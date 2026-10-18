@@ -563,7 +563,7 @@
     "pay_order_binding": {
       "rule": "A gateway payment pays only the order it was started for, by the member who started it.",
       "paypal": "PaymentController::confirm_paypal_payment sends new purchases and pay_order through PayPalGateway::capture_order() -> capture_and_settle(), which reads customer_id and order_id from the PayPal order's custom_id, checks site ownership inside process_payment(), and refunds on an amount mismatch.",
-      "stripe": "PaymentController::confirm_stripe_payment (pay_order) refuses when intent metadata customer_id or order_id is not the order being paid: 409 wpss_payment_not_for_order. Then settle_pay_order() (amount, currency, one payment one order).",
+      "stripe": "StripeGateway::rest_confirm_payment (pay_order) refuses when intent metadata customer_id or order_id is not the order being paid: 409 wpss_payment_not_for_order. Then settle_pay_order() (amount, currency, one payment one order).",
       "tests": [
         "tests/test-rest-pay-order-confirm-contract.php",
         "tests/test-gateway-site-ownership-contract.php"

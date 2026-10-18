@@ -151,8 +151,8 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_stripe_webhook_received` | `string $event_type, object $data, string $payload` | `src/Integrations/Stripe/StripeGateway.php:660` |
-| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1623` |
+| `wpss_stripe_webhook_received` | `string $event_type, object $data, string $payload` | `src/Integrations/Stripe/StripeGateway.php:662` |
+| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1625` |
 
 ### PayPal Gateway
 
@@ -164,13 +164,13 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/API/PaymentController.php:411` |
+| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/API/PaymentController.php:378` |
 
 ### Payment Filters
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `src/Integrations/Stripe/StripeGateway.php:299` |
+| `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `src/Integrations/Stripe/StripeGateway.php:301` |
 | `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `src/Integrations/Gateways/AbstractPaymentGateway.php:37` |
 | `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `src/Integrations/Gateways/AbstractPaymentGateway.php:62` |
 | `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:242` |

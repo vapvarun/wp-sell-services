@@ -241,9 +241,6 @@ class PaymentController extends RestController {
 
 		// Route to the appropriate gateway.
 		switch ( $gateway_id ) {
-			case 'stripe':
-				return $this->create_stripe_intent( $gateway, $intent );
-
 			case 'paypal':
 				return $this->create_paypal_order( $gateway, $checkout_request );
 
@@ -276,9 +273,6 @@ class PaymentController extends RestController {
 		}
 
 		switch ( $gateway_id ) {
-			case 'stripe':
-				return $this->confirm_stripe_payment( $gateway, $payment_id, $service_id, $package_id, $pay_order );
-
 			case 'paypal':
 				return $this->confirm_paypal_payment( $gateway, $payment_id, $service_id, $package_id, $pay_order );
 
@@ -292,33 +286,6 @@ class PaymentController extends RestController {
 					)
 				);
 		}
-	}
-
-	/**
-	 * Create Stripe payment intent.
-	 *
-	 * @param object                                  $gateway Stripe gateway instance.
-	 * @param \WPSellServices\Checkout\CheckoutIntent $intent  Resolved intent.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	private function create_stripe_intent( object $gateway, \WPSellServices\Checkout\CheckoutIntent $intent ) {
-		// The resolved intent's metadata carries what the confirm leg needs to
-		// re-price the same purchase - service, package, quantity, add-ons -
-		// and the order it pays, so a succeeded charge can be matched back.
-		$result = $gateway->create_payment( (float) $intent->amount, (string) $intent->currency, (array) $intent->metadata );
-
-		if ( empty( $result['success'] ) ) {
-			return new WP_Error( 'stripe_error', $result['error'] ?? __( 'Failed to create payment intent.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		return new WP_REST_Response(
-			array(
-				'gateway'           => 'stripe',
-				'client_secret'     => $result['client_secret'],
-				'payment_intent_id' => $result['id'],
-			),
-			201
-		);
 	}
 
 	/**
@@ -423,104 +390,6 @@ class PaymentController extends RestController {
 	}
 
 	/**
-	 * Confirm Stripe payment and create/update order.
-	 *
-	 * @param object $gateway    Stripe gateway instance.
-	 * @param string $payment_id Payment intent ID.
-	 * @param int    $service_id Service ID.
-	 * @param int    $package_id Package index.
-	 * @param int    $pay_order  Existing order ID (0 if new).
-	 * @return WP_REST_Response|WP_Error
-	 */
-	private function confirm_stripe_payment( object $gateway, string $payment_id, int $service_id, int $package_id, int $pay_order ) {
-		// For existing orders (pay_order), verify the payment without creating a new
-		// WPSS order. confirm_payment() creates an order internally, so we use
-		// process_payment() for the verify-only path.
-		if ( $pay_order ) {
-			$order = wpss_get_order( $pay_order );
-
-			// The order must exist, belong to the caller, and still be awaiting
-			// payment — none of which was checked before. Without these guards a
-			// buyer could confirm a small payment intent (e.g. a $5 capture)
-			// against someone else's $500 order and have it marked paid.
-			if ( ! $order ) {
-				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-			}
-
-			if ( get_current_user_id() !== (int) $order->customer_id && ! current_user_can( 'manage_options' ) ) {
-				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
-			}
-
-			// Idempotency: never re-process an order that is already paid.
-			if ( 'paid' === (string) ( $order->payment_status ?? '' ) ) {
-				return new WP_REST_Response(
-					array(
-						'gateway'      => 'stripe',
-						'order_id'     => $pay_order,
-						'order_number' => $order->order_number,
-						'status'       => 'paid',
-					)
-				);
-			}
-
-			$payment = $gateway->process_payment( $payment_id );
-
-			if ( empty( $payment['success'] ) ) {
-				return new WP_Error( 'stripe_confirm_error', $payment['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
-			}
-
-			// The payment names the member who started it and the order it was
-			// started for. Amount and reuse alone let a member confirm someone
-			// else's paid, not yet settled payment of the same price against
-			// their own order.
-			$meta = (array) ( $payment['metadata'] ?? array() );
-
-			if ( (int) ( $meta['customer_id'] ?? 0 ) !== (int) $order->customer_id || (int) ( $meta['order_id'] ?? 0 ) !== $pay_order ) {
-				return new WP_Error( 'wpss_payment_not_for_order', __( 'This payment was not made for this order.', 'wp-sell-services' ), array( 'status' => 409 ) );
-			}
-
-			$settled = $this->settle_pay_order( $order, 'stripe', $payment_id, (float) ( $payment['amount'] ?? 0 ), (string) ( $payment['currency'] ?? '' ) );
-
-			if ( is_wp_error( $settled ) ) {
-				return $settled;
-			}
-
-			$order = wpss_get_order( $pay_order );
-
-			return new WP_REST_Response(
-				array(
-					'gateway'      => 'stripe',
-					'order_id'     => $pay_order,
-					'order_number' => $order ? $order->order_number : '',
-					'status'       => 'paid',
-				)
-			);
-		}
-
-		// New order: verify + create order via gateway.
-		$result = $gateway->confirm_payment(
-			array(
-				'payment_intent_id' => $payment_id,
-				'service_id'        => $service_id,
-				'package_id'        => $package_id,
-			)
-		);
-
-		if ( empty( $result['success'] ) ) {
-			return new WP_Error( 'stripe_confirm_error', $result['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		return new WP_REST_Response(
-			array(
-				'gateway'      => 'stripe',
-				'order_id'     => (int) $result['order_id'],
-				'order_number' => $result['order_number'] ?? '',
-				'status'       => 'paid',
-			)
-		);
-	}
-
-	/**
 	 * Confirm PayPal payment (capture) and create order.
 	 *
 	 * @param object $gateway    PayPal gateway instance.
@@ -582,47 +451,6 @@ class PaymentController extends RestController {
 				'status'       => 'paid',
 			)
 		);
-	}
-
-	/**
-	 * Mark an existing order paid from a verified gateway payment.
-	 *
-	 * Through the same settle() the website checkout uses, not a second copy of
-	 * its checks: it compares amount and currency, and holds the per-payment
-	 * lock while asking whether this payment has already paid an order. The
-	 * copy that lived here checked the amount and nothing else, so one payment
-	 * confirmed every equal-priced order the buyer had (Basecamp 10375173905).
-	 *
-	 * @since 1.8.0
-	 *
-	 * @param object $order          The order to pay; its owner is already checked.
-	 * @param string $gateway_id     Gateway slug.
-	 * @param string $transaction_id Verified gateway payment id.
-	 * @param float  $amount         Verified paid amount.
-	 * @param string $currency       Verified paid currency.
-	 * @return true|WP_Error
-	 */
-	private function settle_pay_order( object $order, string $gateway_id, string $transaction_id, float $amount, string $currency ) {
-		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
-		$intent   = $checkout->resolve( array( 'pay_order' => (int) $order->id ), (int) $order->customer_id );
-
-		if ( is_wp_error( $intent ) ) {
-			return new WP_Error( $intent->get_error_code(), $intent->get_error_message(), array( 'status' => 400 ) );
-		}
-
-		$settle = $checkout->settle( $intent, $gateway_id, $transaction_id, $amount, $currency );
-
-		if ( empty( $settle['success'] ) ) {
-			return new WP_Error( 'rest_amount_mismatch', $settle['error'] ?? __( 'The paid amount does not match the order total.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		// settle() answers a payment it has seen before with the order(s) that
-		// payment already paid. If this order is not one of them, the payment is spent.
-		if ( ! in_array( (int) $order->id, array_map( 'intval', (array) ( $settle['order_ids'] ?? array( $settle['order_id'] ?? 0 ) ) ), true ) ) {
-			return new WP_Error( 'wpss_payment_already_used', __( 'This payment has already been used for another order.', 'wp-sell-services' ), array( 'status' => 409 ) );
-		}
-
-		return true;
 	}
 
 	/**
