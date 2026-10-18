@@ -2421,6 +2421,28 @@ class Settings {
 	 */
 	public function render_realtime_section(): void {
 		echo '<p>' . esc_html__( 'Real-time updates power live order messages and notifications without page refreshes. Paste credentials from a Pusher.com app, or point the host at any self-hosted Pusher-compatible server (e.g. Soketi).', 'wp-sell-services' ) . '</p>';
+
+		$link = static function ( string $url, string $label ): string {
+			return '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $label ) . '</a>';
+		};
+
+		echo '<ol class="wpss-realtime-steps">';
+		echo '<li>' . wp_kses_post(
+			sprintf(
+				/* translators: %s: link to the Pusher Channels dashboard */
+				__( 'Open the %s and create a Channels app (or pick an existing one).', 'wp-sell-services' ),
+				$link( 'https://dashboard.pusher.com/channels', __( 'Pusher Channels dashboard', 'wp-sell-services' ) )
+			)
+		) . '</li>';
+		echo '<li>' . esc_html__( 'Open the app, go to App Keys, and copy the App ID, Key, Secret and Cluster into the fields below.', 'wp-sell-services' ) . '</li>';
+		echo '<li>' . wp_kses_post(
+			sprintf(
+				/* translators: %s: link to the Soketi documentation */
+				__( 'Running your own server instead? Follow the %s and enter its host and port.', 'wp-sell-services' ),
+				$link( 'https://docs.soketi.app/', __( 'Soketi documentation', 'wp-sell-services' ) )
+			)
+		) . '</li>';
+		echo '</ol>';
 	}
 
 	/**
