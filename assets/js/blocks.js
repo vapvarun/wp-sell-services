@@ -100,6 +100,9 @@
 							options: [
 								{ value: 'date', label: __('Date', 'wp-sell-services') },
 								{ value: 'title', label: __('Title', 'wp-sell-services') },
+								{ value: 'rating', label: __('Rating', 'wp-sell-services') },
+								{ value: 'sales', label: __('Popularity (completed orders)', 'wp-sell-services') },
+								{ value: 'price', label: __('Price', 'wp-sell-services') },
 								{ value: 'menu_order', label: __('Menu Order', 'wp-sell-services') },
 								{ value: 'rand', label: __('Random', 'wp-sell-services') }
 							],
