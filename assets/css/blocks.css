@@ -1166,7 +1166,7 @@
 	.wpss-grid-cols-3 .wpss-categories-list,
 	.wpss-grid-cols-4 .wpss-categories-list,
 	.wpss-grid-cols-5 .wpss-categories-list {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	.wpss-featured-slide {

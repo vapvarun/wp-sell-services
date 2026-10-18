@@ -879,6 +879,12 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
    6. FORMS
    ========================================================================== */
 
+/* Form controls and buttons size to their border box. Reign and BuddyX reset this globally; Twenty Twenty-Five and
+   other block themes do not, so a width: 100% field with padding poked out of its column on a phone. */
+.wpss-field__input, .wpss-field__select, .wpss-field__textarea,
+input.wpss-input, select.wpss-input, textarea.wpss-input, select.wpss-select,
+.wpss-btn { box-sizing: border-box; }
+
 .wpss-field { margin-bottom: var(--wpss-space-5); }
 .wpss-field__label { display: block; font-size: var(--wpss-text-base); font-weight: 500; color: var(--wpss-text); margin-bottom: var(--wpss-space-2); }
 .wpss-field__label .wpss-required { color: var(--wpss-danger); }
@@ -1180,7 +1186,7 @@ body.wpss-modal-active { overflow: hidden; }
 .wpss-grid--4 { grid-template-columns: repeat(4, 1fr); }
 
 .wpss-layout { display: grid; gap: var(--wpss-space-8); }
-.wpss-layout--sidebar-right { grid-template-columns: 1fr 360px; }
+.wpss-layout--sidebar-right { grid-template-columns: minmax(0, 1fr) 360px; }
 .wpss-layout--sidebar-left { grid-template-columns: 360px 1fr; }
 
 .wpss-stack { display: flex; flex-direction: column; }
@@ -1539,7 +1545,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 /* ── Tablet (<= 1024px) ── */
 @media (max-width: 1024px) {
 	.wpss-grid--3, .wpss-grid--4 { grid-template-columns: repeat(2, 1fr); }
-	.wpss-layout--sidebar-right, .wpss-layout--sidebar-left { grid-template-columns: 1fr; }
+	.wpss-layout--sidebar-right, .wpss-layout--sidebar-left { grid-template-columns: minmax(0, 1fr); }
 	.wpss-services-grid--3,
 	.wpss-services-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -1547,12 +1553,12 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 /* ── Mobile (<= 640px) ── */
 @media (max-width: 640px) {
 	.wpss-app-shell__container { padding-inline: var(--wpss-space-3); }
-	.wpss-grid--2, .wpss-grid--3, .wpss-grid--4 { grid-template-columns: 1fr; }
-	.wpss-layout--sidebar-right, .wpss-layout--sidebar-left { grid-template-columns: 1fr; }
+	.wpss-grid--2, .wpss-grid--3, .wpss-grid--4 { grid-template-columns: minmax(0, 1fr); }
+	.wpss-layout--sidebar-right, .wpss-layout--sidebar-left { grid-template-columns: minmax(0, 1fr); }
 	.wpss-services-grid,
 	.wpss-services-grid--2,
 	.wpss-services-grid--3,
-	.wpss-services-grid--4 { grid-template-columns: 1fr; }
+	.wpss-services-grid--4 { grid-template-columns: minmax(0, 1fr); }
 	.wpss-banner { flex-direction: column; text-align: center; gap: var(--wpss-space-3); }
 	.wpss-banner__action { width: 100%; }
 	.wpss-card { padding: var(--wpss-space-4); }
@@ -1609,7 +1615,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 /* Phones: one column. In two ~116px columns dates and totals wrapped to two
    or three lines (Basecamp 10345275760); a full row keeps every value on one. */
 @media (max-width: 480px) {
-	.wpss-order-details-grid { grid-template-columns: 1fr; gap: var(--wpss-space-2); }
+	.wpss-order-details-grid { grid-template-columns: minmax(0, 1fr); gap: var(--wpss-space-2); }
 }
 .wpss-order-detail-item--highlight .wpss-order-detail-item__value { font-weight: 700; font-size: var(--wpss-text-md); }
 .wpss-order-detail-item--refunded .wpss-order-detail-item__label,

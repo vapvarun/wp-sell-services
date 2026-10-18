@@ -1282,7 +1282,7 @@ article.wpss-service-card:hover {
 
 @media (max-width: 992px) {
 	.wpss-dashboard-layout {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -1537,13 +1537,13 @@ a.wpss-back-link:focus {
 
 .wpss-order-layout {
 	display: grid;
-	grid-template-columns: 1fr 300px;
+	grid-template-columns: minmax(0, 1fr) 300px;
 	gap: 30px;
 }
 
 @media (max-width: 992px) {
 	.wpss-order-layout {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -2293,14 +2293,14 @@ a.wpss-back-link:focus {
 
 .wpss-profile-layout {
 	display: grid;
-	grid-template-columns: 1fr 300px;
+	grid-template-columns: minmax(0, 1fr) 300px;
 	gap: 30px;
 	margin-top: 30px;
 }
 
 @media (max-width: 992px) {
 	.wpss-profile-layout {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	/* One column: the at-a-glance card (response time, active services,
@@ -2647,13 +2647,13 @@ a.wpss-back-link:focus {
 
 .wpss-requirements-layout {
 	display: grid;
-	grid-template-columns: 1fr 320px;
+	grid-template-columns: minmax(0, 1fr) 320px;
 	gap: 30px;
 }
 
 @media (max-width: 992px) {
 	.wpss-requirements-layout {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -3719,6 +3719,7 @@ a.wpss-back-link:focus {
 
 .wpss-fullwidth-page {
 	width: 100%;
+	box-sizing: border-box;
 	padding: var( --wpss-space-6, 24px ) var( --wpss-space-4, 16px );
 }
 .wpss-fullwidth-inner {
@@ -3978,7 +3979,7 @@ a.wpss-back-link:focus {
 	.wpss-vendors-grid.wpss-columns-2,
 	.wpss-vendors-grid.wpss-columns-3,
 	.wpss-vendors-grid.wpss-columns-4 {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -4055,7 +4056,7 @@ a.wpss-back-link:focus {
 	.wpss-categories-grid.wpss-columns-3,
 	.wpss-categories-grid.wpss-columns-4,
 	.wpss-categories-grid.wpss-columns-5 {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 

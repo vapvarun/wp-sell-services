@@ -659,7 +659,8 @@
 
 .wpss-request-layout {
 	display: grid;
-	grid-template-columns: 1fr;
+	/* minmax(0, 1fr): a bare 1fr will not shrink below its content, so one long word pushed the page sideways on a phone. */
+	grid-template-columns: minmax(0, 1fr);
 	gap: 2rem;
 }
 
@@ -780,6 +781,10 @@
 .wpss-attachment-item:hover {
 	background: var(--wpss-gray-200, #e5e7eb);
 }
+
+/* A long file name wraps inside the chip instead of pushing it past the column on a phone. */
+.wpss-attachment-item { max-width: 100%; box-sizing: border-box; }
+.wpss-attachment-name { min-width: 0; overflow-wrap: anywhere; }
 
 /* ==========================================================================
    Proposals Section
@@ -1173,7 +1178,7 @@
 
 	/* Single request layout */
 	.wpss-request-layout {
-		grid-template-columns: 1fr 340px;
+		grid-template-columns: minmax(0, 1fr) 340px;
 	}
 
 	.wpss-request-sidebar:not(.wpss-request-sidebar) {
@@ -1229,7 +1234,7 @@
 	}
 
 	.wpss-services-grid {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -1359,7 +1364,7 @@
 		padding: var(--wpss-space-3, 12px);
 	}
 	.wpss-milestone-row__meta {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 	.wpss-milestones-builder [data-add-milestone] {
 		width: 100%;

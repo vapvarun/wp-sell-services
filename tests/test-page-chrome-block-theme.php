@@ -35,6 +35,7 @@ if ( wp_is_block_theme() ) {
 	ob_start();
 	wpss_get_header();
 	$head = ob_get_clean();
+	$check( 'block theme: header prints a <title>', str_contains( $head, '<title>' ) );
 	$check( 'block theme: header prints the document shell and the theme header part', str_contains( $head, '<div class="wp-site-blocks">' ) && str_contains( $head, 'wp-block-site-title' ) );
 } else {
 	echo "SKIP  block-theme output (active theme is classic)\n";

@@ -888,7 +888,7 @@
 @media (max-width: 768px) {
 
 	.wpss-messaging {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 		height: calc(100vh - var(--wpss-sticky-top, 32px) - 60px);
 	}
 

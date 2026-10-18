@@ -1444,6 +1444,7 @@ class Shortcodes {
 		}
 		.wpss-vr__actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 		.wpss-vr__btn {
+			box-sizing: border-box; max-width: 100%; text-align: center;
 			display: inline-flex; align-items: center; justify-content: center;
 			padding: 12px 28px; font-size: 15px; font-weight: 600;
 			border-radius: 10px; text-decoration: none; cursor: pointer;

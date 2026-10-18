@@ -1493,6 +1493,21 @@
 	font-size: 1.25rem;
 }
 
+/* The converted hint is a third child of the row; on its own line under the price it
+   no longer pushes the price to the middle. */
+.wpss-summary-total { flex-wrap: wrap; align-items: baseline; }
+.wpss-summary-total .wpss-price-approx {
+	flex: 1 0 100%;
+	margin: 0;
+	text-align: end;
+	font-size: 0.813rem;
+	color: var(--wpss-text-muted);
+}
+
+/* An order modal with nothing to choose (no add-ons, no express delivery for the package)
+   shows only the summary, not an empty band under the header. */
+#wpss-order-modal .wpss-modal__body:not(:has(.wpss-order-extras:not([hidden]))) { display: none; }
+
 .wpss-cart-success {
 	text-align: center;
 }

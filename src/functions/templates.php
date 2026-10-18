@@ -179,6 +179,10 @@ function wpss_get_header(): void {
 		get_header();
 		return;
 	}
+	// Core hooks the <title> only inside its own template canvas, and block themes declare no title-tag support.
+	if ( ! has_action( 'wp_head', '_block_template_render_title_tag' ) && ! current_theme_supports( 'title-tag' ) ) {
+		add_action( 'wp_head', '_block_template_render_title_tag', 1 );
+	}
 	?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
