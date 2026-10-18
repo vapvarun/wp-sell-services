@@ -365,6 +365,12 @@ Same rules as sections 1-4: test branch `1.9.0`, every role, 1440 and 390, Reign
 | `10380420186` Demo import | Wizard Import Demo Content on a clean site: services published, images, 5 sample reviews each; Delete Demo Content removes them. |
 | `10403940320` Real-time docs | `realtime-updates.md` matches what a Pusher or Soketi test server produces: a toast, and the unread count on the dashboard menu. |
 
+### Round 3: QA bounces of 2026-10-18, fixed
+
+- **Notifications type filter** (10403104468). One registry, `wpss_notification_types()`, gives label and icon for every type written. The dropdown lists the member's own types. The model constants, the template icon map and the AJAX list's own query are gone. Pro's EDD and FluentCart account pages now render the same partial. Check: as a user with `order_late`, `refund_pending` and `order_started` rows, every type appears, selecting it returns only those rows, and no row shows the generic bell. Guard: `tests/test-notification-types-registry.php`.
+- **Suspend Member** (10384354109). Dashboard publish, bulk publish, portfolio add and update, and the wizard draft and publish now refuse a suspended seller with the same message as REST. Publish also checks the plan limit and the publish bar. Pause and delete still work. Profile save stays open (billing and display name are not new work). Guard: `tests/test-ajax-standing-gate.php`.
+- **Settings headings** (10412156185). Stripe, PayPal and Offline sub-headings are h3 under their card. The guard now renders the Payment Gateways tab on the standalone rail. Check on Standalone, not Woo.
+
 ## 7. Not fixed yet (still in Bugs)
 
 Only the money cards remain: 4 held back above, plus `10415810962` (Stripe 1.7.x payments refused), `10415810929` (REST pay-order refusal after capture) and `10415811011` (cart refund hits sibling orders). They wait for the Stripe test and PayPal sandbox keys. Do not verify them.
