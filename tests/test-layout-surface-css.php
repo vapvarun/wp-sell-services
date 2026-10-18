@@ -22,7 +22,7 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 $read = static fn( string $rel ): string => (string) file_get_contents( WPSS_PLUGIN_DIR . $rel );
 
 $co = $read( 'src/Integrations/Standalone/StandaloneCheckoutProvider.php' );
-$check( 'checkout aside cards other than the summary stack above the sticky card', (bool) preg_match( '/\.wpss-co-aside > :not\(\.wpss-co-card--summary\) \{[^}]*z-index: 3/', $co ) );
+$check( 'checkout aside sticks as one column, not card by card', (bool) preg_match( '/\.wpss-co-aside \{[^}]*position: sticky/', $co ) && ! preg_match( '/\.wpss-co-aside > :not\(\.wpss-co-card--summary\) \{[^}]*z-index/', $co ) );
 
 foreach ( array( 'design-system.css', 'design-system-rtl.css' ) as $f ) {
 	$check( "{$f} carries the breadcrumb list rules", false !== strpos( $read( "assets/css/{$f}" ), '.wpss-breadcrumb-list {' ) );

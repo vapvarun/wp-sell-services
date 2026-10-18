@@ -908,20 +908,21 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			 * sticky here is the intent, not a side effect.
 			 */
 			/*
-			 * Only the Order Summary sticks (Basecamp 10337204220). The whole
-			 * column used to, and it is taller than a laptop screen, so its top
-			 * scrolled out of view (-17px) with the total and Pay button in it.
-			 * The column stretches to the form's height to give the card room to
-			 * stick; the cards below it pass underneath.
+			 * The aside sticks as ONE column (Basecamp 10411948180). Sticking only the
+			 * summary made it pin at the top while the cards after it scrolled up
+			 * through the same space, so they overlapped whatever z-index said. As a
+			 * single sticky box the cards stack in flow and can never intersect; when
+			 * the column is taller than the viewport it scrolls inside itself, so the
+			 * top (total) and the bottom card are both reachable.
 			 */
-			.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { z-index: 2; }
-			.wpss-checkout-page .wpss-co-aside > :not(.wpss-co-card--summary) { position: relative; z-index: 3; background: var(--wpss-surface, var(--wpss-bg, #fff)); }
+			.wpss-checkout-page .wpss-co-aside { position: sticky; top: var(--wpss-sticky-top, 32px); align-self: start; max-height: calc(100vh - var(--wpss-sticky-top, 32px) - 16px); overflow-y: auto; overscroll-behavior: contain; }
+			.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { position: static; }
 
 			@media (max-width: 1024px) {
 				.wpss-checkout-page .wpss-layout--sidebar-right { display: flex; flex-direction: column; }
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack,
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside { display: contents; }
-				.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { position: static; align-self: stretch; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside { display: contents; position: static; max-height: none; overflow: visible; }
+				.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { align-self: stretch; }
 				/*
 				 * Service details, the total, what happens next, then the form.
 				 *
@@ -1170,7 +1171,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 						</div><!-- /left column -->
 
-						<!-- RIGHT COLUMN: only the Order Summary card sticks (summary.php). -->
+						<!-- RIGHT COLUMN: the whole aside sticks as one column. -->
 						<div class="wpss-co-aside">
 							<?php
 							wpss_get_template(

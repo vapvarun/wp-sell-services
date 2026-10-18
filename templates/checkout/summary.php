@@ -30,7 +30,7 @@ $wpss_total        = isset( $wpss_total ) ? (float) $wpss_total : 0.0;
 $wpss_currency     = isset( $wpss_currency ) ? (string) $wpss_currency : wpss_get_currency();
 $wpss_button_label = isset( $wpss_button_label ) ? (string) $wpss_button_label : '';
 ?>
-<div class="wpss-card wpss-co-card--summary wpss-sticky">
+<div class="wpss-card wpss-co-card--summary">
 	<div class="wpss-card__header">
 		<h3 class="wpss-card__title"><?php echo esc_html( $wpss_title ); ?></h3>
 	</div>
