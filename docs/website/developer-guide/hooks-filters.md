@@ -71,7 +71,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:743` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:579` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:602` |
 
 ### Order Filters
 

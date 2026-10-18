@@ -14,6 +14,29 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * Why an order that is not pending_payment cannot be paid, in words the buyer can act on.
+ *
+ * Every pay door answered "This order has already been paid." for any status but
+ * pending_payment, so a buyer who was charged and then refunded on a cancelled order read it as a
+ * double charge (Basecamp 10416548799). Cancelled and refunded orders now say what happened.
+ *
+ * @since 1.9.0
+ *
+ * @param \WPSellServices\Models\ServiceOrder $order The order.
+ * @return string Message.
+ */
+function wpss_get_order_not_payable_message( $order ): string {
+	switch ( (string) ( $order->status ?? '' ) ) {
+		case 'cancelled':
+			return __( 'This order was cancelled and can no longer be paid.', 'wp-sell-services' );
+		case 'refunded':
+			return __( 'This order was refunded and can no longer be paid.', 'wp-sell-services' );
+		default:
+			return __( 'This order has already been paid.', 'wp-sell-services' );
+	}
+}
+
+/**
  * Get order by ID.
  *
  * @param int $order_id Order ID.

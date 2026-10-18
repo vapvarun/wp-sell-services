@@ -469,7 +469,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		if ( 'pending_payment' !== $order->status ) {
 			return sprintf(
 				'<p class="wpss-alert wpss-alert-info">%s</p><p><a class="wpss-btn wpss-btn--secondary" href="%s">%s</a></p>',
-				esc_html__( 'This order has already been paid.', 'wp-sell-services' ),
+				esc_html( wpss_get_order_not_payable_message( $order ) ),
 				esc_url( $back_to_order ),
 				esc_html__( 'Back to order', 'wp-sell-services' )
 			);

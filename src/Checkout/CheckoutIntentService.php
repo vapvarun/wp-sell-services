@@ -76,7 +76,10 @@ class CheckoutIntentService {
 		}
 
 		if ( 'pending_payment' !== $order->status ) {
-			return new \WP_Error( 'wpss_already_paid', __( 'This order has already been paid.', 'wp-sell-services' ) );
+			return new \WP_Error(
+				in_array( $order->status, array( 'cancelled', 'refunded' ), true ) ? 'wpss_order_closed' : 'wpss_already_paid',
+				wpss_get_order_not_payable_message( $order )
+			);
 		}
 
 		// A locked milestone phase cannot be funded before the previous phase is
