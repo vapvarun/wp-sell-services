@@ -376,6 +376,30 @@
 		modal.style.setProperty( '--wpss-modal-offset', offset + 'px' );
 	}
 
+	// A modal inside .wpss-app-shell is trapped by the shell's stacking context (isolation: isolate), so any
+	// themed header, footer or back-to-top button with its own z-index paints over it. While open, a modal
+	// lives at the end of <body>; a marker keeps its place so close puts it back.
+	var homes = new WeakMap();
+
+	function lift( modal ) {
+		if ( homes.has( modal ) || ! modal.closest( '.wpss-app-shell' ) ) {
+			return;
+		}
+		var marker = document.createComment( 'wpss-modal-home' );
+		modal.parentNode.insertBefore( marker, modal );
+		homes.set( modal, marker );
+		document.body.appendChild( modal );
+	}
+
+	function lower( modal ) {
+		var marker = homes.get( modal );
+		if ( marker && marker.parentNode ) {
+			marker.parentNode.insertBefore( modal, marker );
+			marker.remove();
+		}
+		homes.delete( modal );
+	}
+
 	function trap( e ) {
 		if ( 'Tab' !== e.key ) {
 			return;
@@ -401,6 +425,7 @@
 			return;
 		}
 		lastFocused = document.activeElement;
+		lift( modal );
 		modal.hidden = false;
 		modal.classList.add( 'wpss-modal-open' );
 		document.body.classList.add( 'wpss-modal-active' );
@@ -425,6 +450,7 @@
 		}
 		modal.classList.remove( 'wpss-modal-open' );
 		modal.hidden = true;
+		lower( modal );
 		modal.removeEventListener( 'keydown', trap );
 		if ( ! openModals().length ) {
 			document.body.classList.remove( 'wpss-modal-active' );
