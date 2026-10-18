@@ -888,7 +888,7 @@ WooCommerce or standalone checkout.
 |------|-----------|------|
 | `wpss_fluentcart_adapter_init` | `FluentCartAdapter $adapter` | `src/Integrations/FluentCart/FluentCartAdapter.php:213` |
 | `wpss_fluentcart_order_created` | `int $order_id, int $external_order_id, array $order_data` | `src/Integrations/FluentCart/FluentCartOrderProvider.php:110` |
-| `wpss_fluentcart_order_detail` | `object $order` | `src/Integrations/FluentCart/FluentCartAccountProvider.php:366` |
+| `wpss_fluentcart_order_detail` | `object $order` | `src/Integrations/FluentCart/FluentCartAccountProvider.php:367` |
 
 > `wpss_fluentcart_product_created` was removed in 1.6.1. FluentCart is a
 > payment rail, not a catalogue: the plugin no longer creates FluentCart
@@ -953,7 +953,7 @@ WooCommerce or standalone checkout.
 | `wpss_edd_cart_item_data` | `$cart_item_data, $product_id, $variation_id` | `EDDCheckoutProvider.php:56` |
 | `wpss_edd_validate_add_to_cart` | `$valid, $product_id, $quantity` | `EDDCheckoutProvider.php:97` |
 | `wpss_edd_thankyou_redirect` | `$redirect, $order_id` | `EDDCheckoutProvider.php:251` |
-| `wpss_edd_can_access_vendor_dashboard` | `$can_access, $user_id` | `src/Integrations/EDD/EDDAccountProvider.php:483` |
+| `wpss_edd_can_access_vendor_dashboard` | `$can_access, $user_id` | `src/Integrations/EDD/EDDAccountProvider.php:435` |
 
 ### WooCommerce Filters
 

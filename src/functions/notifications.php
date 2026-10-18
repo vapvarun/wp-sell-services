@@ -576,3 +576,149 @@ function wpss_count_user_notifications( int $user_id, array $args = array() ): i
 	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is hardcoded fragments with placeholders; values come via prepare().
 	return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$where}", $params ) );
 }
+
+/**
+ * Every notification type this plugin writes: label and Lucide icon.
+ *
+ * The one vocabulary behind the notification center's Type dropdown, the row
+ * icon and the REST `icon` field. A type absent here still lists, filters and
+ * shows a humanised label with the bell, so a new event is never hidden from the
+ * filter; add a row to give it its own icon.
+ *
+ * @since 1.9.0
+ *
+ * @return array<string, array{label: string, icon: string}>
+ */
+function wpss_notification_types(): array {
+	$types = array(
+		'order_created'              => array( __( 'New order', 'wp-sell-services' ), 'package' ),
+		'new_order'                  => array( __( 'New order', 'wp-sell-services' ), 'package' ),
+		'order_confirmation'         => array( __( 'Order confirmation', 'wp-sell-services' ), 'package' ),
+		'order_status'               => array( __( 'Order update', 'wp-sell-services' ), 'refresh-cw' ),
+		'order_started'              => array( __( 'Order ready to start', 'wp-sell-services' ), 'play' ),
+		'order_in_progress'          => array( __( 'Order in progress', 'wp-sell-services' ), 'refresh-cw' ),
+		'order_late'                 => array( __( 'Order late', 'wp-sell-services' ), 'triangle-alert' ),
+		'order_cancelled'            => array( __( 'Order cancelled', 'wp-sell-services' ), 'x-circle' ),
+		'order_completed'            => array( __( 'Order completed', 'wp-sell-services' ), 'check-circle' ),
+		'order_completed_vendor'     => array( __( 'Order completed', 'wp-sell-services' ), 'check-circle' ),
+		'order_auto_completed'       => array( __( 'Order auto-completed', 'wp-sell-services' ), 'check-circle' ),
+		'deadline_reminder'          => array( __( 'Deadline reminder', 'wp-sell-services' ), 'calendar-clock' ),
+		'deadline_warning'           => array( __( 'Deadline warning', 'wp-sell-services' ), 'calendar-clock' ),
+		'requirements_pending'       => array( __( 'Requirements needed', 'wp-sell-services' ), 'clipboard-list' ),
+		'requirements_reminder'      => array( __( 'Requirements reminder', 'wp-sell-services' ), 'clipboard-list' ),
+		'requirements_submitted'     => array( __( 'Requirements submitted', 'wp-sell-services' ), 'clipboard-check' ),
+		'submit_requirements'        => array( __( 'Requirements needed', 'wp-sell-services' ), 'clipboard-list' ),
+		'requirements_timeout'       => array( __( 'Requirements timed out', 'wp-sell-services' ), 'triangle-alert' ),
+		'new_message'                => array( __( 'New message', 'wp-sell-services' ), 'message-circle' ),
+		'vendor_contact'             => array( __( 'Vendor enquiry', 'wp-sell-services' ), 'message-circle' ),
+		'delivery_submitted'         => array( __( 'Delivery submitted', 'wp-sell-services' ), 'upload' ),
+		'delivery_ready'             => array( __( 'Delivery ready', 'wp-sell-services' ), 'upload' ),
+		'delivery_received'          => array( __( 'Delivery received', 'wp-sell-services' ), 'upload' ),
+		'delivery_accepted'          => array( __( 'Delivery accepted', 'wp-sell-services' ), 'check-circle' ),
+		'revision_requested'         => array( __( 'Revision requested', 'wp-sell-services' ), 'rotate-ccw' ),
+		'cancellation_requested'     => array( __( 'Cancellation requested', 'wp-sell-services' ), 'x-circle' ),
+		'cancellation_submitted'     => array( __( 'Cancellation requested', 'wp-sell-services' ), 'x-circle' ),
+		'cancellation_auto_approved' => array( __( 'Cancellation approved', 'wp-sell-services' ), 'x-circle' ),
+		'refund_pending'             => array( __( 'Refund pending', 'wp-sell-services' ), 'receipt' ),
+		'refund_failed'              => array( __( 'Refund failed', 'wp-sell-services' ), 'triangle-alert' ),
+		'review_received'            => array( __( 'Review received', 'wp-sell-services' ), 'star' ),
+		'review_reply'               => array( __( 'Review reply', 'wp-sell-services' ), 'star' ),
+		'dispute_opened'             => array( __( 'Dispute opened', 'wp-sell-services' ), 'alert-triangle' ),
+		'dispute_resolved'           => array( __( 'Dispute resolved', 'wp-sell-services' ), 'check' ),
+		'dispute_response_received'  => array( __( 'Dispute response', 'wp-sell-services' ), 'message-square' ),
+		'dispute_reminder'           => array( __( 'Dispute reminder', 'wp-sell-services' ), 'alert-triangle' ),
+		'dispute_admin'              => array( __( 'Dispute update', 'wp-sell-services' ), 'alert-triangle' ),
+		'dispute_escalated'          => array( __( 'Dispute escalated', 'wp-sell-services' ), 'alert-triangle' ),
+		'dispute_cancelled'          => array( __( 'Dispute cancelled', 'wp-sell-services' ), 'x-circle' ),
+		'proposal_submitted'         => array( __( 'Proposal submitted', 'wp-sell-services' ), 'briefcase' ),
+		'proposal_received'          => array( __( 'Proposal received', 'wp-sell-services' ), 'briefcase' ),
+		'proposal_accepted'          => array( __( 'Proposal accepted', 'wp-sell-services' ), 'thumbs-up' ),
+		'proposal_rejected'          => array( __( 'Proposal rejected', 'wp-sell-services' ), 'thumbs-down' ),
+		'milestone_proposed'         => array( __( 'Milestone proposed', 'wp-sell-services' ), 'flag' ),
+		'milestone_paid'             => array( __( 'Milestone paid', 'wp-sell-services' ), 'banknote' ),
+		'milestone_submitted'        => array( __( 'Milestone submitted', 'wp-sell-services' ), 'upload' ),
+		'milestone_approved'         => array( __( 'Milestone approved', 'wp-sell-services' ), 'check-circle' ),
+		'milestone_cancel_warning'   => array( __( 'Milestone cancellation', 'wp-sell-services' ), 'triangle-alert' ),
+		'extension_proposed'         => array( __( 'Extension proposed', 'wp-sell-services' ), 'clock' ),
+		'extension_approved'         => array( __( 'Extension approved', 'wp-sell-services' ), 'calendar' ),
+		'extension_declined'         => array( __( 'Extension declined', 'wp-sell-services' ), 'x' ),
+		'tip_received'               => array( __( 'Tip received', 'wp-sell-services' ), 'heart' ),
+		'tip_receipt'                => array( __( 'Tip sent', 'wp-sell-services' ), 'heart' ),
+		'withdrawal_requested'       => array( __( 'Withdrawal requested', 'wp-sell-services' ), 'landmark' ),
+		'withdrawal_auto'            => array( __( 'Automatic withdrawal', 'wp-sell-services' ), 'landmark' ),
+		'withdrawal_approved'        => array( __( 'Withdrawal approved', 'wp-sell-services' ), 'landmark' ),
+		'withdrawal_completed'       => array( __( 'Withdrawal paid', 'wp-sell-services' ), 'landmark' ),
+		'withdrawal_rejected'        => array( __( 'Withdrawal rejected', 'wp-sell-services' ), 'x-circle' ),
+		'moderation_approved'        => array( __( 'Service approved', 'wp-sell-services' ), 'check-circle' ),
+		'service_approved'           => array( __( 'Service approved', 'wp-sell-services' ), 'check-circle' ),
+		'moderation_rejected'        => array( __( 'Service rejected', 'wp-sell-services' ), 'x-circle' ),
+		'service_rejected'           => array( __( 'Service rejected', 'wp-sell-services' ), 'x-circle' ),
+		'moderation_pending'         => array( __( 'Service awaiting review', 'wp-sell-services' ), 'clock' ),
+		'request_expired'            => array( __( 'Request expired', 'wp-sell-services' ), 'clock' ),
+		'vendor_approved'            => array( __( 'Vendor approved', 'wp-sell-services' ), 'check-circle' ),
+		'vendor_rejected'            => array( __( 'Vendor rejected', 'wp-sell-services' ), 'x-circle' ),
+		'vendor_suspended'           => array( __( 'Vendor suspended', 'wp-sell-services' ), 'triangle-alert' ),
+	);
+
+	$rows = array();
+	foreach ( $types as $type => $row ) {
+		$rows[ $type ] = array(
+			'label' => $row[0],
+			'icon'  => $row[1],
+		);
+	}
+
+	/**
+	 * Filter the notification type registry.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param array<string, array{label: string, icon: string}> $rows Type => label and Lucide icon name.
+	 */
+	return (array) apply_filters( 'wpss_notification_types', $rows );
+}
+
+/**
+ * Display label for a notification type; unknown types are humanised.
+ *
+ * @since 1.9.0
+ *
+ * @param string $type Notification type.
+ * @return string
+ */
+function wpss_notification_type_label( string $type ): string {
+	return wpss_notification_types()[ $type ]['label'] ?? ucfirst( str_replace( '_', ' ', $type ) );
+}
+
+/**
+ * Lucide icon name for a notification type; the bell when the type is unknown.
+ *
+ * @since 1.9.0
+ *
+ * @param string $type Notification type.
+ * @return string
+ */
+function wpss_notification_type_icon( string $type ): string {
+	return wpss_notification_types()[ $type ]['icon'] ?? 'bell';
+}
+
+/**
+ * The notification types this member actually has, for the Type filter.
+ *
+ * Built from the member's own rows so the dropdown never offers an empty option
+ * and never hides a type that exists. Covered by idx_user_created.
+ *
+ * @since 1.9.0
+ *
+ * @param int $user_id User ID.
+ * @return string[] Types, sorted by their label.
+ */
+function wpss_get_user_notification_types( int $user_id ): array {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_notifications';
+
+	$types = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT type FROM {$table} WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	usort( $types, static fn( string $a, string $b ): int => strcasecmp( wpss_notification_type_label( $a ), wpss_notification_type_label( $b ) ) );
+
+	return $types;
+}

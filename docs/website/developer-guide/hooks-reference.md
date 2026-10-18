@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**542 hooks** across **750** firing sites.
+**542 hooks** across **751** firing sites.
 
 ## Actions (276)
 
@@ -408,7 +408,7 @@ guide; this is the complete index.
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php` | Filter email content before sending. |
 | `wpss_notification_retention_days` | 1 | `src/Services/NotificationService.php` | Days to keep a read notification. 0 disables the cleanup. |
-| `wpss_notification_types` | 1 | `src/Admin/Settings.php` | Filter the switchable notification types. |
+| `wpss_notification_types` | 1 | `src/Admin/Settings.php` *(+1 more)* | Filter the switchable notification types. |
 | `wpss_notifications_per_page` | 1 | `templates/partials/notifications-list.php` |  |
 | `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php` | Named offline methods. |
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php` | Filter the offline payment methods. |

@@ -87,29 +87,8 @@ $wpss_notifications = wpss_get_user_notifications(
 	)
 );
 
-// Keyed on the type strings actually stored in wpss_notifications.
-//
-// Notification::get_icon() carries a second, larger map keyed on the model's
-// TYPE_* constants — but most of those strings ('order_new', 'message_new',
-// 'order_delivered') are never written by anything, while the live rows use
-// 'order_created', 'new_message', 'delivery_submitted'. The two vocabularies
-// have drifted, so this map is the one that matches reality. Unifying them
-// would change icons across every existing notification and wants its own
-// card; anything unmapped falls back to 'bell'.
-$wpss_notif_icons = array(
-	'order_created'      => 'package',
-	'order_status'       => 'refresh-cw',
-	'new_message'        => 'message-circle',
-	'delivery_submitted' => 'upload',
-	'delivery_accepted'  => 'check-circle',
-	'revision_requested' => 'rotate-ccw',
-	'review_received'    => 'star',
-	'dispute_opened'     => 'alert-triangle',
-	'dispute_resolved'   => 'check',
-	'proposal_received'  => 'briefcase',
-	'proposal_accepted'  => 'thumbs-up',
-	'proposal_rejected'  => 'thumbs-down',
-);
+// Icons and labels come from the one registry, wpss_notification_types().
+$wpss_notif_types = wpss_get_user_notification_types( $wpss_notif_user );
 
 /*
  * Count unread across EVERY page, not just the rows on screen.
@@ -161,8 +140,8 @@ wpss_enqueue_notifications_style();
 				<span class="screen-reader-text"><?php esc_html_e( 'Type', 'wp-sell-services' ); ?></span>
 				<select name="notifications_type" class="wpss-input">
 					<option value=""><?php esc_html_e( 'All types', 'wp-sell-services' ); ?></option>
-					<?php foreach ( array_keys( $wpss_notif_icons ) as $wpss_type ) : ?>
-						<option value="<?php echo esc_attr( $wpss_type ); ?>" <?php selected( $wpss_filter_type, $wpss_type ); ?>><?php echo esc_html( ucfirst( str_replace( '_', ' ', $wpss_type ) ) ); ?></option>
+					<?php foreach ( $wpss_notif_types as $wpss_type ) : ?>
+						<option value="<?php echo esc_attr( $wpss_type ); ?>" <?php selected( $wpss_filter_type, $wpss_type ); ?>><?php echo esc_html( wpss_notification_type_label( $wpss_type ) ); ?></option>
 					<?php endforeach; ?>
 				</select>
 			</label>
@@ -188,7 +167,7 @@ wpss_enqueue_notifications_style();
 			<?php
 			foreach ( $wpss_notifications as $wpss_n ) :
 				$wpss_unread = empty( $wpss_n->is_read );
-				$wpss_icon   = $wpss_notif_icons[ $wpss_n->type ] ?? 'bell';
+				$wpss_icon   = wpss_notification_type_icon( (string) $wpss_n->type );
 				$wpss_data   = is_string( $wpss_n->data ?? null ) ? json_decode( $wpss_n->data, true ) : (array) ( $wpss_n->data ?? array() );
 				$wpss_url    = wpss_get_notification_url( is_array( $wpss_data ) ? $wpss_data : array(), $wpss_n->action_url ?? null );
 				$wpss_when   = ! empty( $wpss_n->created_at )

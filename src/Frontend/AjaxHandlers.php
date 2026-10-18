@@ -2420,27 +2420,21 @@ class AjaxHandlers {
 		$limit   = absint( $_POST['limit'] ?? 10 );
 		$offset  = absint( $_POST['offset'] ?? 0 );
 
-		global $wpdb;
+		// Same query, ordering and filters as the notification center and REST.
+		$filters = array(
+			'type'        => sanitize_key( $_POST['type'] ?? '' ),
+			'unread_only' => ! empty( $_POST['unread_only'] ),
+		);
 
-		$notifications = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}wpss_notifications
-				WHERE user_id = %d
-				ORDER BY created_at DESC
-				LIMIT %d OFFSET %d",
-				$user_id,
-				$limit,
-				$offset
+		$notifications = wpss_get_user_notifications(
+			$user_id,
+			$filters + array(
+				'limit'  => $limit,
+				'offset' => $offset,
 			)
 		);
 
-		$unread_count = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_notifications
-				WHERE user_id = %d AND is_read = 0",
-				$user_id
-			)
-		);
+		$unread_count = wpss_count_user_notifications( $user_id, array( 'unread_only' => true ) );
 
 		// Bodies are stored as plain text, but rows written before that change
 		// still carry email markup — reduce them on the way out, exactly as the
