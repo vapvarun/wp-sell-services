@@ -1605,12 +1605,9 @@ class StripeGateway extends AbstractPaymentGateway {
 		$refunds   = (array) ( $charge['refunds']['data'] ?? array() );
 		$refund_id = (string) ( $refunds[0]['id'] ?? '' );
 
-		// Through the ONE listener that owns rail-side refunds. It resolves
-		// every order paid with this intent (a cart stamps one intent on
-		// several orders), splits the amount across them and records each via
-		// apply_refund_status() with settled_at_rail = true, so the vendor's
-		// share is reversed and the buyer is not refunded a second time. This
-		// handler used to do that inline for the FIRST order only.
+		// Through the ONE listener that owns rail-side refunds. A charge event names no gig, so the
+		// listener books the new money only where it is unambiguous and otherwise parks it for an
+		// admin; a refund this plugin sent is already recorded and adds nothing.
 		do_action(
 			'wpss_gateway_refund_received',
 			'stripe',
