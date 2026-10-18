@@ -1,285 +1,381 @@
 {
-  "_note": "One row per fixed card. A card does not go to Done without a row. 'check' must fail on the pre-fix commit (proof in 'fails_on'); 'journey' is the audit/journeys file and check line that walks it in the browser.",
-  "_schema": {
-    "card": "Basecamp card id",
-    "class": "root-cause shape fixed (not the instance)",
-    "check": "tests/ or bin/ script, or journey check id",
-    "fails_on": "commit where the check was shown red",
-    "journey": "audit/journeys/NN-*.md#check",
-    "now_dead_or_duplicate": "code removed in the same change, or 'none'"
+ "_note": "One row per fixed card. Schema is the gate's: guard is '<class>:<id>' and must exist in docs/qa/qa-config.json checks. A card does not go to Done without a row whose guard fails on the pre-fix commit (fails_on). Migrated from the old schema 2026-10-18.",
+ "_schema": {
+  "card": "Basecamp card id(s)",
+  "title": "root-cause class fixed (not the instance)",
+  "guard": "class:id from qa-config.json",
+  "added": "date",
+  "fails_on": "commit where the guard was shown red",
+  "check": "the script behind the guard",
+  "note": "code removed in the same change"
+ },
+ "escapes": [
+  {
+   "card": "10402904790",
+   "title": "a status change reuses another status's message instead of owning its own",
+   "guard": "static:withdrawal-status-emails",
+   "added": "2026-10-18",
+   "fails_on": "98d9d2bc (completed sends Approved)",
+   "check": "tests/test-withdrawal-status-emails.php"
   },
-  "escapes": [
-    {
-      "card": "10402904790",
-      "class": "a status change reuses another status's message instead of owning its own",
-      "check": "tests/test-withdrawal-status-emails.php",
-      "fails_on": "98d9d2bc (completed sends Approved)",
-      "journey": "audit/journeys/10-vendor-withdrawal-payout.md#3",
-      "now_dead_or_duplicate": "none"
-    },
-    {
-      "card": "10403205865,10403205035",
-      "class": "checkout summary re-reads the settings option instead of the priced lines; blank label falls through ?? only",
-      "check": "tests/test-multi-checkout-tax-label.php",
-      "fails_on": "pre-fix StandaloneCheckoutProvider/money.php/Settings.php (4 FAIL)",
-      "journey": "audit/journeys/06-standalone-checkout.md#8",
-      "now_dead_or_duplicate": "removed the option re-read in render_multi_checkout_form"
-    },
-    {
-      "card": "10403479953",
-      "class": "a calendar promise implemented as a fixed-seconds recurring action",
-      "check": "tests/test-auto-withdrawal-schedule.php",
-      "fails_on": "pre-fix EarningsService/Plugin (recurring action, fatal on run_scheduled_auto_withdrawals)",
-      "journey": "audit/journeys/10-vendor-withdrawal-payout.md#5",
-      "now_dead_or_duplicate": "schedule_interval() removed; docs paragraph that documented the drift removed"
-    },
-    {
-      "card": "10403454753",
-      "class": "absint() on a field where a negative is a typo flips it to its positive twin",
-      "check": "tests/test-settings-no-negative-numbers.php",
-      "fails_on": "pre-fix Settings.php (4 FAIL)",
-      "journey": "audit/journeys/10-vendor-withdrawal-payout.md#6",
-      "now_dead_or_duplicate": "none"
-    },
-    {
-      "card": "10399042982",
-      "class": "a side effect lives in a listener that only loads on admin screens, so any other door skips it",
-      "check": "tests/test-review-status-rest.php",
-      "fails_on": "pre-fix ReviewsController/ReviewService (4 FAIL)",
-      "journey": "audit/journeys/11-api-write-parity.md#1",
-      "now_dead_or_duplicate": "ReviewModerationPage::recompute_rating_on_moderation and its listener, ReviewRepository::update_status (no caller)"
-    },
-    {
-      "card": "10403105565",
-      "class": "one flow, two implementations: AJAX wrote the table directly and skipped the service",
-      "check": "tests/test-notification-read-at.php",
-      "fails_on": "pre-fix NotificationService/AjaxHandlers (4 FAIL)",
-      "journey": "audit/journeys/11-api-write-parity.md#2",
-      "now_dead_or_duplicate": "two direct $wpdb->update blocks in AjaxHandlers"
-    },
-    {
-      "card": "10402964352",
-      "class": "a filter nested inside another filter's condition is silently dropped",
-      "check": "tests/test-audit-log-object-filter.php",
-      "fails_on": "pre-fix AuditLogService (3 FAIL)",
-      "journey": "audit/journeys/11-api-write-parity.md#3",
-      "now_dead_or_duplicate": "none"
-    },
-    {
-      "card": "10403565741",
-      "class": "a REST route re-implements a service's writes and drops fields, caps and hooks",
-      "check": "tests/test-portfolio-rest-service.php",
-      "fails_on": "pre-fix PortfolioController (9 FAIL)",
-      "journey": "audit/journeys/11-api-write-parity.md#4",
-      "now_dead_or_duplicate": "PortfolioController raw INSERT/UPDATE/DELETE/reorder and its own can_feature_another (moved to the service)"
-    },
-    {
-      "card": "10408191220,10407786815,10407787331,10407787480",
-      "class": "a REST schema default makes has_param() true, so an update treats every default as sent; whole-object validation on PUT",
-      "check": "wp-sell-services-pro/tests/test-rest-partial-update.php + tests/test-no-defaults-on-update-routes.php",
-      "fails_on": "pre-fix Pro controllers (13 + 3 FAIL)",
-      "journey": "audit/journeys/11-api-write-parity.md#5",
-      "now_dead_or_duplicate": "none; also fixed the same defect on PUT /stripe-connect/settings (fee alone switched Connect off)"
-    },
-    {
-      "card": "10399370449",
-      "class": "a transition the docs reserve for the site owner was open to the seller",
-      "check": "tests/test-account-standing.php",
-      "fails_on": "pre-fix OrdersController (hold/resume vendor grant)",
-      "journey": "audit/journeys/12-account-standing.md#1",
-      "now_dead_or_duplicate": "vendor hold/resume branches in get_available_actions removed"
-    },
-    {
-      "card": "10384354109",
-      "class": "standing checked at a few call sites, not in the service that does the work",
-      "check": "tests/test-account-standing.php",
-      "fails_on": "pre-fix ProposalService / ConversationService (no standing_block)",
-      "journey": "audit/journeys/12-account-standing.md#3",
-      "now_dead_or_duplicate": "none; REST send_message comment rewritten to the pre-sale-only rule"
-    },
-    {
-      "card": "10379867128",
-      "class": "top-level menu offered to every edit_posts user while every page behind it needs manage_options",
-      "check": "tests/test-account-standing.php",
-      "fails_on": "pre-fix Admin::add_admin_menu cap",
-      "journey": "audit/journeys/12-account-standing.md#4",
-      "now_dead_or_duplicate": "none"
-    },
-    {
-      "card": "10398957993,10398958911,10398959570,10398686546",
-      "class": "several doors wrote post_status and the moderation meta separately (Quick Edit select, editor, wizard Skip), so they disagreed",
-      "check": "tests/test-service-moderation-admin-publish.php",
-      "fails_on": "pre-fix ServiceModerationPage / admin.css / service-edit.js (4 FAIL)",
-      "journey": "audit/journeys/05-vendor-creates-a-service.md#M1",
-      "now_dead_or_duplicate": "removed quick_edit_fields(), hide_quick_edit_status() and the .inline-edit-status CSS rule"
-    },
-    {
-      "card": "10403104873,10403104468,10403104232,10403105211,10402964139,10402964236",
-      "class": "documented behaviour never built (retention, filter, badge) and list queries written three times with no tiebreak, no index and a session-clock cutoff",
-      "check": "tests/test-notification-center-retention.php",
-      "fails_on": "pre-fix code (type filter FAIL, then fatal: no cleanup_expired)",
-      "journey": "audit/journeys/13-notification-center.md#1",
-      "now_dead_or_duplicate": "NotificationService list query and the REST list/count queries now call wpss_get_user_notifications() and wpss_count_user_notifications()"
-    },
-    {
-      "card": "10407576066,10407576283,10407726798,10408190581,10408191922,10407649116",
-      "class": "a rail-specific or plan-specific seam registered in one adapter/place only, or documented and never wired",
-      "check": "tests/test-woo-rail-guest-and-cart-link.php + wp-sell-services-pro/tests/test-seams-subscriptions-carrier.php",
-      "fails_on": "pre-fix Free and Pro (guest return, cart-link default, carrier query, max_featured filter, subscribe duplicate key)",
-      "journey": "audit/journeys/14-woo-rail-and-plans.md#1",
-      "now_dead_or_duplicate": "none; woocommerce.css loses its OS-preference dark block and every hard-coded grey"
-    },
-    {
-      "card": "10412306674,10412156185,10412156063,10412155855,10412155759,10384448877",
-      "class": "card titles written as <p> and skipped heading levels; tokens meant for decoration (hint, muted) used for real text",
-      "check": "tests/test-settings-heading-outline.php",
-      "fails_on": "pre-fix Free (p titles, hint grey)",
-      "journey": "audit/journeys/15-admin-accessibility.md#1",
-      "now_dead_or_duplicate": "none"
-    },
-    {
-      "card": "10384321636,10384209485,10411858243,10399252183,10408125397",
-      "class": "literal colours beside inverted tokens, icons inserted by JS after the one-time Lucide swap, and a JS-hook class that also carries icon-button styling",
-      "check": "tests/test-dark-mode-and-icon-hooks.php",
-      "fails_on": "pre-fix CSS/JS/templates (9 FAIL) and the .wpss-btn modal-close scan (2 offenders)",
-      "journey": "audit/journeys/16-dark-mode-and-icons.md#1",
-      "now_dead_or_duplicate": "none; new hook class wpss-modal-dismiss for text buttons"
-    },
-    {
-      "card": "10411948180,10384469084,10398652904,10384248570,10379783717,10380369422,10384895523,10384766482",
-      "class": "CSS written on one surface but needed on another, hidden state that depends on a late stylesheet, modals centred in the full viewport under a sticky theme header, grid children that widen their track",
-      "check": "tests/test-layout-surface-css.php",
-      "fails_on": "pre-fix CSS/JS/templates (12 FAIL)",
-      "journey": "audit/journeys/17-layout-per-surface.md#1",
-      "now_dead_or_duplicate": "breadcrumb rules removed from single-service.css (now in design-system.css)"
-    },
-    {
-      "card": "10407616413,10399369371,10399020562,10398958589,10398584633,10398686846,10403821351,10403187415,10384898745,10408271874,10411862427",
-      "class": "state a form shows but never reads back from the record, redirects with a result nobody renders, a handler bound on one tab for a block rendered on two, an out-of-scope variable, ids not rewritten with names, a lookup that ignores one of the ways callers pass a user",
-      "check": "tests/test-form-state-and-feedback.php + wp-sell-services-pro/tests/test-form-state-js.php",
-      "fails_on": "pre-fix Free (fatal on the missing order notice) and pre-fix Pro (5 FAIL)",
-      "journey": "audit/journeys/18-forms-state-feedback.md#1",
-      "now_dead_or_duplicate": "none"
-    },
-    {
-      "card": "10411923530,10408376355,10407727864,10403937289,10403453238,10403452847,10399464603,10399043338,10407788033,10402964464",
-      "class": "docs that name a screen, count, status or feature the code no longer matches; a constant that duplicated a list the admin actually reads",
-      "check": "bin/docs-audit.py [admin-paths] (tab names now match Settings::init_tabs) + tests/test-audit-log-coverage.php",
-      "fails_on": "pre-fix docs (11 admin-paths FAILs once the audit knows the Integrations and System tabs)",
-      "journey": "audit/journeys/18-forms-state-feedback.md",
-      "now_dead_or_duplicate": "AuditLogService::EVENT_TYPES deleted; get_event_labels() is the one list"
-    },
-    {
-      "card": "time sweep (owner decision 14); QA leads 81h wallet dates, REST date normaliser",
-      "class": "each screen picking its own timezone: wp_date/date_i18n/get_gmt_from_date at ~90 call sites, calendar dates treated as instants, deadlines without a zone, a browser-zone ledger, REST dates formatted per controller",
-      "check": "tests/test-time-sweep.php + tests/test-time-helpers.php + bin/check-time-formatter.php (baseline now empty)",
-      "fails_on": "pre-sweep tree (helpers, REST filter and zone labels absent; gate baseline had 90 calls)",
-      "journey": "audit/journeys/19-time-zones.md#1",
-      "now_dead_or_duplicate": "none; the baseline file is empty and every raw call is gone or carries a time-ok comment"
-    },
-    {
-      "card": "ux-rule-14-focus-ring",
-      "class": "Form fields, category select and tip presets removed the focus outline and swapped only a border colour, so keyboard focus was nearly invisible",
-      "check": "tests/test-focus-indicator-css.php + bin/check-ux-conformance.php",
-      "fails_on": "pre-fix CSS (4 rules removed the outline with no ring)",
-      "journey": "audit/journeys/17-layout-per-surface.md#9",
-      "now_dead_or_duplicate": "none"
-    },
-    {
-      "card": "woo-walk: mini cart $0.00 (found by browser walk, no card)",
-      "class": "a carrier product keeps its own price until totals recalculate, and WooCommerce restores a cart from stored totals without recalculating, so any line printed from the product object shows 0",
-      "check": "wp-sell-services-pro/tests/test-woo-cart-session-price.php",
-      "fails_on": "pre-fix Pro WCCheckoutProvider (price set only in before_calculate_totals)",
-      "journey": "audit/journeys/14-woo-rail-and-plans.md#woo-cart-lines-show-the-package-price",
-      "now_dead_or_duplicate": "none; set_cart_item_prices and the session filter share one private pricer"
-    },
-    {
-      "card": "woo-walk: order options sheet full-height on phones",
-      "class": "a mobile rule forced height:100% on every modal content, so a short dialog stretched into an empty full-screen panel",
-      "check": "tests/test-layout-surface-css.php",
-      "fails_on": "pre-fix single-service.css (height:100% at <=768px)",
-      "journey": "audit/journeys/17-layout-per-surface.md#10",
-      "now_dead_or_duplicate": "none"
-    },
-    {
-      "card": "dark-walk: unread notification text 4.48:1 (no card)",
-      "class": "a list styled by an inline style block that took the saturated primary-light token as a row background, so muted text fell under 4.5:1 in dark mode and the CSS was invisible to every sheet-level check",
-      "check": "tests/test-notification-list-style.php",
-      "fails_on": "pre-fix partial (inline style block, no enqueue helper)",
-      "journey": "audit/journeys/16-dark-mode-and-icons.md#notification-rows-read-in-dark-mode",
-      "now_dead_or_duplicate": "inline style block removed from notifications-list.php"
-    },
-    {
-      "card": "dark-walk: danger, caption and wallet text under 4.5:1 (no card)",
-      "class": "fill colours (danger red, success green) and the hint token used as text colour, which only clear 3:1 on one of the two surfaces",
-      "check": "tests/test-text-token-contrast.php",
-      "fails_on": "pre-fix CSS (ghost danger #dc2626 on dark card 3.04, stat captions hint 3.04, wallet credit #10b981 on white 2.54)",
-      "journey": "audit/journeys/16-dark-mode-and-icons.md#meaningful-text-clears-45-1-in-both-modes",
-      "now_dead_or_duplicate": "none"
-    },
-    {
-      "card": "consolidation: .wpss-btn declared in six sheets (no card)",
-      "class": "one component declared in several stylesheets that disagree, so the rendered result depended on which sheets a page loaded (modifier overrides lost to a later base, --sm never rendered small, --link rendered as a box, two class-name schemes)",
-      "check": "tests/test-primitive-single-source.php + bin/check-ux-conformance.php (duplicate-primitive, baseline 0)",
-      "fails_on": "pre-consolidation tree (frontend.css and service-wizard.css redeclared the base; 55+ legacy single-dash classes in source)",
-      "journey": "audit/journeys/17-layout-per-surface.md#11",
-      "now_dead_or_duplicate": "55 duplicate button rules deleted from frontend, single-service, unified-dashboard and vendor-dashboard; legacy single-dash alias blocks deleted from design-system.css"
-    },
-    {
-      "card": "consolidation: .wpss-table base declared in four sheets (no card)",
-      "class": "one component base declared in several stylesheets, so a later sheet could silently change it",
-      "check": "tests/test-primitive-single-source.php (no surface sheet redeclares the table base)",
-      "fails_on": "frontend.css and vendor-dashboard.css redeclared width + border-collapse",
-      "journey": "audit/journeys/17-layout-per-surface.md#12",
-      "now_dead_or_duplicate": "two identical .wpss-table base rules deleted; unified-dashboard keeps only its card-look delta"
-    },
-    {
-      "card": "skeleton: src/functions/misc.php dumping ground (no card)",
-      "class": "a developer cannot predict which file holds a helper, so helpers get duplicated or dropped in a catch-all file",
-      "check": "bin/check-skeleton.php (every function file loaded, domain-named, wpss_ prefixed; no misc/utils/helpers names)",
-      "fails_on": "tree with src/functions/misc.php and core/security files unloaded",
-      "journey": "docs/standards/skeleton.md",
-      "now_dead_or_duplicate": "misc.php deleted; its 32 functions moved unchanged into core, security, notifications and files"
-    },
-    {
-      "card": "integration seams: storage and wallet contracts lived only in Pro; email provider seam had no reader (no card)",
-      "class": "a third-party provider could not implement a seam without Pro, and a bad registry entry failed far from its cause",
-      "check": "tests/test-integration-seam-contract.php (stub provider registered only through the filter; non-conforming entries dropped with a notice)",
-      "fails_on": "tree without wpss_validate_registry() and the Free StorageProviderInterface/WalletProviderInterface",
-      "journey": "docs/standards/integration-seams.md",
-      "now_dead_or_duplicate": "wpss_email_providers filter, Plugin::get_email_providers() and its property deleted (nothing read them)"
-    },
-    {
-      "card": "integration seams: dashboard section needed two registrations; SEO plugins hard-wired in SEO.php (no card)",
-      "class": "adding a provider required editing core (a second filter, or a new branch in SEO.php)",
-      "check": "tests/test-dashboard-section-registry.php and tests/test-integration-seam-contract.php (SEO integration added only by wpss_seo_integrations)",
-      "fails_on": "urls.php without the registered-sections merge; SEO.php with is_yoast_active/is_rank_math_active branches",
-      "journey": "docs/standards/integration-seams.md",
-      "now_dead_or_duplicate": "three repeated is_yoast||is_rank_math||is_aioseo conditions collapsed into has_active_seo_plugin(); SEO::get_yoast()/get_rank_math()/is_*_active() removed (no callers)"
-    },
-    {
-      "card": "skeleton: services/orders/money/files function files too large to navigate (no card)",
-      "class": "a 2,000-line function file hides where a helper lives",
-      "check": "bin/check-skeleton.php (every function file loaded, domain-named, wpss_ prefixed)",
-      "fails_on": "tree with the four oversized files and no loader entries for the new ones",
-      "journey": "docs/standards/skeleton.md",
-      "now_dead_or_duplicate": "166 functions moved unchanged into 10 new domain files; no file over 1,400 lines"
-    },
-    {
-      "card": "duplicate helper bodies: SEO title/description/Open Graph and check_order_permission (no card)",
-      "class": "the same rule written twice drifts, and a fix lands on one copy",
-      "check": "tests/test-integration-seam-contract.php (both integrations still start) and tests/test-rest-matrix.php (order routes keep their permission gate)",
-      "fails_on": "tree with two copies of each body",
-      "journey": "docs/standards/skeleton.md",
-      "now_dead_or_duplicate": "six identical methods in YoastIntegration/RankMathIntegration now in AbstractSeoIntegration; check_order_permission in DisputesController and ConversationsController now in RestController"
-    },
-    {
-      "card": "product-neutral orders: service-shaped orders table (no card)",
-      "class": "the money table could only say what was bought by service_id, so a second product type would need a schema change",
-      "check": "tests/test-order-product-columns.php (columns and index exist after the 1.8.0 upgrade path, new orders get product_type and product_id, backfill fills old rows without overwriting)",
-      "fails_on": "OrderRepository without the product_id default and SchemaManager without backfill_product_id()",
-      "journey": "docs/architecture/PRODUCT-TYPE-INVENTORY.md",
-      "now_dead_or_duplicate": "none; additive, service_id remains authoritative"
-    }
-  ]
+  {
+   "card": "10403205865,10403205035",
+   "title": "checkout summary re-reads the settings option instead of the priced lines; blank label falls through ?? only",
+   "guard": "static:multi-checkout-tax-label",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix StandaloneCheckoutProvider/money.php/Settings.php (4 FAIL)",
+   "check": "tests/test-multi-checkout-tax-label.php",
+   "note": "removed the option re-read in render_multi_checkout_form"
+  },
+  {
+   "card": "10403479953",
+   "title": "a calendar promise implemented as a fixed-seconds recurring action",
+   "guard": "static:auto-withdrawal-schedule",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix EarningsService/Plugin (recurring action, fatal on run_scheduled_auto_withdrawals)",
+   "check": "tests/test-auto-withdrawal-schedule.php",
+   "note": "schedule_interval() removed; docs paragraph that documented the drift removed"
+  },
+  {
+   "card": "10403454753",
+   "title": "absint() on a field where a negative is a typo flips it to its positive twin",
+   "guard": "static:settings-no-negative-numbers",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix Settings.php (4 FAIL)",
+   "check": "tests/test-settings-no-negative-numbers.php"
+  },
+  {
+   "card": "10399042982",
+   "title": "a side effect lives in a listener that only loads on admin screens, so any other door skips it",
+   "guard": "static:review-status-rest",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix ReviewsController/ReviewService (4 FAIL)",
+   "check": "tests/test-review-status-rest.php",
+   "note": "ReviewModerationPage::recompute_rating_on_moderation and its listener, ReviewRepository::update_status (no caller)"
+  },
+  {
+   "card": "10403105565",
+   "title": "one flow, two implementations: AJAX wrote the table directly and skipped the service",
+   "guard": "static:notification-read-at",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix NotificationService/AjaxHandlers (4 FAIL)",
+   "check": "tests/test-notification-read-at.php",
+   "note": "two direct $wpdb->update blocks in AjaxHandlers"
+  },
+  {
+   "card": "10402964352",
+   "title": "a filter nested inside another filter's condition is silently dropped",
+   "guard": "static:audit-log-object-filter",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix AuditLogService (3 FAIL)",
+   "check": "tests/test-audit-log-object-filter.php"
+  },
+  {
+   "card": "10403565741",
+   "title": "a REST route re-implements a service's writes and drops fields, caps and hooks",
+   "guard": "static:portfolio-rest-service",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix PortfolioController (9 FAIL)",
+   "check": "tests/test-portfolio-rest-service.php",
+   "note": "PortfolioController raw INSERT/UPDATE/DELETE/reorder and its own can_feature_another (moved to the service)"
+  },
+  {
+   "card": "10408191220,10407786815,10407787331,10407787480",
+   "title": "a REST schema default makes has_param() true, so an update treats every default as sent; whole-object validation on PUT",
+   "guard": "static:pro-rest-partial-update",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix Pro controllers (13 + 3 FAIL)",
+   "check": "wp-sell-services-pro/tests/test-rest-partial-update.php",
+   "note": "none; also fixed the same defect on PUT /stripe-connect/settings (fee alone switched Connect off)"
+  },
+  {
+   "card": "10408191220,10407786815,10407787331,10407787480",
+   "title": "a REST schema default makes has_param() true, so an update treats every default as sent; whole-object validation on PUT",
+   "guard": "static:no-defaults-on-update-routes",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix Pro controllers (13 + 3 FAIL)",
+   "check": "tests/test-no-defaults-on-update-routes.php",
+   "note": "none; also fixed the same defect on PUT /stripe-connect/settings (fee alone switched Connect off)"
+  },
+  {
+   "card": "10399370449",
+   "title": "a transition the docs reserve for the site owner was open to the seller",
+   "guard": "static:account-standing",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix OrdersController (hold/resume vendor grant)",
+   "check": "tests/test-account-standing.php",
+   "note": "vendor hold/resume branches in get_available_actions removed"
+  },
+  {
+   "card": "10384354109",
+   "title": "standing checked at a few call sites, not in the service that does the work",
+   "guard": "static:account-standing",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix ProposalService / ConversationService (no standing_block)",
+   "check": "tests/test-account-standing.php",
+   "note": "none; REST send_message comment rewritten to the pre-sale-only rule"
+  },
+  {
+   "card": "10379867128",
+   "title": "top-level menu offered to every edit_posts user while every page behind it needs manage_options",
+   "guard": "static:account-standing",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix Admin::add_admin_menu cap",
+   "check": "tests/test-account-standing.php"
+  },
+  {
+   "card": "10398957993,10398958911,10398959570,10398686546",
+   "title": "several doors wrote post_status and the moderation meta separately (Quick Edit select, editor, wizard Skip), so they disagreed",
+   "guard": "static:service-moderation-admin-publish",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix ServiceModerationPage / admin.css / service-edit.js (4 FAIL)",
+   "check": "tests/test-service-moderation-admin-publish.php",
+   "note": "removed quick_edit_fields(), hide_quick_edit_status() and the .inline-edit-status CSS rule"
+  },
+  {
+   "card": "10403104873,10403104468,10403104232,10403105211,10402964139,10402964236",
+   "title": "documented behaviour never built (retention, filter, badge) and list queries written three times with no tiebreak, no index and a session-clock cutoff",
+   "guard": "static:notification-center-retention",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix code (type filter FAIL, then fatal: no cleanup_expired)",
+   "check": "tests/test-notification-center-retention.php",
+   "note": "NotificationService list query and the REST list/count queries now call wpss_get_user_notifications() and wpss_count_user_notifications()"
+  },
+  {
+   "card": "10407576066,10407576283,10407726798,10408190581,10408191922,10407649116",
+   "title": "a rail-specific or plan-specific seam registered in one adapter/place only, or documented and never wired",
+   "guard": "static:woo-rail-guest-and-cart-link",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix Free and Pro (guest return, cart-link default, carrier query, max_featured filter, subscribe duplicate key)",
+   "check": "tests/test-woo-rail-guest-and-cart-link.php",
+   "note": "none; woocommerce.css loses its OS-preference dark block and every hard-coded grey"
+  },
+  {
+   "card": "10407576066,10407576283,10407726798,10408190581,10408191922,10407649116",
+   "title": "a rail-specific or plan-specific seam registered in one adapter/place only, or documented and never wired",
+   "guard": "static:pro-seams-subscriptions-carrier",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix Free and Pro (guest return, cart-link default, carrier query, max_featured filter, subscribe duplicate key)",
+   "check": "wp-sell-services-pro/tests/test-seams-subscriptions-carrier.php",
+   "note": "none; woocommerce.css loses its OS-preference dark block and every hard-coded grey"
+  },
+  {
+   "card": "10412306674,10412156185,10412156063,10412155855,10412155759,10384448877",
+   "title": "card titles written as <p> and skipped heading levels; tokens meant for decoration (hint, muted) used for real text",
+   "guard": "static:settings-heading-outline",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix Free (p titles, hint grey)",
+   "check": "tests/test-settings-heading-outline.php"
+  },
+  {
+   "card": "10384321636,10384209485,10411858243,10399252183,10408125397",
+   "title": "literal colours beside inverted tokens, icons inserted by JS after the one-time Lucide swap, and a JS-hook class that also carries icon-button styling",
+   "guard": "static:dark-mode-and-icon-hooks",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix CSS/JS/templates (9 FAIL) and the .wpss-btn modal-close scan (2 offenders)",
+   "check": "tests/test-dark-mode-and-icon-hooks.php",
+   "note": "none; new hook class wpss-modal-dismiss for text buttons"
+  },
+  {
+   "card": "10411948180,10384469084,10398652904,10384248570,10379783717,10380369422,10384895523,10384766482",
+   "title": "CSS written on one surface but needed on another, hidden state that depends on a late stylesheet, modals centred in the full viewport under a sticky theme header, grid children that widen their track",
+   "guard": "static:layout-surface-css",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix CSS/JS/templates (12 FAIL)",
+   "check": "tests/test-layout-surface-css.php",
+   "note": "breadcrumb rules removed from single-service.css (now in design-system.css)"
+  },
+  {
+   "card": "10407616413,10399369371,10399020562,10398958589,10398584633,10398686846,10403821351,10403187415,10384898745,10408271874,10411862427",
+   "title": "state a form shows but never reads back from the record, redirects with a result nobody renders, a handler bound on one tab for a block rendered on two, an out-of-scope variable, ids not rewritten with names, a lookup that ignores one of the ways callers pass a user",
+   "guard": "static:form-state-and-feedback",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix Free (fatal on the missing order notice) and pre-fix Pro (5 FAIL)",
+   "check": "tests/test-form-state-and-feedback.php"
+  },
+  {
+   "card": "10407616413,10399369371,10399020562,10398958589,10398584633,10398686846,10403821351,10403187415,10384898745,10408271874,10411862427",
+   "title": "state a form shows but never reads back from the record, redirects with a result nobody renders, a handler bound on one tab for a block rendered on two, an out-of-scope variable, ids not rewritten with names, a lookup that ignores one of the ways callers pass a user",
+   "guard": "static:pro-form-state-js",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix Free (fatal on the missing order notice) and pre-fix Pro (5 FAIL)",
+   "check": "wp-sell-services-pro/tests/test-form-state-js.php"
+  },
+  {
+   "card": "10411923530,10408376355,10407727864,10403937289,10403453238,10403452847,10399464603,10399043338,10407788033,10402964464",
+   "title": "docs that name a screen, count, status or feature the code no longer matches; a constant that duplicated a list the admin actually reads",
+   "guard": "static:docs-audit",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix docs (11 admin-paths FAILs once the audit knows the Integrations and System tabs)",
+   "check": "bin/docs-audit.py",
+   "note": "AuditLogService::EVENT_TYPES deleted; get_event_labels() is the one list"
+  },
+  {
+   "card": "10411923530,10408376355,10407727864,10403937289,10403453238,10403452847,10399464603,10399043338,10407788033,10402964464",
+   "title": "docs that name a screen, count, status or feature the code no longer matches; a constant that duplicated a list the admin actually reads",
+   "guard": "static:audit-log-coverage",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix docs (11 admin-paths FAILs once the audit knows the Integrations and System tabs)",
+   "check": "tests/test-audit-log-coverage.php",
+   "note": "AuditLogService::EVENT_TYPES deleted; get_event_labels() is the one list"
+  },
+  {
+   "card": "time sweep (owner decision 14); QA leads 81h wallet dates, REST date normaliser",
+   "title": "each screen picking its own timezone: wp_date/date_i18n/get_gmt_from_date at ~90 call sites, calendar dates treated as instants, deadlines without a zone, a browser-zone ledger, REST dates formatted per controller",
+   "guard": "static:time-sweep",
+   "added": "2026-10-18",
+   "fails_on": "pre-sweep tree (helpers, REST filter and zone labels absent; gate baseline had 90 calls)",
+   "check": "tests/test-time-sweep.php",
+   "note": "none; the baseline file is empty and every raw call is gone or carries a time-ok comment"
+  },
+  {
+   "card": "time sweep (owner decision 14); QA leads 81h wallet dates, REST date normaliser",
+   "title": "each screen picking its own timezone: wp_date/date_i18n/get_gmt_from_date at ~90 call sites, calendar dates treated as instants, deadlines without a zone, a browser-zone ledger, REST dates formatted per controller",
+   "guard": "static:time-helpers",
+   "added": "2026-10-18",
+   "fails_on": "pre-sweep tree (helpers, REST filter and zone labels absent; gate baseline had 90 calls)",
+   "check": "tests/test-time-helpers.php",
+   "note": "none; the baseline file is empty and every raw call is gone or carries a time-ok comment"
+  },
+  {
+   "card": "time sweep (owner decision 14); QA leads 81h wallet dates, REST date normaliser",
+   "title": "each screen picking its own timezone: wp_date/date_i18n/get_gmt_from_date at ~90 call sites, calendar dates treated as instants, deadlines without a zone, a browser-zone ledger, REST dates formatted per controller",
+   "guard": "static:check-time-formatter",
+   "added": "2026-10-18",
+   "fails_on": "pre-sweep tree (helpers, REST filter and zone labels absent; gate baseline had 90 calls)",
+   "check": "bin/check-time-formatter.php",
+   "note": "none; the baseline file is empty and every raw call is gone or carries a time-ok comment"
+  },
+  {
+   "card": "ux-rule-14-focus-ring",
+   "title": "Form fields, category select and tip presets removed the focus outline and swapped only a border colour, so keyboard focus was nearly invisible",
+   "guard": "static:focus-indicator-css",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix CSS (4 rules removed the outline with no ring)",
+   "check": "tests/test-focus-indicator-css.php"
+  },
+  {
+   "card": "ux-rule-14-focus-ring",
+   "title": "Form fields, category select and tip presets removed the focus outline and swapped only a border colour, so keyboard focus was nearly invisible",
+   "guard": "static:check-ux-conformance",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix CSS (4 rules removed the outline with no ring)",
+   "check": "bin/check-ux-conformance.php"
+  },
+  {
+   "card": "woo-walk: mini cart $0.00 (found by browser walk, no card)",
+   "title": "a carrier product keeps its own price until totals recalculate, and WooCommerce restores a cart from stored totals without recalculating, so any line printed from the product object shows 0",
+   "guard": "static:pro-woo-cart-session-price",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix Pro WCCheckoutProvider (price set only in before_calculate_totals)",
+   "check": "wp-sell-services-pro/tests/test-woo-cart-session-price.php",
+   "note": "none; set_cart_item_prices and the session filter share one private pricer"
+  },
+  {
+   "card": "woo-walk: order options sheet full-height on phones",
+   "title": "a mobile rule forced height:100% on every modal content, so a short dialog stretched into an empty full-screen panel",
+   "guard": "static:layout-surface-css",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix single-service.css (height:100% at <=768px)",
+   "check": "tests/test-layout-surface-css.php"
+  },
+  {
+   "card": "dark-walk: unread notification text 4.48:1 (no card)",
+   "title": "a list styled by an inline style block that took the saturated primary-light token as a row background, so muted text fell under 4.5:1 in dark mode and the CSS was invisible to every sheet-level check",
+   "guard": "static:notification-list-style",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix partial (inline style block, no enqueue helper)",
+   "check": "tests/test-notification-list-style.php",
+   "note": "inline style block removed from notifications-list.php"
+  },
+  {
+   "card": "dark-walk: danger, caption and wallet text under 4.5:1 (no card)",
+   "title": "fill colours (danger red, success green) and the hint token used as text colour, which only clear 3:1 on one of the two surfaces",
+   "guard": "static:text-token-contrast",
+   "added": "2026-10-18",
+   "fails_on": "pre-fix CSS (ghost danger #dc2626 on dark card 3.04, stat captions hint 3.04, wallet credit #10b981 on white 2.54)",
+   "check": "tests/test-text-token-contrast.php"
+  },
+  {
+   "card": "consolidation: .wpss-btn declared in six sheets (no card)",
+   "title": "one component declared in several stylesheets that disagree, so the rendered result depended on which sheets a page loaded (modifier overrides lost to a later base, --sm never rendered small, --link rendered as a box, two class-name schemes)",
+   "guard": "static:primitive-single-source",
+   "added": "2026-10-18",
+   "fails_on": "pre-consolidation tree (frontend.css and service-wizard.css redeclared the base; 55+ legacy single-dash classes in source)",
+   "check": "tests/test-primitive-single-source.php",
+   "note": "55 duplicate button rules deleted from frontend, single-service, unified-dashboard and vendor-dashboard; legacy single-dash alias blocks deleted from design-system.css"
+  },
+  {
+   "card": "consolidation: .wpss-btn declared in six sheets (no card)",
+   "title": "one component declared in several stylesheets that disagree, so the rendered result depended on which sheets a page loaded (modifier overrides lost to a later base, --sm never rendered small, --link rendered as a box, two class-name schemes)",
+   "guard": "static:check-ux-conformance",
+   "added": "2026-10-18",
+   "fails_on": "pre-consolidation tree (frontend.css and service-wizard.css redeclared the base; 55+ legacy single-dash classes in source)",
+   "check": "bin/check-ux-conformance.php",
+   "note": "55 duplicate button rules deleted from frontend, single-service, unified-dashboard and vendor-dashboard; legacy single-dash alias blocks deleted from design-system.css"
+  },
+  {
+   "card": "consolidation: .wpss-table base declared in four sheets (no card)",
+   "title": "one component base declared in several stylesheets, so a later sheet could silently change it",
+   "guard": "static:primitive-single-source",
+   "added": "2026-10-18",
+   "fails_on": "frontend.css and vendor-dashboard.css redeclared width + border-collapse",
+   "check": "tests/test-primitive-single-source.php",
+   "note": "two identical .wpss-table base rules deleted; unified-dashboard keeps only its card-look delta"
+  },
+  {
+   "card": "skeleton: src/functions/misc.php dumping ground (no card)",
+   "title": "a developer cannot predict which file holds a helper, so helpers get duplicated or dropped in a catch-all file",
+   "guard": "static:check-skeleton",
+   "added": "2026-10-18",
+   "fails_on": "tree with src/functions/misc.php and core/security files unloaded",
+   "check": "bin/check-skeleton.php",
+   "note": "misc.php deleted; its 32 functions moved unchanged into core, security, notifications and files"
+  },
+  {
+   "card": "integration seams: storage and wallet contracts lived only in Pro; email provider seam had no reader (no card)",
+   "title": "a third-party provider could not implement a seam without Pro, and a bad registry entry failed far from its cause",
+   "guard": "static:integration-seam-contract",
+   "added": "2026-10-18",
+   "fails_on": "tree without wpss_validate_registry() and the Free StorageProviderInterface/WalletProviderInterface",
+   "check": "tests/test-integration-seam-contract.php",
+   "note": "wpss_email_providers filter, Plugin::get_email_providers() and its property deleted (nothing read them)"
+  },
+  {
+   "card": "integration seams: dashboard section needed two registrations; SEO plugins hard-wired in SEO.php (no card)",
+   "title": "adding a provider required editing core (a second filter, or a new branch in SEO.php)",
+   "guard": "static:integration-seam-contract",
+   "added": "2026-10-18",
+   "fails_on": "urls.php without the registered-sections merge; SEO.php with is_yoast_active/is_rank_math_active branches",
+   "check": "tests/test-dashboard-section-registry.php and tests/test-integration-seam-contract.php",
+   "note": "three repeated is_yoast||is_rank_math||is_aioseo conditions collapsed into has_active_seo_plugin(); SEO::get_yoast()/get_rank_math()/is_*_active() removed (no callers)"
+  },
+  {
+   "card": "skeleton: services/orders/money/files function files too large to navigate (no card)",
+   "title": "a 2,000-line function file hides where a helper lives",
+   "guard": "static:check-skeleton",
+   "added": "2026-10-18",
+   "fails_on": "tree with the four oversized files and no loader entries for the new ones",
+   "check": "bin/check-skeleton.php",
+   "note": "166 functions moved unchanged into 10 new domain files; no file over 1,400 lines"
+  },
+  {
+   "card": "duplicate helper bodies: SEO title/description/Open Graph and check_order_permission (no card)",
+   "title": "the same rule written twice drifts, and a fix lands on one copy",
+   "guard": "static:rest-matrix",
+   "added": "2026-10-18",
+   "fails_on": "tree with two copies of each body",
+   "check": "tests/test-integration-seam-contract.php  and tests/test-rest-matrix.php",
+   "note": "six identical methods in YoastIntegration/RankMathIntegration now in AbstractSeoIntegration; check_order_permission in DisputesController and ConversationsController now in RestController"
+  },
+  {
+   "card": "product-neutral orders: service-shaped orders table (no card)",
+   "title": "the money table could only say what was bought by service_id, so a second product type would need a schema change",
+   "guard": "static:order-product-columns",
+   "added": "2026-10-18",
+   "fails_on": "OrderRepository without the product_id default and SchemaManager without backfill_product_id()",
+   "check": "tests/test-order-product-columns.php",
+   "note": "none; additive, service_id remains authoritative"
+  }
+ ]
 }
