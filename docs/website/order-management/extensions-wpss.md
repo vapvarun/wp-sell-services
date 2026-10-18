@@ -4,26 +4,26 @@
 already-paid catalog order. The buyer paid for the base scope, something
 extra comes up mid-order, the vendor quotes a price and extra days, and
 the buyer accepts or declines. No revision cycle, no delivery approval
-on the extension itself — it's a simple mid-order add-on.
+on the extension itself - it's a simple mid-order add-on.
 
-![Vendor quoting a paid extension on an in-progress order](../images/order-management/extension-quote-wpss.png)
+![Vendor quoting a paid extension on an in-progress order](../images/order-management/extension-quote-wpss.webp)
 
 ## When to use a paid extension
 
-Paid extensions live on **catalog orders** — orders that came through
+Paid extensions live on **catalog orders** - orders that came through
 the normal service checkout (Standalone, WooCommerce, EDD,
 FluentCart). These are fixed-price jobs where the buyer already paid the
 full amount upfront.
 
 If the order is a custom project that started from a buyer request, use
 a [Milestone Contract](milestones-wpss.md) instead. Extensions and
-milestones are mutually exclusive — one order will only ever show one of
+milestones are mutually exclusive - one order will only ever show one of
 the two CTAs, never both.
 
 Good uses:
 
 - "Can you also do a square-format version for Instagram?"
-- "I need a rush turnaround — how much to shave 3 days off delivery?"
+- "I need a rush turnaround - how much to shave 3 days off delivery?"
 - "The logo looks great; can you extend the package to include
   stationery?"
 
@@ -34,12 +34,12 @@ paid for.
 
 Catalog services are **fixed-price small jobs**. The buyer paid the
 full amount at checkout. If scope creeps mid-order, the vendor quotes
-the extras — that's an extension. No phased payments, because the main
+the extras - that's an extension. No phased payments, because the main
 job is already paid for.
 
 Buyer-request orders are **large custom projects**. The scope was
 negotiated, the price was agreed in the proposal, and phased delivery
-makes sense — that's a milestone contract.
+makes sense - that's a milestone contract.
 
 Both serve a real need; both would get in each other's way if shown on
 the same order. The plugin hides the irrelevant CTA based on the order's
@@ -54,9 +54,9 @@ buyer-request order (and vice versa) even if the UI is bypassed.
 2. Click **Quote for Extra Work** (sometimes shown as "Request
    Extension" on older themes).
 3. Fill in:
-   - **Amount** — what you're charging for the extra work.
-   - **Extra days** — how many days added to the delivery deadline.
-   - **Reason / what's delivered** — plain-English description of
+   - **Amount** - what you're charging for the extra work.
+   - **Extra days** - how many days added to the delivery deadline.
+   - **Reason / what's delivered** - plain-English description of
      what the buyer gets for the money. This shows on their view.
 4. Submit the quote.
 
@@ -72,7 +72,7 @@ quote details.
   completion).
 - The parent order's delivery deadline extends by the number of days
   in the quote.
-- You keep working on the original order — the extension is an add-on,
+- You keep working on the original order - the extension is an add-on,
   not a blocker.
 
 ### What happens when the buyer declines
@@ -98,17 +98,17 @@ with:
 - How many days the deadline extends if you accept.
 - **Accept & Pay** and **Decline** buttons.
 
-![Buyer accepting or declining an extension quote](../images/order-management/extension-review-wpss.png)
+![Buyer accepting or declining an extension quote](../images/order-management/extension-review-wpss.webp)
 
 ### Accepting
 
 **Accept & Pay** takes you to checkout for just the extension amount
-(not the whole order — you already paid for that). Once the payment
+(not the whole order - you already paid for that). Once the payment
 clears:
 
 - The vendor is credited immediately.
 - Your order's delivery deadline pushes out by the quoted days.
-- The order status doesn't change — the main order keeps moving.
+- The order status doesn't change - the main order keeps moving.
 
 ### Declining
 
@@ -122,7 +122,7 @@ you'll get another notification.
   **Revision requested**. Quotes can't be sent before requirements are
   collected or after the order is completed.
 - One pending quote per order at a time.
-- The reason must be at least 10 characters long — helps prevent
+- The reason must be at least 10 characters long - helps prevent
   "just send more money" quotes with no context.
 - Maximum extra days is 14 by default (admin may configure a different
   cap on your marketplace).
@@ -132,7 +132,7 @@ you'll get another notification.
 | | Paid extension | Milestone contract |
 |---|---|---|
 | Where it lives | Catalog orders (fixed-price) | Buyer-request orders (custom projects) |
-| What the buyer already paid | Full order amount | $0 — all money goes through the phases |
+| What the buyer already paid | Full order amount | $0 - all money goes through the phases |
 | Flow | One quote · accept or decline | Multi-phase · pay each in lock-step |
 | Effect on deadline | Extends by the quoted days | Each phase has its own days |
 | Revision process | None on the extension itself (decline and re-quote) | Chat-based revisions per phase |
@@ -141,7 +141,7 @@ you'll get another notification.
 
 **For vendors:**
 
-- Quote promptly — don't sit on scope creep for days before asking.
+- Quote promptly - don't sit on scope creep for days before asking.
 - Describe what's delivered, not just the price. "+$50" is confusing;
   "+$50 for a square variant of each deliverable" is a yes.
 - Keep extensions small. If the add-on is half the size of the
@@ -152,7 +152,7 @@ you'll get another notification.
 - Read what's delivered before accepting. The price should match the
   scope, not feel arbitrary.
 - If the quote feels off, decline and ask for a revised one in chat.
-  Declines aren't hostile — they're part of the flow.
+  Declines aren't hostile - they're part of the flow.
 
 ## Related documentation
 

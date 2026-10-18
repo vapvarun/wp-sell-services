@@ -2,7 +2,7 @@
 
 Vendor reputation is built one review at a time. This guide explains how ratings shape a vendor's standing on your marketplace and how you can manage reviews as an admin.
 
-![The review moderation queue](../images/admin-review-moderation.png)
+![The review moderation queue](../images/admin-review-moderation.webp)
 
 ## How Reputation Works
 

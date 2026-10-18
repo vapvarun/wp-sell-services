@@ -49,7 +49,7 @@ flatter it are left out -- a new marketplace does not advertise "0 sellers".
 Filter them with `wpss_vendor_pitch_stats`, and the "How it works" steps with
 `wpss_vendor_pitch_steps`.
 
-![Vendor registration and profile editor form](../images/vendor-profile-editor.png)
+![Vendor registration and profile editor form](../images/vendor-profile-editor.webp)
 
 ## What Happens After Registration
 

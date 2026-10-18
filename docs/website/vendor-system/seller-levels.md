@@ -2,7 +2,7 @@
 
 WP Sell Services uses a three-tier auto-calculated level system plus one admin-only tier. As vendors complete more orders and earn better ratings, they advance through the levels and earn visible badges.
 
-![Vendor Analytics Dashboard](../images/vendor-analytics.png)
+![Vendor Analytics Dashboard](../images/vendor-analytics.webp)
 
 ## The Seller Levels
 

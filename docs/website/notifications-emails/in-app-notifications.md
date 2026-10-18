@@ -4,7 +4,7 @@ Every important event in your marketplace triggers an in-app notification so use
 
 ---
 
-![In-app notifications in the dashboard](../images/frontend-notifications.png)
+![In-app notifications in the dashboard](../images/frontend-notifications.webp)
 
 ## How It Works
 

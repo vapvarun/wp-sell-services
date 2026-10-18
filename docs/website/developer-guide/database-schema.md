@@ -81,7 +81,7 @@ Status: `status`, `verification_tier`, `verified_at`.
 Availability: `is_available`, `vacation_mode`, `vacation_message`,
 `vacation_return_date`.
 
-**Denormalised counters** — `total_orders`, `completed_orders`,
+**Denormalised counters** - `total_orders`, `completed_orders`,
 `total_earnings`, `net_earnings`, `total_commission`, `avg_rating`,
 `total_reviews`, `response_time_hours`, `on_time_delivery_rate`. These are
 maintained by the plugin and drive [seller levels](../vendor-system/seller-levels.md).

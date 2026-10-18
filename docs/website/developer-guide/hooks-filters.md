@@ -358,7 +358,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 | `wpss_pro_upgrade_url` | `string $url` (default `https://wpsellservices.com/`) | `UpgradePage.php`, `ServiceWizard.php:961` |
 | `wpss_docs_url` | `string $url` (default `https://wpsellservices.com/docs/`) | `src/Admin/Pages/UpgradePage.php:347` |
 
-_`wpss_pro_upgrade_url` (added 1.3.0) controls where every "Upgrade to Pro" call-to-action points — the admin upgrade screen and the in-wizard prompts. Point it at your own landing page or an in-site URL:_
+_`wpss_pro_upgrade_url` (added 1.3.0) controls where every "Upgrade to Pro" call-to-action points - the admin upgrade screen and the in-wizard prompts. Point it at your own landing page or an in-site URL:_
 
 ```php
 add_filter( 'wpss_pro_upgrade_url', function( $url ) {
@@ -431,11 +431,11 @@ add_filter( 'wpss_vendor_can_create_service', function( $allowed, $user_id ) {
 }, 10, 2 );
 ```
 
-### Wizard Extension Surface (Add-on Integration — 1.2.0)
+### Wizard Extension Surface (Add-on Integration - 1.2.0)
 
 These four hooks form the contract that lets add-ons (such as Pro's recurring billing) inject fields into the frontend Create/Edit Service wizard without patching core files.
 
-**`wpss_wizard_service_data`** — seed extra keys into the wizard's edit-form data model so they pre-fill when a vendor edits an existing service:
+**`wpss_wizard_service_data`** - seed extra keys into the wizard's edit-form data model so they pre-fill when a vendor edits an existing service:
 
 ```php
 add_filter( 'wpss_wizard_service_data', function( $data, $service_id ) {
@@ -444,7 +444,7 @@ add_filter( 'wpss_wizard_service_data', function( $data, $service_id ) {
 }, 10, 2 );
 ```
 
-**`wpss_wizard_pricing_after`** — render extra fields after the Pricing step. Markup runs inside the wizard's Alpine.js scope; bind inputs with `x-model="data.your_key"`:
+**`wpss_wizard_pricing_after`** - render extra fields after the Pricing step. Markup runs inside the wizard's Alpine.js scope; bind inputs with `x-model="data.your_key"`:
 
 ```php
 add_action( 'wpss_wizard_pricing_after', function( $service ) {
@@ -460,7 +460,7 @@ add_action( 'wpss_wizard_pricing_after', function( $service ) {
 } );
 ```
 
-**`wpss_wizard_sanitize_service_data`** — sanitize your injected keys from the untrusted client JSON payload before save:
+**`wpss_wizard_sanitize_service_data`** - sanitize your injected keys from the untrusted client JSON payload before save:
 
 ```php
 add_filter( 'wpss_wizard_sanitize_service_data', function( $sanitized, $raw ) {
@@ -472,7 +472,7 @@ add_filter( 'wpss_wizard_sanitize_service_data', function( $sanitized, $raw ) {
 }, 10, 2 );
 ```
 
-**`wpss_wizard_save_service_meta`** — persist your custom meta. Fires on **both** save-draft and publish (unlike `wpss_service_wizard_saved`, which fires on publish only):
+**`wpss_wizard_save_service_meta`** - persist your custom meta. Fires on **both** save-draft and publish (unlike `wpss_service_wizard_saved`, which fires on publish only):
 
 ```php
 add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
@@ -503,7 +503,7 @@ add_action( 'wpss_dashboard_section_before_content', function( $section, $user_i
 }, 10, 2 );
 ```
 
-**`wpss_dashboard_default_section`** — the landing section when no section is in the URL. Defaults to `sales` for active vendors and `orders` for buyers:
+**`wpss_dashboard_default_section`** - the landing section when no section is in the URL. Defaults to `sales` for active vendors and `orders` for buyers:
 
 ```php
 // Always land on the messages section regardless of role
@@ -689,7 +689,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 
 ### Currency System Filters (1.2.1)
 
-As of 1.2.1, currencies are driven by a single canonical registry (code → name, symbol, decimals). Every currency surface — price formatting, the settings dropdown, manual orders, decimal handling — reads from it, so overriding one filter updates all of them consistently.
+As of 1.2.1, currencies are driven by a single canonical registry (code → name, symbol, decimals). Every currency surface - price formatting, the settings dropdown, manual orders, decimal handling - reads from it, so overriding one filter updates all of them consistently.
 
 | Filter | Parameters | File |
 |--------|-----------|------|
@@ -699,7 +699,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4056` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:948` |
 
-**`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
+**`wpss_currency_registry`** is the preferred, single-place override - add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
 
 ```php
 // Register a custom currency and change USD's symbol
@@ -724,7 +724,7 @@ add_filter( 'wpss_currency_decimals', function( $decimals, $currency ) {
 
 **`wpss_zero_decimal_currencies`** returns the codes rendered without minor units. It is derived from the registry (`decimals === 0`); filter it only when you need to force a currency into or out of zero-decimal formatting independently of its registry entry.
 
-**`wpss_settings_currencies`** and **`wpss_manual_order_currencies`** narrow (or extend) the currency choices offered in the admin settings dropdown and the manual-order screen respectively — useful for restricting a store to a subset of the registry:
+**`wpss_settings_currencies`** and **`wpss_manual_order_currencies`** narrow (or extend) the currency choices offered in the admin settings dropdown and the manual-order screen respectively - useful for restricting a store to a subset of the registry:
 
 ```php
 // Only allow USD and EUR to be selected in settings
@@ -798,7 +798,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:602` |
 | `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:927` |
 
-**`wpss_realtime_settings`** — filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
+**`wpss_realtime_settings`** - filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
 
 ```php
 add_filter( 'wpss_realtime_settings', function( $settings ) {
@@ -815,13 +815,13 @@ add_filter( 'wpss_realtime_settings', function( $settings ) {
 | `wpss_use_fullwidth_template` | `bool $use` | `src/Frontend/TemplateLoader.php:292` (and `:332`) |
 | `wpss_fullwidth_page_keys` | `string[] $page_keys` | `src/Frontend/TemplateLoader.php:338` |
 
-**`wpss_use_fullwidth_template`** — return `false` to keep the active theme's normal page template (with sidebar) on the plugin's pages instead of the sidebar-free full-width layout:
+**`wpss_use_fullwidth_template`** - return `false` to keep the active theme's normal page template (with sidebar) on the plugin's pages instead of the sidebar-free full-width layout:
 
 ```php
 add_filter( 'wpss_use_fullwidth_template', '__return_false' );
 ```
 
-**`wpss_fullwidth_page_keys`** — control which mapped plugin pages render full-width. Default: `['dashboard', 'cart', 'checkout', 'become_vendor', 'registration']`:
+**`wpss_fullwidth_page_keys`** - control which mapped plugin pages render full-width. Default: `['dashboard', 'cart', 'checkout', 'become_vendor', 'registration']`:
 
 ```php
 // Remove the cart page from full-width treatment
@@ -973,13 +973,13 @@ WooCommerce or standalone checkout.
 Tips, milestone phases and extension quotes are **sub-orders**: a real WPSS
 order of their own, created against a parent order, that the buyer pays
 separately. They are the one deliberate exception to the one-rail catalog rule
-— the catalog checkout belongs entirely to the active platform, but a sub-order
+- the catalog checkout belongs entirely to the active platform, but a sub-order
 has no cart and cannot go through it.
 
 ### `wpss_get_pay_order_url( int $order_id ): string`
 
 **The single source for "pay THIS order."** Every surface that links a buyer to
-a payment — dashboard timeline, order view, emails, notifications — must call
+a payment - dashboard timeline, order view, emails, notifications - must call
 it. Never build a `?pay_order=` link by hand; it is correct only on one rail.
 
 ```php
@@ -994,7 +994,7 @@ apply_filters( 'wpss_ensure_pay_order', string $url, int $order_id );           
 ```
 
 A cart-based rail replaces the URL entirely. Pro's WooCommerce implementation
-(`WCPayOrderResolver`) creates — or reuses — a real WooCommerce order for the
+(`WCPayOrderResolver`) creates - or reuses - a real WooCommerce order for the
 sub-order in `wpss_ensure_pay_order` and returns its native order-pay URL, so
 the link works from an email days later with no cart session. Its
 `wpss_pay_order_url_lookup` rebuilds that URL from the id and key stored on
@@ -1006,14 +1006,14 @@ See [Pay-order support by rail](#pay-order-support-by-rail) above -- the one
 table, kept beside the filters it describes.
 
 A platform that has not implemented `wpss_ensure_pay_order` gets no Pay button
-at all (`wpss_can_pay_single_order()` is false) — so implement the filters for
+at all (`wpss_can_pay_single_order()` is false) - so implement the filters for
 any new platform the way `WCPayOrderResolver` does. Do **not** solve it by
 re-enabling WPSS gateways alongside the platform's own, which would break the
 one-rail contract.
 
 ### Why `wpss_get_checkout_base_url()` is not the answer
 
-It returns the **active rail's** checkout — WooCommerce's under Woo. Sending a
+It returns the **active rail's** checkout - WooCommerce's under Woo. Sending a
 buyer there for a sub-order lands them on an empty cart, because a sub-order was
 never added to one. That is the trap the filter above exists to avoid, and the
 reason browser Pay never reaches `StandaloneCheckoutProvider::render_pay_order_checkout()`

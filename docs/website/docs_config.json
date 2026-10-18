@@ -55,7 +55,8 @@
           "slug": "documentation-coverage",
           "title": "Documentation Coverage"
         }
-      ]
+      ],
+      "description": "Install the plugin, finish setup and take a tour of the dashboard."
     },
     {
       "name": "Buyer Guide",
@@ -89,7 +90,8 @@
           "slug": "buyer-faq",
           "title": "Buyer FAQ"
         }
-      ]
+      ],
+      "description": "How buyers find services, choose a package, pay and track an order."
     },
     {
       "name": "Service Creation",
@@ -123,7 +125,8 @@
           "slug": "editing-pausing-services",
           "title": "Managing Your Services: Edit, Pause, and Delete"
         }
-      ]
+      ],
+      "description": "Build a service listing with packages, add-ons, requirements and gallery."
     },
     {
       "name": "Buyer Requests & Proposals",
@@ -145,7 +148,8 @@
           "slug": "proposal-contracts-wpss",
           "title": "Proposal Contracts: Fixed vs Milestone"
         }
-      ]
+      ],
+      "description": "Post a request, receive proposals and turn one into an order."
     },
     {
       "name": "Order Management",
@@ -187,7 +191,8 @@
           "slug": "recurring-services",
           "title": "Recurring Services & Subscriptions [PRO]"
         }
-      ]
+      ],
+      "description": "Work an order from requirements to delivery, revisions and completion."
     },
     {
       "name": "Vendor System",
@@ -221,7 +226,8 @@
           "slug": "vendor-subscription-plans",
           "title": "Vendor Subscription Plans [PRO]"
         }
-      ]
+      ],
+      "description": "Become a seller, manage your profile, portfolio and services."
     },
     {
       "name": "Reviews & Ratings",
@@ -235,7 +241,8 @@
           "slug": "reputation-moderation",
           "title": "Reputation & Moderation"
         }
-      ]
+      ],
+      "description": "Leave, reply to and moderate reviews."
     },
     {
       "name": "Disputes & Resolution",
@@ -253,7 +260,8 @@
           "slug": "admin-dispute-mediation",
           "title": "Resolving Disputes (Admin Guide)"
         }
-      ]
+      ],
+      "description": "Open a dispute, respond and reach a resolution."
     },
     {
       "name": "Payments & Checkout",
@@ -299,7 +307,8 @@
           "slug": "offline-payment-proof",
           "title": "Offline Payment Proof and Receipts"
         }
-      ]
+      ],
+      "description": "Gateways, checkout, taxes and currencies."
     },
     {
       "name": "Earnings & Wallet",
@@ -337,7 +346,8 @@
           "slug": "vendor-payouts",
           "title": "Paying Your Vendors"
         }
-      ]
+      ],
+      "description": "Commissions, balances, withdrawals and payouts."
     },
     {
       "name": "Analytics & Reporting",
@@ -355,7 +365,8 @@
           "slug": "data-export",
           "title": "Data Export **[PRO]**"
         }
-      ]
+      ],
+      "description": "Sales, order and seller reports."
     },
     {
       "name": "Notifications & Emails",
@@ -377,7 +388,8 @@
           "slug": "realtime-updates",
           "title": "Real-Time Updates (Live Messages & Notifications)"
         }
-      ]
+      ],
+      "description": "What members are told, by email and in the site, and how to change it."
     },
     {
       "name": "Cloud Storage",
@@ -391,7 +403,8 @@
           "slug": "cloud-setup",
           "title": "Setting Up Cloud Storage **[PRO]**"
         }
-      ]
+      ],
+      "description": "Store deliveries and files in your own cloud storage."
     },
     {
       "name": "Marketplace Display & SEO",
@@ -417,7 +430,8 @@
           "slug": "seo-schema",
           "title": "SEO Features"
         }
-      ]
+      ],
+      "description": "Archive, search, filters, templates and search-engine settings."
     },
     {
       "name": "Admin Tools & Moderation",
@@ -447,7 +461,8 @@
           "slug": "member-reports",
           "title": "Member Reports"
         }
-      ]
+      ],
+      "description": "Approve services and withdrawals, manage vendors and the audit log."
     },
     {
       "name": "Platform Settings",
@@ -481,7 +496,8 @@
           "slug": "advanced-settings",
           "title": "Advanced Settings"
         }
-      ]
+      ],
+      "description": "Every setting that controls the marketplace."
     },
     {
       "name": "Developer Guide",
@@ -543,7 +559,8 @@
           "slug": "rest-error-codes",
           "title": "REST error codes"
         }
-      ]
+      ],
+      "description": "Hooks, REST API, templates and extension points."
     },
     {
       "name": "FAQ & Troubleshooting",
@@ -553,7 +570,8 @@
           "slug": "faq-troubleshooting",
           "title": "FAQ and Troubleshooting"
         }
-      ]
+      ],
+      "description": "Answers to common questions and fixes for common problems."
     }
   ],
   "product_name": "WP Sell Services",

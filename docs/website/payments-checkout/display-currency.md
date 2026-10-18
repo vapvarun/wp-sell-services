@@ -7,7 +7,7 @@ This is a **display-only hint**. Orders, earnings, commission, refunds, and
 payouts are always calculated and recorded in your base currency. Nothing about
 the stored price changes -- only what a visitor sees while browsing.
 
-![Display Currency settings on the Integrations tab](../images/settings-cloud-storage-currency.png)
+![Display Currency settings on the Integrations tab](../images/settings-cloud-storage-currency.webp)
 
 ## Why display-only
 

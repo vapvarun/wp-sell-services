@@ -16,9 +16,9 @@ Give your marketplace a custom name that appears throughout the platform: in ema
 
 **Examples:** "Creative Hub Marketplace", "Expert Services Network", "DesignPro Market"
 
-![General settings tab](../images/settings-general-tab.png)
+![General settings tab](../images/settings-general-tab.webp)
 
-![Full general settings](../images/settings-general-tab.png)
+![Full general settings](../images/settings-general-tab.webp)
 
 ---
 

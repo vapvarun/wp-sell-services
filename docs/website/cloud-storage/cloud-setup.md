@@ -4,7 +4,7 @@ Connect your marketplace to Amazon S3, Google Cloud Storage, or DigitalOcean Spa
 
 ---
 
-![Cloud Storage settings on the Integrations tab](../images/settings-cloud-storage-currency.png)
+![Cloud Storage settings on the Integrations tab](../images/settings-cloud-storage-currency.webp)
 
 ## Before You Start
 

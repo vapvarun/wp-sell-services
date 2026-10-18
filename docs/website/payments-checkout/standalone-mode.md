@@ -2,7 +2,7 @@
 
 WP Sell Services includes its own built-in checkout system, so you can run a fully independent marketplace without WooCommerce or any other e-commerce plugin.
 
-![Standalone Checkout](../images/frontend-checkout-flow.png)
+![Standalone Checkout](../images/frontend-checkout-flow.webp)
 
 ## What Is Standalone Mode?
 

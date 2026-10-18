@@ -153,14 +153,14 @@ something WooCommerce does not natively have.
 ### The seam
 
 ```
-wpss_ensure_pay_order( $wpss_order_id )       free — src/functions/urls.php
+wpss_ensure_pay_order( $wpss_order_id )       free - src/functions/urls.php
         │
         │  default: <checkout page>?pay_order=N     (standalone understands this)
         ▼
 apply_filters( 'wpss_ensure_pay_order', $url, $order_id )
         │
         ▼
-WCPayOrderResolver::ensure_pay_order()         Pro — Integrations/WooCommerce/
+WCPayOrderResolver::ensure_pay_order()         Pro - Integrations/WooCommerce/
         │
         ├─ reuse the linked WC order if it still needs payment
         └─ else create a NEW pending WC order for the amount owed
@@ -306,19 +306,19 @@ The sync includes infinite-loop prevention -- a status change triggered by the s
 
 With WooCommerce active a buyer can reach something order-shaped in three
 places, which looks like duplication until you know what each one is for. They
-are not three copies of the same list — they answer different questions.
+are not three copies of the same list - they answer different questions.
 
 | Screen | Question it answers | Use it to |
 |---|---|---|
 | **WooCommerce → My Account → Orders** | *What did I pay, and when?* | Receipts, invoices, payment history |
-| **My Account → Service Orders** | *What is happening with my service?* | A bridge — see status, jump into the job |
+| **My Account → Service Orders** | *What is happening with my service?* | A bridge - see status, jump into the job |
 | **Dashboard → My Orders** | *Manage the job* | Requirements, messages, delivery, revisions, approval |
 
 **The rule:** WooCommerce owns the money record. The Dashboard owns the work.
 Service Orders is the doorway between them.
 
-Anything that progresses the job — submitting requirements, replying to the
-seller, approving a delivery, paying a milestone phase — happens in the
+Anything that progresses the job - submitting requirements, replying to the
+seller, approving a delivery, paying a milestone phase - happens in the
 **Dashboard**, never on the WooCommerce orders screen. A phase or tip will not
 appear there as something to act on.
 

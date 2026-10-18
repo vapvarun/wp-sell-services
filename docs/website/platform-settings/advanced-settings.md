@@ -2,7 +2,7 @@
 
 Configure data management, debugging, and learn about the automated background tasks that keep your marketplace running smoothly.
 
-![System Settings Tab](../images/settings-advanced-tab.png)
+![System Settings Tab](../images/settings-advanced-tab.webp)
 
 ---
 

@@ -6,7 +6,7 @@ Every order includes a private conversation between the buyer and vendor. This k
 
 When an order is placed, a conversation is created automatically. The buyer and vendor can message each other directly from the order page in their dashboard. Admins can view these conversations but cannot participate in them -- this keeps the discussion between the two parties involved.
 
-![Order messaging interface](../images/frontend-order-messaging.png)
+![Order messaging interface](../images/frontend-order-messaging.webp)
 
 ## Sending Messages
 
@@ -20,7 +20,7 @@ To send a message:
 
 Messages can include text, file attachments, or both. You cannot send an empty message.
 
-![Order message thread between buyer and vendor](../images/frontend-order-messages.png)
+![Order message thread between buyer and vendor](../images/frontend-order-messages.webp)
 
 ## File Attachments
 

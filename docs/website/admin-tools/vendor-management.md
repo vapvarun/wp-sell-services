@@ -2,7 +2,7 @@
 
 The vendor management page gives you a bird's-eye view of everyone selling on your marketplace -- their activity, earnings, ratings, and account status.
 
-![Vendor Management](../images/admin-vendors-list.png)
+![Vendor Management](../images/admin-vendors-list.webp)
 
 ## Where to Find It
 

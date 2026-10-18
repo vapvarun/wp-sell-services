@@ -2,7 +2,7 @@
 
 Get a bird's-eye view of your entire marketplace with the admin analytics dashboard. Track revenue, monitor vendor performance, and spot trends -- all from one screen.
 
-![Admin analytics dashboard](../images/pro-admin-analytics-dashboard.png)
+![Admin analytics dashboard](../images/pro-admin-analytics-dashboard.webp)
 
 ---
 

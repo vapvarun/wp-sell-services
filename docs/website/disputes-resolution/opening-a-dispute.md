@@ -57,7 +57,7 @@ Before opening the dispute, collect everything that supports your case:
 5. Add evidence -- text descriptions, links to screenshots, or uploaded files.
 6. Click **Submit Dispute**.
 
-![Dispute status on order](../images/frontend-dispute-confirmation.png)
+![Dispute status on order](../images/frontend-dispute-confirmation.webp)
 
 ## What Happens After You Submit
 

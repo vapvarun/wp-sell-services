@@ -85,7 +85,7 @@ the member's **account password** and returns a token to use as Basic auth.
 **`expires` is real and enforced.** Before 1.6.0 it was always `null` and the
 server enforced nothing, so a stolen token worked forever. A token now dies
 **30 days after it was last used** or **90 days after it was issued**, whichever
-comes first — a daily user is never interrupted, and an abandoned token is gone
+comes first - a daily user is never interrupted, and an abandoned token is gone
 in a month. Both limits are filterable via `wpss_app_token_lifetime`.
 
 Treat `expires` as advisory and the 401 as authoritative: on
@@ -100,7 +100,7 @@ unlimited supply and revoking the original changed nothing.
 the *whole request* when an application password fails, so a client that attaches
 its stored token to every request would be unable to reach the login route to
 replace it. `/auth/login`, `/auth/register` and `/auth/forgot-password` are
-therefore reachable with an expired token in the header — they take their
+therefore reachable with an expired token in the header - they take their
 credentials from the body and grant nothing on their own. Every other route
 still refuses it.
 
@@ -116,7 +116,7 @@ to sign itself out. A uuid is resolved against the current member, so it cannot
 be used to sign anybody else out.
 
 Note this is **`/auth/sessions`**, not `/auth/devices`. The latter exists and
-manages **push notification tokens** — revoking one of those must not sign
+manages **push notification tokens** - revoking one of those must not sign
 anyone out.
 
 Only sign-ins this plugin issued are expired or listed. An application password
@@ -305,7 +305,7 @@ it.
 
 ## Error codes
 
-Branch on `code`, never on the message — messages are translated and will not
+Branch on `code`, never on the message - messages are translated and will not
 match in another locale.
 
 ### Status codes

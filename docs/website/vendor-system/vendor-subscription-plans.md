@@ -7,7 +7,7 @@ commission rate they pay.
 Billing runs through **hosted Stripe Checkout**, so card details never touch your
 site.
 
-![Vendor Subscriptions on the Vendors tab](../images/settings-vendor-subscriptions.png)
+![Vendor Subscriptions on the Vendors tab](../images/settings-vendor-subscriptions.webp)
 
 ## Setting up
 

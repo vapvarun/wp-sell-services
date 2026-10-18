@@ -7,11 +7,11 @@ wallet-transactions table. The **CSV export** lets vendors hand that
 same record to their accountant or import it into spreadsheet /
 accounting tools for monthly or annual reporting.
 
-![Earnings Ledger on the Wallet dashboard](../images/earnings-wallet/earnings-ledger-wpss.png)
+![Earnings Ledger on the Wallet dashboard](../images/earnings-wallet/earnings-ledger-wpss.webp)
 
 ## Where to find it
 
-The ledger is on the Wallet page in the vendor dashboard — the same
+The ledger is on the Wallet page in the vendor dashboard - the same
 page as the Available Balance and Total Earned cards. It sits below
 the summary cards as a dated list of every wallet transaction:
 earnings, tips, milestone phase payments, extension payments, and
@@ -28,7 +28,7 @@ A dropdown above the ledger scopes the view to a time window:
 - **All Time** (default)
 
 Changing the selector re-filters the ledger AND the **Export CSV**
-button — whatever range you're viewing is what the export will contain.
+button - whatever range you're viewing is what the export will contain.
 That way the CSV you download always matches the screen.
 
 ## Ledger row types
@@ -84,9 +84,9 @@ in the period, oldest first:
 | **Reference** | A machine-readable link like `order#123`, `withdrawal#45`, `tip#67`. Use this to jump back to the source row. |
 | **Currency** | The currency the amount is in (e.g. `USD`). |
 | **Amount** | The value of the transaction. Debits are negative (e.g. `-400.00` for a withdrawal). Credits are positive. |
-| **Balance After** | The running wallet balance immediately after this row. Makes the ledger reconcile itself — the last row's Balance After is your current balance. |
+| **Balance After** | The running wallet balance immediately after this row. Makes the ledger reconcile itself - the last row's Balance After is your current balance. |
 
-Rows are ordered **oldest first** on purpose — accounting imports and
+Rows are ordered **oldest first** on purpose - accounting imports and
 running-balance calculations expect chronological order.
 
 ## Using the export with accounting tools
@@ -111,7 +111,7 @@ Most accounting tools need you to map columns during import:
   or withdrawal)
 - **Reference** → reference / invoice number
 
-The Type column isn't a standard accounting field — use it to map rows
+The Type column isn't a standard accounting field - use it to map rows
 into the correct income or expense account (Earning / Tip / Extension /
 Milestone into an "Marketplace income" account, Withdrawal into a
 transfer, Dispute Refund into "Refunds").
@@ -120,7 +120,7 @@ transfer, Dispute Refund into "Refunds").
 
 For annual tax reports, use the **This Year** period and sum the
 `Amount` column (or read the summary block's Total Credits and Total
-Debits). The Net figure is credits minus debits — this is the amount
+Debits). The Net figure is credits minus debits - this is the amount
 that changed in your wallet during the period, which is often what you
 need for self-employment tax calculations.
 
@@ -128,10 +128,10 @@ need for self-employment tax calculations.
 
 The Wallet page shows **Available Balance** and **Total Earned** as
 summary cards. Those numbers are derived from the same ledger rows the
-export streams — if the card says $1,240.00 and the summary block says
+export streams - if the card says $1,240.00 and the summary block says
 `# Total Credits,1240.00`, you're looking at the same data through two
 different lenses. Any disagreement between the cards and the export is a
-bug — please report it with a screenshot and the export file.
+bug - please report it with a screenshot and the export file.
 
 ## Admin export filters
 

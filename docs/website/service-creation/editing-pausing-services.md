@@ -12,7 +12,7 @@ Go to your **Dashboard** and click **My Services** in the sidebar. You will see 
 - **Total orders** and **active orders**
 - **Average rating**
 
-![Service management interface](../images/vendor-services-management.png)
+![Service management interface](../images/vendor-services-management.webp)
 
 ---
 

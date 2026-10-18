@@ -8,7 +8,7 @@ Free already gives you a global rate and per-vendor overrides. Tiered rules are
 for when "which rate applies" is a question about the *sale*, not about a
 specific vendor you hand-picked.
 
-![Commission rules on the Commission & Tax tab](../images/settings-tiered-commission.png)
+![Commission rules on the Commission & Tax tab](../images/settings-tiered-commission.webp)
 
 ## The three rule types
 

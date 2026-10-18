@@ -15,9 +15,9 @@ Go to **Dashboard > Buyer Requests** to see all your buyer requests at a glance.
 - Expiration date
 - Category
 
-![Buyer's request management](../images/frontend-buyer-requests-overview.png)
+![Buyer's request management](../images/frontend-buyer-requests-overview.webp)
 
-![My requests with proposal count](../images/frontend-my-requests-dashboard.png)
+![My requests with proposal count](../images/frontend-my-requests-dashboard.webp)
 
 ---
 

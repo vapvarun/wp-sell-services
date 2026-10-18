@@ -3,7 +3,7 @@
 Found a service you like but you are not ready to order? Save it to your
 favorites and come back when you are.
 
-![Saved services in the Favorites section, showing live prices](../images/frontend-favorites.png)
+![Saved services in the Favorites section, showing live prices](../images/frontend-favorites.webp)
 
 ## Saving a service
 

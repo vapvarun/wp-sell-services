@@ -2,7 +2,7 @@
 
 Keep your marketplace quality high by reviewing vendor services before they go live. When moderation is enabled, every new service submission needs your approval.
 
-![Service Moderation Queue](../images/admin-moderation.png)
+![Service Moderation Queue](../images/admin-moderation.webp)
 
 ## Turning On Moderation
 

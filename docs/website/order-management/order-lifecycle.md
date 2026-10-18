@@ -82,9 +82,9 @@ Admins can view and manage all marketplace orders from **Sell Services > Orders*
 - View full order details, conversations, and deliveries
 - Manually change order status when needed
 
-![Admin orders list showing all marketplace orders](../images/admin-all-orders.png)
+![Admin orders list showing all marketplace orders](../images/admin-all-orders.webp)
 
-![Admin order detail view with full order information](../images/admin-order-details.png)
+![Admin order detail view with full order information](../images/admin-order-details.webp)
 
 ## A Typical Order Timeline
 

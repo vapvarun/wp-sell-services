@@ -2,9 +2,9 @@
 
 WP Sell Services includes built-in search and filtering so your visitors can quickly find the right service. No extra plugins or configuration needed.
 
-![Services grid view](../images/frontend-services-grid-view.png)
+![Services grid view](../images/frontend-services-grid-view.webp)
 
-![Full catalog with filters](../images/frontend-services-catalog.png)
+![Full catalog with filters](../images/frontend-services-catalog.webp)
 
 ---
 

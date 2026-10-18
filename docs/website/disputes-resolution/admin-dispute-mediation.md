@@ -14,7 +14,7 @@ When a dispute is opened, it lands on your desk. Your job is to:
 
 Stay impartial. Base every decision on evidence, not assumptions. Apply your marketplace policies consistently.
 
-![Disputes list](../images/admin-disputes-dashboard.png)
+![Disputes list](../images/admin-disputes-dashboard.webp)
 
 ## Accessing Disputes
 
@@ -48,7 +48,7 @@ Review all evidence both parties have submitted. Consider:
 - Is the evidence consistent with other facts in the order?
 - Which party has the stronger case?
 
-![Dispute evidence view](../images/admin-dispute-investigation.png)
+![Dispute evidence view](../images/admin-dispute-investigation.webp)
 
 ## The Five Resolution Types
 

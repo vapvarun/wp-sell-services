@@ -12,7 +12,7 @@ Open > Pending Review > (Escalated) > Resolved > Closed
 
 Not every dispute goes through escalation -- that stage is only for complex cases.
 
-![Dispute detail with messages](../images/admin-dispute-detail-view.png)
+![Dispute detail with messages](../images/admin-dispute-detail-view.webp)
 
 ### Stage 1: Open
 

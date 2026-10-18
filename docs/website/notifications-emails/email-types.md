@@ -2,7 +2,7 @@
 
 WP Sell Services emails buyers, vendors, and admins at every stage of an order. **30 notification types have their own on/off switch** in **Sell Services > Settings > Emails**, and all are on by default. A handful of operational emails (requirement reminders, seller-level promotions, proposal rejections) send automatically and are not individually switchable.
 
-![Email Notification Settings](../images/settings-emails-tab.png)
+![Email Notification Settings](../images/settings-emails-tab.webp)
 
 ---
 

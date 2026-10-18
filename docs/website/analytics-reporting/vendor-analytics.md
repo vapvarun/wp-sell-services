@@ -2,7 +2,7 @@
 
 Vendors get their own analytics dashboard to track personal performance, earnings trends, and service statistics. Everything they need to grow their business on your marketplace.
 
-![Vendor analytics dashboard](../images/pro-vendor-analytics-dashboard.png)
+![Vendor analytics dashboard](../images/pro-vendor-analytics-dashboard.webp)
 
 ---
 

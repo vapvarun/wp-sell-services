@@ -242,7 +242,7 @@ add_filter( 'wpss_dashboard_section_titles', function( $titles ) {
 
 ## Full-width Plugin Pages
 
-Since 1.2.0, the plugin's app-like pages — Dashboard, Cart, Checkout, and Become a Vendor — render full-width without a theme sidebar. This prevents marketplace UI from appearing next to widgets such as Recent Posts.
+Since 1.2.0, the plugin's app-like pages - Dashboard, Cart, Checkout, and Become a Vendor - render full-width without a theme sidebar. This prevents marketplace UI from appearing next to widgets such as Recent Posts.
 
 ### How it works per theme
 
@@ -266,7 +266,7 @@ yourtheme/wp-sell-services/wpss-fullwidth-template.php
 
 ### Opting out and controlling scope
 
-Turn off full-width handling entirely — the active theme's normal sidebar layout will be used on all plugin pages:
+Turn off full-width handling entirely - the active theme's normal sidebar layout will be used on all plugin pages:
 
 ```php
 add_filter( 'wpss_use_fullwidth_template', '__return_false' );
@@ -326,7 +326,7 @@ _Added in 1.3.0._ Every plugin surface is built on CSS custom-property tokens in
 
 ### How dark mode is triggered
 
-The plugin's dark tokens activate when any of these signals is present on the root element — the same signals BuddyX, BuddyX Pro, and Reign 8.x already set from their own dark-mode toggle:
+The plugin's dark tokens activate when any of these signals is present on the root element - the same signals BuddyX, BuddyX Pro, and Reign 8.x already set from their own dark-mode toggle:
 
 ```css
 :root[data-theme="dark"],
@@ -334,7 +334,7 @@ The plugin's dark tokens activate when any of these signals is present on the ro
 .wpss-dark .wpss-app { /* dark token overrides */ }
 ```
 
-If your theme has a dark toggle, set `data-bx-mode="dark"` (or `data-theme="dark"`) on `<html>` and the plugin follows automatically — no per-component CSS required. There is deliberately **no** `prefers-color-scheme` rule, so the plugin never fights a light theme on a dark OS.
+If your theme has a dark toggle, set `data-bx-mode="dark"` (or `data-theme="dark"`) on `<html>` and the plugin follows automatically - no per-component CSS required. There is deliberately **no** `prefers-color-scheme` rule, so the plugin never fights a light theme on a dark OS.
 
 ### Token model
 
@@ -353,7 +353,7 @@ Components consume semantic and scale tokens, never raw hex. In dark mode the wh
 Two rules matter when extending the UI:
 
 1. **Use `--wpss-primary-accent` / `--wpss-secondary-accent` for text, `--wpss-primary` / `--wpss-secondary` for fills.** The accent tokens lighten in dark mode so links stay readable on dark surfaces; the fill tokens stay dark so white button text keeps its contrast.
-2. **Never hard-code hex for text or surfaces** — reach for the tokens above so your addition flips with the rest of the plugin. Lucide icons inherit `currentColor`, so they follow the text token automatically.
+2. **Never hard-code hex for text or surfaces** - reach for the tokens above so your addition flips with the rest of the plugin. Lucide icons inherit `currentColor`, so they follow the text token automatically.
 
 ### Overriding tokens per theme
 

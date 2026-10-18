@@ -3,7 +3,7 @@
 Make the marketplace yours. White Label replaces WP Sell Services branding with
 your own across the admin, the vendor dashboard, and transactional emails.
 
-![White Label settings on the Branding tab](../images/settings-branding-tab.png)
+![White Label settings on the Branding tab](../images/settings-branding-tab.webp)
 
 ## Setup
 

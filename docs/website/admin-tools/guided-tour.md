@@ -1,15 +1,15 @@
 # Guided Admin Tour
 
-A built-in onboarding walkthrough runs the first time a new admin opens the WP Sell Services dashboard. It introduces the sidebar, the at-a-glance stats cards, and each of the main sub-screens — Services, Vendors, Orders, and Settings — so a first-time operator knows where everything lives without reading docs first.
+A built-in onboarding walkthrough runs the first time a new admin opens the WP Sell Services dashboard. It introduces the sidebar, the at-a-glance stats cards, and each of the main sub-screens - Services, Vendors, Orders, and Settings - so a first-time operator knows where everything lives without reading docs first.
 
-![The welcome tour shown on a user's first dashboard visit](../images/frontend-dashboard-welcome-tour.png)
+![The welcome tour shown on a user's first dashboard visit](../images/frontend-dashboard-welcome-tour.webp)
 
 ## When The Tour Starts
 
 The tour auto-opens the first time a logged-in admin lands on **Sell Services > Dashboard**. It will not re-open on subsequent visits.
 
 - Completion is persisted per-user in the `wpss_tour_completed` user meta
-- Clicking "Skip" counts as completion — the tour won't nag you again
+- Clicking "Skip" counts as completion - the tour won't nag you again
 - Each admin sees the tour once on their own account; a second admin on the same site still gets their own first-time walkthrough
 
 ## The Eight Steps
@@ -27,7 +27,7 @@ Each step carries a short explainer, a Lucide icon, and Back / Next / Skip contr
 
 ## Replaying The Tour
 
-After the first run, the Dashboard header shows a **Replay guide** button next to the page title. Click it any time to walk through again — you don't need to reset any user meta.
+After the first run, the Dashboard header shows a **Replay guide** button next to the page title. Click it any time to walk through again - you don't need to reset any user meta.
 
 ## Letting Pro Or Custom Code Add Steps
 

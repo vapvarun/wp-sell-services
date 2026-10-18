@@ -2,7 +2,7 @@
 
 After you purchase a service, your order moves through a series of stages from payment to completion. This guide explains each stage, what to expect, and what actions you can take.
 
-![A buyer's order awaiting approval, with Accept, Request Revision and Open Dispute](../images/frontend-buyer-order-view.png)
+![A buyer's order awaiting approval, with Accept, Request Revision and Open Dispute](../images/frontend-buyer-order-view.webp)
 
 ## Finding Your Orders
 
@@ -91,6 +91,8 @@ If you take too long (default: 7 days), the marketplace may either auto-start th
 - **Leave a review** -- Rate the vendor and share your experience. Reviews help other buyers and help good vendors get more business.
 - **Download deliverables** -- Access any files the vendor sent.
 - **Tip the vendor** -- If you are especially happy with the work, you can send a tip as a thank-you.
+![The "Need this again?" section on a completed order, with the Order again button](../images/order-again.webp)
+
 - **Order again** -- Put the same package and options back in your cart in one click, at today's price. If the price changed or an option is gone, the page tells you before you pay. It is not offered for custom quotes, and it is unavailable while the vendor is away or the service is paused.
 - **Open a dispute** (if needed) -- You have a dispute window (default: 14 days) after completion to raise issues if something goes wrong after acceptance.
 

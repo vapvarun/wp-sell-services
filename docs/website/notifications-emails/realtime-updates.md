@@ -24,7 +24,7 @@ When disabled, the marketplace behaves exactly as before -- messages and notific
 5. Fill in the connection fields (see below)
 6. Save settings
 
-![Real-time settings card](../images/settings-realtime.png)
+![Real-time settings card](../images/settings-realtime.webp)
 
 ---
 
