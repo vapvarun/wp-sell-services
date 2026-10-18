@@ -98,6 +98,7 @@ Existing orders remain accessible -- they stay in the system they were created i
 | Setup effort | Medium | Medium | Easy | Easiest |
 | Catalog checkout | Yes | No (beta) | No (beta) | Yes |
 | Milestone, tip and extension payments | Yes | No (beta) | Yes | Yes |
+| Where you refund | In WooCommerce | In EDD | In FluentCart | Sell Services > Orders |
 | Refunds reflected in the marketplace | Yes | No (beta) | Yes | Yes |
 | Known limitations | None | Buyers cannot complete a catalog purchase, and a refund issued in EDD leaves the order paid and the vendor credited | Buyers cannot complete a catalog purchase because a service cannot be linked to a FluentCart product | None |
 

@@ -75,6 +75,23 @@ $check( count( $gateway_files ) . ' gateway files hold no tax, tip or commission
 $hits = $scan( $gateway_files, array( 'refund' => '/wpss_get_order_refunded_amount\s*\(|new\s+OrderWorkflowManager/' ) );
 $check( 'gateways do not total or split refunds themselves' . ( $hits ? ' (' . implode( ', ', $hits ) . ')' : '' ), ! $hits );
 
+// The refund owners name no provider: they work from what a rail reports, never from who it is.
+$owners = array(
+	WPSS_PLUGIN_DIR . 'src/Services/OrderService.php',
+	WPSS_PLUGIN_DIR . 'src/Services/OrderWorkflowManager.php',
+	WPSS_PLUGIN_DIR . 'src/Services/PendingRefundService.php',
+);
+$hits   = $scan( $owners, array( 'provider' => '/[\'"](stripe|paypal|razorpay|woocommerce|edd|fluentcart)[\'"]/i' ) );
+$check( 'the refund owners never branch on a provider name' . ( $hits ? ' (' . implode( ', ', $hits ) . ')' : '' ), ! $hits );
+
+// A refund is never shared out by price: it names its gig or waits for an admin.
+$share_files = array( WPSS_PLUGIN_DIR . 'src/Services/OrderWorkflowManager.php', WPSS_PLUGIN_DIR . 'src/Services/PendingRefundService.php' );
+if ( defined( 'WPSS_PRO_PLUGIN_DIR' ) ) {
+	$share_files[] = WPSS_PRO_PLUGIN_DIR . 'src/Integrations/WooCommerce/WCOrderProvider.php';
+}
+$hits = $scan( $share_files, array( 'split' => '/\$share\b|\$apportion/i' ) );
+$check( 'no refund handler apportions an amount by price' . ( $hits ? ' (' . implode( ', ', $hits ) . ')' : '' ), ! $hits );
+
 // The option and the rule each have one reader.
 $readers = array();
 foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( WPSS_PLUGIN_DIR . 'src', FilesystemIterator::SKIP_DOTS ) ) as $f ) {

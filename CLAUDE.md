@@ -288,6 +288,15 @@ Real cases found and fixed in 1.2.2:
 2. **Money math lives in exactly one place.** All fee/earnings computation goes
    through `CommissionService::compute_breakdown()`. Gateways are execution
    adapters: they move the amount we already persisted, they never re-derive it.
+   Tax, tip commission and refund amounts have one owner each (`wpss_calculate_tax()`,
+   `TippingService`, `OrderService::refund()` with `OrderWorkflowManager::handle_gateway_refund()`);
+   `tests/test-money-rules-gateway-independent.php` fails if a gateway or a refund owner holds
+   those rules or names a provider.
+   **The rail that collected the money refunds it.** `wpss_order_money_rail( $order )` is empty
+   for orders we collected and names the shop platform otherwise; our refund screens step aside for
+   those and only record what the platform reports through `wpss_gateway_refund_received`. A
+   refund names its gig (`order_id`) or waits for an admin (`PendingRefundService`); never split
+   an amount by price. Who may refund is `wpss_can_refund_order` (admin by default).
 3. **A shared UI surface is a shared partial.** If two locations show the same
    thing (notifications, service cards, order rows), extract
    `templates/partials/*.php` and have both `require` it — see

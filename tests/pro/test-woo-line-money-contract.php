@@ -10,8 +10,8 @@
  * total of 100 and a subtotal of -50 (Basecamp 10264297198).
  *
  * Also covered: two packages of one service in one cart are two WPSS orders,
- * a Woo refund reports to the shared gateway-refund seam per WPSS order, a
- * WPSS-side refund is created in Woo, and completing every WPSS order on a
+ * a Woo refund reports to the shared gateway-refund seam (naming the gig when it was made on
+ * a line), our own refund screens step aside for a Woo-paid order, and completing every WPSS order on a
  * WC order completes the WC order.
  *
  * Runs the provider directly, so it works on any rail as long as WooCommerce
@@ -165,7 +165,8 @@ $provider->handle_order_processed( $wc_id, array(), $wc_order );
 $recount = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE platform = 'woocommerce' AND platform_order_id = %d", $wc_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 wpss_t( 2 === $recount, 'processing the same WC order twice does not duplicate WPSS orders' );
 
-// Woo → WPSS: a partial Woo refund reports to the shared seam, apportioned per WPSS order.
+// Woo → WPSS: an amount-only refund on a two-gig order could be for either gig. It is reported
+// once as "one of these" and never split by price.
 $received = array();
 add_action(
 	'wpss_gateway_refund_received',
@@ -180,29 +181,48 @@ $refund = wc_create_refund( array( 'amount' => 53, 'order_id' => $wc_id, 'reason
 wpss_t( ! is_wp_error( $refund ), 'a partial Woo refund of 53 on 530 can be created' );
 // On a site whose active rail is WooCommerce the provider is already hooked
 // to woocommerce_order_refunded, so wc_create_refund() has reported the
-// refund. Calling the handler again there reported it twice (4 calls, 106).
+// refund. Calling the handler again there reported it twice.
 if ( empty( $received ) ) {
 	$provider->handle_order_refunded( $wc_id, is_wp_error( $refund ) ? 0 : $refund->get_id() );
 }
 
-$sum = array_sum( array_column( $received, 2 ) );
-wpss_t( 2 === count( $received ), 'the seam fires once per WPSS order (got ' . count( $received ) . ')' );
-wpss_t( abs( $sum - 53.0 ) < 0.02, "the apportioned amounts add up to the Woo refund 53 (got {$sum})" );
+wpss_t( 1 === count( $received ), 'an amount-only refund is reported once, not once per gig (got ' . count( $received ) . ')' );
+wpss_t( ! empty( $received ) && abs( (float) $received[0][2] - 53.0 ) < 0.001, 'and it carries the whole 53, not a share' );
 wpss_t( ! empty( $received ) && 'woocommerce' === $received[0][0] && (string) $wc_id === $received[0][1], 'the seam names the woocommerce rail and the WC order id' );
-$ids = array_map( static fn( $r ) => (int) $r[3]['order_id'], $received );
-wpss_t( $a && $b && in_array( (int) $a->id, $ids, true ) && in_array( (int) $b->id, $ids, true ), 'each seam call carries its WPSS order id in context' );
+$candidates = (array) ( $received[0][3]['order_ids'] ?? array() );
+wpss_t( $a && $b && in_array( (int) $a->id, $candidates, true ) && in_array( (int) $b->id, $candidates, true ) && ! isset( $received[0][3]['order_id'] ), 'it lists both gigs as candidates and names neither' );
 
-// WPSS → Woo: a WPSS-side refund is created in Woo through the pre-hook.
-if ( $a && method_exists( $provider, 'process_wpss_refund' ) ) {
+// A refund made on a line names that gig.
+$received = array();
+$line     = $a ? (int) $a->platform_item_id : 0;
+$refund   = wc_create_refund(
+	array(
+		'amount'     => 20,
+		'order_id'   => $wc_id,
+		'line_items' => array(
+			$line => array(
+				'qty'          => 0,
+				'refund_total' => 20,
+				'refund_tax'   => array(),
+			),
+		),
+	)
+);
+if ( empty( $received ) && ! is_wp_error( $refund ) ) {
+	$provider->handle_order_refunded( $wc_id, $refund->get_id() );
+}
+wpss_t( 1 === count( $received ) && $a && (int) ( $received[0][3]['order_id'] ?? 0 ) === (int) $a->id && abs( (float) $received[0][2] - 20.0 ) < 0.001, 'a refund made on a line names that gig' );
+
+// WPSS → Woo: WooCommerce collected the money, so our screens refuse and Woo is untouched.
+if ( $a ) {
+	add_filter( 'wpss_order_money_rail', array( $provider, 'money_rail' ), 10, 2 );
 	$before = (float) wc_get_order( $wc_id )->get_total_refunded();
-	$result = $provider->process_wpss_refund( null, wpss_get_order( (int) $a->id ), 20.0, true );
+	$result = ( new \WPSellServices\Services\OrderService() )->refund( (int) $a->id, 10.0, \WPSellServices\Models\ServiceOrder::STATUS_PARTIALLY_REFUNDED );
 	$after  = (float) wc_get_order( $wc_id )->get_total_refunded();
-	wpss_t( is_array( $result ) && ! empty( $result['success'] ), 'the pre-hook handles the refund for a Woo-paid order' );
-	wpss_t( abs( ( $after - $before ) - 20.0 ) < 0.001, "the WPSS refund appears in Woo (refunded {$before} -> {$after})" );
-	wpss_t( is_array( $result ) && ! empty( $result['manual'] ), 'a gateway that cannot refund is reported as manual, not as success-with-no-money' );
-	wpss_t( null === $provider->process_wpss_refund( null, (object) array( 'id' => 0, 'platform' => 'standalone', 'meta' => array() ), 5.0, true ), 'a standalone order is left to Free' );
-} else {
-	wpss_t( false, 'the provider hooks wpss_pre_process_gateway_refund (process_wpss_refund)' );
+	remove_filter( 'wpss_order_money_rail', array( $provider, 'money_rail' ), 10 );
+	wpss_t( false === $result['ok'] && false !== strpos( (string) $result['message'], 'WooCommerce' ), 'our refund on a Woo-paid order is refused and points to WooCommerce' );
+	wpss_t( abs( $after - $before ) < 0.001, 'and nothing is created in WooCommerce' );
+	wpss_t( ! method_exists( $provider, 'process_wpss_refund' ), 'the provider no longer creates refunds in WooCommerce' );
 }
 
 // WPSS → Woo: completing every WPSS order completes the WC order.

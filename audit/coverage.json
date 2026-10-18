@@ -409,6 +409,9 @@
                 "audit/journeys/03-install-and-upgrade.md",
                 "audit/render-coverage.json"
             ],
+            "wpss refunds": [
+                "tests/test-refund-cart-sibling-contract.php"
+            ],
             "wpss repair:stripe-tax": [
                 "tests/test-cli-guards.php",
                 "audit/render-coverage.json"
@@ -577,6 +580,9 @@
             ],
             "wpss_can_access_dashboard_section": [
                 "audit/render-coverage.json"
+            ],
+            "wpss_can_refund_order": [
+                "tests/test-order-action-gates.php"
             ],
             "wpss_can_view_request_attachments": [
                 "audit/render-coverage.json"
@@ -776,10 +782,15 @@
             "wpss_gateway_refund_received": [
                 "tests/pro/test-woo-line-money-contract.php",
                 "tests/test-gateway-refund-seam.php",
+                "tests/test-refund-cart-sibling-contract.php",
                 "audit/render-coverage.json"
+            ],
+            "wpss_gateway_refund_unallocated": [
+                "tests/test-refund-cart-sibling-contract.php"
             ],
             "wpss_gateway_settings_owned_by_rail": [],
             "wpss_get_template": [
+                "tests/test-template-contract.php",
                 "audit/render-coverage.json"
             ],
             "wpss_get_template_part": [
@@ -809,6 +820,7 @@
                 "audit/render-coverage.json"
             ],
             "wpss_locate_template": [
+                "tests/test-template-contract.php",
                 "tests/test-template-override.php",
                 "audit/render-coverage.json"
             ],
@@ -905,6 +917,11 @@
                 "audit/render-coverage.json"
             ],
             "wpss_order_message_created": [],
+            "wpss_order_money_rail": [
+                "tests/pro/test-woo-line-money-contract.php",
+                "tests/test-refund-cart-sibling-contract.php",
+                "tests/test-refund-dedupe-contract.php"
+            ],
             "wpss_order_number_prefix": [
                 "audit/render-coverage.json"
             ],
@@ -1003,7 +1020,6 @@
                 "audit/render-coverage.json"
             ],
             "wpss_pre_process_gateway_refund": [
-                "tests/pro/test-woo-line-money-contract.php",
                 "tests/test-dispute-closes-on-rail-refund-and-cancel.php",
                 "tests/test-refund-cascade-contract.php",
                 "tests/test-refund-dedupe-contract.php",
@@ -1306,7 +1322,9 @@
             "wpss_three_decimal_currencies": [
                 "audit/render-coverage.json"
             ],
-            "wpss_tip_commission_rate": [],
+            "wpss_tip_commission_rate": [
+                "tests/test-money-rules-gateway-independent.php"
+            ],
             "wpss_tip_order_created": [],
             "wpss_tip_sent": [
                 "tests/test-notification-matrix.php",
@@ -1672,8 +1690,8 @@
                 "tests/test-revisions-from-snapshot.php",
                 "audit/render-coverage.json"
             ],
-            "/wpss/v1/orders/(?P<id>[\\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund)": [
-                "audit/render-coverage.json"
+            "/wpss/v1/orders/(?P<id>[\\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund|assign-refund)": [
+                "tests/test-refund-cart-sibling-contract.php"
             ],
             "/wpss/v1/orders/(?P<id>[\\d]+)/deliverables": [
                 "audit/render-coverage.json"
@@ -2088,6 +2106,7 @@
                 "audit/render-coverage.json"
             ],
             "emails/delivery-ready": [
+                "tests/test-template-contract.php",
                 "audit/journeys/16-milestones-extensions-and-tips.md"
             ],
             "emails/dispute-escalated": [
@@ -2142,6 +2161,7 @@
                 "audit/render-coverage.json"
             ],
             "emails/new-order": [
+                "tests/test-template-contract.php",
                 "audit/render-coverage.json"
             ],
             "emails/order-cancelled": [
@@ -2149,6 +2169,7 @@
             ],
             "emails/order-completed": [
                 "tests/test-display-currency-surfaces-contract.php",
+                "tests/test-template-contract.php",
                 "audit/render-coverage.json"
             ],
             "emails/order-in-progress": [

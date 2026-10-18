@@ -13,7 +13,7 @@ Counts from the 2026-10-18 browser walk, Free and Pro active. Guards are scripts
 | Review Moderation | 13, 14 | `test-notification-matrix` | |
 | Disputes | 02, 13 | `test-dispute-state-machine`, `test-dispute-closes-on-rail-refund-and-cancel` | |
 | Vendors (approve, suspend, hold) | 13 | `test-account-standing`, `test-ajax-standing-gate` | |
-| Orders (status, hold and resume, refund) | 13 | `test-order-action-gates`, `test-refund-cascade-contract`, `test-hold-and-revision-clock` | |
+| Orders (status, hold and resume, refund) | 13 | `test-order-action-gates`, `test-refund-cascade-contract`, `test-hold-and-revision-clock`, `test-refund-cart-sibling-contract`, `test-gateway-refund-seam`, `test-refund-dedupe-contract` | Refund waiting for a gig (notice and assign); platform-paid order shows the refund pointer; live gateway echo (money, held) |
 | Withdrawals | 10 | `test-auto-withdrawal-schedule`, `test-payout-integrity` (Pro) | Paid email (money, held) |
 | Analytics (Pro) | 15 | `test-pro-perf-and-options` (Pro) | admin at 390 |
 | Audit Log | 13 | `test-audit-log-coverage`, `test-audit-log-object-filter` | |
@@ -82,6 +82,7 @@ Everything below is off by default except the licence screen and vendor analytic
 | "The dashboard carries my brand" | admin, White label | 12 | |
 | Razorpay | buyer, checkout | none | `test-razorpay-settle-path` |
 | WooCommerce rail pay-order, fee-only lines | buyer | 07 | `test-fee-only-pay-order-contract`, `test-woo-line-money-contract` |
+| "I refund a Woo, EDD or FluentCart order in that platform and it shows here" | admin, the platform's order screen, then Sell Services > Orders | none | `test-woo-line-money-contract`, `test-refund-dedupe-contract` |
 
 Pro checks to add to every Pro walk:
 - **Licence:** with a valid licence Pro features load; with it cleared they stop and the Free marketplace keeps working, no fatal. With Free deactivated, Pro shows an admin notice, not a fatal. Pro loads no second copy of a library Free ships.

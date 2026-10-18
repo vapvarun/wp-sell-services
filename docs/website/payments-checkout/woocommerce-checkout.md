@@ -240,12 +240,21 @@ fires `wpss_order_paid`. That is what credits the vendor and moves the phase to
 Sub-orders are deliberately *not* pushed into `pending_requirements` when paid --
 requirements belong to the parent order, not to each phase.
 
-**Refunds (1.4.0):** refunding the WooCommerce order now reverses the tip,
-milestone or extension too. Previously only the *paid* handler knew how to
-resolve a sub-order, so a refunded or cancelled tip was silently ignored while
-the buyer got their money back. The refunded amount is apportioned across every
-linked WPSS order and written before the status change, then the vendor's share
-is clawed back through the single refund formula.
+**Refunds:** WooCommerce collected the money, so you refund in WooCommerce. The order screen in
+Sell Services shows "This order was paid through WooCommerce. Refund it there" instead of a refund
+form. When you refund in WooCommerce, the refund is recorded on the marketplace order and the
+vendor's share is clawed back through the single refund formula, including for a tip, milestone or
+extension paid through WooCommerce.
+
+- **Refund a line item.** A refund made on a service line in WooCommerce is recorded on exactly that
+  gig, so refund per line when an order holds several gigs.
+- **Refund an amount with no line.** On an order with more than one gig (or other products) the
+  amount could be for any of them. It is recorded as waiting for a gig: an admin notice appears, and
+  you assign it from the gig's order screen (**Refund waiting for a gig**), with
+  `wp wpss refunds assign <order_id>` or `POST /orders/{id}/assign-refund`. The vendor is charged only
+  for the gig you assign it to. Nothing is split by price.
+- **Cancelling or resolving a dispute for the buyer** on a WooCommerce order leaves the dispute open
+  until the refund is made in WooCommerce and arrives here.
 
 ### Platform support -- read this before promising it
 
@@ -364,7 +373,7 @@ For developers building custom integrations or debugging the WC integration:
 | `WCServiceCarrier` | Creates and manages the virtual carrier product |
 | `WCProductProvider` | Implements `ProductProviderInterface` for WC |
 | `WCCheckoutProvider` | Handles cart item data, dynamic pricing, checkout processing |
-| `WCOrderProvider` | Splits WC orders into WPSS orders, handles status sync, marks sub-orders paid, apportions refunds |
+| `WCOrderProvider` | Splits WC orders into WPSS orders, handles status sync, marks sub-orders paid, reports WooCommerce refunds (per line where it can) |
 | `WCPayOrderResolver` | **The pay-order rail.** Hooks `wpss_pay_order_url_lookup` (read) and `wpss_ensure_pay_order` (write); creates or reuses a WC order so a milestone, tip, extension or accepted proposal can be paid individually |
 | `WCOrderBridge` | Cross-links the two systems for humans: "WooCommerce Order #N" on the WPSS order, a "what happens next" panel on the WC thank-you page, and links between the WC and WPSS order screens (front-end and admin). Also owns the forward/reverse lookup helpers |
 | `WooCommerceAdapter` | Main adapter class, registers all WC hooks |

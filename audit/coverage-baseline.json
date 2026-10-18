@@ -79,7 +79,6 @@
         "hook:wpss_stripe_customer_shipping",
         "hook:wpss_stripe_payment_description",
         "hook:wpss_stripe_refund_processed",
-        "hook:wpss_tip_commission_rate",
         "hook:wpss_tip_order_created",
         "hook:wpss_token_recovery_routes",
         "hook:wpss_updated",

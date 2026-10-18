@@ -128,9 +128,9 @@ try {
 	} else {
 		// The rail hooks only register on a Woo-rail site; wire them for this run.
 		$loop = array( $wc_provider, 'handle_order_refunded' );
-		$pre  = array( $wc_provider, 'process_wpss_refund' );
+		$rail = array( $wc_provider, 'money_rail' );
 		add_action( 'woocommerce_order_refunded', $loop, 10, 2 );
-		add_filter( 'wpss_pre_process_gateway_refund', $pre, 10, 4 );
+		add_filter( 'wpss_order_money_rail', $rail, 10, 2 );
 
 		$make_wc = static function () use ( &$wc_orders ): \WC_Order {
 			$wc  = wc_create_order();
@@ -154,21 +154,21 @@ try {
 		wc_create_refund( array( 'order_id' => $wc->get_id(), 'amount' => 5, 'refund_payment' => false ) );
 		$check( 'woo: refunds of 10 then 5 in Woo record 15, not 25', 15.0 === $refunded( $id ) );
 
-		// A refund started in wp-admin.
+		// A refund started in wp-admin is refused: WooCommerce refunds its own orders.
 		$wc     = $make_wc();
 		$id     = $seed( 100.0, 'cod', 'woocommerce', $wc->get_id() );
 		$ids[]  = $id;
 		$result = $service->refund( $id, 10.0, ServiceOrder::STATUS_PARTIALLY_REFUNDED, array( 'origin' => 'admin' ) );
-		$check( 'woo: a wp-admin refund reports success', true === ( $result['ok'] ?? null ) );
-		$check( '  and records 10 once', 10.0 === $refunded( $id ) );
-		$check( '  and Woo shows 10 refunded', 10.0 === (float) wc_get_order( $wc->get_id() )->get_total_refunded() );
+		$check( 'woo: a wp-admin refund is refused and names WooCommerce', false === ( $result['ok'] ?? null ) && false !== strpos( (string) ( $result['message'] ?? '' ), 'WooCommerce' ) );
+		$check( '  and nothing is recorded or created in Woo', 0.0 === $refunded( $id ) && 0.0 === (float) wc_get_order( $wc->get_id() )->get_total_refunded() );
 
-		// A later refund made in Woo adds only its own amount.
+		// The refund made in Woo is recorded once, with only its own amount.
+		wc_create_refund( array( 'order_id' => $wc->get_id(), 'amount' => 10, 'refund_payment' => false ) );
 		wc_create_refund( array( 'order_id' => $wc->get_id(), 'amount' => 5, 'refund_payment' => false ) );
-		$check( '  then 5 more refunded in Woo records 15', 15.0 === $refunded( $id ) );
+		$check( '  then refunds of 10 and 5 made in Woo record 15', 15.0 === $refunded( $id ) );
 
 		remove_action( 'woocommerce_order_refunded', $loop, 10 );
-		remove_filter( 'wpss_pre_process_gateway_refund', $pre, 10 );
+		remove_filter( 'wpss_order_money_rail', $rail, 10 );
 	}
 } finally {
 	remove_filter( 'wpss_pre_process_gateway_refund', $mock, 10 );

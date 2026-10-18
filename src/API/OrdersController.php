@@ -208,7 +208,7 @@ class OrdersController extends RestController {
 		// having them.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund)',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund|assign-refund)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -228,6 +228,10 @@ class OrdersController extends RestController {
 						'reason' => array(
 							'description' => __( 'Reason for action (required for reject, cancel, dispute).', 'wp-sell-services' ),
 							'type'        => 'string',
+						),
+						'amount' => array(
+							'description' => __( 'assign-refund only: part of the waiting refund to assign to this order.', 'wp-sell-services' ),
+							'type'        => 'number',
 						),
 					),
 				),
@@ -1038,6 +1042,20 @@ class OrdersController extends RestController {
 					$result = $retry['ok'];
 					if ( ! $result ) {
 						$error = $retry['message'];
+					}
+				}
+				break;
+
+			case 'assign-refund':
+				// A refund the payment platform reported without naming the gig.
+				if ( ! $is_admin ) {
+					$error = __( 'Only an administrator can assign a refund.', 'wp-sell-services' );
+				} else {
+					$amount   = $request->get_param( 'amount' );
+					$assigned = ( new \WPSellServices\Services\PendingRefundService() )->assign( $order_id, is_numeric( $amount ) ? (float) $amount : null );
+					$result   = $assigned['ok'];
+					if ( ! $result ) {
+						$error = $assigned['message'];
 					}
 				}
 				break;

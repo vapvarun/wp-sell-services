@@ -254,8 +254,8 @@ function wpss_get_pending_manual_refunds(): array {
 }
 
 /**
- * Refunds the owner has to look at: ones the gateway refused, and fully
- * refunded orders whose paid extensions or tips were never refunded.
+ * Refunds the owner has to look at: ones the gateway refused, rail refunds
+ * waiting for a gig (`unassigned`), and fully refunded orders whose paid extensions or tips were never refunded.
  *
  * The second list is mostly history: before 1.8.0 a full refund stopped at the
  * parent (Basecamp 10336467671). It also catches a refund that started at the
@@ -265,7 +265,7 @@ function wpss_get_pending_manual_refunds(): array {
  * @since 1.8.0
  *
  * @param int $limit Maximum orders per list.
- * @return array{failed: array<int, array<string, mixed>>, uncascaded: int[]}
+ * @return array{failed: array<int, array<string, mixed>>, uncascaded: int[], unassigned: array<int, array<string, mixed>>}
  */
 function wpss_get_refund_review_items( int $limit = 20 ): array {
 	global $wpdb;
@@ -273,6 +273,7 @@ function wpss_get_refund_review_items( int $limit = 20 ): array {
 	$items = array(
 		'failed'     => array(),
 		'uncascaded' => array(),
+		'unassigned' => \WPSellServices\Services\PendingRefundService::all( $limit ),
 	);
 
 	if ( '1.0' === get_option( 'wpss_order_meta_table_version' ) ) {

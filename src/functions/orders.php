@@ -145,6 +145,35 @@ function wpss_order_actor_role( object $order, int $user_id ): string {
 }
 
 /**
+ * The platform that collected the money for an order, or '' when WP Sell Services did.
+ *
+ * Standalone checkout and our own gateways collect the money here, so we refund it
+ * here. An order paid through a shop platform (WooCommerce, EDD, FluentCart) is
+ * refunded in that platform; we only record the refund it reports. Ownership is
+ * decided by where the order was paid, never by its payment method: a Woo order
+ * can carry "stripe" as its method and still belongs to Woo.
+ *
+ * @since 1.9.0
+ *
+ * @param object $order Order row or model.
+ * @return string Human-readable platform name, or '' when we collected the money.
+ */
+function wpss_order_money_rail( object $order ): string {
+	/**
+	 * Filters the platform that owns an order's money.
+	 *
+	 * An ecommerce adapter returns its name for orders it collected (for
+	 * example "WooCommerce"); everything else is ours to refund.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param string $rail  Platform name, '' for orders we collected.
+	 * @param object $order Order row or model.
+	 */
+	return (string) apply_filters( 'wpss_order_money_rail', '', $order );
+}
+
+/**
  * Whether a user may refund an order from the dashboard.
  *
  * Admin only by default. The filter is the extension point for letting vendors

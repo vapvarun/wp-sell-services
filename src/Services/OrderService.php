@@ -33,14 +33,14 @@ class OrderService {
 	 *
 	 * - WE initiate it (admin metabox, dispute resolution, buyer cancel). The
 	 *   money has NOT moved yet, so the refund handler must call the gateway.
-	 * - THE RAIL initiates it (a refund in the Stripe dashboard arriving on
-	 *   charge.refunded, or a Woo refund). The money has ALREADY moved; calling
-	 *   the gateway again refunds the buyer a second time.
+	 * - THE RAIL initiates it (a refund made in a gateway's dashboard and
+	 *   reported by its webhook, or a refund made in a shop platform). The money
+	 *   has ALREADY moved; calling the gateway again refunds the buyer a second
+	 *   time.
 	 *
-	 * Without this distinction the second case is a money-loss bug: verified in
-	 * the Stripe sandbox on 2026-08-01, a $5.00 dashboard refund on order #114
-	 * produced a second $5.00 refund four seconds later — $10.00 out the door
-	 * on a $12.50 charge, from a single click.
+	 * Without this distinction the second case is a money-loss bug: a $5.00
+	 * dashboard refund once produced a second $5.00 refund four seconds later,
+	 * $10.00 out the door on a $12.50 charge, from a single click.
 	 *
 	 * Only the gateway call is suppressed. The vendor-earnings reversal must
 	 * still run either way, because the rail knows nothing about our wallet.
@@ -53,9 +53,8 @@ class OrderService {
 	/**
 	 * Mark a refund as already settled at the payment rail.
 	 *
-	 * For rails that do not route through apply_refund_status() — Pro's
-	 * WooCommerce provider persists the amount itself and then moves the
-	 * status. Always pair with clear_settled_at_rail() in a finally block.
+	 * For rails that do not route through apply_refund_status() and persist
+	 * the amount themselves before moving the status. Always pair with clear_settled_at_rail() in a finally block.
 	 *
 	 * @since 1.4.0
 	 *
@@ -345,6 +344,70 @@ class OrderService {
 	 *         failed (gateway refused - nothing recorded), refused (not refundable).
 	 */
 	public function refund( int $order_id, ?float $amount, string $status, array $ctx = array() ): array {
+		// One refund per order at a time. A refund that moves money holds the lock from the gateway
+		// call to the database write, so a double click or the gateway's own webhook for this very
+		// refund cannot be recorded a second time. A refund reported by the rail takes no lock; it
+		// checks it instead (OrderWorkflowManager::handle_gateway_refund()).
+		$takes_lock = empty( $ctx['settled_at_rail'] );
+
+		if ( $takes_lock ) {
+			if ( self::is_refund_locked( $order_id ) ) {
+				return array(
+					'ok'           => false,
+					'outcome'      => 'refused',
+					'amount'       => 0.0,
+					'status_after' => '',
+					'gateway'      => null,
+					'message'      => __( 'A refund for this order is already being processed. Reload it in a moment.', 'wp-sell-services' ),
+					'retryable'    => false,
+					'children'     => array(),
+				);
+			}
+
+			set_transient( self::refund_lock_key( $order_id ), 1, MINUTE_IN_SECONDS );
+		}
+
+		try {
+			return $this->apply_refund( $order_id, $amount, $status, $ctx );
+		} finally {
+			if ( $takes_lock ) {
+				delete_transient( self::refund_lock_key( $order_id ) );
+			}
+		}
+	}
+
+	/**
+	 * Whether a refund that moves money is in flight for this order.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public static function is_refund_locked( int $order_id ): bool {
+		return false !== get_transient( self::refund_lock_key( $order_id ) );
+	}
+
+	/**
+	 * Transient key of the per-order refund lock.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return string
+	 */
+	private static function refund_lock_key( int $order_id ): string {
+		return 'wpss_refund_lock_' . $order_id;
+	}
+
+	/**
+	 * Record one refund event (see refund()).
+	 *
+	 * @param int                  $order_id Order ID.
+	 * @param float|null           $amount   Amount refunded to the buyer.
+	 * @param string               $status   Target status.
+	 * @param array<string, mixed> $ctx      Context, as refund().
+	 * @return array<string, mixed>
+	 */
+	private function apply_refund( int $order_id, ?float $amount, string $status, array $ctx ): array {
 		global $wpdb;
 
 		$settled_at_rail = ! empty( $ctx['settled_at_rail'] );
@@ -365,6 +428,24 @@ class OrderService {
 
 		if ( ! $order ) {
 			return $result( false, 'refused', 0.0, '', null, __( 'Order not found.', 'wp-sell-services' ) );
+		}
+
+		// The platform that took the money refunds it. We only record what it reports.
+		$rail = $settled_at_rail ? '' : wpss_order_money_rail( $order );
+
+		if ( '' !== $rail ) {
+			return $result(
+				false,
+				'refused',
+				0.0,
+				(string) $order->status,
+				null,
+				sprintf(
+					/* translators: %s: platform name, for example WooCommerce. */
+					__( 'This order was paid through %s. Refund it there; the refund is recorded here when it is made.', 'wp-sell-services' ),
+					$rail
+				)
+			);
 		}
 
 		$table    = $wpdb->prefix . 'wpss_orders';
@@ -547,8 +628,8 @@ class OrderService {
 
 			// The money is already back, so a full refund closes the payment
 			// here. The admin path closes it after its own gateway call; a
-			// Stripe or PayPal dashboard refund used to leave the order
-			// refunded with its payment still "paid".
+			// refund made at the rail used to leave the order refunded with
+			// its payment still "paid".
 			if ( ServiceOrder::STATUS_REFUNDED === $status ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->update( $table, array( 'payment_status' => 'refunded' ), array( 'id' => $order_id ), array( '%s' ), array( '%d' ) );

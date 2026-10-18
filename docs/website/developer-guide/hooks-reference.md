@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**543 hooks** across **752** firing sites.
+**545 hooks** across **756** firing sites.
 
-## Actions (276)
+## Actions (277)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -130,7 +130,8 @@ guide; this is the complete index.
 | `wpss_fluentcart_order_created` | 3 | `src/Integrations/FluentCart/FluentCartOrderProvider.php` **[PRO]** | Fires when a WPSS order is created from Fluent Cart. |
 | `wpss_fluentcart_order_detail` | 1 | `src/Integrations/FluentCart/FluentCartAccountProvider.php` **[PRO]** | Fires after order detail content. |
 | `wpss_gateway_cards` | 1 | `src/Admin/Settings.php` | Fires after the registered gateway cards, before Offline. |
-| `wpss_gateway_refund_received` | 4 | `src/Integrations/PayPal/PayPalGateway.php` *(+3 more)* | Fires when a refund happened at the payment rail. |
+| `wpss_gateway_refund_received` | 4 | `src/Integrations/PayPal/PayPalGateway.php` *(+5 more)* | Fires when a refund happened at the payment rail. |
+| `wpss_gateway_refund_unallocated` | 1 | `src/Services/PendingRefundService.php` | Fires when a rail refund cannot be tied to one gig and waits for an admin. |
 | `wpss_gateway_settings_owned_by_rail` | 1 | `src/Admin/Settings.php` | Fires instead of the gateway cards when a cart rail owns payment. |
 | `wpss_loaded` | 1 | `src/Core/Plugin.php` | Fires after the plugin is fully loaded. |
 | `wpss_message_sent` | 2 | `src/Services/ConversationService.php` | Fires when a message is sent. |
@@ -293,7 +294,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (267)
+## Filters (268)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -416,6 +417,7 @@ guide; this is the complete index.
 | `wpss_open_graph_data` | 2 | `src/SEO/SEO.php` |  |
 | `wpss_order_actions` | 2 | `templates/order/order-view.php` | Filter: wpss_order_actions |
 | `wpss_order_is_refundable` | 2 | `src/functions/ledger.php` | Filter whether an order may be refunded. |
+| `wpss_order_money_rail` | 2 | `src/functions/orders.php` | Filters the platform that owns an order's money. |
 | `wpss_order_number_prefix` | 1 | `src/Database/Repositories/OrderRepository.php` *(+1 more)* | Generate a unique order number. |
 | `wpss_order_payment_reference` | 2 | `src/functions/orders.php` | Filter the payment-rail receipt reference shown on an order. |
 | `wpss_order_status_groups` | 1 | `src/functions/order-status.php` | Filter the order status groups used by the dashboard filter chips. |

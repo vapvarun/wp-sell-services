@@ -33,6 +33,7 @@ use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Services\AuditLogService;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\OrderService;
+use WPSellServices\Services\PendingRefundService;
 use WPSellServices\Services\OrderWorkflowManager;
 use WPSellServices\Assets\ScriptRegistry;
 
@@ -443,6 +444,7 @@ class Admin {
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
 		add_action( 'admin_post_wpss_mark_refund_sent', array( $this, 'handle_mark_refund_sent' ) );
 		add_action( 'admin_post_wpss_retry_refund', array( $this, 'handle_retry_refund' ) );
+		add_action( 'admin_post_wpss_assign_pending_refund', array( $this, 'handle_assign_pending_refund' ) );
 	}
 
 	/**
@@ -603,8 +605,29 @@ class Admin {
 		if ( ! empty( $review['uncascaded'] ) ) {
 			$deferred = $this->defer_notice( __( 'refunded orders with extensions or tips still paid', 'wp-sell-services' ) ) || $deferred;
 		}
+		if ( ! empty( $review['unassigned'] ) ) {
+			/* translators: %d: number of refunds */
+			$deferred = $this->defer_notice( sprintf( _n( '%d refund waiting to be assigned to a gig', '%d refunds waiting to be assigned to a gig', count( $review['unassigned'] ), 'wp-sell-services' ), count( $review['unassigned'] ) ) ) || $deferred;
+		}
 		if ( $deferred ) {
 			return;
+		}
+
+		if ( ! empty( $review['unassigned'] ) ) {
+			$items = array();
+
+			foreach ( $review['unassigned'] as $record ) {
+				$orders  = array_map( 'intval', (array) $record['orders'] );
+				$items[] = '<li>' . esc_html( wpss_format_price( (float) $record['remaining'], (string) $record['currency'] ) ) . ': '
+					. implode( ', ', array_map( $link, $orders ) ) . '</li>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built from escaped links.
+			}
+
+			printf(
+				'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><ul style="list-style: disc; margin-inline-start: 1.5em;">%s</ul></div>',
+				esc_html( _n( 'A refund was made at the payment platform without saying which gig it was for.', 'Refunds were made at the payment platform without saying which gig they were for.', count( $items ), 'wp-sell-services' ) ),
+				esc_html__( 'The buyer has the money back. Open the gig it was for and assign the refund, so the right vendor is charged.', 'wp-sell-services' ),
+				implode( '', $items ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each item escaped above.
+			);
 		}
 
 		if ( ! empty( $review['failed'] ) ) {
@@ -630,6 +653,39 @@ class Admin {
 				implode( '', array_map( static fn( int $id ): string => '<li>' . $link( $id ) . '</li>', $review['uncascaded'] ) ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built from escaped links.
 			);
 		}
+	}
+
+	/**
+	 * Admin assigned a refund the payment platform reported without a gig to this order.
+	 *
+	 * @since 1.9.0
+	 * @return void
+	 */
+	public function handle_assign_pending_refund(): void {
+		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		if ( ! isset( $_POST['wpss_assign_refund_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_assign_refund_nonce'] ) ), 'wpss_assign_pending_refund_' . $order_id ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		$amount = isset( $_POST['amount'] ) ? (float) wp_unslash( $_POST['amount'] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to float.
+		$result = ( new PendingRefundService() )->assign( $order_id, $amount );
+		$args   = array(
+			'page'     => 'wpss-orders',
+			'action'   => 'view',
+			'order_id' => $order_id,
+		);
+
+		if ( $result['ok'] ) {
+			$args['updated'] = '1';
+		}
+
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	/**
@@ -2694,8 +2750,63 @@ class Admin {
 						</div>
 					<?php endif; ?>
 
+					<?php
+					// A refund is made where the money was collected. A shop platform refunds its own orders.
+					$wpss_money_rail = wpss_order_money_rail( $order );
+
+					if ( '' !== $wpss_money_rail && current_user_can( 'manage_options' ) && wpss_order_is_refundable( $order ) ) :
+						?>
+						<div class="postbox">
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Refund', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<p>
+									<?php
+									printf(
+										/* translators: %s: platform name, for example WooCommerce. */
+										esc_html__( 'This order was paid through %s. Refund it there; the refund is recorded here when it is made.', 'wp-sell-services' ),
+										esc_html( $wpss_money_rail )
+									);
+									?>
+								</p>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<?php
+					// A refund the payment platform reported without naming the gig.
+					$wpss_unassigned = current_user_can( 'manage_options' ) ? PendingRefundService::get( $order_id ) : null;
+
+					if ( null !== $wpss_unassigned ) :
+						?>
+						<div class="postbox wpss-refund-unassigned">
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Refund waiting for a gig', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<p>
+									<?php
+									printf(
+										/* translators: 1: amount, 2: transaction id */
+										esc_html__( '%1$s was refunded at the payment platform (%2$s) without saying which gig it was for. If it was this one, assign it here. The vendor\'s earnings are reversed only for the gig you assign it to.', 'wp-sell-services' ),
+										'<strong>' . esc_html( wpss_format_price( (float) $wpss_unassigned['remaining'], (string) $wpss_unassigned['currency'] ) ) . '</strong>',
+										esc_html( (string) $wpss_unassigned['transaction_id'] )
+									);
+									?>
+								</p>
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+									<input type="hidden" name="action" value="wpss_assign_pending_refund">
+									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
+									<?php wp_nonce_field( 'wpss_assign_pending_refund_' . $order_id, 'wpss_assign_refund_nonce' ); ?>
+									<p>
+										<label for="wpss-assign-refund-<?php echo esc_attr( (string) $order_id ); ?>"><strong><?php esc_html_e( 'Amount for this gig', 'wp-sell-services' ); ?></strong></label><br>
+										<input type="number" id="wpss-assign-refund-<?php echo esc_attr( (string) $order_id ); ?>" name="amount" min="0" step="0.01" max="<?php echo esc_attr( (string) $wpss_unassigned['remaining'] ); ?>" value="<?php echo esc_attr( (string) $wpss_unassigned['remaining'] ); ?>" style="width: 140px;">
+									</p>
+									<?php submit_button( __( 'Assign to this gig', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+								</form>
+							</div>
+						</div>
+					<?php endif; ?>
+
 					<!-- Admin Actions -->
-					<?php if ( current_user_can( 'manage_options' ) && wpss_order_is_refundable( $order ) ) : ?>
+					<?php if ( '' === $wpss_money_rail && current_user_can( 'manage_options' ) && wpss_order_is_refundable( $order ) ) : ?>
 						<?php
 						$wpss_already_refunded = wpss_get_order_refunded_amount( $order );
 						$wpss_refundable_left  = max( 0, (float) $order->total - $wpss_already_refunded );
