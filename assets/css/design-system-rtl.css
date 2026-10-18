@@ -358,6 +358,7 @@ input.wpss-input,
 select.wpss-input,
 textarea.wpss-input,
 textarea.wpss-textarea,
+select.wpss-select,
 input.wpss-form-input,
 select.wpss-form-select,
 textarea.wpss-form-textarea {
@@ -375,6 +376,7 @@ textarea.wpss-form-textarea {
 :root[data-theme="dark"] select.wpss-input,
 :root[data-theme="dark"] textarea.wpss-input,
 :root[data-theme="dark"] textarea.wpss-textarea,
+:root[data-theme="dark"] select.wpss-select,
 :root[data-theme="dark"] input.wpss-form-input,
 :root[data-theme="dark"] select.wpss-form-select,
 :root[data-theme="dark"] textarea.wpss-form-textarea,
@@ -385,6 +387,7 @@ textarea.wpss-form-textarea {
 :root[data-bx-mode="dark"] select.wpss-input,
 :root[data-bx-mode="dark"] textarea.wpss-input,
 :root[data-bx-mode="dark"] textarea.wpss-textarea,
+:root[data-bx-mode="dark"] select.wpss-select,
 :root[data-bx-mode="dark"] input.wpss-form-input,
 :root[data-bx-mode="dark"] select.wpss-form-select,
 :root[data-bx-mode="dark"] textarea.wpss-form-textarea,
@@ -395,6 +398,7 @@ textarea.wpss-form-textarea {
 .wpss-dark select.wpss-input,
 .wpss-dark textarea.wpss-input,
 .wpss-dark textarea.wpss-textarea,
+.wpss-dark select.wpss-select,
 .wpss-dark input.wpss-form-input,
 .wpss-dark select.wpss-form-select,
 .wpss-dark textarea.wpss-form-textarea {
@@ -1025,6 +1029,8 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 .wpss-modal.wpss-modal-open { display: flex; }
 .wpss-modal__backdrop { position: absolute; inset: 0; background: var(--wpss-overlay); backdrop-filter: blur(2px); }
 .wpss-modal__dialog { position: relative; display: flex; flex-direction: column; background: var(--wpss-bg); border-radius: var(--wpss-radius-xl); max-width: 480px; width: 100%; box-shadow: var(--wpss-shadow-xl); max-height: 90vh; overflow-y: auto; }
+/* Fields inside a modal take text colour from the plugin tokens, not the host theme, so dark mode stays readable. */
+.wpss-modal__body :is(input:not([type=checkbox]):not([type=radio]), select, textarea) { color: var(--wpss-text); }
 .wpss-modal__dialog--sm { max-width: 360px; }
 .wpss-modal__dialog--lg { max-width: 720px; }
 .wpss-modal__header { position: relative; padding: var(--wpss-space-6) var(--wpss-space-6) var(--wpss-space-4); border-bottom: 1px solid var(--wpss-border); }
