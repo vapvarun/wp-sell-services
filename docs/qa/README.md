@@ -14,6 +14,8 @@ One page, in the order QA works. Everything QA needs is linked from here; nothin
 | `QA-HANDOFF-1.9.0.md` | developer | what changed this release, by fix group (replaced each release) |
 | `OWNER_INVENTORY.md` | generated | what the site owner can see; regenerate, never edit |
 
+Tests all live in Free: `tests/` for the core and `tests/pro/` for Pro features (each skips with a message when Pro is not active). Run any of them with `wp eval-file tests/<file>.php` from the WordPress root.
+
 ## 1. Set up (every session)
 
 1. Plugin on the branch named on the card, Free and Pro at origin HEAD.
