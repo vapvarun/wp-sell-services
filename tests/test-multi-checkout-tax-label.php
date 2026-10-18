@@ -16,9 +16,17 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 	$fails += $ok ? 0 : 1;
 };
 
-$ids = get_posts( array( 'post_type' => 'wpss_service', 'post_status' => 'publish', 'posts_per_page' => 1, 'fields' => 'ids' ) );
+// A service with a price: a free one is never taxed, whatever the rate.
+$ids = array();
+foreach ( get_posts( array( 'post_type' => 'wpss_service', 'post_status' => 'publish', 'posts_per_page' => 20, 'fields' => 'ids' ) ) as $candidate ) {
+	$priced = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( (int) $candidate, 0, 1, array() );
+	if ( ! is_wp_error( $priced ) && (float) $priced['subtotal'] > 0 ) {
+		$ids = array( $candidate );
+		break;
+	}
+}
 if ( ! $ids ) {
-	echo "SKIP  no published service\n";
+	echo "SKIP  no priced published service\n";
 	return;
 }
 

@@ -33,6 +33,7 @@
    ========================================================================== */
 
 :root {
+	--wpss-modal-offset: 0px; /* set by WPSS.offsetModalFromHeader() when a sticky header covers the top */
 	/* ---- Colors ---- */
 	--wpss-primary: #4f46e5;
 	--wpss-primary-hover: #4338ca;

@@ -61,7 +61,8 @@ $urls[0][] = $first( 'wpss_service' ) ? get_permalink( $first( 'wpss_service' ) 
 $urls[0][] = $first( 'wpss_request' ) ? get_permalink( $first( 'wpss_request' ) ) : '';
 $urls[0][] = (string) get_post_type_archive_link( 'wpss_request' );
 $urls[0][] = $vendor_id ? wpss_get_vendor_url( $vendor_id ) : '';
-$urls[0][] = $term && ! is_wp_error( $term ) ? (string) get_term_link( $term[0] ) : '';
+$term_link = $term && ! is_wp_error( $term ) ? get_term_link( $term[0] ) : '';
+$urls[0][]  = is_wp_error( $term_link ) ? '' : (string) $term_link;
 
 // Every dashboard section, for both sides of the marketplace.
 $sections = ( new ReflectionMethod( UnifiedDashboard::class, 'get_sections' ) );
