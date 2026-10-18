@@ -1409,7 +1409,15 @@ body.wpss-modal-active { overflow: hidden; }
 .wpss-stat-card--highlight .wpss-stat-card__value,
 .wpss-stat-card--highlight .wpss-stat-card__label,
 .wpss-stat-card--highlight .wpss-stat-card__meta { color: var(--wpss-white, #fff); }
-.wpss-stat-card--negative .wpss-stat-card__value { color: var(--wpss-danger); }
+/* A debt is not the accent tile: red on the indigo fill read 1.3:1. Surface fill, danger border,
+   --wpss-danger-text (which lightens in dark mode) for the figure. */
+.wpss-stats-grid .wpss-stat-card--negative,
+.wpss-stat-card.wpss-stat-card--negative {
+	background: var(--wpss-surface);
+	border-color: var(--wpss-danger);
+}
+.wpss-stat-card--negative .wpss-stat-card__value { color: var(--wpss-danger-text); }
+.wpss-stat-card--negative .wpss-stat-card__label { color: var(--wpss-text-secondary); }
 
 @media (max-width: 640px) {
 	.wpss-stats-grid,

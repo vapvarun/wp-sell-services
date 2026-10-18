@@ -60,6 +60,19 @@ $payout_method  = $payout_profile['method'];
 // their earnings are ready, when the site requires $50, is the same lie in a
 // smaller hat.
 $available_balance = (float) $earnings['available_balance'];
+
+// What the owner sees for this vendor is the ledger figure; the tile below also subtracts a withdrawal
+// in progress. The debt notices state the ledger amount and name the withdrawal, so the two screens
+// reconcile (Basecamp 10416610833).
+$wpss_ledger_owed  = (float) $earnings['ledger_balance'] < 0 ? abs( (float) $earnings['ledger_balance'] ) : abs( $available_balance );
+$wpss_pending_note = (float) $earnings['pending_withdrawal'] > 0
+	? sprintf(
+		/* translators: 1: withdrawal in progress, formatted. 2: balance shown on the card, formatted. */
+		__( 'A withdrawal of %1$s is still in progress and is counted against you until it is processed, so the card below reads %2$s.', 'wp-sell-services' ),
+		wpss_format_price( (float) $earnings['pending_withdrawal'] ),
+		wpss_format_price( $available_balance )
+	)
+	: '';
 $pending_clearance = (float) $earnings['pending_clearance'];
 
 if ( $available_balance < 0 ) {
@@ -154,15 +167,23 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 		?>
 		<div class="wpss-notice wpss-notice--warning wpss-earnings-debt">
 			<h3 class="wpss-earnings-debt__title"><?php esc_html_e( 'Your balance is below zero', 'wp-sell-services' ); ?></h3>
+			<?php if ( (float) $earnings['ledger_balance'] >= 0 ) : ?>
+				<?php // No debt: a withdrawal in progress is larger than what the ledger holds (for example after an admin write-off). ?>
+				<p><?php echo esc_html( $wpss_pending_note ); ?></p>
+			<?php else : ?>
 			<p>
 				<?php
 				printf(
 					/* translators: %s: the amount the vendor is short, formatted. */
 					esc_html__( 'A previous payout came to %s more than your earnings covered. Nothing is being taken from you now - your next earnings clear this first, and anything above it becomes available to withdraw as usual.', 'wp-sell-services' ),
-					esc_html( wpss_format_price( abs( $available_balance ) ) )
+					esc_html( wpss_format_price( $wpss_ledger_owed ) )
 				);
 				?>
 			</p>
+				<?php if ( '' !== $wpss_pending_note ) : ?>
+				<p class="wpss-caption"><?php echo esc_html( $wpss_pending_note ); ?></p>
+			<?php endif; ?>
+			<?php endif; ?>
 			<p class="wpss-caption">
 				<?php esc_html_e( 'If that does not look right, contact the site owner with your order history - they can see every entry behind this figure.', 'wp-sell-services' ); ?>
 			</p>
@@ -334,6 +355,8 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 
 				<div id="wpss-withdrawal-message" class="wpss-notice" style="display: none;"></div>
 			</form>
+		<?php elseif ( $available_balance < 0 && (float) $earnings['ledger_balance'] >= 0 ) : ?>
+			<?php // Over-committed by a withdrawal in progress, not in debt: the notice above says so. ?>
 		<?php elseif ( 'negative' === EarningsService::classify_balance( (float) $earnings['available_balance'] ) ) : ?>
 			<?php
 			// A refund reversed earnings the vendor had already withdrawn, so
@@ -342,7 +365,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 			// simply have not earned enough, when in fact money was taken back.
 			// The balance is a ledger SUM, so new earnings clear it
 			// automatically; nobody has to chase an invoice.
-			$wpss_owed_amount   = abs( (float) $earnings['available_balance'] );
+			$wpss_owed_amount   = $wpss_ledger_owed;
 			$wpss_earn_more_url = wpss_append_dashboard_section( get_permalink(), 'services' );
 			?>
 			<div class="wpss-banner wpss-banner--danger wpss-earnings__payout-banner" role="status">

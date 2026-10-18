@@ -276,6 +276,8 @@ class EarningsController extends RestController {
 				'available_balance'        => round( $summary['available_balance'], 2 ),
 				'in_clearance'             => round( $summary['in_clearance'], 2 ),
 				// 'negative' when the vendor owes the platform; clients show an explanation, not a bare minus figure.
+				// What the admin Vendors screen shows; available_balance also subtracts a withdrawal in progress.
+				'ledger_balance'           => round( $summary['ledger_balance'], 2 ),
 				'balance_state'            => \WPSellServices\Services\EarningsService::classify_balance( (float) $summary['available_balance'] ),
 				'total_earned_minor'       => wpss_amount_to_minor_units( (float) $summary['total_earned'], $currency ),
 				'total_withdrawn_minor'    => wpss_amount_to_minor_units( (float) $summary['withdrawn'], $currency ),
