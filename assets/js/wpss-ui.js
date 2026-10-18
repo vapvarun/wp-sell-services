@@ -4,6 +4,7 @@
  * Exposes two globals:
  *   window.wpssConfirm( message, options ) → Promise<boolean>
  *   window.wpssToast( message, type )
+ *   window.wpssModal.open( el | id ) / .close( el | id ) / .closeAll()
  *
  * Single source of truth for both helpers across admin and frontend.
  * Vanilla JS, no jQuery dependency.  IIFE so it is idempotent across
@@ -302,5 +303,138 @@
 			summary.setAttribute( 'hidden', 'hidden' );
 		}
 		trigger.setAttribute( 'hidden', 'hidden' );
+	} );
+}() );
+
+/* -------------------------------------------------------------------------
+   wpssModal - the one open/close contract for .wpss-modal.
+   Markup and CSS: design-system.css section 10. Open sets .wpss-modal-open and
+   drops [hidden], locks the page, traps focus, and keeps the dialog clear of a
+   fixed theme header. Close buttons, the backdrop and Esc close the top modal.
+   ---------------------------------------------------------------------- */
+( function() {
+	'use strict';
+
+	if ( window.wpssModal ) {
+		return;
+	}
+
+	var FOCUSABLE = 'button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])';
+	var lastFocused = null;
+
+	function resolve( target ) {
+		return 'string' === typeof target ? document.getElementById( target ) : target;
+	}
+
+	function visible( root ) {
+		return Array.prototype.filter.call( root.querySelectorAll( FOCUSABLE ), function( el ) {
+			return el.offsetParent !== null;
+		} );
+	}
+
+	function openModals() {
+		return document.querySelectorAll( '.wpss-modal.wpss-modal-open' );
+	}
+
+	// Hand the height of a fixed/sticky header covering the top edge to the CSS.
+	function offsetFromHeader( modal ) {
+		var offset = 0;
+		document.elementsFromPoint( Math.round( window.innerWidth / 2 ), 2 ).forEach( function( el ) {
+			if ( modal.contains( el ) || el === document.body || el === document.documentElement ) {
+				return;
+			}
+			var pos = window.getComputedStyle( el ).position;
+			if ( 'fixed' === pos || 'sticky' === pos ) {
+				offset = Math.max( offset, Math.ceil( el.getBoundingClientRect().bottom ) );
+			}
+		} );
+		modal.style.setProperty( '--wpss-modal-offset', offset + 'px' );
+	}
+
+	function trap( e ) {
+		if ( 'Tab' !== e.key ) {
+			return;
+		}
+		var items = visible( e.currentTarget );
+		if ( ! items.length ) {
+			return;
+		}
+		var first = items[ 0 ];
+		var last  = items[ items.length - 1 ];
+		if ( e.shiftKey && document.activeElement === first ) {
+			e.preventDefault();
+			last.focus();
+		} else if ( ! e.shiftKey && document.activeElement === last ) {
+			e.preventDefault();
+			first.focus();
+		}
+	}
+
+	function open( target ) {
+		var modal = resolve( target );
+		if ( ! modal ) {
+			return;
+		}
+		lastFocused = document.activeElement;
+		modal.hidden = false;
+		modal.classList.add( 'wpss-modal-open' );
+		document.body.classList.add( 'wpss-modal-active' );
+		offsetFromHeader( modal );
+		modal.addEventListener( 'keydown', trap );
+		// Icons inside a modal rendered hidden need hydrating once it shows.
+		document.dispatchEvent( new CustomEvent( 'wpss:icons:refresh' ) );
+		// First field, else the footer's first button (the safe one), never the close icon.
+		var body   = modal.querySelector( '.wpss-modal__body' );
+		var footer = modal.querySelector( '.wpss-modal__footer' );
+		var first  = ( body && visible( body )[ 0 ] ) || ( footer && visible( footer )[ 0 ] ) || visible( modal )[ 0 ];
+		if ( first ) {
+			first.focus();
+		}
+		modal.dispatchEvent( new CustomEvent( 'wpss:modal:open', { bubbles: true } ) );
+	}
+
+	function close( target ) {
+		var modal = target ? resolve( target ) : openModals()[ openModals().length - 1 ];
+		if ( ! modal ) {
+			return;
+		}
+		modal.classList.remove( 'wpss-modal-open' );
+		modal.hidden = true;
+		modal.removeEventListener( 'keydown', trap );
+		if ( ! openModals().length ) {
+			document.body.classList.remove( 'wpss-modal-active' );
+		}
+		if ( lastFocused && lastFocused.focus ) {
+			lastFocused.focus();
+		}
+		lastFocused = null;
+		modal.dispatchEvent( new CustomEvent( 'wpss:modal:close', { bubbles: true } ) );
+	}
+
+	function closeAll() {
+		Array.prototype.forEach.call( openModals(), close );
+	}
+
+	window.wpssModal = { open: open, close: close, closeAll: closeAll };
+
+	document.addEventListener( 'click', function( e ) {
+		var opener = e.target.closest( '[data-wpss-modal-open]' );
+		if ( opener ) {
+			e.preventDefault();
+			open( opener.getAttribute( 'data-wpss-modal-open' ) );
+			return;
+		}
+		var closer = e.target.closest( '.wpss-modal__backdrop, .wpss-modal__close, .wpss-modal__close-btn' );
+		var modal  = closer && closer.closest( '.wpss-modal' );
+		if ( modal ) {
+			e.preventDefault();
+			close( modal );
+		}
+	} );
+
+	document.addEventListener( 'keydown', function( e ) {
+		if ( 'Escape' === e.key ) {
+			close();
+		}
 	} );
 }() );

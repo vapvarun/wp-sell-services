@@ -47,5 +47,8 @@
         "assets/css/single-service.css": 2,
         "assets/css/wpss-tour.css": 2
     },
+    "legacy-modal-php": [],
+    "legacy-modal-js": [],
+    "legacy-modal-css": [],
     "duplicate-primitive": []
 }

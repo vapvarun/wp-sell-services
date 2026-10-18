@@ -29,6 +29,10 @@ $rules = array(
 	'dashicons'      => array( array( 'src', 'templates' ), 'php', '/dashicons-/' ),
 	'js-dialogs'     => array( array( 'assets/js' ), 'js', '/(?<![\w.])(alert|confirm|prompt)\s*\(/' ),
 	'outline-none'   => array( array( 'assets/css' ), 'css', '/outline\s*:\s*(none|0)\b/' ),
+	// The one modal is .wpss-modal + __backdrop/__dialog/__header/__title/__close/__body/__footer (design-system.css).
+	'legacy-modal-php' => array( array( 'src', 'templates' ), 'php', '/wpss-modal(-(overlay|backdrop|dialog|content|header|body|footer|title|close|close-btn|dismiss|cancel|large|lg|error)|__(overlay|content|cancel))(?![\w-])/' ),
+	'legacy-modal-js'  => array( array( 'assets/js' ), 'js', '/wpss-modal(-(overlay|backdrop|dialog|content|header|body|footer|title|close|close-btn|dismiss|cancel|large|lg|error)|__(overlay|content|cancel))(?![\w-])/' ),
+	'legacy-modal-css' => array( array( 'assets/css' ), 'css', '/wpss-modal(-(overlay|backdrop|dialog|content|header|body|footer|title|close|close-btn|dismiss|cancel|large|lg|error)|__(overlay|content|cancel))(?![\w-])/' ),
 	// Selector line of a rule that opens with the owned base; admin.css is the wp-admin chrome surface.
 	'duplicate-primitive' => array( array( 'assets/css' ), 'css', '/^(a\.)?\.wpss-btn(--(primary|secondary|outline|success|danger|sm|lg|block|icon|ghost|disabled|full|danger-outline))?\s*[,{]/' ),
 );
@@ -44,7 +48,7 @@ foreach ( $rules as $name => list( $dirs, $ext, $re ) ) {
 		foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, FilesystemIterator::SKIP_DOTS ) ) as $file ) {
 			$rel = ltrim( str_replace( $root, '', $file->getPathname() ), '/' );
 			// Minified and RTL copies are generated from the source file.
-			if ( $file->getExtension() !== $ext || str_contains( $rel, '.min.' ) || str_contains( $rel, '-rtl.' ) || ( 'duplicate-primitive' === $name && in_array( basename( $rel ), array( 'design-system.css', 'admin.css' ), true ) ) || str_contains( $rel, 'vendor/' ) || str_contains( $rel, 'assets/js/vendor' ) ) {
+			if ( $file->getExtension() !== $ext || str_contains( $rel, '.min.' ) || str_contains( $rel, '-rtl.' ) || ( in_array( $name, array( 'duplicate-primitive', 'legacy-modal-css' ), true ) && in_array( basename( $rel ), array( 'design-system.css', 'admin.css' ), true ) ) || str_contains( $rel, 'vendor/' ) || str_contains( $rel, 'assets/js/vendor' ) ) {
 				continue;
 			}
 			foreach ( file( $file->getPathname() ) as $line ) {

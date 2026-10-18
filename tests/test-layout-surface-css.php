@@ -30,8 +30,8 @@ foreach ( array( 'design-system.css', 'design-system-rtl.css' ) as $f ) {
 $check( 'single-service.css no longer duplicates the breadcrumb rules', false === strpos( $read( 'assets/css/single-service.css' ), '.wpss-breadcrumb-list {' ) );
 
 $check( 'report modal starts hidden so it cannot flash before CSS loads', (bool) preg_match( '/id="wpss-report-modal" hidden/', $read( 'templates/partials/report-modal.php' ) ) );
-$js = $read( 'assets/js/frontend.js' );
-$check( 'showModal unhides and offsets from a sticky header', false !== strpos( $js, "prop('hidden', false).addClass('wpss-modal-open')" ) && false !== strpos( $js, 'offsetModalFromHeader' ) );
+$js = $read( 'assets/js/wpss-ui.js' );
+$check( 'wpssModal unhides and offsets from a sticky header', false !== strpos( $js, 'wpssModal' ) && false !== strpos( $js, '--wpss-modal-offset' ) && false !== strpos( $js, "removeAttribute( 'hidden' )" ) );
 
 foreach ( array( 'design-system.css', 'design-system-rtl.css' ) as $f ) {
 	$ds = $read( "assets/css/{$f}" );
@@ -47,9 +47,5 @@ $check( 'empty-state categories block is centred', (bool) preg_match( '/\.wpss-e
 $ad = $read( 'assets/css/admin.css' );
 $check( 'vacation fields stack label over control', false !== strpos( $ad, '.wpss-vacation-return-date label {' ) );
 $check( 'review search field is wide enough for its placeholder', (bool) preg_match( '/\.wpss-review-search input\[type="search"\] \{[^}]*min-width: 240px/', $ad ) );
-
-foreach ( array( 'single-service.css', 'single-service-rtl.css' ) as $f ) {
-	$check( "{$f} phone modal content sizes to its content, not the full screen", (bool) preg_match( '/\.wpss-modal-content \{\s*max-height: 100vh;\s*height: auto;/', $read( "assets/css/{$f}" ) ) );
-}
 
 echo $fails ? "{$fails} FAILED\n" : "All passed\n";

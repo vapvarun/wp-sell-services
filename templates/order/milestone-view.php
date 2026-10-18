@@ -320,7 +320,7 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					</div>
 					<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 					<div class="wpss-modal__footer">
-						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
 						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Submit delivery', 'wp-sell-services' ); ?></button>
 					</div>
 				</form>
@@ -349,7 +349,7 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					</div>
 					<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 					<div class="wpss-modal__footer">
-						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
 						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send back to seller', 'wp-sell-services' ); ?></button>
 					</div>
 				</form>
@@ -446,18 +446,12 @@ do_action( 'wpss_after_milestone_view', $current_order );
 		var form = modal.querySelector('.' + formClass);
 		var feedback = modal.querySelector('.wpss-modal__feedback');
 
-		function close() { modal.hidden = true; modal.classList.remove('wpss-modal-open'); }
-
 		document.querySelectorAll('.' + openerClass).forEach(function (btn) {
 			btn.addEventListener('click', function () {
-				modal.hidden = false;
-				modal.classList.add('wpss-modal-open');
+				window.wpssModal.open(modal);
 				var input = form.querySelector('[name=' + field + ']');
 				if (input) input.focus();
 			});
-		});
-		modal.querySelectorAll('.wpss-modal__close, .wpss-modal__cancel, .wpss-modal__backdrop').forEach(function (el) {
-			el.addEventListener('click', close);
 		});
 
 		form.addEventListener('submit', function (e) {

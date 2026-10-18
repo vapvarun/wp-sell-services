@@ -61,6 +61,7 @@ Logic that needs state, or is more than a few helpers, is a class in `Services/`
 | One screen family | `<surface>.css` (`single-service`, `vendor-dashboard`, `unified-dashboard`, `messaging`, `order-view`...) | Only scoped deltas under the surface's wrapper class. |
 | wp-admin | `admin.css`, `admin-<screen>.css` | Exempt from the primitive rule. |
 | Block editor | `blocks-editor.css` | |
+| A modal / dialog | markup `.wpss-modal` > `__backdrop` + `__dialog` > `__header` / `__body` / `__footer` (styles in `design-system.css`) | Open and close only through `window.wpssModal.open/close/closeAll` (`wpss-ui.js`) or `[data-wpss-modal-open="id"]`; it owns focus trap, Esc, scroll lock and the `wpss:modal:open/close` events. Never add a surface-specific overlay; `check-ux-conformance.php` fails on the legacy classes. |
 
 `-rtl.css` and `.min.css` are generated (`npm run rtl`, `node scripts/build-min.js`); never edit them.
 Colours, spacing and radii are tokens (`var(--wpss-*)`), never raw values.

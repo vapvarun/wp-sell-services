@@ -1473,7 +1473,7 @@ do_action( 'wpss_before_order_view', $order );
 						</div>
 						<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 						<div class="wpss-modal__footer">
-							<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+							<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
 							<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send to buyer', 'wp-sell-services' ); ?></button>
 						</div>
 					</form>
@@ -1488,12 +1488,7 @@ do_action( 'wpss_before_order_view', $order );
 			var form = modal.querySelector('.wpss-milestone-form');
 			var feedback = modal.querySelector('.wpss-modal__feedback');
 
-			// Dashboard CSS gates .wpss-modal visibility on the
-			// .wpss-modal-open class, not the [hidden] attribute — toggling
-			// .hidden alone leaves 'display: none' winning from the default
-			// rule, which is why the Propose button appeared to do nothing.
-			document.querySelectorAll('.wpss-open-milestone-modal').forEach(function (b) { b.addEventListener('click', function () { modal.hidden = false; modal.classList.add('wpss-modal-open'); try { document.dispatchEvent(new CustomEvent('wpss:icons:refresh')); } catch(_e){} }); });
-			modal.querySelectorAll('.wpss-modal__close, .wpss-modal__cancel, .wpss-modal__backdrop').forEach(function (b) { b.addEventListener('click', function () { modal.hidden = true; modal.classList.remove('wpss-modal-open'); }); });
+			document.querySelectorAll('.wpss-open-milestone-modal').forEach(function (b) { b.addEventListener('click', function () { window.wpssModal.open(modal); }); });
 
 			form.addEventListener('submit', function (e) {
 				e.preventDefault();
@@ -2200,15 +2195,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	document.querySelectorAll('.wpss-cancel-btn').forEach(function(btn) {
 		btn.addEventListener('click', function(e) {
 			e.preventDefault();
-			if (typeof jQuery !== 'undefined' && typeof WPSS !== 'undefined' && WPSS.showModal) {
-				WPSS.showModal('wpss-cancel-modal');
-			} else {
-				var modal = document.getElementById('wpss-cancel-modal');
-				if (modal) {
-					modal.classList.add('wpss-modal-open');
-					document.body.classList.add('wpss-modal-active');
-				}
-			}
+			window.wpssModal.open('wpss-cancel-modal');
 		});
 	});
 
@@ -2296,7 +2283,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					</div>
 					<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 					<div class="wpss-modal__footer">
-						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
 						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send Payment Link', 'wp-sell-services' ); ?></button>
 					</div>
 				</form>
@@ -2309,19 +2296,11 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		var modal = document.getElementById('wpss-extension-modal');
 		if (!modal) return;
 		var openBtns = document.querySelectorAll('.wpss-open-extension-modal');
-		var closeBtns = modal.querySelectorAll('.wpss-modal__close, .wpss-modal__cancel, .wpss-modal__backdrop');
 		var form = modal.querySelector('.wpss-extension-form');
 		var feedback = modal.querySelector('.wpss-modal__feedback');
 
-		// Same class-based visibility gate the milestone modal uses: the
-		// dashboard CSS default is display:none and the .wpss-modal-open
-		// class is what flips it to flex. Toggling .hidden alone silently
-		// no-ops because display:none wins specificity.
-		function show() { modal.hidden = false; modal.classList.add('wpss-modal-open'); try { document.dispatchEvent(new CustomEvent('wpss:icons:refresh')); } catch(_e){} }
-		function hide() { modal.hidden = true; modal.classList.remove('wpss-modal-open'); if (feedback) { feedback.hidden = true; feedback.textContent = ''; feedback.className = 'wpss-modal__feedback'; } }
-
-		openBtns.forEach(function (btn) { btn.addEventListener('click', show); });
-		closeBtns.forEach(function (btn) { btn.addEventListener('click', hide); });
+		openBtns.forEach(function (btn) { btn.addEventListener('click', function () { window.wpssModal.open(modal); }); });
+		modal.addEventListener('wpss:modal:close', function () { if (feedback) { feedback.hidden = true; feedback.textContent = ''; feedback.className = 'wpss-modal__feedback'; } });
 
 		form.addEventListener('submit', function (e) {
 			e.preventDefault();

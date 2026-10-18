@@ -66,7 +66,6 @@
 			$(document).on('submit', '#wpss-portfolio-form', this.handlePortfolioSave.bind(this));
 			$(document).on('click', '#wpss-portfolio-upload-media', this.handlePortfolioMediaUpload.bind(this));
 			$(document).on('click', '.wpss-portfolio-media-remove', this.handlePortfolioMediaRemove.bind(this));
-			$(document).on('click', '.wpss-modal__close, .wpss-modal__close-btn, .wpss-modal__overlay', this.handleModalClose.bind(this));
 
 			// Favorites — unfavorite from the saved grid.
 			$(document).on('click', '.wpss-favorites__remove', this.handleFavoriteRemove.bind(this));
@@ -953,7 +952,7 @@
 			e.preventDefault();
 			this.resetPortfolioForm();
 			$('#wpss-portfolio-modal-title').text(wpssUnifiedDashboard.i18n.addPortfolioItem);
-			$('#wpss-portfolio-modal').addClass('wpss-modal-open');
+			window.wpssModal.open('wpss-portfolio-modal');
 		},
 
 		/**
@@ -1005,7 +1004,7 @@
 				$('#wpss-portfolio-media').val(JSON.stringify(mediaIds));
 			}
 
-			$('#wpss-portfolio-modal').addClass('wpss-modal-open');
+			window.wpssModal.open('wpss-portfolio-modal');
 		},
 
 		/**
@@ -1124,7 +1123,7 @@
 					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 				},
 				success: function () {
-					$('#wpss-portfolio-modal').removeClass('wpss-modal-open');
+					window.wpssModal.close('wpss-portfolio-modal');
 					window.location.reload();
 				},
 				error: function (xhr) {
@@ -1210,16 +1209,6 @@
 				WPSS.showNotification(message, 'error');
 				$button.prop('disabled', false);
 			});
-		},
-
-		/**
-		 * Close modal.
-		 *
-		 * @param {Event} e Click event.
-		 */
-		handleModalClose: function (e) {
-			e.preventDefault();
-			$(e.currentTarget).closest('.wpss-modal').removeClass('wpss-modal-open');
 		},
 
 		/**

@@ -51,7 +51,7 @@ foreach ( $roots as $root ) {
 }
 $check( 'no .wpss-btn carries wpss-modal-close (' . implode( ',', $offenders ) . ')', ! $offenders );
 foreach ( array( 'assets/js/single-service.js', 'assets/js/frontend.js' ) as $js ) {
-	$check( "{$js} still closes modals from .wpss-modal-dismiss", false !== strpos( $read( $js ), 'wpss-modal-dismiss' ) );
+	$check( "{$js} closes modals through wpssModal", false !== strpos( $read( $js ), 'wpssModal' ) );
 }
 
 echo $fails ? "{$fails} FAILED\n" : "All passed\n";

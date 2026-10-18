@@ -108,7 +108,7 @@ class SingleServiceView {
 		ScriptRegistry::enqueue(
 			'wpss-single-service',
 			'assets/js/single-service.js',
-			array( 'jquery', 'wpss-frontend' )
+			array( 'jquery', 'wpss-frontend', ScriptRegistry::HANDLE_UI )
 		);
 
 		$checkout_url = wpss_get_service_checkout_url( get_the_ID() );
@@ -146,6 +146,7 @@ class SingleServiceView {
 					'sendMessage'        => __( 'Send Message', 'wp-sell-services' ),
 					'contactFailed'      => __( 'Failed to send message. Please try again.', 'wp-sell-services' ),
 					'comparePackages'    => __( 'Compare Packages', 'wp-sell-services' ),
+					'close'              => __( 'Close', 'wp-sell-services' ),
 					'price'              => __( 'Price', 'wp-sell-services' ),
 					'delivery'           => __( 'Delivery', 'wp-sell-services' ),
 					'revisions'          => __( 'Revisions', 'wp-sell-services' ),
@@ -840,17 +841,14 @@ class SingleServiceView {
 		}
 		?>
 		<div id="wpss-order-modal" class="wpss-modal" hidden role="dialog" aria-modal="true" aria-labelledby="wpss-order-modal-title">
-			<div class="wpss-modal-overlay"></div>
-			<div class="wpss-modal-content">
-				<button type="button" class="wpss-modal-close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-					&times;
-				</button>
-
-				<div class="wpss-modal-header">
-					<h3 id="wpss-order-modal-title"><?php esc_html_e( 'Order Options', 'wp-sell-services' ); ?></h3>
+			<div class="wpss-modal__backdrop"></div>
+			<div class="wpss-modal__dialog">
+				<div class="wpss-modal__header">
+					<h3 id="wpss-order-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Order Options', 'wp-sell-services' ); ?></h3>
+					<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 				</div>
 
-				<div class="wpss-modal-body">
+				<div class="wpss-modal__body">
 					<form id="wpss-order-form" class="wpss-order-form">
 						<input type="hidden" name="service_id" value="<?php echo esc_attr( $service_id ); ?>">
 						<input type="hidden" name="package_index" value="0">
@@ -975,7 +973,7 @@ class SingleServiceView {
 					</form>
 				</div>
 
-				<div class="wpss-modal-footer">
+				<div class="wpss-modal__footer wpss-modal__footer--stack">
 					<div class="wpss-order-summary">
 						<div class="wpss-summary-row wpss-summary-package">
 							<span class="wpss-summary-label"><?php esc_html_e( 'Package:', 'wp-sell-services' ); ?></span>
@@ -1020,17 +1018,14 @@ class SingleServiceView {
 		}
 		?>
 		<div id="wpss-contact-modal" class="wpss-modal" hidden role="dialog" aria-modal="true" aria-labelledby="wpss-contact-modal-title">
-			<div class="wpss-modal-backdrop wpss-modal-overlay"></div>
-			<div class="wpss-modal-dialog wpss-modal-content">
-				<button type="button" class="wpss-modal-close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-					&times;
-				</button>
-
-				<div class="wpss-modal-header">
-					<h3 id="wpss-contact-modal-title"><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
+			<div class="wpss-modal__backdrop"></div>
+			<div class="wpss-modal__dialog">
+				<div class="wpss-modal__header">
+					<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
+					<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 				</div>
 
-				<div class="wpss-modal-body">
+				<div class="wpss-modal__body">
 					<div class="wpss-contact-vendor-info">
 						<img src="<?php echo esc_url( get_avatar_url( $vendor_id, array( 'size' => 50 ) ) ); ?>"
 							alt="<?php echo esc_attr( $vendor->display_name ); ?>"
@@ -1103,7 +1098,7 @@ class SingleServiceView {
 								<button type="submit" class="wpss-btn wpss-btn--primary">
 									<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
 								</button>
-								<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal-dismiss">									
+								<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">									
 									&times;
 								</button>
 							</div>

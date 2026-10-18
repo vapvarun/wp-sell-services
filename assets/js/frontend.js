@@ -659,79 +659,18 @@
 	};
 
 	/**
-	 * Show modal utility with focus trap.
+	 * Open / close a modal. The contract lives in wpss-ui.js (window.wpssModal);
+	 * these names stay because templates and add-ons call them.
 	 */
 	WPSS.showModal = function(modalId) {
-		const $modal = $('#' + modalId);
-		if ($modal.length) {
-			WPSS._lastFocused = document.activeElement;
-			$modal.prop('hidden', false).addClass('wpss-modal-open');
-			$('body').addClass('wpss-modal-active');
-			WPSS.offsetModalFromHeader($modal[0]);
-
-			// Packet H: rehydrate any <i data-lucide="…"> inside the modal. The
-			// modal body may have been rendered hidden (display:none) at load
-			// time; some browsers skip icon rendering for offscreen nodes, and
-			// AJAX-injected modal bodies need this unconditionally.
-			try {
-				document.dispatchEvent( new CustomEvent( 'wpss:icons:refresh' ) );
-			} catch ( e ) {}
-
-			// Focus first focusable element.
-			var $focusable = $modal.find('button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])').filter(':visible');
-			if ($focusable.length) {
-				$focusable.first().focus();
-			}
-
-			// Focus trap.
-			$modal.off('keydown.wpss-trap').on('keydown.wpss-trap', function(e) {
-				if (e.key !== 'Tab') return;
-				var $focusables = $modal.find('button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])').filter(':visible');
-				var $first = $focusables.first();
-				var $last = $focusables.last();
-				if (e.shiftKey && document.activeElement === $first[0]) {
-					e.preventDefault();
-					$last.focus();
-				} else if (!e.shiftKey && document.activeElement === $last[0]) {
-					e.preventDefault();
-					$first.focus();
-				}
-			});
-		}
+		window.wpssModal.open(modalId);
 	};
 
-	/**
-	 * Keep a modal clear of a fixed/sticky theme header: find what covers the
-	 * top edge and hand its height to the CSS as --wpss-modal-offset.
-	 */
-	WPSS.offsetModalFromHeader = function(modal) {
-		var offset = 0;
-		var probe = document.elementsFromPoint(Math.round(window.innerWidth / 2), 2);
-		probe.forEach(function(el) {
-			if (modal.contains(el) || el === document.body || el === document.documentElement) {
-				return;
-			}
-			var pos = window.getComputedStyle(el).position;
-			if (pos === 'fixed' || pos === 'sticky') {
-				offset = Math.max(offset, Math.ceil(el.getBoundingClientRect().bottom));
-			}
-		});
-		modal.style.setProperty('--wpss-modal-offset', offset + 'px');
-	};
-
-	/**
-	 * Hide modal utility and restore focus.
-	 */
 	WPSS.hideModal = function(modalId) {
-		const $modal = modalId ? $('#' + modalId) : $('.wpss-modal.wpss-modal-open');
-		$modal.removeClass('wpss-modal-open').off('keydown.wpss-trap');
-		$modal.filter('#wpss-report-modal').prop('hidden', true);
-		$('body').removeClass('wpss-modal-active');
-
-		// Restore focus.
-		if (WPSS._lastFocused) {
-			WPSS._lastFocused.focus();
-			WPSS._lastFocused = null;
+		if (modalId) {
+			window.wpssModal.close(modalId);
+		} else {
+			window.wpssModal.closeAll();
 		}
 	};
 
@@ -825,23 +764,6 @@
 	 * Initialize modal handlers.
 	 */
 	WPSS.initModals = function() {
-		// Close modal on backdrop click.
-		$(document).on('click', '.wpss-modal-backdrop, .wpss-modal__backdrop', function() {
-			WPSS.hideModal();
-		});
-
-		// Close modal on close button click (support both naming conventions).
-		$(document).on('click', '.wpss-modal-close, .wpss-modal-dismiss, .wpss-modal-close-btn, .wpss-modal__close, .wpss-modal__close-btn', function() {
-			WPSS.hideModal();
-		});
-
-		// Close modal on escape key.
-		$(document).on('keydown', function(e) {
-			if (e.key === 'Escape') {
-				WPSS.hideModal();
-			}
-		});
-
 		// Review form submission.
 		$(document).on('submit', '#wpss-review-form', function(e) {
 			e.preventDefault();
@@ -947,35 +869,11 @@
 			return;
 		}
 
-		// Open contact modal on button click.
+		// Open contact modal on button click; the shared contract closes it.
 		$(document).on('click', '.wpss-contact-btn', function(e) {
 			e.preventDefault();
-			$modal.prop('hidden', false).addClass('wpss-modal-open');
-			$('body').addClass('wpss-modal-active');
-			// Packet H: rehydrate Lucide icons inside the just-revealed modal.
-			try { document.dispatchEvent( new CustomEvent( 'wpss:icons:refresh' ) ); } catch ( e2 ) {}
+			window.wpssModal.open($modal[0]);
 			$modal.find('textarea').focus();
-		});
-
-		// Close modal on overlay click.
-		$modal.on('click', '.wpss-modal-overlay', function() {
-			$modal.prop('hidden', true).removeClass('wpss-modal-open');
-			$('body').removeClass('wpss-modal-active');
-		});
-
-		// Close modal on close button.
-		$modal.on('click', '.wpss-modal-close, .wpss-modal-dismiss', function(e) {
-			e.preventDefault();
-			$modal.prop('hidden', true).removeClass('wpss-modal-open');
-			$('body').removeClass('wpss-modal-active');
-		});
-
-		// Close on Escape key.
-		$(document).on('keydown', function(e) {
-			if (e.key === 'Escape' && $modal.hasClass('wpss-modal-open')) {
-				$modal.prop('hidden', true).removeClass('wpss-modal-open');
-				$('body').removeClass('wpss-modal-active');
-			}
 		});
 
 		// Contact form submission.
@@ -1008,8 +906,7 @@
 						);
 
 						setTimeout(function() {
-							$modal.prop('hidden', true).removeClass('wpss-modal-open');
-							$('body').removeClass('wpss-modal-active');
+							window.wpssModal.close($modal[0]);
 						}, 2000);
 					} else {
 						WPSS.showNotification(response.data.message || wpssData.i18n?.error || 'Failed to send message.', 'error');
@@ -1751,7 +1648,7 @@
 		var labelledBy = title ? titleId : msgId;
 
 		var $modal = $('<div id="wpss-confirm-modal" class="wpss-modal wpss-modal-open" role="dialog" aria-modal="true" aria-labelledby="' + labelledBy + '">' +
-			'<div class="wpss-modal__overlay"></div>' +
+			'<div class="wpss-modal__backdrop"></div>' +
 			'<div class="wpss-modal__dialog wpss-confirm" role="document">' +
 				(title ? '<h2 id="' + titleId + '" class="wpss-confirm__title">' + WPSS.escapeHtml(title) + '</h2>' : '') +
 				'<p id="' + msgId + '" class="wpss-confirm__message">' + WPSS.escapeHtml(message) + '</p>' +
@@ -1796,7 +1693,7 @@
 			if (onConfirm) onConfirm(reason);
 		});
 
-		$modal.find('.wpss-confirm-cancel, .wpss-modal__overlay').on('click', function() {
+		$modal.find('.wpss-confirm-cancel, .wpss-modal__backdrop').on('click', function() {
 			close();
 		});
 
@@ -1849,15 +1746,13 @@
 		var $modal = $('<div id="wpss-prompt-modal" class="wpss-modal wpss-modal-open">' +
 			'<div class="wpss-modal__backdrop"></div>' +
 			'<div class="wpss-modal__dialog wpss-modal__dialog--sm">' +
-				'<div class="wpss-modal__content">' +
-					'<div class="wpss-modal__body" style="padding:24px;">' +
-						'<p style="margin:0 0 12px;font-size:15px;">' + WPSS.escapeHtml(message) + '</p>' +
-						'<textarea class="wpss-prompt-input" rows="3" placeholder="' + WPSS.escapeHtml(placeholder) + '" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;resize:vertical;font-size:14px;"></textarea>' +
-						'<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">' +
-							'<button type="button" class="wpss-btn wpss-btn--outline wpss-prompt-cancel">' + WPSS.escapeHtml(cancelText) + '</button>' +
-							'<button type="button" class="wpss-btn wpss-btn--primary wpss-prompt-submit">' + WPSS.escapeHtml(submitText) + '</button>' +
-						'</div>' +
-					'</div>' +
+				'<div class="wpss-modal__body">' +
+					'<p class="wpss-modal__intro">' + WPSS.escapeHtml(message) + '</p>' +
+					'<textarea class="wpss-form-textarea wpss-prompt-input" rows="3" placeholder="' + WPSS.escapeHtml(placeholder) + '"></textarea>' +
+				'</div>' +
+				'<div class="wpss-modal__footer">' +
+					'<button type="button" class="wpss-btn wpss-btn--outline wpss-prompt-cancel">' + WPSS.escapeHtml(cancelText) + '</button>' +
+					'<button type="button" class="wpss-btn wpss-btn--primary wpss-prompt-submit">' + WPSS.escapeHtml(submitText) + '</button>' +
 				'</div>' +
 			'</div>' +
 		'</div>');

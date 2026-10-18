@@ -1330,108 +1330,6 @@
 }
 
 /* ==========================================================================
-   Modals
-   ========================================================================== */
-
-.wpss-modal {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 9991;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 1rem;
-}
-
-.wpss-modal[hidden] {
-	display: none;
-}
-
-.wpss-modal-overlay {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: rgb(0 0 0 / 50%);
-}
-
-.wpss-modal-content {
-	position: relative;
-	background: var(--wpss-surface);
-	border-radius: var(--wpss-radius-lg);
-	width: 100%;
-	max-width: 480px;
-	max-height: 90vh;
-	overflow-y: auto;
-	box-shadow: var(--wpss-shadow-lg);
-}
-
-.wpss-modal-large {
-	max-width: 800px;
-}
-
-.wpss-modal-close {
-	position: absolute;
-	top: 1rem;
-	right: 1rem;
-	background: none !important;
-	border: none !important;
-	font-size: 1.5rem !important;
-	cursor: pointer;
-	color: var(--wpss-text-muted);
-	padding: 0 !important;
-	width: 32px;
-	height: 32px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 10;
-}
-
-.wpss-modal-close:hover {
-	background: none;
-	color: var(--wpss-text);
-	border: none;
-}
-
-.wpss-modal-header {
-	padding: 1.5rem 1.5rem 1rem;
-	border-bottom: 1px solid var(--wpss-border);
-}
-
-.wpss-modal-header h3 {
-	margin: 0;
-	font-size: 1.25rem;
-}
-
-.wpss-modal-body {
-	padding: 1.5rem;
-}
-
-.wpss-modal-footer {
-	padding: 1rem 1.5rem 1.5rem;
-	border-top: 1px solid var(--wpss-border);
-}
-
-.wpss-modal-error {
-	background: var(--wpss-danger-light, #fef2f2);
-	border: 1px solid var(--wpss-danger-border, #fecaca);
-	color: var(--wpss-error);
-	padding: 0.75rem 1rem;
-	border-radius: var(--wpss-radius);
-	margin-bottom: 1rem;
-	font-size: 0.875rem;
-}
-
-body.wpss-modal-open {
-	overflow: hidden;
-}
-
-/* ==========================================================================
    Order Modal
    ========================================================================== */
 
@@ -1797,12 +1695,6 @@ body.wpss-modal-open {
 	.wpss-contact-btn {
 		width: 100%;
 		margin-top: 1rem;
-	}
-
-	.wpss-modal-content {
-		max-height: 100vh;
-		height: auto;
-		border-radius: 0;
 	}
 }
 

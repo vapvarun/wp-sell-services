@@ -649,17 +649,14 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 	$response_time_display = $vendor_service->get_response_time( $vendor_id );
 	?>
 	<div id="wpss-contact-modal" class="wpss-modal" hidden role="dialog" aria-modal="true" aria-labelledby="wpss-contact-modal-title">
-		<div class="wpss-modal-backdrop wpss-modal-overlay"></div>
-		<div class="wpss-modal-dialog wpss-modal-content">
-			<button type="button" class="wpss-modal-close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-				&times;
-			</button>
-
-			<div class="wpss-modal-header">
-				<h3 id="wpss-contact-modal-title"><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
+		<div class="wpss-modal__backdrop"></div>
+		<div class="wpss-modal__dialog">
+			<div class="wpss-modal__header">
+				<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
+				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 			</div>
 
-			<div class="wpss-modal-body">
+			<div class="wpss-modal__body">
 				<div class="wpss-contact-vendor-info">
 					<img src="<?php echo esc_url( get_avatar_url( $vendor_id, array( 'size' => 50 ) ) ); ?>"
 						alt="<?php echo esc_attr( $vendor->display_name ); ?>"
@@ -712,7 +709,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 						<button type="submit" class="wpss-btn wpss-btn--primary">
 							<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
 						</button>
-						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal-dismiss">							
+						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">							
 							&times;
 						</button>
 					</div>

@@ -211,7 +211,7 @@
                 self.state.selectedPackage = packageIndex;
 
                 // If modal is already open, update it with new package info.
-                if ($(self.config.orderModal).hasClass('active')) {
+                if ($(self.config.orderModal).hasClass('wpss-modal-open')) {
                     self.updateOrderSummary();
                 }
             });
@@ -449,69 +449,10 @@
         },
 
         /**
-         * Ensure the popup stylesheet is present on the page.
-         *
-         * The single-service page only enqueues single-service.css, but all
-         * message/inquiry popup styling now lives in messaging.css (the single
-         * source of truth). When that stylesheet is not already loaded, derive
-         * its URL from the single-service stylesheet link and inject it once so
-         * the popup renders with a solid, readable surface on every theme.
-         *
-         * @return {void}
-         */
-        ensurePopupStyles: function() {
-            // Already loaded (e.g. dashboard messaging view) - nothing to do.
-            if (document.querySelector('link[href*="messaging.css"], link[href*="messaging.min.css"]')) {
-                return;
-            }
-
-            // Find the single-service stylesheet to borrow its directory + version.
-            const links = document.querySelectorAll('link[rel="stylesheet"][href*="single-service"]');
-
-            if (!links.length) {
-                return;
-            }
-
-            const ref = links[0].getAttribute('href');
-            // Swap the filename, preserve any ?ver= query string and .min variant.
-            const href = ref.replace(/single-service(-rtl)?(\.min)?\.css/, 'messaging$2.css');
-
-            if (href === ref) {
-                return;
-            }
-
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = href;
-            document.head.appendChild(link);
-        },
-
-        /**
          * Initialize modals.
          */
         initModals: function() {
             const self = this;
-
-            // Make sure the popup surface styles are available on this page.
-            this.ensurePopupStyles();
-
-            // Close on overlay click.
-            $(document).on('click', '.wpss-modal-overlay', function() {
-                self.closeModals();
-            });
-
-            // Close button.
-            $(document).on('click', '.wpss-modal-close, .wpss-modal-dismiss', function(e) {
-                e.preventDefault();
-                self.closeModals();
-            });
-
-            // Escape key.
-            $(document).on('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    self.closeModals();
-                }
-            });
 
             // Contact seller link.
             $(document).on('click', '.wpss-contact-link, .wpss-contact-btn', function(e) {
@@ -531,11 +472,7 @@
             this.updateOrderSummary();
 
             // Show modal.
-            $modal.prop('hidden', false).addClass('active');
-            $('body').addClass('wpss-modal-open');
-
-            // Focus first input.
-            $modal.find('input:first').focus();
+            window.wpssModal.open($modal[0]);
         },
 
         /**
@@ -544,9 +481,7 @@
         openContactModal: function() {
             const $modal = $(this.config.contactModal);
 
-            $modal.prop('hidden', false).addClass('active');
-            $('body').addClass('wpss-modal-open');
-
+            window.wpssModal.open($modal[0]);
             $modal.find('textarea').focus();
         },
 
@@ -554,8 +489,7 @@
          * Close all modals.
          */
         closeModals: function() {
-            $('.wpss-modal').prop('hidden', true).removeClass('active');
-            $('body').removeClass('wpss-modal-open');
+            window.wpssModal.closeAll();
         },
 
         /**
@@ -818,7 +752,7 @@
          */
         showCartOptions: function() {
             const $modal = $(this.config.orderModal);
-            const $footer = $modal.find('.wpss-modal-footer');
+            const $footer = $modal.find('.wpss-modal__footer');
             const checkoutUrl = this.state.checkoutUrl || wpssService.checkoutUrl;
             const cartUrl = wpssService.cartUrl || checkoutUrl;
 
@@ -924,11 +858,11 @@
          * Show error message.
          */
         showError: function(message) {
-            const $modal = $('.wpss-modal.active');
+            const $modal = $('.wpss-modal.wpss-modal-open');
 
             if ($modal.length) {
-                const $error = $('<div class="wpss-modal-error">' + this.escapeHtml(message) + '</div>');
-                $modal.find('.wpss-modal-body').prepend($error);
+                const $error = $('<div class="wpss-modal__feedback wpss-modal__feedback--error" role="alert">' + this.escapeHtml(message) + '</div>');
+                $modal.find('.wpss-modal__body').prepend($error);
 
                 setTimeout(function() {
                     $error.fadeOut(function() {
@@ -993,11 +927,12 @@
             });
 
             // Build comparison table.
-            let html = '<div class="wpss-comparison-modal wpss-modal">';
-            html += '<div class="wpss-modal-overlay"></div>';
-            html += '<div class="wpss-modal-content wpss-modal-large">';
-            html += '<button class="wpss-modal-close">&times;</button>';
-            html += '<h3>' + wpssService.i18n.comparePackages + '</h3>';
+            let html = '<div class="wpss-comparison-modal wpss-modal" role="dialog" aria-modal="true" aria-labelledby="wpss-comparison-title" hidden>';
+            html += '<div class="wpss-modal__backdrop"></div>';
+            html += '<div class="wpss-modal__dialog wpss-modal__dialog--lg">';
+            html += '<div class="wpss-modal__header"><h3 id="wpss-comparison-title" class="wpss-modal__title">' + wpssService.i18n.comparePackages + '</h3>';
+            html += '<button type="button" class="wpss-modal__close" aria-label="' + WPSSService.escapeHtml(wpssService.i18n.close || 'Close') + '">&times;</button></div>';
+            html += '<div class="wpss-modal__body">';
             html += '<table class="wpss-comparison-table">';
             html += '<thead><tr><th></th>';
 
@@ -1041,10 +976,11 @@
             }
 
             html += '</tbody></table>';
-            html += '</div></div>';
+            html += '</div></div></div>';
 
+            $('.wpss-comparison-modal').remove();
             $('body').append(html);
-            $('.wpss-comparison-modal').prop('hidden', false).addClass('active');
+            window.wpssModal.open($('.wpss-comparison-modal')[0]);
         }
     };
 

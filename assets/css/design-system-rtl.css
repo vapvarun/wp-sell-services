@@ -1016,30 +1016,32 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
    10. MODALS
    ========================================================================== */
 
+/* The one modal. Markup: .wpss-modal > .wpss-modal__backdrop + .wpss-modal__dialog >
+   (.wpss-modal__header > .wpss-modal__title + .wpss-modal__close) + .wpss-modal__body +
+   .wpss-modal__footer. Open it with window.wpssModal.open( el | id ) (wpss-ui.js): that sets
+   .wpss-modal-open, drops [hidden], locks the page and traps focus. Sections carry the
+   padding, the dialog carries none, so a header, body and footer line up on one edge. */
 .wpss-modal { position: fixed; inset: 0; z-index: var(--wpss-z-modal); display: none; align-items: center; justify-content: center; padding: var(--wpss-space-5); }
-/* `display: flex !important` is load-bearing, not lazy. Two modal show/hide
-   contracts coexist in this codebase: the design-system's `.wpss-modal-open`
-   (used by the global confirm dialog and the order-action modals) and
-   messaging/single-service's `.wpss-modal:not(.active)` / `[hidden]`. Those
-   `:not(.active)` hide rules match ANY modal lacking `.active` — including one
-   opened via `.wpss-modal-open` — at equal (0,2,0) specificity, so whichever of
-   messaging.css / single-service.css loads AFTER this file wins and forces the
-   open confirm dialog to `display: none`. That silently broke "Accept &
-   Complete", "Request Revision", "Open Dispute" and every other wpssConfirm()
-   action on the order view (which embeds the conversation, so messaging.css is
-   present): the confirm modal was in the DOM with `.wpss-modal-open` but 0×0 and
-   unclickable. Until the modal systems are unified (scoped task 2.8), the
-   `-open` contract must win whenever it is applied — an open modal always shows.
-   Only affects elements that carry `.wpss-modal-open`; messaging's own
-   `.active` modals never do, so they are untouched. */
-.wpss-modal.wpss-modal-open { display: flex !important; }
-.wpss-modal__overlay { position: absolute; inset: 0; background: var(--wpss-overlay); backdrop-filter: blur(2px); }
-.wpss-modal__dialog { position: relative; background: var(--wpss-bg); border-radius: var(--wpss-radius-xl); padding: var(--wpss-space-8); max-width: 480px; width: 100%; box-shadow: var(--wpss-shadow-xl); max-height: 90vh; overflow-y: auto; }
-.wpss-modal__close { position: absolute; top: var(--wpss-space-4); inset-inline-end: var(--wpss-space-4); background: none; border: none; cursor: pointer; padding: var(--wpss-space-1); color: var(--wpss-text-hint); transition: color var(--wpss-ease); border-radius: var(--wpss-radius); }
-.wpss-modal__close:hover { color: var(--wpss-text); }
+.wpss-modal.wpss-modal-open { display: flex; }
+.wpss-modal__backdrop { position: absolute; inset: 0; background: var(--wpss-overlay); backdrop-filter: blur(2px); }
+.wpss-modal__dialog { position: relative; display: flex; flex-direction: column; background: var(--wpss-bg); border-radius: var(--wpss-radius-xl); max-width: 480px; width: 100%; box-shadow: var(--wpss-shadow-xl); max-height: 90vh; overflow-y: auto; }
+.wpss-modal__dialog--sm { max-width: 360px; }
+.wpss-modal__dialog--lg { max-width: 720px; }
+.wpss-modal__header { position: relative; padding: var(--wpss-space-6) var(--wpss-space-6) var(--wpss-space-4); border-bottom: 1px solid var(--wpss-border); }
+.wpss-modal__title { margin: 0; padding-inline-end: var(--wpss-space-10); font-size: var(--wpss-text-xl); font-weight: 600; line-height: 1.3; color: var(--wpss-text); }
+.wpss-modal__close { position: absolute; top: var(--wpss-space-4); inset-inline-end: var(--wpss-space-4); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; background: none; border: none; border-radius: var(--wpss-radius); font-size: var(--wpss-text-2xl); line-height: 1; color: var(--wpss-text-hint); cursor: pointer; transition: color var(--wpss-ease); }
+.wpss-modal__close:hover { color: var(--wpss-text); background: none; }
 .wpss-modal__close:focus-visible { outline: var(--wpss-ring-width) solid var(--wpss-ring-color); outline-offset: var(--wpss-ring-offset); }
-.wpss-modal__title { font-size: var(--wpss-text-2xl); font-weight: 600; color: var(--wpss-text); margin: 0 0 var(--wpss-space-6); padding-inline-end: var(--wpss-space-10); }
-.wpss-modal__actions { display: flex; gap: var(--wpss-space-3); justify-content: flex-end; margin-top: var(--wpss-space-6); }
+.wpss-modal__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: var(--wpss-space-6); }
+.wpss-modal__form { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+.wpss-modal__intro { margin: 0 0 var(--wpss-space-4); color: var(--wpss-text-secondary); }
+.wpss-modal__feedback { margin-bottom: var(--wpss-space-4); font-size: var(--wpss-text-sm); }
+.wpss-modal__feedback--error { color: var(--wpss-danger-dark, var(--wpss-danger)); }
+.wpss-modal__feedback--success { color: var(--wpss-success-dark, var(--wpss-success)); }
+.wpss-modal__footer { display: flex; flex-wrap: wrap; gap: var(--wpss-space-3); justify-content: flex-end; padding: var(--wpss-space-4) var(--wpss-space-6) var(--wpss-space-6); border-top: 1px solid var(--wpss-border); }
+/* A footer that holds a summary above one full-width action. */
+.wpss-modal__footer--stack { flex-direction: column; align-items: stretch; }
+body.wpss-modal-active { overflow: hidden; }
 
 /* Confirm dialog (WPSS.showConfirm) — ONE clean surface: title + message +
    action row. The dialog card is the only box; there is no nested
@@ -1097,6 +1099,15 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 .wpss-ui-confirm-wrap { position: fixed; inset: 0; z-index: 160001; display: flex; align-items: center; justify-content: center; padding: var(--wpss-space-5, 20px); }
 .wpss-ui-confirm-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
 .wpss-ui-modal { position: relative; /* stacks above overlay */ }
+
+@media (max-width: 640px) {
+	/* The modal becomes a bottom sheet on a phone. */
+	.wpss-modal { padding: var(--wpss-space-3); align-items: flex-end; }
+	.wpss-modal__dialog { max-width: none; max-height: 92vh; border-radius: var(--wpss-radius-xl) var(--wpss-radius-xl) 0 0; }
+	.wpss-modal__header { padding: var(--wpss-space-4) var(--wpss-space-4) var(--wpss-space-3); }
+	.wpss-modal__body { padding: var(--wpss-space-4); }
+	.wpss-modal__footer { padding: var(--wpss-space-3) var(--wpss-space-4) var(--wpss-space-4); }
+}
 
 @media (max-width: 640px) {
 	.wpss-ui-confirm-wrap { padding: var(--wpss-space-4, 16px); align-items: flex-end; }
@@ -1425,9 +1436,6 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	.wpss-services-grid--2,
 	.wpss-services-grid--3,
 	.wpss-services-grid--4 { grid-template-columns: 1fr; }
-	.wpss-modal__dialog { padding: var(--wpss-space-6); margin: var(--wpss-space-4); }
-	.wpss-modal__actions { flex-direction: column; }
-	.wpss-modal__actions .wpss-btn { width: 100%; }
 	.wpss-banner { flex-direction: column; text-align: center; gap: var(--wpss-space-3); }
 	.wpss-banner__action { width: 100%; }
 	.wpss-card { padding: var(--wpss-space-4); }
@@ -1713,12 +1721,10 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	font-weight: 500;
 }
 
-/* Modals clear a fixed/sticky theme header. WPSS.showModal measures what covers the
-   top edge into --wpss-modal-offset. Two classes beat every dialog's own
+/* Modals clear a fixed/sticky theme header. wpssModal.open() measures what covers the
+   top edge into --wpss-modal-offset. Two classes beat the dialog's own
    max-height: 90vh, whichever stylesheet loads last. */
-.wpss-modal .wpss-modal__dialog,
-.wpss-modal .wpss-modal-dialog,
-.wpss-modal .wpss-modal-content {
+.wpss-modal .wpss-modal__dialog {
 	margin-top: var(--wpss-modal-offset, 0px);
 	max-height: calc(100vh - var(--wpss-modal-offset, 0px) - 2 * var(--wpss-space-5, 20px));
 }
