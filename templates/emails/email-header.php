@@ -8,6 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var string $email_heading Email heading text.
  * @var string $header_image  Header image URL (optional).

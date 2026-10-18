@@ -2147,6 +2147,13 @@ class Settings {
 					'callback'    => array( $this, 'render_demo_content_section' ),
 				),
 				array(
+					'id'          => 'template-overrides',
+					'title'       => __( 'Template Overrides', 'wp-sell-services' ),
+					'description' => __( 'Templates your theme replaces, and whether each is older than the version this plugin ships.', 'wp-sell-services' ),
+					'collapsed'   => true,
+					'callback'    => array( $this, 'render_template_overrides_section' ),
+				),
+				array(
 					'id'          => 'setup-wizard',
 					'title'       => __( 'Setup Wizard', 'wp-sell-services' ),
 					'description' => __( 'Re-run the setup wizard to reconfigure your marketplace settings.', 'wp-sell-services' ),
@@ -2677,6 +2684,50 @@ class Settings {
 
 			<span class="wpss-demo-status" style="margin-left: 10px; display: none;"></span>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render the theme template overrides and their versions.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @return void
+	 */
+	public function render_template_overrides_section(): void {
+		$rows   = wpss_get_template_overrides();
+		$labels = array(
+			'current'     => __( 'Up to date', 'wp-sell-services' ),
+			'outdated'    => __( 'Outdated', 'wp-sell-services' ),
+			'unversioned' => __( 'No version', 'wp-sell-services' ),
+		);
+
+		if ( ! $rows ) {
+			echo '<p>' . esc_html__( 'Your theme does not override any templates.', 'wp-sell-services' ) . '</p>';
+			return;
+		}
+		?>
+		<table class="widefat striped">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Template', 'wp-sell-services' ); ?></th>
+					<th><?php esc_html_e( 'Your version', 'wp-sell-services' ); ?></th>
+					<th><?php esc_html_e( 'Plugin version', 'wp-sell-services' ); ?></th>
+					<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $rows as $row ) : ?>
+					<tr>
+						<td><code><?php echo esc_html( $row['path'] ); ?></code></td>
+						<td><?php echo esc_html( $row['theirs'] ? $row['theirs'] : '-' ); ?></td>
+						<td><?php echo esc_html( $row['shipped'] ? $row['shipped'] : '-' ); ?></td>
+						<td><?php echo esc_html( $labels[ $row['status'] ] ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<p class="description"><?php esc_html_e( 'Compare an outdated or unversioned override with the plugin file and copy across what changed.', 'wp-sell-services' ); ?></p>
 		<?php
 	}
 

@@ -15,6 +15,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  *
  * @var array<string,object> $wpss_gateways Enabled gateways keyed by id.
  * @var float                $wpss_amount   Amount handed to each gateway form.

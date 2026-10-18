@@ -7,8 +7,12 @@
  * so they skip requirements/messaging/delivery panels and show a simple
  * receipt card tailored to the viewer (buyer or vendor).
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/order/tip-view.php
+ *
  * @package WPSellServices\Templates
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\ServiceOrder $current_order The tip order row.
  * @var int                                 $user_id       Current user ID.

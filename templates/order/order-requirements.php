@@ -5,8 +5,12 @@
  * Displays the requirements form for buyers to submit after purchase.
  * Uses CSS classes from orders.css design system.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/order/order-requirements.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var int $order_id Order ID passed from parent template.
  *

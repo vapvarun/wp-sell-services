@@ -164,6 +164,72 @@ function wpss_locate_template( string $template_name ): string {
 }
 
 /**
+ * Read the `@version` a template file declares in its header.
+ *
+ * @since 1.9.0
+ *
+ * @param string $file Absolute path.
+ * @return string Version, or '' when the file declares none.
+ */
+function wpss_template_version( string $file ): string {
+	$head = (string) file_get_contents( $file, false, null, 0, 4096 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+	return preg_match( '/^[ \t\/*#@]*@version\s+(\S+)/mi', $head, $m ) ? $m[1] : '';
+}
+
+/**
+ * Templates a theme overrides, with the version each side declares.
+ *
+ * A template that changes in a release bumps its `@version`; an override older than the shipped
+ * file is `outdated`, one that declares no version is `unversioned` (copied before versions existed).
+ *
+ * @since 1.9.0
+ *
+ * @param string[]|null $dirs Folders to scan; defaults to the child and parent theme `wp-sell-services/` folders.
+ * @return array<int, array{path:string, file:string, theirs:string, shipped:string, status:string}>
+ */
+function wpss_get_template_overrides( ?array $dirs = null ): array {
+	if ( null === $dirs ) {
+		$dirs = array_unique( array( get_stylesheet_directory() . '/wp-sell-services', get_template_directory() . '/wp-sell-services' ) );
+	}
+
+	$rows = array();
+	foreach ( $dirs as $dir ) {
+		if ( ! is_dir( $dir ) ) {
+			continue;
+		}
+		$base = trailingslashit( $dir );
+		foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ) ) as $file ) {
+			if ( 'php' !== $file->getExtension() ) {
+				continue;
+			}
+			$path    = ltrim( str_replace( '\\', '/', substr( $file->getPathname(), strlen( $base ) ) ), '/' );
+			$shipped = WPSS_PLUGIN_DIR . 'templates/' . $path;
+			if ( isset( $rows[ $path ] ) || ! is_file( $shipped ) ) {
+				continue; // The child theme wins; a file we do not ship is not ours.
+			}
+			$theirs  = wpss_template_version( $file->getPathname() );
+			$current = wpss_template_version( $shipped );
+			if ( '' === $theirs ) {
+				$status = 'unversioned';
+			} else {
+				$status = version_compare( $theirs, $current, '<' ) ? 'outdated' : 'current';
+			}
+			$rows[ $path ] = array(
+				'path'    => $path,
+				'file'    => $file->getPathname(),
+				'theirs'  => $theirs,
+				'shipped' => $current,
+				'status'  => $status,
+			);
+		}
+	}
+	ksort( $rows );
+
+	return array_values( $rows );
+}
+
+/**
  * Open the page chrome for a plugin template that is not a block template.
  *
  * Classic themes: get_header(). Block themes have no header.php, so get_header() logs a core

@@ -11,6 +11,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\ServiceOrder $wpss_order                The order.
  * @var string                              $wpss_viewer               'buyer', 'vendor' or 'admin'.

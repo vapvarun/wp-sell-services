@@ -7,8 +7,12 @@
  * Accept & Pay deep link so the buyer can move forward without hunting
  * through the dashboard.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/emails/milestone-proposed.php
+ *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\ServiceOrder      $milestone    Milestone sub-order.
  * @var \WPSellServices\Models\ServiceOrder|null $parent_order Parent order (may be null).
@@ -35,7 +39,7 @@ do_action( 'wpss_email_content_before', 'milestone_proposed', $milestone, $recip
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php printf( esc_html__( 'Hi %s,', 'wp-sell-services' ), esc_html( $buyer_name ) ); ?>
+	<?php /* translators: %s: recipient first name. */ printf( esc_html__( 'Hi %s,', 'wp-sell-services' ), esc_html( $buyer_name ) ); ?>
 </p>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">

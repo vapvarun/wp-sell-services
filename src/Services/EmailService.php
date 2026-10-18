@@ -2247,7 +2247,7 @@ class EmailService {
 	/**
 	 * Get template file path.
 	 *
-	 * Checks theme override first, then plugin templates.
+	 * Resolved by wpss_locate_template(), so the theme override and the wpss_get_template filter apply.
 	 *
 	 * @param string $type Email type.
 	 * @return string|null
@@ -2255,19 +2255,9 @@ class EmailService {
 	private function get_template_file( string $type ): ?string {
 		$template_name = $this->get_template_name( $type );
 
-		// Check theme override.
-		$theme_template = locate_template( 'wp-sell-services/emails/' . $template_name );
-		if ( $theme_template ) {
-			return $theme_template;
-		}
+		$template = wpss_locate_template( 'emails/' . $template_name );
 
-		// Plugin template.
-		$plugin_template = WPSS_PLUGIN_DIR . 'templates/emails/' . $template_name;
-		if ( file_exists( $plugin_template ) ) {
-			return $plugin_template;
-		}
-
-		return null;
+		return file_exists( $template ) ? $template : null;
 	}
 
 	/**
@@ -2280,9 +2270,7 @@ class EmailService {
 	private function get_template_part( string $part, array $template_vars ): string {
 		$template_name = "email-{$part}.php";
 
-		// Check theme override.
-		$theme_template = locate_template( 'wp-sell-services/emails/' . $template_name );
-		$template_file  = $theme_template ?: WPSS_PLUGIN_DIR . 'templates/emails/' . $template_name;
+		$template_file = wpss_locate_template( 'emails/' . $template_name );
 
 		if ( ! file_exists( $template_file ) ) {
 			return '';

@@ -18,8 +18,12 @@
  * The analytics claim is softened for the same reason: Free ships order and
  * earnings figures, not the Pro analytics dashboard.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/vendor-benefits.php
+ *
  * @package WPSellServices
  * @since   1.7.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;

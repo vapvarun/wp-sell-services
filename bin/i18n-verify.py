@@ -645,7 +645,7 @@ def check_script_translations(root: Path, cfg: dict, list_handles: bool):
 # ---------------------------------------------------------------------------
 
 JS_FALLBACK_RE = re.compile(
-    r"\b(wpss[A-Za-z0-9_]*|l10n)((?:\.[A-Za-z_][A-Za-z0-9_]*)+)\s*\|\|\s*(['\"])([^'\"]{3,})\3"
+    r"\b(wpss[A-Za-z0-9_]*|l10n)((?:\??\.[A-Za-z_][A-Za-z0-9_]*)+)\s*\|\|\s*(['\"])([^'\"]{3,})\3"
 )
 
 JS_BLOCK_COMMENT_RE = re.compile(r'/\*.*?\*/', re.DOTALL)
@@ -722,6 +722,41 @@ def check_js_fallbacks(root: Path, cfg: dict):
     return violations
 
 
+JS_LITERAL_MESSAGE_RE = re.compile(
+    r"\b(?:WPSS\.showNotification|notify|adminConfirm|WPSS\.showConfirm|wpssToast|wpssConfirm)\(\s*(['\"])([^'\"\n]*[A-Za-z]{3}[^'\"\n]*)\1"
+)
+
+
+def check_js_literal_messages(root: Path, cfg: dict):
+    """Flag a user-facing message passed to a notice or confirm dialog as a bare English literal.
+
+    A literal has no key, so no translator can reach it and check_js_fallbacks cannot see it
+    (the 1.9.0 proposal flow shipped five of these). Pass `wpssData.i18n.<key>` instead.
+    """
+    violations = []
+    excluded = tuple(cfg.get('jsScanExclude') or [])
+
+    for rel_dir in cfg.get('jsScanDirs') or []:
+        base = root / rel_dir
+        if not base.is_dir():
+            continue
+        for path in sorted(base.rglob('*.js')):
+            rel = str(path.relative_to(root))
+            if rel.endswith('.min.js') or rel.startswith(excluded):
+                continue
+            raw = path.read_text(encoding='utf-8', errors='replace')
+            src = JS_LINE_COMMENT_RE.sub('', JS_BLOCK_COMMENT_RE.sub('', raw))
+            for match in JS_LITERAL_MESSAGE_RE.finditer(src):
+                violations.append(Violation(
+                    'js-literal',
+                    rel,
+                    src[:match.start()].count('\n') + 1,
+                    f'"{match.group(2)[:60]}" is shown to the user as a bare English literal.',
+                    'Add a key to the wp_localize_script() i18n payload and pass it instead.'))
+
+    return violations
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description='i18n verification gate.')
     parser.add_argument('--root', default=None,
@@ -748,6 +783,7 @@ def main() -> int:
     violations += check_text_domain(root, cfg)
     violations += check_script_translations(root, cfg, opts.list_handles)
     violations += check_js_fallbacks(root, cfg)
+    violations += check_js_literal_messages(root, cfg)
     if opts.skip_pot:
         if opts.verbose:
             print('  (POT freshness check skipped)')

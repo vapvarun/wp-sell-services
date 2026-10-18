@@ -40,6 +40,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.5.1
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;

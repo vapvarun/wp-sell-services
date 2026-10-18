@@ -9,8 +9,12 @@
  * Rows reuse the request-card markup, so the list stacks under 480px with the
  * same rules as Buyer Requests and needs no stylesheet of its own.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/proposals.php
+ *
  * @package WPSellServices\Templates
  * @since   1.7.1
+ * @version 1.9.0
  *
  * @var int           $user_id        Current user ID.
  * @var VendorService $vendor_service Vendor service instance.

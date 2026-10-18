@@ -715,6 +715,27 @@ for p in md_files(DOCS):
 if not drift:
     ok("labels", "doc labels match the strings the plugin renders")
 
+# --- 6b. template counts in the overrides page must match the folder ------------
+def audit_template_counts():
+    tdir = os.path.join(FREE, "templates")
+    allf, emails = 0, 0
+    for root, _, files in os.walk(tdir):
+        for f in files:
+            if f.endswith(".php"):
+                allf += 1
+                emails += 1 if os.path.relpath(root, tdir).split(os.sep)[0] == "emails" else 0
+    page = os.path.join(FREE, "docs/website/marketplace-display/template-overrides.md")
+    text = open(page, encoding="utf-8").read()
+    m = re.search(r"ships \*\*(\d+) templates\*\*: (\d+) frontend templates plus (\d+) email", text)
+    if not m or (int(m.group(1)), int(m.group(2)), int(m.group(3))) != (allf, allf - emails, emails):
+        fail("template-counts", "template-overrides.md should say %d templates: %d frontend plus %d email" % (allf, allf - emails, emails))
+    m = re.search(r"(\d+) templates under `emails/`", text)
+    if not m or int(m.group(1)) != emails:
+        fail("template-counts", "template-overrides.md should say %d templates under `emails/`" % emails)
+
+
+audit_template_counts()
+
 # --- 7. Pro tree must not publish --------------------------------------------
 pro_cfg = os.path.join(PRO, "docs", "website", "docs_config.json")
 if os.path.exists(pro_cfg):

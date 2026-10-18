@@ -5,8 +5,12 @@
  * Displays a single order with all details in a single-column layout.
  * Uses CSS classes from orders.css design system.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/order/order-view.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var int $order_id Order ID passed from parent template.
  *
@@ -1668,7 +1672,7 @@ do_action( 'wpss_before_order_view', $order );
 						/* translators: 1: amount, 2: days */
 						esc_html__( 'You requested %1$s / %2$s. Buyer has not responded yet.', 'wp-sell-services' ),
 						esc_html( wpss_format_price( (float) $pending_extension->amount, $ext_currency ) ),
-						esc_html( sprintf( _n( '%d day', '%d days', (int) $pending_extension->extra_days, 'wp-sell-services' ), absint( $pending_extension->extra_days ) ) )
+						esc_html( sprintf( /* translators: %d: number of days. */ _n( '%d day', '%d days', (int) $pending_extension->extra_days, 'wp-sell-services' ), absint( $pending_extension->extra_days ) ) )
 					);
 					?>
 				</p>

@@ -6,8 +6,12 @@
  * party to. Previously the dispute backend (REST + services) existed but had no
  * member-facing list/detail view anywhere — only a modal to OPEN a dispute.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/disputes.php
+ *
  * @package WPSellServices\Templates
  * @since   1.2.2
+ * @version 1.9.0
  *
  * @var int           $user_id        Current user ID.
  * @var VendorService $vendor_service Vendor service instance.

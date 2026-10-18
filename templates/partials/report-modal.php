@@ -11,6 +11,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;

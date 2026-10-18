@@ -4,8 +4,12 @@
  *
  * Uses CSS classes from orders.css design system.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/myaccount/service-orders.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var array $orders  Service orders.
  * @var int   $user_id Current user ID.

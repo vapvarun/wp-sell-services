@@ -4,8 +4,12 @@
  *
  * Displays the service image gallery.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/service-gallery.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var WPSellServices\Models\Service $service     Service object.
  * @var int                            $service_id  Service post ID.

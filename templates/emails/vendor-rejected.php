@@ -11,6 +11,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.2.0
+ * @version 1.9.0
  *
  * @var string  $rejection_reason Reason the application was rejected (optional).
  * @var string  $site_url         Site home URL.

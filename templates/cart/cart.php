@@ -4,8 +4,12 @@
  *
  * Displays the standalone cart with all items, totals, and checkout CTA.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/cart/cart.php
+ *
  * @package WPSellServices\Templates
  * @since   1.6.0
+ * @version 1.9.0
  *
  * @var array $cart_items Cart items from _wpss_cart user meta.
  * @var bool  $wpss_guest Whether the visitor is logged out (the cart needs an account).

@@ -13,8 +13,12 @@
  *   - Buyer, pending_approval   → Approve / Request changes
  *   - Either, completed         → Read-only receipt with commission split
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/order/milestone-view.php
+ *
  * @package WPSellServices\Templates
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\ServiceOrder $current_order Milestone sub-order row.
  * @var int                                 $user_id       Current user ID.

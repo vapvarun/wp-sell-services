@@ -12,6 +12,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  *
  * @var string $wpss_title    Card title.
  * @var array  $wpss_lines    Lines, each: label (string), amount (float), and

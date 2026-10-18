@@ -4,8 +4,12 @@
  *
  * This section embeds the service creation wizard.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/create.php
+ *
  * @package WPSellServices\Templates
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.

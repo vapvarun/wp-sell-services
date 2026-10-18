@@ -16,8 +16,12 @@
  * Expects:
  *   string $wpss_answer_text  The answer, already unslashed, not yet escaped.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/requirement-answer.php
+ *
  * @package WPSellServices
  * @since   1.7.2
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;

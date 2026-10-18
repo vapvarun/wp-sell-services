@@ -8,6 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var string   $service_title Service title.
  * @var string   $vendor_name   Display name of the vendor who submitted the service.

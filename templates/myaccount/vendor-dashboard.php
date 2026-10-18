@@ -4,8 +4,12 @@
  *
  * Uses CSS classes from vendor-dashboard.css design system.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/myaccount/vendor-dashboard.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\VendorProfile|null $vendor  Vendor profile.
  * @var object                                     $stats   Vendor statistics.

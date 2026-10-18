@@ -8,6 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var WPSellServices\Models\ServiceOrder $order Service order object.
  * @var WP_User $recipient       Recipient user object.
@@ -60,7 +61,7 @@ do_action( 'wpss_email_content_before', 'new_message', $order, $recipient );
 </p>
 
 <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #3c3c3c;">
-	<?php printf( esc_html__( 'Order #%s', 'wp-sell-services' ), esc_html( $order->order_number ) ); ?>
+	<?php /* translators: %s: order number. */ printf( esc_html__( 'Order #%s', 'wp-sell-services' ), esc_html( $order->order_number ) ); ?>
 </h2>
 
 <?php if ( ! empty( $message_content ) ) : ?>

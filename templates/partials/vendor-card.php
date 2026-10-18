@@ -4,8 +4,12 @@
  *
  * Displays vendor information card on service pages.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/vendor-card.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var int    $vendor_id         Vendor user ID.
  * @var object $vendor            Vendor WP_User object.

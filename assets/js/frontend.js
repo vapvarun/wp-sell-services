@@ -205,7 +205,7 @@
 					}
 				},
 				error: function() {
-					WPSS.showNotification('An error occurred. Please try again.', 'error');
+					WPSS.showNotification(wpssData.i18n.ajaxError, 'error');
 				},
 				complete: function() {
 					$btn.prop('disabled', false);
@@ -1264,7 +1264,7 @@
 			// Each milestone row: title + amount > 0 required. Days optional.
 			const $rows = $form.find('[data-milestone-row]');
 			if (!$rows.length) {
-				WPSS.showNotification('Add at least one milestone phase.', 'warning');
+				WPSS.showNotification(wpssData.i18n.milestonePhaseRequired, 'warning');
 				return;
 			}
 			let invalid = false;
@@ -1276,7 +1276,7 @@
 				}
 			});
 			if (invalid) {
-				WPSS.showNotification('Each phase needs a title and an amount greater than zero.', 'warning');
+				WPSS.showNotification(wpssData.i18n.milestonePhaseInvalid, 'warning');
 				return;
 			}
 		} else {

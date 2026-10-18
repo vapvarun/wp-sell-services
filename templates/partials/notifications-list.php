@@ -15,8 +15,12 @@
  *
  * Uses `wpss-notif-*` classes — never `wpss-notification` (toast).
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/notifications-list.php
+ *
  * @package WPSellServices\Templates
  * @since   1.2.2
+ * @version 1.9.0
  *
  * @var int  $user_id           Optional. User whose notifications to render.
  *                              Defaults to the current user.

@@ -150,8 +150,6 @@
         <exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited"/>
         <!-- Allow inline comments without punctuation -->
         <exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
-        <!-- Skip translator comments for placeholders (handled during i18n review) -->
-        <exclude name="WordPress.WP.I18n.MissingTranslatorsComment"/>
         <!-- Skip doc comment issues (handled separately) -->
         <exclude name="Squiz.Commenting.FunctionComment.MissingParamTag"/>
         <exclude name="Squiz.Commenting.FunctionComment.IncorrectTypeHint"/>

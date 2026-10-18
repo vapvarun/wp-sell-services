@@ -129,17 +129,10 @@ class OrderScreen {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'wpss_order_admin' ),
 				'i18n'    => array(
-					'confirmStatusChange'  => __( 'Are you sure you want to change the order status?', 'wp-sell-services' ),
 					'confirmRefund'        => __( 'Refund this order? The gateway payment will be refunded where supported.', 'wp-sell-services' ),
 					'confirmPartialRefund' => __( 'Issue this partial refund? The buyer is refunded the amount entered and the vendor\'s proportional share is clawed back.', 'wp-sell-services' ),
 					'refund'               => __( 'Refund', 'wp-sell-services' ),
-					'noteAdded'            => __( 'Note added successfully.', 'wp-sell-services' ),
-					'requirementsSaved'    => __( 'Requirements saved successfully.', 'wp-sell-services' ),
 					'error'                => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'enterNote'            => __( 'Please enter a note.', 'wp-sell-services' ),
-					'update'               => __( 'Update', 'wp-sell-services' ),
-					'updating'             => __( 'Updating...', 'wp-sell-services' ),
-					'savingRequirements'   => __( 'Saving...', 'wp-sell-services' ),
 				),
 			)
 		);

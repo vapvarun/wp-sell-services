@@ -14,8 +14,12 @@
  * Collapses to a one-line summary when the profile is already complete, which
  * is the whole point: a returning buyer enters card details and nothing else.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/billing-fields.php
+ *
  * @package WPSellServices
  * @since   1.2.3
+ * @version 1.9.0
  *
  * @var array<string,string> $wpss_billing  Current values (profile or posted).
  * @var bool                 $wpss_complete Whether every required field is set.

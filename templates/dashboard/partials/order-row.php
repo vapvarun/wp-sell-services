@@ -8,8 +8,12 @@
  * amount, when it is due (late when overdue, wpss_is_order_late()) and what
  * the viewer has to do next.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/partials/order-row.php
+ *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  *
  * @var object $order_item    Order row from OrderRepository.
  * @var string $wpss_side     'buyer' (My Orders) or 'seller' (Sales Orders).

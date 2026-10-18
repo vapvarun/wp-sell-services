@@ -11,6 +11,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.2.0
+ * @version 1.9.0
  *
  * @var string  $dashboard_url Vendor dashboard URL.
  * @var WP_User $recipient     Recipient user object (vendor).

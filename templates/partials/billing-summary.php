@@ -10,8 +10,12 @@
  * profile — an invoice has to show what was billed at the time, and a later
  * profile edit must not rewrite it.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/billing-summary.php
+ *
  * @package WPSellServices
  * @since   1.2.3
+ * @version 1.9.0
  *
  * @var ServiceOrder|object $wpss_order The order.
  */

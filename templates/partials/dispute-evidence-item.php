@@ -5,8 +5,12 @@
  * Rendered by the thread (templates/partials/dispute-thread.php) and by the
  * AJAX reply, which used to build its own copy of this markup.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/dispute-evidence-item.php
+ *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  *
  * @var array $wpss_item        One row from DisputeService::get_evidence().
  * @var int   $wpss_viewer_id   The user looking at the thread.

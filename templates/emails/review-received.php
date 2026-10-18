@@ -6,8 +6,12 @@
  * Surfaces the rating, the written review, and a deep link to the public
  * review on the service page so the vendor can read + reply.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/emails/review-received.php
+ *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var \WP_User $recipient     Vendor.
  * @var string   $vendor_name
@@ -28,7 +32,7 @@ do_action( 'wpss_email_content_before', 'review_received', null, $recipient );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php printf( esc_html__( 'Hi %s,', 'wp-sell-services' ), esc_html( $vendor_name ) ); ?>
+	<?php /* translators: %s: recipient first name. */ printf( esc_html__( 'Hi %s,', 'wp-sell-services' ), esc_html( $vendor_name ) ); ?>
 </p>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">

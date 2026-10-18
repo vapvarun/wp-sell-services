@@ -5,8 +5,12 @@
  * Displays the conversation/messaging interface for an order.
  * Uses CSS classes from messaging.css design system.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/order/conversation.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var int    $order_id     Order ID.
  * @var object $order        Order object.

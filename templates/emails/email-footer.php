@@ -8,6 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var string $footer_text Footer text.
  * @var string $base_color  Primary brand color.

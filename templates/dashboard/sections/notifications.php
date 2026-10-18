@@ -6,8 +6,12 @@
  * standalone account page and the myaccount template all render the identical
  * surface (list + working mark-read) instead of three divergent copies.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/notifications.php
+ *
  * @package WPSellServices\Templates
  * @since   1.2.2
+ * @version 1.9.0
  *
  * @var int           $user_id        Current user ID.
  * @var VendorService $vendor_service Vendor service instance.

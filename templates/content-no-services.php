@@ -10,8 +10,12 @@
  * Available filters:
  * - wpss_no_services_message - Modify the message text
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/content-no-services.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;

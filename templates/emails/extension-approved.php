@@ -6,8 +6,12 @@
  * the net amount lands in the wallet and the parent deadline has
  * moved — vendor continues work on the expanded scope.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/emails/extension-approved.php
+ *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\ServiceOrder $extension
  * @var \WP_User                            $recipient Vendor.
@@ -58,7 +62,7 @@ do_action( 'wpss_email_content_before', 'extension_approved', $extension, $recip
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php printf( esc_html__( 'Hi %s,', 'wp-sell-services' ), esc_html( $vendor_name ) ); ?>
+	<?php /* translators: %s: recipient first name. */ printf( esc_html__( 'Hi %s,', 'wp-sell-services' ), esc_html( $vendor_name ) ); ?>
 </p>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">

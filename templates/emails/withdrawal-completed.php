@@ -4,8 +4,12 @@
  *
  * Sent when admin marks a vendor's approved withdrawal as paid.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/emails/withdrawal-completed.php
+ *
  * @package WPSellServices\Templates\Emails
  * @since   1.2.0
+ * @version 1.9.0
  *
  * @var WP_User $recipient      Recipient (vendor) user object.
  * @var string  $email_heading  Email heading.
