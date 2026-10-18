@@ -2,7 +2,7 @@
 
 **Roles:** guest, buyer, seller on a plan, admin
 **Rail:** woo
-**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 ## Steps
 

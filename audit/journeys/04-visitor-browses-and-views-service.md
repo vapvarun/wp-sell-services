@@ -2,7 +2,7 @@
 
 **Role:** logged-out visitor, then buyer
 **Rail:** standalone, woo
-**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 Guards card 10208183009.
 

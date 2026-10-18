@@ -2,7 +2,7 @@
 
 **Role:** logged-out visitor, then buyer, then administrator
 **Rail:** standalone
-**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 Guards cards 10208392848, 10208094640, 10163575694.
 

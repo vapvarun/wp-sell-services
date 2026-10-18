@@ -265,6 +265,12 @@ foreach ( $map as $kind => $items ) {
 }
 printf( "%-11s %4d / %4d covered  (%5.1f%%)\n", 'TOTAL', $hit, $total, $total ? 100 * $hit / $total : 100 );
 
+// The crawl record is test output and is not committed, so a clean checkout cannot judge page coverage.
+if ( ! $wpss_cov_render && in_array( $wpss_cov_mode, array( 'check', 'write' ), true ) ) {
+	echo "SKIP  no recorded crawl (audit/render-coverage.json); run bin/coverage-run.sh first.\n";
+	exit( 'write' === $wpss_cov_mode ? 1 : 0 );
+}
+
 if ( 'write' === $wpss_cov_mode ) {
 	file_put_contents( $wpss_cov_dir . 'audit/coverage.json', wp_json_encode( array( 'artefacts' => $map ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n" );
 	file_put_contents( $wpss_cov_dir . 'audit/coverage-baseline.json', wp_json_encode( array( '_doc' => 'Artefacts no check names yet. bin/coverage-map.php check fails when this list grows or goes stale. Shrink it by adding checks; never add to it by hand.', 'uncovered' => array_values( array_unique( array_merge( $uncovered, $wpss_cov_elsewhere ) ) ) ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n" );

@@ -2,7 +2,7 @@
 
 **Role:** admin
 **Rail:** standalone (install default)
-**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 Guards cards 10208003415, 10208047602, and the activation fatal found the
 same day.

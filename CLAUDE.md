@@ -135,7 +135,7 @@ your tools back.
 |---|---|---|
 | Lint + PHPStan | `php vendor/bin/phpstan analyse` | type and namespace bugs; found a real fatal in 1.7.0 |
 | Contract audit | `contract-audit.php --pair=…` | key/hook contract drift between Free and Pro |
-| Browser smoke | `wp-plugin-smoke` skill | rendered behaviour; writes `docs/qa/.last-smoke-pass.json` |
+| Browser smoke | `wp-plugin-smoke` skill | rendered behaviour; writes `.qa-results/last-smoke-pass.json` (untracked) |
 | Docs truth | `bin/docs-audit.py` | docs contradicting the code being shipped |
 | REST | `tests/audit/rest-reachability.php` | an unguarded or fataling endpoint anywhere |
 | Catalogue | `bin/gen-openapi.php` | the published API spec going stale |

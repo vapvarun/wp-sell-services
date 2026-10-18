@@ -1,3 +1,0 @@
-{
- "_note": "QA-owned. One entry per journey file: {\"date\":\"YYYY-MM-DD\",\"rail\":\"...\",\"result\":\"pass|fail\",\"by\":\"...\"}. The ready check reads it; journey files themselves are developer-owned."
-}

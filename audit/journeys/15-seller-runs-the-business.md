@@ -2,7 +2,7 @@
 
 **Roles:** seller (`wpss_vendor`), admin
 **Rail:** standalone, woo
-**Status:** written 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** written 2026-10-18; walk pending (see .qa-results/walks.json)
 **Docs:** docs/website/vendor-system, docs/website/earnings-wallet, docs/website/analytics-reporting
 
 ## Steps

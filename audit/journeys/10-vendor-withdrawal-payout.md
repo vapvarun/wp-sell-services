@@ -2,7 +2,7 @@
 
 **Roles:** seller (`wpss_vendor`), admin
 **Rail:** standalone (manual payout)
-**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 Guards card 10402904790 (card:10402904790). Mark paid used to send the "Approved" email, so a seller who was just paid read "approved" and wrote in to ask where the money was.
 

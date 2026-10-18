@@ -76,7 +76,7 @@ Users and data are created by the walk (or `bin/qa-fixtures.sh` for users). Do n
 | `15-seller-runs-the-business.md` | profile, portfolio, earnings, analytics, plans | standalone, woo |
 | `16-milestones-extensions-and-tips.md` | milestone contracts, paid and deadline extensions, tips | standalone, woo |
 
-Walk dates and results are recorded in `docs/qa/walks.json`, not in these files.
+Walk dates and results are recorded in `.qa-results/walks.json`, not in these files.
 
 ## Not yet written
 

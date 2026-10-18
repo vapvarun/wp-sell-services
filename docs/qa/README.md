@@ -10,7 +10,7 @@ One page, in the order QA works. Everything QA needs is linked from here; nothin
 | [`../../audit/gate-parameters.md`](../../audit/gate-parameters.md) | developer | the conditions every flow is walked under (rail, theme, dark, 390, RTL, upgraded site, time zone) |
 | [`TESTING-GUIDELINE.md`](TESTING-GUIDELINE.md) | developer | how to judge what you see (expectation first) |
 | [`CORE_PATHS.md`](CORE_PATHS.md) | developer | the flows that matter most; a bug there outranks one on an edge |
-| `qa-config.json`, `walks.json`, `../../audit/escapes.json` | QA | gate config, walk ledger, regression-guard rows |
+| `qa-config.json`, `.qa-results/walks.json` (untracked, local to the tester), `../../audit/escapes.json` | QA | gate config, walk ledger, regression-guard rows |
 | `QA-HANDOFF-1.9.0.md` | developer | what changed this release, by fix group (replaced each release) |
 | `OWNER_INVENTORY.md` | generated | what the site owner can see; regenerate, never edit |
 
@@ -43,7 +43,7 @@ For each file in `audit/journeys/` (list and roles in `audit/journeys/README.md`
 1. Log in as the stated role, on the stated rail.
 2. Walk the steps in order, in a real browser. Check each `Expect` as you go.
 3. Where a step says *computed style*, read it; themes override links and buttons.
-4. Record date, rail and result in `walks.json`.
+4. Record date, rail and result in `.qa-results/walks.json` (untracked, local to the tester).
 
 The catalog says which journey covers which area. An area with no journey is a gap: walk it by hand from the catalog row and file the gap.
 

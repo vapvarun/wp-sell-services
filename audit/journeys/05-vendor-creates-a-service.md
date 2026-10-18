@@ -2,7 +2,7 @@
 
 **Role:** vendor, then administrator
 **Rail:** standalone, woo
-**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 Guards cards 10208080926, 10208086929, 10212521285, 10212520711.
 

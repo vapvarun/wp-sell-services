@@ -79,7 +79,7 @@ const CANNOT_RUN = {
  * BOTH walks, not just the one whose filename is shorter.
  *
  * This read a single path, so free-mode coverage was optional in practice -
- * and .last-smoke-pass-free.json had never existed, meaning every release so
+ * and last-smoke-pass-free.json had never existed, meaning every release so
  * far shipped with the free-only experience never exercised in a browser.
  * That matters more here than for most plugins: Pro changes behaviour on
  * SHARED surfaces (white-label branding, payout rails, the four raised wizard
@@ -87,8 +87,8 @@ const CANNOT_RUN = {
  * about the free product, which is what most installs run.
  */
 const REPORTS = [
-	[ 'combo', 'docs/qa/.last-smoke-pass.json' ],
-	[ 'free', 'docs/qa/.last-smoke-pass-free.json' ],
+	[ 'combo', '.qa-results/last-smoke-pass.json' ],
+	[ 'free', '.qa-results/last-smoke-pass-free.json' ],
 ];
 
 /**

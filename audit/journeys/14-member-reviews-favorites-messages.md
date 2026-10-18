@@ -2,7 +2,7 @@
 
 **Roles:** buyer (`subscriber`), seller (`wpss_vendor`)
 **Rail:** standalone, woo
-**Status:** written 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** written 2026-10-18; walk pending (see .qa-results/walks.json)
 **Docs:** docs/website/reviews-ratings, docs/website/order-management/order-messaging.md
 
 ## Steps

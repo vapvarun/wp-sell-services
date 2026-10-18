@@ -54,6 +54,7 @@
                 "audit/render-coverage.json"
             ],
             "wpss_add_service_to_cart": [
+                "tests/pro/test-beta-rails.php",
                 "audit/render-coverage.json"
             ],
             "wpss_admin_add_order_note": [
@@ -406,7 +407,6 @@
             ],
             "wpss preflight": [
                 "audit/journeys/03-install-and-upgrade.md",
-                "docs/qa/AGENT_SMOKE_RUNBOOK.md",
                 "audit/render-coverage.json"
             ],
             "wpss repair:stripe-tax": [
@@ -449,7 +449,9 @@
             "wpss_adapter_initialized": [
                 "audit/render-coverage.json"
             ],
-            "wpss_add_service_to_cart": [],
+            "wpss_add_service_to_cart": [
+                "tests/pro/test-beta-rails.php"
+            ],
             "wpss_admin_menu_label": [
                 "tests/Integration/ProExtensionHooksTest.php",
                 "audit/render-coverage.json"
@@ -716,6 +718,7 @@
             ],
             "wpss_docs_url": [],
             "wpss_ecommerce_adapters": [
+                "tests/pro/test-beta-rails.php",
                 "tests/test-integration-seam-contract.php",
                 "audit/render-coverage.json"
             ],
@@ -745,7 +748,9 @@
             "wpss_enqueue_dashboard_assets": [
                 "audit/render-coverage.json"
             ],
-            "wpss_ensure_pay_order": [],
+            "wpss_ensure_pay_order": [
+                "tests/pro/test-pay-order-read-only.php"
+            ],
             "wpss_extension_approved": [],
             "wpss_extension_rejected": [],
             "wpss_extension_request_approved": [],
@@ -769,6 +774,7 @@
             ],
             "wpss_gateway_checkout_button_label": [],
             "wpss_gateway_refund_received": [
+                "tests/pro/test-woo-line-money-contract.php",
                 "tests/test-gateway-refund-seam.php",
                 "audit/render-coverage.json"
             ],
@@ -904,6 +910,7 @@
             ],
             "wpss_order_paid": [
                 "tests/Rest/MilestonesUpworkFlowTest.php",
+                "tests/pro/test-pro-perf-and-options.php",
                 "tests/test-mark-as-paid-idempotent.php",
                 "tests/test-rest-pay-order-confirm-contract.php",
                 "tests/test-scale-surfaces.php",
@@ -946,7 +953,9 @@
                 "tests/test-uninstall-scope.php",
                 "audit/render-coverage.json"
             ],
-            "wpss_pay_order_url_lookup": [],
+            "wpss_pay_order_url_lookup": [
+                "tests/pro/test-pay-order-read-only.php"
+            ],
             "wpss_payment_action_required_message": [],
             "wpss_payment_callback": [],
             "wpss_payment_declined_message": [],
@@ -994,6 +1003,7 @@
                 "audit/render-coverage.json"
             ],
             "wpss_pre_process_gateway_refund": [
+                "tests/pro/test-woo-line-money-contract.php",
                 "tests/test-dispute-closes-on-rail-refund-and-cancel.php",
                 "tests/test-refund-cascade-contract.php",
                 "tests/test-refund-dedupe-contract.php",
@@ -1273,7 +1283,8 @@
             "wpss_stripe_customer_shipping": [],
             "wpss_stripe_payment_description": [],
             "wpss_stripe_payment_intent_args": [
-                "tests/Integration/ProExtensionHooksTest.php"
+                "tests/Integration/ProExtensionHooksTest.php",
+                "tests/pro/test-payout-integrity.php"
             ],
             "wpss_stripe_refund_args": [
                 "audit/render-coverage.json"
@@ -1321,7 +1332,9 @@
                 "audit/render-coverage.json"
             ],
             "wpss_user_blocked": [],
-            "wpss_user_can_feature_service": [],
+            "wpss_user_can_feature_service": [
+                "tests/pro/test-seams-subscriptions-carrier.php"
+            ],
             "wpss_user_unblocked": [],
             "wpss_validate_add_to_cart": [
                 "audit/render-coverage.json"
@@ -1389,6 +1402,7 @@
             "wpss_video_thumbnail_cache_ttl": [],
             "wpss_wallet_manager": [],
             "wpss_wallet_providers": [
+                "tests/pro/test-payout-integrity.php",
                 "tests/test-integration-seam-contract.php",
                 "audit/render-coverage.json"
             ],
@@ -1647,6 +1661,7 @@
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/orders": [
+                "tests/pro/test-pay-order-read-only.php",
                 "tests/test-orders-schema-contract.php",
                 "tests/test-rest-app-surface.php",
                 "audit/journeys/08-api-client-acts-as-each-role.md",
@@ -1831,6 +1846,7 @@
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/settings": [
+                "tests/pro/test-rest-partial-update.php",
                 "tests/test-legal-links-contract.php",
                 "audit/render-coverage.json"
             ],
@@ -2222,6 +2238,7 @@
                 "tests/test-requirements-one-store.php"
             ],
             "order/order-view": [
+                "tests/pro/test-pay-order-read-only.php",
                 "tests/test-copy-sweep.php",
                 "tests/test-milestone-parent-total-contract.php",
                 "tests/test-requirements-display-contract.php",

@@ -2,7 +2,7 @@
 
 **Roles:** buyer (`subscriber`), seller (`wpss_vendor`), admin
 **Rail:** standalone (payment of a phase or tip), woo (pay-order URL)
-**Status:** written 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** written 2026-10-18; walk pending (see .qa-results/walks.json)
 **Docs:** docs/website/order-management/milestones-wpss.md, extensions-wpss.md, tipping-extensions.md
 
 A single order shows milestones or paid extensions, never both: milestones only on buyer-request orders, extensions only on catalog orders.

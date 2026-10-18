@@ -2,7 +2,7 @@
 
 **Roles:** buyer (`subscriber`), two sellers (`wpss_vendor`), admin
 **Rail:** standalone
-**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 Guards cards 10208094430, 10208094503, 10208094640, 10208199238.
 

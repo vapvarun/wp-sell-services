@@ -2,7 +2,7 @@
 
 **Roles:** admin, seller (`wpss_vendor`), buyer
 **Rail:** standalone, woo
-**Status:** written 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** written 2026-10-18; walk pending (see .qa-results/walks.json)
 **Docs:** docs/website/admin-tools
 
 ## Steps

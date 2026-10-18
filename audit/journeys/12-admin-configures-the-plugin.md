@@ -2,7 +2,7 @@
 
 **Roles:** admin
 **Rail:** standalone, woo
-**Status:** written 2026-10-18; walk pending (see docs/qa/walks.json)
+**Status:** written 2026-10-18; walk pending (see .qa-results/walks.json)
 **Docs:** docs/website/platform-settings, docs/website/getting-started
 
 Seed: a fresh site with the plugin and Pro active, no demo content. Expectation source: what the settings pages promise.
