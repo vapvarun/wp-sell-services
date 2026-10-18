@@ -676,14 +676,14 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 |--------|-----------|------|
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:57` |
 | `wpss_currency` | `$currency` | `src/functions/money.php:1090` |
-| `wpss_platform_name` | `$platform_name` | `src/functions/misc.php:36` |
+| `wpss_platform_name` | `$platform_name` | `src/functions/core.php:34` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:147` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
 | `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:1125` |
 | `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:1152` |
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1947` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:153` |
-| `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:126` |
+| `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:1752` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:820` |
 | `wpss_wallet_manager` | `null` | `src/functions/money.php:1969` |
 
@@ -1024,7 +1024,7 @@ on a cart rail.
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_app_token_lifetime` | `array{idle:int, absolute:int} $lifetime` | `functions/misc.php` |
+| `wpss_app_token_lifetime` | `array{idle:int, absolute:int} $lifetime` | `functions/security.php` |
 | `wpss_token_recovery_routes` | `array<int,string> $routes` | `API/AppTokenGuard.php` |
 
 App tokens expire 30 days after last use or 90 days after issue, whichever comes

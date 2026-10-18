@@ -256,6 +256,12 @@ if [ -n "$STAGED_PHP_FILES" ] && ! php bin/check-ux-conformance.php; then
     exit 1
 fi
 
+# Skeleton gate: helpers live in a domain file under src/functions/, no dumping-ground names.
+if [ -n "$STAGED_PHP_FILES" ] && ! php bin/check-skeleton.php; then
+    echo "✗ BLOCKED: file layout breaks docs/standards/skeleton.md."
+    exit 1
+fi
+
 echo ""
 echo "✓ All pre-commit checks passed!"
 exit 0

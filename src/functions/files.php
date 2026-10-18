@@ -1735,3 +1735,157 @@ function wpss_guard_proposed_request_status( $data, $postarr ) {
 	return $data;
 }
 add_filter( 'wp_insert_post_data', 'wpss_guard_proposed_request_status', 10, 2 );
+
+/**
+ * Get max upload size in bytes.
+ *
+ * @return int
+ */
+function wpss_get_max_upload_size(): int {
+	$upload_max = wp_max_upload_size();
+
+	/**
+	 * Filter the max upload size for requirements files.
+	 *
+	 * @param int $max_size Max size in bytes.
+	 */
+	return (int) apply_filters( 'wpss_max_upload_size', $upload_max );
+}
+
+/**
+ * Validate + store conversation message file attachments.
+ *
+ * Single source of truth for message, contact and dispute-reply attachments,
+ * used by REST and admin-ajax alike so the limits and the storage are the
+ * same on every transport.
+ *
+ * With an order id the file goes through wpss_store_order_file() - outside
+ * the web root, behind the order read gate, no URL stored - because a
+ * message on an order carries the same briefs and proofs a requirement does
+ * (Basecamp 10264291163). Without one (a pre-sale contact) there is no
+ * order to gate on, so it stays a media-library attachment marked private.
+ *
+ * @since 1.2.0
+ * @since 1.7.1 Order-scoped files use the private order store; limits come from settings.
+ *
+ * @param array<string, mixed> $files    A single $_FILES['attachments'] entry (PHP's grouped
+ *                                       multi-file shape: name[], type[], tmp_name[], etc.).
+ * @param int                  $order_id Order the conversation belongs to, 0 for none.
+ * @param string               $kind     message|contact|dispute|receipt - grouping only.
+ * @return array{attachments: array<int, array<string,mixed>>, skipped: array<int,string>}
+ */
+function wpss_handle_message_attachments( array $files, int $order_id = 0, string $kind = 'message' ): array {
+	$attachments = array();
+	$skipped     = array();
+
+	if ( empty( $files['name'] ) || ! is_array( $files['name'] ) ) {
+		return array(
+			'attachments' => $attachments,
+			'skipped'     => $skipped,
+		);
+	}
+
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+
+	$file_count = count( $files['name'] );
+	for ( $i = 0; $i < $file_count; $i++ ) {
+		if ( empty( $files['name'][ $i ] ) ) {
+			continue;
+		}
+
+		$file = array(
+			'name'     => $files['name'][ $i ],
+			'type'     => $files['type'][ $i ],
+			'tmp_name' => $files['tmp_name'][ $i ],
+			'error'    => $files['error'][ $i ],
+			'size'     => $files['size'][ $i ],
+		);
+
+		$file_name = sanitize_file_name( $file['name'] );
+		$refused   = wpss_check_upload( $file );
+
+		if ( $refused ) {
+			$skipped[] = $file_name . ': ' . $refused->get_error_message();
+			continue;
+		}
+
+		if ( $order_id > 0 ) {
+			$record = wpss_store_order_file( $file, $order_id, $kind );
+
+			if ( $record ) {
+				$attachments[] = $record;
+			} else {
+				$skipped[] = $file_name . ': ' . __( 'upload failed', 'wp-sell-services' );
+			}
+			continue;
+		}
+
+		// ponytail: pre-sale contact files stay in the media library; the URL is
+		// unlisted, not gated. Move them behind a conversation read gate if
+		// pre-sale inquiries start carrying sensitive documents.
+		$_FILES['upload_file'] = $file;
+
+		// Unlisted means unguessable, or it means nothing - see
+		// wpss_obfuscate_public_upload_name().
+		add_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
+		$attachment_id = media_handle_upload( 'upload_file', 0, array( 'post_status' => 'private' ) );
+		remove_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
+
+		if ( ! is_wp_error( $attachment_id ) ) {
+			$attachments[] = array(
+				'id'   => $attachment_id,
+				'url'  => wp_get_attachment_url( $attachment_id ),
+				'name' => $files['name'][ $i ],
+				'type' => (string) get_post_mime_type( $attachment_id ), // Server-verified MIME, not client-provided.
+			);
+		} else {
+			$skipped[] = $file_name . ': ' . $attachment_id->get_error_message();
+		}
+	}
+
+	return array(
+		'attachments' => $attachments,
+		'skipped'     => $skipped,
+	);
+}
+
+/**
+ * Normalize PHP's grouped $_FILES entry into a list of per-file specs.
+ *
+ * Turns the `name[]/type[]/tmp_name[]/error[]/size[]` shape PHP produces for a
+ * multi-file field into a flat array of single-file specs (name/type/tmp_name/
+ * error/size), skipping empty slots and sanitizing the client-supplied name +
+ * mime. tmp_name/error/size are not user-controlled. Shared by the REST
+ * deliverables endpoint and the legacy admin-ajax delivery handler so both
+ * feed DeliveryService::submit() the same shape.
+ *
+ * @since 1.2.0
+ *
+ * @param array<string, mixed> $files A single grouped $_FILES['field'] entry.
+ * @return array<int, array{name:string,type:string,tmp_name:string,error:int,size:int}>
+ */
+function wpss_normalize_uploaded_files( array $files ): array {
+	$out = array();
+
+	if ( empty( $files['name'] ) || ! is_array( $files['name'] ) ) {
+		return $out;
+	}
+
+	$count = count( $files['name'] );
+	for ( $i = 0; $i < $count; $i++ ) {
+		if ( empty( $files['name'][ $i ] ) ) {
+			continue;
+		}
+		$out[] = array(
+			'name'     => sanitize_file_name( $files['name'][ $i ] ),
+			'type'     => sanitize_mime_type( $files['type'][ $i ] ),
+			'tmp_name' => $files['tmp_name'][ $i ],
+			'error'    => (int) $files['error'][ $i ],
+			'size'     => (int) $files['size'][ $i ],
+		);
+	}
+
+	return $out;
+}

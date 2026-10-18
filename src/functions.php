@@ -35,7 +35,8 @@ $wpss_function_files = array(
 	'notifications',
 	'payments',
 	'time',
-	'misc',
+	'core',
+	'security',
 );
 
 foreach ( $wpss_function_files as $wpss_function_file ) {

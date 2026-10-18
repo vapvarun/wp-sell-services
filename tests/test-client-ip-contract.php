@@ -85,7 +85,7 @@ try {
 			$readers[] = str_replace( WPSS_PLUGIN_DIR, '', $file->getPathname() );
 		}
 	}
-	$check( 'only wpss_client_ip() reads the client address (found in: ' . implode( ', ', $readers ) . ')', array( 'src/functions/misc.php' ) === $readers );
+	$check( 'only wpss_client_ip() reads the client address (found in: ' . implode( ', ', $readers ) . ')', array( 'src/functions/security.php' ) === $readers );
 } finally {
 	// Remove every limiter bucket this script could have created, old keying or new.
 	foreach ( array_merge( array( '203.0.113.7', '0.0.0.0' ), $touched ) as $addr ) {

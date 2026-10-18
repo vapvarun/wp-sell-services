@@ -53,7 +53,7 @@ guide; this is the complete index.
 | `wpss_after_vendor_profile` | 1 | `templates/vendor/profile.php` | Hook: wpss_after_vendor_profile |
 | `wpss_analytics_init` | 1 | `src/Analytics/AnalyticsManager.php` **[PRO]** | Fires when analytics manager is initialized. |
 | `wpss_app_session_revoked` | 2 | `src/API/AuthController.php` | Fires after a single app sign-in is revoked. |
-| `wpss_app_sessions_revoked` | 2 | `src/functions/misc.php` | Fires after a member's app sessions have been revoked. |
+| `wpss_app_sessions_revoked` | 2 | `src/functions/security.php` | Fires after a member's app sessions have been revoked. |
 | `wpss_auto_withdrawal_created` | 3 | `src/Services/EarningsService.php` | Fires when auto withdrawal is created. |
 | `wpss_before_account_deletion` | 2 | `src/Services/AccountDeletionService.php` | Fires before a member's account is deleted. |
 | `wpss_before_cascade_delete_request` | 1 | `src/Services/DataCascadeHandler.php` | Fires before buyer request cascade data is deleted. |
@@ -315,7 +315,7 @@ guide; this is the complete index.
 | `wpss_app_enabled` | 1 | `src/API/API.php` |  |
 | `wpss_app_features` | 1 | `src/API/API.php` |  |
 | `wpss_app_min_version` | 1 | `src/API/API.php` |  |
-| `wpss_app_token_lifetime` | 1 | `src/functions/misc.php` | Filter how long a mobile app token stays valid. |
+| `wpss_app_token_lifetime` | 1 | `src/functions/security.php` | Filter how long a mobile app token stays valid. |
 | `wpss_archive_request_columns` | 1 | `templates/archive-request.php` | Filter: wpss_archive_request_columns |
 | `wpss_archive_service_columns` | 1 | `templates/archive-service.php` | Filter: wpss_archive_service_columns |
 | `wpss_attachment_display_name` | 1 | `src/functions/files.php` | Filter the display form of an attachment filename. |
@@ -344,7 +344,7 @@ guide; this is the complete index.
 | `wpss_checkout_creates_accounts` | 1 | `src/functions/billing.php` | Filter whether checkout creates an account for a logged-out buyer. |
 | `wpss_checkout_slug` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php` | Filter the checkout URL slug. |
 | `wpss_checkout_tax_rate` | 3 | `src/functions/money.php` |  |
-| `wpss_cloudflare_ip_ranges` | 1 | `src/functions/misc.php` | Filters Cloudflare's address ranges. Update when Cloudflare publishes new ones. |
+| `wpss_cloudflare_ip_ranges` | 1 | `src/functions/security.php` | Filters Cloudflare's address ranges. Update when Cloudflare publishes new ones. |
 | `wpss_commission_base_amount` | 3 | `src/Services/CommissionService.php` | Filters the base amount used for commission calculation. |
 | `wpss_commission_fee` | 4 | `src/Services/CommissionService.php` | Filters the platform fee AMOUNT for an order. |
 | `wpss_commission_rate` | 4 | `src/Services/CommissionService.php` *(+1 more)* | Filter the commission rate for a specific order. |
@@ -398,7 +398,7 @@ guide; this is the complete index.
 | `wpss_locked_billing_fields` | 1 | `src/functions/billing.php` | Filters the billing fields that cannot be disabled. |
 | `wpss_manual_order_currencies` | 1 | `src/Admin/Pages/ManualOrderPage.php` | Filter the currencies available on the Manual Order page dropdown. |
 | `wpss_max_order_quantity` | 2 | `src/Frontend/SingleServiceView.php` *(+1 more)* | Filters the maximum order quantity for a service. |
-| `wpss_max_upload_size` | 1 | `src/functions/misc.php` | Filter the max upload size for requirements files. |
+| `wpss_max_upload_size` | 1 | `src/functions/files.php` | Filter the max upload size for requirements files. |
 | `wpss_max_upload_size_mb` | 3 | `src/functions/files.php` | Filter the maximum upload size, in megabytes. |
 | `wpss_member_bypasses_limits` | 2 | `src/functions/vendors.php` | Filter whether a member is exempt from vendor selling limits. |
 | `wpss_member_display_name` | 3 | `src/functions/vendors.php` *(+1 more)* | This filter is documented below. |
@@ -434,7 +434,7 @@ guide; this is the complete index.
 | `wpss_payout_banner_state` | 4 | `templates/dashboard/sections/earnings.php` | Filters the payout banner state shown on the earnings section. |
 | `wpss_payout_fields` | 2 | `src/Services/EarningsService.php` | Filter the details a payout method collects. |
 | `wpss_person_schema` | 2 | `src/SEO/SchemaMarkup.php` |  |
-| `wpss_platform_name` | 1 | `src/functions/misc.php` | Filter the platform name. |
+| `wpss_platform_name` | 1 | `src/functions/core.php` | Filter the platform name. |
 | `wpss_post_checkout_url` | 3 | `src/functions/orders.php` | Filter the post-checkout redirect. |
 | `wpss_pre_create_order` | 1 | `src/Integrations/Standalone/StandaloneOrderProvider.php` | Filters order data before database insertion. |
 | `wpss_pre_create_review` | 2 | `src/Services/ReviewService.php` | Filters review data before database insertion. |
@@ -535,7 +535,7 @@ guide; this is the complete index.
 | `wpss_token_recovery_routes` | 1 | `src/API/AppTokenGuard.php` | Filter the routes reachable without a valid token. |
 | `wpss_tour_should_enqueue` | 1 | `src/Frontend/Tour.php` | Filter whether WPSS tour assets load on the current request. |
 | `wpss_tour_steps` | 1 | `src/Frontend/Tour.php` | Filter the steps array handed to Shepherd. |
-| `wpss_trusted_proxies` | 1 | `src/functions/misc.php` | Filters the proxies allowed to set X-Forwarded-For (IPs or CIDR ranges). |
+| `wpss_trusted_proxies` | 1 | `src/functions/security.php` | Filters the proxies allowed to set X-Forwarded-For (IPs or CIDR ranges). |
 | `wpss_use_fullwidth_template` | 1 | `src/Frontend/TemplateLoader.php` *(+1 more)* | Filter whether plugin pages use the full-width template. |
 | `wpss_user_can_feature_service` | 2 | `src/functions/services.php` | Filter who may mark a service as Featured. |
 | `wpss_validate_add_to_cart` | 4 | `src/API/CartController.php` | Validates whether a service can be added to the cart. |

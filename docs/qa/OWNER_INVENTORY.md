@@ -95,7 +95,7 @@ Every option the code reads, with the default it falls back to. **A blank defaul
 			continue;
 		}
 
-		if ( $hook ===  ·  . $slug || str_ends_with( $hook,  · rtl | src/functions/misc.php |
+		if ( $hook ===  ·  . $slug || str_ends_with( $hook,  · rtl | src/functions/security.php |
 
 ## Templates
 
@@ -423,7 +423,7 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 57
 - `wpss_revision_requested` — src/API/OrdersController.php
 - `wpss_order_disputed` — src/API/OrdersController.php
 - `wpss_billing_address_saved` — src/functions/billing.php
-- `wpss_app_sessions_revoked` — src/functions/misc.php
+- `wpss_app_sessions_revoked` — src/functions/security.php
 - `wpss_order_created` — src/functions/orders.php
 - `wpss_notification_created` — src/Services/NotificationService.php
 - `wpss_service_created` — src/Services/ServiceManager.php
@@ -705,9 +705,9 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 57
 - `wpss_countries` — src/functions/billing.php
 - `wpss_billing_address` — src/functions/billing.php
 - `wpss_checkout_creates_accounts` — src/functions/billing.php
-- `wpss_platform_name` — src/functions/misc.php
-- `wpss_max_upload_size` — src/functions/misc.php
-- `wpss_app_token_lifetime` — src/functions/misc.php
+- `wpss_platform_name` — src/functions/core.php
+- `wpss_max_upload_size` — src/functions/files.php
+- `wpss_app_token_lifetime` — src/functions/security.php
 - `wpss_order_statuses` — src/functions/orders.php
 - `wpss_requirement_field_label` — src/functions/orders.php
 - `wpss_post_checkout_url` — src/functions/orders.php

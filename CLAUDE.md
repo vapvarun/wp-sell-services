@@ -179,6 +179,10 @@ WPSellServices\Frontend\      # Frontend functionality
 WPSellServices\API\           # REST API endpoints
 ```
 
+### Where does X go
+
+Class, helper, CSS and JS placement is one table in `docs/standards/skeleton.md`; `php bin/check-skeleton.php` enforces the helper rules. New third-party integrations follow `docs/standards/integration-seams.md` (base class + filter registry, no core edit).
+
 ### Directory Structure
 ```
 wp-sell-services/

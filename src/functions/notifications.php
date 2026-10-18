@@ -391,3 +391,188 @@ function wpss_save_email_preferences( int $user_id, array $submitted ): ?array {
 
 	return get_user_meta( $user_id, 'wpss_email_preferences', true ) === $preferences ? $preferences : null;
 }
+
+/**
+ * Add a notification for a user.
+ *
+ * Helper function to simplify adding notifications via NotificationService.
+ *
+ * @since 1.0.0
+ *
+ * @param int    $user_id User ID to notify.
+ * @param string $type    Notification type.
+ * @param string $message Notification message.
+ * @param array  $data    Additional data.
+ * @return int|false Notification ID or false on failure.
+ */
+function wpss_add_notification( int $user_id, string $type, string $message, array $data = array() ) {
+	$notification_service = new \WPSellServices\Services\NotificationService();
+
+	// Generate title from type.
+	$type_titles = array(
+		'order_created'        => __( 'New Order', 'wp-sell-services' ),
+		'order_status'         => __( 'Order Update', 'wp-sell-services' ),
+		'new_message'          => __( 'New Message', 'wp-sell-services' ),
+		'delivery_submitted'   => __( 'Delivery Submitted', 'wp-sell-services' ),
+		'delivery_accepted'    => __( 'Delivery Accepted', 'wp-sell-services' ),
+		'revision_requested'   => __( 'Revision Requested', 'wp-sell-services' ),
+		'review_received'      => __( 'New Review', 'wp-sell-services' ),
+		'dispute_opened'       => __( 'Dispute Opened', 'wp-sell-services' ),
+		'dispute_resolved'     => __( 'Dispute Resolved', 'wp-sell-services' ),
+		'deadline_warning'     => __( 'Deadline Warning', 'wp-sell-services' ),
+		'service_approved'     => __( 'Service Approved', 'wp-sell-services' ),
+		'service_rejected'     => __( 'Service Requires Changes', 'wp-sell-services' ),
+		'withdrawal_pending'   => __( 'Withdrawal Request', 'wp-sell-services' ),
+		'withdrawal_approved'  => __( 'Withdrawal Approved', 'wp-sell-services' ),
+		'withdrawal_completed' => __( 'Withdrawal Paid', 'wp-sell-services' ),
+		'withdrawal_rejected'  => __( 'Withdrawal Rejected', 'wp-sell-services' ),
+	);
+
+	$title = $type_titles[ $type ] ?? ucwords( str_replace( '_', ' ', $type ) );
+
+	return $notification_service->create( $user_id, $type, $title, $message, $data );
+}
+
+/**
+ * Where a notification leads: the thing it is about.
+ *
+ * An explicit action_url wins; otherwise the IDs the notification already
+ * carries name the target - a thread with no order goes to Messages, anything
+ * with an order goes to that order (the dashboard picks the buyer or seller
+ * side), then a request, a withdrawal. Most rows carry only an order_id, so
+ * the list, the REST payload and the email button all read the link from here
+ * instead of each rows' empty action_url column (Basecamp 10337217098).
+ *
+ * @since 1.8.0
+ *
+ * @param array       $data       The notification's data payload.
+ * @param string|null $action_url The stored action_url column, if any.
+ * @return string URL, or '' when the notification points at nothing.
+ */
+function wpss_get_notification_url( array $data, ?string $action_url = null ): string {
+	foreach ( array( $action_url, $data['action_url'] ?? '', $data['link'] ?? '' ) as $url ) {
+		if ( ! empty( $url ) ) {
+			return (string) $url;
+		}
+	}
+
+	if ( ! empty( $data['conversation_id'] ) && empty( $data['order_id'] ) ) {
+		return add_query_arg(
+			array(
+				'section'         => 'messages',
+				'conversation_id' => (int) $data['conversation_id'],
+			),
+			wpss_get_dashboard_url()
+		);
+	}
+
+	// A dispute notification opens the dispute, not its order (Basecamp
+	// 10337159668). The dashboard view admits only the two parties, so the
+	// site's admin goes to the admin dispute screen.
+	if ( ! empty( $data['dispute_id'] ) ) {
+		return current_user_can( 'manage_options' )
+			? admin_url( 'admin.php?page=wpss-disputes&action=view&dispute_id=' . (int) $data['dispute_id'] )
+			: add_query_arg( 'dispute', (int) $data['dispute_id'], wpss_get_dashboard_url( 'disputes' ) );
+	}
+
+	foreach ( array( 'order_id', 'parent_order_id' ) as $key ) {
+		if ( ! empty( $data[ $key ] ) ) {
+			$url = wpss_get_order_url( (int) $data[ $key ] );
+			if ( '' !== $url ) {
+				return $url;
+			}
+		}
+	}
+
+	if ( ! empty( $data['request_id'] ) ) {
+		return (string) get_permalink( (int) $data['request_id'] );
+	}
+
+	if ( ! empty( $data['withdrawal_id'] ) ) {
+		return wpss_get_dashboard_url( 'earnings' );
+	}
+
+	return '';
+}
+
+/**
+ * WHERE clause for a member's notifications: the one place list, count and pager agree.
+ *
+ * @since 1.9.0
+ *
+ * @param int   $user_id User ID.
+ * @param array $args    unread_only (bool), is_read (0|1), type (string notification type).
+ * @return array{0: string, 1: array} SQL fragment starting at "user_id = %d", and its params.
+ */
+function wpss_notifications_where( int $user_id, array $args ): array {
+	$sql    = 'user_id = %d';
+	$params = array( $user_id );
+
+	if ( ! empty( $args['unread_only'] ) ) {
+		$sql .= ' AND is_read = 0';
+	} elseif ( isset( $args['is_read'] ) ) {
+		$sql     .= ' AND is_read = %d';
+		$params[] = (int) (bool) $args['is_read'];
+	}
+
+	if ( ! empty( $args['type'] ) ) {
+		$sql     .= ' AND type = %s';
+		$params[] = sanitize_key( (string) $args['type'] );
+	}
+
+	return array( $sql, $params );
+}
+
+/**
+ * Get notifications for a user, newest first.
+ *
+ * Ordered by created_at then id so rows written in the same second page
+ * without repeats or gaps.
+ *
+ * @since 1.2.0
+ *
+ * @param int   $user_id User ID.
+ * @param array $args    Query arguments (limit, offset, unread_only, type).
+ * @return array Array of notification objects.
+ */
+function wpss_get_user_notifications( int $user_id, array $args = array() ): array {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_notifications';
+
+	$args = wp_parse_args(
+		$args,
+		array(
+			'limit'  => 20,
+			'offset' => 0,
+		)
+	);
+
+	list( $where, $params ) = wpss_notifications_where( $user_id, $args );
+	$params[]               = max( 1, (int) $args['limit'] );
+	$params[]               = max( 0, (int) $args['offset'] );
+
+	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is hardcoded fragments with placeholders; values come via prepare().
+	return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE {$where} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d", $params ) );
+}
+
+/**
+ * Count a user's notifications.
+ *
+ * Needed so the notifications screen can page: it used to take the 50 most
+ * recent and stop, with nothing in the UI to reach anything older.
+ *
+ * @since 1.7.2
+ *
+ * @param int   $user_id User ID.
+ * @param array $args    Query arguments (unread_only, type).
+ * @return int
+ */
+function wpss_count_user_notifications( int $user_id, array $args = array() ): int {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_notifications';
+
+	list( $where, $params ) = wpss_notifications_where( $user_id, $args );
+
+	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is hardcoded fragments with placeholders; values come via prepare().
+	return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$where}", $params ) );
+}

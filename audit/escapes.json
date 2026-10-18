@@ -232,6 +232,14 @@
       "fails_on": "frontend.css and vendor-dashboard.css redeclared width + border-collapse",
       "journey": "audit/journeys/17-layout-per-surface.md#12",
       "now_dead_or_duplicate": "two identical .wpss-table base rules deleted; unified-dashboard keeps only its card-look delta"
+    },
+    {
+      "card": "skeleton: src/functions/misc.php dumping ground (no card)",
+      "class": "a developer cannot predict which file holds a helper, so helpers get duplicated or dropped in a catch-all file",
+      "check": "bin/check-skeleton.php (every function file loaded, domain-named, wpss_ prefixed; no misc/utils/helpers names)",
+      "fails_on": "tree with src/functions/misc.php and core/security files unloaded",
+      "journey": "docs/standards/skeleton.md",
+      "now_dead_or_duplicate": "misc.php deleted; its 32 functions moved unchanged into core, security, notifications and files"
     }
   ]
 }
