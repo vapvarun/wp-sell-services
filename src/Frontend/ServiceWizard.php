@@ -351,7 +351,7 @@ class ServiceWizard {
 					<button type="button" class="wpss-btn wpss-btn--success wpss-wizard__btn-publish" x-show="currentStep === 'review'" @click="publishService()" :disabled="publishing" x-cloak>
 						<i data-lucide="check-circle-2" class="wpss-icon" x-show="!publishing" aria-hidden="true"></i>
 						<span class="wpss-spinner" x-show="publishing" x-cloak></span>
-						<?php if ( $service_id ) : ?>
+						<?php if ( $service_id && in_array( get_post_status( $service_id ), array( 'publish', 'pending' ), true ) ) : // A draft is published here, not updated. ?>
 						<span x-text="publishing ? '<?php esc_attr_e( 'Updating...', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Update Service', 'wp-sell-services' ); ?>'"></span>
 					<?php else : ?>
 						<span x-text="publishing ? '<?php esc_attr_e( 'Publishing...', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Publish Service', 'wp-sell-services' ); ?>'"></span>
