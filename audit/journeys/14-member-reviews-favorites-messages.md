@@ -29,3 +29,8 @@ Buyer messages the seller from a service (pre-sale) and from an order.
 
 ### 5. Where reviews and FAQs show
 A service page lists approved reviews (`partials/service-reviews`) and the seller's FAQs (`partials/service-faqs`); a service with neither shows no empty heading. Reviews held for moderation never appear.
+
+### 6. Helpful is a toggle (card:10385175812)
+As a signed-in reader who is not the author, press Helpful on a review, reload, then press it again.
+
+**Expect** the count rises by one and the button shows it is marked after a reload; pressing again removes the vote; the author's own review offers no button; a signed-out reader is asked to log in.

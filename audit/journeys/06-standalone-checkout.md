@@ -122,3 +122,8 @@ At 1440x900 scroll the checkout from top to bottom in 100px steps.
 `checkout/payment-methods` lists only enabled gateways and hides the list when one is enough; `checkout/summary` totals match the charge; `partials/legal-links` shows the terms and privacy links only when those pages are mapped.
 
 **Expect** with no pages mapped there is no empty "Terms" link.
+
+### A closed order is not "already paid" (card:10416548799)
+Open the pay link of an order that was cancelled or refunded.
+
+**Expect** the page says the order was cancelled (or refunded) and can no longer be paid; "already been paid" appears only for an order that is paid.

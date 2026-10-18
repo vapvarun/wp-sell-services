@@ -161,3 +161,18 @@ As a seller who also has `edit_posts`, open wp-admin.
 
 
 **Doors to assert together** (the REST twin and the AJAX door must agree): dashboard publish, bulk publish, wizard draft and publish, portfolio add and update, REST services and proposals. Guard: `tests/test-ajax-standing-gate.php`.
+
+### 5. Each tier has its own description (card:10244588840)
+In the wizard Pricing step, switch between Basic, Standard and Premium.
+
+**Expect** every tier has a Tier description field that saves and shows under the tier on the service page; leaving it empty is allowed.
+
+### 6. A refused publish says why (card:10399161587)
+Publish an incomplete service from the editor and from the list.
+
+**Expect** the service stays a draft and an explicit notice names what is missing, visible only to someone who may edit that service.
+
+### 7. My Services status tiles (card:10403854262)
+Open Dashboard > My Services.
+
+**Expect** the All, Active, Drafts and Pending Review tiles are links; selecting one lists only that status and the count matches the list; at 390px they wrap without horizontal scroll.

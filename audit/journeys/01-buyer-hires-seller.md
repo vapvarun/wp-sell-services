@@ -109,3 +109,8 @@ Open Deliver Work, Open Dispute and Quote Extra Work on an order, then the same 
 
 - 390px on every screen above.
 - Seller proposing on their **own** request notifies nobody.
+
+### Order again (card:9696986584)
+As the buyer, open a completed order that was bought from a package.
+
+**Expect** a "Need this again?" section with the package name and today's price; Order again puts the same package and options in the cart and lands on checkout; if the price changed the section says so before the click; a custom-quote order, a paused service and an order that is not yours show no section; an option the vendor removed is dropped with a warning, never silently.

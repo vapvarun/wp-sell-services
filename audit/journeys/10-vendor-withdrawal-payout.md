@@ -55,3 +55,8 @@ Settings > Payouts and Emails: type -5 into minimum withdrawal, clearance days a
 - Automatic payout: the seller gets `emails/withdrawal-auto` on the scheduled date, naming the amount and the method.
 
 **Expect** each mail reads correctly in light and dark, in RTL, and the status cell matches the withdrawal's real status.
+
+### 8. A balance below zero (card:10244795017, card:10416610833)
+Refund an order after its earnings were withdrawn so the vendor ledger goes negative.
+
+**Expect** the vendor cannot request a withdrawal and an approved request cannot be marked paid; the Earnings page explains the debt in words, the figure is readable at 4.5:1 in light and dark, and it matches the ledger amount the admin sees (a withdrawal in progress is named, not hidden); Admin > Vendors lists the vendor and Write off, with a reason, brings the balance to exactly zero once, leaves Total earned unchanged, and a second click does nothing.

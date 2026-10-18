@@ -400,6 +400,78 @@
    "added": "2026-10-18",
    "fails_on": "00fd7b12^ (h2 to h4 x3 in gateway classes)",
    "check": "tests/test-settings-heading-outline.php"
+  },
+  {
+   "card": "10399161587",
+   "title": "a refused publish is explained with a flag and shown only to someone who may edit the service",
+   "guard": "static:publish-blocked-notice",
+   "added": "2026-10-19",
+   "fails_on": "0d895fa9^ (guard red on the pre-fix commit)",
+   "check": "tests/test-publish-blocked-notice.php"
+  },
+  {
+   "card": "10385175812",
+   "title": "Helpful is a toggle with one durable vote writer shared by REST and AJAX, and never on your own review",
+   "guard": "static:review-helpful-toggle",
+   "added": "2026-10-19",
+   "fails_on": "0efd1e4c^ (guard red on the pre-fix commit)",
+   "check": "tests/test-review-helpful-toggle.php"
+  },
+  {
+   "card": "10244588840",
+   "title": "every package tier carries its own description field",
+   "guard": "static:wizard-package-description",
+   "added": "2026-10-19",
+   "fails_on": "5c11d9b7^ (guard red on the pre-fix commit)",
+   "check": "tests/test-wizard-package-description.php"
+  },
+  {
+   "card": "9696986584",
+   "title": "Order Again prices the same package through the one cart door on every rail and refuses what cannot be repeated",
+   "guard": "static:order-again",
+   "added": "2026-10-19",
+   "fails_on": "44706cb5^ (guard red on the pre-fix commit)",
+   "check": "tests/test-order-again.php"
+  },
+  {
+   "card": "10244795017",
+   "title": "a negative balance is carried, refused at every payout gate, and written off by an admin once, as a non-earning credit",
+   "guard": "static:negative-balance-writeoff",
+   "added": "2026-10-19",
+   "fails_on": "1bf68bcb^ (guard red on the pre-fix commit)",
+   "check": "tests/test-negative-balance-writeoff.php"
+  },
+  {
+   "card": "10416610833",
+   "title": "the negative earnings tile is readable in both themes and the vendor figure reconciles with the admin ledger figure",
+   "guard": "static:negative-tile-contract",
+   "added": "2026-10-19",
+   "fails_on": "1b25187a^ (guard red on the pre-fix commit)",
+   "check": "tests/test-negative-tile-contract.php"
+  },
+  {
+   "card": "10416548799",
+   "title": "a cancelled or refunded order is never described as already paid on any pay door",
+   "guard": "static:order-not-payable-message",
+   "added": "2026-10-19",
+   "fails_on": "a216b876^ (guard red on the pre-fix commit)",
+   "check": "tests/test-order-not-payable-message.php"
+  },
+  {
+   "card": "10268606549",
+   "title": "no undefined design token (comments stripped) and one owner for the .wpss-btn base rule",
+   "guard": "static:design-token-integrity",
+   "added": "2026-10-19",
+   "fails_on": "2fb1c564^ (guard red on the pre-fix commit)",
+   "check": "tests/test-design-token-integrity.php"
+  },
+  {
+   "card": "10331411319",
+   "title": "the release smoke gate invalidates by surface across Free and Pro and fails safe on unmapped files",
+   "guard": "static:smoke-gate-surfaces",
+   "added": "2026-10-19",
+   "fails_on": "43d045ce^ (guard red on the pre-fix commit)",
+   "check": "tests/smoke-gate-surfaces.test.cjs"
   }
  ]
 }

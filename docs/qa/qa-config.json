@@ -92,6 +92,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-account-standing.php"
    },
    {
+    "id": "ajax-standing-gate",
+    "run": "${WP_CLI:-wp} eval-file tests/test-ajax-standing-gate.php"
+   },
+   {
     "id": "audit-log-coverage",
     "run": "${WP_CLI:-wp} eval-file tests/test-audit-log-coverage.php"
    },
@@ -120,6 +124,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-dark-mode-and-icon-hooks.php"
    },
    {
+    "id": "design-token-integrity",
+    "run": "${WP_CLI:-wp} eval-file tests/test-design-token-integrity.php"
+   },
+   {
     "id": "docs-audit",
     "run": "python3 bin/docs-audit.py"
    },
@@ -144,6 +152,14 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-multi-checkout-tax-label.php"
    },
    {
+    "id": "negative-balance-writeoff",
+    "run": "${WP_CLI:-wp} eval-file tests/test-negative-balance-writeoff.php"
+   },
+   {
+    "id": "negative-tile-contract",
+    "run": "${WP_CLI:-wp} eval-file tests/test-negative-tile-contract.php"
+   },
+   {
     "id": "no-defaults-on-update-routes",
     "run": "${WP_CLI:-wp} eval-file tests/test-no-defaults-on-update-routes.php"
    },
@@ -158,6 +174,18 @@
    {
     "id": "notification-read-at",
     "run": "${WP_CLI:-wp} eval-file tests/test-notification-read-at.php"
+   },
+   {
+    "id": "notification-types-registry",
+    "run": "${WP_CLI:-wp} eval-file tests/test-notification-types-registry.php"
+   },
+   {
+    "id": "order-again",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-again.php"
+   },
+   {
+    "id": "order-not-payable-message",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-not-payable-message.php"
    },
    {
     "id": "order-product-columns",
@@ -188,8 +216,16 @@
     "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-woo-cart-session-price.php"
    },
    {
+    "id": "publish-blocked-notice",
+    "run": "${WP_CLI:-wp} eval-file tests/test-publish-blocked-notice.php"
+   },
+   {
     "id": "rest-matrix",
     "run": "${WP_CLI:-wp} eval-file tests/test-integration-seam-contract.php  and tests/test-rest-matrix.php"
+   },
+   {
+    "id": "review-helpful-toggle",
+    "run": "${WP_CLI:-wp} eval-file tests/test-review-helpful-toggle.php"
    },
    {
     "id": "review-status-rest",
@@ -204,8 +240,16 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-settings-heading-outline.php"
    },
    {
+    "id": "settings-heading-outline",
+    "run": "${WP_CLI:-wp} eval-file tests/test-settings-heading-outline.php"
+   },
+   {
     "id": "settings-no-negative-numbers",
     "run": "${WP_CLI:-wp} eval-file tests/test-settings-no-negative-numbers.php"
+   },
+   {
+    "id": "smoke-gate-surfaces",
+    "run": "node tests/smoke-gate-surfaces.test.cjs"
    },
    {
     "id": "text-token-contrast",
@@ -224,20 +268,12 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-withdrawal-status-emails.php"
    },
    {
+    "id": "wizard-package-description",
+    "run": "${WP_CLI:-wp} eval-file tests/test-wizard-package-description.php"
+   },
+   {
     "id": "woo-rail-guest-and-cart-link",
     "run": "${WP_CLI:-wp} eval-file tests/test-woo-rail-guest-and-cart-link.php"
-   },
-   {
-    "id": "ajax-standing-gate",
-    "run": "${WP_CLI:-wp} eval-file tests/test-ajax-standing-gate.php"
-   },
-   {
-    "id": "notification-types-registry",
-    "run": "${WP_CLI:-wp} eval-file tests/test-notification-types-registry.php"
-   },
-   {
-    "id": "settings-heading-outline",
-    "run": "${WP_CLI:-wp} eval-file tests/test-settings-heading-outline.php"
    }
   ]
  }

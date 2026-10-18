@@ -34,3 +34,8 @@ Add, edit, feature and remove an item.
 - The account-page versions of the seller dashboard (`myaccount/vendor-dashboard`, `myaccount/vendor-services`, `myaccount/service-orders`) show the same figures as the dashboard.
 
 **Expect** screen and API agree, and a visitor or another seller gets 403.
+
+### 7. Earnings page states (card:10416610833)
+Walk Earnings with a positive, zero and negative balance.
+
+**Expect** each state has the right label ("Available to withdraw" or "Balance to clear") and an explanation; the negative tile keeps the surface colour and a readable figure in dark mode at 390px.
