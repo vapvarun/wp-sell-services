@@ -29,3 +29,11 @@ A buyer uses Report this service on a service page and Report this seller on a p
 
 ### 5. Orders, disputes, withdrawals and the audit log
 **Expect** each list pages, filters and sorts at 2000+ rows without a timeout; every status change an admin makes appears in the Audit Log with actor and time; hold and resume work for admins only (journey 05 part 2).
+
+### 6. Rejections, resolutions and the mail that goes with them
+- `POST /moderation/{service_id}/reject` with a reason: the seller sees `partials/service-rejection-notice` on that service and gets the moderation-response mail; the service is not public.
+- A service entering the queue sends the admin `emails/moderation-pending`; the decision sends the seller `emails/moderation-response`.
+- Vendor application: approve sends `emails/vendor-approved`, reject sends `emails/vendor-rejected` with the reason; the Contact action sends `emails/vendor-contact`.
+- `POST /reports/{id}/resolve` closes a member report once, records who resolved it, and tells the reporter.
+
+**Expect** nothing in the queue is actionable twice, and each mail reaches the right person only.

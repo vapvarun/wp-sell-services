@@ -148,3 +148,14 @@ Dashboard > Portfolio: add an item with tags "logo, branding", edit it, clear th
 `PUT` one field at a time to a plan and to a commission rule.
 
 **Expect** the other fields are untouched, `is_active` is in every response, and a category rule with no category is refused.
+
+### 6. Cart, order payment and proposals over REST
+- `DELETE /cart/{item_key}` removes one line; a key from another user's cart is a 404, not a removal.
+- `POST /payments/create-intent` registers only on the standalone rail; on Woo it does not exist. `POST /orders/{id}/pay` is the customer's own call to pay an existing order (milestone phases use it): another buyer gets 403, and a later phase cannot be paid before the earlier one is approved.
+- `POST /buyer-requests/{id}/proposals` creates a proposal for a seller; the request owner cannot propose on their own request. `.../proposals/{proposal_id}/accept` creates one order and rejects every other proposal's pending state; `.../reject` tells the seller; `POST /proposals/{id}/withdraw` is the seller's own and only while pending.
+- `POST /realtime/auth` signs a private channel only for the caller's own user channel or an order they are part of; anything else is 403.
+- `POST /orders/{id}/requirements/skip` marks requirements skipped once; the order moves on and a second call is refused.
+- `POST /orders/{order_id}/review` creates one review per completed order; a second call is refused.
+- `POST /conversations/{id}/read` clears the unread count for the caller only.
+
+**Expect** the same guards as the screens: wrong role 403, wrong owner 403 or 404, repeated call changes nothing.

@@ -25,3 +25,12 @@ Add, edit, feature and remove an item.
 
 ### 5. Vendor plans (Pro)
 **Expect** a seller at the plan limit sees the upgrade link and cannot publish past it; Max featured is honoured (carrier product on Woo).
+
+### 6. Portfolio order, featured item, vacation and levels over REST
+- `POST /portfolio/reorder` saves the new order and the profile shows it; a seller cannot reorder another seller's items.
+- `POST /portfolio/{id}/featured` toggles an item as featured, up to the featured cap; going over the cap is refused with a message, not silently ignored.
+- `POST /vendors/me/vacation` turns vacation mode on or off for the caller only, and the services are hidden or restored as the screen does.
+- `GET /seller-levels/{level}` returns the level's requirements and the seller's progress toward it.
+- The account-page versions of the seller dashboard (`myaccount/vendor-dashboard`, `myaccount/vendor-services`, `myaccount/service-orders`) show the same figures as the dashboard.
+
+**Expect** screen and API agree, and a visitor or another seller gets 403.

@@ -28,3 +28,10 @@ Seller requests up to 14 extra days with a reason.
 Buyer sends a tip on a completed order.
 
 **Expect** charged once (double click safe), credited to the seller's earnings with commission per settings, receipt to the buyer, notification to the seller, refund reverses it.
+
+### 5. REST and mail for each money-adjacent step
+- Milestones: `GET`/`PUT /milestones/{id}`, `.../submit`, `.../approve`, `.../decline`, `.../request-revision`, `.../pay`. Only the owning seller submits, only the buyer approves, declines or requests a revision; a phase cannot be paid before the previous one is approved; every repeat call changes nothing. The proposal mail is `emails/milestone-proposed` and the buyer sees the plan in `order/milestone-view`.
+- Extensions: `POST /orders/{order_id}/extension` quotes (catalog orders only), `POST /extensions/{id}/decline` declines. Mails: `emails/extension-proposed`, `emails/extension-approved`, `emails/extension-declined`; the buyer sees the quote in `order/extension-view`.
+- Delivery: marking delivered sends `emails/delivery-ready` to the buyer.
+
+**Expect** wrong role 403, a milestone route on a catalog order and an extension route on a request order are both refused, and each mail names the right order and amount.

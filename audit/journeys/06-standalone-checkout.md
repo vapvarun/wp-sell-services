@@ -106,9 +106,19 @@ Settings > Payment Gateways > Tax: enable, label VAT, 20%. Buy one service, then
 - Clear the label and save: it stores and shows "Tax", never a bare "(20%)".
 - A site that lowers the rate per seller through `wpss_checkout_tax_rate` sees that rate (or the label alone when the cart mixes rates) in the summary, never the settings rate.
 
+### Sidebar cards never overlap (card:10411948180)
+At 1440x900 scroll the checkout from top to bottom in 100px steps.
+
+**Expect** the Order Summary, About the Seller and What happens next cards never intersect at any step, each is fully readable at some step, and at 390 the summary comes first and nothing overflows sideways (guard `tests/test-layout-surface-css.php`).
+
 ## Notes for whoever runs this
 
 - The container behaviour is decided in JS on load. If you disable JavaScript,
   the wrapper stays constrained; that is the safe direction and not a failure.
 - `?pay_order={id}` and `/service-checkout/{id}/` are **different routes** with
   different renderers. A pass on one says nothing about the other.
+
+### Payment methods, summary and legal links
+`checkout/payment-methods` lists only enabled gateways and hides the list when one is enough; `checkout/summary` totals match the charge; `partials/legal-links` shows the terms and privacy links only when those pages are mapped.
+
+**Expect** with no pages mapped there is no empty "Terms" link.

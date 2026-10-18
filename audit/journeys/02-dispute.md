@@ -91,3 +91,15 @@ On a site with pre-1.6.0 disputes, after upgrade:
   (`migrate_evidence_to_messages()`, gated on `wpss_dispute_evidence_migrated`)
 - admin status notes are **still there** — the migration must keep them
 - running the migration twice moves 0 the second time
+
+## REST doors for the same flow
+
+Every dispute action has a REST twin, and the dashboard button and the API call must end in the same state, notification and audit row.
+
+- `POST /disputes/{id}/respond`: the other party answers; a third user gets 403; the opener is told.
+- `POST /disputes/{id}/cancel`: only the opener, only while open; the other party is told and Open Dispute is offered again.
+- `POST /disputes/{id}/escalate`: moves an open dispute to admin review once; a second call is refused, not duplicated.
+- `POST /disputes/{id}/assign`: admin only; a buyer or seller gets 403.
+- `POST /disputes/{id}/resolve`: admin only; the resolution type decides the refund and the order status exactly as the admin screen does, and resolving twice changes nothing (a refund is never paid twice).
+
+**Expect** each call returns the same refusal as the screen for the same user (a suspended seller included) and writes one audit-log row.

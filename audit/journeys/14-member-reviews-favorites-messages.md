@@ -26,3 +26,6 @@ Heart a service as the buyer; open Dashboard > Favorites; remove it.
 Buyer messages the seller from a service (pre-sale) and from an order.
 
 **Expect** both threads appear for both parties, unread counts clear when read, attachments respect size and type limits, a suspended seller cannot start a new pre-sale thread but can still answer an order thread (card:10384354109).
+
+### 5. Where reviews and FAQs show
+A service page lists approved reviews (`partials/service-reviews`) and the seller's FAQs (`partials/service-faqs`); a service with neither shows no empty heading. Reviews held for moderation never appear.

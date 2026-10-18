@@ -156,3 +156,6 @@ strip is reachable.
   performance win.
 - The poster URL is cached for a week. After changing a service's video, the old
   poster can persist — clear `wpss_video_thumb_{md5(url)}` or wait it out.
+
+### 8. Empty states
+A sitewide archive with no services shows `content-no-services`, and a request list with no requests shows `content-no-requests`, each with the next step for that visitor and no broken heading.

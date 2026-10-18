@@ -32,3 +32,8 @@ As a member with `order_late`, `refund_pending` and `order_started` rows: every 
 
 ### Retention
 Old read notifications are cleaned after 90 days by default; a site changes it with the `wpss_notification_retention_days` filter. **Expect** rows older than the window and already read are removed, unread rows never are, and the badge count is unchanged by the cleanup.
+
+### 5. The account-page notifications tab
+Where a cart plugin owns the account page, Notifications renders `myaccount/notifications` with the same list, filter and mark-read as the dashboard.
+
+**Expect** the type filter lists only the types this member has received, and marking read updates the bell badge.

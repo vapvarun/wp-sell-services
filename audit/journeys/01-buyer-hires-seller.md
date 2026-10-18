@@ -100,6 +100,11 @@ Same check on the admin **Recent Orders** table and the admin Orders list: every
 request order and every sub-order names its source, and only a genuinely removed
 service post says "Deleted service #N".
 
+### Modals sit above the theme (card:10384248570, card:10416190285)
+Open Deliver Work, Open Dispute and Quote Extra Work on an order, then the same on a block theme and Reign at 1440 and 390.
+
+**Expect** the title, close button and primary button each receive the click (`document.elementFromPoint` on them returns the modal), the theme header, footer and back-to-top sit underneath, Esc closes, and the modal is back inside the page afterwards (guard `tests/test-modal-portal.php`).
+
 ## Regression checks
 
 - 390px on every screen above.

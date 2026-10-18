@@ -48,3 +48,10 @@ Settings > Payouts: enable auto-withdrawal, Monthly. Tools > Scheduled Actions.
 Settings > Payouts and Emails: type -5 into minimum withdrawal, clearance days and the message-email delay (a browser stops this, so also POST it).
 
 **Expect** (card:10403454753) each saves as 0, never 5.
+
+### 7. The other two withdrawal emails
+- Approve: the seller gets `emails/withdrawal-approved`, saying approved and not yet paid.
+- Reject: the seller gets `emails/withdrawal-rejected` with the reason the admin typed, and the held amount is back in their available balance.
+- Automatic payout: the seller gets `emails/withdrawal-auto` on the scheduled date, naming the amount and the method.
+
+**Expect** each mail reads correctly in light and dark, in RTL, and the status cell matches the withdrawal's real status.

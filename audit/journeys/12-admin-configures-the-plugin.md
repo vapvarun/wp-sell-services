@@ -25,7 +25,12 @@ General, Checkout, Pages, Payment Gateways (standalone only), Commission & Tax, 
 ### 4. Headings read in order
 **Expect** one H1, cards are H2, sub-sections H3, no skipped level on any tab on either rail (card:10412156185; guard `tests/test-settings-heading-outline.php`).
 
+Same check, visual side: every `h2` on every Settings tab is the same size and case (card:10412306674, card:10412156063), and the first heading on Payment Gateways has no empty band above it. Pro cards injected into a tab follow the same rule.
+
 ### 5. The Payment Gateways tab follows the rail
 Standalone: gateway cards. Woo: one notice that WooCommerce owns payment.
 
 **Expect** switching rails never rewrites past orders, and a gateway saved on one rail is not shown as active on the other.
+
+### Test email and the page template
+Settings > Emails > send a test: Mailpit receives `emails/test-email` and the screen reports success only then. Plugin pages render through `wpss-fullwidth-template` on a theme with no native full-width support and stay inside the theme's own template where it has one.
