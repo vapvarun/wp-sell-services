@@ -1948,7 +1948,7 @@ class Admin {
 				<h2 class="wpss-stats-heading"><?php esc_html_e( 'Action items', 'wp-sell-services' ); ?></h2>
 				<div class="wpss-stats-row wpss-stats-row--action wpss-stats-row--queues">
 					<?php foreach ( $queues as $queue ) : ?>
-						<a class="wpss-stat-card wpss-stat-card--action <?php echo $queue['count'] > 0 ? 'is-active' : 'is-empty'; ?>" href="<?php echo esc_url( $queue['url'] ); ?>">
+						<a class="wpss-admin-stat-card wpss-admin-stat-card--action <?php echo $queue['count'] > 0 ? 'is-active' : 'is-empty'; ?>" href="<?php echo esc_url( $queue['url'] ); ?>">
 							<i data-lucide="<?php echo esc_attr( $queue['icon'] ); ?>" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 							<div class="wpss-stat-info">
 								<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $queue['count'] ) ); ?></span>
@@ -1961,7 +1961,7 @@ class Admin {
 				<!-- Marketplace health (rolling totals — read-only at-a-glance). -->
 				<h2 class="wpss-stats-heading"><?php esc_html_e( 'Marketplace health', 'wp-sell-services' ); ?></h2>
 				<div class="wpss-stats-row">
-					<div class="wpss-stat-card">
+					<div class="wpss-admin-stat-card">
 						<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->total ); ?></span>
@@ -1969,7 +1969,7 @@ class Admin {
 						</div>
 					</div>
 
-					<div class="wpss-stat-card">
+					<div class="wpss-admin-stat-card">
 						<i data-lucide="clock" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->in_progress ); ?></span>
@@ -1977,7 +1977,7 @@ class Admin {
 						</div>
 					</div>
 
-					<div class="wpss-stat-card">
+					<div class="wpss-admin-stat-card">
 						<i data-lucide="check-circle-2" class="wpss-icon wpss-stat-icon wpss-stat-icon--success" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->completed ); ?></span>
@@ -1985,7 +1985,7 @@ class Admin {
 						</div>
 					</div>
 
-					<div class="wpss-stat-card">
+					<div class="wpss-admin-stat-card">
 						<i data-lucide="banknote" class="wpss-icon wpss-stat-icon wpss-stat-icon--revenue" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( (float) ( $revenue ?? 0 ) ) ); ?></span>

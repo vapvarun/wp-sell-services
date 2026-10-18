@@ -525,7 +525,7 @@ class ServiceMetabox {
 		$view_count     = ! empty( $view_count ) ? $view_count : 0;
 		?>
 		<div class="wpss-stats-wrapper">
-			<div class="wpss-stats-grid">
+			<div class="wpss-admin-stats-grid">
 				<div class="wpss-stat-item">
 					<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 					<div class="wpss-stat-data">
@@ -1492,7 +1492,7 @@ class ServiceMetabox {
 
 			<div class="wpss-overview-section">
 				<h4><?php esc_html_e( 'Statistics', 'wp-sell-services' ); ?></h4>
-				<div class="wpss-stats-grid">
+				<div class="wpss-admin-stats-grid">
 					<div class="wpss-stat-item">
 						<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-data">

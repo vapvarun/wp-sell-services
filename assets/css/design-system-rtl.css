@@ -1212,6 +1212,114 @@ body.wpss-modal-active { overflow: hidden; }
 @keyframes wpss-shimmer { 0% { background-position: -100% 0; } 100% { background-position: 300% 0; } }
 
 /* ==========================================================================
+   13. STAT CARDS (UX PRIMITIVE)
+   ----------------------------------------------------------------------------
+   One figure card and one grid for every dashboard, account and analytics
+   screen, Free and Pro. Markup:
+     .wpss-stats-grid > .wpss-stat-card > .wpss-stat-card__value + __label [+ __meta]
+   With an icon, add --icon and wrap the text in __content:
+     .wpss-stat-card.wpss-stat-card--icon > __icon.__icon--{tone} + __content
+   Modifiers: --highlight (accent fill), --negative (red figure).
+   Tones: primary, success, warning, info, neutral, danger, tip, milestone.
+   Surface sheets add only scoped deltas (column count, type size).
+   ========================================================================== */
+.wpss-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	grid-auto-rows: 1fr; /* every row as tall as the tallest card, so a wrapped caption does not step the grid */
+	gap: var(--wpss-space-4);
+	margin-bottom: var(--wpss-space-6);
+}
+.wpss-stats-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.wpss-stat-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wpss-space-1);
+	min-width: 0;
+	padding: var(--wpss-space-5);
+	background: var(--wpss-surface);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius-lg);
+	box-shadow: var(--wpss-shadow-sm);
+}
+.wpss-stat-card--icon { flex-direction: row; align-items: flex-start; gap: var(--wpss-space-4); }
+
+.wpss-stat-card__icon {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border-radius: var(--wpss-radius);
+	background: var(--wpss-primary-light);
+	color: var(--wpss-primary-accent);
+}
+.wpss-stat-card__icon--success { background: var(--wpss-success-light); color: var(--wpss-success); }
+.wpss-stat-card__icon--warning { background: var(--wpss-warning-light); color: var(--wpss-warning-dark); }
+.wpss-stat-card__icon--info { background: var(--wpss-info-light); color: var(--wpss-info); }
+.wpss-stat-card__icon--danger { background: var(--wpss-danger-light); color: var(--wpss-danger); }
+.wpss-stat-card__icon--neutral { background: var(--wpss-bg-subtle); color: var(--wpss-text-muted); }
+.wpss-stat-card__icon--tip { background: var(--wpss-badge-tip-bg, var(--wpss-danger-light)); color: var(--wpss-badge-tip-icon-fg, var(--wpss-danger)); }
+.wpss-stat-card__icon--milestone { background: var(--wpss-badge-milestone-icon-bg, var(--wpss-info-light)); color: var(--wpss-badge-milestone-icon-fg, var(--wpss-info)); }
+
+.wpss-stat-card__content { display: flex; flex: 1; flex-direction: column; gap: var(--wpss-space-1); min-width: 0; }
+
+.wpss-stat-card__value {
+	display: block;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	font-size: 1.75rem;
+	font-weight: 700;
+	line-height: 1.2;
+	color: var(--wpss-text);
+}
+.wpss-stat-card__label {
+	display: block;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: var(--wpss-text-muted);
+}
+.wpss-stat-card__meta { display: block; font-size: 0.75rem; color: var(--wpss-text-muted); }
+
+.wpss-stat-card__trend {
+	display: inline-flex;
+	align-items: center;
+	align-self: flex-start;
+	margin-top: var(--wpss-space-1);
+	padding: var(--wpss-space-1) var(--wpss-space-2);
+	border-radius: var(--wpss-radius-full, 999px);
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1.2;
+}
+.wpss-stat-card__trend--up { background: var(--wpss-success-light); color: var(--wpss-success-dark, var(--wpss-success)); }
+.wpss-stat-card__trend--down { background: var(--wpss-danger-light); color: var(--wpss-danger-dark, var(--wpss-danger)); }
+
+/* Higher specificity than the bare card: a host theme that paints generic
+   cards grey must not flatten the accent. */
+.wpss-stats-grid .wpss-stat-card--highlight,
+.wpss-stat-card.wpss-stat-card--highlight {
+	background: var(--wpss-primary);
+	border-color: var(--wpss-primary);
+}
+.wpss-stat-card--highlight .wpss-stat-card__value,
+.wpss-stat-card--highlight .wpss-stat-card__label,
+.wpss-stat-card--highlight .wpss-stat-card__meta { color: var(--wpss-white, #fff); }
+.wpss-stat-card--negative .wpss-stat-card__value { color: var(--wpss-danger); }
+
+@media (max-width: 640px) {
+	.wpss-stats-grid,
+	.wpss-stats-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wpss-space-3); }
+	.wpss-stat-card { padding: var(--wpss-space-4); }
+	.wpss-stat-card--icon { flex-direction: column; gap: var(--wpss-space-2); }
+	.wpss-stat-card__value { font-size: 1.375rem; }
+}
+
+/* ==========================================================================
    14. FORM ERROR (UX PRIMITIVE)
    ----------------------------------------------------------------------------
    Inline error message attached to a single field OR rendered above a form.

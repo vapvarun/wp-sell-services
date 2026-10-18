@@ -268,19 +268,19 @@ JS;
 			<?php endif; ?>
 
 			<div class="wpss-listing-stats wpss-review-moderation-stats">
-				<div class="wpss-stat-card">
+				<div class="wpss-admin-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( (int) array_sum( $counts ) ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Total Reviews', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-stat-card wpss-stat-pending">
+				<div class="wpss-admin-stat-card wpss-stat-pending">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( (int) ( $counts[ Review::STATUS_PENDING ] ?? 0 ) ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-stat-card wpss-stat-approved">
+				<div class="wpss-admin-stat-card wpss-stat-approved">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( (int) ( $counts[ Review::STATUS_APPROVED ] ?? 0 ) ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Approved', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-stat-card wpss-stat-rejected">
+				<div class="wpss-admin-stat-card wpss-stat-rejected">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( (int) ( $counts[ Review::STATUS_REJECTED ] ?? 0 ) ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
 				</div>

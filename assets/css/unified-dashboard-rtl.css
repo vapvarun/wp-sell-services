@@ -348,17 +348,6 @@
    Stats Grid
    ========================================================================== */
 
-.wpss-stats-grid {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 16px;
-	margin-bottom: 24px;
-}
-
-.wpss-stats-grid--4 {
-	grid-template-columns: repeat(4, 1fr);
-}
-
 /*
  * Desktop: up to four stat cards share one row. frontend.css's auto-fit 200px
  * tracks gave three per row in the ~740px content column, so four cards split
@@ -392,40 +381,6 @@
 	.wpss-dashboard .wpss-stat-card__value {
 		font-size: 1.375rem;
 	}
-}
-
-.wpss-stat-card {
-	background: var(--wpss-surface, #fff);
-	border-radius: var(--wpss-radius);
-	padding: 20px;
-	box-shadow: var(--wpss-shadow-sm);
-	border: 1px solid var(--wpss-gray-200);
-}
-
-.wpss-stat-card--highlight {
-	background: var(--wpss-primary);
-	border-color: var(--wpss-primary);
-}
-
-.wpss-stat-card--highlight .wpss-stat-card__value,
-.wpss-stat-card--highlight .wpss-stat-card__label {
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-stat-card__value {
-	display: block;
-	font-size: 28px;
-	font-weight: 700;
-	color: var(--wpss-gray-900);
-	line-height: 1.2;
-}
-
-.wpss-stat-card__label {
-	display: block;
-	margin-top: 4px;
-	font-size: 13px;
-	color: var(--wpss-gray-500);
-	font-weight: 500;
 }
 
 /* ==========================================================================
@@ -2011,37 +1966,6 @@ select.wpss-input option,
 	}
 }
 
-/*
- * Stack the value above its label, and let the label wrap - at every width.
- * At 1440 the Earnings labels sat beside the number and wrapped to 3-4
- * lines ("Clearing / from / open / orders"), so this is not phone-only.
- *
- * Same specificity story as the stats-grid rule in the 768px block:
- * frontend.css sets a bare `.wpss-stat-card { display: flex;
- * align-items: center }` and loads after this sheet, so the value and the
- * label sat SIDE BY SIDE. In a 125px column at 390px the 28px value took
- * almost all of it and the label was squeezed into what was left -
- * "Withdrawal in progress" rendered as "With / in pr", "Total earned so
- * far" as "Tota / earn / so fa", and one label was reduced to single
- * letters. A vendor on a phone could not tell what most of the numbers
- * meant.
- *
- * Scoped to .wpss-dashboard so it outranks the unscoped rule, exactly as
- * the stats-grid fix has to be. min-width: 0 because a flex item will not
- * shrink below its content width without it, which is what made the label
- * overflow rather than wrap in the first place.
- */
-.wpss-dashboard .wpss-stat-card {
-	display: block;
-}
-
-.wpss-dashboard .wpss-stat-card__value,
-.wpss-dashboard .wpss-stat-card__label {
-	display: block;
-	min-width: 0;
-	overflow-wrap: anywhere;
-}
-
 /* Post a Request: uploaded attachments. */
 .wpss-request-files {
 	list-style: none;
@@ -2185,20 +2109,6 @@ select.wpss-input option,
 @media (max-width: 768px) {
 	.wpss-dashboard__body {
 		padding: 16px;
-	}
-
-	/*
-	 * Scoped to the dashboard, and that is what makes it work. frontend.css
-	 * also defines .wpss-stats-grid (auto-fit, minmax(200px, 1fr)) and loads
-	 * after this sheet, so at equal specificity it won: in a ~300px phone
-	 * column two 200px tracks do not fit, the grid fell to ONE column, and
-	 * five stacked stat cards pushed the first order below the screen on
-	 * BuddyX, BuddyX Pro and Reign alike. This two-column rule existed and
-	 * had never applied.
-	 */
-	.wpss-dashboard .wpss-stats-grid,
-	.wpss-dashboard .wpss-stats-grid--4 {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
 	.wpss-order-card {
@@ -2460,19 +2370,6 @@ select.wpss-input option,
 	.wpss-favorites__card-title {
 		font-size: 14px;
 	}
-}
-
-/* ==========================================================================
-   Stat card highlight — force background over theme overrides so the
-   indigo accent does not get flattened by third-party themes applying a
-   gray card background (observed with BuddyX on the Earnings section).
-   ========================================================================== */
-
-.wpss-dashboard .wpss-stat-card.wpss-stat-card--highlight,
-.wpss-stat-card.wpss-stat-card--highlight {
-	background: var(--wpss-primary);
-	border-color: var(--wpss-primary);
-	color: var(--wpss-white, #fff);
 }
 
 /* ==========================================================================

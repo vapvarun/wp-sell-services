@@ -9,7 +9,7 @@
  *    5  Dashicons in new markup
  *    8  alert( / confirm( / prompt( in plugin JS
  *   10  an inline <script> block in PHP output (enqueue a file or wp_add_inline_script)
- *    9  a shared primitive (.wpss-btn and its modifiers) declared outside design-system.css
+ *    9  a shared primitive (.wpss-btn, .wpss-stat-card, .wpss-stats-grid and their modifiers) declared outside design-system.css
  *   14  `outline: none|0` in source CSS (each needs a :focus-visible replacement)
  *
  * Run: php bin/check-ux-conformance.php [--update]
@@ -34,7 +34,7 @@ $rules = array(
 	'legacy-modal-js'  => array( array( 'assets/js' ), 'js', '/wpss-modal(-(overlay|backdrop|dialog|content|header|body|footer|title|close|close-btn|dismiss|cancel|large|lg|error)|__(overlay|content|cancel))(?![\w-])/' ),
 	'legacy-modal-css' => array( array( 'assets/css' ), 'css', '/wpss-modal(-(overlay|backdrop|dialog|content|header|body|footer|title|close|close-btn|dismiss|cancel|large|lg|error)|__(overlay|content|cancel))(?![\w-])/' ),
 	// Selector line of a rule that opens with the owned base; admin.css is the wp-admin chrome surface.
-	'duplicate-primitive' => array( array( 'assets/css' ), 'css', '/^(a\.)?\.wpss-btn(--(primary|secondary|outline|success|danger|sm|lg|block|icon|ghost|disabled|full|danger-outline))?\s*[,{]/' ),
+	'duplicate-primitive' => array( array( 'assets/css' ), 'css', '/^((a\.)?\.wpss-btn(--(primary|secondary|outline|success|danger|sm|lg|block|icon|ghost|disabled|full|danger-outline))?|\.wpss-(stat-card|stats-grid)(__[a-z]+|--[a-z0-9]+)*)\s*[,{]/' ),
 );
 
 $counts = array();

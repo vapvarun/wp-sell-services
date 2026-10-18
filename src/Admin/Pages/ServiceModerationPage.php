@@ -360,19 +360,19 @@ class ServiceModerationPage {
 			$moderation_rejected = $counts[ self::STATUS_REJECTED ] ?? 0;
 			?>
 			<div class="wpss-listing-stats wpss-moderation-stats">
-				<div class="wpss-stat-card">
+				<div class="wpss-admin-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_total ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Total Services', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-stat-card wpss-stat-pending">
+				<div class="wpss-admin-stat-card wpss-stat-pending">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_pending ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-stat-card wpss-stat-approved">
+				<div class="wpss-admin-stat-card wpss-stat-approved">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_approved ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Approved', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-stat-card wpss-stat-rejected">
+				<div class="wpss-admin-stat-card wpss-stat-rejected">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_rejected ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
 				</div>

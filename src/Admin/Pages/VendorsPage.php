@@ -624,11 +624,11 @@ class VendorsPage {
 			<?php endif; ?>
 
 			<div class="wpss-listing-stats wpss-vendor-stats">
-				<div class="wpss-stat-card">
+				<div class="wpss-admin-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['total'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Total Vendors', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-stat-card">
+				<div class="wpss-admin-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( $stats['total_earnings'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Total Earned', 'wp-sell-services' ); ?></span>
 				</div>

@@ -1351,27 +1351,6 @@ article.wpss-service-card:hover {
 	padding: 30px;
 }
 
-/* Stats Grid */
-.wpss-stats-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-	gap: 20px;
-	margin-bottom: 30px;
-}
-
-.wpss-stat-card {
-	display: flex;
-	align-items: center;
-	gap: 15px;
-	padding: 20px;
-	background: var(--wpss-background);
-	border-radius: var(--wpss-radius-lg);
-}
-
-.wpss-stat-card.wpss-stat-highlight {
-	background: var(--wpss-primary-light);
-}
-
 /* .wpss-stat-icon deliberately NOT styled here.
  *
  * It is an ADMIN component - only ServiceMetabox and Admin.php render it, and
@@ -4313,9 +4292,6 @@ a.wpss-order-filter.is-active:focus {
    support. Semantic colour, separate from the accent, and token-driven so it
    follows the theme's dark mode. */
 
-.wpss-stat-card--negative .wpss-stat-card__value {
-	color: var(--wpss-danger, #ef4444);
-}
 
 /* .wpss-notice is a flex ROW built for one line of text plus an icon. This
    notice is a heading and two paragraphs, so inheriting that laid it out as
