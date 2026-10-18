@@ -1845,7 +1845,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-line-items__total td {
 	border-block-end: 0;
 	font-weight: 600;
-	color: var(--wpss-text-primary, var(--wpss-text-secondary));
+	color: var(--wpss-text-secondary);
 }
 
 /* Checkout: the second Pay button under the payment methods sat against the
