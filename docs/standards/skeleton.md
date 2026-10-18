@@ -26,15 +26,30 @@ A helper goes in the file for its domain. Never create `misc`, `utils` or `helpe
 
 | File | Holds |
 |---|---|
-| `core.php` | platform name, plugin instance, logging, generic sanitizers, admin/enqueue/form helpers |
+| `core.php` | platform name, plugin instance, logging, generic sanitizers, admin/enqueue/form helpers, `wpss_validate_registry()` |
 | `security.php` | secrets, app tokens, login lockout, client IP |
 | `settings.php` | option readers |
-| `money.php`, `billing.php`, `payments.php` | amounts, tax, invoices, gateways |
-| `orders.php`, `services.php`, `vendors.php` | the three domain objects |
-| `files.php` | uploads and delivery files |
+| `money.php` | formatting, currency registry, minor units, tax, order limits |
+| `ledger.php` | ledger rows, refunds, commission base, wallet balance |
+| `billing.php`, `payments.php` | invoices, billing fields, gateway lookups |
+| `orders.php` | order lookup, URLs, snapshots |
+| `order-status.php` | status and payment labels, groups, priority |
+| `order-queries.php` | order lists, counts, revenue aggregates |
+| `requirements.php` | service requirement fields and answers |
+| `services.php` | service lookup, status, rating, limits, publishing |
+| `packages.php` | packages, add-ons, express delivery, line pricing |
+| `catalog.php` | galleries, sorting, category terms, services grid |
+| `cart.php` | the member cart |
+| `demo.php` | demo content |
+| `vendors.php` | vendor lookup and standing |
+| `files.php` | uploads, storage provider, file directories |
+| `order-files.php` | order files: store, locate, stream, legacy migration |
+| `request-files.php` | buyer-request attachments and their guards |
 | `notifications.php`, `moderation.php` | notices, reports |
 | `templates.php`, `urls.php`, `rest.php` | rendering, routing, REST helpers |
 | `time.php` | the only place that formats or converts time |
+
+A file stays under about 1,000 lines. When one outgrows that, split it by sub-domain and add the row here.
 
 Logic that needs state, or is more than a few helpers, is a class in `Services/`.
 

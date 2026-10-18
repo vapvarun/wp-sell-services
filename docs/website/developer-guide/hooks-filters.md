@@ -71,7 +71,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:743` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:1196` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:522` |
 
 ### Order Filters
 
@@ -84,7 +84,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `src/Services/OrderWorkflowManager.php:804` |
 | `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:1149` |
 | `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:685` |
-| `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/orders.php:356` |
+| `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/requirements.php:40` |
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:666` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:493` |
 | `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `src/Services/OrderWorkflowManager.php:628` |
@@ -173,7 +173,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `src/Integrations/Stripe/StripeGateway.php:299` |
 | `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:270` |
 | `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:319` |
-| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:832` |
+| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:242` |
 
 **`wpss_stripe_payment_intent_args`** lets you modify Stripe PaymentIntent parameters before creation:
 
@@ -674,17 +674,17 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:57` |
-| `wpss_currency` | `$currency` | `src/functions/money.php:1090` |
+| `wpss_currency` | `$currency` | `src/functions/money.php:417` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/core.php:34` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:147` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
-| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:1125` |
-| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:1152` |
-| `wpss_currencies` | `$currencies` | `src/functions/money.php:1947` |
-| `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:153` |
-| `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:1752` |
-| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:820` |
-| `wpss_wallet_manager` | `null` | `src/functions/money.php:1969` |
+| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:452` |
+| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:479` |
+| `wpss_currencies` | `$currencies` | `src/functions/money.php:1274` |
+| `wpss_order_statuses` | `$statuses` | `src/functions/order-status.php:81` |
+| `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:606` |
+| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:407` |
+| `wpss_wallet_manager` | `null` | `src/functions/ledger.php:702` |
 
 ### Currency System Filters (1.2.1)
 
@@ -692,9 +692,9 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1926` |
+| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1253` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:205` |
-| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:1052` |
+| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:379` |
 | `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4003` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:948` |
 

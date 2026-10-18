@@ -304,7 +304,7 @@ guide; this is the complete index.
 | `wpss_admin_notification_email` | 1 | `src/Services/EmailService.php` | Tell the site owner a buyer has sent proof of an offline payment. |
 | `wpss_admin_vendor_notification_content` | 2 | `src/Services/NotificationService.php` | Filter admin vendor notification email content. |
 | `wpss_after_become_vendor_redirect` | 2 | `src/Frontend/UnifiedDashboard.php` | Filter the redirect URL after a vendor successfully registers. |
-| `wpss_allow_late_requirements_submission` | 1 | `src/functions/orders.php` *(+1 more)* | Filter whether late requirements submission is allowed. |
+| `wpss_allow_late_requirements_submission` | 1 | `src/functions/requirements.php` *(+1 more)* | Filter whether late requirements submission is allowed. |
 | `wpss_allowed_file_types` | 3 | `src/functions/files.php` | Filter the file extensions any WPSS upload may use. |
 | `wpss_analytics_widgets` | 1 | `src/Core/Plugin.php` *(+1 more)* | Filter the registered analytics widgets. |
 | `wpss_api_controllers` | 1 | `src/API/API.php` | Filter registered API controllers. |
@@ -330,7 +330,7 @@ guide; this is the complete index.
 | `wpss_buyer_request_post_type_args` | 1 | `src/PostTypes/BuyerRequestPostType.php` | Filter buyer request post type arguments. |
 | `wpss_buyer_request_slug` | 1 | `src/PostTypes/BuyerRequestPostType.php` | Filter the buyer request post type slug. |
 | `wpss_can_access_dashboard_section` | 3 | `src/Frontend/UnifiedDashboard.php` | Filter whether user can access a dashboard section. |
-| `wpss_can_view_request_attachments` | 2 | `src/functions/files.php` | Filter who may see a buyer request's attachments. |
+| `wpss_can_view_request_attachments` | 2 | `src/functions/request-files.php` | Filter who may see a buyer request's attachments. |
 | `wpss_cart_checkout` | 4 | `src/API/CartController.php` | Filter to create order from cart during standalone checkout. |
 | `wpss_cart_item_data` | 3 | `src/API/CartController.php` | Filters cart item data before it is saved. |
 | `wpss_cascade_preserve_shared_records` | 2 | `src/Services/DataCascadeHandler.php` | Filter whether records shared with another member survive this cascade. |
@@ -338,7 +338,7 @@ guide; this is the complete index.
 | `wpss_category_card_classes` | 2 | `templates/partials/category-card.php` | Filters the category card CSS classes. |
 | `wpss_category_card_link` | 2 | `templates/partials/category-card.php` | Filters the category card's link target. |
 | `wpss_category_schema` | 2 | `src/SEO/SchemaMarkup.php` |  |
-| `wpss_category_terms_limit` | 1 | `src/functions/services.php` | Filter the maximum number of category terms a chooser will render. |
+| `wpss_category_terms_limit` | 1 | `src/functions/catalog.php` | Filter the maximum number of category terms a chooser will render. |
 | `wpss_check_order_limits` | 3 | `src/functions/money.php` | Filter the order-limit decision. |
 | `wpss_checkout_badges` | 2 | `src/functions/payments.php` | Filter the checkout reassurance badges. |
 | `wpss_checkout_creates_accounts` | 1 | `src/functions/billing.php` | Filter whether checkout creates an account for a logged-out buyer. |
@@ -392,7 +392,7 @@ guide; this is the complete index.
 | `wpss_get_template_part` | 3 | `src/functions/templates.php` | Filter the template file path. |
 | `wpss_is_vendor` | 2 | `src/functions/vendors.php` | Filter whether user is a vendor. |
 | `wpss_known_dashboard_sections` | 1 | `src/functions/urls.php` | Filter the set of known dashboard section slugs. |
-| `wpss_ledger_debit_types` | 1 | `src/functions/money.php` | Filter the ledger transaction types treated as debits. |
+| `wpss_ledger_debit_types` | 1 | `src/functions/ledger.php` | Filter the ledger transaction types treated as debits. |
 | `wpss_locate_template` | 3 | `src/Frontend/TemplateLoader.php` |  |
 | `wpss_locked_billing_fields` | 1 | `src/functions/billing.php` | Filters the billing fields that cannot be disabled. |
 | `wpss_manual_order_currencies` | 1 | `src/Admin/Pages/ManualOrderPage.php` | Filter the currencies available on the Manual Order page dropdown. |
@@ -414,16 +414,16 @@ guide; this is the complete index.
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php` | Filter the offline payment methods. |
 | `wpss_open_graph_data` | 2 | `src/SEO/SEO.php` |  |
 | `wpss_order_actions` | 2 | `templates/order/order-view.php` | Filter: wpss_order_actions |
-| `wpss_order_is_refundable` | 2 | `src/functions/money.php` | Filter whether an order may be refunded. |
+| `wpss_order_is_refundable` | 2 | `src/functions/ledger.php` | Filter whether an order may be refunded. |
 | `wpss_order_number_prefix` | 1 | `src/Database/Repositories/OrderRepository.php` *(+1 more)* | Generate a unique order number. |
 | `wpss_order_payment_reference` | 2 | `src/functions/orders.php` | Filter the payment-rail receipt reference shown on an order. |
-| `wpss_order_status_groups` | 1 | `src/functions/orders.php` | Filter the order status groups used by the dashboard filter chips. |
+| `wpss_order_status_groups` | 1 | `src/functions/order-status.php` | Filter the order status groups used by the dashboard filter chips. |
 | `wpss_order_status_label` | 3 | `templates/order/order-view.php` | Filter: wpss_order_status_label |
 | `wpss_order_status_transitions` | 3 | `src/Services/OrderService.php` | Filter allowed status transitions. |
-| `wpss_order_statuses` | 1 | `src/functions/orders.php` | Filter order statuses. |
+| `wpss_order_statuses` | 1 | `src/functions/order-status.php` | Filter order statuses. |
 | `wpss_organization_schema` | 1 | `src/SEO/SchemaMarkup.php` |  |
 | `wpss_package_button_text` | 2 | `templates/partials/service-packages.php` | Filters the package button text. |
-| `wpss_package_id_base` | 2 | `src/functions/services.php` |  |
+| `wpss_package_id_base` | 2 | `src/functions/packages.php` |  |
 | `wpss_package_price_html` | 3 | `templates/partials/service-packages.php` | Filters the package price HTML. |
 | `wpss_page_definitions` | 1 | `src/functions/urls.php` | Filter the page registry. |
 | `wpss_pay_order_url_lookup` | 3 | `src/functions/urls.php` | Filter the pay URL with one the rail already knows. |
@@ -454,7 +454,7 @@ guide; this is the complete index.
 | `wpss_pro_recurring_feature_available` | 1 | `src/RecurringServices/RecurringSettingsRenderer.php` **[PRO]** | Whether the recurring-services feature is available in this version. |
 | `wpss_pro_upgrade_url` | 1 | `src/Frontend/ServiceWizard.php` *(+4 more)* |  |
 | `wpss_proposal_order_revisions` | 3 | `src/Services/BuyerRequestService.php` |  |
-| `wpss_rail_status_map` | 2 | `src/functions/orders.php` | Filters the rail status map. |
+| `wpss_rail_status_map` | 2 | `src/functions/order-status.php` | Filters the rail status map. |
 | `wpss_rate_limits` | 2 | `src/Core/RateLimiter.php` | Filter rate limits for a specific action. |
 | `wpss_realtime_settings` | 1 | `src/Services/RealtimeService.php` | Filter the realtime (Pusher-protocol) connection settings. |
 | `wpss_related_services_args` | 2 | `src/Frontend/SingleServiceView.php` | Filter related services query args. |
@@ -464,7 +464,7 @@ guide; this is the complete index.
 | `wpss_requests_per_page` | 1 | `templates/archive-request.php` | Filter: wpss_requests_per_page |
 | `wpss_require_service_moderation` | 1 | `src/Services/ModerationService.php` | Filter whether new/updated services require moderation. |
 | `wpss_requirement_answer_collapse_at` | 2 | `templates/partials/requirement-answer.php` | Length past which an answer is collapsed behind a Show more control. |
-| `wpss_requirement_field_label` | 2 | `src/functions/orders.php` | Filter the label shown for a submitted requirement field. |
+| `wpss_requirement_field_label` | 2 | `src/functions/requirements.php` | Filter the label shown for a submitted requirement field. |
 | `wpss_requirements_allowed_file_types` | 1 | `src/functions/files.php` | Filter the file extensions allowed for buyer requirement attachments. |
 | `wpss_requirements_file_inputs` | 2 | `src/Frontend/AjaxHandlers.php` |  |
 | `wpss_rest_confirm_payment` | 6 | `src/API/PaymentController.php` | Filter to handle custom payment gateway confirmation via REST. |
@@ -482,7 +482,7 @@ guide; this is the complete index.
 | `wpss_seller_levels` | 1 | `src/API/SellerLevelsController.php` | Filter seller level definitions. |
 | `wpss_seo_integrations` | 1 | `src/SEO/SEO.php` | Filter the SEO plugin integrations. |
 | `wpss_service_card_classes` | 2 | `templates/content-service-card.php` |  |
-| `wpss_service_card_display` | 2 | `src/functions/services.php` | Filter which elements a service card renders. |
+| `wpss_service_card_display` | 2 | `src/functions/catalog.php` | Filter which elements a service card renders. |
 | `wpss_service_card_thumbnail_size` | 2 | `templates/content-service-card.php` | Hook: wpss_before_service_card |
 | `wpss_service_category_taxonomy_args` | 1 | `src/Taxonomies/ServiceCategoryTaxonomy.php` | Filter service category taxonomy arguments. |
 | `wpss_service_editor_url` | 2 | `src/functions/urls.php` | Filter the service create/edit destination. |
@@ -555,8 +555,8 @@ guide; this is the complete index.
 | `wpss_vendor_welcome_email_content` | 3 | `src/Services/NotificationService.php` | Filter vendor welcome email content. |
 | `wpss_vendors_page_id` | 1 | `src/functions/vendors.php` | Filter the resolved vendor-directory page ID. |
 | `wpss_vendors_url` | 2 | `src/functions/vendors.php` | Filter the vendor-directory URL. |
-| `wpss_video_thumbnail_cache_ttl` | 2 | `src/functions/services.php` | Filter how long a video's poster URL is cached. |
-| `wpss_wallet_manager` | 1 | `src/functions/money.php` | Filter the wallet manager instance. |
+| `wpss_video_thumbnail_cache_ttl` | 2 | `src/functions/catalog.php` | Filter how long a video's poster URL is cached. |
+| `wpss_wallet_manager` | 1 | `src/functions/ledger.php` | Filter the wallet manager instance. |
 | `wpss_wallet_providers` | 1 | `src/Core/Plugin.php` *(+2 more)* | Filter the registered wallet providers. |
 | `wpss_web_login_lock` | 1 | `src/Core/Plugin.php` | Filter whether the website sign-in form honours the lockout. |
 | `wpss_withdrawal_methods` | 1 | `src/API/EarningsController.php` *(+1 more)* | Filter available withdrawal methods. |

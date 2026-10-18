@@ -99,7 +99,7 @@ $wpdb->delete( $audit, array( 'object_type' => 'qa' ) );
 delete_option( \WPSellServices\Services\AuditLogService::RETENTION_OPTION );
 
 // --- Sort tiebreaks ------------------------------------------------------------
-$svc = (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/functions/services.php' );
+$svc = (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/functions/catalog.php' );
 $ven = (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/API/VendorsController.php' );
 $check( 'services sort ends on a unique key', false !== strpos( $svc, 'post_date DESC, {$wpdb->posts}.ID DESC' ) );
 $check( 'vendors rating sort ends on a unique key', false !== strpos( $ven, '{$wpdb->users}.ID DESC' ) );

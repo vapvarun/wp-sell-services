@@ -256,6 +256,14 @@
       "fails_on": "urls.php without the registered-sections merge; SEO.php with is_yoast_active/is_rank_math_active branches",
       "journey": "docs/standards/integration-seams.md",
       "now_dead_or_duplicate": "three repeated is_yoast||is_rank_math||is_aioseo conditions collapsed into has_active_seo_plugin(); SEO::get_yoast()/get_rank_math()/is_*_active() removed (no callers)"
+    },
+    {
+      "card": "skeleton: services/orders/money/files function files too large to navigate (no card)",
+      "class": "a 2,000-line function file hides where a helper lives",
+      "check": "bin/check-skeleton.php (every function file loaded, domain-named, wpss_ prefixed)",
+      "fails_on": "tree with the four oversized files and no loader entries for the new ones",
+      "journey": "docs/standards/skeleton.md",
+      "now_dead_or_duplicate": "166 functions moved unchanged into 10 new domain files; no file over 1,400 lines"
     }
   ]
 }

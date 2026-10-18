@@ -14,7 +14,7 @@ $root  = dirname( __DIR__ );
 $fails = array();
 
 $loader = (string) file_get_contents( "$root/src/functions.php" );
-preg_match_all( "/^\t'([a-z_]+)',$/m", $loader, $m );
+preg_match_all( "/^\t'([a-z_-]+)',$/m", $loader, $m );
 $loaded = $m[1];
 $files  = array_map( fn( $f ) => basename( $f, '.php' ), glob( "$root/src/functions/*.php" ) );
 
