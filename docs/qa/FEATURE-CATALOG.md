@@ -65,6 +65,33 @@ My Orders, Favorites, Buyer Requests, Messages, Notifications, Disputes, Profile
 | Cart, checkout (WooCommerce) | 07 | `test-cart-unavailable-contract` | |
 | `/become-a-vendor/`, `/login/` | 05 | `test-registration-page-contract`, `test-login-page-contract`, `test-login-lockout` | |
 
+## Pro features (all QA and docs for Pro live here, in Free)
+
+Everything below is off by default except the licence screen and vendor analytics. Walk Pro on top of the Free core paths. Rail first: Pro owns the WooCommerce, EDD and FluentCart adapters, and an adapter loads only when `wpss_general[ecommerce_platform]` names its rail, so a step on another rail is `skipped`, never `fail`.
+
+| Flow (owner's words) | Role and surface | Journey | Guards |
+|---|---|---|---|
+| "My licence is active and Pro features are on" | admin, Sell Services > License | 12 | `test-license-gate-and-storage` |
+| "Sellers can see how they are doing" | vendor, `/dashboard/analytics/` | 15 | `test-pro-perf-and-options` |
+| "I can see how the marketplace is doing" | admin, Sell Services > Analytics | 13 | same |
+| "I take a different cut per seller or category" | admin, Settings > Commission & Tax | 12 | `test-rest-partial-update` |
+| "Sellers get paid out automatically" | Stripe Connect, PayPal Payouts | 10 | `test-payout-integrity`, `test-connect-refund-observation` |
+| "Sellers pay me a plan to sell" | vendor `/dashboard/subscription/`, admin Subscriptions | 15 | `test-seams-subscriptions-carrier` |
+| "Deliveries go to my cloud storage" | admin, Settings > Integrations | none | `test-license-gate-and-storage` |
+| "Buyers can pay with site credit" | buyer, checkout and wallet | none | |
+| "The dashboard carries my brand" | admin, White label | 12 | |
+| Razorpay | buyer, checkout | none | `test-razorpay-settle-path` |
+| WooCommerce rail pay-order, fee-only lines | buyer | 07 | `test-fee-only-pay-order-contract`, `test-woo-line-money-contract` |
+
+Pro checks to add to every Pro walk:
+- **Licence:** with a valid licence Pro features load; with it cleared they stop and the Free marketplace keeps working, no fatal. With Free deactivated, Pro shows an admin notice, not a fatal. Pro loads no second copy of a library Free ships.
+- **Zero config:** activate Pro on a working Free site with no Pro setting touched. The Free path (`/services/`, a service, checkout) behaves as before and the vendor dashboard gains Analytics. Anything else appearing is a finding.
+- **Money rails:** on the Woo rail a tip, paid extension and milestone phase each resolve to a real order-pay URL and charge the right amount. A Woo refund on the parent reverses its tip, extension and phase children. Switching rails never rewrites a past order. EDD and FluentCart are `skipped` unless installed and set as the rail.
+- **Payouts and wallet:** Stripe Connect and PayPal payout screens load. The active wallet provider balance equals `wpss_get_ledger_balance()` for the same vendor; a configured but inactive provider falls back to `internal`. `WalletManager` exposes no way to move money.
+- **Cloud storage:** settings save and the connection test passes; with a provider active a delivery upload reaches it, the local copy goes, and the download is a short-lived signed URL that refuses an unrelated member. A failed upload keeps the file on local disk.
+- **Analytics:** every widget renders and CSV export writes a real file. Top Services excludes `service_id = 0`.
+- **Display currency:** with rates set, the switcher converts prices carrying `data-wbcom-amount`; earnings, admin screens and emails stay in base currency; with rates unavailable the hint does not render.
+
 ## Cross-cutting (gate parameters, not journeys)
 
 | Concern | Where | Guards |
