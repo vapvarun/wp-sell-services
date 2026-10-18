@@ -32,7 +32,7 @@ generic order, checkout or payment code.
 | Payment gateway | `wpss_payment_gateways` | `PaymentGatewayInterface` | Interface done. `PaymentController` still switches on `stripe`/`paypal`/`offline` and the settings screen hard-codes the cards: moves into the gateway classes after the sandbox is wired |
 | Dashboard section | `wpss_dashboard_sections` | array | Done; a section registered here is also a known route; contract-tested |
 | SEO plugin | `wpss_seo_integrations` | `SeoIntegrationInterface` | Done; Yoast, Rank Math and AIOSEO are three providers; contract-tested |
-| Product type, fulfillment | planned | | Service is the first product type; delivery is the first fulfillment. Not built in 1.9.0 |
+| Product type, fulfillment | planned | | Inventory and proposed seam in `docs/architecture/PRODUCT-TYPE-INVENTORY.md`. Not built in 1.9.0 |
 
 Removed in 1.9.0: `wpss_email_providers` (registered, never read by anything).
 
