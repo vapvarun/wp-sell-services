@@ -15,6 +15,8 @@ defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Integrations\Gateways\AbstractPaymentGateway;
 use WPSellServices\Assets\ScriptRegistry;
+use WP_Error;
+use WP_REST_Response;
 
 /**
  * PayPal payment gateway implementation using PayPal REST API.
@@ -1460,5 +1462,95 @@ class PayPalGateway extends AbstractPaymentGateway {
 		}
 
 		return $body;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * Creates a PayPal order and returns its approval URL.
+	 */
+	public function rest_create_intent( \WPSellServices\Checkout\CheckoutIntent $intent, array $request ) {
+		$checkout_request = $request;
+
+		// PayPalGateway::create_order() resolves the request itself and keeps
+		// the add-on selection for its capture leg.
+		$result = $this->create_order( $checkout_request );
+
+		if ( empty( $result['success'] ) ) {
+			return new WP_Error( 'paypal_error', $result['error'] ?? __( 'Failed to create PayPal order.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'gateway'         => 'paypal',
+				'paypal_order_id' => $result['id'],
+				'approval_url'    => $result['approval_url'],
+			),
+			201
+		);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * Captures the PayPal payment for a new purchase or an existing order.
+	 */
+	public function rest_confirm_payment( array $params ) {
+		$payment_id = (string) ( $params['payment_id'] ?? '' );
+		$service_id = (int) ( $params['service_id'] ?? 0 );
+		$package_id = (int) ( $params['package_id'] ?? 0 );
+		$pay_order  = (int) ( $params['pay_order'] ?? 0 );
+
+		// Paying an existing order: answer the plain refusals before PayPal is
+		// asked for anything.
+		if ( $pay_order ) {
+			$order = wpss_get_order( $pay_order );
+
+			if ( ! $order ) {
+				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+			}
+
+			if ( get_current_user_id() !== (int) $order->customer_id ) {
+				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			}
+
+			// Idempotency: never re-process an order that is already paid.
+			if ( 'paid' === (string) ( $order->payment_status ?? '' ) ) {
+				return new WP_REST_Response(
+					array(
+						'gateway'      => 'paypal',
+						'order_id'     => $pay_order,
+						'order_number' => $order->order_number,
+						'status'       => 'paid',
+					)
+				);
+			}
+		}
+
+		// One capture path for a new purchase and an existing order, the one the
+		// website uses. It reads the buyer and the order from the PayPal payment
+		// itself, so a payment pays what it was started for and only for the
+		// member who started it. This route used to capture whatever PayPal
+		// payment it was handed and mark the named order paid.
+		$result = $this->capture_order(
+			array(
+				'paypal_order_id' => $payment_id,
+				'service_id'      => $service_id,
+				'package_id'      => $package_id,
+			)
+		);
+
+		if ( empty( $result['success'] ) ) {
+			return new WP_Error( 'paypal_confirm_error', $result['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'gateway'      => 'paypal',
+				'order_id'     => (int) $result['order_id'],
+				'order_number' => $result['order_number'] ?? '',
+				'status'       => 'paid',
+			)
+		);
 	}
 }

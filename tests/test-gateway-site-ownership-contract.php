@@ -128,8 +128,12 @@ try {
 	// site, by anyone, paid the order the caller named. It now goes through
 	// the website's path, which reads the buyer and the order off the payment.
 	$rest    = static function ( int $pay_order ) use ( $paypal ) {
-		$method = new ReflectionMethod( \WPSellServices\API\PaymentController::class, 'confirm_paypal_payment' );
-		return $method->invoke( new \WPSellServices\API\PaymentController(), $paypal, 'ORDERSTUB', 0, 0, $pay_order );
+		return $paypal->rest_confirm_payment(
+			array(
+				'payment_id' => 'ORDERSTUB',
+				'pay_order'  => $pay_order,
+			)
+		);
 	};
 	$mine    = $seed();
 	$started = $seed();

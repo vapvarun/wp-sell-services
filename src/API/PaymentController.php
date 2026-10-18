@@ -241,9 +241,6 @@ class PaymentController extends RestController {
 
 		// Route to the appropriate gateway.
 		switch ( $gateway_id ) {
-			case 'paypal':
-				return $this->create_paypal_order( $gateway, $checkout_request );
-
 			case 'offline':
 			case 'test':
 				return $this->create_offline_order( $gateway, $checkout_request );
@@ -273,9 +270,6 @@ class PaymentController extends RestController {
 		}
 
 		switch ( $gateway_id ) {
-			case 'paypal':
-				return $this->confirm_paypal_payment( $gateway, $payment_id, $service_id, $package_id, $pay_order );
-
 			default:
 				return $gateway->rest_confirm_payment(
 					array(
@@ -286,32 +280,6 @@ class PaymentController extends RestController {
 					)
 				);
 		}
-	}
-
-	/**
-	 * Create PayPal order.
-	 *
-	 * @param object               $gateway          PayPal gateway instance.
-	 * @param array<string, mixed> $checkout_request Resolve() request.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	private function create_paypal_order( object $gateway, array $checkout_request ) {
-		// PayPalGateway::create_order() resolves the request itself and keeps
-		// the add-on selection for its capture leg.
-		$result = $gateway->create_order( $checkout_request );
-
-		if ( empty( $result['success'] ) ) {
-			return new WP_Error( 'paypal_error', $result['error'] ?? __( 'Failed to create PayPal order.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		return new WP_REST_Response(
-			array(
-				'gateway'         => 'paypal',
-				'paypal_order_id' => $result['id'],
-				'approval_url'    => $result['approval_url'],
-			),
-			201
-		);
 	}
 
 	/**
@@ -386,70 +354,6 @@ class PaymentController extends RestController {
 				'status'       => 'pending_payment',
 			),
 			201
-		);
-	}
-
-	/**
-	 * Confirm PayPal payment (capture) and create order.
-	 *
-	 * @param object $gateway    PayPal gateway instance.
-	 * @param string $payment_id PayPal order ID.
-	 * @param int    $service_id Service ID.
-	 * @param int    $package_id Package index.
-	 * @param int    $pay_order  Existing order ID (0 if new).
-	 * @return WP_REST_Response|WP_Error
-	 */
-	private function confirm_paypal_payment( object $gateway, string $payment_id, int $service_id, int $package_id, int $pay_order ) {
-		// Paying an existing order: answer the plain refusals before PayPal is
-		// asked for anything.
-		if ( $pay_order ) {
-			$order = wpss_get_order( $pay_order );
-
-			if ( ! $order ) {
-				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-			}
-
-			if ( get_current_user_id() !== (int) $order->customer_id ) {
-				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
-			}
-
-			// Idempotency: never re-process an order that is already paid.
-			if ( 'paid' === (string) ( $order->payment_status ?? '' ) ) {
-				return new WP_REST_Response(
-					array(
-						'gateway'      => 'paypal',
-						'order_id'     => $pay_order,
-						'order_number' => $order->order_number,
-						'status'       => 'paid',
-					)
-				);
-			}
-		}
-
-		// One capture path for a new purchase and an existing order, the one the
-		// website uses. It reads the buyer and the order from the PayPal payment
-		// itself, so a payment pays what it was started for and only for the
-		// member who started it. This route used to capture whatever PayPal
-		// payment it was handed and mark the named order paid.
-		$result = $gateway->capture_order(
-			array(
-				'paypal_order_id' => $payment_id,
-				'service_id'      => $service_id,
-				'package_id'      => $package_id,
-			)
-		);
-
-		if ( empty( $result['success'] ) ) {
-			return new WP_Error( 'paypal_confirm_error', $result['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		return new WP_REST_Response(
-			array(
-				'gateway'      => 'paypal',
-				'order_id'     => (int) $result['order_id'],
-				'order_number' => $result['order_number'] ?? '',
-				'status'       => 'paid',
-			)
 		);
 	}
 
