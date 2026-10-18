@@ -365,6 +365,16 @@ textarea.wpss-form-textarea {
 	color-scheme: light;
 }
 
+/* One declaration per plugin surface, so every control inside inherits it instead of
+   needing its class listed below (the message composer and any new textarea were
+   missed that way and kept a light scrollbar on a dark page). The per-class lists
+   remain for controls rendered outside these containers. */
+:root[data-theme="dark"] :is(.wpss-app, .wpss-app-shell, .wpss-dashboard, .wpss-modal, .wpss-confirm, .wpss-messaging),
+:root[data-bx-mode="dark"] :is(.wpss-app, .wpss-app-shell, .wpss-dashboard, .wpss-modal, .wpss-confirm, .wpss-messaging),
+.wpss-dark :is(.wpss-app, .wpss-app-shell, .wpss-dashboard, .wpss-modal, .wpss-confirm, .wpss-messaging) {
+	color-scheme: dark;
+}
+
 /* The same set under theme dark mode. Scoped to the plugin's own classes as
    well as .wpss-app, because plugin forms are not all inside that wrapper -
    the buyer-request Deadline field is one that is not, and scoping to the

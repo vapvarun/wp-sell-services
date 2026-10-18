@@ -27,6 +27,7 @@ preg_match( '/\.wpss-dashboard \.wpss-pagination__link:hover,[^{]*\{(.*?)\}/s', 
 $check( 'dashboard pager hover and focus set a text colour', ! empty( $pg[1] ) && false !== strpos( $pg[1], 'color: var(--wpss-text' ) );
 
 $ds = $read( 'assets/css/design-system.css' );
+$check( 'plugin surfaces declare dark color-scheme once, so every control inside inherits it (message composer included)', (bool) preg_match( '/:root\[data-bx-mode="dark"\] :is\([^)]*\.wpss-messaging[^)]*\)[^{]*\{[^}]*color-scheme: dark/s', $ds ) );
 $check( 'textarea.wpss-textarea declares color-scheme', false !== strpos( $ds, 'textarea.wpss-textarea,' ) && false !== strpos( $ds, ':root[data-theme="dark"] textarea.wpss-textarea' ) );
 $check( 'select.wpss-input declares color-scheme', false !== strpos( $ds, 'select.wpss-input,' ) && false !== strpos( $ds, '.wpss-dark select.wpss-input' ) );
 
