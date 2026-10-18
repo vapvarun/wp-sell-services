@@ -252,12 +252,8 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		// Note: /service-order/{id}/ is handled by Plugin::register_rewrite_rules()
 		// via the wpss_service_order query var → TemplateLoader → order-view.php.
 
-		// Account pages.
-		add_rewrite_rule(
-			'^account/([^/]+)/?$',
-			'index.php?wpss_account=1&wpss_account_page=$matches[1]',
-			'top'
-		);
+		// No /account/{page}/ rule: that base belongs to the site (Learnomy and other plugins answer
+		// /account/billing/ and friends). [wpss_account] still reads ?wpss_account_page= from the query string.
 
 		// Payment callback.
 		add_rewrite_rule(
