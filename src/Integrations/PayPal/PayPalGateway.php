@@ -1354,7 +1354,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 		}
 
 		// Check cached token.
-		$cached = get_transient( 'wpss_paypal_access_token' );
+		$cached = get_transient( $this->token_cache_key() );
 
 		if ( $cached ) {
 			$this->access_token = $cached;
@@ -1387,7 +1387,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 			$this->access_token = $body['access_token'];
 			$expires_in         = (int) ( $body['expires_in'] ?? 3600 ) - 60; // Buffer of 60 seconds.
 
-			set_transient( 'wpss_paypal_access_token', $this->access_token, $expires_in );
+			set_transient( $this->token_cache_key(), $this->access_token, $expires_in );
 
 			return $this->access_token;
 		}
@@ -1396,14 +1396,27 @@ class PayPalGateway extends AbstractPaymentGateway {
 	}
 
 	/**
+	 * Cache name of the access token for the credentials in use.
+	 *
+	 * Keyed by mode and client id, so a token minted for other keys (sandbox before live, rotated
+	 * or replaced keys) is never sent with these ones.
+	 *
+	 * @return string
+	 */
+	private function token_cache_key(): string {
+		return 'wpss_paypal_token_' . substr( md5( ( $this->is_sandbox_mode() ? 'sandbox|' : 'live|' ) . $this->get_client_id() ), 0, 12 );
+	}
+
+	/**
 	 * Make PayPal API request.
 	 *
 	 * @param string $endpoint API endpoint.
 	 * @param array  $data     Request data.
 	 * @param string $method   HTTP method.
+	 * @param bool   $retried  Whether this is the repeat after a refused token.
 	 * @return array
 	 */
-	private function api_request( string $endpoint, array $data = array(), string $method = 'POST' ): array {
+	private function api_request( string $endpoint, array $data = array(), string $method = 'POST', bool $retried = false ): array {
 		$access_token = $this->get_access_token();
 
 		if ( ! $access_token ) {
@@ -1442,10 +1455,19 @@ class PayPalGateway extends AbstractPaymentGateway {
 		$body = json_decode( wp_remote_retrieve_body( $response ), true ) ?: array();
 		$code = wp_remote_retrieve_response_code( $response );
 
+		// A token PayPal no longer accepts (revoked, or minted for other keys) is dropped and the
+		// call made once more with a fresh one, instead of failing until the cache runs out.
+		if ( 401 === $code && ! $retried ) {
+			delete_transient( $this->token_cache_key() );
+			$this->access_token = null;
+
+			return $this->api_request( $endpoint, $data, $method, true );
+		}
+
 		if ( $code >= 400 ) {
 			return array(
 				'error' => array(
-					'message' => $body['message'] ?? $body['details'][0]['description'] ?? __( 'PayPal API error.', 'wp-sell-services' ),
+					'message' => $body['message'] ?? $body['details'][0]['description'] ?? $body['error_description'] ?? __( 'PayPal API error.', 'wp-sell-services' ),
 					'details' => $body,
 				),
 			);
