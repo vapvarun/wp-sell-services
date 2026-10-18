@@ -65,7 +65,7 @@ interface OrderProviderInterface {
 	 * @param int $order_id Platform order ID.
 	 * @return bool
 	 */
-	public function has_service_items( int $order_id ): bool;
+	public function has_sellable_items( int $order_id ): bool;
 
 	/**
 	 * Get all service items from an order.
@@ -73,7 +73,7 @@ interface OrderProviderInterface {
 	 * @param int $order_id Platform order ID.
 	 * @return ServiceItem[]
 	 */
-	public function get_service_items( int $order_id ): array;
+	public function get_sellable_items( int $order_id ): array;
 
 	/**
 	 * Update order item meta.

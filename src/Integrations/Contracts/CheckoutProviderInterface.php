@@ -55,14 +55,14 @@ interface CheckoutProviderInterface {
 	 *
 	 * @return bool
 	 */
-	public function cart_has_services(): bool;
+	public function cart_has_sellable_items(): bool;
 
 	/**
 	 * Get service items in cart.
 	 *
 	 * @return array
 	 */
-	public function get_cart_services(): array;
+	public function get_cart_sellable_items(): array;
 
 	/**
 	 * Process checkout for services.

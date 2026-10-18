@@ -36,11 +36,11 @@ interface EcommerceAdapterInterface {
 
 ### Provider Interfaces
 
-**OrderProviderInterface** (`src/Integrations/Contracts/OrderProviderInterface.php`) -- Handles order data retrieval: `get_order()`, `get_order_item()`, `get_customer_orders()`, `get_vendor_orders()`, `has_service_items()`, `get_service_items()`, `update_item_meta()`, `get_item_meta()`, `get_customer_data()`, `handle_order_complete()`.
+**OrderProviderInterface** (`src/Integrations/Contracts/OrderProviderInterface.php`) -- Handles order data retrieval: `get_order()`, `get_order_item()`, `get_customer_orders()`, `get_vendor_orders()`, `has_sellable_items()`, `get_sellable_items()`, `update_item_meta()`, `get_item_meta()`, `get_customer_data()`, `handle_order_complete()`.
 
-**ProductProviderInterface** (`src/Integrations/Contracts/ProductProviderInterface.php`) -- Handles service-to-product mapping: `is_service_product()`, `get_service()`, `get_service_vendors()`, `get_requirements()`, `get_delivery_time()`, `set_service_type()`, `add_service_type_option()`, `save_service_meta()`, `sync_with_service()`.
+**ProductProviderInterface** (`src/Integrations/Contracts/ProductProviderInterface.php`) -- Handles service-to-product mapping: `is_sellable_product()`, `get_service()`, `get_service_vendors()`, `get_requirements()`, `get_delivery_time()`, `set_service_type()`, `add_service_type_option()`, `save_service_meta()`, `sync_with_service()`.
 
-**CheckoutProviderInterface** (`src/Integrations/Contracts/CheckoutProviderInterface.php`) -- Handles cart and checkout: `add_cart_item_data()`, `validate_add_to_cart()`, `get_checkout_url()`, `cart_has_services()`, `get_cart_services()`, `process_checkout()`, `get_thankyou_redirect()`, `filter_quantity_max()`.
+**CheckoutProviderInterface** (`src/Integrations/Contracts/CheckoutProviderInterface.php`) -- Handles cart and checkout: `add_cart_item_data()`, `validate_add_to_cart()`, `get_checkout_url()`, `cart_has_sellable_items()`, `get_cart_sellable_items()`, `process_checkout()`, `get_thankyou_redirect()`, `filter_quantity_max()`.
 
 **AccountProviderInterface** (`src/Integrations/Contracts/AccountProviderInterface.php`) -- Handles user account integration: `add_menu_items()`, `register_endpoints()`, `get_account_url()`, `get_orders_url()`, `get_vendor_dashboard_url()`, `render_orders_endpoint()`, `render_services_endpoint()`, `render_notifications_endpoint()`, `can_access_vendor_dashboard()`, `get_login_url()`, `get_register_url()`.
 

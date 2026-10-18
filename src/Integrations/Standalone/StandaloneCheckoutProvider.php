@@ -96,7 +96,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 *
 	 * @return bool
 	 */
-	public function cart_has_services(): bool {
+	public function cart_has_sellable_items(): bool {
 		$cart = $this->get_cart();
 		return ! empty( $cart );
 	}
@@ -106,7 +106,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 *
 	 * @return array
 	 */
-	public function get_cart_services(): array {
+	public function get_cart_sellable_items(): array {
 		return $this->get_cart();
 	}
 

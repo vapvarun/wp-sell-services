@@ -565,7 +565,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 	 * @param int $order_id Order ID.
 	 * @return bool
 	 */
-	public function has_service_items( int $order_id ): bool {
+	public function has_sellable_items( int $order_id ): bool {
 		$order = $this->get_order( $order_id );
 		return $order !== null;
 	}
@@ -578,7 +578,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 	 * @param int $order_id Order ID.
 	 * @return ServiceItem[]
 	 */
-	public function get_service_items( int $order_id ): array {
+	public function get_sellable_items( int $order_id ): array {
 		$item = $this->get_order_item( $order_id );
 		return $item ? [ $item ] : [];
 	}
