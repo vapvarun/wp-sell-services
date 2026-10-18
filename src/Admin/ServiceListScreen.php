@@ -39,6 +39,84 @@ class ServiceListScreen {
 		add_action( 'pre_get_posts', array( $this, 'apply_filters' ) );
 		add_filter( 'default_hidden_columns', array( $this, 'hidden_columns' ), 10, 2 );
 		add_filter( 'display_post_states', array( $this, 'featured_state' ), 10, 2 );
+		add_filter( 'bulk_actions-edit-' . ServicePostType::POST_TYPE, array( $this, 'bulk_actions' ) );
+		add_filter( 'handle_bulk_actions-edit-' . ServicePostType::POST_TYPE, array( $this, 'handle_bulk_action' ), 10, 3 );
+		add_action( 'admin_notices', array( $this, 'bulk_notice' ) );
+	}
+
+	/**
+	 * Add Feature / Unfeature to the bulk menu, for those who may curate.
+	 *
+	 * @param array<string, string> $actions Bulk actions.
+	 * @return array<string, string>
+	 */
+	public function bulk_actions( array $actions ): array {
+		if ( wpss_user_can_feature_service() ) {
+			$actions['wpss_feature']   = __( 'Mark as featured', 'wp-sell-services' );
+			$actions['wpss_unfeature'] = __( 'Remove from featured', 'wp-sell-services' );
+		}
+
+		return $actions;
+	}
+
+	/**
+	 * Apply a Feature / Unfeature bulk action.
+	 *
+	 * @param string $redirect Redirect URL.
+	 * @param string $action   Bulk action.
+	 * @param int[]  $ids      Selected post IDs.
+	 * @return string
+	 */
+	public function handle_bulk_action( $redirect, $action, $ids ) {
+		if ( ! in_array( $action, array( 'wpss_feature', 'wpss_unfeature' ), true ) ) {
+			return $redirect;
+		}
+
+		$done = 0;
+
+		foreach ( array_map( 'absint', (array) $ids ) as $id ) {
+			if ( ServicePostType::POST_TYPE !== get_post_type( $id ) || ! wpss_user_can_feature_service( $id ) ) {
+				continue;
+			}
+
+			wpss_set_service_featured( $id, 'wpss_feature' === $action );
+			++$done;
+		}
+
+		return add_query_arg(
+			array(
+				'wpss_featured_done' => $done,
+				'wpss_featured_mode' => 'wpss_feature' === $action ? 'on' : 'off',
+			),
+			remove_query_arg( array( 'wpss_featured_done', 'wpss_featured_mode' ), $redirect )
+		);
+	}
+
+	/**
+	 * Say how many services the bulk action changed.
+	 *
+	 * @return void
+	 */
+	public function bulk_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only counter on a redirect.
+		if ( ! isset( $_GET['wpss_featured_done'], $_GET['wpss_featured_mode'] ) || ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$count = absint( wp_unslash( $_GET['wpss_featured_done'] ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$on = 'on' === sanitize_key( wp_unslash( $_GET['wpss_featured_mode'] ) );
+
+		if ( $on ) {
+			/* translators: %d: number of services */
+			$message = _n( '%d service marked as featured.', '%d services marked as featured.', $count, 'wp-sell-services' );
+		} else {
+			/* translators: %d: number of services */
+			$message = _n( '%d service removed from featured.', '%d services removed from featured.', $count, 'wp-sell-services' );
+		}
+
+		printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( sprintf( $message, $count ) ) );
 	}
 
 	/**

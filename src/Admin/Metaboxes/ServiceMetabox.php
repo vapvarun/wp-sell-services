@@ -723,32 +723,7 @@ class ServiceMetabox {
 		// The field is not rendered for them either, so a vendor's save
 		// carries no wpss_featured key and leaves the owner's choice intact.
 		if ( isset( $_POST['wpss_featured'] ) && wpss_user_can_feature_service( $post_id ) ) {
-			$wpss_featured = ! empty( $_POST['wpss_featured'] );
-
-			/**
-			 * Filter whether a service is featured as it saves.
-			 *
-			 * The owner's checkbox is the default. A site can force the flag from
-			 * its own rule - a vendor tier, a paid placement, a campaign window -
-			 * without having to intercept save_post.
-			 *
-			 * @since 1.7.1
-			 *
-			 * @param bool $wpss_featured Whether the service should be featured.
-			 * @param int  $post_id       Service post ID.
-			 */
-			$wpss_featured = (bool) apply_filters( 'wpss_service_is_featured', $wpss_featured, $post_id );
-
-			if ( $wpss_featured ) {
-				update_post_meta( $post_id, '_wpss_featured', 1 );
-			} else {
-				// Deleted rather than stored as 0. Both readers compare the value
-				// to '1', so a 0 would not match either way - but leaving rows
-				// behind for every service anyone ever unticked is meta nobody
-				// reads, and EXISTS is the obvious way for a future query to ask
-				// this question.
-				delete_post_meta( $post_id, '_wpss_featured' );
-			}
+			wpss_set_service_featured( $post_id, ! empty( $_POST['wpss_featured'] ) );
 		}
 
 		// Only active / paused: visibility belongs to the post status, so the

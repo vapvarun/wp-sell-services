@@ -799,6 +799,9 @@
                 "tests/test-title-suppression-scope.php",
                 "audit/render-coverage.json"
             ],
+            "wpss_is_own_payment_site": [
+                "tests/test-gateway-site-ownership-contract.php"
+            ],
             "wpss_is_vendor": [
                 "tests/Factories/UserFactory.php",
                 "tests/test-copy-sweep.php",
@@ -951,6 +954,9 @@
                 "audit/render-coverage.json"
             ],
             "wpss_order_status_groups": [
+                "audit/render-coverage.json"
+            ],
+            "wpss_order_status_in_progress": [
                 "audit/render-coverage.json"
             ],
             "wpss_order_status_pending_requirements": [
@@ -1175,7 +1181,9 @@
                 "audit/render-coverage.json"
             ],
             "wpss_service_editor_url": [],
-            "wpss_service_is_featured": [],
+            "wpss_service_is_featured": [
+                "tests/test-service-bulk-feature.php"
+            ],
             "wpss_service_limit_error_message": [],
             "wpss_service_list_schema": [
                 "audit/render-coverage.json"
@@ -1681,6 +1689,7 @@
             "/wpss/v1/orders": [
                 "tests/pro/test-pay-order-read-only.php",
                 "tests/test-orders-schema-contract.php",
+                "tests/test-paypal-token-cache.php",
                 "tests/test-rest-app-surface.php",
                 "audit/journeys/08-api-client-acts-as-each-role.md",
                 "audit/render-coverage.json"
@@ -1752,6 +1761,17 @@
                 "audit/journeys/08-api-client-acts-as-each-role.md"
             ],
             "/wpss/v1/orders/(?P<order_id>[\\d]+)/tip": [
+                "audit/render-coverage.json"
+            ],
+            "/wpss/v1/payments/confirm": [
+                "tests/test-rest-pay-order-confirm-contract.php"
+            ],
+            "/wpss/v1/payments/create-intent": [
+                "tests/test-product-neutral-payment.php",
+                "audit/journeys/08-api-client-acts-as-each-role.md"
+            ],
+            "/wpss/v1/payments/methods": [
+                "tests/test-license-gate-and-storage.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/portfolio": [
@@ -1941,6 +1961,9 @@
             ]
         },
         "shortcode": {
+            "wpss_account": [
+                "audit/render-coverage.json"
+            ],
             "wpss_buyer_requests": [
                 "tests/test-retired-tables-contract.php",
                 "audit/render-coverage.json"
@@ -2215,6 +2238,7 @@
                 "audit/journeys/10-vendor-withdrawal-payout.md"
             ],
             "emails/withdrawal-completed": [
+                "tests/test-withdrawal-paid-email.php",
                 "audit/journeys/10-vendor-withdrawal-payout.md"
             ],
             "emails/withdrawal-rejected": [

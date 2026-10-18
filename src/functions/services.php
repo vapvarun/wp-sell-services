@@ -553,6 +553,42 @@ function wpss_enforce_service_limits( array $meta ): array {
 }
 
 /**
+ * Set or clear a service's Featured flag.
+ *
+ * The one writer: the service metabox and the list table's bulk action both come here, so the
+ * `wpss_service_is_featured` filter sees every change. The caller checks wpss_user_can_feature_service().
+ *
+ * @since 1.9.0
+ *
+ * @param int  $service_id Service post ID.
+ * @param bool $featured   Whether the service should be featured.
+ * @return void
+ */
+function wpss_set_service_featured( int $service_id, bool $featured ): void {
+	/**
+	 * Filter whether a service is featured as it saves.
+	 *
+	 * The owner's choice is the default. A site can force the flag from its own rule - a vendor tier, a
+	 * paid placement, a campaign window - without having to intercept save_post.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param bool $featured   Whether the service should be featured.
+	 * @param int  $service_id Service post ID.
+	 */
+	$featured = (bool) apply_filters( 'wpss_service_is_featured', $featured, $service_id );
+
+	if ( $featured ) {
+		update_post_meta( $service_id, '_wpss_featured', 1 );
+		return;
+	}
+
+	// Deleted rather than stored as 0: both readers compare the value to '1', and a row for every
+	// service anyone ever unticked is meta nobody reads.
+	delete_post_meta( $service_id, '_wpss_featured' );
+}
+
+/**
  * Whether the current user may set a service's Featured flag.
  *
  * Featured is marketplace curation, not service authoring: `_wpss_featured` is

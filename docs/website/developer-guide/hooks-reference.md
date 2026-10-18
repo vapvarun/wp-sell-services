@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**546 hooks** across **757** firing sites.
+**547 hooks** across **758** firing sites.
 
-## Actions (277)
+## Actions (278)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -162,6 +162,7 @@ guide; this is the complete index.
 | `wpss_order_refunded` | 2 | `src/Services/OrderWorkflowManager.php` | Fires when an order is refunded. |
 | `wpss_order_started` | 1 | `src/API/OrdersController.php` |  |
 | `wpss_order_status_changed` | 3 | `src/Admin/Pages/ManualOrderPage.php` *(+5 more)* |  |
+| `wpss_order_status_in_progress` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php` |  |
 | `wpss_order_status_pending_requirements` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php` |  |
 | `wpss_order_view_actions` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_actions |
 | `wpss_order_view_details` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_details |
@@ -491,7 +492,7 @@ guide; this is the complete index.
 | `wpss_service_card_thumbnail_size` | 2 | `templates/content-service-card.php` | Hook: wpss_before_service_card |
 | `wpss_service_category_taxonomy_args` | 1 | `src/Taxonomies/ServiceCategoryTaxonomy.php` | Filter service category taxonomy arguments. |
 | `wpss_service_editor_url` | 2 | `src/functions/urls.php` | Filter the service create/edit destination. |
-| `wpss_service_is_featured` | 2 | `src/Admin/Metaboxes/ServiceMetabox.php` | Filter whether a service is featured as it saves. |
+| `wpss_service_is_featured` | 2 | `src/functions/services.php` | Filter whether a service is featured as it saves. |
 | `wpss_service_limit_error_message` | 1 | `src/Frontend/ServiceWizard.php` *(+4 more)* | Filter the error message shown when a vendor cannot create more services. |
 | `wpss_service_list_schema` | 1 | `src/SEO/SchemaMarkup.php` |  |
 | `wpss_service_manager_enforce_publishable` | 3 | `src/Services/ServiceManager.php` | Let a caller publish a service that is not marketplace-ready. |

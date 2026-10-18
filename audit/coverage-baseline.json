@@ -67,7 +67,6 @@
         "hook:wpss_search_results",
         "hook:wpss_search_suggestions",
         "hook:wpss_service_editor_url",
-        "hook:wpss_service_is_featured",
         "hook:wpss_service_limit_error_message",
         "hook:wpss_service_meta_saved",
         "hook:wpss_service_updated",
@@ -107,7 +106,6 @@
         "rest:/wpss/v1/milestones/(?P<id>[\\d]+)/request-revision",
         "rest:/wpss/v1/milestones/(?P<id>[\\d]+)/submit",
         "template:dashboard/sections/create",
-        "rest:/wpss/v1/payments/create-intent",
         "admin_page:wpss-upgrade"
     ]
 }

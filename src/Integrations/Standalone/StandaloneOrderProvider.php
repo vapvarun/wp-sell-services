@@ -434,7 +434,11 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			// manage their own lifecycle via their service handler on wpss_order_paid.
 			if ( ! $is_sub_order ) {
 				do_action( 'wpss_order_status_changed', $order_id, $paid_status, ServiceOrder::STATUS_PENDING_PAYMENT );
-				do_action( "wpss_order_status_{$paid_status}", $order_id, ServiceOrder::STATUS_PENDING_PAYMENT );
+				if ( ServiceOrder::STATUS_IN_PROGRESS === $paid_status ) {
+					do_action( 'wpss_order_status_in_progress', $order_id, ServiceOrder::STATUS_PENDING_PAYMENT );
+				} else {
+					do_action( 'wpss_order_status_pending_requirements', $order_id, ServiceOrder::STATUS_PENDING_PAYMENT );
+				}
 			}
 
 			/**
