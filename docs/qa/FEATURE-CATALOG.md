@@ -28,7 +28,7 @@ Counts from the 2026-10-18 browser walk, Free and Pro active. Guards are scripts
 | General, Pages, Branding, Integrations, System | 12 | `test-settings-heading-outline`, `test-settings-card-title-case`, `bin/settings-contract.py` | |
 | Checkout (account at checkout, billing fields) | 06, 12 | `test-billing-prefill-contract`, `test-guest-checkout-contract` | |
 | Payment Gateways | 06, 12 | `test-payment-gateway-seam`, `test-gateway-isolation-contract` | Stripe and PayPal live walk (money, held) |
-| Commission & Tax | 12 | `test-checkout-tax-contract`, `test-multi-checkout-tax-label` | Tax cards (money, held) |
+| Commission & Tax | 12 | `test-checkout-tax-contract`, `test-multi-checkout-tax-label`, `test-money-rules-gateway-independent` | Tax cards (money, held) |
 | Payouts | 10, 12 | `test-payout-method-registry` | schedule card (money, held) |
 | Vendor Settings (limits, moderation, Review Moderation) | 05, 12 | `bin/docs-audit.py` (settings paths in docs) | |
 | Orders & Disputes | 02, 12 | `test-requirements-clock-from-payment` | |
