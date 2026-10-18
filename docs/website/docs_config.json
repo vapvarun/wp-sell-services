@@ -284,6 +284,10 @@
           "title": "Currency and Tax Settings"
         },
         {
+          "slug": "currency-reference",
+          "title": "Supported currencies (generated)"
+        },
+        {
           "slug": "stripe-connect",
           "title": "Stripe Connect Split Payments [PRO]"
         },
@@ -965,6 +969,12 @@
           "slug": "currency-tax-config-wpss",
           "file": "payments-checkout/currency-tax-config.md",
           "order": 6
+        },
+        {
+          "title": "Supported Currencies (complete)",
+          "slug": "currency-reference-wpss",
+          "file": "payments-checkout/currency-reference.md",
+          "order": 7
         },
         {
           "title": "Stripe Connect Split Payments [PRO]",

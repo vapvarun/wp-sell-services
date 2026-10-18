@@ -428,6 +428,29 @@ if generator and os.path.exists(generator):
     else:
         fail("hook-reference", (result.stdout or result.stderr).strip() or "hooks-reference.md is out of date")
 
+# ---------------------------------------------------------------------------
+# One currency table, generated from the registry.
+#
+# Two hand-typed ten-row tables once disagreed with each other and with the
+# 148-currency registry (Euro shown as "E"). currency-reference.md is the only
+# table; every other page links to it, and it must match wpss_get_currency_registry().
+# ---------------------------------------------------------------------------
+import subprocess
+
+cur_gen = os.path.join(FREE, "bin/generate-currency-reference.py")
+cur_res = subprocess.run([sys.executable, cur_gen, "--check"], capture_output=True, text=True, cwd=FREE)
+if cur_res.returncode == 0:
+    ok("currency-reference", "the generated currency table matches the registry")
+else:
+    fail("currency-reference", (cur_res.stdout or cur_res.stderr).strip() or "currency-reference.md is out of date")
+
+cur_row = re.compile(r"^\|\s*(US Dollar|Euro|British Pound)\s*\|", re.M)
+for root, _dirs, names in os.walk(DOCS):
+    for name in names:
+        path = os.path.join(root, name)
+        if name.endswith(".md") and name != "currency-reference.md" and cur_row.search(open(path, encoding="utf-8").read()):
+            fail("currency-reference", "%s carries its own currency table; link currency-reference.md instead" % os.path.relpath(path, DOCS))
+
 if os.path.exists(hooks_doc):
     cite_re = re.compile(
         r"^\|\s*`(wpss_[a-z0-9_]+)`[^|]*\|[^|]*\|\s*`([A-Za-z0-9_/.-]+\.php):(\d+)`",

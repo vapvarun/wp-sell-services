@@ -14,18 +14,7 @@ Your currency applies everywhere -- service prices, order totals, vendor earning
 
 ### Supported Currencies
 
-| Currency | Code | Symbol |
-|----------|------|--------|
-| US Dollar | USD | $ |
-| Euro | EUR | E |
-| British Pound | GBP | L |
-| Canadian Dollar | CAD | C$ |
-| Australian Dollar | AUD | A$ |
-| Indian Rupee | INR | R |
-| Japanese Yen | JPY | Y |
-| Chinese Yuan | CNY | Y |
-| Brazilian Real | BRL | R$ |
-| Mexican Peso | MXN | $ |
+The marketplace supports 148 currencies. See the [full list with codes, symbols and decimal places](currency-reference.md); it is generated from the plugin, so it is always current.
 
 **Good to know:** Changing currency after you already have orders does not convert existing amounts. Only new orders will use the new currency.
 

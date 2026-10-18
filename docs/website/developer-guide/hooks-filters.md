@@ -1101,8 +1101,7 @@ create a service, run the **filter** - calling either class directly can return
 | `wpss_presence_window` | `int $seconds` | `functions/notifications.php` |
 | `wpss_messages_per_page` | `int $per_page` | `templates/dashboard/sections/messages.php` |
 
-There is no settings screen for the presence behaviour - it is on by default and
-adjusted here.
+The presence behaviour is on by default. Site owners switch it off under **Settings > Emails > Message Email Delivery > Skip when they are already here**; the filters above adjust it in code.
 
 ## Gallery and Layout (1.6.0)
 

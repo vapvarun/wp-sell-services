@@ -28,18 +28,7 @@ Choose the currency for all transactions on your marketplace. This affects how p
 
 ### Supported Currencies
 
-| Currency | Symbol | Code |
-|----------|--------|------|
-| US Dollar | $ | USD |
-| Euro | EUR | EUR |
-| British Pound | GBP | GBP |
-| Canadian Dollar | C$ | CAD |
-| Australian Dollar | A$ | AUD |
-| Indian Rupee | INR | INR |
-| Japanese Yen | JPY | JPY |
-| Chinese Yuan | CNY | CNY |
-| Brazilian Real | R$ | BRL |
-| Mexican Peso | MXN | MXN |
+The marketplace supports 148 currencies. See the [full list with codes, symbols and decimal places](../payments-checkout/currency-reference.md); it is generated from the plugin, so it is always current.
 
 ### Setting Your Currency
 
