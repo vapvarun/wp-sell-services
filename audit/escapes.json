@@ -376,6 +376,30 @@
    "fails_on": "OrderRepository without the product_id default and SchemaManager without backfill_product_id()",
    "check": "tests/test-order-product-columns.php",
    "note": "none; additive, service_id remains authoritative"
+  },
+  {
+   "card": "10384354109",
+   "title": "every AJAX writer that starts new work carries the same standing gate as its REST twin",
+   "guard": "static:ajax-standing-gate",
+   "added": "2026-10-18",
+   "fails_on": "b66ee276^ (dashboard publish accepted a suspended seller)",
+   "check": "tests/test-ajax-standing-gate.php"
+  },
+  {
+   "card": "10403104468",
+   "title": "one notification type vocabulary: the filter offers every type the member has and each row has an icon",
+   "guard": "static:notification-types-registry",
+   "added": "2026-10-18",
+   "fails_on": "6879a2c7^ (12 of 31 types filterable, three type lists)",
+   "check": "tests/test-notification-types-registry.php"
+  },
+  {
+   "card": "10412156185",
+   "title": "rendered heading outline of the Payment Gateways tab on the standalone rail never skips a level",
+   "guard": "static:settings-heading-outline",
+   "added": "2026-10-18",
+   "fails_on": "00fd7b12^ (h2 to h4 x3 in gateway classes)",
+   "check": "tests/test-settings-heading-outline.php"
   }
  ]
 }

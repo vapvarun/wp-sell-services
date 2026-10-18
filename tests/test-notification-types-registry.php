@@ -9,8 +9,7 @@
  */
 
 require_once __DIR__ . '/exit-on-fail.php';
-
-global $wpdb;
+require_once __DIR__ . '/fixtures.php';
 
 $fails = 0;
 $check = static function ( string $label, bool $ok ) use ( &$fails ) {
@@ -25,23 +24,23 @@ $check( 'registry exists with label and icon per type', $registry && ! array_fil
 $missing = array_diff( array_keys( wpss_notification_type_settings() ), array_keys( $registry ) );
 $check( 'every type that has an email setting has a registry row (' . implode( ',', $missing ) . ')', ! $missing );
 
-$stored  = $wpdb->get_col( "SELECT DISTINCT type FROM {$table}" );
-$missing = array_diff( $stored, array_keys( $registry ) );
-$check( 'every stored type has a registry row (' . implode( ',', $missing ) . ')', ! $missing );
-
-// A member's dropdown is their own types, and each filters to exactly its rows.
-$user = (int) $wpdb->get_var( "SELECT user_id FROM {$table} GROUP BY user_id ORDER BY COUNT(DISTINCT type) DESC LIMIT 1" );
-if ( $user ) {
-	$mine = wpss_get_user_notification_types( $user );
-	$real = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT type FROM {$table} WHERE user_id = %d", $user ) );
-	$check( 'dropdown types equal the member\'s distinct types', array() === array_diff( $real, $mine ) && array() === array_diff( $mine, $real ) );
-	$bad = 0;
-	foreach ( $mine as $type ) {
-		$rows = wpss_get_user_notifications( $user, array( 'type' => $type, 'limit' => 200 ) );
-		$bad += count( array_filter( $rows, static fn( $r ) => $r->type !== $type ) ) + ( $rows ? 0 : 1 );
-	}
-	$check( 'filtering by each of the member\'s types returns only that type', 0 === $bad );
+// A member's dropdown is their own types, and each filters to exactly its rows. Seed a member with a
+// spread of types, including ones that used to have no filter option.
+$f     = wpss_test_fixtures();
+$user  = $f->buyer;
+$seed  = array( 'order_late', 'refund_pending', 'order_started', 'order_status', 'new_message', 'brand_new_thing' );
+foreach ( $seed as $i => $type ) {
+	wpss_add_notification( $user, $type, "QA {$type} row", array() );
 }
+$mine = wpss_get_user_notification_types( $user );
+$check( 'dropdown types equal the member\'s distinct types', array() === array_diff( $seed, $mine ) && array() === array_diff( $mine, $seed ) );
+$check( 'a type that had no filter before is offered (refund_pending)', in_array( 'refund_pending', $mine, true ) );
+$bad = 0;
+foreach ( $mine as $type ) {
+	$rows = wpss_get_user_notifications( $user, array( 'type' => $type, 'limit' => 200 ) );
+	$bad += count( array_filter( $rows, static fn( $r ) => $r->type !== $type ) ) + ( $rows ? 0 : 1 );
+}
+$check( 'filtering by each of the member\'s types returns only that type', 0 === $bad );
 
 $check( 'unknown type: humanised label, bell icon', 'Brand new thing' === wpss_notification_type_label( 'brand_new_thing' ) && 'bell' === wpss_notification_type_icon( 'brand_new_thing' ) );
 

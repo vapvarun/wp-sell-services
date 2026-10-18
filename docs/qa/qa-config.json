@@ -226,6 +226,18 @@
    {
     "id": "woo-rail-guest-and-cart-link",
     "run": "${WP_CLI:-wp} eval-file tests/test-woo-rail-guest-and-cart-link.php"
+   },
+   {
+    "id": "ajax-standing-gate",
+    "run": "${WP_CLI:-wp} eval-file tests/test-ajax-standing-gate.php"
+   },
+   {
+    "id": "notification-types-registry",
+    "run": "${WP_CLI:-wp} eval-file tests/test-notification-types-registry.php"
+   },
+   {
+    "id": "settings-heading-outline",
+    "run": "${WP_CLI:-wp} eval-file tests/test-settings-heading-outline.php"
    }
   ]
  }

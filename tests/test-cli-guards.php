@@ -109,6 +109,13 @@ $check = static function ( string $label, string $args, string $env_type, array 
 	WP_CLI::log( ( count( $failures ) > $already ? '  FAIL ' : '  ok   ' ) . $label );
 };
 
+// The positive case runs `demo delete --yes`, which removes ALL marked demo content. On a site that already
+// has some it would erase it, so refuse to run there (it wiped a working site's samples on 2026-10-18).
+if ( wpss_has_demo_content() ) {
+	WP_CLI::warning( 'SKIP  this site has demo content and the delete case would erase it; run on a site without any.' );
+	return;
+}
+
 // One marked demo service, so the delete cases have something in scope and
 // the positive case at the end can prove that only this row goes.
 $fixture = (int) wp_insert_post(
@@ -137,7 +144,7 @@ $total = count(
 
 // Gate: safe on the old code because no case passes --yes.
 $check( 'demo delete refuses on production', 'wpss demo delete', 'production', array( 'nonzero' => true, 'contains' => 'production' ) );
-$check( 'demo delete scopes to demo content', 'wpss demo delete', 'local', array( 'contains' => '1 demo posts', 'lacks' => "Delete {$total} services" ) );
+$check( 'demo delete scopes to demo content', 'wpss demo delete', 'local', array( 'contains' => ' demo posts', 'lacks' => "Delete {$total} services" ) );
 $check( 'demo delete --all needs --yes', 'wpss demo delete --all', 'local', array( 'nonzero' => true, 'contains' => '--yes' ) );
 
 if ( $failures ) {

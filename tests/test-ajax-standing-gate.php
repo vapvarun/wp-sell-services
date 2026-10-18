@@ -9,6 +9,7 @@
  */
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 $fails = 0;
 $check = static function ( string $label, bool $ok ) use ( &$fails ) {
@@ -16,14 +17,9 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 	$fails += $ok ? 0 : 1;
 };
 
-$vendor = (int) get_users( array( 'role' => 'wpss_vendor', 'number' => 1, 'fields' => 'ID' ) )[0];
-if ( ! $vendor || ! function_exists( 'wpss_service_publish_refusal' ) ) {
-	$check( 'wpss_service_publish_refusal() exists and a vendor exists', false );
-	exit( 1 );
-}
-
-$sid = wp_insert_post( array( 'post_type' => 'wpss_service', 'post_status' => 'draft', 'post_title' => 'QA standing probe service title', 'post_author' => $vendor ) );
-$was = get_user_meta( $vendor, 'wpss_account_status', true );
+$f      = wpss_test_fixtures();
+$vendor = $f->vendor;
+$sid    = ( $f->service )( 'draft' );
 
 delete_user_meta( $vendor, 'wpss_account_status' );
 $check( 'good standing: refusal is about the publish bar, not standing', ! str_contains( wpss_service_publish_refusal( $sid, $vendor ), 'suspended' ) );
@@ -33,8 +29,6 @@ $check( 'suspended: publish is refused', '' !== wpss_service_publish_refusal( $s
 wp_update_post( array( 'ID' => $sid, 'post_status' => 'publish' ) );
 $check( 'suspended: refused even for an already-live service', '' !== wpss_service_publish_refusal( $sid, $vendor ) );
 
-$was ? update_user_meta( $vendor, 'wpss_account_status', $was ) : delete_user_meta( $vendor, 'wpss_account_status' );
-wp_delete_post( $sid, true );
 
 // Every door that starts new work carries the gate.
 $root  = dirname( __DIR__ ) . '/src/Frontend/';
