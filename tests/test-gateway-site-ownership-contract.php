@@ -61,6 +61,16 @@ try {
 	$check( 'this site recognises its own address, with or without scheme and slash', wpss_is_own_payment_site( home_url( '/' ) ) && wpss_is_own_payment_site( (string) preg_replace( '#^https?://#', '', (string) get_option( 'home' ) ) ) );
 	$check( '  and not another site\'s, nor an empty one', ! wpss_is_own_payment_site( 'https://another-store.example' ) && ! wpss_is_own_payment_site( '' ) );
 
+	// Payments started on 1.7.x were stamped with home_url(), which a language plugin or a www redirect changes (10415810962).
+	$home = untrailingslashit( (string) get_option( 'home' ) );
+	$www  = (string) preg_replace( '#^(https?://)(www\.)?#', '$1www.', $home );
+	$check( 'a language folder or a www host on this site is still this site', wpss_is_own_payment_site( $home . '/fr' ) && wpss_is_own_payment_site( $home . '/pt-br/' ) && wpss_is_own_payment_site( $www ) );
+	$check( '  but another install on the same host is not', ! wpss_is_own_payment_site( $home . '/shop' ) && ! wpss_is_own_payment_site( $home . '/fr/shop' ) );
+	$only_mapped = static fn( bool $own, string $url ): bool => $own || 'https://mapped.example' === $url;
+	add_filter( 'wpss_is_own_payment_site', $only_mapped, 10, 2 );
+	$check( '  and an owner can add an address through wpss_is_own_payment_site', wpss_is_own_payment_site( 'https://mapped.example' ) && ! wpss_is_own_payment_site( 'https://other.example' ) );
+	remove_filter( 'wpss_is_own_payment_site', $only_mapped, 10 );
+
 	// PayPal: custom_id is full, so the mark is the start of the invoice number.
 	$paypal  = new \WPSellServices\Integrations\PayPal\PayPalGateway();
 	$ours    = 'WPSS-' . wpss_payment_site_hash() . '-';

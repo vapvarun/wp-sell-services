@@ -1462,13 +1462,18 @@ class StripeGateway extends AbstractPaymentGateway {
 
 		// Path 1: Order already created via AJAX — just confirm payment.
 		if ( ! empty( $metadata['order_id'] ) ) {
-			( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
+			$settled = ( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
 				(int) $metadata['order_id'],
 				'stripe',
 				(string) $payment_intent['id'],
 				$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ?? 0 ), (string) ( $payment_intent['currency'] ?? 'usd' ) ),
 				(string) ( $payment_intent['currency'] ?? '' )
 			);
+
+			// A captured charge the order refused is given back, as browser confirm does.
+			if ( ! $settled ) {
+				$this->refund_unsettled_charge( (string) $payment_intent['id'] );
+			}
 
 			return array(
 				'success' => true,
@@ -2182,7 +2187,13 @@ class StripeGateway extends AbstractPaymentGateway {
 
 			$settled = $this->settle_pay_order( $order, 'stripe', $payment_id, (float) ( $payment['amount'] ?? 0 ), (string) ( $payment['currency'] ?? '' ) );
 
+			// The charge is captured and cannot pay this order (cancelled or repriced since
+			// the intent, phase locked, spent elsewhere): give it back. The payment was
+			// proved to be this member's for this order above, so it is theirs to refund;
+			// a charge that already paid an order is left alone by refund_unsettled().
 			if ( is_wp_error( $settled ) ) {
+				$this->refund_unsettled_charge( $payment_id );
+
 				return $settled;
 			}
 

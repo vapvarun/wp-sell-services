@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**545 hooks** across **756** firing sites.
+**546 hooks** across **757** firing sites.
 
 ## Actions (277)
 
@@ -294,7 +294,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (268)
+## Filters (269)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -392,6 +392,7 @@ guide; this is the complete index.
 | `wpss_gateway_checkout_button_label` | 4 | `src/functions/payments.php` | Filter the checkout button label for a gateway. |
 | `wpss_get_template` | 3 | `src/functions/templates.php` *(+1 more)* |  |
 | `wpss_get_template_part` | 3 | `src/functions/templates.php` | Filter the template file path. |
+| `wpss_is_own_payment_site` | 2 | `src/functions/payments.php` | Filters whether a payment's site address is this site's. |
 | `wpss_is_vendor` | 2 | `src/functions/vendors.php` | Filter whether user is a vendor. |
 | `wpss_known_dashboard_sections` | 1 | `src/functions/urls.php` | Filter the set of known dashboard section slugs. |
 | `wpss_ledger_debit_types` | 1 | `src/functions/ledger.php` | Filter the ledger transaction types treated as debits. |
