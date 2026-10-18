@@ -2728,7 +2728,7 @@ final class Plugin {
 		 *
 		 * @param array $gateways Array of payment gateway instances.
 		 */
-		$this->payment_gateways = apply_filters( 'wpss_payment_gateways', $this->payment_gateways );
+		$this->payment_gateways = wpss_validate_registry( apply_filters( 'wpss_payment_gateways', $this->payment_gateways ), \WPSellServices\Integrations\Contracts\PaymentGatewayInterface::class, 'wpss_payment_gateways' );
 
 		// Test gateway LAST, on purpose: it decides whether to register by asking
 		// whether any real gateway is usable, and that is only correct once

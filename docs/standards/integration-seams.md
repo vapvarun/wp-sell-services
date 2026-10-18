@@ -29,7 +29,7 @@ generic order, checkout or payment code.
 | E-commerce rail | `wpss_ecommerce_adapters` | `EcommerceAdapterInterface` | Done; contract-tested |
 | Storage | `wpss_storage_providers` | `StorageProviderInterface` | Done; contract-tested |
 | Wallet | `wpss_wallet_providers` | `WalletProviderInterface` | Done; contract-tested |
-| Payment gateway | `wpss_payment_gateways` | `PaymentGatewayInterface` | Done. A gateway extends `AbstractPaymentGateway` and owns its REST create/confirm (`rest_create_intent`, `rest_confirm_payment`) and its settings card (`get_settings_card`, with `order`). `PaymentController` and `Settings` name no gateway |
+| Payment gateway | `wpss_payment_gateways` | `PaymentGatewayInterface` | Done, registry validated. A gateway extends `AbstractPaymentGateway` and owns its REST create/confirm (`rest_create_intent`, `rest_confirm_payment`) and its settings card (`get_settings_card`, with `order`). `PaymentController` and `Settings` name no gateway |
 | Dashboard section | `wpss_dashboard_sections` | array | Done; a section registered here is also a known route; contract-tested |
 | SEO plugin | `wpss_seo_integrations` | `SeoIntegrationInterface` | Done; Yoast, Rank Math and AIOSEO are three providers; contract-tested |
 | Product type, fulfillment | planned | | Inventory and proposed seam in `docs/architecture/PRODUCT-TYPE-INVENTORY.md`. Not built in 1.9.0 |
