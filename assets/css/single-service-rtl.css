@@ -1016,6 +1016,8 @@
    ========================================================================== */
 
 .wpss-packages-widget {
+	/* Where the Continue button starts: the content panel's padding plus the package pane's. */
+	--wpss-package-inset: calc(1.5rem + 20px);
 	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	box-shadow: var(--wpss-shadow);
@@ -1191,8 +1193,16 @@
 	flex-direction: column;
 	gap: 0.75rem;
 	margin-top: 1rem;
-	padding-top: 1rem;
+	padding: 1rem var(--wpss-package-inset) 1.5rem;
 	border-top: 1px solid var(--wpss-border);
+}
+
+/* Anything appended straight to the widget takes the same inline padding as
+   .wpss-packages-content, or it sits against the widget edge while the
+   Continue button is inset. */
+.wpss-packages-widget > .wpss-package-extras-note {
+	margin: 0;
+	padding: 0 var(--wpss-package-inset) 1rem;
 }
 
 /* The favourite toggle spans the sidebar like the order CTA above it. */

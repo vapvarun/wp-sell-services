@@ -26,6 +26,8 @@ $check( 'shared form controls (.wpss-form-input/-textarea/-label/-help) are in t
 $check( 'service-wizard.css no longer owns the shared control base', ! preg_match( '/^\.wpss-form-input,\s*\.wpss-form-select,/m', $read( 'assets/css/service-wizard.css' ) ) );
 $check( 'dashboard pager link pins its colour against a theme content-link hover', (bool) preg_match( '/a\.wpss-pagination__link:hover,[^{]*\{[^}]*color: var\(--wpss-text[^}]*!important/s', $read( 'assets/css/unified-dashboard.css' ) ) );
 
+$check( 'the package widget gives the add-on note and the order actions the Continue button inset', (bool) preg_match( '/\.wpss-packages-widget > \.wpss-package-extras-note \{[^}]*var\(--wpss-package-inset\)/s', $read( 'assets/css/single-service.css' ) ) && (bool) preg_match( '/\.wpss-package-actions \{[^}]*var\(--wpss-package-inset\)/s', $read( 'assets/css/single-service.css' ) ) );
+
 $admin_css = $read( 'assets/css/admin.css' );
 $settings  = $read( 'src/Admin/Settings.php' );
 $check( 'settings card and sub-heading titles share one tab heading style (18px, not small caps)', (bool) preg_match( '/\.wpss-settings-content h2\.wpss-card__title,[^{]*\{[^}]*font-size: 18px;[^}]*text-transform: none/s', $admin_css ) );
