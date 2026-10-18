@@ -386,7 +386,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		);
 
 		// Use get_header/get_footer for theme integration.
-		get_header();
+		wpss_get_header();
 		?>
 		<main id="primary" class="site-main">
 			<?php
@@ -429,7 +429,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			</div>
 		</main>
 		<?php
-		get_footer();
+		wpss_get_footer();
 	}
 
 	/**

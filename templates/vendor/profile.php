@@ -125,7 +125,7 @@ $reviews = $wpdb->get_results(
 	)
 );
 
-get_header();
+wpss_get_header();
 
 /**
  * Hook: wpss_before_vendor_profile
@@ -727,4 +727,4 @@ endif;
  */
 do_action( 'wpss_after_vendor_profile', $vendor_id );
 
-get_footer();
+wpss_get_footer();

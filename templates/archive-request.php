@@ -48,7 +48,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-get_header();
+wpss_get_header();
 
 /**
  * Filter: wpss_archive_request_columns
@@ -141,4 +141,4 @@ do_action( 'wpss_before_request_archive' );
  */
 do_action( 'wpss_after_request_archive' );
 
-get_footer();
+wpss_get_footer();

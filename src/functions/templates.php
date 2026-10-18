@@ -164,6 +164,58 @@ function wpss_locate_template( string $template_name ): string {
 }
 
 /**
+ * Open the page chrome for a plugin template that is not a block template.
+ *
+ * Classic themes: get_header(). Block themes have no header.php, so get_header() logs a core
+ * deprecation and prints core's theme-compat chrome instead of the theme's. There the document
+ * shell is printed here and the theme's own header template part is rendered.
+ *
+ * @since 1.9.0
+ *
+ * @return void
+ */
+function wpss_get_header(): void {
+	if ( ! wp_is_block_theme() ) {
+		get_header();
+		return;
+	}
+	?>
+<!DOCTYPE html>
+<html <?php language_attributes(); ?>>
+<head>
+<meta charset="<?php bloginfo( 'charset' ); ?>">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+	<?php wp_head(); ?>
+</head>
+<body <?php body_class(); ?>>
+	<?php wp_body_open(); ?>
+<div class="wp-site-blocks">
+	<?php block_template_part( 'header' ); ?>
+	<?php
+}
+
+/**
+ * Close the page chrome opened by wpss_get_header().
+ *
+ * @since 1.9.0
+ *
+ * @return void
+ */
+function wpss_get_footer(): void {
+	if ( ! wp_is_block_theme() ) {
+		get_footer();
+		return;
+	}
+	block_template_part( 'footer' );
+	?>
+</div>
+	<?php wp_footer(); ?>
+</body>
+</html>
+	<?php
+}
+
+/**
  * Get template.
  *
  * @param string $template_name Template name.

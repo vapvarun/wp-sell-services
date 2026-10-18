@@ -47,7 +47,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-get_header();
+wpss_get_header();
 
 $request_id         = get_the_ID();
 $buyer_id           = (int) get_post_field( 'post_author', $request_id );
@@ -706,4 +706,4 @@ do_action( 'wpss_before_single_request', $request_id );
  */
 do_action( 'wpss_after_single_request', $request_id );
 
-get_footer();
+wpss_get_footer();
