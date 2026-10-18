@@ -472,6 +472,22 @@
    "added": "2026-10-19",
    "fails_on": "43d045ce^ (guard red on the pre-fix commit)",
    "check": "tests/smoke-gate-surfaces.test.cjs"
+  },
+  {
+   "card": "combo-walk 1.9.0: buyer got Order Completed twice (no card)",
+   "title": "a notification row for an order event EmailService already mails must not send a second email",
+   "guard": "static:notification-no-double-email",
+   "added": "2026-10-19",
+   "fails_on": "57bacdcd (delivery_accepted missing from the covered list)",
+   "check": "tests/test-notification-no-double-email.php"
+  },
+  {
+   "card": "combo-walk 1.9.0: white on success green 2.5:1 (no card)",
+   "title": "filled success buttons and toasts use the solid fill, and the required asterisk the danger text token",
+   "guard": "static:text-token-contrast",
+   "added": "2026-10-19",
+   "fails_on": "57bacdcd (success buttons used --wpss-success)",
+   "check": "tests/test-text-token-contrast.php"
   }
  ]
 }

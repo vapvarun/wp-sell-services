@@ -110,6 +110,11 @@ Open Deliver Work, Open Dispute and Quote Extra Work on an order, then the same 
 - 390px on every screen above.
 - Seller proposing on their **own** request notifies nobody.
 
+### One completion email (combo-walk 1.9.0)
+Complete an order as the buyer (accept delivery) with Mailpit open.
+
+**Expect** exactly one "Completed" email to the buyer and one to the seller; no second plain copy titled "Order Completed". Guard: `static:notification-no-double-email`.
+
 ### Order again (card:9696986584)
 As the buyer, open a completed order that was bought from a package.
 

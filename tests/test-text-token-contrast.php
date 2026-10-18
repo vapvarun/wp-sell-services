@@ -40,6 +40,9 @@ $check( 'light danger text is 4.5:1 on white', $ratio( $token( $ds, '--wpss-dang
 $check( 'dark danger text is 4.5:1 on the dark card', $ratio( $token( $ds, '--wpss-danger-text', true ), '#1f2937' ) >= 4.5 );
 $check( 'success-dark (credit text) is 4.5:1 on white', $ratio( $token( $ds, '--wpss-success-dark', false ), '#ffffff' ) >= 4.5 );
 $check( 'dark success-dark is 4.5:1 on the dark card', $ratio( $token( $ds, '--wpss-success-dark', true ), '#1f2937' ) >= 4.5 );
+$check( 'success-solid carries white text at 4.5:1', $ratio( $token( $ds, '--wpss-success-solid', false ), '#ffffff' ) >= 4.5 );
+$check( 'filled success button and toast use the solid fill, not the 2.5:1 --wpss-success', 1 !== preg_match( '/\\.wpss-btn--success\s*\{[^}]*background:\s*var\(--wpss-success[,)]/', $ds ) && false === strpos( $ds, '.wpss-toast--success { background: var(--wpss-success,' ) );
+$check( 'required asterisk uses the danger text token', false !== strpos( $ds, '.wpss-required { color: var(--wpss-danger-text' ) );
 $check( 'muted text is 4.5:1 in both modes', $ratio( $token( $ds, '--wpss-text-muted', false ), '#ffffff' ) >= 4.5 && $ratio( $token( $ds, '--wpss-text-muted', true ), '#1f2937' ) >= 4.5 );
 $check( 'the hint token is NOT 4.5:1 on the dark card (so it must stay off real text)', $ratio( $token( $ds, '--wpss-text-hint', true ), '#1f2937' ) < 4.5 );
 

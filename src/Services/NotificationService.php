@@ -2163,6 +2163,7 @@ class NotificationService {
 			'order_in_progress',
 			'order_completed',
 			'order_completed_vendor',
+			self::TYPE_DELIVERY_ACCEPTED,
 			'order_auto_completed',
 			'order_cancelled',
 			self::TYPE_REVISION_REQUESTED,

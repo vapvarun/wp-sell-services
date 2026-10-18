@@ -274,6 +274,10 @@
    {
     "id": "woo-rail-guest-and-cart-link",
     "run": "${WP_CLI:-wp} eval-file tests/test-woo-rail-guest-and-cart-link.php"
+   },
+   {
+    "id": "notification-no-double-email",
+    "run": "${WP_CLI:-wp} eval-file tests/test-notification-no-double-email.php"
    }
   ]
  }

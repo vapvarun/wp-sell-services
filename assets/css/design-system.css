@@ -84,6 +84,8 @@
 	--wpss-success: #10b981;
 	--wpss-success-light: #ecfdf5;
 	--wpss-success-dark: #065f46;
+	/* Fill behind white text (filled buttons, toasts). --wpss-success is 2.5:1 with white; this is 5.5:1 in both modes. */
+	--wpss-success-solid: #047857;
 	--wpss-success-border: #a7f3d0;
 	--wpss-warning: #f59e0b;
 	--wpss-warning-light: #fffbeb;
@@ -633,7 +635,7 @@ button.wpss-btn--ghost.wpss-btn--danger:hover {
 
 /* .wpss-btn--danger base declarations live in the theme-proof block below. */
 .wpss-btn--danger:hover { background: var(--wpss-danger-dark, #b91c1c); border-color: var(--wpss-danger-dark, #b91c1c); color: var(--wpss-white, #fff); }
-.wpss-btn--success { background: var(--wpss-success); color: var(--wpss-white, #fff); border-color: var(--wpss-success); }
+.wpss-btn--success { background: var(--wpss-success-solid); color: var(--wpss-white, #fff); border-color: var(--wpss-success-solid); }
 
 /* Theme-proof filled CTAs — when a .wpss-btn renders OUTSIDE the .wpss-app
    scope (e.g. a confirm modal appended straight to <body>), or INSIDE the
@@ -662,7 +664,7 @@ button.wpss-btn--danger,
 .wpss-btn--danger { background: var(--wpss-danger); border-color: var(--wpss-danger); color: var(--wpss-white, #fff); }
 a.wpss-btn--success, a.wpss-btn--success:link, a.wpss-btn--success:visited,
 button.wpss-btn--success,
-.wpss-btn--success { background: var(--wpss-success); border-color: var(--wpss-success); color: var(--wpss-white, #fff); }
+.wpss-btn--success { background: var(--wpss-success-solid); border-color: var(--wpss-success-solid); color: var(--wpss-white, #fff); }
 
 /* Link-state foreground, pinned. The block above loses the specificity race
    inside a theme's content wrapper: BuddyX ships
@@ -726,7 +728,7 @@ a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
 }
 button.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline),
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
-	background: var(--wpss-success) !important; border-color: var(--wpss-success) !important;
+	background: var(--wpss-success-solid) !important; border-color: var(--wpss-success-solid) !important;
 }
 
 .wpss-btn--sm { min-height: 34px; padding: var(--wpss-space-2) var(--wpss-space-4); font-size: var(--wpss-text-sm); }
@@ -978,7 +980,7 @@ select.wpss-form-input::-ms-expand {
 
 .wpss-field { margin-bottom: var(--wpss-space-5); }
 .wpss-field__label { display: block; font-size: var(--wpss-text-base); font-weight: 500; color: var(--wpss-text); margin-bottom: var(--wpss-space-2); }
-.wpss-field__label .wpss-required { color: var(--wpss-danger); }
+.wpss-field__label .wpss-required { color: var(--wpss-danger-text, var(--wpss-danger)); }
 
 .wpss-field__input, .wpss-field__select, .wpss-field__textarea {
 	width: 100%; min-height: var(--wpss-space-10); padding: var(--wpss-space-3) var(--wpss-space-4); font-size: var(--wpss-text-base); font-family: inherit;
@@ -1232,7 +1234,7 @@ body.wpss-modal-active { overflow: hidden; }
 .wpss-toast-container { position: fixed; bottom: var(--wpss-space-5, 20px); inset-inline-end: var(--wpss-space-5, 20px); z-index: 160000; display: flex; flex-direction: column-reverse; gap: var(--wpss-space-2, 8px); pointer-events: none; }
 .wpss-toast { padding: var(--wpss-space-3, 12px) var(--wpss-space-5, 20px); border-radius: var(--wpss-radius, 8px); font-size: var(--wpss-text-sm, 13px); line-height: 1.5; color: var(--wpss-white, #fff); background: var(--wpss-text, #111827); box-shadow: var(--wpss-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)); max-width: 360px; opacity: 0; transform: translateY(8px); transition: opacity 0.3s, transform 0.3s; }
 .wpss-toast.is-visible { opacity: 1; transform: translateY(0); }
-.wpss-toast--success { background: var(--wpss-success, #10b981); }
+.wpss-toast--success { background: var(--wpss-success-solid, #047857); }
 .wpss-toast--error { background: var(--wpss-danger, #dc2626); display: flex; align-items: flex-start; gap: var(--wpss-space-3, 12px); pointer-events: auto; }
 .wpss-toast__close { flex-shrink: 0; margin-inline-start: auto; padding: 0 var(--wpss-space-1, 4px); border: 0; background: none; color: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
 .wpss-toast__close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
