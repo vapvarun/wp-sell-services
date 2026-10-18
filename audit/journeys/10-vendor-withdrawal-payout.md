@@ -27,7 +27,7 @@ Withdrawals > Approve.
 Withdrawals > Mark paid, confirm.
 
 **Expect**
-- The seller gets "Withdrawal of X Paid" (card:10402904790), not "Approved". Body status cell reads Paid.
+- The seller gets "Withdrawal of X Paid" (card:10402904790, template `emails/withdrawal-completed`), not "Approved". Body status cell reads Paid.
 - Exactly one ledger debit; pressing Mark paid again changes nothing.
 - The seller's in-app notification and Earnings history read Paid.
 - Settings > Emails has a "Withdrawal Paid" switch; switching it off silences this email only.

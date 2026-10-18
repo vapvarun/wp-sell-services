@@ -29,3 +29,6 @@ Run `wp action-scheduler run` (or wait for the daily job).
 
 ### Registry check
 As a member with `order_late`, `refund_pending` and `order_started` rows: every type present appears in the Type dropdown, selecting it returns only those rows, and no row shows the generic bell. Guard: `tests/test-notification-types-registry.php`.
+
+### Retention
+Old read notifications are cleaned after 90 days by default; a site changes it with the `wpss_notification_retention_days` filter. **Expect** rows older than the window and already read are removed, unread rows never are, and the badge count is unchanged by the cleanup.
