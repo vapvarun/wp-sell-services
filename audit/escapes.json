@@ -264,6 +264,14 @@
       "fails_on": "tree with the four oversized files and no loader entries for the new ones",
       "journey": "docs/standards/skeleton.md",
       "now_dead_or_duplicate": "166 functions moved unchanged into 10 new domain files; no file over 1,400 lines"
+    },
+    {
+      "card": "duplicate helper bodies: SEO title/description/Open Graph and check_order_permission (no card)",
+      "class": "the same rule written twice drifts, and a fix lands on one copy",
+      "check": "tests/test-integration-seam-contract.php (both integrations still start) and tests/test-rest-matrix.php (order routes keep their permission gate)",
+      "fails_on": "tree with two copies of each body",
+      "journey": "docs/standards/skeleton.md",
+      "now_dead_or_duplicate": "six identical methods in YoastIntegration/RankMathIntegration now in AbstractSeoIntegration; check_order_permission in DisputesController and ConversationsController now in RestController"
     }
   ]
 }
