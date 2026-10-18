@@ -528,6 +528,14 @@
    "added": "2026-10-19",
    "fails_on": "57bacdcd (DeliveryService logged and dropped the file)",
    "check": "tests/test-delivery-refuses-bad-file.php"
+  },
+  {
+   "card": "admin sweep 1.9.0: rejection email omitted the reason (no card)",
+   "title": "wpss_withdrawal_processed listeners get the withdrawal with its new status and admin note",
+   "guard": "static:withdrawal-processed-carries-note",
+   "added": "2026-10-19",
+   "fails_on": "57bacdcd (listeners received the row read before the update)",
+   "check": "tests/test-withdrawal-processed-carries-note.php"
   }
  ]
 }

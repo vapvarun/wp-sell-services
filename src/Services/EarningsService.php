@@ -633,6 +633,8 @@ class EarningsService {
 		// Side effects only after commit — the money record is already safe.
 		// The wpss_withdrawal_processed listener re-runs record_withdrawal_debit,
 		// which finds the row we just wrote and skips (idempotent by design).
+		$withdrawal = $this->as_processed( $withdrawal, self::WITHDRAWAL_COMPLETED, $note );
+
 		$this->notify_withdrawal_processed( $withdrawal_id, self::WITHDRAWAL_COMPLETED, $withdrawal );
 
 		/** This action is documented in process_withdrawal(). */
@@ -1088,6 +1090,8 @@ class EarningsService {
 
 		$wpdb->query( 'COMMIT' );
 
+		$withdrawal = $this->as_processed( $withdrawal, $status, $note );
+
 		$this->notify_withdrawal_processed( $withdrawal_id, $status, $withdrawal );
 
 		/**
@@ -1103,6 +1107,25 @@ class EarningsService {
 			'success' => true,
 			'message' => __( 'Withdrawal updated successfully.', 'wp-sell-services' ),
 		);
+	}
+
+	/**
+	 * The withdrawal row as it now stands. The row was read before the update, so a listener
+	 * handed it saw the old status and no admin note: the rejection email left out the reason.
+	 *
+	 * @param object $withdrawal Row read before the update.
+	 * @param string $status     Status just written.
+	 * @param string $note       Admin note just written.
+	 * @return object
+	 */
+	private function as_processed( object $withdrawal, string $status, string $note ): object {
+		$processed               = clone $withdrawal;
+		$processed->status       = $status;
+		$processed->admin_note   = sanitize_textarea_field( $note );
+		$processed->processed_at = current_time( 'mysql', true );
+		$processed->processed_by = get_current_user_id();
+
+		return $processed;
 	}
 
 	/**

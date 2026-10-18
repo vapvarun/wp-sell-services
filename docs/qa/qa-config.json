@@ -298,6 +298,10 @@
    {
     "id": "delivery-refuses-bad-file",
     "run": "${WP_CLI:-wp} eval-file tests/test-delivery-refuses-bad-file.php"
+   },
+   {
+    "id": "withdrawal-processed-carries-note",
+    "run": "${WP_CLI:-wp} eval-file tests/test-withdrawal-processed-carries-note.php"
    }
   ]
  }
