@@ -28,4 +28,7 @@ $check( 'showPrompt delegates to wpssConfirm', (bool) preg_match( '/showPrompt[\
 $check( 'wpssConfirm supports a required prompt field', false !== strpos( $ui, 'requiredMessage' ) && false !== strpos( $ui, 'aria-invalid' ) );
 $check( 'frontend.js depends on the UI script handle', (bool) preg_match( '/frontend\.js[\s\S]{0,400}HANDLE_UI/', $php ) || (bool) preg_match( '/HANDLE_UI[\s\S]{0,300}frontend/', $php ) );
 
+$css = (string) file_get_contents( $root . '/assets/css/design-system.css' );
+$check( 'confirm field takes its background from the tokens at a specificity that beats a host theme', (bool) preg_match( '/\.wpss-ui-confirm-wrap \.wpss-confirm__input\s*\{[^}]*background-color:\s*var\(--wpss-bg\)/', $css ) );
+
 exit( $fails ? 1 : 0 );

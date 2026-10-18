@@ -1029,8 +1029,9 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 .wpss-modal.wpss-modal-open { display: flex; }
 .wpss-modal__backdrop { position: absolute; inset: 0; background: var(--wpss-overlay); backdrop-filter: blur(2px); }
 .wpss-modal__dialog { position: relative; display: flex; flex-direction: column; background: var(--wpss-bg); border-radius: var(--wpss-radius-xl); max-width: 480px; width: 100%; box-shadow: var(--wpss-shadow-xl); max-height: 90vh; overflow-y: auto; }
-/* Fields inside a modal take text colour from the plugin tokens, not the host theme, so dark mode stays readable. */
-.wpss-modal__body :is(input:not([type=checkbox]):not([type=radio]), select, textarea) { color: var(--wpss-text); }
+/* Fields inside a modal take background and text colour from the plugin tokens, not the host theme (Reign styles bare textarea and input at higher specificity), so dark mode stays readable. */
+.wpss-modal__body :is(input:not([type=checkbox]):not([type=radio]), select, textarea),
+.wpss-ui-confirm-wrap .wpss-confirm__input { background-color: var(--wpss-bg); color: var(--wpss-text); }
 .wpss-modal__dialog--sm { max-width: 360px; }
 .wpss-modal__dialog--lg { max-width: 720px; }
 .wpss-modal__header { position: relative; padding: var(--wpss-space-6) var(--wpss-space-6) var(--wpss-space-4); border-bottom: 1px solid var(--wpss-border); }
