@@ -1055,6 +1055,18 @@ function wpss_ensure_pay_order( int $order_id ): string {
 		return '';
 	}
 
+	// A locked milestone phase is never funded before the previous phase is approved. The
+	// standalone page and the checkout intent say so, but a store rail's pay link came through
+	// here and got its payment page anyway, so the rule is held at the one seam every rail uses.
+	$wpss_pay_order = wpss_get_order( $order_id );
+	if (
+		$wpss_pay_order
+		&& \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $wpss_pay_order->platform ?? '' )
+		&& ( new \WPSellServices\Services\MilestoneService() )->is_locked( $order_id )
+	) {
+		return wpss_get_order_url( $order_id, '', $wpss_pay_order );
+	}
+
 	/**
 	 * Filter the pay URL after the rail has made sure its store order exists.
 	 *

@@ -541,6 +541,11 @@ document.addEventListener('DOMContentLoaded', function() {
 					lastMessageId = response.data.id;
 				}
 
+				// Files the site refused come back as warnings; say so instead of dropping them.
+				if (response.warnings && response.warnings.length) {
+					wpssShowNotice($('<div>').text(response.warnings.join(' | ')).html(), 'error');
+				}
+
 				// Clear form.
 				$messageInput.val('').css('height', 'auto');
 				selectedFiles = [];

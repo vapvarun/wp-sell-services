@@ -1208,9 +1208,8 @@ class API {
 				'pending_orders'   => (int) $vendor_orders->pending,
 				'active_orders'    => (int) $vendor_orders->in_progress,
 				'completed_orders' => (int) $vendor_orders->completed,
-				// Paid orders, net of refunds and commission: the same figure as
-				// the web dashboard's Sales tile (wpss_get_revenue()).
-				'total_earnings'   => (float) ( wpss_get_revenue( array( 'vendor_id' => (int) $user_id ) )[0]->vendor_earnings ?? 0 ),
+				// The ledger total: the same figure as the web Sales tile and Earnings page.
+				'total_earnings'   => wpss_get_ledger_total_earned( (int) $user_id ),
 				'rating'           => $wpss_vp ? (float) $wpss_vp->rating : 0.0,
 				'review_count'     => $wpss_vp ? (int) $wpss_vp->review_count : 0,
 			];

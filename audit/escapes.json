@@ -504,6 +504,30 @@
    "added": "2026-10-19",
    "fails_on": "6333eac7 (label read Cod; notification showed not_as_described)",
    "check": "tests/test-member-sweep-labels.php"
+  },
+  {
+   "card": "vendor sweep 1.9.0: Sales tile 159.00 above the ledger (no card)",
+   "title": "the Sales tile, REST profile and Earnings page read one ledger figure",
+   "guard": "static:vendor-earnings-one-figure",
+   "added": "2026-10-19",
+   "fails_on": "57bacdcd (tile summed order rows incl. disputed)",
+   "check": "tests/test-vendor-earnings-one-figure.php"
+  },
+  {
+   "card": "vendor sweep 1.9.0: locked milestone phase reached a Woo payment page (no card)",
+   "title": "a locked phase gets no payment page on any rail",
+   "guard": "static:locked-phase-pay-seam",
+   "added": "2026-10-19",
+   "fails_on": "57bacdcd (wpss_ensure_pay_order had no lock check)",
+   "check": "tests/test-locked-phase-pay-seam.php"
+  },
+  {
+   "card": "vendor sweep 1.9.0: delivery saved without the file the site refused (no card)",
+   "title": "a delivery with a refused file is refused whole and names the file",
+   "guard": "static:delivery-refuses-bad-file",
+   "added": "2026-10-19",
+   "fails_on": "57bacdcd (DeliveryService logged and dropped the file)",
+   "check": "tests/test-delivery-refuses-bad-file.php"
   }
  ]
 }

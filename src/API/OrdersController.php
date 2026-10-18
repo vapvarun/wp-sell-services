@@ -886,6 +886,10 @@ class OrdersController extends RestController {
 		$delivery_service = new DeliveryService();
 		$result           = $delivery_service->submit( $order_id, $description, $files );
 
+		if ( ! $result && '' !== $delivery_service->get_last_error() ) {
+			return new WP_Error( 'rest_deliverable_file_refused', $delivery_service->get_last_error(), array( 'status' => 400 ) );
+		}
+
 		if ( ! $result ) {
 			return new WP_Error(
 				'rest_deliverable_failed',

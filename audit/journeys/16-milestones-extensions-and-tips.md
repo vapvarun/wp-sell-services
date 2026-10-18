@@ -40,3 +40,8 @@ Buyer sends a tip on a completed order.
 As the buyer, tip a completed order (pending or paid) and reload the order page.
 
 **Expect** HTTP 200 and the tip receipt with the amount and its state; nothing in debug.log. Guard: `static:template-wpdb-scope`.
+
+### Locked phase on a store rail (vendor sweep 1.9.0)
+On the Woo rail open ?pay_order=<second phase id> as the buyer while phase one is unpaid.
+
+**Expect** no payment page; the buyer lands on the order. Guard: `static:locked-phase-pay-seam`.

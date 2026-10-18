@@ -484,7 +484,7 @@
 
 .wpss-order-card__sep {
 	margin: 0 6px;
-	color: var(--wpss-gray-300);
+	color: var(--wpss-text-muted);
 }
 
 .wpss-order-card__amount {

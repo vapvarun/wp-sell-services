@@ -306,7 +306,7 @@ class AjaxHandlers {
 		if ( $result ) {
 			wp_send_json_success( array( 'message' => __( 'Delivery submitted successfully.', 'wp-sell-services' ) ) );
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to submit delivery.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => $delivery_service->get_last_error() ?: __( 'Failed to submit delivery.', 'wp-sell-services' ) ) );
 		}
 	}
 

@@ -534,6 +534,14 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 									<span class="wpss-badge <?php echo esc_attr( $status_class ); ?>">
 										<?php echo esc_html( $statuses[ $withdrawal['status'] ] ?? ucfirst( $withdrawal['status'] ) ); ?>
 									</span>
+									<?php if ( EarningsService::WITHDRAWAL_REJECTED === $withdrawal['status'] && '' !== trim( (string) $withdrawal['admin_note'] ) ) : ?>
+										<p class="wpss-text-muted wpss-withdrawal-reason">
+											<?php
+											/* translators: %s: the reason the marketplace gave for rejecting the withdrawal */
+											echo esc_html( sprintf( __( 'Reason: %s', 'wp-sell-services' ), $withdrawal['admin_note'] ) );
+											?>
+										</p>
+									<?php endif; ?>
 								</td>
 								<td>
 									<?php if ( EarningsService::WITHDRAWAL_PENDING === $withdrawal['status'] && empty( $withdrawal['is_auto'] ) ) : ?>

@@ -68,7 +68,7 @@ The vendor sees a confirmation with a request ID and status. They also receive a
 | **Pending** | Request submitted, waiting for admin review |
 | **Approved** | Admin approved it, payment is being processed |
 | **Completed** | Payment has been sent to the vendor |
-| **Rejected** | Request denied -- funds return to vendor's available balance |
+| **Rejected** | Request denied -- funds return to vendor's available balance. The note the admin typed shows under the badge as "Reason: ..." and is in the email |
 
 The typical flow is: **Pending > Approved > Completed**
 

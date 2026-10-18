@@ -39,3 +39,8 @@ Add, edit, feature and remove an item.
 Walk Earnings with a positive, zero and negative balance.
 
 **Expect** each state has the right label ("Available to withdraw" or "Balance to clear") and an explanation; the negative tile keeps the surface colour and a readable figure in dark mode at 390px.
+
+### One earned figure (vendor sweep 1.9.0)
+As a vendor with a disputed order, compare the Sales tile, the Earnings page Total earned and the profile.
+
+**Expect** the same amount on all three. Guard: `static:vendor-earnings-one-figure`.

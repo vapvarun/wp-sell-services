@@ -674,9 +674,10 @@ class OrderRepository extends AbstractRepository {
 			'total_orders'         => (int) ( $stats['total_orders'] ?? 0 ),
 			'completed_orders'     => (int) ( $stats['completed_orders'] ?? 0 ),
 			'active_orders'        => (int) ( $stats['active_orders'] ?? 0 ),
-			// The vendor's share of what buyers paid, net of refunds and
-			// commission, by the one revenue definition (get_revenue()).
-			'total_earnings'       => $this->get_revenue( array( 'vendor_id' => $vendor_id ) )[0]->vendor_earnings ?? 0.0,
+			// What the vendor has earned, from the ledger: the same figure the Earnings
+			// page and the vendor profile show. Summing order rows counted disputed
+			// orders and ran 159.00 above the ledger on the demo seller.
+			'total_earnings'       => wpss_get_ledger_total_earned( $vendor_id ),
 			'avg_completion_hours' => (float) ( $stats['avg_completion_hours'] ?? 0 ),
 		);
 	}

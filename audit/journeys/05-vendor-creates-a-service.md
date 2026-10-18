@@ -176,3 +176,8 @@ Publish an incomplete service from the editor and from the list.
 Open Dashboard > My Services.
 
 **Expect** the All, Active, Drafts and Pending Review tiles are links; selecting one lists only that status and the count matches the list; at 390px they wrap without horizontal scroll.
+
+### A refused file stops a delivery (vendor sweep 1.9.0)
+As the vendor deliver an order with an .exe attached.
+
+**Expect** an error naming the file and no delivery sent; in a message, a refused attachment shows a notice. Guard: `static:delivery-refuses-bad-file`.

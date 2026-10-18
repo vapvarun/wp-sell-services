@@ -286,6 +286,18 @@
    {
     "id": "member-sweep-labels",
     "run": "${WP_CLI:-wp} eval-file tests/test-member-sweep-labels.php"
+   },
+   {
+    "id": "vendor-earnings-one-figure",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-earnings-one-figure.php"
+   },
+   {
+    "id": "locked-phase-pay-seam",
+    "run": "${WP_CLI:-wp} eval-file tests/test-locked-phase-pay-seam.php"
+   },
+   {
+    "id": "delivery-refuses-bad-file",
+    "run": "${WP_CLI:-wp} eval-file tests/test-delivery-refuses-bad-file.php"
    }
   ]
  }

@@ -60,3 +60,8 @@ Settings > Payouts and Emails: type -5 into minimum withdrawal, clearance days a
 Refund an order after its earnings were withdrawn so the vendor ledger goes negative.
 
 **Expect** the vendor cannot request a withdrawal and an approved request cannot be marked paid; the Earnings page explains the debt in words, the figure is readable at 4.5:1 in light and dark, and it matches the ledger amount the admin sees (a withdrawal in progress is named, not hidden); Admin > Vendors lists the vendor and Write off, with a reason, brings the balance to exactly zero once, leaves Total earned unchanged, and a second click does nothing.
+
+### Rejected withdrawal shows its reason (vendor sweep 1.9.0)
+As admin reject a withdrawal with a note; as the vendor open Earnings.
+
+**Expect** the history row reads "Reason: <note>" under the Rejected badge, and the email carries it too.
