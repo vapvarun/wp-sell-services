@@ -2080,7 +2080,7 @@ class Settings {
 		<div class="wpss-card<?php echo esc_attr( $collapsed ); ?>" data-gateway="<?php echo esc_attr( $gateway_id ); ?>">
 			<div class="wpss-card__head wpss-card__head--with-badge">
 				<div>
-					<h2 class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></h2>
+					<h2 class="wpss-card__title"><?php echo esc_html( $title ); ?></h2>
 					<p class="wpss-card__desc"><?php echo esc_html( $description ); ?></p>
 				</div>
 				<span class="wpss-gateway-badge <?php echo esc_attr( $badge_class ); ?>">
@@ -2489,7 +2489,7 @@ class Settings {
 	 *
 	 * Section definition keys:
 	 *   - id           (string) Section identifier.
-	 *   - title        (string) Section heading text (auto-uppercased in card head).
+	 *   - title        (string) Section heading text.
 	 *   - description  (string) Optional description paragraph.
 	 *   - option_group (string) Option group for settings_fields(). Omit if using callback.
 	 *   - settings_id  (string) Settings ID for do_settings_sections(). Omit if using callback.
@@ -2506,7 +2506,7 @@ class Settings {
 		<div class="wpss-card" data-section="<?php echo esc_attr( $section['id'] ?? '' ); ?>">
 			<?php if ( empty( $section['option_group'] ) || ! $this->page_leads_with( (string) ( $section['settings_id'] ?? $section['option_group'] ), $title ) ) : ?>
 				<div class="wpss-card__head">
-					<h2 class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></h2>
+					<h2 class="wpss-card__title"><?php echo esc_html( $title ); ?></h2>
 					<?php if ( ! empty( $section['description'] ) ) : ?>
 						<p class="wpss-card__desc"><?php echo esc_html( $section['description'] ); ?></p>
 					<?php endif; ?>

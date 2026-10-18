@@ -241,7 +241,7 @@ class MenuVisibility {
 		?>
 		<div class="wpss-card" data-section="menu-visibility">
 			<div class="wpss-card__head">
-				<h2 class="wpss-card__title"><?php esc_html_e( 'MENU VISIBILITY', 'wp-sell-services' ); ?></h2>
+				<h2 class="wpss-card__title"><?php esc_html_e( 'Menu Visibility', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-card__desc">
 					<?php esc_html_e( 'Choose which dashboard sections each role can see. Everything is visible by default; unticking a section also blocks its direct URL for that role.', 'wp-sell-services' ); ?>
 				</p>

@@ -2946,6 +2946,24 @@ h2.wpss-settings-subhead__title {
 	color: var(--wpss-admin-text);
 }
 
+/* Settings tabs: a card or sub-heading title reads the same as the section
+   headings the Settings API prints (General, Checkout), not as a small caps
+   label. Scoped so other admin screens keep the compact card head. */
+.wpss-settings-content h2,
+.wpss-settings-content h2.wpss-card__title,
+.wpss-settings-content h2.wpss-settings-subhead__title {
+	font-size: 18px;
+	letter-spacing: 0;
+	text-transform: none;
+}
+
+/* The first sub-heading on a tab is the tab heading: no divider or gap above it. */
+.wpss-settings-section > .wpss-settings-subhead:first-child {
+	margin-top: 0;
+	padding-top: 0;
+	border-top: 0;
+}
+
 .wpss-settings-subhead__desc {
 	margin: 0;
 	font-size: 13px;

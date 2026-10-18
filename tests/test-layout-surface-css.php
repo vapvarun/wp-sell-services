@@ -21,6 +21,12 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 };
 $read = static fn( string $rel ): string => (string) file_get_contents( WPSS_PLUGIN_DIR . $rel );
 
+$admin_css = $read( 'assets/css/admin.css' );
+$settings  = $read( 'src/Admin/Settings.php' );
+$check( 'settings card and sub-heading titles share one tab heading style (18px, not small caps)', (bool) preg_match( '/\.wpss-settings-content h2\.wpss-card__title,[^{]*\{[^}]*font-size: 18px;[^}]*text-transform: none/s', $admin_css ) );
+$check( 'settings card titles are not upper-cased in PHP', false === strpos( $settings, 'strtoupper( $title )' ) );
+$check( 'the first sub-heading on a tab has no divider band above it', (bool) preg_match( '/\.wpss-settings-section > \.wpss-settings-subhead:first-child \{[^}]*border-top: 0/', $admin_css ) );
+
 $co = $read( 'src/Integrations/Standalone/StandaloneCheckoutProvider.php' );
 $check( 'checkout aside sticks as one column, not card by card', (bool) preg_match( '/\.wpss-co-aside \{[^}]*position: sticky/', $co ) && ! preg_match( '/\.wpss-co-aside > :not\(\.wpss-co-card--summary\) \{[^}]*z-index/', $co ) );
 
