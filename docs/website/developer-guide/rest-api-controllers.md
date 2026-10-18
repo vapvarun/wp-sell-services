@@ -280,6 +280,7 @@ is `pending_approval`.
 | GET | `/vendors/(?P<id>[\d]+)/reviews` |
 | GET | `/vendors/(?P<id>[\d]+)/stats` |
 | POST | `/vendors/register` |
+| POST | `/vendors/(?P<id>[\d]+)/balance/write-off` |
 
 ### Seller levels
 

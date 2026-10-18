@@ -113,6 +113,7 @@ class VendorsPage {
 		add_action( 'wp_ajax_wpss_moderate_portfolio_item', array( $this, 'ajax_moderate_portfolio_item' ) );
 		add_action( 'admin_post_wpss_vendor_role_cleanup', array( $this, 'handle_role_cleanup' ) );
 		add_action( 'admin_post_wpss_vendor_role_undo', array( $this, 'handle_role_undo' ) );
+		add_action( 'admin_post_wpss_write_off_balance', array( $this, 'handle_write_off_balance' ) );
 		add_action( 'pre_get_users', array( $this, 'filter_users_to_role_only' ) );
 	}
 
@@ -351,7 +352,7 @@ class VendorsPage {
 		// per-row PHP call to get_summary(), which would N+1 at 500 vendors.
 		// $debit_types_sql values are sanitize_key()'d in the helper, safe to
 		// interpolate into the IN () list.
-		$debit_types_sql   = wpss_get_ledger_debit_types_sql();
+		$debit_types_sql   = wpss_get_ledger_not_earned_types_sql();
 		$ledger_earned_sql = "(SELECT COALESCE( SUM( wt.amount ), 0 )
 			FROM {$wallet_table} wt
 			WHERE wt.user_id = vp.user_id
@@ -568,6 +569,28 @@ class VendorsPage {
 				? wpss_get_negative_ledger_balances( 20 )
 				: array();
 
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display of the redirect result only.
+			$wpss_wo = isset( $_GET['wpss_write_off'] ) ? sanitize_key( wp_unslash( $_GET['wpss_write_off'] ) ) : '';
+			if ( '' !== $wpss_wo ) :
+				?>
+				<div class="notice <?php echo 'ok' === $wpss_wo ? 'notice-success' : 'notice-error'; ?> is-dismissible">
+					<p>
+						<?php
+						echo esc_html(
+							'ok' === $wpss_wo
+								? __( 'Negative balance written off. The entry is in the vendor\'s ledger.', 'wp-sell-services' )
+								: ( 'reason_required' === $wpss_wo
+									? __( 'A reason is required to write off a balance.', 'wp-sell-services' )
+									: ( 'not_negative' === $wpss_wo
+										? __( 'That vendor no longer has a negative balance, so nothing was written off.', 'wp-sell-services' )
+										: __( 'The balance could not be written off.', 'wp-sell-services' ) ) )
+						);
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+
+			<?php
 			if ( $wpss_negative ) :
 				$wpss_owed = 0.0;
 				foreach ( $wpss_negative as $wpss_row ) {
@@ -617,6 +640,17 @@ class VendorsPage {
 								}
 								printf( ' <strong>%s</strong>', esc_html( wpss_format_price( $wpss_row['balance'] ) ) );
 								?>
+								<details class="wpss-negative-balances__writeoff">
+									<summary><?php esc_html_e( 'Write off', 'wp-sell-services' ); ?></summary>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+										<input type="hidden" name="action" value="wpss_write_off_balance" />
+										<input type="hidden" name="vendor_id" value="<?php echo esc_attr( (string) $wpss_row['user_id'] ); ?>" />
+										<?php wp_nonce_field( 'wpss_write_off_balance_' . $wpss_row['user_id'] ); ?>
+										<label for="wpss-wo-reason-<?php echo esc_attr( (string) $wpss_row['user_id'] ); ?>"><?php esc_html_e( 'Reason (kept in the ledger)', 'wp-sell-services' ); ?></label>
+										<input type="text" id="wpss-wo-reason-<?php echo esc_attr( (string) $wpss_row['user_id'] ); ?>" name="reason" class="regular-text" required maxlength="200" />
+										<button type="submit" class="button"><?php esc_html_e( 'Write off to zero', 'wp-sell-services' ); ?></button>
+									</form>
+								</details>
 							</li>
 						<?php endforeach; ?>
 					</ul>
@@ -868,6 +902,35 @@ class VendorsPage {
 		wpss_remove_vendor_role( wpss_get_role_only_vendor_ids() );
 
 		wp_safe_redirect( admin_url( 'admin.php?page=wpss-vendors' ) );
+		exit;
+	}
+
+	/**
+	 * Write off a vendor's negative balance (admin-post).
+	 *
+	 * @return void
+	 */
+	public function handle_write_off_balance(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), 403 );
+		}
+
+		$vendor_id = absint( $_POST['vendor_id'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified on the next line.
+		check_admin_referer( 'wpss_write_off_balance_' . $vendor_id );
+
+		$result = ( new \WPSellServices\Services\EarningsService() )->write_off_negative_balance(
+			$vendor_id,
+			sanitize_text_field( wp_unslash( (string) ( $_POST['reason'] ?? '' ) ) ),
+			get_current_user_id()
+		);
+
+		wp_safe_redirect(
+			add_query_arg(
+				'wpss_write_off',
+				$result['success'] ? 'ok' : (string) ( $result['code'] ?? 'failed' ),
+				admin_url( 'admin.php?page=wpss-vendors' )
+			)
+		);
 		exit;
 	}
 

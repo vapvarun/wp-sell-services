@@ -237,7 +237,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `src/Services/SellerLevelService.php:377` |
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:274` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:377` |
-| `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1405` |
+| `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1468` |
 | `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2059` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:442` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:494` |
@@ -253,9 +253,9 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_commission_recorded` | `int $order_id, array $commission, int $vendor_id` | `src/Services/CommissionService.php:297` |
-| `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:792` |
-| `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `src/Services/EarningsService.php:527` |
-| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1655` |
+| `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:903` |
+| `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `src/Services/EarningsService.php:1099` |
+| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1766` |
 | `wpss_tip_order_created` | `int $tip_order_id, int $parent_order_id, int $customer_id, float $amount` | `TippingService.php:290` |
 | `wpss_tip_sent` | `int $tip_txn_id, int $parent_order_id, int $vendor_id, int $customer_id, float $vendor_earnings, string $vendor_notes` | `src/Services/TippingService.php:490` |
 
@@ -685,7 +685,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_order_statuses` | `$statuses` | `src/functions/order-status.php:81` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:606` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:429` |
-| `wpss_wallet_manager` | `null` | `src/functions/ledger.php:703` |
+| `wpss_wallet_manager` | `null` | `src/functions/ledger.php:740` |
 
 ### Currency System Filters (1.2.1)
 
@@ -780,11 +780,11 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_realtime_settings` | `array $settings` | `RealtimeService.php` |
 | `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:534` |
 | `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/API/ReviewsController.php:437` |
-| `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:599` |
+| `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:647` |
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |
 | `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:373` |
 | `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:383` |
-| `wpss_payout_method_registry` | `$methods` (id => label + fields) | `src/Services/EarningsService.php:1117` |
+| `wpss_payout_method_registry` | `$methods` (id => label + fields) | `src/Services/EarningsService.php:1228` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:789` |

@@ -13947,6 +13947,68 @@
                 }
             }
         },
+        "/wpss/v1/vendors/{id}/balance/write-off": {
+            "x-wpss-tier": "free",
+            "post": {
+                "tags": [
+                    "Vendors"
+                ],
+                "operationId": "post_wpss_v1_vendors_id_balance_write_off",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": ""
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "Why the debt is written off. Kept in the ledger."
+                                    }
+                                },
+                                "required": [
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/wpss/v1/vendors/{id}/reviews": {
             "x-wpss-tier": "free",
             "get": {

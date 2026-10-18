@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**547 hooks** across **758** firing sites.
+**549 hooks** across **760** firing sites.
 
-## Actions (278)
+## Actions (279)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -55,6 +55,7 @@ guide; this is the complete index.
 | `wpss_app_session_revoked` | 2 | `src/API/AuthController.php` | Fires after a single app sign-in is revoked. |
 | `wpss_app_sessions_revoked` | 2 | `src/functions/security.php` | Fires after a member's app sessions have been revoked. |
 | `wpss_auto_withdrawal_created` | 3 | `src/Services/EarningsService.php` | Fires when auto withdrawal is created. |
+| `wpss_balance_written_off` | 4 | `src/Services/EarningsService.php` | Fires after an admin writes off a vendor's negative balance. |
 | `wpss_before_account_deletion` | 2 | `src/Services/AccountDeletionService.php` | Fires before a member's account is deleted. |
 | `wpss_before_cascade_delete_request` | 1 | `src/Services/DataCascadeHandler.php` | Fires before buyer request cascade data is deleted. |
 | `wpss_before_cascade_delete_service` | 1 | `src/Services/DataCascadeHandler.php` | Fires before service cascade data is deleted. |
@@ -295,7 +296,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (269)
+## Filters (270)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -397,6 +398,7 @@ guide; this is the complete index.
 | `wpss_is_vendor` | 2 | `src/functions/vendors.php` | Filter whether user is a vendor. |
 | `wpss_known_dashboard_sections` | 1 | `src/functions/urls.php` | Filter the set of known dashboard section slugs. |
 | `wpss_ledger_debit_types` | 1 | `src/functions/ledger.php` | Filter the ledger transaction types treated as debits. |
+| `wpss_ledger_non_earning_types` | 1 | `src/functions/ledger.php` | Filter the ledger credit types that are not earnings. |
 | `wpss_locate_template` | 3 | `src/Frontend/TemplateLoader.php` |  |
 | `wpss_locked_billing_fields` | 1 | `src/functions/billing.php` | Filters the billing fields that cannot be disabled. |
 | `wpss_manual_order_currencies` | 1 | `src/Admin/Pages/ManualOrderPage.php` | Filter the currencies available on the Manual Order page dropdown. |

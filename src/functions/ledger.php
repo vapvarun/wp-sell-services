@@ -75,6 +75,43 @@ function wpss_get_ledger_debit_types_sql(): string {
 }
 
 /**
+ * Credit types that move the balance but are not earnings.
+ *
+ * An admin write-off of a negative balance is a credit that brings the vendor
+ * back to zero. It must not read as money the vendor earned, count toward the
+ * clearance hold, or inflate "Total earned" on any screen or statement.
+ *
+ * @since 1.9.0
+ *
+ * @return string[] Credit transaction types that are not earnings.
+ */
+function wpss_get_ledger_non_earning_types(): array {
+	/**
+	 * Filter the ledger credit types that are not earnings.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param string[] $types Credit types excluded from total earned and clearance.
+	 */
+	$types = apply_filters( 'wpss_ledger_non_earning_types', array( 'balance_write_off' ) );
+
+	return array_values( array_unique( array_map( 'sanitize_key', (array) $types ) ) );
+}
+
+/**
+ * Quoted SQL list of every type that is NOT an earning: debits plus non-earning credits.
+ *
+ * @since 1.9.0
+ *
+ * @return string e.g. "'withdrawal','debit','dispute_refund','balance_write_off'"
+ */
+function wpss_get_ledger_not_earned_types_sql(): string {
+	$types = array_filter( array_map( 'sanitize_key', array_merge( wpss_get_ledger_debit_types(), wpss_get_ledger_non_earning_types() ) ) );
+
+	return "'" . implode( "','", array_unique( $types ) ) . "'";
+}
+
+/**
  * How much was refunded on an order, for DISPLAY.
  *
  * `wpss_orders.refunded_amount` carries a sentinel the money layer relies on:
@@ -422,7 +459,7 @@ function wpss_get_ledger_balance( int $user_id, bool $lock = false ): float {
 function wpss_get_ledger_total_earned( int $user_id ): float {
 	global $wpdb;
 
-	$debit_types = wpss_get_ledger_debit_types_sql();
+	$debit_types = wpss_get_ledger_not_earned_types_sql();
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	return (float) $wpdb->get_var(

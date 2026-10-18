@@ -91,7 +91,7 @@ class EarningsService {
 		// Lifetime credits net of reversals, for display: the same SUM the
 		// vendor profile row caches, so the two cannot disagree.
 		$txn_table    = $wpdb->prefix . 'wpss_wallet_transactions';
-		$debit_types  = wpss_get_ledger_debit_types_sql();
+		$debit_types  = wpss_get_ledger_not_earned_types_sql();
 		$total_earned = wpss_get_ledger_total_earned( $vendor_id );
 
 		// Credits still inside the clearance window are not withdrawable yet.
@@ -389,6 +389,117 @@ class EarningsService {
 		}
 
 		return 'written';
+	}
+
+	/**
+	 * Write off a vendor's negative balance (admin decision).
+	 *
+	 * A negative balance is carried by default: nothing is deducted, the vendor
+	 * cannot withdraw, and new earnings clear it. When the owner decides the debt
+	 * will not be recovered, this posts ONE credit row that brings the balance
+	 * back to exactly zero. The row type is not an earning
+	 * (wpss_get_ledger_non_earning_types()), so Total earned does not move.
+	 *
+	 * Idempotent by state: the balance is re-read under the ledger lock, and a
+	 * balance already at or above zero writes nothing, so a double click or a
+	 * second admin cannot credit twice.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param int    $vendor_id Vendor user ID.
+	 * @param string $reason    Why the debt is written off (required, kept in the ledger description).
+	 * @param int    $admin_id  Admin user ID doing it.
+	 * @return array{success: bool, code?: string, message: string, amount?: float}
+	 */
+	public function write_off_negative_balance( int $vendor_id, string $reason, int $admin_id ): array {
+		global $wpdb;
+
+		$reason = trim( sanitize_text_field( $reason ) );
+
+		if ( $vendor_id <= 0 || ! get_userdata( $vendor_id ) ) {
+			return array(
+				'success' => false,
+				'code'    => 'invalid_vendor',
+				'message' => __( 'Vendor not found.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( '' === $reason ) {
+			return array(
+				'success' => false,
+				'code'    => 'reason_required',
+				'message' => __( 'A reason is required to write off a balance.', 'wp-sell-services' ),
+			);
+		}
+
+		$wpdb->query( 'START TRANSACTION' );
+
+		$balance = wpss_get_ledger_balance( $vendor_id, true );
+
+		if ( $balance >= 0 ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'code'    => 'not_negative',
+				'message' => __( 'This vendor does not have a negative balance.', 'wp-sell-services' ),
+			);
+		}
+
+		$amount    = round( abs( $balance ), 2 );
+		$ref_type  = 'write_off_' . $vendor_id;
+		$txn_table = $wpdb->prefix . 'wpss_wallet_transactions';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$prior = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(*) FROM {$txn_table} WHERE reference_type = %s", $ref_type )
+		);
+
+		$written = wpss_insert_ledger_row(
+			array(
+				'user_id'        => $vendor_id,
+				'type'           => 'balance_write_off',
+				'amount'         => $amount,
+				'balance_after'  => 0.0,
+				'description'    => sprintf(
+					/* translators: %s: the admin's reason */
+					__( 'Negative balance written off: %s', 'wp-sell-services' ),
+					$reason
+				),
+				'reference_type' => $ref_type,
+				'reference_id'   => $prior + 1,
+			)
+		);
+
+		if ( ! $written ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'code'    => 'write_failed',
+				'message' => __( 'The write-off could not be recorded.', 'wp-sell-services' ),
+			);
+		}
+
+		$wpdb->query( 'COMMIT' );
+
+		wpss_log( sprintf( 'Admin %d wrote off %.2f of vendor %d negative balance: %s', $admin_id, $amount, $vendor_id, $reason ), 'info' );
+
+		/**
+		 * Fires after an admin writes off a vendor's negative balance.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param int    $vendor_id Vendor user ID.
+		 * @param float  $amount    Amount written off (positive).
+		 * @param string $reason    Admin's reason.
+		 * @param int    $admin_id  Admin user ID.
+		 */
+		do_action( 'wpss_balance_written_off', $vendor_id, $amount, $reason, $admin_id );
+
+		return array(
+			'success' => true,
+			'message' => __( 'Negative balance written off.', 'wp-sell-services' ),
+			'amount'  => $amount,
+		);
 	}
 
 	/**

@@ -103,6 +103,12 @@ Use the admin notes field to keep a record of:
 
 Vendors cannot request more than their available balance, and they cannot have multiple pending requests at the same time.
 
+## Negative Balances
+
+A vendor can end up below zero when a refund or dispute claws back earnings that were already paid out. The balance is carried: nothing is deducted, the vendor cannot request a withdrawal, and new earnings pay the debt down first. The vendor sees a banner on their Earnings page explaining the amount.
+
+Vendors in this state are listed in a notice at the top of **WP Sell Services > Vendors**. If you decide the debt will not be recovered, open **Write off** beside the vendor, enter a reason and choose **Write off to zero**. This adds one ledger entry that brings the balance to exactly zero. It is not counted as earnings, so **Total earned** does not change, and a second click does nothing. Developers can do the same with `POST /vendors/{id}/balance/write-off` (administrators only).
+
 ## Related Docs
 
 - [Vendor Management](vendor-management.md) -- Managing vendor accounts
