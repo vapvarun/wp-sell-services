@@ -1326,11 +1326,11 @@
 }
 
 .wpss-wallet__row--credit .wpss-wallet__amount {
-	color: var(--wpss-success);
+	color: var(--wpss-success-dark); /* the fill green is 2.5:1 on white; this token inverts to a light green in dark mode */
 }
 
 .wpss-wallet__row--debit .wpss-wallet__amount {
-	color: var(--wpss-danger);
+	color: var(--wpss-danger-text, var(--wpss-danger));
 }
 
 /* Clickable "View Order" / "View Tip" reference link under the ledger description. */
@@ -3613,7 +3613,7 @@ select.wpss-input option,
 
 .wpss-notification-time {
 	font-size: 12px;
-	color: var(--wpss-text-hint, #999);
+	color: var(--wpss-text-muted, #6b7280);
 }
 
 .wpss-notification-link {

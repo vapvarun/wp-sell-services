@@ -208,6 +208,14 @@
       "fails_on": "pre-fix partial (inline style block, no enqueue helper)",
       "journey": "audit/journeys/16-dark-mode-and-icons.md#notification-rows-read-in-dark-mode",
       "now_dead_or_duplicate": "inline style block removed from notifications-list.php"
+    },
+    {
+      "card": "dark-walk: danger, caption and wallet text under 4.5:1 (no card)",
+      "class": "fill colours (danger red, success green) and the hint token used as text colour, which only clear 3:1 on one of the two surfaces",
+      "check": "tests/test-text-token-contrast.php",
+      "fails_on": "pre-fix CSS (ghost danger #dc2626 on dark card 3.04, stat captions hint 3.04, wallet credit #10b981 on white 2.54)",
+      "journey": "audit/journeys/16-dark-mode-and-icons.md#meaningful-text-clears-45-1-in-both-modes",
+      "now_dead_or_duplicate": "none"
     }
   ]
 }

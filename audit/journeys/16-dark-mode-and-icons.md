@@ -36,3 +36,8 @@ Pro dashboard > Subscription > Cancel subscription; seller profile > Contact; a 
 Buyer with unread notifications, Reign in dark, dashboard Notifications at 1440 and 390; also My Account > Notifications and the admin Notifications page.
 
 **Expect** message and time text on an unread row measure 4.5:1 or better, the list is styled on all three surfaces, and the page source carries no inline style block for the list. check: tests/test-notification-list-style.php
+
+### Meaningful text clears 4.5:1 in both modes (found by the 1.9.0 computed-contrast sweep)
+Vendor dashboard (Services, Proposals, Portfolio, Analytics, Earnings) on Reign, light and dark, 1440 and 390.
+
+**Expect** Delete and Withdraw labels, analytics period captions, notification times and wallet credit and debit amounts all measure 4.5:1 or better; none uses the hint token. check: tests/test-text-token-contrast.php
