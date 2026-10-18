@@ -152,7 +152,7 @@ Cards:
 
 Steps and surfaces:
 
-- With the WooCommerce rail on: logged-out Add to cart returns the guest to the service page and keeps the item after login.
+- With the WooCommerce rail on: logged-out Add to cart returns the guest to the service page after login; the buyer chooses the package again (nothing is carried into a Woo cart for a guest).
 - Settings: Site cart link override is honoured, and hidden where WooCommerce owns the checkout.
 - Direct URL of a carrier product redirects to the homepage, not 404.
 - Requirement submission panel on the Woo order page uses the host theme colours, light and dark.

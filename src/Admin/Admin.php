@@ -1294,17 +1294,9 @@ class Admin {
 			wp_die( esc_html__( 'Security check failed.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
 		}
 
-		// Check capabilities — admins can update any order, vendors can update their own.
+		// Admin only: hold, resume and status changes are the site owner's tools (vendors act through the dashboard).
 		$order_id   = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 		$has_access = current_user_can( 'manage_options' );
-
-		if ( ! $has_access && current_user_can( 'wpss_vendor_orders' ) && $order_id ) {
-			// Vendors can only update orders they are the vendor on.
-			$check_order = wpss_get_order( $order_id );
-			if ( $check_order && (int) $check_order->vendor_id === get_current_user_id() ) {
-				$has_access = true;
-			}
-		}
 
 		if ( ! $has_access ) {
 			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
@@ -3366,7 +3358,7 @@ class Admin {
 								</p>
 								<?php if ( ! empty( $dispute->resolution_notes ) ) : ?>
 									<p>
-										<strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong><br>
+										<strong><?php esc_html_e( 'Decision note:', 'wp-sell-services' ); ?></strong><br>
 										<?php echo wp_kses_post( wpautop( $dispute->resolution_notes ) ); ?>
 									</p>
 								<?php endif; ?>
