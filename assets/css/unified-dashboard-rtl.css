@@ -2225,6 +2225,29 @@ select.wpss-input option,
 	}
 }
 
+/* My Services status tiles are the status filter: links that look like the tiles they were. */
+.wpss-stat-card--link {
+	color: inherit;
+	text-decoration: none;
+	min-height: 40px;
+}
+
+.wpss-stat-card--link:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
+}
+
+.wpss-stat-card--link[aria-current="true"] {
+	border-color: var(--wpss-primary);
+	background: var(--wpss-primary-light);
+}
+
+@media (hover: hover) {
+	.wpss-stat-card--link:hover {
+		border-color: var(--wpss-primary);
+	}
+}
+
 /* ==========================================================================
    Favorites section (Dashboard → Buying → Favorites)
    ========================================================================== */
