@@ -145,6 +145,34 @@ function wpss_order_actor_role( object $order, int $user_id ): string {
 }
 
 /**
+ * Whether a user may refund an order from the dashboard.
+ *
+ * Admin only by default. The filter is the extension point for letting vendors
+ * (or a support role) refund; it must also size the amount, since the verb only
+ * knows full refunds today.
+ *
+ * @since 1.9.0
+ *
+ * @param string $actor   Role from wpss_order_actor_role().
+ * @param object $order   Order being refunded.
+ * @param int    $user_id Acting user ID.
+ * @return bool
+ */
+function wpss_actor_can_refund_order( string $actor, object $order, int $user_id ): bool {
+	/**
+	 * Filters whether a user may refund an order.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param bool   $allowed Default: true for the admin actor only.
+	 * @param object $order   Order being refunded.
+	 * @param int    $user_id Acting user ID.
+	 * @param string $actor   'admin', 'vendor', 'buyer' or ''.
+	 */
+	return (bool) apply_filters( 'wpss_can_refund_order', 'admin' === $actor, $order, $user_id, $actor );
+}
+
+/**
  * Whether an order is past its delivery deadline while the seller owes work.
  *
  * The one definition of "late": the late-order sweep

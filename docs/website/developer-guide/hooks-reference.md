@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**542 hooks** across **751** firing sites.
+**543 hooks** across **752** firing sites.
 
 ## Actions (276)
 
@@ -293,7 +293,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (266)
+## Filters (267)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -330,6 +330,7 @@ guide; this is the complete index.
 | `wpss_buyer_request_post_type_args` | 1 | `src/PostTypes/BuyerRequestPostType.php` | Filter buyer request post type arguments. |
 | `wpss_buyer_request_slug` | 1 | `src/PostTypes/BuyerRequestPostType.php` | Filter the buyer request post type slug. |
 | `wpss_can_access_dashboard_section` | 3 | `src/Frontend/UnifiedDashboard.php` | Filter whether user can access a dashboard section. |
+| `wpss_can_refund_order` | 4 | `src/functions/orders.php` | Filters whether a user may refund an order. |
 | `wpss_can_view_request_attachments` | 2 | `src/functions/request-files.php` | Filter who may see a buyer request's attachments. |
 | `wpss_cart_checkout` | 4 | `src/API/CartController.php` | Filter to create order from cart during standalone checkout. |
 | `wpss_cart_item_data` | 3 | `src/API/CartController.php` | Filters cart item data before it is saved. |

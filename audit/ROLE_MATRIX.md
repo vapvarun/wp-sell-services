@@ -23,7 +23,7 @@ editor and vendors no longer receive `edit_posts`.
 force any status. Vendors hold `wpss_vendor_orders` only, so they are bound to
 the natural transition map. Dashboard order verbs go through
 `wpss_order_actor_role()` plus the allow map in `AjaxHandlers::order_action()`:
-refund is admin-only (vendor when `wpss_orders[allow_vendor_refunds]` is on),
+refund is admin-only (the `wpss_can_refund_order` filter can open it),
 cancel is buyer-before-work or admin, start and the cancellation replies are
 vendor-only.
 

@@ -2772,10 +2772,7 @@ class AjaxHandlers {
 		$allowed = array(
 			'start'               => array( array( 'vendor' ), ServiceOrder::STATUS_IN_PROGRESS ),
 			'cancel'              => array( array( 'buyer', 'admin' ), ServiceOrder::STATUS_CANCELLED ),
-			'refund'              => array(
-				wpss_get_option( 'orders', 'allow_vendor_refunds' ) ? array( 'admin', 'vendor' ) : array( 'admin' ),
-				ServiceOrder::STATUS_REFUNDED,
-			),
+			'refund'              => array( array( 'admin' ), ServiceOrder::STATUS_REFUNDED ),
 			'accept-cancellation' => array( array( 'vendor' ), ServiceOrder::STATUS_CANCELLED ),
 			'reject-cancellation' => array( array( 'vendor' ), ServiceOrder::STATUS_DISPUTED ),
 		);
@@ -2786,7 +2783,12 @@ class AjaxHandlers {
 
 		list( $actor_roles, $target_status ) = $allowed[ $action ];
 
-		if ( ! in_array( $actor, $actor_roles, true ) ) {
+		// Refund is decided by wpss_can_refund_order, so a site can open it to vendors.
+		$permitted = 'refund' === $action
+			? wpss_actor_can_refund_order( $actor, $order, $user_id )
+			: in_array( $actor, $actor_roles, true );
+
+		if ( ! $permitted ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 

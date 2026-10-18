@@ -71,7 +71,6 @@ function wpss_settings_defaults(): array {
 		'wpss_orders'        => array(
 			'auto_complete_days'        => 3,
 			'allow_disputes'            => true,
-			'allow_vendor_refunds'      => false,
 			'dispute_window_days'       => 14,
 			'auto_dispute_late_days'    => 3,
 			'allow_late_requirements'   => false,
