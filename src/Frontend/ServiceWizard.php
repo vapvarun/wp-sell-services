@@ -659,6 +659,18 @@ class ServiceWizard {
 							<div class="wpss-form-hint"><?php esc_html_e( 'Short label buyers see on the package card (e.g. "Logo + 3 revisions").', 'wp-sell-services' ); ?></div>
 						</div>
 
+						<div class="wpss-form-group">
+							<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-description">
+								<?php esc_html_e( 'Tier description', 'wp-sell-services' ); ?>
+							</label>
+							<textarea id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-description"
+								class="wpss-form-textarea"
+								rows="3"
+								x-model="data.packages.<?php echo esc_attr( $tier ); ?>.description"
+								placeholder="<?php esc_attr_e( "Describe what's included in this package...", 'wp-sell-services' ); ?>"></textarea>
+							<div class="wpss-form-hint"><?php esc_html_e( 'Optional. Shown under the tier on the service page.', 'wp-sell-services' ); ?></div>
+						</div>
+
 						<div class="wpss-form-row wpss-form-row--2col">
 							<div class="wpss-form-group">
 								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-price">
@@ -1614,8 +1626,6 @@ class ServiceWizard {
 					'validationImage'            => __( 'Please upload a main image', 'wp-sell-services' ),
 					/* translators: %s: package tier name (e.g. Basic). */
 					'validationPkgName'          => __( 'Package name is required for the %s package.', 'wp-sell-services' ),
-					/* translators: %s: package tier name (e.g. Basic). */
-					'validationPkgDesc'          => __( 'Package description is required for the %s package.', 'wp-sell-services' ),
 					/* translators: %s: package tier name (e.g. Standard). */
 					'validationPkgPrice'         => __( 'Set a price and delivery time for the %s package.', 'wp-sell-services' ),
 					'validationTags'             => sprintf(
