@@ -304,7 +304,7 @@ class ServicePostType {
 			'public'             => true,
 			'publicly_queryable' => true,
 			'show_ui'            => true,
-			'show_in_menu'       => 'wp-sell-services', // Show under our custom admin menu.
+			'show_in_menu'       => wpss_cpt_menu_parent(), // Under our menu for the admin, own entry for anyone else.
 			'query_var'          => true,
 			'rewrite'            => [
 				'slug'       => $this->get_slug(),

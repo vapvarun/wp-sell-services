@@ -170,6 +170,22 @@ function wpss_submit_button( string $text, string $type = 'primary', string $nam
 }
 
 /**
+ * Where a plugin post type's list screens sit in the wp-admin menu.
+ *
+ * The plugin menu requires manage_options, and WordPress refuses every child
+ * link of a parent the viewer cannot open, so a vendor who also holds
+ * edit_posts saw "All Services" and got a 403 on click. Anyone else gets the
+ * post type as its own top-level entry, which opens.
+ *
+ * @since 1.9.0
+ *
+ * @return string|bool 'wp-sell-services' for the site admin, true otherwise.
+ */
+function wpss_cpt_menu_parent() {
+	return current_user_can( 'manage_options' ) ? 'wp-sell-services' : true;
+}
+
+/**
  * Whether an admin hook suffix or screen id refers to one of our pages.
  *
  * WordPress derives a submenu hook suffix from the PARENT MENU TITLE, not from
