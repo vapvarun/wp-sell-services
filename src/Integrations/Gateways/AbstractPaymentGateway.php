@@ -128,4 +128,78 @@ abstract class AbstractPaymentGateway implements PaymentGatewayInterface {
 
 		return true;
 	}
+
+	/**
+	 * Create order directly for offline/test gateways.
+	 *
+	 * @param array<string, mixed> $checkout_request Resolve() request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	protected function create_offline_rest_order( array $checkout_request ) {
+		$pay_order = (int) $checkout_request['pay_order'];
+
+		// For existing orders (pay_order), record the rail and return. Ownership
+		// and pending_payment status are already verified by create_intent().
+		//
+		// Out-of-band rails settle later, so the order has to remember which one
+		// it is waiting on: the admin confirmation box and the buyer's proof
+		// upload both key off payment_method being the gateway id, and this
+		// branch used to leave it NULL - the same dead end the AJAX checkout had
+		// (Basecamp 10208094640). One writer serves both entry points.
+		if ( $pay_order ) {
+			$order = wpss_get_order( $pay_order );
+
+			if ( ! wpss_record_pending_payment_method( $pay_order, $this->get_id() ) ) {
+				return new WP_Error(
+					'wpss_payment_method_not_recorded',
+					__( 'Could not record the payment method on this order.', 'wp-sell-services' ),
+					array( 'status' => 500 )
+				);
+			}
+
+			return new WP_REST_Response(
+				array(
+					'gateway'      => $this->get_id(),
+					'order_id'     => (int) $order->id,
+					'order_number' => $order->order_number,
+					'status'       => 'pending_payment',
+					'message'      => __( 'Please complete your payment using the offline instructions. Your order will be activated once payment is confirmed.', 'wp-sell-services' ),
+				),
+				201
+			);
+		}
+
+		// A new order, priced and created by the checkout form's own path.
+		$offline = wpss()->get_payment_gateways()['offline'] ?? new \WPSellServices\Integrations\Gateways\OfflineGateway();
+		$order   = $offline->create_service_order(
+			(int) $checkout_request['service_id'],
+			(int) $checkout_request['package_id'],
+			(int) $checkout_request['quantity'],
+			\WPSellServices\Checkout\CheckoutIntentService::request_selection( $checkout_request ),
+			$this->get_id()
+		);
+
+		if ( is_wp_error( $order ) ) {
+			return $order;
+		}
+
+		/**
+		 * Fires when an offline order is created via REST API.
+		 *
+		 * @param int    $order_id   Order ID.
+		 * @param object $order      Order object.
+		 * @param string $gateway_id Gateway ID.
+		 */
+		do_action( 'wpss_rest_offline_order_created', $order->id, $order, $this->get_id() );
+
+		return new WP_REST_Response(
+			array(
+				'gateway'      => $this->get_id(),
+				'order_id'     => (int) $order->id,
+				'order_number' => $order->order_number,
+				'status'       => 'pending_payment',
+			),
+			201
+		);
+	}
 }

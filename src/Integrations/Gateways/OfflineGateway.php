@@ -1886,4 +1886,11 @@ class OfflineGateway extends AbstractPaymentGateway {
 		$settings = get_option( self::OPTION_NAME, array() );
 		return is_array( $settings ) ? $settings : array();
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function rest_create_intent( \WPSellServices\Checkout\CheckoutIntent $intent, array $request ) {
+		return $this->create_offline_rest_order( $request );
+	}
 }
