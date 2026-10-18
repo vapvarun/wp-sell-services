@@ -500,7 +500,7 @@ class UnifiedDashboard {
 	 *
 	 * @return array<string, array<string, mixed>> Sections configuration.
 	 */
-	private function get_sections(): array {
+	public function get_sections(): array {
 		$user_id       = get_current_user_id();
 		$is_vendor     = $this->vendor_service->is_vendor( $user_id );
 		$vendor_status = $this->vendor_service->get_vendor_status( $user_id );

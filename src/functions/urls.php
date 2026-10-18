@@ -284,12 +284,23 @@ function wpss_get_known_dashboard_sections(): array {
 		'subscriptions',
 	);
 
+	// A section registered on `wpss_dashboard_sections` is a known route too, so an add-on
+	// registers once. The guard stops get_sections() from re-entering through the resolver.
+	static $resolving = false;
+	$dashboard        = $resolving ? null : wpss()->get_unified_dashboard();
+	if ( $dashboard ) {
+		$resolving = true;
+		foreach ( $dashboard->get_sections() as $group ) {
+			$sections = array_merge( $sections, array_keys( (array) ( $group['items'] ?? array() ) ) );
+		}
+		$resolving = false;
+	}
+
 	/**
 	 * Filter the set of known dashboard section slugs.
 	 *
-	 * Anything not in this set is treated as a mistyped URL and redirected to
-	 * the dashboard's default landing section, so add-ons that register their
-	 * own section must add its slug here as well as to `wpss_dashboard_sections`.
+	 * Sections registered on `wpss_dashboard_sections` are already included; use this only for a
+	 * slug that has no menu item (a direct-link page).
 	 *
 	 * @since 1.6.0
 	 *

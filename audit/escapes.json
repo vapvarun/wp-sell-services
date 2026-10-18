@@ -248,6 +248,14 @@
       "fails_on": "tree without wpss_validate_registry() and the Free StorageProviderInterface/WalletProviderInterface",
       "journey": "docs/standards/integration-seams.md",
       "now_dead_or_duplicate": "wpss_email_providers filter, Plugin::get_email_providers() and its property deleted (nothing read them)"
+    },
+    {
+      "card": "integration seams: dashboard section needed two registrations; SEO plugins hard-wired in SEO.php (no card)",
+      "class": "adding a provider required editing core (a second filter, or a new branch in SEO.php)",
+      "check": "tests/test-dashboard-section-registry.php and tests/test-integration-seam-contract.php (SEO integration added only by wpss_seo_integrations)",
+      "fails_on": "urls.php without the registered-sections merge; SEO.php with is_yoast_active/is_rank_math_active branches",
+      "journey": "docs/standards/integration-seams.md",
+      "now_dead_or_duplicate": "three repeated is_yoast||is_rank_math||is_aioseo conditions collapsed into has_active_seo_plugin(); SEO::get_yoast()/get_rank_math()/is_*_active() removed (no callers)"
     }
   ]
 }

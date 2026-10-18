@@ -18,7 +18,21 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 1.0.0
  */
-class RankMathIntegration {
+class RankMathIntegration implements SeoIntegrationInterface {
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_id(): string {
+		return 'rank_math';
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function is_active(): bool {
+		return class_exists( 'RankMath' );
+	}
 
 	/**
 	 * Initialize Rank Math integration.

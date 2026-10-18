@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**541 hooks** across **747** firing sites.
+**542 hooks** across **748** firing sites.
 
 ## Actions (276)
 
@@ -293,7 +293,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (265)
+## Filters (266)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -480,6 +480,7 @@ guide; this is the complete index.
 | `wpss_search_results` | 3 | `src/Services/SearchService.php` | Filter search results. |
 | `wpss_search_suggestions` | 2 | `src/Services/SearchService.php` | Filter search suggestions. |
 | `wpss_seller_levels` | 1 | `src/API/SellerLevelsController.php` | Filter seller level definitions. |
+| `wpss_seo_integrations` | 1 | `src/SEO/SEO.php` | Filter the SEO plugin integrations. |
 | `wpss_service_card_classes` | 2 | `templates/content-service-card.php` |  |
 | `wpss_service_card_display` | 2 | `src/functions/services.php` | Filter which elements a service card renders. |
 | `wpss_service_card_thumbnail_size` | 2 | `templates/content-service-card.php` | Hook: wpss_before_service_card |

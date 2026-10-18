@@ -739,7 +739,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_get_template_part` | `$template, $slug, $name` | `src/functions/templates.php:125` |
 | `wpss_get_template` | `$template, $template_name, $args` | `src/functions/templates.php:176` |
 | `wpss_locate_template` | `$template, $template_name, $template_path` | `src/Frontend/TemplateLoader.php:568` |
-| `wpss_dashboard_section_template` | `$template_path, $section` | `src/functions/urls.php:415` |
+| `wpss_dashboard_section_template` | `$template_path, $section` | `src/functions/urls.php:426` |
 
 ### URL and Taxonomy Filters
 
@@ -839,9 +839,10 @@ add_filter( 'wpss_fullwidth_page_keys', function( $keys ) {
 | `wpss_person_schema` | `$schema, $user_id` | `src/SEO/SchemaMarkup.php:354` |
 | `wpss_vendor_page_schema` | `$schema, $user_id` | `src/SEO/SchemaMarkup.php:401` |
 | `wpss_organization_schema` | `$schema` | `src/SEO/SchemaMarkup.php:432` |
-| `wpss_open_graph_data` | `$data, $service_id` | `src/SEO/SEO.php:270` |
-| `wpss_sitemap_post_types` | `$post_types` | `src/SEO/SEO.php:334` |
-| `wpss_breadcrumbs` | `$breadcrumbs, $service_id` | `src/SEO/SEO.php:402` |
+| `wpss_seo_integrations` | `array<string, SeoIntegrationInterface> $integrations` | `src/SEO/SEO.php:54` |
+| `wpss_open_graph_data` | `$data, $service_id` | `src/SEO/SEO.php:260` |
+| `wpss_sitemap_post_types` | `$post_types` | `src/SEO/SEO.php:324` |
+| `wpss_breadcrumbs` | `$breadcrumbs, $service_id` | `src/SEO/SEO.php:392` |
 | `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2062` |
 | `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1570` |
 | `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1672` |

@@ -18,7 +18,21 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 1.0.0
  */
-class YoastIntegration {
+class YoastIntegration implements SeoIntegrationInterface {
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_id(): string {
+		return 'yoast';
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function is_active(): bool {
+		return defined( 'WPSEO_VERSION' );
+	}
 
 	/**
 	 * Initialize Yoast integration.

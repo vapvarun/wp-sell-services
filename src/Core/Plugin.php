@@ -2761,7 +2761,6 @@ final class Plugin {
 		 */
 		$this->storage_providers = wpss_validate_registry( apply_filters( 'wpss_storage_providers', $this->storage_providers ), \WPSellServices\Integrations\Contracts\StorageProviderInterface::class, 'wpss_storage_providers' );
 
-
 		/**
 		 * Filter the registered analytics widgets.
 		 *
@@ -3314,6 +3313,17 @@ final class Plugin {
 	 */
 	public function get_payment_gateway( string $gateway_id ) {
 		return $this->payment_gateways[ $gateway_id ] ?? null;
+	}
+
+	/**
+	 * The member dashboard, once its hooks are defined.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @return UnifiedDashboard|null
+	 */
+	public function get_unified_dashboard(): ?UnifiedDashboard {
+		return $this->unified_dashboard;
 	}
 
 	/**

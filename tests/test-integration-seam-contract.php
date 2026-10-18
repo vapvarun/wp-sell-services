@@ -76,6 +76,34 @@ add_filter( 'wpss_storage_providers', static fn( $p ) => array_merge( (array) $p
 $check( 'wpss_get_storage_provider() resolves a provider added only by the filter', wpss_get_storage_provider( 'acme' ) === $storage );
 $check( 'wpss_get_storage_provider() refuses an unregistered id', null === wpss_get_storage_provider( 'nope' ) );
 
+// SEO: a plugin integration added only by the filter makes core step aside.
+$seo_stub = new class() implements \WPSellServices\SEO\SeoIntegrationInterface {
+	/** @var bool */
+	public bool $started = false;
+
+	public function get_id(): string {
+		return 'acme_seo';
+	}
+
+	public function is_active(): bool {
+		return true;
+	}
+
+	public function init(): void {
+		$this->started = true;
+	}
+};
+$seo_add  = static fn( $i ) => array_merge( (array) $i, array( 'acme_seo' => $seo_stub ) );
+add_filter( 'wpss_seo_integrations', $seo_add );
+$seo = new \WPSellServices\SEO\SEO();
+$seo->init();
+$check( 'an SEO integration added only by wpss_seo_integrations is started', $seo_stub->started );
+$check( 'core SEO tags step aside for it', $seo->has_active_seo_plugin() );
+remove_filter( 'wpss_seo_integrations', $seo_add );
+$bare = new \WPSellServices\SEO\SEO();
+$bare->init();
+$check( 'with no SEO plugin active core prints its own tags', ! $bare->has_active_seo_plugin() || defined( 'WPSEO_VERSION' ) || class_exists( 'RankMath' ) || defined( 'AIOSEO_VERSION' ) );
+
 // Pro's interfaces extend Free's, so Pro providers satisfy the Free contract.
 if ( interface_exists( '\WPSellServicesPro\Storage\StorageProviderInterface' ) ) {
 	$check( 'Pro StorageProviderInterface extends the Free contract', is_subclass_of( '\WPSellServicesPro\Storage\StorageProviderInterface', StorageProviderInterface::class ) );

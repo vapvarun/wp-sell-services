@@ -28,18 +28,11 @@ class SEO {
 	private SchemaMarkup $schema;
 
 	/**
-	 * Yoast integration instance.
+	 * Active SEO plugin integrations, id => integration.
 	 *
-	 * @var YoastIntegration|null
+	 * @var array<string, SeoIntegrationInterface>
 	 */
-	private ?YoastIntegration $yoast = null;
-
-	/**
-	 * Rank Math integration instance.
-	 *
-	 * @var RankMathIntegration|null
-	 */
-	private ?RankMathIntegration $rank_math = null;
+	private array $integrations = array();
 
 	/**
 	 * Initialize SEO functionality.
@@ -50,16 +43,31 @@ class SEO {
 		$this->schema = new SchemaMarkup();
 		$this->schema->init();
 
-		// Initialize Yoast integration if available.
-		if ( $this->is_yoast_active() ) {
-			$this->yoast = new YoastIntegration();
-			$this->yoast->init();
-		}
+		/**
+		 * Filter the SEO plugin integrations.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param array<string, SeoIntegrationInterface> $integrations Integrations keyed by id.
+		 */
+		$registered = wpss_validate_registry(
+			apply_filters(
+				'wpss_seo_integrations',
+				array(
+					'yoast'     => new YoastIntegration(),
+					'rank_math' => new RankMathIntegration(),
+					'aioseo'    => new AioseoIntegration(),
+				)
+			),
+			SeoIntegrationInterface::class,
+			'wpss_seo_integrations'
+		);
 
-		// Initialize Rank Math integration if available.
-		if ( $this->is_rank_math_active() ) {
-			$this->rank_math = new RankMathIntegration();
-			$this->rank_math->init();
+		foreach ( $registered as $id => $integration ) {
+			if ( $integration->is_active() ) {
+				$this->integrations[ $id ] = $integration;
+				$integration->init();
+			}
 		}
 
 		// Register hooks.
@@ -74,30 +82,12 @@ class SEO {
 	}
 
 	/**
-	 * Check if Yoast SEO is active.
+	 * Whether an SEO plugin owns the page's title, meta and Open Graph tags.
 	 *
 	 * @return bool
 	 */
-	public function is_yoast_active(): bool {
-		return defined( 'WPSEO_VERSION' );
-	}
-
-	/**
-	 * Check if Rank Math is active.
-	 *
-	 * @return bool
-	 */
-	public function is_rank_math_active(): bool {
-		return class_exists( 'RankMath' );
-	}
-
-	/**
-	 * Check if All in One SEO is active.
-	 *
-	 * @return bool
-	 */
-	public function is_aioseo_active(): bool {
-		return defined( 'AIOSEO_VERSION' );
+	public function has_active_seo_plugin(): bool {
+		return array() !== $this->integrations;
 	}
 
 	/**
@@ -107,7 +97,7 @@ class SEO {
 	 */
 	public function output_meta_tags(): void {
 		// Skip if another SEO plugin handles this.
-		if ( $this->is_yoast_active() || $this->is_rank_math_active() || $this->is_aioseo_active() ) {
+		if ( $this->has_active_seo_plugin() ) {
 			return;
 		}
 
@@ -143,7 +133,7 @@ class SEO {
 	 */
 	public function modify_title( array $title_parts ): array {
 		// Skip if another SEO plugin handles this.
-		if ( $this->is_yoast_active() || $this->is_rank_math_active() || $this->is_aioseo_active() ) {
+		if ( $this->has_active_seo_plugin() ) {
 			return $title_parts;
 		}
 
@@ -196,7 +186,7 @@ class SEO {
 	 */
 	public function output_open_graph(): void {
 		// Skip if another SEO plugin handles this.
-		if ( $this->is_yoast_active() || $this->is_rank_math_active() || $this->is_aioseo_active() ) {
+		if ( $this->has_active_seo_plugin() ) {
 			return;
 		}
 
@@ -410,23 +400,5 @@ class SEO {
 	 */
 	public function get_schema(): SchemaMarkup {
 		return $this->schema;
-	}
-
-	/**
-	 * Get Yoast instance.
-	 *
-	 * @return YoastIntegration|null
-	 */
-	public function get_yoast(): ?YoastIntegration {
-		return $this->yoast;
-	}
-
-	/**
-	 * Get Rank Math instance.
-	 *
-	 * @return RankMathIntegration|null
-	 */
-	public function get_rank_math(): ?RankMathIntegration {
-		return $this->rank_math;
 	}
 }
