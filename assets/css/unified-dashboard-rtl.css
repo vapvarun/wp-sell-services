@@ -2526,6 +2526,18 @@ select.wpss-input option,
 	color: var(--wpss-text, #1f2937);
 }
 
+/* Pinned foreground. The pager lives inside the theme's content wrapper, where BuddyX's
+   `.entry-content a:not(...):hover` (0,5,1) beats this file's (0,3,0) and painted its coral
+   link colour on the grey hover fill (3.7:1 dark, 2.5:1 light). Colour only, never the
+   fill, so the hover background still animates. Retint through --wpss-text. */
+.wpss-dashboard a.wpss-pagination__link,
+.wpss-dashboard a.wpss-pagination__link:link,
+.wpss-dashboard a.wpss-pagination__link:visited,
+.wpss-dashboard a.wpss-pagination__link:hover,
+.wpss-dashboard a.wpss-pagination__link:focus-visible {
+	color: var(--wpss-text, #1f2937) !important;
+}
+
 .wpss-dashboard .wpss-pagination__link .wpss-icon {
 	width: 14px;
 	height: 14px;

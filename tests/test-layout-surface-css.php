@@ -21,6 +21,11 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 };
 $read = static fn( string $rel ): string => (string) file_get_contents( WPSS_PLUGIN_DIR . $rel );
 
+$ds = $read( 'assets/css/design-system.css' );
+$check( 'shared form controls (.wpss-form-input/-textarea/-label/-help) are in the design system, border-box', (bool) preg_match( '/\.wpss-form-input,\s*\.wpss-form-select,\s*\.wpss-form-textarea \{[^}]*box-sizing: border-box/s', $ds ) && false !== strpos( $ds, '.wpss-form-help {' ) && false !== strpos( $ds, '.wpss-form-label {' ) );
+$check( 'service-wizard.css no longer owns the shared control base', ! preg_match( '/^\.wpss-form-input,\s*\.wpss-form-select,/m', $read( 'assets/css/service-wizard.css' ) ) );
+$check( 'dashboard pager link pins its colour against a theme content-link hover', (bool) preg_match( '/a\.wpss-pagination__link:hover,[^{]*\{[^}]*color: var\(--wpss-text[^}]*!important/s', $read( 'assets/css/unified-dashboard.css' ) ) );
+
 $admin_css = $read( 'assets/css/admin.css' );
 $settings  = $read( 'src/Admin/Settings.php' );
 $check( 'settings card and sub-heading titles share one tab heading style (18px, not small caps)', (bool) preg_match( '/\.wpss-settings-content h2\.wpss-card__title,[^{]*\{[^}]*font-size: 18px;[^}]*text-transform: none/s', $admin_css ) );
