@@ -1,8 +1,8 @@
-# Journey 14 - WooCommerce rail, plan limits and the carrier product
+# Journey 07 - Buyer pays on the WooCommerce rail
 
 **Roles:** guest, buyer, seller on a plan, admin
-**Rail:** WooCommerce (and standalone for step 2)
-**Status:** written 2026-10-18; walk pending
+**Rail:** woo
+**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
 
 ## Steps
 

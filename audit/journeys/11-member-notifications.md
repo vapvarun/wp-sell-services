@@ -1,8 +1,8 @@
-# Journey 13 - Notifications: find, filter, read, and the badge tells the truth
+# Journey 11 - Member finds, filters and reads notifications
 
 **Roles:** seller or buyer with 100+ notifications (seed one), admin
-**Rail:** any
-**Status:** written 2026-10-18; walk pending
+**Rail:** standalone, woo
+**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
 
 ## Steps
 
@@ -25,3 +25,7 @@ Seed 60 notifications with one timestamp, page through three pages of 20.
 Run `wp action-scheduler run` (or wait for the daily job).
 
 **Expect** read notices over 90 days are gone, unread ones and dispute notices under a year remain.
+
+
+### Registry check
+As a member with `order_late`, `refund_pending` and `order_started` rows: every type present appears in the Type dropdown, selecting it returns only those rows, and no row shows the generic bell. Guard: `tests/test-notification-types-registry.php`.

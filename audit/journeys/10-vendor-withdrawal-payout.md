@@ -1,8 +1,8 @@
-# Journey 10 - A seller is paid out, and is told the truth at each step
+# Journey 10 - Seller is paid out and told the truth at each step
 
 **Roles:** seller (`wpss_vendor`), admin
-**Rail:** standalone payments, manual payout (PayPal email)
-**Status:** written 2026-10-18; walk pending
+**Rail:** standalone (manual payout)
+**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
 
 Guards card 10402904790 (card:10402904790). Mark paid used to send the "Approved" email, so a seller who was just paid read "approved" and wrote in to ask where the money was.
 

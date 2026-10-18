@@ -1,8 +1,8 @@
-# Journey 01 — Buyer hires a seller from a request
+# Journey 01 - Buyer hires a seller from a request
 
 **Roles:** buyer (`subscriber`), two sellers (`wpss_vendor`), admin
-**Rail:** standalone payments
-**Status:** passes (steps 7 + 8 fixed 2026-08-17, Basecamp 10208094640 / 10208199238)
+**Rail:** standalone
+**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
 
 Guards cards 10208094430, 10208094503, 10208094640, 10208199238.
 

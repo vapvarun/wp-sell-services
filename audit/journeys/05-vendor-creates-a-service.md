@@ -1,7 +1,8 @@
-# Journey 05 — A vendor creates a service
+# Journey 05 - Seller creates and publishes a service; standing limits what they can start
 
 **Role:** vendor, then administrator
-**Status:** passing as of commits `afbbbdf`, `c954ed0`, `f8eeb43` / Pro `8500b76`
+**Rail:** standalone, woo
+**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
 
 Guards cards 10208080926, 10208086929, 10212521285, 10212520711.
 
@@ -132,3 +133,31 @@ Open a Pending service in the editor and click Publish (also: Quick Edit > Statu
 New Service wizard (admin), fill step 1, click Skip to full editor.
 
 **Expect** the service is a draft in the normal tabbed editor, nothing appears on /services/ until Publish is clicked.
+
+
+# Part 2 - account standing (was journey 12)
+
+## Steps
+
+### 1. Seller cannot pause their own order (card:10399370449)
+As the seller, open an in-progress order, then `POST /orders/{id}/hold`.
+
+**Expect** no Hold button anywhere, the route refuses with "Only an administrator can put an order on hold", the status is unchanged. As admin both hold and resume work.
+
+### 2. Suspend a seller with an open paid order (card:10384354109)
+Admin sets the seller to Suspended. As the seller open the dashboard.
+
+**Expect** a Selling > Sales Orders item and nothing else under Selling; the open order can be delivered and messaged inside; My Services, Proposals, Portfolio and Earnings are not reachable by URL.
+
+### 3. Suspended seller starts nothing new (card:10384354109)
+As the suspended seller submit a proposal (form and `POST /requests/{id}/proposals`), use Contact seller on another seller's service, send a message in a pre-sale thread.
+
+**Expect** each is refused with a plain message ("Your vendor account is suspended" or "Your account is suspended"), nothing is created, no notification reaches the other person.
+
+### 4. Plugin menu is not offered to sellers (card:10379867128)
+As a seller who also has `edit_posts`, open wp-admin.
+
+**Expect** no WP Sell Services menu item and no 403 page reachable from the admin bar or menu.
+
+
+**Doors to assert together** (the REST twin and the AJAX door must agree): dashboard publish, bulk publish, wizard draft and publish, portfolio add and update, REST services and proposals. Guard: `tests/test-ajax-standing-gate.php`.

@@ -1,7 +1,8 @@
-# Journey 06 — Paying on the standalone rail
+# Journey 06 - Buyer pays on the standalone rail
 
 **Role:** logged-out visitor, then buyer, then administrator
-**Status:** passing as of commits `7deda27`, `345cc0c`, `9b1acd0`, `e13921f`
+**Rail:** standalone
+**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
 
 Guards cards 10208392848, 10208094640, 10163575694.
 

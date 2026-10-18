@@ -1,7 +1,8 @@
-# Journey 02 — Dispute, end to end
+# Journey 02 - Buyer and seller dispute an order, admin decides
 
 **Roles:** buyer (`subscriber`), seller (`wpss_vendor`), admin
-**Status:** passing as of commit `4264144`
+**Rail:** standalone, woo
+**Status:** rewritten 2026-10-18; walk pending (see docs/qa/walks.json)
 
 Guards cards 10208075086, 10208074988, 10208211608.
 
