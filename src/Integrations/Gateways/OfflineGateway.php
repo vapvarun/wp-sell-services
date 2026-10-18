@@ -1716,7 +1716,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 
 		<?php $this->render_methods_editor(); ?>
 
-		<h4><?php esc_html_e( 'Available Placeholders for Instructions', 'wp-sell-services' ); ?></h4>
+		<h3><?php esc_html_e( 'Available Placeholders for Instructions', 'wp-sell-services' ); ?></h3>
 		<p class="description">
 			<?php esc_html_e( 'You can use these placeholders in the Payment Instructions:', 'wp-sell-services' ); ?>
 		</p>
@@ -1751,7 +1751,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		$slots   = (int) apply_filters( 'wpss_offline_method_slots', 4 );
 		$slots   = max( count( $methods ), max( 1, $slots ) );
 		?>
-		<h4><?php esc_html_e( 'Payment Methods', 'wp-sell-services' ); ?></h4>
+		<h3><?php esc_html_e( 'Payment Methods', 'wp-sell-services' ); ?></h3>
 		<p class="description">
 			<?php esc_html_e( 'Name each way a buyer can pay you offline. Leave a slot blank to skip it. Buyers choose from the enabled ones at checkout, and the method they picked is recorded on the order, so renaming or removing one later never changes what a past order says.', 'wp-sell-services' ); ?>
 		</p>

@@ -41,6 +41,28 @@ foreach ( $roots as $root ) {
 $check( 'no settings card title is a <p> (' . implode( ',', $paragraph_titles ) . ')', ! $paragraph_titles );
 $check( 'no settings renderer skips from h2 to h4 (' . implode( ',', $h4_in_settings ) . ')', ! $h4_in_settings );
 
+// Rendered outline of the Payment Gateways tab: the gateway cards live in their own classes (Free and
+// Pro), so a file-name scan misses them. The tab only exists on the standalone rail (QA 2026-10-18).
+$general = get_option( 'wpss_general', array() );
+update_option( 'wpss_general', array_merge( (array) $general, array( 'ecommerce_platform' => 'standalone' ) ) );
+// The rail is resolved at boot, so render in a fresh process that boots on the standalone rail.
+$html = (string) WP_CLI::runcommand(
+	'eval \'wp_set_current_user( 1 ); $s = new \\WPSellServices\\Admin\\Settings(); $m = new ReflectionMethod( $s, "render_payments_tab" ); $m->setAccessible( true ); $m->invoke( $s );\'',
+	array( 'launch' => true, 'return' => true, 'exit_error' => false )
+);
+update_option( 'wpss_general', $general );
+preg_match_all( '/<h([1-6])[\s>]/', $html, $levels );
+$prev = 1;
+$skip = array();
+foreach ( $levels[1] as $lvl ) {
+	if ( (int) $lvl > $prev + 1 ) {
+		$skip[] = "h{$prev}>h{$lvl}";
+	}
+	$prev = (int) $lvl;
+}
+$check( 'Payment Gateways tab renders its headings', count( $levels[1] ) > 3 );
+$check( 'Payment Gateways tab never skips a heading level (' . implode( ',', $skip ) . ')', ! $skip );
+
 // Contrast of the two admin greys against #f0f0f1 (wp-admin background).
 $lum = static function ( string $hex ): float {
 	$c = array_map( static fn( $p ) => ( ( $v = hexdec( $p ) / 255 ) <= 0.03928 ) ? $v / 12.92 : pow( ( $v + 0.055 ) / 1.055, 2.4 ), str_split( ltrim( $hex, '#' ), 2 ) );

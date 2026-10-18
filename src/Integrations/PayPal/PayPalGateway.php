@@ -1159,7 +1159,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 		</table>
 
 		<div class="wpss-gateway-setup-guide" style="margin-top: 20px; padding: 15px; background: #f0f6fc; border: 1px solid #c8d8e6; border-radius: 4px;">
-			<h4 style="margin-top: 0;"><?php esc_html_e( 'PayPal Setup Guide', 'wp-sell-services' ); ?></h4>
+			<h3 style="margin-top: 0;"><?php esc_html_e( 'PayPal Setup Guide', 'wp-sell-services' ); ?></h3>
 
 			<p><strong><?php esc_html_e( 'Step 1: Create a REST API App', 'wp-sell-services' ); ?></strong></p>
 			<ol style="margin-left: 20px;">

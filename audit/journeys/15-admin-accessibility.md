@@ -1,7 +1,7 @@
 # Journey 15 - Settings read correctly to a screen reader and in low contrast
 
 **Roles:** admin
-**Rail:** any
+**Rail:** standalone (the Payment Gateways tab renders only on this rail)
 **Status:** written 2026-10-18; walk pending
 
 ## Steps
