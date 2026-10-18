@@ -344,11 +344,32 @@ Money paths are tested last, after the Stripe test and PayPal sandbox keys are w
 - `10403205865` Checkout tax line ignores wpss_checkout_tax_rate: money; test with tax and gateway together
 - `10403205035` Empty Tax Label saves blank: money; same walk as the tax line
 
-## 6. Not fixed yet (still in Bugs)
+## 6. Round 2: fixes added after the first handoff
 
-17 cards have no fix on the branch yet; they are listed in the checklist artifact and stay in Bugs. Do not verify them.
+Same rules as sections 1-4: test branch `1.9.0`, every role, 1440 and 390, Reign, BuddyX, BuddyX Pro and Twenty Twenty-Five in light and dark, data created before 1.9.0.
 
-## 7. Known failures that are not regressions
+| Card | What to check |
+|---|---|
+| `10415811081` Reason prompt and confirm | Any reason prompt (reject, cancel, dispute) and any confirm: one dialog, reason field focused, empty submit stays open with an inline alert, Tab trapped, Esc closes and returns focus. |
+| `10415811064` Dead dispute statistics | Disputes admin list and dashboard load. |
+| `10415811135` Wizard button | Review step says Publish Service on a draft and Update Service on a live or pending service. |
+| `10415811119` Wallet and analytics dates | Ledger rows and Pro chart labels with the browser zone different from the site zone. |
+| `10407787720` Seller-level rule (Pro) | A "new" level rule matches a new-tier vendor and not a buyer or deleted vendor. |
+| `10415811101` Template overrides | Copy `order/tip-view.php` into `yourtheme/wp-sell-services/order/`, change a string, see it on the dashboard order view; same for the notifications list and Woo My Account pages. |
+| `10415816659` Block-theme chrome | On Twenty Twenty-Five: archive, single, category, vendor profile, requests, checkout, cart: the theme's header and footer, no `header.php` deprecation in debug.log. |
+| `10415816650` Leave-site prompt (Pro) | Create a PayPal batch and run the vendor migration, the page reloads without a browser prompt. |
+| `10415816716` Service Grid block | Editor lists Rating, Popularity, Price; category names show `&` not `&amp;`; the front end sorts by each and keeps every service. |
+| `10415811057` UtcMigration DST | Upgrade a site whose MySQL global zone is a named zone; package timestamps are right in winter and summer. |
+| `10415811038` Request deadlines | Site west of UTC: legacy typed deadline shows the typed day on the edit form and request page; REST create with a date or an offset value stores UTC; a bad value returns 400. |
+| `10415811050` Dispute on refund and cancel | A Stripe refund closes the dispute naming stripe; cancelling a disputed paid order closes it naming cancel. |
+| `10380420186` Demo import | Wizard Import Demo Content on a clean site: services published, images, 5 sample reviews each; Delete Demo Content removes them. |
+| `10403940320` Real-time docs | `realtime-updates.md` matches what a Pusher or Soketi test server produces: a toast, and the unread count on the dashboard menu. |
+
+## 7. Not fixed yet (still in Bugs)
+
+Only the money cards remain: 4 held back above, plus `10415810962` (Stripe 1.7.x payments refused), `10415810929` (REST pay-order refusal after capture) and `10415811011` (cart refund hits sibling orders). They wait for the Stripe test and PayPal sandbox keys. Do not verify them.
+
+## 8. Known failures that are not regressions
 
 - `tests/test-cli-guards.php`, `tests/test-demo-delete-contract.php`: this site has demo content, the tests refuse or mis-scope on it.
 - `tests/test-vendor-profile-contract.php`: display-name assertion on the dev data.
