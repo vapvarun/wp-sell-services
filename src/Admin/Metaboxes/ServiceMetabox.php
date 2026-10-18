@@ -25,6 +25,12 @@ defined( 'ABSPATH' ) || exit;
 class ServiceMetabox {
 
 	/**
+	 * Post meta marking a service whose publish was refused (a draft the owner tried to put live).
+	 */
+	public const PUBLISH_BLOCKED_META = '_wpss_publish_blocked';
+
+
+	/**
 	 * Initialize metabox.
 	 *
 	 * @return void
@@ -1052,6 +1058,8 @@ class ServiceMetabox {
 		$errors = wpss_get_service_publish_errors( $post_id );
 
 		if ( empty( $errors ) ) {
+			// Nothing blocks it any more: a flag left by an earlier refused publish is stale.
+			delete_post_meta( $post_id, self::PUBLISH_BLOCKED_META );
 			return;
 		}
 
@@ -1098,6 +1106,10 @@ class ServiceMetabox {
 				'post_status' => 'draft',
 			)
 		);
+		// Remembered, not flashed: ServiceListScreen::publish_blocked_notice() reads the reasons live from
+		// the rules for as long as this stays set, so a refused publish is explained on the editor and the
+		// list however many screens the owner passes through (a one-shot transient was consumed unseen).
+		update_post_meta( $post_id, self::PUBLISH_BLOCKED_META, time() );
 		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'save_meta' ), 10, 2 );
 		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'enforce_publish_rules' ), 99, 2 );
 	}

@@ -12,6 +12,7 @@ namespace WPSellServices\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Admin\Metaboxes\ServiceMetabox;
 use WPSellServices\PostTypes\ServicePostType;
 
 /**
@@ -42,6 +43,67 @@ class ServiceListScreen {
 		add_filter( 'bulk_actions-edit-' . ServicePostType::POST_TYPE, array( $this, 'bulk_actions' ) );
 		add_filter( 'handle_bulk_actions-edit-' . ServicePostType::POST_TYPE, array( $this, 'handle_bulk_action' ), 10, 3 );
 		add_action( 'admin_notices', array( $this, 'bulk_notice' ) );
+		add_action( 'admin_notices', array( $this, 'publish_blocked_notice' ) );
+	}
+
+	/**
+	 * Say why a service the owner tried to publish is still a draft.
+	 *
+	 * Shown on that service's editor and on the Services list for as long as the service is a draft with a
+	 * refused publish on record. The reasons are read live from the publish rules, never stored, so the
+	 * notice is accurate however many screens passed since the save and disappears when the service qualifies.
+	 *
+	 * @return void
+	 */
+	public function publish_blocked_notice(): void {
+		$screen = get_current_screen();
+
+		if ( ! $screen || ServicePostType::POST_TYPE !== $screen->post_type || ! in_array( $screen->base, array( 'post', 'edit' ), true ) ) {
+			return;
+		}
+
+		if ( 'post' === $screen->base ) {
+			$post = get_post();
+			$ids  = $post && 'draft' === $post->post_status && get_post_meta( $post->ID, ServiceMetabox::PUBLISH_BLOCKED_META, true ) ? array( $post->ID ) : array();
+		} else {
+			$ids = get_posts(
+				array(
+					'post_type'      => ServicePostType::POST_TYPE,
+					'post_status'    => 'draft',
+					'meta_key'       => ServiceMetabox::PUBLISH_BLOCKED_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- one key, capped page.
+					'posts_per_page' => 5,
+					'orderby'        => 'modified',
+					'fields'         => 'ids',
+					'no_found_rows'  => true,
+				)
+			);
+		}
+
+		foreach ( $ids as $id ) {
+			$errors = wpss_get_service_publish_errors( (int) $id );
+
+			if ( ! $errors ) {
+				continue;
+			}
+
+			echo '<div class="notice notice-warning"><p><strong>';
+			echo esc_html(
+				sprintf(
+					/* translators: %s: service title */
+					__( '"%s" was saved as a draft, not published. It is missing:', 'wp-sell-services' ),
+					get_the_title( (int) $id )
+				)
+			);
+			echo '</strong></p><ul class="ul-disc">';
+			foreach ( $errors as $message ) {
+				echo '<li>' . esc_html( $message ) . '</li>';
+			}
+			echo '</ul>';
+			if ( 'edit' === $screen->base ) {
+				printf( '<p><a href="%s">%s</a></p>', esc_url( (string) get_edit_post_link( (int) $id, 'raw' ) ), esc_html__( 'Finish this service', 'wp-sell-services' ) );
+			}
+			echo '</div>';
+		}
 	}
 
 	/**
