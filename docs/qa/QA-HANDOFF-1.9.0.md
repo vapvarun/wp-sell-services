@@ -373,4 +373,3 @@ Only the money cards remain: 4 held back above, plus `10415810962` (Stripe 1.7.x
 
 - `tests/test-cli-guards.php`, `tests/test-demo-delete-contract.php`: this site has demo content, the tests refuse or mis-scope on it.
 - `tests/test-vendor-profile-contract.php`: display-name assertion on the dev data.
-- Pro `tests/test-pro-perf-and-options.php`: one raw hex colour in `dashboard.css` and one in `analytics.css`; small fix still owed.
