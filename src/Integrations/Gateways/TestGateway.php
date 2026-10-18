@@ -567,4 +567,20 @@ class TestGateway extends AbstractPaymentGateway {
 	public function rest_create_intent( \WPSellServices\Checkout\CheckoutIntent $intent, array $request ) {
 		return $this->create_offline_rest_order( $request );
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_settings_card(): ?array {
+		if ( ! ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ) {
+			return null;
+		}
+
+		return array(
+			'title'        => __( 'Test Gateway', 'wp-sell-services' ),
+			'description'  => __( 'Test payment gateway for development. No real charges.', 'wp-sell-services' ),
+			'option_group' => 'wpss_test_gateway_settings',
+			'order'        => 5,
+		);
+	}
 }

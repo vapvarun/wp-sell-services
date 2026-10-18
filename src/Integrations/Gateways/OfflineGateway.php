@@ -1893,4 +1893,16 @@ class OfflineGateway extends AbstractPaymentGateway {
 	public function rest_create_intent( \WPSellServices\Checkout\CheckoutIntent $intent, array $request ) {
 		return $this->create_offline_rest_order( $request );
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_settings_card(): ?array {
+		return array(
+			'title'        => __( 'Offline Payment', 'wp-sell-services' ),
+			'description'  => __( 'Accept bank transfer, cash, and other manual payments.', 'wp-sell-services' ),
+			'option_group' => 'wpss_offline_settings',
+			'order'        => 90,
+		);
+	}
 }

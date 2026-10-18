@@ -1553,4 +1553,16 @@ class PayPalGateway extends AbstractPaymentGateway {
 			)
 		);
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_settings_card(): ?array {
+		return array(
+			'title'        => __( 'PayPal', 'wp-sell-services' ),
+			'description'  => __( 'Accept payments via PayPal.', 'wp-sell-services' ),
+			'option_group' => 'wpss_paypal_settings',
+			'order'        => 20,
+		);
+	}
 }

@@ -2221,4 +2221,16 @@ class StripeGateway extends AbstractPaymentGateway {
 			)
 		);
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_settings_card(): ?array {
+		return array(
+			'title'        => __( 'Stripe', 'wp-sell-services' ),
+			'description'  => __( 'Accept credit card payments via Stripe.', 'wp-sell-services' ),
+			'option_group' => 'wpss_stripe_settings',
+			'order'        => 10,
+		);
+	}
 }

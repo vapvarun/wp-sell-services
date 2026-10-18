@@ -81,4 +81,32 @@ foreach ( $all as $gw ) {
 }
 $check( 'every registered gateway extends AbstractPaymentGateway', $ok && count( $all ) >= 3 );
 
+// Settings screen: one card per registered gateway, in card order, with no core edit for a new one.
+$plugin = wpss();
+$prop   = new ReflectionProperty( $plugin, 'payment_gateways' );
+$prop->setAccessible( true );
+$saved = $prop->getValue( $plugin );
+$prop->setValue( $plugin, $saved + array( 'acme_pay' => $stub ) );
+
+$im      = $plugin->get_integration_manager();
+$adapter = new ReflectionProperty( $im, 'active_adapter' );
+$adapter->setAccessible( true );
+$was = $adapter->getValue( $im );
+$adapter->setValue( $im, $im->get_adapter( 'standalone' ) );
+
+wp_set_current_user( 1 );
+$settings = new WPSellServices\Admin\Settings();
+$render   = new ReflectionMethod( $settings, 'render_gateway_cards' );
+$render->setAccessible( true );
+ob_start();
+$render->invoke( $settings );
+$html = ob_get_clean();
+preg_match_all( '/data-gateway="([a-z_]+)"/', $html, $found );
+
+$prop->setValue( $plugin, $saved );
+$adapter->setValue( $im, $was );
+
+$check( 'settings screen renders a registered stub gateway with no core edit', in_array( 'acme_pay', $found[1], true ) );
+$check( 'stripe card prints before offline', array_search( 'stripe', $found[1], true ) < array_search( 'offline', $found[1], true ) );
+
 echo $fails ? "{$fails} FAILED\n" : "All passed\n";

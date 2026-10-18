@@ -1975,11 +1975,9 @@ class Settings {
 	/**
 	 * Render the consolidated payment-gateway cards.
 	 *
-	 * Renders Stripe, PayPal, and Offline gateway settings as collapsible
-	 * cards. Pro and extensions inject additional gateways via the
-	 * wpss_gateway_cards and wpss_settings_sections_gateways hooks, which are
-	 * preserved here unchanged so the Pro contract is unaffected by moving the
-	 * cards from a standalone tab into the Payments tab.
+	 * One collapsible card per registered gateway, described by the gateway's
+	 * own get_settings_card(). wpss_gateway_cards and
+	 * wpss_settings_sections_gateways stay for panels that are not gateways.
 	 *
 	 * @since 1.1.0
 	 * @return void
@@ -2017,36 +2015,29 @@ class Settings {
 			return;
 		}
 
-		// Test Gateway section (only in debug mode).
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			$this->render_gateway_card(
-				'test',
-				__( 'Test Gateway', 'wp-sell-services' ),
-				__( 'Test payment gateway for development. No real charges.', 'wp-sell-services' ),
-				'wpss_test_gateway_settings'
-			);
+		// Each registered gateway describes its own card (see
+		// PaymentGatewayInterface::get_settings_card()); core never names one.
+		$cards = array();
+		foreach ( \WPSellServices\Core\Plugin::get_instance()->get_payment_gateways() as $id => $gateway ) {
+			$card = $gateway->get_settings_card();
+			if ( $card ) {
+				$cards[ (string) $id ] = $card;
+			}
+		}
+		uasort( $cards, static fn( array $a, array $b ): int => $a['order'] <=> $b['order'] );
+
+		// Cards ordered below 80 print before the extension hooks, the rest (Offline) after.
+		$split = static fn( bool $before ): array => array_filter( $cards, static fn( array $c ): bool => $before === ( $c['order'] < 80 ) );
+
+		foreach ( $split( true ) as $id => $card ) {
+			$this->render_gateway_card( $id, $card['title'], $card['description'], $card['option_group'] );
 		}
 
-		// Stripe section.
-		$this->render_gateway_card(
-			'stripe',
-			__( 'Stripe', 'wp-sell-services' ),
-			__( 'Accept credit card payments via Stripe.', 'wp-sell-services' ),
-			'wpss_stripe_settings'
-		);
-
-		// PayPal section.
-		$this->render_gateway_card(
-			'paypal',
-			__( 'PayPal', 'wp-sell-services' ),
-			__( 'Accept payments via PayPal.', 'wp-sell-services' ),
-			'wpss_paypal_settings'
-		);
-
 		/**
-		 * Fires after core gateways, before Offline.
+		 * Fires after the registered gateway cards, before Offline.
 		 *
-		 * Pro uses this to add Razorpay and other gateways.
+		 * For panels that belong beside a gateway but are not one (Stripe Connect).
+		 * A gateway adds its own card through get_settings_card().
 		 *
 		 * @since 1.1.0
 		 */
@@ -2056,19 +2047,14 @@ class Settings {
 		 * Unified gateway sections hook.
 		 *
 		 * Fires alongside the legacy wpss_gateway_cards hook.
-		 * Pro and extensions can use either hook to inject gateway settings.
 		 *
 		 * @since 1.3.0
 		 */
 		do_action( 'wpss_settings_sections_gateways' );
 
-		// Offline section.
-		$this->render_gateway_card(
-			'offline',
-			__( 'Offline Payment', 'wp-sell-services' ),
-			__( 'Accept bank transfer, cash, and other manual payments.', 'wp-sell-services' ),
-			'wpss_offline_settings'
-		);
+		foreach ( $split( false ) as $id => $card ) {
+			$this->render_gateway_card( $id, $card['title'], $card['description'], $card['option_group'] );
+		}
 	}
 
 	/**

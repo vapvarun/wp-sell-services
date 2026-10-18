@@ -129,7 +129,7 @@ guide; this is the complete index.
 | `wpss_fluentcart_adapter_init` | 1 | `src/Integrations/FluentCart/FluentCartAdapter.php` **[PRO]** | Fires after Fluent Cart adapter is initialized. |
 | `wpss_fluentcart_order_created` | 3 | `src/Integrations/FluentCart/FluentCartOrderProvider.php` **[PRO]** | Fires when a WPSS order is created from Fluent Cart. |
 | `wpss_fluentcart_order_detail` | 1 | `src/Integrations/FluentCart/FluentCartAccountProvider.php` **[PRO]** | Fires after order detail content. |
-| `wpss_gateway_cards` | 1 | `src/Admin/Settings.php` | Fires after core gateways, before Offline. |
+| `wpss_gateway_cards` | 1 | `src/Admin/Settings.php` | Fires after the registered gateway cards, before Offline. |
 | `wpss_gateway_refund_received` | 4 | `src/Integrations/PayPal/PayPalGateway.php` *(+3 more)* | Fires when a refund happened at the payment rail. |
 | `wpss_gateway_settings_owned_by_rail` | 1 | `src/Admin/Settings.php` | Fires instead of the gateway cards when a cart rail owns payment. |
 | `wpss_loaded` | 1 | `src/Core/Plugin.php` | Fires after the plugin is fully loaded. |
