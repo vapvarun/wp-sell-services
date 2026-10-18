@@ -683,18 +683,8 @@ class PayPalGateway extends AbstractPaymentGateway {
 		// addon_ids / addon_sel come from the intent's own metadata
 		// (CheckoutIntentService::selection_metadata()).
 
-		switch ( $intent->kind ) {
-			case \WPSellServices\Checkout\CheckoutIntent::KIND_CART:
-				$metadata['description'] = __( 'Multi-service cart checkout', 'wp-sell-services' );
-				break;
-			case \WPSellServices\Checkout\CheckoutIntent::KIND_ORDER:
-				/* translators: %d: order ID */
-				$metadata['description'] = sprintf( __( 'Order #%d', 'wp-sell-services' ), $intent->order_id );
-				break;
-			default:
-				/* translators: %d: Service ID */
-				$metadata['description'] = sprintf( __( 'Service #%d', 'wp-sell-services' ), $intent->service_id );
-		}
+		// The intent names its own receipt line; the gateway never looks the product up.
+		$metadata['description'] = $metadata['description'] ?? __( 'Payment', 'wp-sell-services' );
 
 		return $metadata;
 	}

@@ -235,10 +235,9 @@ class StripeGateway extends AbstractPaymentGateway {
 		// accounts (and is good practice everywhere — it shows on the customer's
 		// statement/receipt). Without it confirmPayment() fails outright with
 		// "As per Indian regulations, export transactions require a description".
-		$service_id  = (int) ( $metadata['service_id'] ?? 0 );
-		$description = $service_id ? get_the_title( $service_id ) : '';
-		if ( '' === trim( (string) $description ) ) {
-			$description = __( 'Service purchase', 'wp-sell-services' );
+		$description = trim( (string) ( $metadata['description'] ?? '' ) );
+		if ( '' === $description ) {
+			$description = __( 'Payment', 'wp-sell-services' );
 		}
 		if ( $order_id ) {
 			$description .= ' (#' . $order_id . ')';

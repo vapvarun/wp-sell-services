@@ -79,33 +79,43 @@ class PaymentController extends RestController {
 					'callback'            => array( $this, 'create_intent' ),
 					'permission_callback' => array( $this, 'check_permissions' ),
 					'args'                => array(
-						'service_id' => array(
-							'description' => __( 'Service ID.', 'wp-sell-services' ),
+						'service_id'   => array(
+							'description' => __( 'Service ID. Same as product_id for the service type.', 'wp-sell-services' ),
 							'type'        => 'integer',
-							'required'    => true,
+							'default'     => 0,
 						),
-						'package_id' => array(
+						'product_id'   => array(
+							'description' => __( 'ID of the product being bought.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 0,
+						),
+						'product_type' => array(
+							'description' => __( 'Product type; "service" is the only type registered.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'default'     => 'service',
+						),
+						'package_id'   => array(
 							'description' => __( 'Package: stable id or legacy index.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 0,
 						),
-						'quantity'   => array(
+						'quantity'     => array(
 							'description' => __( 'How many of the package.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 1,
 							'minimum'     => 1,
 						),
-						'addons'     => array(
+						'addons'       => array(
 							'description' => __( 'Add-on selection: ids, or {id, quantity, option, text} objects. Prices are never read.', 'wp-sell-services' ),
 							'type'        => array( 'array', 'string' ),
 							'default'     => array(),
 						),
-						'gateway'    => array(
+						'gateway'      => array(
 							'description' => __( 'Payment gateway ID.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
 						),
-						'pay_order'  => array(
+						'pay_order'    => array(
 							'description' => __( 'Existing order ID to pay for (from proposal).', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 0,
@@ -125,27 +135,37 @@ class PaymentController extends RestController {
 					'callback'            => array( $this, 'confirm_payment' ),
 					'permission_callback' => array( $this, 'check_permissions' ),
 					'args'                => array(
-						'gateway'    => array(
+						'gateway'      => array(
 							'description' => __( 'Payment gateway ID.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
 						),
-						'payment_id' => array(
+						'payment_id'   => array(
 							'description' => __( 'Gateway payment/order ID.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
 						),
-						'service_id' => array(
-							'description' => __( 'Service ID.', 'wp-sell-services' ),
+						'service_id'   => array(
+							'description' => __( 'Service ID. Same as product_id for the service type.', 'wp-sell-services' ),
 							'type'        => 'integer',
-							'required'    => true,
+							'default'     => 0,
 						),
-						'package_id' => array(
+						'product_id'   => array(
+							'description' => __( 'ID of the product being bought.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 0,
+						),
+						'product_type' => array(
+							'description' => __( 'Product type; "service" is the only type registered.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'default'     => 'service',
+						),
+						'package_id'   => array(
 							'description' => __( 'Package index.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 0,
 						),
-						'pay_order'  => array(
+						'pay_order'    => array(
 							'description' => __( 'Existing order ID to pay for.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 0,
@@ -199,7 +219,10 @@ class PaymentController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_intent( WP_REST_Request $request ) {
-		$service_id = (int) $request->get_param( 'service_id' );
+		$service_id = $this->product_id( $request );
+		if ( is_wp_error( $service_id ) ) {
+			return $service_id;
+		}
 		$package_id = (int) $request->get_param( 'package_id' );
 		$gateway_id = sanitize_text_field( $request->get_param( 'gateway' ) );
 		$pay_order  = (int) $request->get_param( 'pay_order' );
@@ -251,7 +274,10 @@ class PaymentController extends RestController {
 	public function confirm_payment( WP_REST_Request $request ) {
 		$gateway_id = sanitize_text_field( $request->get_param( 'gateway' ) );
 		$payment_id = sanitize_text_field( $request->get_param( 'payment_id' ) );
-		$service_id = (int) $request->get_param( 'service_id' );
+		$service_id = $this->product_id( $request );
+		if ( is_wp_error( $service_id ) ) {
+			return $service_id;
+		}
 		$package_id = (int) $request->get_param( 'package_id' );
 		$pay_order  = (int) $request->get_param( 'pay_order' );
 
@@ -272,6 +298,29 @@ class PaymentController extends RestController {
 					)
 				);
 		}
+	}
+
+	/**
+	 * The id of the product being bought, from product_id or its service alias.
+	 *
+	 * "service" is the only registered product type, so another type is refused
+	 * here rather than priced as a service.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return int|WP_Error
+	 */
+	private function product_id( WP_REST_Request $request ) {
+		$type = (string) $request->get_param( 'product_type' );
+		if ( '' !== $type && 'service' !== $type ) {
+			return new WP_Error( 'wpss_unsupported_product_type', __( 'This product type is not supported.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		$id = (int) $request->get_param( 'product_id' ) ?: (int) $request->get_param( 'service_id' );
+		if ( ! $id && ! (int) $request->get_param( 'pay_order' ) ) {
+			return new WP_Error( 'rest_missing_callback_param', __( 'Missing parameter(s): product_id', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		return $id;
 	}
 
 	/**

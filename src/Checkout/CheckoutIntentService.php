@@ -103,6 +103,8 @@ class CheckoutIntentService {
 				'vendor_id'   => (int) $order->vendor_id,
 				'service_id'  => (int) $order->service_id,
 				'customer_id' => $buyer_id,
+				/* translators: %d: order ID */
+				'description' => wp_strip_all_tags( get_the_title( (int) $order->service_id ) ) ?: sprintf( __( 'Order #%d', 'wp-sell-services' ), $order_id ),
 			)
 		);
 	}
@@ -174,6 +176,7 @@ class CheckoutIntentService {
 		$metadata   = array(
 			'is_multi_checkout' => 1,
 			'customer_id'       => $buyer_id,
+			'description'       => __( 'Multi-service cart checkout', 'wp-sell-services' ),
 		);
 		if ( 1 === count( $vendor_ids ) ) {
 			$metadata['vendor_id'] = $vendor_ids[0];
@@ -369,6 +372,8 @@ class CheckoutIntentService {
 				// pay-order intents did, so a split rail (Pro Connect) never
 				// split a catalog purchase.
 				'vendor_id'   => (int) $service->post_author,
+				// What the gateway prints on the receipt; gateways never look the product up.
+				'description' => wp_strip_all_tags( get_the_title( $service ) ) ?: __( 'Service purchase', 'wp-sell-services' ),
 			) + self::selection_metadata( $line['addons'] ),
 			$line['subtotal'] + $line['addons_total']
 		);
