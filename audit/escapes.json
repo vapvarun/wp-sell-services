@@ -224,6 +224,14 @@
       "fails_on": "pre-consolidation tree (frontend.css and service-wizard.css redeclared the base; 55+ legacy single-dash classes in source)",
       "journey": "audit/journeys/17-layout-per-surface.md#11",
       "now_dead_or_duplicate": "55 duplicate button rules deleted from frontend, single-service, unified-dashboard and vendor-dashboard; legacy single-dash alias blocks deleted from design-system.css"
+    },
+    {
+      "card": "consolidation: .wpss-table base declared in four sheets (no card)",
+      "class": "one component base declared in several stylesheets, so a later sheet could silently change it",
+      "check": "tests/test-primitive-single-source.php (no surface sheet redeclares the table base)",
+      "fails_on": "frontend.css and vendor-dashboard.css redeclared width + border-collapse",
+      "journey": "audit/journeys/17-layout-per-surface.md#12",
+      "now_dead_or_duplicate": "two identical .wpss-table base rules deleted; unified-dashboard keeps only its card-look delta"
     }
   ]
 }

@@ -1400,11 +1400,6 @@ article.wpss-service-card:hover {
 }
 
 /* Tables */
-.wpss-table {
-	width: 100%;
-	border-collapse: collapse;
-}
-
 .wpss-table th,
 .wpss-table td {
 	padding: 12px;

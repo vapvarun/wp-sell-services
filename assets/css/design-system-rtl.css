@@ -589,8 +589,8 @@ textarea.wpss-form-textarea {
 
 /* Ghost, with the same two-class weight as outline above: the one-class rule loses to a
    theme's anchor colour, so an <a class="wpss-btn wpss-btn--ghost"> would take the theme
-   link colour. The single-dash names (wpss-btn-outline, wpss-btn-ghost, ...) no longer
-   exist: every template, script and Pro screen uses the BEM modifier. */
+   link colour. The old one-dash modifier names are gone: every template, script and Pro
+   screen uses the double-dash BEM modifier. */
 .wpss-btn.wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
 .wpss-btn.wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
 

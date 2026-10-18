@@ -1266,8 +1266,6 @@
    ========================================================================== */
 
 .wpss-table {
-	width: 100%;
-	border-collapse: collapse;
 	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	overflow: hidden;

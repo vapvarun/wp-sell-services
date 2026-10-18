@@ -61,3 +61,9 @@ Service page at 390, tap Continue on a package.
 Vendor dashboard (Services, Portfolio, Proposals), the service page order sheet, checkout and My Account, 1440 and 390, light and dark.
 
 **Expect** Primary, outline, ghost, small and link buttons share one size, weight, border and radius everywhere; `--sm` is visibly smaller than the default; a `--link` button reads as a link, not a boxed button; nothing overflows at 390. check: tests/test-primitive-single-source.php and bin/check-ux-conformance.php (duplicate-primitive)
+
+### 12. A data table is full width and collapsed on every surface (1.9.0 consolidation)
+
+Any `.wpss-table` (vendor earnings, My Account service orders, Pro analytics), 1440 and 390, light and dark.
+
+**Expect** the table is 100% wide with collapsed borders whichever stylesheets the page loads; the dashboard table keeps its bordered, rounded card look. check: tests/test-primitive-single-source.php (no surface sheet redeclares the table base)

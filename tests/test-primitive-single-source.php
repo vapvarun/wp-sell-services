@@ -59,6 +59,19 @@ foreach ( glob( dirname( __DIR__ ) . '/assets/css/*.css' ) as $css ) {
 }
 $check( 'no surface sheet redeclares the button base or its variants' . ( $found ? ': ' . implode( '; ', $found ) : '' ), ! $found );
 
+// 3. The table base (width + border-collapse) lives in design-system.css; surfaces add only deltas.
+$tables = array();
+foreach ( glob( dirname( __DIR__ ) . '/assets/css/*.css' ) as $css ) {
+	$name = basename( $css );
+	if ( in_array( $name, array( 'design-system.css', 'admin.css' ), true ) || str_contains( $name, '.min.' ) || str_contains( $name, '-rtl' ) ) {
+		continue;
+	}
+	if ( preg_match( '/(^|\})\s*\.wpss-table\s*\{[^}]*border-collapse/m', (string) preg_replace( '#/\*.*?\*/#s', '', (string) file_get_contents( $css ) ) ) ) {
+		$tables[] = $name;
+	}
+}
+$check( 'no surface sheet redeclares the table base' . ( $tables ? ': ' . implode( ', ', $tables ) : '' ), ! $tables );
+
 $ds = (string) file_get_contents( dirname( __DIR__ ) . '/assets/css/design-system.css' );
 foreach ( array( '--block', '--disabled', '--danger-outline', '--link' ) as $variant ) {
 	$check( "design-system.css owns .wpss-btn{$variant}", str_contains( $ds, ".wpss-btn{$variant}" ) );
