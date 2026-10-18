@@ -112,7 +112,7 @@ $wpss_not_provided  = ! $wpss_has_submitted && ! empty( $service_requirements ) 
 						<?php elseif ( $response_value ) : ?>
 							<?php
 							$wpss_answer_text = (string) $response_value;
-							require WPSS_PLUGIN_DIR . 'templates/partials/requirement-answer.php';
+							require wpss_locate_template( 'partials/requirement-answer.php' );
 							?>
 							<button type="button" class="wpss-requirement-view__copy-btn" data-copy-text="<?php echo esc_attr( $response_value ); ?>" title="<?php esc_attr_e( 'Copy to clipboard', 'wp-sell-services' ); ?>">
 								<i data-lucide="copy" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
@@ -176,7 +176,7 @@ $wpss_not_provided  = ! $wpss_has_submitted && ! empty( $service_requirements ) 
 					<div class="wpss-requirement-view__answer <?php echo $orphan_long ? 'wpss-requirement-view__answer--collapsed' : ''; ?>">
 						<?php
 						$wpss_answer_text = $orphan_text;
-						require WPSS_PLUGIN_DIR . 'templates/partials/requirement-answer.php';
+						require wpss_locate_template( 'partials/requirement-answer.php' );
 						?>
 					</div>
 				</div>

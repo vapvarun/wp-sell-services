@@ -144,13 +144,16 @@ wpss_get_template_part( 'partials/vendor-card', '', [ 'vendor_id' => 42 ] );
 
 // Load a specific template file
 wpss_get_template( 'order/order-view.php', [ 'order' => $order ] );
+
+// Resolve the file to include yourself (theme copy first, plugin file as fallback)
+include wpss_locate_template( 'order/tip-view.php' );
 ```
 
 ### Template Filters
 
 ```php
 // Redirect template loading without copying files
-add_filter( 'wpss_locate_template', function( $template, $template_name, $template_path ) {
+add_filter( 'wpss_get_template', function( $template, $template_name, $args ) {
     if ( 'single-service.php' === $template_name ) {
         return '/path/to/my/custom-single-service.php';
     }

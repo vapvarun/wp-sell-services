@@ -35,7 +35,7 @@ if ( $order_id ) {
 		// Tip orders have no delivery workflow — render a dedicated receipt
 		// view instead of the full service-order UI.
 		if ( \WPSellServices\Services\TippingService::ORDER_TYPE === ( $current_order->platform ?? '' ) ) {
-			include WPSS_PLUGIN_DIR . 'templates/order/tip-view.php';
+			include wpss_locate_template( 'order/tip-view.php' );
 			return;
 		}
 
@@ -43,7 +43,7 @@ if ( $order_id ) {
 		// parent order, not a separate delivery, so buyers see the accept /
 		// decline UI, not the requirements/delivery workflow.
 		if ( \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE === ( $current_order->platform ?? '' ) ) {
-			include WPSS_PLUGIN_DIR . 'templates/order/extension-view.php';
+			include wpss_locate_template( 'order/extension-view.php' );
 			return;
 		}
 
@@ -51,7 +51,7 @@ if ( $order_id ) {
 		// Accept & Pay / Approve, vendors see Submit Delivery, depending on
 		// the phase's current state.
 		if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $current_order->platform ?? '' ) ) {
-			include WPSS_PLUGIN_DIR . 'templates/order/milestone-view.php';
+			include wpss_locate_template( 'order/milestone-view.php' );
 			return;
 		}
 
@@ -59,10 +59,10 @@ if ( $order_id ) {
 
 		switch ( $order_action ) {
 			case 'requirements':
-				include WPSS_PLUGIN_DIR . 'templates/order/order-requirements.php';
+				include wpss_locate_template( 'order/order-requirements.php' );
 				break;
 			default:
-				include WPSS_PLUGIN_DIR . 'templates/order/order-view.php';
+				include wpss_locate_template( 'order/order-view.php' );
 				break;
 		}
 		return;

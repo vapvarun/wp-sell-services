@@ -1044,7 +1044,7 @@ class AjaxHandlers {
 				// Same partial as the initial page render, so page two of the
 				// reviews list cannot drift from page one.
 				$wpss_review = $review;
-				require WPSS_PLUGIN_DIR . 'templates/partials/review-body.php';
+				require wpss_locate_template( 'partials/review-body.php' );
 				?>
 
 				<div class="wpss-review-actions">

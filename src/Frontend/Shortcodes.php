@@ -545,10 +545,7 @@ class Shortcodes {
 			return '<p class="wpss-notice wpss-notice--error">' . esc_html__( 'Vendor not found.', 'wp-sell-services' ) . '</p>';
 		}
 
-		$template = locate_template( 'wp-sell-services/vendor/profile.php' );
-		if ( ! $template ) {
-			$template = WPSS_PLUGIN_DIR . 'templates/vendor/profile.php';
-		}
+		$template = wpss_locate_template( 'vendor/profile.php' );
 
 		ob_start();
 		if ( file_exists( $template ) ) {
@@ -900,10 +897,7 @@ class Shortcodes {
 		// (it resolves the order from $order_id, which is set above). The old
 		// lookup targeted order/details.php, which never existed, so the shortcode
 		// always fell back to a reduced inline copy (Basecamp #10110742943).
-		$template = locate_template( 'wp-sell-services/order/order-view.php' );
-		if ( ! $template ) {
-			$template = WPSS_PLUGIN_DIR . 'templates/order/order-view.php';
-		}
+		$template = wpss_locate_template( 'order/order-view.php' );
 
 		ob_start();
 		include $template;
@@ -1127,7 +1121,7 @@ class Shortcodes {
 						// written out here and again below, so a copy correction
 						// had to be made twice or the page told two different
 						// stories depending on who was reading it.
-						require WPSS_PLUGIN_DIR . 'templates/partials/vendor-benefits.php';
+						require wpss_locate_template( 'partials/vendor-benefits.php' );
 
 						$this->render_vendor_pitch_steps();
 						?>
@@ -1201,7 +1195,7 @@ class Shortcodes {
 					// out here and again above, so a copy correction had to be made
 					// twice or the page told two different stories depending on who
 					// was reading it.
-					require WPSS_PLUGIN_DIR . 'templates/partials/vendor-benefits.php';
+					require wpss_locate_template( 'partials/vendor-benefits.php' );
 
 					$this->render_vendor_pitch_steps();
 					?>

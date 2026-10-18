@@ -226,7 +226,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_pre_vendor_register` | `array $profile_data, int $user_id` | `VendorService.php` |
 | `wpss_vendor_profile_allowed_fields` | `array $allowed_fields` | `VendorService.php` |
 | `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:838` |
-| `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1349` |
+| `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1343` |
 
 | Hook | Parameters | File |
 |------|-----------|------|
@@ -738,7 +738,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_get_template_part` | `$template, $slug, $name` | `src/functions/templates.php:125` |
-| `wpss_get_template` | `$template, $template_name, $args` | `src/functions/templates.php:176` |
+| `wpss_get_template` | `$template, $template_name, $args` | `src/functions/templates.php:162` |
 | `wpss_locate_template` | `$template, $template_name, $template_path` | `src/Frontend/TemplateLoader.php:568` |
 | `wpss_dashboard_section_template` | `$template_path, $section` | `src/functions/urls.php:426` |
 

@@ -129,7 +129,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 				$wpss_review = \WPSellServices\Models\Review::from_db( $review );
 				?>
 				<div class="wpss-review">
-					<?php require WPSS_PLUGIN_DIR . 'templates/partials/review-body.php'; ?>
+					<?php require wpss_locate_template( 'partials/review-body.php' ); ?>
 
 					<div class="wpss-review-helpful">
 						<?php if ( is_user_logged_in() && (int) ( $review->reviewer_id ?? 0 ) !== get_current_user_id() ) : ?>

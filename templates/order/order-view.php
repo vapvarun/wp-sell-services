@@ -991,7 +991,7 @@ do_action( 'wpss_before_order_view', $order );
 
 				<?php
 				$late_submission = $show_late_requirements_form;
-				include WPSS_PLUGIN_DIR . 'templates/order/requirements-form.php';
+				include wpss_locate_template( 'order/requirements-form.php' );
 				?>
 			</div>
 		</section>
@@ -1228,7 +1228,7 @@ do_action( 'wpss_before_order_view', $order );
 				<div class="wpss-review">
 					<?php
 					$wpss_review = $wpss_order_review;
-					require WPSS_PLUGIN_DIR . 'templates/partials/review-body.php';
+					require wpss_locate_template( 'partials/review-body.php' );
 					?>
 				</div>
 				<?php

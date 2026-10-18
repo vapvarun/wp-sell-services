@@ -15,4 +15,4 @@
 
 defined( 'ABSPATH' ) || exit;
 
-require WPSS_PLUGIN_DIR . 'templates/partials/notifications-list.php';
+require wpss_locate_template( 'partials/notifications-list.php' );

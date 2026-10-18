@@ -142,6 +142,28 @@ function wpss_get_template_part( string $slug, string $name = '', array $args = 
 }
 
 /**
+ * Resolve a template file: the theme's `wp-sell-services/` folder first, then the plugin's.
+ *
+ * Use it wherever a template is included in place and must share the caller's variables.
+ * Never build `WPSS_PLUGIN_DIR . 'templates/...'` for a template, a theme override would be ignored.
+ *
+ * @since 1.9.0
+ *
+ * @param string $template_name Path under templates/, e.g. 'order/tip-view.php'.
+ * @return string Absolute path of the file to include.
+ */
+function wpss_locate_template( string $template_name ): string {
+	$template = locate_template( 'wp-sell-services/' . $template_name );
+
+	if ( ! $template ) {
+		$template = WPSS_PLUGIN_DIR . 'templates/' . $template_name;
+	}
+
+	/** This filter is documented in src/functions/templates.php wpss_get_template() */
+	return (string) apply_filters( 'wpss_get_template', $template, $template_name, array() );
+}
+
+/**
  * Get template.
  *
  * @param string $template_name Template name.

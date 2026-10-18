@@ -72,7 +72,7 @@ $avg_rating   = $profile ? (float) $profile->rating : 0.0;
 							<a href="<?php echo esc_url( wpss_get_order_url( $wpss_review->order_id, 'sales' ) ); ?>"><?php echo esc_html( $service_title ); ?></a>
 						</p>
 					<?php endif; ?>
-					<?php include WPSS_PLUGIN_DIR . 'templates/partials/review-body.php'; ?>
+					<?php include wpss_locate_template( 'partials/review-body.php' ); ?>
 					<?php if ( ! $wpss_review->has_response() ) : ?>
 						<form class="wpss-review-reply-form" data-review-id="<?php echo esc_attr( (string) $wpss_review->id ); ?>">
 							<label for="wpss-review-reply-<?php echo esc_attr( (string) $wpss_review->id ); ?>">

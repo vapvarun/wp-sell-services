@@ -100,7 +100,7 @@ do_action( 'wpss_before_requirements_form', $order );
 				</div>
 			</div>
 
-			<?php require WPSS_PLUGIN_DIR . 'templates/order/requirements-form.php'; ?>
+			<?php require wpss_locate_template( 'order/requirements-form.php' ); ?>
 		</div>
 
 		<aside class="wpss-requirements-page__sidebar">

@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**542 hooks** across **747** firing sites.
+**542 hooks** across **748** firing sites.
 
 ## Actions (276)
 
@@ -388,7 +388,7 @@ guide; this is the complete index.
 | `wpss_gallery_image_size` | 2 | `templates/partials/service-gallery.php` | Filters the gallery image size. |
 | `wpss_gallery_max_upload_size_mb` | 2 | `src/Frontend/ServiceWizard.php` | Filter the maximum size of a service gallery image, in megabytes. |
 | `wpss_gateway_checkout_button_label` | 4 | `src/functions/payments.php` | Filter the checkout button label for a gateway. |
-| `wpss_get_template` | 3 | `src/functions/templates.php` | Filter the template file path. |
+| `wpss_get_template` | 3 | `src/functions/templates.php` *(+1 more)* |  |
 | `wpss_get_template_part` | 3 | `src/functions/templates.php` | Filter the template file path. |
 | `wpss_is_vendor` | 2 | `src/functions/vendors.php` | Filter whether user is a vendor. |
 | `wpss_known_dashboard_sections` | 1 | `src/functions/urls.php` | Filter the set of known dashboard section slugs. |
