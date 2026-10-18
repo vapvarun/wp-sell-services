@@ -515,18 +515,24 @@ class CheckoutIntentService {
 	 * @param string $transaction_id Gateway payment id, as settle() stamps it.
 	 * @param float  $amount         Amount the gateway reports as paid.
 	 * @param string $currency       Currency the gateway reports.
+	 * @param string $refusal        Set to why a false answer was given: 'refunded', 'spent' or 'mismatch'
+	 *                               (the order is not for this amount), else empty. Only 'mismatch' is a
+	 *                               reason to give the charge back.
 	 * @return bool False when the payment was spent elsewhere or does not match.
 	 */
-	public function settle_webhook_order( int $order_id, string $gateway_id, string $transaction_id, float $amount, string $currency ): bool {
+	public function settle_webhook_order( int $order_id, string $gateway_id, string $transaction_id, float $amount, string $currency, string &$refusal = '' ): bool {
+		$refusal = '';
+
 		return $this->locked(
 			$gateway_id,
 			$transaction_id,
-			static function () use ( $order_id, $gateway_id, $transaction_id, $amount, $currency ): bool {
+			static function () use ( $order_id, $gateway_id, $transaction_id, $amount, $currency, &$refusal ): bool {
 				// Given back as unsettled (refund_unsettled()): the same rule as
 				// settle(), so a late webhook cannot mark an order paid with money
 				// the buyer already has back.
 				if ( get_transient( self::refunded_key( $gateway_id, $transaction_id ) ) ) {
 					wpss_log( sprintf( '%s webhook names order #%d, but transaction %s was refunded as unsettled. Not marking it paid.', $gateway_id, $order_id, $transaction_id ), 'warning' );
+					$refusal = 'refunded';
 					return false;
 				}
 
@@ -534,6 +540,7 @@ class CheckoutIntentService {
 
 				if ( $paid && ! in_array( $order_id, array_map( static fn( $row ) => (int) $row->id, $paid ), true ) ) {
 					wpss_log( sprintf( '%s webhook names order #%d, but transaction %s already paid %d other order(s). Not marking it paid.', $gateway_id, $order_id, $transaction_id, count( $paid ) ), 'warning' );
+					$refusal = 'spent';
 					return false;
 				}
 
@@ -543,6 +550,7 @@ class CheckoutIntentService {
 				// compared only for an order this payment has not paid yet.
 				if ( ! $paid && $order && ( strtoupper( $currency ) !== strtoupper( (string) $order->currency ) || ! wpss_amounts_match( $amount, (float) $order->total, (string) $order->currency ) ) ) {
 					wpss_log( sprintf( '%s webhook: transaction %s paid %s %s but order #%d is %s %s. Not marking it paid; review this payment.', $gateway_id, $transaction_id, $currency, $amount, $order_id, $order->currency, $order->total ), 'error' );
+					$refusal = 'mismatch';
 					return false;
 				}
 

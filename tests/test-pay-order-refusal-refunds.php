@@ -154,6 +154,22 @@ try {
 		)
 	);
 	$check( 'a webhook charge the order refuses (wrong amount) is refunded', 'pending' === $payment_status( $f ) && 3 === count( $refunds ) );
+
+	// 6. A webhook for a payment that already paid another order is not a reason to refund.
+	( new StripeGateway() )->handle_webhook(
+		array(
+			'type' => 'payment_intent.succeeded',
+			'data' => array(
+				'object' => array(
+					'id'       => $pi_id . 'c',
+					'amount'   => wpss_amount_to_minor_units( 23.60, $currency ),
+					'currency' => strtolower( $currency ),
+					'metadata' => array( 'order_id' => $d, 'site_url' => get_option( 'home' ), 'platform' => 'wp-sell-services' ),
+				),
+			),
+		)
+	);
+	$check( 'a webhook for a spent payment is not refunded', 'pending' === $payment_status( $d ) && 3 === count( $refunds ) );
 } finally {
 	wp_set_current_user( 0 );
 	remove_filter( 'pre_http_request', $stub, 10 );

@@ -64,8 +64,12 @@ try {
 	// Payments started on 1.7.x were stamped with home_url(), which a language plugin or a www redirect changes (10415810962).
 	$home = untrailingslashit( (string) get_option( 'home' ) );
 	$www  = (string) preg_replace( '#^(https?://)(www\.)?#', '$1www.', $home );
-	$check( 'a language folder or a www host on this site is still this site', wpss_is_own_payment_site( $home . '/fr' ) && wpss_is_own_payment_site( $home . '/pt-br/' ) && wpss_is_own_payment_site( $www ) );
-	$check( '  but another install on the same host is not', ! wpss_is_own_payment_site( $home . '/shop' ) && ! wpss_is_own_payment_site( $home . '/fr/shop' ) );
+	$langs = static fn() => array( 'fr' => array(), 'pt-br' => array() );
+	add_filter( 'wpml_active_languages', $langs );
+	$check( 'a language folder this site serves, or a www host, is still this site', wpss_is_own_payment_site( $home . '/fr' ) && wpss_is_own_payment_site( $home . '/pt-br/' ) && wpss_is_own_payment_site( $www ) );
+	$check( '  but another install on the same host is not', ! wpss_is_own_payment_site( $home . '/shop' ) && ! wpss_is_own_payment_site( $home . '/fr/shop' ) && ! wpss_is_own_payment_site( $home . '/de' ) );
+	remove_filter( 'wpml_active_languages', $langs );
+	$check( '  and with no language plugin a folder is never ignored', ! wpss_is_own_payment_site( $home . '/fr' ) );
 	$only_mapped = static fn( bool $own, string $url ): bool => $own || 'https://mapped.example' === $url;
 	add_filter( 'wpss_is_own_payment_site', $only_mapped, 10, 2 );
 	$check( '  and an owner can add an address through wpss_is_own_payment_site', wpss_is_own_payment_site( 'https://mapped.example' ) && ! wpss_is_own_payment_site( 'https://other.example' ) );

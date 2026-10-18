@@ -1462,16 +1462,19 @@ class StripeGateway extends AbstractPaymentGateway {
 
 		// Path 1: Order already created via AJAX — just confirm payment.
 		if ( ! empty( $metadata['order_id'] ) ) {
+			$refusal = '';
 			$settled = ( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
 				(int) $metadata['order_id'],
 				'stripe',
 				(string) $payment_intent['id'],
 				$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ?? 0 ), (string) ( $payment_intent['currency'] ?? 'usd' ) ),
-				(string) ( $payment_intent['currency'] ?? '' )
+				(string) ( $payment_intent['currency'] ?? '' ),
+				$refusal
 			);
 
-			// A captured charge the order refused is given back, as browser confirm does.
-			if ( ! $settled ) {
+			// A charge the order's own total refuses is given back, as browser confirm does. Any other
+			// refusal (spent elsewhere, already refunded, a write that failed) is left to the owner.
+			if ( ! $settled && 'mismatch' === $refusal ) {
 				$this->refund_unsettled_charge( (string) $payment_intent['id'] );
 			}
 

@@ -79,7 +79,7 @@ function wpss_payment_site_mark(): string {
  * Whether a site address written on a payment is this site's.
  *
  * Scheme, case, a leading www and a trailing slash are ignored, and so is a
- * language folder (/fr, /pt-br): payments started on 1.6.0-1.7.2 were stamped
+ * language folder this site serves (WPML or Polylang, /fr): payments started on 1.6.0-1.7.2 were stamped
  * with home_url(), which a multilingual plugin filters per request
  * (Basecamp 10415810962). Any other path stays significant, because another
  * install on the same host sharing the gateway account is not this site.
@@ -92,10 +92,28 @@ function wpss_payment_site_mark(): string {
  * @return bool
  */
 function wpss_is_own_payment_site( string $site_url ): bool {
-	$bare = static function ( string $url ): string {
+	// Only the language folders this site really serves (WPML, Polylang) are ignored. A generic
+	// two-letter folder could be another install on the same host sharing the gateway account.
+	$languages = array_filter(
+		array_map(
+			'strtolower',
+			array_merge(
+				array_keys( (array) apply_filters( 'wpml_active_languages', null ) ),
+				function_exists( 'pll_languages_list' ) ? (array) pll_languages_list() : array()
+			)
+		)
+	);
+
+	$bare = static function ( string $url ) use ( $languages ): string {
 		$url = untrailingslashit( strtolower( (string) preg_replace( '#^https?://(www\.)?#i', '', trim( $url ) ) ) );
 
-		return (string) preg_replace( '#^([^/]+)/[a-z]{2}(?:[-_][a-z0-9]{2,4})?$#', '$1', $url );
+		foreach ( $languages as $code ) {
+			if ( preg_match( '#^([^/]+)/' . preg_quote( (string) $code, '#' ) . '$#', $url, $m ) ) {
+				return $m[1];
+			}
+		}
+
+		return $url;
 	};
 
 	$own = '' !== $bare( $site_url ) && $bare( $site_url ) === $bare( wpss_payment_site_mark() );
