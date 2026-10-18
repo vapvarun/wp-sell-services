@@ -1610,124 +1610,38 @@
 	};
 
 	/**
-	 * Show confirm dialog (replaces browser confirm()).
+	 * Show a confirm dialog (replaces browser confirm()).
 	 *
-	 * Renders ONE clean modal surface — overlay + single dialog card with an
-	 * optional title, a message, and an action row (visible primary/danger
-	 * confirm + outline cancel). Focus is trapped inside the dialog, Escape
-	 * closes it, and focus is restored to the element that opened it. All
-	 * styling lives in design-system.css (.wpss-confirm); no inline styles.
+	 * A callback wrapper over window.wpssConfirm (wpss-ui.js), which owns the dialog
+	 * role, focus trap, Esc, focus return and the prompt field. Nothing here builds markup.
 	 *
-	 * @param {string}   message   - The confirmation message.
-	 * @param {Function} onConfirm - Callback when confirmed.
+	 * @param {string}   message   - The message to display.
+	 * @param {Function} onConfirm - Called on confirm; receives the reason when options.prompt is set.
 	 * @param {Object}   options   - Optional: title, confirmText, cancelText,
 	 *                               tone ('danger' renders a danger confirm),
-	 *                               prompt (label for a required reason field -
-	 *                               its value is passed to onConfirm).
+	 *                               prompt (label for a required reason field).
 	 */
 	WPSS.showConfirm = function(message, onConfirm, options) {
 		options = options || {};
 		var i18n = (wpssData && wpssData.i18n) || {};
-		var isDanger = 'danger' === options.tone;
-		// Default the action label to a danger verb when this is a destructive
-		// confirm so the Delete button reads correctly even if the caller does
-		// not pass an explicit confirmText.
-		var defaultConfirm = isDanger ? (i18n.delete) : (i18n.confirm);
-		var confirmText = options.confirmText || defaultConfirm;
-		var cancelText = options.cancelText || i18n.cancel;
-		var title = options.title || '';
-		var confirmVariant = isDanger ? 'wpss-btn--danger' : 'wpss-btn--primary';
-
-		$('#wpss-confirm-modal').remove();
-
-		// Remember the opener so focus can return to it on close.
-		var opener = document.activeElement;
-
-		var titleId = 'wpss-confirm-title';
-		var msgId = 'wpss-confirm-message';
-		var labelledBy = title ? titleId : msgId;
-
-		var $modal = $('<div id="wpss-confirm-modal" class="wpss-modal wpss-modal-open" role="dialog" aria-modal="true" aria-labelledby="' + labelledBy + '">' +
-			'<div class="wpss-modal__backdrop"></div>' +
-			'<div class="wpss-modal__dialog wpss-confirm" role="document">' +
-				(title ? '<h2 id="' + titleId + '" class="wpss-confirm__title">' + WPSS.escapeHtml(title) + '</h2>' : '') +
-				'<p id="' + msgId + '" class="wpss-confirm__message">' + WPSS.escapeHtml(message) + '</p>' +
-				(options.prompt ?
-					'<label class="wpss-confirm__prompt-label" for="wpss-confirm-prompt">' + WPSS.escapeHtml(options.prompt) + '</label>' +
-					'<textarea id="wpss-confirm-prompt" class="wpss-form-textarea wpss-confirm__prompt" rows="3"></textarea>'
-					: '') +
-				'<div class="wpss-confirm__actions">' +
-					'<button type="button" class="wpss-btn wpss-btn--outline wpss-confirm-cancel">' + WPSS.escapeHtml(cancelText) + '</button>' +
-					'<button type="button" class="wpss-btn ' + confirmVariant + ' wpss-confirm-ok">' + WPSS.escapeHtml(confirmText) + '</button>' +
-				'</div>' +
-			'</div>' +
-		'</div>');
-
-		$('body').append($modal).addClass('wpss-modal-active');
-
-		var close = function() {
-			$modal.off('keydown.wpss-confirm');
-			$modal.remove();
-			$('body').removeClass('wpss-modal-active');
-			if (opener && typeof opener.focus === 'function') {
-				opener.focus();
-			}
-		};
-
-		$modal.find('.wpss-confirm-ok').on('click', function() {
-			var reason = '';
-
-			if (options.prompt) {
-				var $field = $modal.find('.wpss-confirm__prompt');
-				reason = $.trim($field.val() || '');
-
-				// Keep the dialog open rather than sending something the server
-				// would only refuse.
-				if (!reason) {
-					$field.addClass('wpss-form-input--error').attr('aria-invalid', 'true').focus();
-					return;
-				}
-			}
-
-			close();
-			if (onConfirm) onConfirm(reason);
-		});
-
-		$modal.find('.wpss-confirm-cancel, .wpss-modal__backdrop').on('click', function() {
-			close();
-		});
-
+		var opts = { title: options.title, cancelText: options.cancelText, tone: options.tone };
+		opts.confirmText = options.confirmText || ('danger' === options.tone ? i18n.delete : i18n.confirm);
 		if (options.prompt) {
-			$modal.find('.wpss-confirm__prompt').trigger('focus');
+			opts.prompt = { label: options.prompt, required: true, requiredMessage: i18n.promptRequired };
 		}
 
-		// Keyboard: Escape closes; Tab is trapped between the focusable controls.
-		var $focusable = $modal.find('textarea, button');
-		$modal.on('keydown.wpss-confirm', function(e) {
-			if ('Escape' === e.key) {
-				e.preventDefault();
-				close();
+		window.wpssConfirm(message, opts).then(function(result) {
+			if (false === result) {
 				return;
 			}
-			if ('Tab' === e.key && $focusable.length) {
-				var first = $focusable.get(0);
-				var last = $focusable.get($focusable.length - 1);
-				if (e.shiftKey && document.activeElement === first) {
-					e.preventDefault();
-					last.focus();
-				} else if (!e.shiftKey && document.activeElement === last) {
-					e.preventDefault();
-					first.focus();
-				}
+			if (onConfirm) {
+				onConfirm(options.prompt ? $.trim(result) : '');
 			}
 		});
-
-		// Move focus into the dialog (cancel first — the safe default).
-		$modal.find('.wpss-confirm-cancel').trigger('focus');
 	};
 
 	/**
-	 * Show prompt dialog (replaces browser prompt()).
+	 * Show a prompt dialog (replaces browser prompt()): a confirm with a text field.
 	 *
 	 * @param {string}   message  - The prompt message.
 	 * @param {Function} onSubmit - Callback with the entered value.
@@ -1736,44 +1650,19 @@
 	WPSS.showPrompt = function(message, onSubmit, options) {
 		options = options || {};
 		var i18n = (wpssData && wpssData.i18n) || {};
-		var placeholder = options.placeholder || '';
-		var submitText = options.submitText || i18n.submit;
-		var cancelText = options.cancelText || i18n.cancel;
-		var required = options.required !== false;
 
-		$('#wpss-prompt-modal').remove();
-
-		var $modal = $('<div id="wpss-prompt-modal" class="wpss-modal wpss-modal-open">' +
-			'<div class="wpss-modal__backdrop"></div>' +
-			'<div class="wpss-modal__dialog wpss-modal__dialog--sm">' +
-				'<div class="wpss-modal__body">' +
-					'<p class="wpss-modal__intro">' + WPSS.escapeHtml(message) + '</p>' +
-					'<textarea class="wpss-form-textarea wpss-prompt-input" rows="3" placeholder="' + WPSS.escapeHtml(placeholder) + '"></textarea>' +
-				'</div>' +
-				'<div class="wpss-modal__footer">' +
-					'<button type="button" class="wpss-btn wpss-btn--outline wpss-prompt-cancel">' + WPSS.escapeHtml(cancelText) + '</button>' +
-					'<button type="button" class="wpss-btn wpss-btn--primary wpss-prompt-submit">' + WPSS.escapeHtml(submitText) + '</button>' +
-				'</div>' +
-			'</div>' +
-		'</div>');
-
-		$('body').append($modal).addClass('wpss-modal-active');
-		$modal.find('.wpss-prompt-input').trigger('focus');
-
-		$modal.find('.wpss-prompt-submit').on('click', function() {
-			var value = $modal.find('.wpss-prompt-input').val();
-			if (required && (!value || !value.trim())) {
-				WPSS.showNotification(wpssData.i18n.promptRequired, 'warning');
-				return;
+		window.wpssConfirm(message, {
+			confirmText: options.submitText || i18n.submit,
+			cancelText: options.cancelText,
+			prompt: {
+				placeholder: options.placeholder || '',
+				required: false !== options.required,
+				requiredMessage: i18n.promptRequired
 			}
-			$modal.remove();
-			$('body').removeClass('wpss-modal-active');
-			if (onSubmit) onSubmit(value);
-		});
-
-		$modal.find('.wpss-prompt-cancel, .wpss-modal__backdrop').on('click', function() {
-			$modal.remove();
-			$('body').removeClass('wpss-modal-active');
+		}).then(function(value) {
+			if (false !== value && onSubmit) {
+				onSubmit(value);
+			}
 		});
 	};
 

@@ -113,7 +113,7 @@ class Frontend {
 		wp_register_script(
 			'wpss-frontend',
 			\WPSS_PLUGIN_URL . 'assets/js/frontend.js',
-			array( 'jquery', 'alpinejs', 'wpss-icons', 'wpss-ux-primitives' ),
+			array( 'jquery', 'alpinejs', 'wpss-icons', 'wpss-ux-primitives', ScriptRegistry::HANDLE_UI ),
 			\WPSS_VERSION,
 			true
 		);

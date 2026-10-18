@@ -32,7 +32,9 @@
 		 * @param {string} [options.cancelText]  Label for the cancel button (default 'Cancel').
 		 * @param {string} [options.tone]        'danger' tints the confirm button red.
 		 * @param {Object} [options.prompt]      Ask for text as well as consent. Renders a
-		 *                                       textarea; {label, placeholder, maxLength}.
+		 *                                       textarea; {label, placeholder, maxLength,
+		 *                                       required, requiredMessage}. With required the
+		 *                                       dialog stays open until the field has text.
 		 * @return {Promise<boolean|string>} Without options.prompt: true on confirm, false
 		 *                                   otherwise. With it: the entered string on
 		 *                                   confirm (possibly empty), false on
@@ -68,14 +70,17 @@
 				if ( titleText ) {
 					var h2 = document.createElement( 'h2' );
 					h2.className = 'wpss-confirm__title';
+					h2.id = 'wpss-confirm-title';
 					h2.textContent = titleText;
 					dialog.appendChild( h2 );
 				}
 
 				var p = document.createElement( 'p' );
 				p.className = 'wpss-confirm__message';
+				p.id = 'wpss-confirm-message';
 				p.textContent = message;
 				dialog.appendChild( p );
+				dialog.setAttribute( 'aria-labelledby', titleText ? 'wpss-confirm-title' : 'wpss-confirm-message' );
 
 				/*
 				 * Optional text input. Exists so nothing in this plugin has to reach
@@ -84,8 +89,10 @@
 				 * service got a half-translated dialog (Basecamp 10304333428).
 				 */
 				var field = null;
+				var promptOpts = {};
+				var feedback = null;
 				if ( options.prompt ) {
-					var promptOpts = 'object' === typeof options.prompt ? options.prompt : {};
+					promptOpts = 'object' === typeof options.prompt ? options.prompt : {};
 
 					if ( promptOpts.label ) {
 						var label = document.createElement( 'label' );
@@ -99,6 +106,9 @@
 					field.className = 'wpss-confirm__input';
 					field.id = 'wpss-confirm-input';
 					field.rows = 3;
+					if ( ! promptOpts.label ) {
+						field.setAttribute( 'aria-labelledby', 'wpss-confirm-message' );
+					}
 					if ( promptOpts.placeholder ) {
 						field.placeholder = promptOpts.placeholder;
 					}
@@ -184,6 +194,21 @@
 				document.addEventListener( 'keydown', onEsc );
 
 				confirmBtn.addEventListener( 'click', function() {
+					if ( field && promptOpts.required && ! field.value.trim() ) {
+						// Keep the dialog open rather than send something the server would refuse.
+						field.setAttribute( 'aria-invalid', 'true' );
+						if ( ! feedback ) {
+							feedback = document.createElement( 'p' );
+							feedback.className = 'wpss-confirm__error';
+							feedback.setAttribute( 'role', 'alert' );
+							feedback.textContent = promptOpts.requiredMessage || i18n.required || 'Please fill this in.';
+							field.insertAdjacentElement( 'afterend', feedback );
+							field.setAttribute( 'aria-describedby', 'wpss-confirm-error' );
+							feedback.id = 'wpss-confirm-error';
+						}
+						field.focus();
+						return;
+					}
 					teardown( field ? field.value : true );
 				} );
 

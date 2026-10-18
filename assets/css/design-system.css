@@ -1098,6 +1098,8 @@ body.wpss-modal-active { overflow: hidden; }
 .wpss-confirm__label { text-align: start; font-size: var(--wpss-text-sm); font-weight: 600; color: var(--wpss-text); }
 .wpss-confirm__input { width: 100%; box-sizing: border-box; padding: var(--wpss-space-3); border: 1px solid var(--wpss-border); border-radius: var(--wpss-radius); background: var(--wpss-bg); color: var(--wpss-text); font: inherit; font-size: var(--wpss-text-base); line-height: 1.5; resize: vertical; text-align: start; }
 .wpss-confirm__input:focus { outline: 2px solid var(--wpss-primary); outline-offset: 1px; border-color: var(--wpss-primary); }
+.wpss-confirm__input[aria-invalid="true"] { border-color: var(--wpss-danger); }
+.wpss-confirm__error { margin: 0; text-align: start; font-size: var(--wpss-text-sm); color: var(--wpss-danger-dark, var(--wpss-danger)); }
 
 /* wpss-ui.js confirm primitive — overlay + dialog wrapper.
    The dialog reuses .wpss-modal__dialog.wpss-confirm (above) + .wpss-btn
