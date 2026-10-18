@@ -225,13 +225,16 @@ class UtcMigration {
 			$cutover[ $table ] = (int) $wpdb->get_var( "SELECT MAX(id) FROM {$name}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		}
 
-		$nothing_to_do = $site_is_utc && 0 === $server_offset;
+		// A named zone with daylight saving can read 0 now and not in July, so only UTC itself is a no-op.
+		$server_zone   = self::server_zone();
+		$nothing_to_do = $site_is_utc && 0 === $server_offset && in_array( $server_zone, array( '', 'UTC', 'Etc/UTC' ), true );
 		$started       = gmdate( 'Y-m-d H:i:s' );
 
 		return array(
 			'status'        => $nothing_to_do ? 'done' : 'pending',
 			'site_is_utc'   => $site_is_utc,
 			'server_offset' => $server_offset,
+			'server_zone'   => $server_zone,
 			'cutover'       => $cutover,
 			'cursor'        => array(),
 			'meta_done'     => $site_is_utc,
@@ -334,21 +337,64 @@ class UtcMigration {
 	}
 
 	/**
+	 * The database server's global zone when it is a named zone (`America/New_York`), else ''.
+	 *
+	 * A named zone has daylight saving, so one offset cannot convert every stored time. `SYSTEM`
+	 * and fixed offsets (`+02:00`) are not named: a fixed offset is exact, and SYSTEM only names
+	 * an abbreviation.
+	 *
+	 * @return string
+	 */
+	public static function server_zone(): string {
+		global $wpdb;
+
+		$zone = (string) $wpdb->get_var( 'SELECT @@global.time_zone' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		return in_array( $zone, timezone_identifiers_list(), true ) ? $zone : '';
+	}
+
+	/**
 	 * Seconds the database server's own clock runs ahead of UTC.
 	 *
 	 * The plugin set this connection to UTC; the global zone is what columns
-	 * filled by MySQL used before.
+	 * filled by MySQL used before. A named zone is read in PHP, so a server without
+	 * MySQL's zone tables is no longer taken for UTC.
 	 *
 	 * @return int
 	 */
 	public static function server_offset(): int {
 		global $wpdb;
 
+		$zone = self::server_zone();
+		if ( '' !== $zone ) {
+			return ( new \DateTimeZone( $zone ) )->getOffset( new \DateTimeImmutable( 'now', new \DateTimeZone( 'UTC' ) ) );
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$offset = $wpdb->get_var( "SELECT TIMESTAMPDIFF( SECOND, UTC_TIMESTAMP(), CONVERT_TZ( UTC_TIMESTAMP(), '+00:00', @@global.time_zone ) )" );
 
-		// NULL when the global zone is a name and MySQL has no zone tables.
+		// NULL for SYSTEM or an unreadable zone.
 		return null === $offset ? 0 : (int) $offset;
+	}
+
+	/**
+	 * A time the database server's clock filled, as UTC.
+	 *
+	 * @param string               $value MySQL datetime in the server's zone.
+	 * @param array<string, mixed> $state State: server_zone, server_offset.
+	 * @return string UTC `Y-m-d H:i:s`.
+	 */
+	public static function server_to_utc( string $value, array $state ): string {
+		$zone = (string) ( $state['server_zone'] ?? '' );
+
+		if ( '' !== $zone ) {
+			$dt = date_create( $value, new \DateTimeZone( $zone ) );
+			if ( false !== $dt ) {
+				return $dt->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
+			}
+		}
+
+		return gmdate( 'Y-m-d H:i:s', strtotime( $value . ' UTC' ) - (int) $state['server_offset'] );
 	}
 
 	/**
@@ -449,7 +495,7 @@ class UtcMigration {
 			return false;
 		}
 
-		if ( 0 !== (int) $state['server_offset'] ) {
+		if ( 0 !== (int) $state['server_offset'] || '' !== (string) ( $state['server_zone'] ?? '' ) ) {
 			foreach ( self::SERVER_COLUMNS as $table => $columns ) {
 				if ( ! self::table_done( $state, $table ) ) {
 					self::convert_table( $state, $table, $columns, 'server', $dry_run, $samples );
@@ -518,7 +564,7 @@ class UtcMigration {
 				}
 
 				if ( 'server' === $from ) {
-					$value = gmdate( 'Y-m-d H:i:s', strtotime( $row[ $column ] . ' UTC' ) - (int) $state['server_offset'] );
+					$value = self::server_to_utc( (string) $row[ $column ], $state );
 				} elseif ( $mysql_stamped ) {
 					$value = self::updated_at_utc( $row, $columns, $state );
 				} else {
@@ -627,7 +673,7 @@ class UtcMigration {
 	private static function updated_at_utc( array $row, array $columns, array $state ): string {
 		$stored = (string) $row['updated_at'];
 		$site   = get_gmt_from_date( $stored );
-		$server = gmdate( 'Y-m-d H:i:s', strtotime( $stored . ' UTC' ) - (int) $state['server_offset'] );
+		$server = self::server_to_utc( $stored, $state );
 
 		if ( $site === $server ) {
 			return $site;
