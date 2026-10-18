@@ -311,7 +311,9 @@ class PaymentController extends RestController {
 	 */
 	private function product_id( WP_REST_Request $request ) {
 		$type = (string) $request->get_param( 'product_type' );
-		if ( '' !== $type && 'service' !== $type ) {
+		// A registered type other than "service" is known but cannot be bought until
+		// the checkout intent is item-based, so it is refused with the same error.
+		if ( '' !== $type && ( 'service' !== $type || null === wpss()->get_product_type( $type ) ) ) {
 			return new WP_Error( 'wpss_unsupported_product_type', __( 'This product type is not supported.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 

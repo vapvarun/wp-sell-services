@@ -13,6 +13,7 @@ require_once __DIR__ . '/exit-on-fail.php';
 
 use WPSellServices\Integrations\Contracts\EcommerceAdapterInterface;
 use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
+use WPSellServices\Integrations\Contracts\ProductTypeInterface;
 use WPSellServices\Integrations\Contracts\StorageProviderInterface;
 use WPSellServices\Integrations\Contracts\WalletProviderInterface;
 
@@ -63,6 +64,7 @@ foreach ( array(
 	array( WalletProviderInterface::class, 'wpss_wallet_providers' ),
 	array( EcommerceAdapterInterface::class, 'wpss_ecommerce_adapters' ),
 	array( PaymentGatewayInterface::class, 'wpss_payment_gateways' ),
+	array( ProductTypeInterface::class, 'wpss_product_types' ),
 ) as list( $contract, $filter ) ) {
 	$good   = $stub( $contract, 'acme' );
 	$result = wpss_validate_registry( array( 'acme' => $good, 'rogue' => new stdClass(), 7 => $good ), $contract, $filter );
@@ -70,7 +72,7 @@ foreach ( array(
 	$check( "{$filter}: an object that is not the contract is dropped", ! isset( $result['rogue'] ) );
 	$check( "{$filter}: a numeric id is dropped", ! isset( $result[7] ) );
 }
-$check( 'a developer notice names the filter for each dropped entry', 8 === $notices );
+$check( 'a developer notice names the filter for each dropped entry', 10 === $notices );
 
 $check( 'the live gateway registry holds only gateways', count( array_filter( wpss()->get_payment_gateways(), static fn( $g ) => ! $g instanceof PaymentGatewayInterface ) ) === 0 );
 

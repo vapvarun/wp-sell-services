@@ -609,7 +609,7 @@ class EarningsService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, order_number, service_id, total, vendor_earnings, commission_rate, platform_fee, status, completed_at, created_at
+				"SELECT id, order_number, service_id, product_type, total, vendor_earnings, commission_rate, platform_fee, status, completed_at, created_at
 				FROM {$orders_table}
 				WHERE {$where_clause}
 				ORDER BY completed_at DESC
@@ -620,13 +620,14 @@ class EarningsService {
 
 		return array_map(
 			function ( $order ) {
-				$service = get_post( $order->service_id );
+				$type  = wpss()->get_product_type( (string) ( $order->product_type ?: 'service' ) );
+				$title = $type ? $type->get_title( (int) $order->service_id ) : '';
 				// Use vendor_earnings when available (commission calculated), fall back to total for older orders.
 				$amount = null !== $order->vendor_earnings ? (float) $order->vendor_earnings : (float) $order->total;
 				return array(
 					'id'              => (int) $order->id,
 					'order_number'    => $order->order_number,
-					'service_name'    => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
+					'service_name'    => '' !== $title ? $title : __( 'Deleted Service', 'wp-sell-services' ),
 					'amount'          => $amount,
 					'order_total'     => (float) $order->total,
 					'commission_rate' => null !== $order->commission_rate ? (float) $order->commission_rate : null,

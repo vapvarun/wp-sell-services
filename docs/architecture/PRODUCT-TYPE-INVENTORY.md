@@ -41,14 +41,18 @@ Each row is a place a physical-goods type would have to work around today. Order
 | 2 | `CheckoutIntent` carries `service_id`, `package_id`, `addons`, `addons_total` as first-class fields | `src/Checkout/CheckoutIntent.php:104-128`. **1.9.0: the intent carries its own receipt `description` in its metadata; `service_id`/`package_id` stay for the service type.** | Intent needs `items[]` of `{product_id, type, qty, options}`; the service fields become one item's options. |
 | 3 | `PaymentController` requires `service_id` and `package_id` on create and confirm | `src/API/PaymentController.php:82-143,202`. **1.9.0: routes accept `product_id` + `product_type`; `service_id` stays an alias and any type but `service` is refused.** | Options stay service-shaped until the type registry lands. |
 | 4 | Stripe and PayPal read `metadata['service_id']`, title via `get_the_title( $service_id )`, vendor via the service's `post_author` | `StripeGateway.php:236,1034-1043`, `PayPalGateway.php:694,740`. **1.9.0: Stripe and PayPal print the intent's description and no longer look up the service; the legacy `create_payment_intent()` still reads the service author.** | Gateways must receive a neutral description and payee from the intent, not look up a service. |
-| 5 | Contract methods named for services (renamed in 1.9.0: `cart_has_sellable_items`, `get_cart_sellable_items`, `has_sellable_items`, `get_sellable_items`, `is_sellable_product`). `ProductProviderInterface::get_service(): ?Service` still returns the service model | `CheckoutProviderInterface`, `OrderProviderInterface`, `ProductProviderInterface` | `get_service()` is renamed when the product-type registry lands. |
+| 5 | Contract methods named for services (renamed in 1.9.0: `cart_has_sellable_items`, `get_cart_sellable_items`, `has_sellable_items`, `get_sellable_items`, `is_sellable_product`). `ProductProviderInterface::get_service(): ?Service` still returns the service model | `CheckoutProviderInterface`, `OrderProviderInterface`, `ProductProviderInterface` | `get_service()` stays in 1.9.0: renaming it needs a neutral product model to return, which belongs with the item-based intent. |
 | 6 | One status list for every order | `ServiceOrder::STATUS_*` (18 constants) mixes generic (`pending_payment`, `completed`, `cancelled`, `refunded`) with service-only states | Each type declares its states and transitions; generic ones stay in core. |
 | 7 | Order workflow crons are service lifecycle | `OrderWorkflowManager` (late, auto-complete, requirements reminders) | Register per type, not for every order. |
 | 8 | `wpss_calculate_tax()` takes `$service_id` | `functions/money.php:234`; filter `wpss_checkout_tax_rate` | Pass a product id and type. Filter signature changes (Compat). |
 | 9 | Earnings screens resolve a service title from the order | `EarningsService.php:612-623` | Ask the type for a line label. |
 | 10 | Standalone adapter is wired to services (149 hits) | `src/Integrations/Standalone` | Becomes the "services" implementation of a neutral standalone rail. |
 
-## 4. Proposed seam (not built in 1.9.0)
+## 4. Seam (partly built in 1.9.0)
+
+**Built in 1.9.0:** `ProductTypeInterface` (`get_id`, `get_label`, `owns`, `get_title`, `get_vendor_id`), `ServiceProductType`, the `wpss_product_types` registry (`wpss()->get_product_types()` / `get_product_type()`), the REST payment type check and the earnings line label. **Not built:** `statuses()`, `checkout_options()`, `fulfillment()` and `register_cron()` below.
+
+Proposed full contract:
 
 ```
 ProductTypeInterface

@@ -136,6 +136,14 @@ final class Plugin {
 	private array $wallet_providers = array();
 
 	/**
+	 * Registered product types (id => ProductTypeInterface).
+	 *
+	 * @var array
+	 * @since 1.9.0
+	 */
+	private array $product_types = array();
+
+	/**
 	 * Registered storage providers.
 	 *
 	 * @var array
@@ -2747,6 +2755,23 @@ final class Plugin {
 		 *
 		 * @param array $providers Array of wallet provider instances.
 		 */
+		/**
+		 * Filter the registered product types.
+		 *
+		 * "service" is registered by core. A type added here is known to the
+		 * REST payment routes, earnings labels and any code that asks the registry;
+		 * it still needs an item-based checkout intent before it can be bought.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param array $types Map of type id to ProductTypeInterface instance.
+		 */
+		$this->product_types = wpss_validate_registry(
+			apply_filters( 'wpss_product_types', array( 'service' => new \WPSellServices\Integrations\ProductTypes\ServiceProductType() ) ),
+			\WPSellServices\Integrations\Contracts\ProductTypeInterface::class,
+			'wpss_product_types'
+		);
+
 		$this->wallet_providers = wpss_validate_registry( apply_filters( 'wpss_wallet_providers', $this->wallet_providers ), \WPSellServices\Integrations\Contracts\WalletProviderInterface::class, 'wpss_wallet_providers' );
 
 		/**
@@ -3334,6 +3359,27 @@ final class Plugin {
 	 */
 	public function get_wallet_providers(): array {
 		return $this->wallet_providers;
+	}
+
+	/**
+	 * Get registered product types.
+	 *
+	 * @since 1.9.0
+	 * @return array<string, \WPSellServices\Integrations\Contracts\ProductTypeInterface>
+	 */
+	public function get_product_types(): array {
+		return $this->product_types;
+	}
+
+	/**
+	 * Get one product type by id.
+	 *
+	 * @since 1.9.0
+	 * @param string $id Type id.
+	 * @return \WPSellServices\Integrations\Contracts\ProductTypeInterface|null
+	 */
+	public function get_product_type( string $id ): ?\WPSellServices\Integrations\Contracts\ProductTypeInterface {
+		return $this->product_types[ $id ] ?? null;
 	}
 
 	/**

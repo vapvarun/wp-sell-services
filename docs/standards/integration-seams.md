@@ -30,6 +30,7 @@ generic order, checkout or payment code.
 | Storage | `wpss_storage_providers` | `StorageProviderInterface` | Done; contract-tested |
 | Wallet | `wpss_wallet_providers` | `WalletProviderInterface` | Done; contract-tested |
 | Payment gateway | `wpss_payment_gateways` | `PaymentGatewayInterface` | Done, registry validated. A gateway extends `AbstractPaymentGateway` and owns its REST create/confirm (`rest_create_intent`, `rest_confirm_payment`) and its settings card (`get_settings_card`, with `order`). `PaymentController` and `Settings` name no gateway |
+| Product type | `wpss_product_types` | `ProductTypeInterface` | Done for registration; contract-tested. "service" is registered by core. REST payment routes and earnings labels read the registry. A second type cannot be bought until the checkout intent is item-based (see `docs/architecture/PRODUCT-TYPE-INVENTORY.md`) |
 | Dashboard section | `wpss_dashboard_sections` | array | Done; a section registered here is also a known route; contract-tested |
 | SEO plugin | `wpss_seo_integrations` | `SeoIntegrationInterface` | Done; Yoast, Rank Math and AIOSEO are three providers; contract-tested |
 | Product type, fulfillment | planned | | Inventory and proposed seam in `docs/architecture/PRODUCT-TYPE-INVENTORY.md`. Not built in 1.9.0 |
