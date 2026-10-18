@@ -1946,14 +1946,23 @@ class Settings {
 			)
 		);
 
-		printf(
-			'<p class="description wpss-settings-crosslink">%s</p>',
-			wp_kses_post(
-				sprintf(
-					/* translators: %s: link to the Withdrawals admin screen. */
-					__( 'Work the payout batch itself on the %s screen.', 'wp-sell-services' ),
-					'<a href="' . esc_url( admin_url( 'admin.php?page=wpss-withdrawals' ) ) . '">' . esc_html__( 'Withdrawals', 'wp-sell-services' ) . '</a>'
-				)
+		// A card, like every other direct child of a settings panel.
+		$this->render_single_section(
+			array(
+				'id'       => 'payout-batches',
+				'title'    => __( 'Payout batches', 'wp-sell-services' ),
+				'callback' => static function (): void {
+					printf(
+						'<p class="description wpss-settings-crosslink">%s</p>',
+						wp_kses_post(
+							sprintf(
+								/* translators: %s: link to the Withdrawals admin screen. */
+								__( 'Work the payout batch itself on the %s screen.', 'wp-sell-services' ),
+								'<a href="' . esc_url( admin_url( 'admin.php?page=wpss-withdrawals' ) ) . '">' . esc_html__( 'Withdrawals', 'wp-sell-services' ) . '</a>'
+							)
+						)
+					);
+				},
 			)
 		);
 	}
