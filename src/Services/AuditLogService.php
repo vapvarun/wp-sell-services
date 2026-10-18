@@ -177,7 +177,7 @@ class AuditLogService {
 					$withdrawal_id,
 					array(
 						'action'     => 'completed' === $status ? 'pay' : $status,
-						'from_value' => (string) ( $withdrawal->status ?? '' ),
+						'from_value' => (string) ( $withdrawal->previous_status ?? $withdrawal->status ?? '' ),
 						'to_value'   => $status,
 						'context'    => array(
 							'vendor_id' => (int) ( $withdrawal->vendor_id ?? 0 ),

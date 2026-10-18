@@ -1113,17 +1113,20 @@ class EarningsService {
 	 * The withdrawal row as it now stands. The row was read before the update, so a listener
 	 * handed it saw the old status and no admin note: the rejection email left out the reason.
 	 *
+	 * `previous_status` keeps the state it moved from, for the audit log.
+	 *
 	 * @param object $withdrawal Row read before the update.
 	 * @param string $status     Status just written.
 	 * @param string $note       Admin note just written.
 	 * @return object
 	 */
 	private function as_processed( object $withdrawal, string $status, string $note ): object {
-		$processed               = clone $withdrawal;
-		$processed->status       = $status;
-		$processed->admin_note   = sanitize_textarea_field( $note );
-		$processed->processed_at = current_time( 'mysql', true );
-		$processed->processed_by = get_current_user_id();
+		$processed                  = clone $withdrawal;
+		$processed->previous_status = (string) ( $withdrawal->status ?? '' );
+		$processed->status          = $status;
+		$processed->admin_note      = sanitize_textarea_field( $note );
+		$processed->processed_at    = current_time( 'mysql', true );
+		$processed->processed_by    = get_current_user_id();
 
 		return $processed;
 	}

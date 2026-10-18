@@ -45,6 +45,8 @@ $check( 'the rejection went through', ! empty( $result['success'] ) );
 $check( 'the listener sees the new status', is_object( $seen ) && 'rejected' === $seen->status );
 $check( 'the listener sees the admin note', is_object( $seen ) && 'IBAN is missing' === $seen->admin_note );
 
+$check( 'the listener still knows the state it moved from', is_object( $seen ) && 'pending' === ( $seen->previous_status ?? '' ) );
+
 remove_action( 'wpss_withdrawal_processed', $spy, 99 );
 $wpdb->delete( $table, array( 'id' => $id ) );
 
