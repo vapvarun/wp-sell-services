@@ -90,21 +90,29 @@ function wpss_get_gallery_video_url( $raw ): string {
  */
 function wpss_service_meta_sorts(): array {
 	return array(
-		'price_low'  => array(
+		'price_low'   => array(
 			'key'   => '_wpss_starting_price',
 			'order' => 'ASC',
 		),
-		'price_high' => array(
+		'price_high'  => array(
 			'key'   => '_wpss_starting_price',
 			'order' => 'DESC',
 		),
-		'rating'     => array(
+		'rating'      => array(
 			'key'   => '_wpss_rating_average',
 			'order' => 'DESC',
 		),
-		'popular'    => array(
+		'rating_low'  => array(
+			'key'   => '_wpss_rating_average',
+			'order' => 'ASC',
+		),
+		'popular'     => array(
 			'key'   => '_wpss_order_count',
 			'order' => 'DESC',
+		),
+		'popular_low' => array(
+			'key'   => '_wpss_order_count',
+			'order' => 'ASC',
 		),
 	);
 }
@@ -124,7 +132,7 @@ function wpss_service_meta_sorts(): array {
  * @since 1.8.0
  *
  * @param array<string,mixed> $args WP_Query args.
- * @param string              $sort newest, price_low, price_high, rating or popular. Anything else leaves $args untouched.
+ * @param string              $sort newest, price_low, price_high, rating, rating_low, popular or popular_low. Anything else leaves $args untouched.
  * @return array<string,mixed> The args with the sort applied.
  */
 function wpss_apply_service_sort( array $args, string $sort ): array {
@@ -320,8 +328,8 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 	// "sales" none at all, because it read _wpss_total_sales, a key nothing
 	// writes (Basecamp 10375174916).
 	$sorts = array(
-		'rating' => 'rating',
-		'sales'  => 'popular',
+		'rating' => 'ASC' === $args['order'] ? 'rating_low' : 'rating',
+		'sales'  => 'ASC' === $args['order'] ? 'popular_low' : 'popular',
 		'price'  => 'ASC' === $args['order'] ? 'price_low' : 'price_high',
 	);
 
