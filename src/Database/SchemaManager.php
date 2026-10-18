@@ -374,6 +374,8 @@ class SchemaManager {
 		$this->maybe_add_index( 'orders', 'customer_status_created', 'customer_id, status, created_at' );
 		// Revenue is counted by the date money was paid (wpss_get_revenue()).
 		$this->maybe_add_index( 'orders', 'idx_paid', 'paid_at' );
+		// Orders are looked up by what was bought once a second product type exists (1.9.0).
+		$this->maybe_add_index( 'orders', 'idx_product', 'product_type, product_id' );
 	}
 
 	/**
@@ -525,6 +527,23 @@ class SchemaManager {
 				'definition' => 'varchar(64) DEFAULT NULL',
 				'after'      => 'platform_order_id',
 			),
+			// What was bought, in product-neutral terms (1.9.0). `service_id` stays and
+			// stays authoritative for the 'service' type; product_id mirrors it, so a
+			// later product type has somewhere to put its own id without a schema
+			// change on the money table. Additive only: nothing is migrated off
+			// service_id and no existing query changes meaning.
+			array(
+				'table'      => 'orders',
+				'column'     => 'product_type',
+				'definition' => "varchar(32) NOT NULL DEFAULT 'service'",
+				'after'      => 'service_id',
+			),
+			array(
+				'table'      => 'orders',
+				'column'     => 'product_id',
+				'definition' => 'bigint(20) unsigned DEFAULT NULL',
+				'after'      => 'product_type',
+			),
 			// Proof of payment as a private order-file record instead of a
 			// media-library attachment id, which was a public uploads URL
 			// (Basecamp 10267994010). Same column name and shape as every other
@@ -547,6 +566,7 @@ class SchemaManager {
 		}
 
 		$this->backfill_platform_order_ref();
+		$this->backfill_product_id();
 		$this->backfill_package_snapshots();
 		$this->backfill_package_ids();
 		$this->backfill_revisions_included();
@@ -732,6 +752,50 @@ class SchemaManager {
 
 		if ( $fixed > 0 && function_exists( 'wpss_log' ) ) {
 			wpss_log( "Schema 1.7.1: set revisions_included from the package snapshot on {$fixed} standalone order(s)." );
+		}
+	}
+
+	/**
+	 * Give existing orders a product_id matching their service_id.
+	 *
+	 * Batched and capped like backfill_platform_order_ref(): a marketplace can hold hundreds
+	 * of thousands of orders and an unbounded UPDATE would lock the money table. Rows past the
+	 * cap finish on the next upgrade pass; until then readers use service_id, which is unchanged.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @return void
+	 */
+	private function backfill_product_id(): void {
+		$table = $this->get_table_name( 'orders' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$column_exists = $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+				WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+				DB_NAME,
+				$table,
+				'product_id'
+			)
+		);
+
+		if ( (int) $column_exists < 1 ) {
+			return;
+		}
+
+		for ( $batch = 0; $batch < 200; $batch++ ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL
+			$updated = $this->wpdb->query(
+				"UPDATE `{$table}`
+				SET product_id = service_id
+				WHERE product_id IS NULL
+				LIMIT 2000"
+			);
+
+			if ( ! $updated ) {
+				return;
+			}
 		}
 	}
 
@@ -1211,6 +1275,8 @@ class SchemaManager {
 			customer_id bigint(20) unsigned NOT NULL,
 			vendor_id bigint(20) unsigned NOT NULL,
 			service_id bigint(20) unsigned NOT NULL,
+			product_type varchar(32) NOT NULL DEFAULT 'service',
+			product_id bigint(20) unsigned DEFAULT NULL,
 			package_id bigint(20) unsigned DEFAULT NULL,
 			addons longtext,
 			platform varchar(50) DEFAULT 'standalone',
@@ -1246,6 +1312,7 @@ class SchemaManager {
 			KEY idx_customer (customer_id),
 			KEY idx_vendor (vendor_id),
 			KEY idx_service (service_id),
+			KEY idx_product (product_type,product_id),
 			KEY idx_status (status),
 			KEY idx_status_date (status,created_at),
 			KEY idx_vendor_status (vendor_id,status),

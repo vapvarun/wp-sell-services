@@ -677,7 +677,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_currency` | `$currency` | `src/functions/money.php:417` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/core.php:34` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:147` |
-| `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
+| `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:98` |
 | `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:452` |
 | `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:479` |
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1274` |

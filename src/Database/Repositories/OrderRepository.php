@@ -81,6 +81,12 @@ class OrderRepository extends AbstractRepository {
 			$data['platform_order_ref'] = (string) $data['platform_order_id'];
 		}
 
+		// What was bought, product-neutrally. 'service' is the only type today, so the
+		// product is the service. Same inferred-formats condition as above.
+		if ( empty( $format ) && ! isset( $data['product_id'] ) && isset( $data['service_id'] ) ) {
+			$data['product_id'] = (int) $data['service_id'];
+		}
+
 		return parent::insert( $data, $format );
 	}
 

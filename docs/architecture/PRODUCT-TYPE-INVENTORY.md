@@ -37,7 +37,7 @@ Each row is a place a physical-goods type would have to work around today. Order
 
 | # | Coupling | Evidence | Effect on a new type |
 |---|---|---|---|
-| 1 | `wpss_orders` is service-shaped: `service_id NOT NULL`, `package_id`, `addons`, `addons_total`, `revisions_included`, `revisions_used`, `delivery_deadline`, `original_deadline` are columns, not type data | `SchemaManager::get_orders_table` | A goods order has no service, package or revisions. Needs `product_id` + `product_type` and the service columns moved to type meta (migration on a money table). |
+| 1 | `wpss_orders` is service-shaped: `service_id NOT NULL`, `package_id`, `addons`, `revisions_*`, deadlines are columns. **1.9.0 added `product_type` (default `service`) and `product_id` (mirrors `service_id`) with an index and a batched backfill; `service_id` stays authoritative.** | `SchemaManager::get_orders_table` | The service-only columns still move to type data when the product-type registry lands. |
 | 2 | `CheckoutIntent` carries `service_id`, `package_id`, `addons`, `addons_total` as first-class fields | `src/Checkout/CheckoutIntent.php:104-128` | Intent needs `items[]` of `{product_id, type, qty, options}`; the service fields become one item's options. |
 | 3 | `PaymentController` requires `service_id` and `package_id` on create and confirm | `src/API/PaymentController.php:82-143,202` | REST payment routes are service-only; take `product_id` + `type` + `options`. |
 | 4 | Stripe and PayPal read `metadata['service_id']`, title via `get_the_title( $service_id )`, vendor via the service's `post_author` | `StripeGateway.php:236,1034-1043`, `PayPalGateway.php:694,740` | Gateways must receive a neutral description and payee from the intent, not look up a service. |

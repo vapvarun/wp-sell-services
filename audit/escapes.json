@@ -272,6 +272,14 @@
       "fails_on": "tree with two copies of each body",
       "journey": "docs/standards/skeleton.md",
       "now_dead_or_duplicate": "six identical methods in YoastIntegration/RankMathIntegration now in AbstractSeoIntegration; check_order_permission in DisputesController and ConversationsController now in RestController"
+    },
+    {
+      "card": "product-neutral orders: service-shaped orders table (no card)",
+      "class": "the money table could only say what was bought by service_id, so a second product type would need a schema change",
+      "check": "tests/test-order-product-columns.php (columns and index exist after the 1.8.0 upgrade path, new orders get product_type and product_id, backfill fills old rows without overwriting)",
+      "fails_on": "OrderRepository without the product_id default and SchemaManager without backfill_product_id()",
+      "journey": "docs/architecture/PRODUCT-TYPE-INVENTORY.md",
+      "now_dead_or_duplicate": "none; additive, service_id remains authoritative"
     }
   ]
 }
