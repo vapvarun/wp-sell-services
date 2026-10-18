@@ -900,6 +900,12 @@
       "object_id": true,
       "writes": true
     },
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/reorder": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": true
+    },
     "POST /wpss/v1/orders/(?P<id>[\\d]+)/requirements": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\OrdersController::check_customer_permissions",

@@ -888,3 +888,122 @@ function wpss_offline_payment_notice( object $order ): string {
 		? __( 'Payment proof received. We will confirm it shortly and let you know.', 'wp-sell-services' )
 		: __( 'Order placed and waiting for your payment. Work starts once it is confirmed.', 'wp-sell-services' );
 }
+
+/**
+ * What "Order again" would put in the buyer's cart for a finished order, or why it cannot.
+ *
+ * The one reader behind the order page's button and POST /orders/{id}/reorder, so the
+ * two can never disagree. It rebuilds the choice the buyer made (package, add-ons,
+ * quantity) against what the service offers TODAY and prices it through the pricer
+ * checkout charges through, so what the button promises is what checkout shows. Three
+ * things move since the first order and each is said, never hidden: a package that was
+ * removed refuses (a different tier would be a silent substitution), an add-on that is
+ * gone is dropped and named, and a changed price is reported with both figures.
+ * A service that is deleted, paused or whose seller is away is refused by the pricer
+ * with its own reason.
+ *
+ * Not offered for a custom quote or proposal order (there is no package to repeat), a
+ * tip, milestone or extension (they belong to a parent order), or an order that is not
+ * completed.
+ *
+ * @since 1.9.0
+ *
+ * @param \WPSellServices\Models\ServiceOrder $order     The finished order.
+ * @param int                                 $viewer_id Who is asking; only the order's customer may repeat it.
+ * @return array{service_id:int, package_id:int, quantity:int, line:array<string,mixed>, warnings:string[], price_changed:bool, previous_total:float, current_total:float}|\WP_Error
+ */
+function wpss_get_reorder_plan( \WPSellServices\Models\ServiceOrder $order, int $viewer_id ) {
+	if ( $viewer_id < 1 || (int) $order->customer_id !== $viewer_id ) {
+		return new WP_Error( 'wpss_reorder_not_owner', __( 'Only the buyer can order this again.', 'wp-sell-services' ), array( 'status' => 403 ) );
+	}
+
+	$sub_orders = array(
+		\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_TIP,
+		\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_MILESTONE,
+		\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_EXTENSION,
+	);
+	$snapshot   = $order->get_package_snapshot();
+
+	if ( \WPSellServices\Models\ServiceOrder::STATUS_COMPLETED !== $order->status
+		|| in_array( $order->platform, $sub_orders, true )
+		|| ! empty( $order->meta['proposal_snapshot'] )
+		|| null === $order->package_id
+		|| ! $snapshot ) {
+		return new WP_Error( 'wpss_reorder_not_available', __( 'This order cannot be ordered again.', 'wp-sell-services' ), array( 'status' => 409 ) );
+	}
+
+	$service_id = (int) $order->service_id;
+
+	// The package by its stable id; a legacy snapshot without one by its position, but only if
+	// it is still the same package (same name) - a different tier is not "the same order".
+	$resolved = isset( $snapshot['id'] ) ? wpss_resolve_service_package( $service_id, (int) $snapshot['id'] ) : null;
+
+	if ( ! $resolved && ! isset( $snapshot['id'] ) ) {
+		$live = wpss_get_service_packages( $service_id )[ (int) $order->package_id ] ?? null;
+
+		if ( is_array( $live ) && (string) ( $live['name'] ?? '' ) === (string) ( $snapshot['name'] ?? '' ) ) {
+			$resolved = array(
+				'package' => $live,
+				'index'   => (int) $order->package_id,
+			);
+		}
+	}
+
+	if ( ! $resolved ) {
+		return new WP_Error( 'wpss_reorder_package_gone', __( 'The package you bought is no longer offered. Open the service to choose another.', 'wp-sell-services' ), array( 'status' => 409 ) );
+	}
+
+	// Quantity is not stored on the order; it is whole multiples of the package price.
+	$unit     = (float) ( $snapshot['price'] ?? 0 );
+	$ratio    = $unit > 0 ? (float) $order->subtotal / $unit : 1.0;
+	$quantity = ( $ratio >= 1 && abs( $ratio - round( $ratio ) ) < 0.001 ) ? (int) round( $ratio ) : 1;
+
+	$selection = wpss_normalize_addon_selection( is_array( $order->addons ) ? $order->addons : array() );
+	$line      = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, (int) $resolved['index'], $quantity, $selection );
+
+	if ( is_wp_error( $line ) ) {
+		return $line;
+	}
+
+	$warnings = array();
+	$dropped  = array_diff( array_keys( $selection ), array_map( 'intval', array_column( $line['addons'], 'id' ) ) );
+
+	if ( $dropped ) {
+		$names = array();
+		foreach ( (array) $order->addons as $row ) {
+			if ( is_array( $row ) && in_array( (int) ( $row['id'] ?? -1 ), $dropped, true ) ) {
+				$names[] = (string) ( $row['title'] ?? $row['name'] ?? '' );
+			}
+		}
+
+		$warnings[] = sprintf(
+			/* translators: %s: comma-separated add-on names */
+			__( 'No longer available, so left out: %s.', 'wp-sell-services' ),
+			implode( ', ', array_filter( $names ) ) ?: __( 'an add-on from your last order', 'wp-sell-services' )
+		);
+	}
+
+	$previous = round( (float) $order->subtotal + (float) $order->addons_total, wpss_get_currency_decimals() );
+	$current  = round( (float) $line['subtotal'] + (float) $line['addons_total'], wpss_get_currency_decimals() );
+	$changed  = abs( $current - $previous ) > 0.005;
+
+	if ( $changed ) {
+		$warnings[] = sprintf(
+			/* translators: 1: price on the last order, 2: price today */
+			__( 'The price has changed since your last order: it was %1$s and is now %2$s.', 'wp-sell-services' ),
+			wpss_format_price( $previous ),
+			wpss_format_price( $current )
+		);
+	}
+
+	return array(
+		'service_id'     => $service_id,
+		'package_id'     => (int) $resolved['index'],
+		'quantity'       => $quantity,
+		'line'           => $line,
+		'warnings'       => $warnings,
+		'price_changed'  => $changed,
+		'previous_total' => $previous,
+		'current_total'  => $current,
+	);
+}

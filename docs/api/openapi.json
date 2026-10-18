@@ -2740,23 +2740,19 @@
                                             "percentage",
                                             "flat"
                                         ],
-                                        "default": "percentage",
                                         "description": "Whether rate is a percentage or flat fee."
                                     },
                                     "conditions": {
                                         "type": "object",
-                                        "default": [],
                                         "description": "Rule-specific matching conditions."
                                     },
                                     "priority": {
                                         "type": "integer",
                                         "minimum": 1,
-                                        "default": 10,
                                         "description": "Evaluation order (lower = first)."
                                     },
                                     "is_active": {
                                         "type": "boolean",
-                                        "default": true,
                                         "description": "Whether this rule is active."
                                     }
                                 }
@@ -2835,23 +2831,19 @@
                                             "percentage",
                                             "flat"
                                         ],
-                                        "default": "percentage",
                                         "description": "Whether rate is a percentage or flat fee."
                                     },
                                     "conditions": {
                                         "type": "object",
-                                        "default": [],
                                         "description": "Rule-specific matching conditions."
                                     },
                                     "priority": {
                                         "type": "integer",
                                         "minimum": 1,
-                                        "default": 10,
                                         "description": "Evaluation order (lower = first)."
                                     },
                                     "is_active": {
                                         "type": "boolean",
-                                        "default": true,
                                         "description": "Whether this rule is active."
                                     }
                                 }
@@ -2930,23 +2922,19 @@
                                             "percentage",
                                             "flat"
                                         ],
-                                        "default": "percentage",
                                         "description": "Whether rate is a percentage or flat fee."
                                     },
                                     "conditions": {
                                         "type": "object",
-                                        "default": [],
                                         "description": "Rule-specific matching conditions."
                                     },
                                     "priority": {
                                         "type": "integer",
                                         "minimum": 1,
-                                        "default": 10,
                                         "description": "Evaluation order (lower = first)."
                                     },
                                     "is_active": {
                                         "type": "boolean",
-                                        "default": true,
                                         "description": "Whether this rule is active."
                                     }
                                 }
@@ -6180,6 +6168,49 @@
                 }
             }
         },
+        "/wpss/v1/orders/{id}/reorder": {
+            "x-wpss-tier": "free",
+            "post": {
+                "tags": [
+                    "Orders"
+                ],
+                "operationId": "post_wpss_v1_orders_id_reorder",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "The finished order to repeat."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                }
+            }
+        },
         "/wpss/v1/orders/{id}/requirements": {
             "x-wpss-tier": "free",
             "get": {
@@ -6560,6 +6591,10 @@
                                     "reason": {
                                         "type": "string",
                                         "description": "Reason for action (required for reject, cancel, dispute)."
+                                    },
+                                    "amount": {
+                                        "type": "number",
+                                        "description": "assign-refund only: part of the waiting refund to assign to this order."
                                     }
                                 }
                             }
@@ -7298,7 +7333,18 @@
                                     },
                                     "service_id": {
                                         "type": "integer",
-                                        "description": "Service ID."
+                                        "default": 0,
+                                        "description": "Service ID. Same as product_id for the service type."
+                                    },
+                                    "product_id": {
+                                        "type": "integer",
+                                        "default": 0,
+                                        "description": "ID of the product being bought."
+                                    },
+                                    "product_type": {
+                                        "type": "string",
+                                        "default": "service",
+                                        "description": "Product type; \"service\" is the only type registered."
                                     },
                                     "package_id": {
                                         "type": "integer",
@@ -7313,8 +7359,7 @@
                                 },
                                 "required": [
                                     "gateway",
-                                    "payment_id",
-                                    "service_id"
+                                    "payment_id"
                                 ]
                             }
                         }
@@ -7361,7 +7406,18 @@
                                 "properties": {
                                     "service_id": {
                                         "type": "integer",
-                                        "description": "Service ID."
+                                        "default": 0,
+                                        "description": "Service ID. Same as product_id for the service type."
+                                    },
+                                    "product_id": {
+                                        "type": "integer",
+                                        "default": 0,
+                                        "description": "ID of the product being bought."
+                                    },
+                                    "product_type": {
+                                        "type": "string",
+                                        "default": "service",
+                                        "description": "Product type; \"service\" is the only type registered."
                                     },
                                     "package_id": {
                                         "type": "integer",
@@ -7393,7 +7449,6 @@
                                     }
                                 },
                                 "required": [
-                                    "service_id",
                                     "gateway"
                                 ]
                             }
@@ -8435,6 +8490,17 @@
                                         "type": "string",
                                         "format": "uri",
                                         "description": "External project URL."
+                                    },
+                                    "tags": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "Tags, as a list or a comma-separated string."
+                                    },
+                                    "is_featured": {
+                                        "type": "boolean",
+                                        "description": "Feature this item (limited by the featured cap)."
                                     }
                                 },
                                 "required": [
@@ -12257,14 +12323,12 @@
                                 "type": "object",
                                 "properties": {
                                     "enabled": {
-                                        "type": "boolean",
-                                        "default": false
+                                        "type": "boolean"
                                     },
                                     "fee": {
                                         "type": "number",
                                         "minimum": 0,
-                                        "maximum": 100,
-                                        "default": 20
+                                        "maximum": 100
                                     }
                                 }
                             }
@@ -12308,14 +12372,12 @@
                                 "type": "object",
                                 "properties": {
                                     "enabled": {
-                                        "type": "boolean",
-                                        "default": false
+                                        "type": "boolean"
                                     },
                                     "fee": {
                                         "type": "number",
                                         "minimum": 0,
-                                        "maximum": 100,
-                                        "default": 20
+                                        "maximum": 100
                                     }
                                 }
                             }
@@ -12359,14 +12421,12 @@
                                 "type": "object",
                                 "properties": {
                                     "enabled": {
-                                        "type": "boolean",
-                                        "default": false
+                                        "type": "boolean"
                                     },
                                     "fee": {
                                         "type": "number",
                                         "minimum": 0,
-                                        "maximum": 100,
-                                        "default": 20
+                                        "maximum": 100
                                     }
                                 }
                             }
@@ -12757,7 +12817,6 @@
                                     },
                                     "description": {
                                         "type": "string",
-                                        "default": "",
                                         "description": "Plan description."
                                     },
                                     "price": {
@@ -12772,31 +12831,26 @@
                                             "yearly",
                                             "weekly"
                                         ],
-                                        "default": "monthly",
                                         "description": "Billing period."
                                     },
                                     "max_services": {
                                         "type": "integer",
                                         "minimum": -1,
-                                        "default": -1,
                                         "description": "Maximum published services. -1 = unlimited."
                                     },
                                     "max_featured": {
                                         "type": "integer",
                                         "minimum": 0,
-                                        "default": 0,
                                         "description": "Maximum featured services."
                                     },
                                     "commission_override": {
                                         "type": "number",
                                         "minimum": 0,
                                         "maximum": 100,
-                                        "default": null,
                                         "description": "Override platform commission rate (%). Null = use global setting."
                                     },
                                     "features": {
                                         "type": "array",
-                                        "default": [],
                                         "items": {
                                             "type": "string"
                                         },
@@ -12804,12 +12858,10 @@
                                     },
                                     "stripe_price_id": {
                                         "type": "string",
-                                        "default": "",
                                         "description": "Stripe Price ID (price_…) for automatic billing."
                                     },
                                     "is_active": {
                                         "type": "boolean",
-                                        "default": true,
                                         "description": "Whether this plan is available to vendors."
                                     }
                                 }
@@ -12874,7 +12926,6 @@
                                     },
                                     "description": {
                                         "type": "string",
-                                        "default": "",
                                         "description": "Plan description."
                                     },
                                     "price": {
@@ -12889,31 +12940,26 @@
                                             "yearly",
                                             "weekly"
                                         ],
-                                        "default": "monthly",
                                         "description": "Billing period."
                                     },
                                     "max_services": {
                                         "type": "integer",
                                         "minimum": -1,
-                                        "default": -1,
                                         "description": "Maximum published services. -1 = unlimited."
                                     },
                                     "max_featured": {
                                         "type": "integer",
                                         "minimum": 0,
-                                        "default": 0,
                                         "description": "Maximum featured services."
                                     },
                                     "commission_override": {
                                         "type": "number",
                                         "minimum": 0,
                                         "maximum": 100,
-                                        "default": null,
                                         "description": "Override platform commission rate (%). Null = use global setting."
                                     },
                                     "features": {
                                         "type": "array",
-                                        "default": [],
                                         "items": {
                                             "type": "string"
                                         },
@@ -12921,12 +12967,10 @@
                                     },
                                     "stripe_price_id": {
                                         "type": "string",
-                                        "default": "",
                                         "description": "Stripe Price ID (price_…) for automatic billing."
                                     },
                                     "is_active": {
                                         "type": "boolean",
-                                        "default": true,
                                         "description": "Whether this plan is available to vendors."
                                     }
                                 }
@@ -12991,7 +13035,6 @@
                                     },
                                     "description": {
                                         "type": "string",
-                                        "default": "",
                                         "description": "Plan description."
                                     },
                                     "price": {
@@ -13006,31 +13049,26 @@
                                             "yearly",
                                             "weekly"
                                         ],
-                                        "default": "monthly",
                                         "description": "Billing period."
                                     },
                                     "max_services": {
                                         "type": "integer",
                                         "minimum": -1,
-                                        "default": -1,
                                         "description": "Maximum published services. -1 = unlimited."
                                     },
                                     "max_featured": {
                                         "type": "integer",
                                         "minimum": 0,
-                                        "default": 0,
                                         "description": "Maximum featured services."
                                     },
                                     "commission_override": {
                                         "type": "number",
                                         "minimum": 0,
                                         "maximum": 100,
-                                        "default": null,
                                         "description": "Override platform commission rate (%). Null = use global setting."
                                     },
                                     "features": {
                                         "type": "array",
-                                        "default": [],
                                         "items": {
                                             "type": "string"
                                         },
@@ -13038,12 +13076,10 @@
                                     },
                                     "stripe_price_id": {
                                         "type": "string",
-                                        "default": "",
                                         "description": "Stripe Price ID (price_…) for automatic billing."
                                     },
                                     "is_active": {
                                         "type": "boolean",
-                                        "default": true,
                                         "description": "Whether this plan is available to vendors."
                                     }
                                 }

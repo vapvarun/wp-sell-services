@@ -1694,6 +1694,51 @@ do_action( 'wpss_before_order_view', $order );
 		</section>
 	<?php endif; ?>
 
+	<?php
+	// Order again: the buyer's own finished order, same package and add-ons at today's price.
+	// The plan is the one the REST route uses, so the button never promises what the cart refuses.
+	$wpss_reorder = null;
+	if ( 'completed' === $order->status && $is_customer ) {
+		$wpss_reorder = wpss_get_reorder_plan( $order, get_current_user_id() );
+
+		// Not repeatable at all (a tip, a custom quote): say nothing rather than explain a button that was never there.
+		if ( is_wp_error( $wpss_reorder ) && in_array( $wpss_reorder->get_error_code(), array( 'wpss_reorder_not_owner', 'wpss_reorder_not_available' ), true ) ) {
+			$wpss_reorder = null;
+		}
+	}
+	?>
+	<?php if ( null !== $wpss_reorder ) : ?>
+		<section class="wpss-order-section wpss-order-section--reorder" aria-labelledby="wpss-reorder-title">
+			<h3 id="wpss-reorder-title" class="wpss-reorder__title"><?php esc_html_e( 'Need this again?', 'wp-sell-services' ); ?></h3>
+			<?php if ( is_wp_error( $wpss_reorder ) ) : ?>
+				<p class="wpss-reorder__text"><?php echo esc_html( $wpss_reorder->get_error_message() ); ?></p>
+				<?php $wpss_reorder_service = get_permalink( (int) $order->service_id ); ?>
+				<?php if ( $wpss_reorder_service && 'wpss_reorder_package_gone' === $wpss_reorder->get_error_code() ) : ?>
+					<a class="wpss-btn wpss-btn--outline" href="<?php echo esc_url( $wpss_reorder_service ); ?>"><?php esc_html_e( 'View the service', 'wp-sell-services' ); ?></a>
+				<?php endif; ?>
+			<?php else : ?>
+				<p class="wpss-reorder__text">
+					<?php
+					printf(
+						/* translators: 1: package name, 2: total at today's price */
+						esc_html__( 'Same package (%1$s) and options as this order, for %2$s at today\'s price.', 'wp-sell-services' ),
+						esc_html( (string) ( $wpss_reorder['line']['package']['name'] ?? $order->get_package_name() ) ),
+						esc_html( wpss_format_price( $wpss_reorder['current_total'] ) )
+					);
+					?>
+				</p>
+				<?php foreach ( $wpss_reorder['warnings'] as $wpss_reorder_warning ) : ?>
+					<p class="wpss-notice wpss-notice--warning"><?php echo esc_html( $wpss_reorder_warning ); ?></p>
+				<?php endforeach; ?>
+				<button type="button" class="wpss-btn wpss-btn--primary wpss-reorder-btn" data-order="<?php echo esc_attr( (string) $order_id ); ?>">
+					<i data-lucide="repeat" class="wpss-icon" aria-hidden="true"></i>
+					<?php esc_html_e( 'Order again', 'wp-sell-services' ); ?>
+				</button>
+				<p class="wpss-reorder__error wpss-notice wpss-notice--error" role="alert" hidden></p>
+			<?php endif; ?>
+		</section>
+	<?php endif; ?>
+
 	<!-- Tip CTA (for completed orders, buyer only, once per order, on a rail that can take the payment) -->
 	<?php
 	if ( 'completed' === $order->status && $is_customer && wpss_can_pay_single_order() && wpss_tipping_enabled() ) :

@@ -3561,6 +3561,50 @@ a.wpss-back-link:focus {
 }
 
 /* ==========================================================================
+   Order again - order-view CTA for a finished order
+   ========================================================================== */
+
+.wpss-order-section--reorder {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	margin-top: 16px;
+	padding: 20px;
+	background: var(--wpss-bg-subtle);
+	border: 1px solid var(--wpss-border);
+	border-radius: 12px;
+}
+
+.wpss-reorder__title {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--wpss-text);
+}
+
+.wpss-reorder__text {
+	margin: 0;
+	font-size: 14px;
+	color: var(--wpss-text-muted);
+}
+
+.wpss-order-section--reorder .wpss-notice {
+	margin: 0;
+}
+
+@media (max-width: 640px) {
+	.wpss-order-section--reorder {
+		padding: 16px;
+	}
+
+	.wpss-order-section--reorder .wpss-reorder-btn,
+	.wpss-order-section--reorder .wpss-btn {
+		width: 100%;
+	}
+}
+
+/* ==========================================================================
    Tip UI — order-view CTA + modal (Tipping feature)
    ========================================================================== */
 

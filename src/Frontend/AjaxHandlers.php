@@ -2184,8 +2184,8 @@ class AjaxHandlers {
 	/**
 	 * The checkout URL for a priced line, carrying the whole selection.
 	 *
-	 * Ids travel in the URL; a quantity, option or text needs the full
-	 * selection beside them or checkout would drop it.
+	 * Exits with the honest refusal when the rail cannot build one
+	 * (see ServiceCart::checkout_url()).
 	 *
 	 * @param int                  $service_id Service ID.
 	 * @param array<string, mixed> $line       Priced line.
@@ -2193,52 +2193,13 @@ class AjaxHandlers {
 	 * @return string
 	 */
 	private function checkout_url_for_line( int $service_id, array $line, int $quantity ): string {
-		$url  = $this->require_checkout_url( $service_id, (int) $line['package_id'], array_map( 'intval', array_column( $line['addons'], 'id' ) ), $quantity );
-		$meta = \WPSellServices\Checkout\CheckoutIntentService::selection_metadata( $line['addons'] );
+		$url = \WPSellServices\Checkout\ServiceCart::checkout_url( $service_id, $line, $quantity );
 
-		return empty( $meta['addon_sel'] ) ? $url : add_query_arg( 'addon_sel', rawurlencode( $meta['addon_sel'] ), $url );
-	}
-
-	/**
-	 * The checkout URL for a selection, or refuse when the rail cannot build one.
-	 *
-	 * A store rail that has no catalog checkout returns an empty string from its
-	 * checkout provider. Carrying on regardless is what made the dead end silent:
-	 * the buyer got "Added to cart", a cart row, and a Checkout link with an
-	 * empty href, which reloaded the service page forever with no error anywhere
-	 * (Basecamp 10268056147, 10268056083).
-	 *
-	 * The refusal lives here, at the one seam every add-to-cart path goes
-	 * through, so a rail is honest by default rather than by special case.
-	 *
-	 * Exits when no URL can be built.
-	 *
-	 * @since 1.7.1
-	 *
-	 * @param int             $service_id Service CPT ID.
-	 * @param int             $package_id Package index.
-	 * @param array<int, int> $addons     Selected addon indexes.
-	 * @param int             $quantity   Quantity, appended when above one.
-	 * @return string
-	 */
-	private function require_checkout_url( int $service_id, int $package_id, array $addons, int $quantity = 1 ): string {
-		$checkout_url = wpss_get_service_checkout_url( $service_id, $package_id, $addons );
-
-		if ( '' === $checkout_url ) {
-			$adapter = wpss_get_active_adapter();
-
-			wp_send_json_error(
-				array(
-					'message' => sprintf(
-						/* translators: %s: name of the active store platform, e.g. Fluent Cart */
-						__( 'Checkout is not available for this service on %s, so nothing was added to your cart. Please let the site owner know.', 'wp-sell-services' ),
-						$adapter ? $adapter->get_name() : __( 'this store platform', 'wp-sell-services' )
-					),
-				)
-			);
+		if ( is_wp_error( $url ) ) {
+			wp_send_json_error( array( 'message' => $url->get_error_message() ) );
 		}
 
-		return $quantity > 1 ? add_query_arg( 'quantity', $quantity, $checkout_url ) : $checkout_url;
+		return $url;
 	}
 
 	/**
@@ -2279,85 +2240,18 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
 		}
 
-		$line      = $this->price_posted_selection( $service_id, $quantity );
-		$cart_item = array(
-			'service_id' => $service_id,
-			'package_id' => (int) $line['package_id'],
-			'package'    => $line['package'],
-			// The selection only: the cart prices it again on every read
-			// (wpss_price_cart_item()), so a price can never go stale here.
-			'addons'     => array_map(
-				static fn( $addon ) => array_intersect_key( $addon, array_flip( array( 'id', 'quantity', 'option', 'text' ) ) ),
-				$line['addons']
-			),
-			'quantity'   => $quantity,
-			'total'      => (float) $line['total'],
-		);
+		$line   = $this->price_posted_selection( $service_id, $quantity );
+		$result = \WPSellServices\Checkout\ServiceCart::add( get_current_user_id(), $service_id, $line, $quantity );
 
-		/**
-		 * Filter to let e-commerce adapters handle cart addition natively.
-		 *
-		 * When a non-standalone adapter (e.g. WooCommerce) is active, it should
-		 * handle adding the service to its own cart system instead of the
-		 * standalone user-meta cart.
-		 *
-		 * Return an array with 'handled' => true to skip standalone cart logic.
-		 * Optionally include 'checkout_url' and 'cart_count' in the returned array.
-		 *
-		 * @since 1.3.0
-		 *
-		 * @param array|false                                               $result    False by default (not handled).
-		 * @param array                                                     $cart_item Cart item data.
-		 * @param \WPSellServices\Integrations\Contracts\EcommerceAdapterInterface|null $adapter   Active adapter.
-		 */
-		// Resolved before anything is written to any cart: a rail that cannot
-		// check this service out refuses here instead of leaving the buyer with
-		// a cart row and a Checkout button that goes nowhere.
-		$checkout_url = $this->checkout_url_for_line( $service_id, $line, $quantity );
-
-		$adapter_result = apply_filters( 'wpss_add_service_to_cart', false, $cart_item, $adapter );
-
-		if ( is_array( $adapter_result ) && ! empty( $adapter_result['handled'] ) ) {
-			// Adapter handled the cart addition (e.g. WooCommerce, EDD).
-			if ( ! empty( $adapter_result['error'] ) ) {
-				wp_send_json_error( array( 'message' => $adapter_result['error'] ) );
-			}
-
-			if ( ! empty( $adapter_result['checkout_url'] ) ) {
-				$checkout_url = (string) $adapter_result['checkout_url'];
-				if ( $quantity > 1 ) {
-					$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
-				}
-			}
-
-			wp_send_json_success(
-				array(
-					'message'      => __( 'Added to cart!', 'wp-sell-services' ),
-					'cart_count'   => $adapter_result['cart_count'] ?? 1,
-					'checkout_url' => $checkout_url,
-				)
-			);
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
-
-		// Standalone cart: store in user meta.
-		$user_id = get_current_user_id();
-		$cart    = get_user_meta( $user_id, '_wpss_cart', true );
-
-		if ( ! is_array( $cart ) ) {
-			$cart = array();
-		}
-
-		$item_key              = md5( $service_id . '-' . $line['package_id'] . '-' . wp_json_encode( $cart_item['addons'] ) );
-		$cart_item['added_at'] = current_time( 'mysql', true );
-		$cart[ $item_key ]     = $cart_item;
-
-		update_user_meta( $user_id, '_wpss_cart', $cart );
 
 		wp_send_json_success(
 			array(
 				'message'      => __( 'Added to cart!', 'wp-sell-services' ),
-				'cart_count'   => wpss_get_cart_count( $user_id ),
-				'checkout_url' => $checkout_url,
+				'cart_count'   => $result['cart_count'],
+				'checkout_url' => $result['checkout_url'],
 			)
 		);
 	}

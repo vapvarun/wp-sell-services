@@ -55,6 +55,7 @@
             ],
             "wpss_add_service_to_cart": [
                 "tests/pro/test-beta-rails.php",
+                "tests/test-order-again.php",
                 "audit/render-coverage.json"
             ],
             "wpss_admin_add_order_note": [
@@ -168,6 +169,7 @@
                 "audit/render-coverage.json"
             ],
             "wpss_get_service_packages": [
+                "tests/test-order-again.php",
                 "audit/render-coverage.json"
             ],
             "wpss_import_demo_content": [
@@ -453,7 +455,8 @@
                 "audit/render-coverage.json"
             ],
             "wpss_add_service_to_cart": [
-                "tests/pro/test-beta-rails.php"
+                "tests/pro/test-beta-rails.php",
+                "tests/test-order-again.php"
             ],
             "wpss_admin_menu_label": [
                 "tests/Integration/ProExtensionHooksTest.php",
@@ -768,6 +771,7 @@
             "wpss_format_price": [
                 "tests/test-display-currency-surfaces-contract.php",
                 "tests/test-milestone-parent-total-contract.php",
+                "tests/test-order-again.php",
                 "tests/test-settings-defaults.php",
                 "audit/render-coverage.json"
             ],
@@ -1721,6 +1725,9 @@
                 "tests/test-receipt-privacy.php",
                 "audit/render-coverage.json"
             ],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/reorder": [
+                "tests/test-order-again.php"
+            ],
             "/wpss/v1/orders/(?P<id>[\\d]+)/requirements": [
                 "tests/test-requirement-attachment-records.php",
                 "audit/journeys/09-request-files-to-order.md",
@@ -2350,7 +2357,8 @@
                 "audit/render-coverage.json"
             ],
             "partials/service-packages": [
-                "tests/test-display-currency-surfaces-contract.php"
+                "tests/test-display-currency-surfaces-contract.php",
+                "tests/test-wizard-package-description.php"
             ],
             "partials/service-rejection-notice": [
                 "audit/journeys/13-admin-moderates-and-manages.md"
@@ -2378,6 +2386,7 @@
                 "tests/test-guest-checkout-contract.php",
                 "tests/test-layout-surface-css.php",
                 "tests/test-title-suppression-scope.php",
+                "tests/test-wizard-package-description.php",
                 "audit/journeys/04-visitor-browses-and-views-service.md"
             ],
             "vendor/profile": [

@@ -440,6 +440,38 @@
 			WPSS.showReviewModal(orderId);
 		});
 
+		// Order again: REST puts the finished order's package and add-ons in the cart, then go to checkout.
+		$(document).on('click', '.wpss-reorder-btn', function(e) {
+			e.preventDefault();
+			const $btn = $(this);
+			const $error = $btn.siblings('.wpss-reorder__error');
+
+			// One request at a time, so a double click cannot add the line twice.
+			if ($btn.prop('disabled')) { return; }
+			$btn.prop('disabled', true);
+			$error.prop('hidden', true).text('');
+
+			$.ajax({
+				url: wpssData.apiUrl + 'orders/' + $btn.data('order') + '/reorder',
+				method: 'POST',
+				beforeSend: function(xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
+				},
+				success: function(response) {
+					if (response && response.checkout_url) {
+						window.location.href = response.checkout_url;
+						return;
+					}
+					$btn.prop('disabled', false);
+				},
+				error: function(xhr) {
+					const message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : wpssData.i18n.ajaxError;
+					$error.text(message).prop('hidden', false);
+					$btn.prop('disabled', false);
+				}
+			});
+		});
+
 		// Send tip — open modal.
 		$(document).on('click', '.wpss-open-tip-modal', function(e) {
 			e.preventDefault();

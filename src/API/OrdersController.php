@@ -363,6 +363,26 @@ class OrdersController extends RestController {
 			)
 		);
 
+		// Order again: put a finished order's package and add-ons back in the buyer's cart.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/reorder',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'reorder' ),
+					'permission_callback' => array( $this, 'check_item_permissions' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'The finished order to repeat.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
+
 		// Trigger payment on an existing order (primarily used for
 		// milestone sub-orders where the lock-step rule must be enforced
 		// server-side so a crafted URL can't leapfrog phases).
@@ -1700,6 +1720,55 @@ class OrdersController extends RestController {
 				'platform'     => (string) ( $order->platform ?? '' ),
 			),
 			200
+		);
+	}
+
+	/**
+	 * Order again: add a finished order's package and add-ons to the buyer's cart.
+	 *
+	 * Everything is decided by wpss_get_reorder_plan() (shared with the order page's
+	 * button); the cart write goes through ServiceCart, so it lands in the active
+	 * rail's cart. Warnings (a changed price, an add-on that no longer exists) are
+	 * returned so a client can say them before the buyer pays.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function reorder( WP_REST_Request $request ) {
+		$order = ServiceOrder::find( (int) $request->get_param( 'id' ) );
+
+		if ( ! $order ) {
+			return new WP_Error( 'wpss_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		$plan = wpss_get_reorder_plan( $order, get_current_user_id() );
+
+		if ( is_wp_error( $plan ) ) {
+			return $plan;
+		}
+
+		$added = \WPSellServices\Checkout\ServiceCart::add( get_current_user_id(), $plan['service_id'], $plan['line'], $plan['quantity'] );
+
+		if ( is_wp_error( $added ) ) {
+			return $added;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success'        => true,
+				'checkout_url'   => $added['checkout_url'],
+				'cart_count'     => $added['cart_count'],
+				'service_id'     => $plan['service_id'],
+				'package_id'     => (int) ( $plan['line']['package']['id'] ?? $plan['package_id'] ),
+				'quantity'       => $plan['quantity'],
+				'previous_total' => $plan['previous_total'],
+				'current_total'  => $plan['current_total'],
+				'price_changed'  => $plan['price_changed'],
+				'warnings'       => $plan['warnings'],
+			),
+			201
 		);
 	}
 
