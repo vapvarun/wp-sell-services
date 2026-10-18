@@ -46,3 +46,8 @@ Admin > Vendors > a vendor > Vacation Mode.
 Admin > Review Moderation.
 
 **Expect** "Search by reviewer or text..." is fully visible at 1440; the field fills the row at 390.
+
+### 9. Keyboard focus is visible on every field (UX rule 14)
+Tab through the contact form, the request requirements form, checkout form groups, the block category select and the tip presets.
+
+**Expect** each focused control shows a 3px primary ring, not only a border-colour change. check: tests/test-focus-indicator-css.php

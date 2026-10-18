@@ -2856,6 +2856,7 @@ a.wpss-back-link:focus {
 .wpss-requirement-field select:focus {
 	outline: none;
 	border-color: var(--wpss-primary);
+	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
 }
 
 .wpss-requirement-field textarea {
@@ -3336,6 +3337,7 @@ body.wpss-modal-active {
 .wpss-form-group input:focus {
 	outline: none;
 	border-color: var(--wpss-primary);
+	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
 }
 
 .wpss-form-group textarea {
@@ -3375,6 +3377,7 @@ body.wpss-modal-active {
 .wpss-form-group__textarea:focus {
 	outline: none;
 	border-color: var(--wpss-primary);
+	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
 }
 
 .wpss-form-group__textarea {
@@ -3972,6 +3975,10 @@ body.wpss-modal-active {
 	border-color: var(--wpss-gray-300, #d1d5db);
 	background: var(--wpss-surface, #fff);
 	outline: none;
+}
+
+.wpss-tip-form__preset:focus-visible {
+	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
 }
 
 .wpss-tip-form__preset.is-selected {

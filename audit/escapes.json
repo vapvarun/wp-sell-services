@@ -176,6 +176,14 @@
       "fails_on": "pre-sweep tree (helpers, REST filter and zone labels absent; gate baseline had 90 calls)",
       "journey": "audit/journeys/19-time-zones.md#1",
       "now_dead_or_duplicate": "none; the baseline file is empty and every raw call is gone or carries a time-ok comment"
+    },
+    {
+      "card": "ux-rule-14-focus-ring",
+      "class": "Form fields, category select and tip presets removed the focus outline and swapped only a border colour, so keyboard focus was nearly invisible",
+      "check": "tests/test-focus-indicator-css.php + bin/check-ux-conformance.php",
+      "fails_on": "pre-fix CSS (4 rules removed the outline with no ring)",
+      "journey": "audit/journeys/17-layout-per-surface.md#9",
+      "now_dead_or_duplicate": "none"
     }
   ]
 }
