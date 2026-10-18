@@ -1,0 +1,34 @@
+{
+  "_doc": [
+    "Which files belong to which browser-walked surface, for bin/smoke-gate.cjs.",
+    "",
+    "A changed rendered file used to invalidate the whole smoke walk. A file listed here only makes its own",
+    "surface stale: re-walk that surface, record it under `surfaces` in the smoke report with the commit it ran",
+    "against, and the file is covered again.",
+    "",
+    "Safety property: a file that matches NO glob here invalidates everything, exactly as before. A shared",
+    "helper, a new file, a rename or an unmapped directory therefore fails safe. This file can only narrow",
+    "invalidation for files someone deliberately mapped; list a file under a surface only when a walk of that",
+    "surface would notice a regression in it.",
+    "",
+    "Globs: ** crosses directories, * stays inside one. `free` paths are relative to the Free plugin, `pro` to Pro."
+  ],
+  "surfaces": {
+    "cart": {
+      "free": [ "templates/cart/**" ],
+      "pro": [ "src/Integrations/*/*Cart*" ]
+    },
+    "checkout": {
+      "free": [ "src/Checkout/**", "templates/checkout/**" ],
+      "pro": [ "src/Integrations/*/*Checkout*" ]
+    },
+    "earnings": {
+      "free": [ "templates/dashboard/sections/earnings.php", "assets/css/unified-dashboard*.css" ],
+      "pro": []
+    },
+    "publish": {
+      "free": [ "src/Admin/Metaboxes/ServiceMetabox.php", "src/Services/ServiceManager.php" ],
+      "pro": []
+    }
+  }
+}

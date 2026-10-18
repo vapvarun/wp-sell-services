@@ -51,6 +51,65 @@ function staleSince( dir, sha, rendered ) {
 	}
 }
 
+/**
+ * Glob to RegExp: ** crosses directories, * stays inside one.
+ *
+ * @param {string} glob Glob from docs/qa/smoke-surfaces.json.
+ * @return {RegExp} Anchored matcher.
+ */
+function globToRegExp( glob ) {
+	const body = String( glob )
+		.replace( /[.+^${}()|[\]\\]/g, '\\$&' )
+		.replace( /\*\*/g, '\u0000' )
+		.replace( /\*/g, '[^/]*' )
+		.replace( /\u0000/g, '.*' );
+
+	return new RegExp( '^' + body + '$' );
+}
+
+/**
+ * Drop changed files whose every surface was re-verified after the change.
+ *
+ * A file that maps to no surface is never dropped, so an unmapped change
+ * invalidates the whole walk: the map can narrow invalidation, never widen
+ * what passes. A mapped file is covered only when each surface it belongs to
+ * has a report entry whose recorded commit is at or after the file's last
+ * change, i.e. the file is not in the diff from that commit to HEAD.
+ *
+ * @param {string}      dir      Checkout the files belong to.
+ * @param {string[]}    files    Changed rendered files (stale list).
+ * @param {Object}      surfaces Surface map, name => { free: [], pro: [] }.
+ * @param {'free'|'pro'} side    Which glob list applies to this checkout.
+ * @param {Object}      verified Report's `surfaces`: name => { ran_against, pro_ran_against }.
+ * @param {string[]}    rendered Rendered prefixes for this checkout.
+ * @return {string[]} Files still stale.
+ */
+function dropVerifiedSurfaces( dir, files, surfaces, side, verified, rendered ) {
+	const key = 'free' === side ? 'ran_against' : 'pro_ran_against';
+
+	return files.filter( ( file ) => {
+		const owners = Object.keys( surfaces ).filter( ( name ) =>
+			( surfaces[ name ][ side ] || [] ).some( ( g ) => globToRegExp( g ).test( file ) )
+		);
+
+		if ( ! owners.length ) {
+			return true;
+		}
+
+		return ! owners.every( ( name ) => {
+			const sha = verified && verified[ name ] && verified[ name ][ key ];
+
+			if ( ! /^[0-9a-f]{7,40}$/.test( String( sha || '' ) ) ) {
+				return false;
+			}
+
+			const since = staleSince( dir, sha, rendered );
+
+			return null !== since && ! since.includes( file );
+		} );
+	} );
+}
+
 /*
  * Sections a walk CANNOT run, which is not the same as a walk that did not.
  *
@@ -169,6 +228,17 @@ module.exports = function smokeGate( { version, freeDir, proDir = path.resolve( 
 		}
 	}
 
+	let surfaceMap = {};
+	const surfaceFile = at( 'docs/qa/smoke-surfaces.json' );
+
+	if ( fs.existsSync( surfaceFile ) ) {
+		try {
+			surfaceMap = JSON.parse( fs.readFileSync( surfaceFile, 'utf8' ) ).surfaces || {};
+		} catch ( e ) {
+			return fail( surfaceFile + ' is not valid JSON: ' + e.message );
+		}
+	}
+
 	for ( const [ mode, rel ] of REPORTS ) {
 		const report = at( rel );
 
@@ -236,7 +306,11 @@ module.exports = function smokeGate( { version, freeDir, proDir = path.resolve( 
 			);
 		}
 
-		const stale = staleSince( freeDir, data.ran_against, RENDERED );
+		let stale = staleSince( freeDir, data.ran_against, RENDERED );
+
+		if ( stale && stale.length ) {
+			stale = dropVerifiedSurfaces( freeDir, stale, surfaceMap, 'free', data.surfaces, RENDERED );
+		}
 
 		if ( null === stale ) {
 			return fail(
@@ -260,7 +334,11 @@ module.exports = function smokeGate( { version, freeDir, proDir = path.resolve( 
 				return fail( rel + ' has no usable "pro_ran_against" SHA; the combo walk cannot be dated against Pro. Re-run the smoke.' );
 			}
 
-			const proStale = fs.existsSync( proDir ) ? staleSince( proDir, data.pro_ran_against, PRO_RENDERED ) : null;
+			let proStale = fs.existsSync( proDir ) ? staleSince( proDir, data.pro_ran_against, PRO_RENDERED ) : null;
+
+			if ( proStale && proStale.length ) {
+				proStale = dropVerifiedSurfaces( proDir, proStale, surfaceMap, 'pro', data.surfaces, PRO_RENDERED );
+			}
 
 			if ( null === proStale ) {
 				return fail( 'cannot diff Pro at ' + proDir + ' from ' + data.pro_ran_against + '. Check out wp-sell-services-pro beside Free, or re-run the smoke.' );

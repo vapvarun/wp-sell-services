@@ -10,6 +10,7 @@ One page, in the order QA works. Everything QA needs is linked from here; nothin
 | [`../../audit/gate-parameters.md`](../../audit/gate-parameters.md) | developer | the conditions every flow is walked under (rail, theme, dark, 390, RTL, upgraded site, time zone) |
 | [`TESTING-GUIDELINE.md`](TESTING-GUIDELINE.md) | developer | how to judge what you see (expectation first) |
 | [`CORE_PATHS.md`](CORE_PATHS.md) | developer | the flows that matter most; a bug there outranks one on an edge |
+| [`smoke-surfaces.json`](smoke-surfaces.json) | developer | which files belong to which walked surface; the release gate re-walks only a changed surface (an unmapped file re-walks everything) |
 | `qa-config.json`, `.qa-results/walks.json` (untracked, local to the tester), `../../audit/escapes.json` | QA | gate config, walk ledger, regression-guard rows |
 | `QA-HANDOFF-1.9.0.md` | developer | what changed this release, by fix group (replaced each release) |
 | `OWNER_INVENTORY.md` | generated | what the site owner can see; regenerate, never edit |
@@ -29,6 +30,8 @@ Tests all live in Free: `tests/` for the core and `tests/pro/` for Pro features 
 node <qa-mcp>/bin/wppqa-run.mjs --plugin <plugin dir> --only static --allow-static
 python3 <claude-backup>/skills/wp-qa-gate/scripts/ready-check.py <plugin dir>
 ```
+
+Before a release, `grunt verify:smoke-gate` dates both smoke reports against Free and Pro. A changed file that `smoke-surfaces.json` maps to a surface is covered once that surface is re-walked and recorded under `surfaces` in the report (`ran_against`, and `pro_ran_against` for Pro files); a file it does not map invalidates the whole walk. `node tests/smoke-gate-surfaces.test.cjs` proves both.
 
 A red guard on a surface is where the walk starts. A green gate does not replace the walk; it covers the known shapes only. Prove a guard can fail before trusting it (`audit/escapes.json` has a `fails_on` for each).
 
