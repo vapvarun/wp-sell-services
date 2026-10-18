@@ -181,7 +181,7 @@ ksort( $artefacts );
 // ---------------------------------------------------------------------------
 
 $wpss_cov_evidence = array();
-foreach ( array_merge( $wpss_cov_php( $wpss_cov_dir . 'tests' ), glob( $wpss_cov_dir . 'audit/journeys/*.md' ), array( $wpss_cov_dir . 'docs/qa/AGENT_SMOKE_RUNBOOK.md' ) ) as $f ) {
+foreach ( array_merge( $wpss_cov_php( $wpss_cov_dir . 'tests' ), glob( $wpss_cov_dir . 'audit/journeys/*.md' ), array( $wpss_cov_dir . 'docs/qa/README.md' ) ) as $f ) {
 	$text = (string) file_get_contents( $f );
 	// A PHP concatenation or a {placeholder} inside a path stands for one segment:
 	// '/wpss/v1/orders/' . $id . '/requirements' and /orders/{id}/requirements
