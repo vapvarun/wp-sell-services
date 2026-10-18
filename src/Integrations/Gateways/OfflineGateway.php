@@ -15,7 +15,6 @@ namespace WPSellServices\Integrations\Gateways;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
 
 /**
  * Offline payment gateway implementation.
@@ -25,7 +24,7 @@ use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
  *
  * @since 1.0.0
  */
-class OfflineGateway implements PaymentGatewayInterface {
+class OfflineGateway extends AbstractPaymentGateway {
 
 	/**
 	 * Gateway ID.

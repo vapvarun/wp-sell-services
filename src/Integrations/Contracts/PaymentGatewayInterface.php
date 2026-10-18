@@ -115,4 +115,40 @@ interface PaymentGatewayInterface {
 	 * @return string HTML output.
 	 */
 	public function render_payment_form( float $amount, string $currency, int $order_id ): string;
+
+	/**
+	 * Start a payment from the REST API (POST /payments/intent).
+	 *
+	 * Core resolves and prices the purchase, then hands the gateway the finished intent. Return the
+	 * response the client needs to continue (a client secret, an approval URL, or the created order).
+	 * Core never names a gateway; a gateway that cannot be driven over REST returns a WP_Error.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param \WPSellServices\Checkout\CheckoutIntent $intent  Server-priced intent.
+	 * @param array<string, mixed>                    $request Resolver request: pay_order, service_id, package_id, quantity, addons.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function rest_create_intent( \WPSellServices\Checkout\CheckoutIntent $intent, array $request );
+
+	/**
+	 * Confirm a payment from the REST API (POST /payments/confirm).
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param array<string, mixed> $params payment_id, service_id, package_id, pay_order.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function rest_confirm_payment( array $params );
+
+	/**
+	 * How this gateway appears in Settings > Payments, or null to stay off that screen.
+	 *
+	 * The card body is the gateway's own `wpss_gateway_settings_{id}` fields.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @return array{title: string, description: string, option_group: string, order: int}|null
+	 */
+	public function get_settings_card(): ?array;
 }

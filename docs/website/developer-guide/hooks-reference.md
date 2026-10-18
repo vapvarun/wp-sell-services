@@ -467,8 +467,8 @@ guide; this is the complete index.
 | `wpss_requirement_field_label` | 2 | `src/functions/requirements.php` | Filter the label shown for a submitted requirement field. |
 | `wpss_requirements_allowed_file_types` | 1 | `src/functions/files.php` | Filter the file extensions allowed for buyer requirement attachments. |
 | `wpss_requirements_file_inputs` | 2 | `src/Frontend/AjaxHandlers.php` |  |
-| `wpss_rest_confirm_payment` | 6 | `src/API/PaymentController.php` | Filter to handle custom payment gateway confirmation via REST. |
-| `wpss_rest_create_payment_intent` | 7 | `src/API/PaymentController.php` | Filter to handle custom payment gateway intent creation via REST. |
+| `wpss_rest_confirm_payment` | 6 | `src/Integrations/Gateways/AbstractPaymentGateway.php` |  |
+| `wpss_rest_create_payment_intent` | 7 | `src/Integrations/Gateways/AbstractPaymentGateway.php` |  |
 | `wpss_rest_order_data` | 3 | `src/API/OrdersController.php` | Filters the order data returned in REST API responses. |
 | `wpss_rest_review_data` | 3 | `src/API/ReviewsController.php` | Filters the review data returned in REST API responses. |
 | `wpss_rest_service_data` | 3 | `src/API/ServicesController.php` | Filter service REST response data. |

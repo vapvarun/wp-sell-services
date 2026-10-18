@@ -15,7 +15,6 @@ namespace WPSellServices\Integrations\Gateways;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
 
 /**
  * Test payment gateway implementation.
@@ -24,7 +23,7 @@ use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
  *
  * @since 1.2.0
  */
-class TestGateway implements PaymentGatewayInterface {
+class TestGateway extends AbstractPaymentGateway {
 
 	/**
 	 * Gateway ID.

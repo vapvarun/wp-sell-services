@@ -232,9 +232,6 @@ class PaymentController extends RestController {
 			return $intent;
 		}
 
-		$amount   = (float) $intent->amount;
-		$currency = (string) $intent->currency;
-
 		// Find the gateway.
 		$gateway = $this->get_gateway( $gateway_id );
 
@@ -255,26 +252,7 @@ class PaymentController extends RestController {
 				return $this->create_offline_order( $gateway, $checkout_request );
 
 			default:
-				/**
-				 * Filter to handle custom payment gateway intent creation via REST.
-				 *
-				 * @since 1.1.0
-				 *
-				 * @param WP_REST_Response|WP_Error|null $result     Default null.
-				 * @param object                         $gateway    Gateway instance.
-				 * @param float                          $amount     Payment amount.
-				 * @param string                         $currency   Currency code.
-				 * @param int                            $service_id Service ID.
-				 * @param int                            $package_id Package index.
-				 * @param int                            $pay_order  Existing order ID (0 if new).
-				 */
-				$result = apply_filters( 'wpss_rest_create_payment_intent', null, $gateway, $amount, $currency, $service_id, $package_id, $pay_order );
-
-				if ( null !== $result ) {
-					return $result;
-				}
-
-				return new WP_Error( 'unsupported_gateway', __( 'This gateway is not supported for REST payments.', 'wp-sell-services' ), array( 'status' => 400 ) );
+				return $gateway->rest_create_intent( $intent, $checkout_request );
 		}
 	}
 
@@ -305,25 +283,14 @@ class PaymentController extends RestController {
 				return $this->confirm_paypal_payment( $gateway, $payment_id, $service_id, $package_id, $pay_order );
 
 			default:
-				/**
-				 * Filter to handle custom payment gateway confirmation via REST.
-				 *
-				 * @since 1.1.0
-				 *
-				 * @param WP_REST_Response|WP_Error|null $result     Default null.
-				 * @param object                         $gateway    Gateway instance.
-				 * @param string                         $payment_id Gateway payment ID.
-				 * @param int                            $service_id Service ID.
-				 * @param int                            $package_id Package index.
-				 * @param int                            $pay_order  Existing order ID (0 if new).
-				 */
-				$result = apply_filters( 'wpss_rest_confirm_payment', null, $gateway, $payment_id, $service_id, $package_id, $pay_order );
-
-				if ( null !== $result ) {
-					return $result;
-				}
-
-				return new WP_Error( 'unsupported_gateway', __( 'This gateway does not support REST confirmation.', 'wp-sell-services' ), array( 'status' => 400 ) );
+				return $gateway->rest_confirm_payment(
+					array(
+						'payment_id' => $payment_id,
+						'service_id' => $service_id,
+						'package_id' => $package_id,
+						'pay_order'  => $pay_order,
+					)
+				);
 		}
 	}
 

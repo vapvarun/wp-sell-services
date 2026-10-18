@@ -13,7 +13,7 @@ namespace WPSellServices\Integrations\PayPal;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
+use WPSellServices\Integrations\Gateways\AbstractPaymentGateway;
 use WPSellServices\Assets\ScriptRegistry;
 
 /**
@@ -21,7 +21,7 @@ use WPSellServices\Assets\ScriptRegistry;
  *
  * @since 1.0.0
  */
-class PayPalGateway implements PaymentGatewayInterface {
+class PayPalGateway extends AbstractPaymentGateway {
 
 	/**
 	 * Gateway ID.

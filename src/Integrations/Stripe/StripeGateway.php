@@ -13,7 +13,7 @@ namespace WPSellServices\Integrations\Stripe;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
+use WPSellServices\Integrations\Gateways\AbstractPaymentGateway;
 use WPSellServices\Assets\ScriptRegistry;
 
 /**
@@ -21,7 +21,7 @@ use WPSellServices\Assets\ScriptRegistry;
  *
  * @since 1.0.0
  */
-class StripeGateway implements PaymentGatewayInterface {
+class StripeGateway extends AbstractPaymentGateway {
 
 	/**
 	 * Gateway ID.
