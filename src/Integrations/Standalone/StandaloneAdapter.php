@@ -202,8 +202,15 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		}
 
 		$products = wp_count_posts( 'product' );
+		$sold     = (int) ( $products->publish ?? 0 );
 
-		return empty( $products->publish );
+		// Pro's published, catalog-hidden carrier product is plumbing, not something the site sells.
+		$carrier = (int) get_option( 'wpss_wc_carrier_product_id', 0 );
+		if ( $carrier && 'product' === get_post_type( $carrier ) && 'publish' === get_post_status( $carrier ) ) {
+			--$sold;
+		}
+
+		return $sold <= 0;
 	}
 
 	/**
