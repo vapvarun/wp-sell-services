@@ -51,3 +51,8 @@ Admin > Review Moderation.
 Tab through the contact form, the request requirements form, checkout form groups, the block category select and the tip presets.
 
 **Expect** each focused control shows a 3px primary ring, not only a border-colour change. check: tests/test-focus-indicator-css.php
+
+### 10. The order options sheet fits its content on a phone
+Service page at 390, tap Continue on a package.
+
+**Expect** the Order Options sheet is as tall as its rows (about 300px), anchored at the bottom, not a full-height white panel. check: tests/test-layout-surface-css.php (modal content height at <=768px is auto)

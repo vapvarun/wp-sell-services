@@ -35,3 +35,8 @@ Plan with Max featured 1: seller edits own service, ticks Featured on one, then 
 Order-received and My Account > View order on a dark theme and on a light one, 1440 and 390.
 
 **Expect** panel text, order number and the Submit requirements button are readable (4.5:1) in both; the panel takes the theme's colours and does not paint a white card.
+
+### Woo cart lines show the package price (found in the 1.9.0 browser walk)
+As a signed-in buyer on the Woo rail, add a service, then reload any page.
+
+**Expect** the header mini cart reads "1 x $85.00" (the package price), never "1 x $0.00" beside a correct subtotal. check: wp-sell-services-pro/tests/test-woo-cart-session-price.php

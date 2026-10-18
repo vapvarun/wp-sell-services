@@ -184,6 +184,22 @@
       "fails_on": "pre-fix CSS (4 rules removed the outline with no ring)",
       "journey": "audit/journeys/17-layout-per-surface.md#9",
       "now_dead_or_duplicate": "none"
+    },
+    {
+      "card": "woo-walk: mini cart $0.00 (found by browser walk, no card)",
+      "class": "a carrier product keeps its own price until totals recalculate, and WooCommerce restores a cart from stored totals without recalculating, so any line printed from the product object shows 0",
+      "check": "wp-sell-services-pro/tests/test-woo-cart-session-price.php",
+      "fails_on": "pre-fix Pro WCCheckoutProvider (price set only in before_calculate_totals)",
+      "journey": "audit/journeys/14-woo-rail-and-plans.md#woo-cart-lines-show-the-package-price",
+      "now_dead_or_duplicate": "none; set_cart_item_prices and the session filter share one private pricer"
+    },
+    {
+      "card": "woo-walk: order options sheet full-height on phones",
+      "class": "a mobile rule forced height:100% on every modal content, so a short dialog stretched into an empty full-screen panel",
+      "check": "tests/test-layout-surface-css.php",
+      "fails_on": "pre-fix single-service.css (height:100% at <=768px)",
+      "journey": "audit/journeys/17-layout-per-surface.md#10",
+      "now_dead_or_duplicate": "none"
     }
   ]
 }

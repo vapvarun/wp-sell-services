@@ -1855,7 +1855,7 @@ body.wpss-modal-open {
 
 	.wpss-modal-content {
 		max-height: 100vh;
-		height: 100%;
+		height: auto;
 		border-radius: 0;
 	}
 }

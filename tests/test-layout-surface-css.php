@@ -48,4 +48,8 @@ $ad = $read( 'assets/css/admin.css' );
 $check( 'vacation fields stack label over control', false !== strpos( $ad, '.wpss-vacation-return-date label {' ) );
 $check( 'review search field is wide enough for its placeholder', (bool) preg_match( '/\.wpss-review-search input\[type="search"\] \{[^}]*min-width: 240px/', $ad ) );
 
+foreach ( array( 'single-service.css', 'single-service-rtl.css' ) as $f ) {
+	$check( "{$f} phone modal content sizes to its content, not the full screen", (bool) preg_match( '/\.wpss-modal-content \{\s*max-height: 100vh;\s*height: auto;/', $read( "assets/css/{$f}" ) ) );
+}
+
 echo $fails ? "{$fails} FAILED\n" : "All passed\n";
