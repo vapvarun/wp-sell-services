@@ -69,7 +69,7 @@ charge currency is stated at checkout. It is not multi-currency settlement.
 | Email notifications | Yes | + white-label branding |
 | In-app notifications | Yes | Yes |
 | Push notifications to phones (Firebase) | — | Yes |
-| Realtime messaging (Pusher-protocol) | Yes | Yes |
+| Realtime alerts for messages and notifications (Pusher-protocol) | Yes | Yes |
 
 ## Operations
 
