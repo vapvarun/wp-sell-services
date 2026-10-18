@@ -35,3 +35,8 @@ Buyer sends a tip on a completed order.
 - Delivery: marking delivered sends `emails/delivery-ready` to the buyer.
 
 **Expect** wrong role 403, a milestone route on a catalog order and an extension route on a request order are both refused, and each mail names the right order and amount.
+
+### Order page after a tip (member sweep 1.9.0)
+As the buyer, tip a completed order (pending or paid) and reload the order page.
+
+**Expect** HTTP 200 and the tip receipt with the amount and its state; nothing in debug.log. Guard: `static:template-wpdb-scope`.

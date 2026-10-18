@@ -143,7 +143,7 @@ do_action( 'wpss_before_order_view', $order );
 				printf(
 					/* translators: %s: order number */
 					esc_html__( 'Order #%s', 'wp-sell-services' ),
-					esc_html( $order->order_number )
+					'<bdi>' . esc_html( $order->order_number ) . '</bdi>'
 				);
 				?>
 			</h1>
@@ -629,7 +629,7 @@ do_action( 'wpss_before_order_view', $order );
 				?>
 				<div class="wpss-order-detail-item">
 					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Number', 'wp-sell-services' ); ?></span>
-					<span class="wpss-order-detail-item__value wpss-order-detail-item__value--id">#<?php echo esc_html( $order->order_number ); ?></span>
+					<span class="wpss-order-detail-item__value wpss-order-detail-item__value--id">#<bdi><?php echo esc_html( $order->order_number ); ?></bdi></span>
 					<?php if ( $wpss_payment_ref ) : ?>
 						<span class="wpss-order-detail-item__sub">
 							<?php
@@ -1751,16 +1751,7 @@ do_action( 'wpss_before_order_view', $order );
 		// related tip order by parent order ID.
 		$tip_order_row = null;
 		if ( $already_tipped ) {
-			$tip_order_row = $wpdb->get_row(
-				$wpdb->prepare(
-					"SELECT total, status FROM {$wpdb->prefix}wpss_orders
-					WHERE platform = %s AND platform_order_id = %d AND customer_id = %d
-					ORDER BY id DESC LIMIT 1",
-					\WPSellServices\Services\TippingService::ORDER_TYPE,
-					$order_id,
-					get_current_user_id()
-				)
-			);
+			$tip_order_row = $tipping_service->get_buyer_tip_order( $order_id, get_current_user_id() );
 		}
 		?>
 		<section class="wpss-order-section wpss-order-section--tip">

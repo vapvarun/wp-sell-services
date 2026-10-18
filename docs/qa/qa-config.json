@@ -278,6 +278,14 @@
    {
     "id": "notification-no-double-email",
     "run": "${WP_CLI:-wp} eval-file tests/test-notification-no-double-email.php"
+   },
+   {
+    "id": "template-wpdb-scope",
+    "run": "${WP_CLI:-wp} eval-file tests/test-template-wpdb-scope.php"
+   },
+   {
+    "id": "member-sweep-labels",
+    "run": "${WP_CLI:-wp} eval-file tests/test-member-sweep-labels.php"
    }
   ]
  }

@@ -331,8 +331,19 @@ function wpss_get_payment_method_label( string $method ): string {
 	}
 
 	$gateway = wpss()->get_payment_gateway( $method );
+	if ( $gateway ) {
+		return $gateway->get_name();
+	}
 
-	return $gateway ? $gateway->get_name() : ucwords( str_replace( array( '_', '-' ), ' ', $method ) );
+	// A WooCommerce gateway slug (cod, bacs, cheque) names itself with its own title.
+	if ( function_exists( 'WC' ) && WC()->payment_gateways() ) {
+		$woo_gateways = WC()->payment_gateways()->payment_gateways();
+		if ( isset( $woo_gateways[ $method ] ) ) {
+			return wp_strip_all_tags( $woo_gateways[ $method ]->get_title() );
+		}
+	}
+
+	return ucwords( str_replace( array( '_', '-' ), ' ', $method ) );
 }
 
 /**

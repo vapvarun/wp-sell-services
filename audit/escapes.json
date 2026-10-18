@@ -488,6 +488,22 @@
    "added": "2026-10-19",
    "fails_on": "57bacdcd (success buttons used --wpss-success)",
    "check": "tests/test-text-token-contrast.php"
+  },
+  {
+   "card": "member sweep 1.9.0: order page 500 after a tip (no card)",
+   "title": "a template that uses $wpdb declares it global, or asks a service",
+   "guard": "static:template-wpdb-scope",
+   "added": "2026-10-19",
+   "fails_on": "6333eac7 (order-view.php used $wpdb with no global)",
+   "check": "tests/test-template-wpdb-scope.php"
+  },
+  {
+   "card": "member sweep 1.9.0: Paid · Cod and raw dispute reason key (no card)",
+   "title": "a Woo gateway slug and a dispute reason key read as their labels",
+   "guard": "static:member-sweep-labels",
+   "added": "2026-10-19",
+   "fails_on": "6333eac7 (label read Cod; notification showed not_as_described)",
+   "check": "tests/test-member-sweep-labels.php"
   }
  ]
 }

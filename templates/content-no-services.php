@@ -21,7 +21,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Determine context-specific message.
-if ( is_search() ) {
+if ( is_search() || '' !== trim( (string) get_query_var( 's' ) ) || isset( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only.
 	$default_message = sprintf(
 		/* translators: %s: search query */
 		esc_html__( 'No services match your search for "%s". Try different keywords or browse categories.', 'wp-sell-services' ),

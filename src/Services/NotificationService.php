@@ -1223,7 +1223,7 @@ class NotificationService {
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				if ( ! empty( $data['reason'] ) ) {
-					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), (string) $data['reason'] );
+					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), $this->dispute_reason_label( (string) $data['reason'] ) );
 				}
 				if ( ! empty( $data['response_deadline'] ) ) {
 					$deadline = wpss_deadline_label( $data['response_deadline'], '—', $user_id );
@@ -1436,7 +1436,7 @@ class NotificationService {
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				if ( ! empty( $data['reason'] ) ) {
-					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), (string) $data['reason'] );
+					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), $this->dispute_reason_label( (string) $data['reason'] ) );
 				}
 				$message->paragraph( __( 'A member of the team will review the case and both parties will be told the outcome.', 'wp-sell-services' ) );
 				break;
@@ -1449,7 +1449,7 @@ class NotificationService {
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				if ( ! empty( $data['reason'] ) ) {
-					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), (string) $data['reason'] );
+					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), $this->dispute_reason_label( (string) $data['reason'] ) );
 				}
 				break;
 
@@ -2132,6 +2132,16 @@ class NotificationService {
 		$wc_emails = WC()->mailer()->get_emails();
 
 		return isset( $wc_emails[ $class_key ] );
+	}
+
+	/**
+	 * Dispute reason key as the member reads it, the key itself when no label exists.
+	 *
+	 * @param string $reason Stored reason key.
+	 * @return string
+	 */
+	private function dispute_reason_label( string $reason ): string {
+		return wpss_get_dispute_reasons()[ $reason ] ?? $reason;
 	}
 
 	/**

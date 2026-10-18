@@ -84,7 +84,13 @@ if ( ! isset( $proposal_service ) ) {
 	$proposal_service = new \WPSellServices\Services\ProposalService();
 }
 if ( $is_buyer ) {
-	$proposals = $proposal_service->get_by_request( $request_id );
+	// Withdrawn offers are not counted anywhere else, so they are not listed here either.
+	$proposals = array_values(
+		array_filter(
+			$proposal_service->get_by_request( $request_id ),
+			static fn( $proposal ) => 'withdrawn' !== ( $proposal->status ?? '' )
+		)
+	);
 }
 // "Proposals" means the same number on every surface - archive card, this
 // page, the buyer dashboard and REST: every proposal except withdrawn ones,

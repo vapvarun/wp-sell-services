@@ -565,6 +565,32 @@ class TippingService {
 	}
 
 	/**
+	 * The buyer's tip sub-order for a parent order: the gross amount they paid and its status.
+	 *
+	 * @param int $order_id    Parent service order ID.
+	 * @param int $customer_id Buyer user ID.
+	 * @return object|null Row with total and status, or null when this buyer has not tipped.
+	 */
+	public function get_buyer_tip_order( int $order_id, int $customer_id ): ?object {
+		global $wpdb;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT total, status FROM {$wpdb->prefix}wpss_orders
+				WHERE platform = %s AND platform_order_id = %d AND customer_id = %d
+				ORDER BY id DESC LIMIT 1",
+				self::ORDER_TYPE,
+				$order_id,
+				$customer_id
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return $row ?: null;
+	}
+
+	/**
 	 * Get tips received by a vendor.
 	 *
 	 * @param int   $vendor_id Vendor user ID.
