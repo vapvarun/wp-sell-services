@@ -13,6 +13,7 @@
 
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Services\OrderService;
+use WPSellServices\Services\OrderWorkflowManager;
 use WPSellServices\Services\PendingRefundService;
 
 require_once __DIR__ . '/exit-on-fail.php';
@@ -168,6 +169,17 @@ try {
 	$j    = $seed( 40.0, $txn4 );
 	do_action( 'wpss_gateway_refund_received', 'stripe', $txn4, 150.0, array( 'cumulative' => true, 'currency' => 'USD', 'refund_id' => 're_over' ) );
 	$check( 'a refund larger than the charge holds is parked, no gig is refunded', 0.0 === $got( $i ) && 0.0 === $got( $j ) && null !== PendingRefundService::get( $i ) );
+
+	// 10. A rail that reports each refund on its own (no running total) echoes a refund we sent: nothing new.
+	$txn5 = 'cap_echo_' . wp_generate_password( 6, false );
+	$k    = $seed( 85.0, $txn5 );
+	$l    = $seed( 75.0, $txn5 );
+	( new OrderService() )->refund( $k, null, ServiceOrder::STATUS_REFUNDED, array( 'settled_at_rail' => true ) );
+	OrderWorkflowManager::remember_gateway_refund( $k, 'RF-OURS' );
+	do_action( 'wpss_gateway_refund_received', 'paypal', $txn5, 85.0, array( 'refund_id' => 'RF-OURS', 'currency' => 'USD', 'order_id' => 0 ) );
+	$check( 'the echo of a refund we sent, from a rail with per-refund amounts, is not parked', null === PendingRefundService::get( $l ) && 0.0 === $got( $l ) );
+	do_action( 'wpss_gateway_refund_received', 'paypal', $txn5, 20.0, array( 'refund_id' => 'RF-NEW', 'currency' => 'USD', 'order_id' => 0 ) );
+	$check( '  while a different refund of that charge still waits for an admin', null !== PendingRefundService::get( $l ) && 20.0 === (float) PendingRefundService::get( $l )['remaining'] );
 } finally {
 	remove_action( 'wpss_gateway_refund_unallocated', $count );
 	if ( function_exists( 'as_unschedule_all_actions' ) ) {

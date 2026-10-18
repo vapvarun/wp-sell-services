@@ -971,6 +971,18 @@ class OrderWorkflowManager {
 			break; // The lock never cleared: go on, what is already recorded still prevents a double.
 		}
 
+		// A refund this site already recorded (one it sent, or an event the rail repeats) adds nothing,
+		// whichever gig of the charge it was recorded on. A rail that reports each refund on its own,
+		// not as a running total, has no other way to tell its echo of our refund from new money.
+		if ( '' !== $refund_id ) {
+			foreach ( array_keys( $orders ) as $oid ) {
+				if ( in_array( $refund_id, (array) wpss_get_order_provider()->get_item_meta( (int) $oid, '_wpss_gateway_refund_ids' ), true ) ) {
+					wpss_log( sprintf( '"%s" refund %s is already recorded on order %d; nothing to add.', $gateway, $refund_id, (int) $oid ), 'info' );
+					return;
+				}
+			}
+		}
+
 		// What this event adds. A running total is measured against what is already recorded on the
 		// orders it covers, plus anything already parked for them.
 		$recorded = array_sum( array_map( static fn( ServiceOrder $o ): float => wpss_get_order_refunded_amount( $o ), $orders ) );
