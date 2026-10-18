@@ -200,6 +200,14 @@
       "fails_on": "pre-fix single-service.css (height:100% at <=768px)",
       "journey": "audit/journeys/17-layout-per-surface.md#10",
       "now_dead_or_duplicate": "none"
+    },
+    {
+      "card": "dark-walk: unread notification text 4.48:1 (no card)",
+      "class": "a list styled by an inline style block that took the saturated primary-light token as a row background, so muted text fell under 4.5:1 in dark mode and the CSS was invisible to every sheet-level check",
+      "check": "tests/test-notification-list-style.php",
+      "fails_on": "pre-fix partial (inline style block, no enqueue helper)",
+      "journey": "audit/journeys/16-dark-mode-and-icons.md#notification-rows-read-in-dark-mode",
+      "now_dead_or_duplicate": "inline style block removed from notifications-list.php"
     }
   ]
 }

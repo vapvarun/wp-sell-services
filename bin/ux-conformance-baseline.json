@@ -5,7 +5,6 @@
         "src/Integrations/Standalone/StandaloneCheckoutProvider.php": 2,
         "templates/cart/cart.php": 1,
         "templates/order/requirements-form.php": 1,
-        "templates/partials/notifications-list.php": 1,
         "templates/partials/vendor-portfolio.php": 1
     },
     "inline-onclick": {

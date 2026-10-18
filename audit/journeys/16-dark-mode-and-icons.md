@@ -31,3 +31,8 @@ Notifications with 40+ rows, hover and tab to Next on each theme, light and dark
 Pro dashboard > Subscription > Cancel subscription; seller profile > Contact; a service page > Contact; Stripe payouts rail > disconnect.
 
 **Expect** no horizontal scrollbar in the modal, "Keep Subscription" / "Cancel" are full-size text buttons, and clicking them closes the modal; the corner X still closes it too.
+
+### Notification rows read in dark mode (found in the 1.9.0 dark walk)
+Buyer with unread notifications, Reign in dark, dashboard Notifications at 1440 and 390; also My Account > Notifications and the admin Notifications page.
+
+**Expect** message and time text on an unread row measure 4.5:1 or better, the list is styled on all three surfaces, and the page source carries no inline style block for the list. check: tests/test-notification-list-style.php

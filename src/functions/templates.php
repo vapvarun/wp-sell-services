@@ -668,6 +668,21 @@ function wpss_enqueue_order_view_style(): void {
 }
 
 /**
+ * Enqueue the notification list stylesheet (assets/css/notifications.css).
+ *
+ * The list renders on the dashboard, My Account and the admin Notifications page from one
+ * partial, which calls this before its markup.
+ *
+ * @since 1.9.0
+ *
+ * @return void
+ */
+function wpss_enqueue_notifications_style(): void {
+	wpss_register_design_system();
+	wpss_enqueue_style( 'wpss-notifications', 'assets/css/notifications.css' );
+}
+
+/**
  * WordPress core's list-table pager, for admin lists built without WP_List_Table.
  *
  * Orders and Disputes use WP_List_Table and get core's pager (first, previous,
