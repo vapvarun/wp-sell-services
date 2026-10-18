@@ -620,8 +620,26 @@ class ServiceCommands extends WP_CLI_Command {
 		global $wpdb;
 
 		$reviews_table = $wpdb->prefix . 'wpss_reviews';
-		$ratings       = $this->generate_rating_distribution( $target_avg, $count );
-		$review_texts  = array(
+		$orders_table  = $wpdb->prefix . 'wpss_orders';
+
+		// A review is unique per order, so each one needs an order of its own: every row at
+		// order 0 collided on uniq_order_review and only the first ever landed. Sample reviews,
+		// not a claim of hundreds, so the demo does not seed hundreds of orders.
+		$count    = min( $count, 5 );
+		$customer = get_current_user_id();
+		if ( ! $customer || $customer === $vendor_id ) {
+			$others   = get_users(
+				array(
+					'exclude' => array( $vendor_id ),
+					'number'  => 1,
+					'fields'  => 'ID',
+				)
+			);
+			$customer = $others ? (int) $others[0] : 1;
+		}
+
+		$ratings      = $this->generate_rating_distribution( $target_avg, $count );
+		$review_texts = array(
 			'Excellent work! Delivered exactly what I needed and the quality was outstanding.',
 			'Very professional and communicative. Would definitely hire again.',
 			'Great service, fast delivery, and the results exceeded my expectations.',
@@ -650,14 +668,49 @@ class ServiceCommands extends WP_CLI_Command {
 			$days_ago   = (int) round( ( $i / $total ) * 365 );
 			$created_at = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days_ago} days" ) );
 
+			// The marker is the one wpss_delete_demo_content() reads to tell importer orders from real ones.
+			$wpdb->insert(
+				$orders_table,
+				array(
+					'order_number'   => 'WPSS-DEMO-' . strtoupper( wp_generate_password( 8, false ) ),
+					'customer_id'    => $customer,
+					'vendor_id'      => $vendor_id,
+					'service_id'     => $service_id,
+					'platform'       => 'standalone',
+					'subtotal'       => 0,
+					'total'          => 0,
+					'currency'       => 'USD',
+					'status'         => 'completed',
+					'payment_status' => 'paid',
+					'payment_method' => 'standalone',
+					'created_at'     => $created_at,
+					'completed_at'   => $created_at,
+					'meta'           => wp_json_encode(
+						array(
+							'status_history' => array(
+								array(
+									'status'    => 'completed',
+									'timestamp' => $created_at,
+									'note'      => 'Seeded demo order.',
+								),
+							),
+						)
+					),
+				)
+			);
+			$order_id = (int) $wpdb->insert_id;
+			if ( ! $order_id ) {
+				continue;
+			}
+
 			$wpdb->insert(
 				$reviews_table,
 				array(
-					'order_id'    => 0,
-					'reviewer_id' => 1,
+					'order_id'    => $order_id,
+					'reviewer_id' => $customer,
 					'reviewee_id' => $vendor_id,
 					'service_id'  => $service_id,
-					'customer_id' => 1,
+					'customer_id' => $customer,
 					'vendor_id'   => $vendor_id,
 					'rating'      => $rating,
 					'review'      => $review_texts[ $i % count( $review_texts ) ],
