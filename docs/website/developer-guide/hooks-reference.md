@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**542 hooks** across **748** firing sites.
+**541 hooks** across **746** firing sites.
 
 ## Actions (276)
 
@@ -293,7 +293,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (266)
+## Filters (265)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -431,7 +431,7 @@ guide; this is the complete index.
 | `wpss_payment_declined_message` | 3 | `src/Integrations/Stripe/StripeGateway.php` | Filters the message shown to a buyer whose card was declined. |
 | `wpss_payment_gateways` | 1 | `src/Core/Plugin.php` *(+4 more)* | Filter the registered payment gateways. |
 | `wpss_payout_banner_state` | 4 | `templates/dashboard/sections/earnings.php` | Filters the payout banner state shown on the earnings section. |
-| `wpss_payout_fields` | 2 | `src/Services/EarningsService.php` | Filter the details a payout method collects. |
+| `wpss_payout_method_registry` | 1 | `src/Services/EarningsService.php` | Filter the payout methods. Replaces wpss_withdrawal_methods and wpss_payout_fields. |
 | `wpss_person_schema` | 2 | `src/SEO/SchemaMarkup.php` |  |
 | `wpss_platform_name` | 1 | `src/functions/core.php` | Filter the platform name. |
 | `wpss_post_checkout_url` | 3 | `src/functions/orders.php` | Filter the post-checkout redirect. |
@@ -559,7 +559,6 @@ guide; this is the complete index.
 | `wpss_wallet_manager` | 1 | `src/functions/ledger.php` | Filter the wallet manager instance. |
 | `wpss_wallet_providers` | 1 | `src/Core/Plugin.php` *(+2 more)* | Filter the registered wallet providers. |
 | `wpss_web_login_lock` | 1 | `src/Core/Plugin.php` | Filter whether the website sign-in form honours the lockout. |
-| `wpss_withdrawal_methods` | 1 | `src/API/EarningsController.php` *(+1 more)* | Filter available withdrawal methods. |
 | `wpss_wizard_sanitize_service_data` | 2 | `src/Frontend/ServiceWizard.php` | Filter the sanitized wizard payload. |
 | `wpss_wizard_service_data` | 2 | `src/Frontend/ServiceWizard.php` | Filter the wizard's Alpine seed data for an existing service. |
 | `wpss_zero_decimal_currencies` | 1 | `src/functions/money.php` | Filter the list of zero-decimal currency codes. |

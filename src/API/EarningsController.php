@@ -696,16 +696,6 @@ class EarningsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_withdrawal_methods( WP_REST_Request $request ): WP_REST_Response {
-		$methods = array(
-			'bank_transfer' => __( 'Bank Transfer', 'wp-sell-services' ),
-			'paypal'        => __( 'PayPal', 'wp-sell-services' ),
-		);
-
-		/**
-		 * Filter available withdrawal methods.
-		 *
-		 * @param array $methods Withdrawal methods.
-		 */
-		return new WP_REST_Response( apply_filters( 'wpss_withdrawal_methods', $methods ) );
+		return new WP_REST_Response( \WPSellServices\Services\EarningsService::get_withdrawal_methods() );
 	}
 }

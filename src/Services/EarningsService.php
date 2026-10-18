@@ -1058,30 +1058,95 @@ class EarningsService {
 	}
 
 	/**
-	 * Get withdrawal methods.
+	 * The payout methods a vendor can withdraw by, keyed by method id.
 	 *
-	 * @return array Available methods.
+	 * One registry: each method names itself and the details it collects, so a
+	 * new method (a regional bank rail, a wallet) is added with one filter entry
+	 * and no core edit.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @return array<string, array{label: string, fields: array<string, array{label: string, type: string, required: bool}>}>
 	 */
-	public static function get_withdrawal_methods(): array {
+	public static function get_payout_methods(): array {
 		$methods = array(
-			'paypal'        => __( 'PayPal', 'wp-sell-services' ),
-			'bank_transfer' => __( 'Bank Transfer', 'wp-sell-services' ),
+			'paypal'        => array(
+				'label'  => __( 'PayPal', 'wp-sell-services' ),
+				'fields' => array(
+					'email' => array(
+						'label'    => __( 'PayPal email', 'wp-sell-services' ),
+						'type'     => 'email',
+						'required' => true,
+					),
+				),
+			),
+			'bank_transfer' => array(
+				'label'  => __( 'Bank Transfer', 'wp-sell-services' ),
+				'fields' => array(
+					'account_name'   => array(
+						'label'    => __( 'Account holder name', 'wp-sell-services' ),
+						'type'     => 'text',
+						'required' => true,
+					),
+					'bank_name'      => array(
+						'label'    => __( 'Bank name', 'wp-sell-services' ),
+						'type'     => 'text',
+						'required' => true,
+					),
+					'account_number' => array(
+						'label'    => __( 'Account number or IBAN', 'wp-sell-services' ),
+						'type'     => 'text',
+						'required' => true,
+					),
+					'routing_number' => array(
+						'label'    => __( 'Routing, SWIFT or IFSC code', 'wp-sell-services' ),
+						'type'     => 'text',
+						'required' => false,
+					),
+				),
+			),
 		);
 
 		/**
-		 * Filter withdrawal methods.
+		 * Filter the payout methods. Replaces wpss_withdrawal_methods and wpss_payout_fields.
 		 *
-		 * @param array $methods Available methods.
+		 * @since 1.9.0
+		 *
+		 * @param array $methods id => { label: string, fields: key => { label, type, required } }.
 		 */
-		return apply_filters( 'wpss_withdrawal_methods', $methods );
+		$filtered = (array) apply_filters( 'wpss_payout_method_registry', $methods );
+		$valid    = array();
+
+		foreach ( $filtered as $id => $method ) {
+			if ( is_string( $id ) && '' !== $id && is_array( $method ) && ! empty( $method['label'] ) ) {
+				// A method that names no fields gets one free-text field.
+				$method['fields'] = ! empty( $method['fields'] ) && is_array( $method['fields'] ) ? $method['fields'] : array(
+					'details' => array(
+						'label'    => __( 'Payout details', 'wp-sell-services' ),
+						'type'     => 'textarea',
+						'required' => true,
+					),
+				);
+				$valid[ $id ]     = $method;
+			} else {
+				_doing_it_wrong( 'wpss_payout_method_registry', esc_html__( 'A payout method needs a string id and a label.', 'wp-sell-services' ), '1.9.0' );
+			}
+		}
+
+		return $valid;
+	}
+
+	/**
+	 * Withdrawal methods as id => label.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_withdrawal_methods(): array {
+		return wp_list_pluck( self::get_payout_methods(), 'label' );
 	}
 
 	/**
 	 * The fields a payout method needs, keyed by detail name.
-	 *
-	 * PayPal needs an email; a bank transfer needs holder, bank and account.
-	 * A method added by filter gets one free-text field unless it declares its
-	 * own through wpss_payout_fields.
 	 *
 	 * @since 1.8.0
 	 *
@@ -1089,55 +1154,7 @@ class EarningsService {
 	 * @return array<string, array{label: string, type: string, required: bool}>
 	 */
 	public static function get_payout_fields( string $method ): array {
-		$fields = array(
-			'paypal'        => array(
-				'email' => array(
-					'label'    => __( 'PayPal email', 'wp-sell-services' ),
-					'type'     => 'email',
-					'required' => true,
-				),
-			),
-			'bank_transfer' => array(
-				'account_name'   => array(
-					'label'    => __( 'Account holder name', 'wp-sell-services' ),
-					'type'     => 'text',
-					'required' => true,
-				),
-				'bank_name'      => array(
-					'label'    => __( 'Bank name', 'wp-sell-services' ),
-					'type'     => 'text',
-					'required' => true,
-				),
-				'account_number' => array(
-					'label'    => __( 'Account number or IBAN', 'wp-sell-services' ),
-					'type'     => 'text',
-					'required' => true,
-				),
-				'routing_number' => array(
-					'label'    => __( 'Routing, SWIFT or IFSC code', 'wp-sell-services' ),
-					'type'     => 'text',
-					'required' => false,
-				),
-			),
-		);
-
-		$method_fields = $fields[ $method ] ?? array(
-			'details' => array(
-				'label'    => __( 'Payout details', 'wp-sell-services' ),
-				'type'     => 'textarea',
-				'required' => true,
-			),
-		);
-
-		/**
-		 * Filter the details a payout method collects.
-		 *
-		 * @since 1.8.0
-		 *
-		 * @param array  $method_fields Fields: key => {label, type, required}.
-		 * @param string $method        Withdrawal method key.
-		 */
-		return (array) apply_filters( 'wpss_payout_fields', $method_fields, $method );
+		return self::get_payout_methods()[ $method ]['fields'] ?? array();
 	}
 
 	/**
