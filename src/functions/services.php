@@ -752,3 +752,50 @@ add_action(
 	30,
 	2
 );
+
+/**
+ * Whether the member may put this service live from a dashboard control.
+ *
+ * One gate for every door that flips a service to publish (dashboard publish,
+ * bulk publish): marketplace standing first, then the plan limit when the
+ * service is not already counted, then the publish bar. Pausing and deleting are
+ * not gated, so a suspended seller can still take listings down.
+ *
+ * @since 1.9.0
+ *
+ * @param int $service_id Service post ID.
+ * @param int $user_id    Member ID. Defaults to the current user.
+ * @return string Refusal sentence, or '' when the service may go live.
+ */
+function wpss_service_publish_refusal( int $service_id, int $user_id = 0 ): string {
+	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+
+	$block = wpss_vendor_status_block( $user_id );
+	if ( $block ) {
+		return $block->get_error_message();
+	}
+
+	if ( 'publish' === get_post_status( $service_id ) ) {
+		return '';
+	}
+
+	if ( ! user_can( $user_id, 'manage_options' ) && ! apply_filters( 'wpss_vendor_can_create_service', true, $user_id ) ) {
+		/** This filter is documented in src/Frontend/ServiceWizard.php */
+		return wp_strip_all_tags(
+			(string) apply_filters(
+				'wpss_service_limit_error_message',
+				__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
+			)
+		);
+	}
+
+	$errors = wpss_validate_service_publishable(
+		array(
+			'title'       => get_the_title( $service_id ),
+			'description' => (string) get_post_field( 'post_content', $service_id ),
+			'packages'    => (array) get_post_meta( $service_id, '_wpss_packages', true ),
+		)
+	);
+
+	return $errors ? implode( ' ', $errors ) : '';
+}

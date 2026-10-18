@@ -1669,6 +1669,11 @@ class ServiceWizard {
 			wp_send_json_error( array( 'message' => __( 'You must be an approved vendor to create services.', 'wp-sell-services' ) ) );
 		}
 
+		$standing = wpss_vendor_status_block( $user_id );
+		if ( $standing ) {
+			wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
+		}
+
 		// Check vendor status - suspended or pending vendors cannot create services.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			$vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
@@ -1798,6 +1803,11 @@ class ServiceWizard {
 		$vendor_service = new \WPSellServices\Services\VendorService();
 		if ( ! $vendor_service->is_vendor( $user_id ) && ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'You must be an approved vendor to create services.', 'wp-sell-services' ) ) );
+		}
+
+		$standing = wpss_vendor_status_block( $user_id );
+		if ( $standing ) {
+			wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
 		}
 
 		// Check vendor status - suspended or pending vendors cannot create services.

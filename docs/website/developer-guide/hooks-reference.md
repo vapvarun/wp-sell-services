@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**542 hooks** across **748** firing sites.
+**542 hooks** across **750** firing sites.
 
 ## Actions (276)
 
@@ -488,7 +488,7 @@ guide; this is the complete index.
 | `wpss_service_category_taxonomy_args` | 1 | `src/Taxonomies/ServiceCategoryTaxonomy.php` | Filter service category taxonomy arguments. |
 | `wpss_service_editor_url` | 2 | `src/functions/urls.php` | Filter the service create/edit destination. |
 | `wpss_service_is_featured` | 2 | `src/Admin/Metaboxes/ServiceMetabox.php` | Filter whether a service is featured as it saves. |
-| `wpss_service_limit_error_message` | 1 | `src/Frontend/ServiceWizard.php` *(+3 more)* | Filter the error message shown when a vendor cannot create more services. |
+| `wpss_service_limit_error_message` | 1 | `src/Frontend/ServiceWizard.php` *(+4 more)* | Filter the error message shown when a vendor cannot create more services. |
 | `wpss_service_list_schema` | 1 | `src/SEO/SchemaMarkup.php` |  |
 | `wpss_service_manager_enforce_publishable` | 3 | `src/Services/ServiceManager.php` | Let a caller publish a service that is not marketplace-ready. |
 | `wpss_service_max_extras` | 1 | `src/functions/services.php` | Max service extras (add-ons). |
@@ -541,7 +541,7 @@ guide; this is the complete index.
 | `wpss_user_can_feature_service` | 2 | `src/functions/services.php` | Filter who may mark a service as Featured. |
 | `wpss_validate_add_to_cart` | 4 | `src/API/CartController.php` | Validates whether a service can be added to the cart. |
 | `wpss_vendor_benefit_listings_copy` | 2 | `templates/partials/vendor-benefits.php` | Filter the service-count promise on the Become a Vendor page. |
-| `wpss_vendor_can_create_service` | 2 | `src/Frontend/ServiceWizard.php` *(+4 more)* |  |
+| `wpss_vendor_can_create_service` | 2 | `src/Frontend/ServiceWizard.php` *(+5 more)* |  |
 | `wpss_vendor_is_on_vacation` | 2 | `src/Models/VendorProfile.php` | Check if vendor is on vacation. |
 | `wpss_vendor_max_services` | 2 | `src/Models/VendorProfile.php` | Filter the number of services this vendor may have. |
 | `wpss_vendor_page_schema` | 2 | `src/SEO/SchemaMarkup.php` |  |

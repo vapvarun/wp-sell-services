@@ -2710,6 +2710,10 @@ class AjaxHandlers {
 				break;
 
 			case 'publish':
+				$refusal = wpss_service_publish_refusal( $service_id, $user_id );
+				if ( '' !== $refusal ) {
+					wp_send_json_error( array( 'message' => $refusal ) );
+				}
 				wp_update_post(
 					array(
 						'ID'          => $service_id,
@@ -2945,6 +2949,7 @@ class AjaxHandlers {
 		}
 
 		$processed = 0;
+		$refused   = 0;
 
 		if ( 'services' === $type ) {
 			foreach ( $ids as $service_id ) {
@@ -2965,6 +2970,10 @@ class AjaxHandlers {
 							++$processed;
 							break;
 						case 'publish':
+							if ( '' !== wpss_service_publish_refusal( $service_id, $user_id ) ) {
+								++$refused;
+								break;
+							}
 							wp_update_post(
 								array(
 									'ID'          => $service_id,
@@ -2976,6 +2985,10 @@ class AjaxHandlers {
 					}
 				}
 			}
+		}
+
+		if ( $refused && ! $processed ) {
+			wp_send_json_error( array( 'message' => wpss_service_publish_refusal( (int) reset( $ids ), $user_id ) ) );
 		}
 
 		/* translators: %d: number of items processed */
@@ -3256,6 +3269,11 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
+		$standing = wpss_vendor_status_block( $user_id );
+		if ( $standing ) {
+			wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
+		}
+
 		$data = array(
 			'title'        => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
 			'description'  => wp_kses_post( wp_unslash( $_POST['description'] ?? '' ) ),
@@ -3300,6 +3318,11 @@ class AjaxHandlers {
 		$user_id = get_current_user_id();
 		if ( ! $user_id || ! wpss_is_vendor( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$standing = wpss_vendor_status_block( $user_id );
+		if ( $standing ) {
+			wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
