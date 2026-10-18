@@ -154,7 +154,7 @@ and point to the platform; the platform's own refund comes back to us as an even
 A refund made AT a rail (a gateway dashboard, a shop platform) reaches us as an event. Every rail
 fires `wpss_gateway_refund_received( $gateway, $transaction_id, $amount, $context )` and nothing
 else; `OrderWorkflowManager::handle_gateway_refund()` is the only listener. The rail reports what it
-knows in `$context`: `order_id` (the gig), `order_ids` (the gigs it could be), `cumulative` (the
+knows in `$context`: `order_id` (the gig), `order_ids` (the gigs it could be), `full_charge` (the rail says the whole charge, made only of these gigs, came back), `cumulative` (the
 amount is a running total, so what it adds is the difference from what we recorded), `refund_id`,
 `currency`. The listener never splits an amount by price:
 

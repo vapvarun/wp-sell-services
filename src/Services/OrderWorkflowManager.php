@@ -887,6 +887,7 @@ class OrderWorkflowManager {
 	 *
 	 * What a rail reports is described by its context:
 	 * - `order_id`: the gig the refund was for, when the rail knows.
+	 * - `full_charge`: the rail says the whole charge, made up of these gigs only, was refunded.
 	 * - `order_ids`: the gigs the refund could be for, when the rail knows only that much (a shop
 	 *   order with other lines, or an amount-only refund). It waits for an admin like an unnamed one.
 	 * - `cumulative`: `$amount` is the running total refunded for that gig (or, with no `order_id`,
@@ -908,7 +909,7 @@ class OrderWorkflowManager {
 	 * @param string               $gateway        Rail slug (for example 'stripe' or 'woocommerce').
 	 * @param string               $transaction_id The transaction / intent / capture / payment id the orders were paid with.
 	 * @param float                $amount         Amount refunded, in major units of the order currency.
-	 * @param array<string, mixed> $context        Optional: order_id (int), order_ids (int[]), cumulative (bool), refund_id (string),
+	 * @param array<string, mixed> $context        Optional: order_id (int), order_ids (int[]), full_charge (bool), cumulative (bool), refund_id (string),
 	 *                                             charge_id (string), currency (string).
 	 * @return void
 	 */
@@ -947,12 +948,27 @@ class OrderWorkflowManager {
 		$decimals  = wpss_get_currency_decimals( $currency );
 		$refund_id = (string) ( $context['refund_id'] ?? '' );
 
-		// A refund this plugin is sending right now comes back as the rail's own event.
+		// A refund this plugin is sending right now comes back as the rail's own event, but so could a
+		// different refund on a sibling gig. Neither is dropped: the event is run again once the lock
+		// has gone, when what we recorded makes our own echo add nothing and anything else still counts.
+		$deferred = (int) ( $context['deferred'] ?? 0 );
+
 		foreach ( array_keys( $orders ) as $oid ) {
-			if ( OrderService::is_refund_locked( (int) $oid ) ) {
-				wpss_log( sprintf( 'Order %d: "%s" refund %s is the one being sent from here; not recorded twice.', $oid, $gateway, $refund_id ), 'info' );
+			if ( ! OrderService::is_refund_locked( (int) $oid ) ) {
+				continue;
+			}
+
+			if ( $deferred < 3 ) {
+				Scheduler::schedule_single(
+					'wpss_gateway_refund_received',
+					time() + MINUTE_IN_SECONDS + 15,
+					array( $gateway, $transaction_id, $amount, array_merge( $context, array( 'deferred' => $deferred + 1 ) ) )
+				);
+				wpss_log( sprintf( 'Order %d: a refund is being sent from here; "%s" refund %s will be checked again shortly.', $oid, $gateway, $refund_id ), 'info' );
 				return;
 			}
+
+			break; // The lock never cleared: go on, what is already recorded still prevents a double.
 		}
 
 		// What this event adds. A running total is measured against what is already recorded on the
@@ -968,9 +984,12 @@ class OrderWorkflowManager {
 
 		if ( count( $orders ) > 1 || $ambiguous ) {
 			// Everything left on the charge came back: each gig is refunded in full, no choice to make.
+			// Only when the charge is known to hold gigs and nothing else: a transaction we paid
+			// ourselves, or a rail that says so (`full_charge`). An amount that merely matches could be
+			// a refund of something else on the order.
 			$room = array_sum( array_map( static fn( ServiceOrder $o ): float => max( 0.0, (float) $o->total - wpss_get_order_refunded_amount( $o ) ), $orders ) );
 
-			if ( $delta > $room || wpss_amounts_match( $delta, $room, $currency ) ) {
+			if ( ! empty( $context['full_charge'] ) || ( ! $ambiguous && wpss_amounts_match( $delta, $room, $currency ) ) ) {
 				$this->refund_all_on_charge( $orders, $gateway, $refund_id );
 				return;
 			}

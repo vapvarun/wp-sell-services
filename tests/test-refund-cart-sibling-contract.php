@@ -137,6 +137,8 @@ try {
 	$check( 'the echo of a refund in flight is skipped', 0.0 === $got( $e ) );
 	$locked = ( new OrderService() )->refund( $e, 30.0, ServiceOrder::STATUS_PARTIALLY_REFUNDED );
 	$check( '  and a second refund on the same order is refused', false === $locked['ok'] && 'refused' === $locked['outcome'] );
+	$queued = function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( 'wpss_gateway_refund_received' );
+	$check( '  and it is scheduled to be checked again, not dropped', $queued );
 	delete_transient( 'wpss_refund_lock_' . $e );
 	do_action( 'wpss_gateway_refund_received', 'stripe', $txn3, 30.0, array( 'cumulative' => true, 'currency' => 'USD' ) );
 	$check( '  with the lock gone a refund from the rail is recorded', 30.0 === $got( $e ) );
@@ -150,8 +152,27 @@ try {
 	do_action( 'wpss_gateway_refund_received', 'woocommerce', 'wc_' . $txn3, 20.0, array( 'order_id' => $f, 'cumulative' => true, 'currency' => 'USD', 'refund_id' => 'wc_refund_1' ) );
 	remove_filter( 'wpss_order_money_rail', $filter );
 	$check( '  but the platform\'s own refund is recorded', 20.0 === $got( $f ) );
+
+	// 8. The refund-everything shortcut needs proof the charge holds only these gigs.
+	$g = $seed( 60.0, 'wc_g_' . $txn3 );
+	$h = $seed( 40.0, 'wc_g_' . $txn3 );
+	$ctx_ids = array( 'cumulative' => true, 'currency' => 'USD', 'order_ids' => array( $g, $h ) );
+	do_action( 'wpss_gateway_refund_received', 'woocommerce', 'wc_g_' . $txn3, 100.0, array_merge( $ctx_ids, array( 'refund_id' => 'amb_1' ) ) );
+	$check( 'an amount that only matches the total, on gigs the rail could not name, is parked not refunded', 0.0 === $got( $g ) && 0.0 === $got( $h ) && null !== PendingRefundService::get( $g ) );
+	do_action( 'wpss_gateway_refund_received', 'woocommerce', 'wc_g_' . $txn3, 100.0, array_merge( $ctx_ids, array( 'refund_id' => 'amb_2', 'full_charge' => true, 'cumulative' => false ) ) );
+	$check( '  but a rail that says the whole charge was refunded refunds every gig', 'refunded' === $row( $g )->status && 'refunded' === $row( $h )->status );
+
+	// 9. More than the charge holds is parked for an admin, never spread over the gigs.
+	$txn4 = 'pi_over_' . wp_generate_password( 6, false );
+	$i    = $seed( 60.0, $txn4 );
+	$j    = $seed( 40.0, $txn4 );
+	do_action( 'wpss_gateway_refund_received', 'stripe', $txn4, 150.0, array( 'cumulative' => true, 'currency' => 'USD', 'refund_id' => 're_over' ) );
+	$check( 'a refund larger than the charge holds is parked, no gig is refunded', 0.0 === $got( $i ) && 0.0 === $got( $j ) && null !== PendingRefundService::get( $i ) );
 } finally {
 	remove_action( 'wpss_gateway_refund_unallocated', $count );
+	if ( function_exists( 'as_unschedule_all_actions' ) ) {
+		as_unschedule_all_actions( 'wpss_gateway_refund_received' );
+	}
 	foreach ( $ids as $id ) {
 		wpss_get_order_provider()->update_item_meta( $id, PendingRefundService::META, '' );
 		$wpdb->delete( $table, array( 'id' => $id ) );
