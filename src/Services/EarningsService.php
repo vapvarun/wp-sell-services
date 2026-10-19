@@ -374,7 +374,7 @@ class EarningsService {
 				'currency'       => $withdrawal->currency ?? wpss_get_currency(),
 				'description'    => sprintf(
 					/* translators: %d: withdrawal ID */
-					__( 'Withdrawal #%d completed', 'wp-sell-services' ),
+					__( 'Withdrawal #%d paid', 'wp-sell-services' ),
 					$withdrawal_id
 				),
 				'reference_type' => 'withdrawal',
