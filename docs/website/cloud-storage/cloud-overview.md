@@ -1,16 +1,6 @@
 # Cloud Storage **[PRO]**
 
-> **Not yet connected to deliveries.** The S3, Google Cloud and DigitalOcean
-> drivers work and the connection test really does reach your bucket, but nothing
-> routes a delivery file through them -- deliveries are still stored in the
-> WordPress media library. The bucket is currently reachable only through the
-> REST API, for custom integrations.
->
-> Set this up now if you are building against the API. If you want delivery
-> storage offloaded, wait for that rather than configuring it here. This page
-> describes the intended behaviour once it is connected.
-
-Cloud storage is intended to move delivery files off your WordPress server onto a dedicated provider, for better performance and faster downloads worldwide.
+Cloud storage moves order files off your WordPress server onto a dedicated provider, for better performance and faster downloads worldwide. Once a provider is active, every new delivery, requirement, message, dispute and payment-receipt file goes to your bucket.
 
 ---
 
@@ -60,9 +50,9 @@ S3-compatible storage with simple, predictable pricing: $5/month for 250GB stora
 With a provider active, the flow is:
 
 1. A vendor uploads their delivery files through the order page (same as usual)
-2. The plugin transfers the files to your cloud storage bucket
-3. When the buyer downloads, the file is served from the cloud provider
-4. Access is controlled through signed, time-limited download links
+2. The plugin uploads each file to your cloud storage bucket and removes the local copy
+3. If an upload fails, the local copy is kept and served instead, so a bucket outage never loses a delivery
+4. When the buyer downloads, a permission-checked link on the order hands out a short-lived signed URL from the provider
 
 Each stored file records which provider holds it, so files uploaded before you switch providers keep downloading from their original bucket.
 
@@ -72,8 +62,8 @@ Each stored file records which provider holds it, so files uploaded before you s
 
 Until you enable cloud storage, files are stored locally:
 
-- Delivery files go to `wp-content/uploads/wpss/deliveries/`
-- Files are protected so only authorized buyers can download them
+- Order files go to a `wpss-order-files/` folder outside your web root where the host allows it, otherwise to `wp-content/uploads/wpss-order-files/` with access rules added
+- Only the buyer, the vendor and site admins can download them
 - Storage is limited by your hosting plan
 
 **Tips for managing local storage:**
