@@ -12,7 +12,7 @@ No WooCommerce needed: the free plugin has its own checkout with Stripe, PayPal 
 - **Vendors**: open, approval-based or closed registration, seller levels, portfolio, intro video, vacation mode and a vendor dashboard.
 - **Reviews and disputes**: multi-criteria ratings with moderation, and a dispute workflow with evidence and admin mediation.
 - **Money**: global and per-vendor commission, an earnings ledger, withdrawal requests, mark-paid payouts and CSV export of what is owed. Refunds are made by the payment rail that collected the money.
-- **Extras**: tipping, paid extensions, favorites, email and in-app notifications, guided tours for admins and members, and dark mode on every frontend screen.
+- **Extras**: paid extensions, favorites, email and in-app notifications, guided tours for admins and members, and dark mode on every frontend screen.
 - **Display**: 20 shortcodes and 6 blocks for service grids, search, categories, seller cards, buyer requests and dashboards.
 
 ## Who it is for
@@ -22,7 +22,7 @@ Site owners building a freelance, coaching, tutoring or agency services marketpl
 ## Get it
 
 - Free plugin: [wbcomdesigns.com/downloads/wp-sell-services](https://wbcomdesigns.com/downloads/wp-sell-services/)
-- [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro/) adds WooCommerce, EDD and FluentCart checkout, Razorpay, Stripe Connect and PayPal payouts, tiered commission, vendor subscription plans, wallet providers, cloud storage, white label, display currency, push notifications and analytics. Pricing is on that page.
+- [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro/) adds WooCommerce, EDD and FluentCart checkout, Razorpay, Stripe Connect and PayPal payouts, tipping, tiered commission, vendor subscription plans, wallet providers, cloud storage, white label, display currency, push notifications and analytics. Pricing is on that page.
 - Product site: [wpsellservices.com](https://wpsellservices.com/)
 
 ## Documentation
