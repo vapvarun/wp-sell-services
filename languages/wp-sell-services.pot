@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-19T04:17:42+00:00\n"
+"POT-Creation-Date: 2026-10-19T05:17:45+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -630,7 +630,6 @@ msgstr ""
 #: src/functions/order-status.php:149
 #: src/Models/ServiceOrder.php:637
 #: src/Privacy/PersonalData.php:529
-#: src/Services/EarningsService.php:1425
 #: templates/dashboard/sections/orders.php:154
 #: templates/dashboard/sections/sales.php:175
 #: templates/emails/order-completed.php:97
@@ -2739,6 +2738,7 @@ msgstr ""
 #. translators: %s: payment method, e.g. Stripe.
 #: src/Admin/Pages/ManualOrderPage.php:362
 #: src/functions/order-status.php:314
+#: src/Services/EarningsService.php:1425
 #: templates/emails/withdrawal-completed.php:59
 msgid "Paid"
 msgstr ""
@@ -17047,7 +17047,7 @@ msgstr ""
 #. translators: %d: withdrawal ID
 #: src/Services/EarningsService.php:377
 #, php-format
-msgid "Withdrawal #%d completed"
+msgid "Withdrawal #%d paid"
 msgstr ""
 
 #: src/Services/EarningsService.php:444
@@ -19185,7 +19185,7 @@ msgstr ""
 msgid "This refund is being assigned. Reload and check the order."
 msgstr ""
 
-#: src/Services/PendingRefundService.php:230
+#: src/Services/PendingRefundService.php:228
 msgid "This order has nothing left to refund."
 msgstr ""
 

@@ -706,7 +706,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 	 * @return array<string,mixed> settle() result, or { success:false, error:string }.
 	 */
 	private function capture_and_settle( string $paypal_order_id ): array {
-		if ( ! $paypal_order_id ) {
+		if ( ! preg_match( '/^[A-Za-z0-9_-]{5,64}$/', $paypal_order_id ) ) {
 			return array(
 				'success' => false,
 				'error'   => __( 'Invalid PayPal order.', 'wp-sell-services' ),

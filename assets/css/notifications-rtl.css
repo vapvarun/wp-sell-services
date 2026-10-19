@@ -9,6 +9,7 @@
 .wpss-notif-center__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .wpss-notif-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
 .wpss-notif-filter select { min-width: 0; max-width: 100%; }
+.wpss-notif-filter button { min-height: 44px; }
 .wpss-notif-filter__reset { font-size: 13px; }
 .wpss-notif-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .wpss-notif-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid var( --wpss-border, #e5e7eb ); border-radius: var( --wpss-radius, 8px ); background: var( --wpss-bg, #fff ); }
