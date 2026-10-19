@@ -28,7 +28,8 @@ $wpss_payment = wpss_get_payment_status_label( (string) $wpss_order->payment_sta
 	<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Payment', 'wp-sell-services' ); ?></span>
 	<span class="wpss-order-detail-item__value"><?php echo esc_html( $wpss_payment ); ?></span>
 </div>
-<?php if ( $wpss_order->paid_at ) : ?>
+<?php // A pay-on-delivery order is stamped when work starts, not when money arrives, so no "Paid On" date. ?>
+<?php if ( $wpss_order->paid_at && 'cod' !== (string) $wpss_order->payment_method ) : ?>
 	<div class="wpss-order-detail-item">
 		<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Paid On', 'wp-sell-services' ); ?></span>
 		<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_datetime_label( $wpss_order->paid_at->getTimestamp() ) ); ?></span>

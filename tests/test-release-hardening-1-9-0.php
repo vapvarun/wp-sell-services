@@ -51,6 +51,7 @@ if ( is_readable( $pro_dir . 'WCOrderBridge.php' ) ) {
 	$check( 'the Woo receipt does not say a COD order is paid', false !== strpos( (string) file_get_contents( $pro_dir . 'WCOrderBridge.php' ), "'cod' === (string) ( \$order->payment_method" ) );
 	$check( 'a request order line is named by its request', false !== strpos( (string) file_get_contents( $pro_dir . 'WCPayOrderResolver.php' ), "'request' === \$platform && '' !== \$subject" ) );
 }
+$check( 'a pay-on-delivery order shows no Paid On date', false !== strpos( $read( 'templates/order/payment.php' ), "'cod' !== (string) \$wpss_order->payment_method" ) );
 $check( 'the notification filter button is a 44px target', false !== strpos( $read( 'assets/css/notifications.css' ), '.wpss-notif-filter button { min-height: 44px; }' ) );
 
 exit( $fails ? 1 : 0 );
