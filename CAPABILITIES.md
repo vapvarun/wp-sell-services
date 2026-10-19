@@ -3,7 +3,7 @@
 Buyer-level truth for the store listing and for anyone deciding whether this
 plugin fits. Written to be read before purchase, not after.
 
-**Version**: 1.8.0 · **Last verified**: 2026-10-07 (rows changed in 1.8.0 checked against source and tests)
+**Version**: 1.9.0 · **Last verified**: 2026-10-19 (rows changed in 1.9.0 checked against the release smoke walk)
 
 `YES` — ships and is exercised · `PARTIAL` — ships with a stated limit ·
 `NO` — does not ship, whatever a roadmap says.
@@ -83,6 +83,23 @@ they belong to the other party too, and you need them for your accounting.
 
 Added in 1.7.0. Before that the plugin registered nothing, so an export looked
 complete while containing no marketplace data at all.
+
+## Can a buyer re-order a finished order?
+
+**YES** since 1.9.0. Order Again puts the package and options of a finished
+order back in the cart in one click, on every checkout rail.
+
+## Who is refunded how, and what happens to a negative balance?
+
+**YES** since 1.9.0. A refund is made by the rail that collected the money.
+Refunding stays admin-only unless a site opens it with the
+`wpss_can_refund_order` filter. An admin can write off a vendor's negative
+balance, and the REST API reports the balance state.
+
+## Can buyers mark a review as helpful?
+
+**YES** since 1.9.0. The Helpful vote can be toggled off, is remembered, and
+is refused on your own review. Only approved reviews take votes.
 
 ## Can I take a commission?
 
