@@ -82,7 +82,7 @@ See the full admin workflow in [Withdrawal Approvals](../admin-tools/withdrawal-
 2. Review pending requests (vendor info, amount, payment details)
 3. **Approve** the request
 4. Process payment externally (send the bank transfer or PayPal payment)
-5. Return to the request and click **Mark as paid**
+5. Return to the request and click **Mark paid**
 
 Admins can also **Reject** a request with a reason if something is wrong (incomplete payment details, outstanding disputes, etc.).
 

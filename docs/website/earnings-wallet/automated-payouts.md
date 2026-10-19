@@ -82,7 +82,7 @@ Auto-payouts still need admin approval and payment processing, just like manual 
 2. You will see new auto-withdrawal requests (marked with "Auto" badge)
 3. Review the request and click **Approve**
 4. Send the payment via PayPal or bank transfer
-5. Return and click **Mark as paid**
+5. Return and click **Mark paid**
 
 This keeps you in control of when money actually leaves your account while automating the request part.
 
