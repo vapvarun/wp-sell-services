@@ -300,6 +300,7 @@ Refunds and payments follow the rail that collected the money, negative balances
 * Fix      - Admin publish approves a service and Quick Edit stops rewriting moderation.
 * Fix      - Learnomy account pages resolve because the plugin no longer claims the /account/ base.
 * Fix      - The checkout tax summary follows the priced lines and a blank tax label falls back to Tax.
+* Security - Refund assignment is guarded by an atomic lock, PayPal order ids are checked before use, helpful votes count approved reviews only, and refused file names are sanitised.
 * Dev      - Payment gateways share one base class and three contract methods, and orders record what was bought product-neutrally.
 * Dev      - Release gates date the smoke walk by surface across Free and Pro.
 * Compat   - Aligned with WP Sell Services Pro 1.9.0. Install both updates together.
