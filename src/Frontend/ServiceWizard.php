@@ -1323,7 +1323,7 @@ class ServiceWizard {
 							<div class="wpss-pricing-summary-item" x-show="tier === 'basic' || data.packages[tier].enabled" x-cloak>
 								<span class="wpss-pricing-summary-name" x-text="data.packages[tier].name || tier.charAt(0).toUpperCase() + tier.slice(1)"></span>
 								<span class="wpss-pricing-summary-price" x-text="'<?php echo esc_html( wpss_get_currency_symbol() ); ?>' + (data.packages[tier].price || '0')"></span>
-								<span class="wpss-pricing-summary-delivery" x-text="(data.packages[tier].delivery_time || '?') + ' <?php esc_attr_e( 'days', 'wp-sell-services' ); ?>'"></span>
+								<span class="wpss-pricing-summary-delivery" x-text="(data.packages[tier].delivery_time || '?') + ' ' + (parseInt(data.packages[tier].delivery_time, 10) === 1 ? '<?php echo esc_js( __( 'day', 'wp-sell-services' ) ); ?>' : '<?php echo esc_js( __( 'days', 'wp-sell-services' ) ); ?>')"></span>
 							</div>
 						</template>
 					</div>

@@ -119,3 +119,8 @@ Complete an order as the buyer (accept delivery) with Mailpit open.
 As the buyer, open a completed order that was bought from a package.
 
 **Expect** a "Need this again?" section with the package name and today's price; Order again puts the same package and options in the cart and lands on checkout; if the price changed the section says so before the click; a custom-quote order, a paused service and an order that is not yours show no section; an option the vendor removed is dropped with a warning, never silently.
+
+### Order again on a store rail (combo walk 1.9.0)
+On the Woo rail order again from an order bought with quantity 2.
+
+**Expect** the button and the cart both show one, with a line saying the store sells one per order. Guard: `static:order-again`.

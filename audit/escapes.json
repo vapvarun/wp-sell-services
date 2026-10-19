@@ -536,6 +536,30 @@
    "added": "2026-10-19",
    "fails_on": "57bacdcd (listeners received the row read before the update)",
    "check": "tests/test-withdrawal-processed-carries-note.php"
+  },
+  {
+   "card": "combo walk 1.9.0: declined phase revived to paid by a stale Woo link (no card)",
+   "title": "a closed order is never marked paid and no store pay link is made for it",
+   "guard": "static:closed-order-cannot-be-paid",
+   "added": "2026-10-19",
+   "fails_on": "57bacdcd (mark_as_paid and wpss_ensure_pay_order had no closed-order check)",
+   "check": "tests/test-closed-order-cannot-be-paid.php"
+  },
+  {
+   "card": "combo walk 1.9.0: declined phase left its Woo order pending (no card)",
+   "title": "declining or deleting an unpaid phase cancels its pending store order",
+   "guard": "static:pro-declined-phase-cancels-store-order",
+   "added": "2026-10-19",
+   "fails_on": "57bacdcd (nothing cancelled the Woo order)",
+   "check": "tests/pro/test-declined-phase-cancels-store-order.php"
+  },
+  {
+   "card": "combo walk 1.9.0: Order Again promised 2x on the Woo rail, cart held 1x (no card)",
+   "title": "Order Again on a store rail adds and prices one, and says why",
+   "guard": "static:order-again",
+   "added": "2026-10-19",
+   "fails_on": "57bacdcd (plan priced the bought quantity on a rail whose cart drops it to 1)",
+   "check": "tests/test-order-again.php"
   }
  ]
 }

@@ -84,7 +84,14 @@ $check( 'a tip cannot', 'wpss_reorder_not_available' === $code( wpss_get_reorder
 $check( 'a custom quote cannot', 'wpss_reorder_not_available' === $code( wpss_get_reorder_plan( $make( array( 'package_id' => null, 'meta' => wp_json_encode( array( 'proposal_snapshot' => array( 'price' => 40 ) ) ) ) ), $buyer->ID ) ) );
 
 // 3. Quantity is read back from the money.
+// Quantity is kept on the standalone rail; a store rail sells one (section 11).
+$manager_early  = wpss()->get_integration_manager();
+$prop_early     = new ReflectionProperty( $manager_early, 'active_adapter' );
+$prop_early->setAccessible( true );
+$original_early = $prop_early->getValue( $manager_early );
+$prop_early->setValue( $manager_early, $manager_early->get_adapter( 'standalone' ) );
 $plan = wpss_get_reorder_plan( $make( array( 'subtotal' => 180, 'addons_total' => 10, 'total' => 190 ) ), $buyer->ID );
+$prop_early->setValue( $manager_early, $original_early );
 $check( 'two of the package orders two again', is_array( $plan ) && 2 === $plan['quantity'] );
 
 // 4. A changed price is said, with both figures.
@@ -173,6 +180,20 @@ $res = $rest( $order->id );
 $check( 'ordering again twice does not stack a duplicate line', 1 === count( (array) get_user_meta( $buyer->ID, '_wpss_cart', true ) ) );
 $prop->setValue( $manager, $original );
 delete_user_meta( $buyer->ID, '_wpss_cart' );
+
+// 11. A store rail sells one delivery per line: two bought on standalone comes back as one, and says so.
+$woo_adapter = $manager->get_adapter( 'woocommerce' );
+if ( $woo_adapter ) {
+	$prop->setValue( $manager, $woo_adapter );
+	$plan = wpss_get_reorder_plan( $make( array( 'subtotal' => 180, 'addons_total' => 10, 'total' => 190 ) ), $buyer->ID );
+	$check( 'on a store rail two bought comes back as one', is_array( $plan ) && 1 === $plan['quantity'] );
+	$check( 'the price shown is for the one that is added', is_array( $plan ) && abs( $plan['current_total'] - 100 ) < 0.005 );
+	$check( 'it says why', is_array( $plan ) && 1 === count( array_filter( $plan['warnings'], static fn( $w ) => false !== strpos( $w, 'per order' ) ) ) );
+	$check( 'and does not call it a price change', is_array( $plan ) && false === $plan['price_changed'] );
+	$prop->setValue( $manager, $original );
+} else {
+	echo "SKIP  WooCommerce adapter not available\n";
+}
 
 // Cleanup.
 wp_set_current_user( 0 );

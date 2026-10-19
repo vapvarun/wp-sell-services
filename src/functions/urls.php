@@ -1061,9 +1061,16 @@ function wpss_ensure_pay_order( int $order_id ): string {
 	$wpss_pay_order = wpss_get_order( $order_id );
 	if (
 		$wpss_pay_order
-		&& \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $wpss_pay_order->platform ?? '' )
-		&& ( new \WPSellServices\Services\MilestoneService() )->is_locked( $order_id )
+		&& (
+			in_array( $wpss_pay_order->status ?? '', array( 'cancelled', 'refunded' ), true )
+			|| (
+				\WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $wpss_pay_order->platform ?? '' )
+				&& ( new \WPSellServices\Services\MilestoneService() )->is_locked( $order_id )
+			)
+		)
 	) {
+		// A closed order is never offered for payment either: a stale link to a declined phase
+		// still reached the store's pay page and took the money.
 		return wpss_get_order_url( $order_id, '', $wpss_pay_order );
 	}
 

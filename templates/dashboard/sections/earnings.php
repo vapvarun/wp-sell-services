@@ -365,30 +365,13 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 			// simply have not earned enough, when in fact money was taken back.
 			// The balance is a ledger SUM, so new earnings clear it
 			// automatically; nobody has to chase an invoice.
-			$wpss_owed_amount   = $wpss_ledger_owed;
 			$wpss_earn_more_url = wpss_append_dashboard_section( get_permalink(), 'services' );
 			?>
 			<div class="wpss-banner wpss-banner--danger wpss-earnings__payout-banner" role="status">
 				<i data-lucide="alert-circle" class="wpss-icon wpss-icon--lg wpss-banner__icon" aria-hidden="true"></i>
 				<div class="wpss-banner__content">
-					<span class="wpss-banner__title">
-						<?php
-						printf(
-							/* translators: %s: negative balance */
-							esc_html__( 'Your balance is %s', 'wp-sell-services' ),
-							esc_html( wpss_format_price( -$wpss_owed_amount ) )
-						);
-						?>
-					</span>
-					<span class="wpss-banner__text">
-						<?php
-						printf(
-							/* translators: %s: amount owed */
-							esc_html__( 'A refund returned %s to a buyer after you were paid, so that amount is owed back. Your next earnings clear it automatically — there is nothing to pay directly. Withdrawals resume once your balance is positive again.', 'wp-sell-services' ),
-							esc_html( wpss_format_price( $wpss_owed_amount ) )
-						);
-						?>
-					</span>
+					<span class="wpss-banner__title"><?php esc_html_e( 'Withdrawals are paused', 'wp-sell-services' ); ?></span>
+					<span class="wpss-banner__text"><?php esc_html_e( 'Your balance is below zero, as explained above. Withdrawals resume once your next earnings bring it back above zero.', 'wp-sell-services' ); ?></span>
 				</div>
 				<a href="<?php echo esc_url( $wpss_earn_more_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm wpss-banner__action">
 					<i data-lucide="briefcase" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>

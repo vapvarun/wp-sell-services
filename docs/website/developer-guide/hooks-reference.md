@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**549 hooks** across **760** firing sites.
+**550 hooks** across **761** firing sites.
 
-## Actions (279)
+## Actions (280)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -173,6 +173,7 @@ guide; this is the complete index.
 | `wpss_package_features` | 3 | `templates/partials/service-packages.php` | Fires inside the package features list. |
 | `wpss_payable_total_after` | 2 | `templates/checkout/summary.php` *(+1 more)* | Fires after the payable total, before the Pay button. |
 | `wpss_payment_callback` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php` | Fires when a payment callback is received. |
+| `wpss_payment_for_closed_order` | 3 | `src/Integrations/Standalone/StandaloneOrderProvider.php` | Fires when a payment arrives for an order that is already closed. |
 | `wpss_payment_receipt_rejected` | 4 | `src/Services/PaymentReceiptService.php` | Fires when an admin rejects proof of an offline payment. |
 | `wpss_payment_receipt_submitted` | 3 | `src/Services/PaymentReceiptService.php` | Fires when a buyer submits proof of an offline payment. |
 | `wpss_payment_receipt_verified` | 3 | `src/Services/PaymentReceiptService.php` | Fires when an admin verifies proof of an offline payment. |

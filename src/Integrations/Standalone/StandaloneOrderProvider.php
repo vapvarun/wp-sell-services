@@ -349,6 +349,26 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			return true;
 		}
 
+		// A cancelled or refunded order is closed. Marking it paid revived a declined milestone
+		// phase under a completed parent when a stale store link was still paid. The payment
+		// is announced instead, so the owner can refund it.
+		if ( in_array( $order->status ?? '', array( ServiceOrder::STATUS_CANCELLED, ServiceOrder::STATUS_REFUNDED ), true ) ) {
+			wpss_log( sprintf( 'mark_as_paid refused for order #%d: it is %s (incoming transaction %s)', $order_id, $order->status, $transaction_id ), 'warning' );
+
+			/**
+			 * Fires when a payment arrives for an order that is already closed.
+			 *
+			 * @since 1.9.0
+			 *
+			 * @param int    $order_id       WPSS order ID.
+			 * @param string $transaction_id Gateway transaction.
+			 * @param string $payment_method Gateway slug.
+			 */
+			do_action( 'wpss_payment_for_closed_order', $order_id, $transaction_id, $payment_method );
+
+			return false;
+		}
+
 		// Sub-order platforms (tip, extension, milestone) do NOT go through
 		// the requirements workflow — they have their own service handler
 		// wired to `wpss_order_paid` which credits the vendor wallet and

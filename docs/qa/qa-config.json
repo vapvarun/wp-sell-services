@@ -302,6 +302,14 @@
    {
     "id": "withdrawal-processed-carries-note",
     "run": "${WP_CLI:-wp} eval-file tests/test-withdrawal-processed-carries-note.php"
+   },
+   {
+    "id": "closed-order-cannot-be-paid",
+    "run": "${WP_CLI:-wp} eval-file tests/test-closed-order-cannot-be-paid.php"
+   },
+   {
+    "id": "pro-declined-phase-cancels-store-order",
+    "run": "${WP_CLI:-wp} eval-file tests/pro/test-declined-phase-cancels-store-order.php"
    }
   ]
  }

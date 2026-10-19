@@ -68,6 +68,8 @@ $is_cancelled = 'cancelled' === $status;
 // sites while the same phase paid fine from the notification email, which
 // does use the seam.
 $pay_url = wpss_get_pay_order_url( (int) $current_order->id, $current_order );
+// A locked phase cannot be paid yet; the Pay button used to loop back to this page.
+$wpss_phase_locked = ( new \WPSellServices\Services\MilestoneService() )->is_locked( (int) $current_order->id );
 
 $counterparty_id = $is_buyer ? (int) $current_order->vendor_id : (int) $current_order->customer_id;
 $counterparty    = get_userdata( $counterparty_id );
@@ -222,6 +224,9 @@ do_action( 'wpss_before_milestone_view', $current_order );
 
 		<div class="wpss-tip-view__actions">
 			<?php if ( $is_buyer && $is_unpaid && '' !== $pay_url ) : ?>
+				<?php if ( $wpss_phase_locked ) : ?>
+					<p class="wpss-text-muted"><?php esc_html_e( 'This phase unlocks once the previous phase is approved.', 'wp-sell-services' ); ?></p>
+				<?php else : ?>
 				<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php
 					printf(
@@ -231,6 +236,7 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					);
 					?>
 				</a>
+				<?php endif; ?>
 				<button type="button" class="wpss-btn wpss-btn--secondary wpss-milestone-decline-btn"
 					data-milestone="<?php echo esc_attr( (int) $current_order->id ); ?>">
 					<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>

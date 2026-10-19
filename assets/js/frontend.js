@@ -799,6 +799,11 @@
 		// Review form submission.
 		$(document).on('submit', '#wpss-review-form', function(e) {
 			e.preventDefault();
+			// The star radios are visually hidden, so the browser cannot show its own "required" bubble.
+			if (!$(this).find('input[name="rating"]:checked').length) {
+				WPSS.showNotification($(this).data('rating-error'), 'error');
+				return;
+			}
 			WPSS.submitReview($(this));
 		});
 

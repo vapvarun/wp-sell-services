@@ -981,6 +981,14 @@ function wpss_get_reorder_plan( \WPSellServices\Models\ServiceOrder $order, int 
 	$ratio    = $unit > 0 ? (float) $order->subtotal / $unit : 1.0;
 	$quantity = ( $ratio >= 1 && abs( $ratio - round( $ratio ) ) < 0.001 ) ? (int) round( $ratio ) : 1;
 
+	// A store rail sells one delivery per line: asking for more priced a quantity its cart then
+	// dropped to 1 (combo walk, 1.9.0). The standalone cart keeps the quantity.
+	$bought_quantity = $quantity;
+	$adapter         = wpss_get_active_adapter();
+	if ( $adapter && 'standalone' !== $adapter->get_id() ) {
+		$quantity = 1;
+	}
+
 	$selection = wpss_normalize_addon_selection( is_array( $order->addons ) ? $order->addons : array() );
 	$line      = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, (int) $resolved['index'], $quantity, $selection );
 
@@ -1006,7 +1014,17 @@ function wpss_get_reorder_plan( \WPSellServices\Models\ServiceOrder $order, int 
 		);
 	}
 
-	$previous = round( (float) $order->subtotal + (float) $order->addons_total, wpss_get_currency_decimals() );
+	if ( $quantity < $bought_quantity ) {
+		$warnings[] = sprintf(
+			/* translators: 1: quantity on the last order, 2: quantity added now */
+			__( 'You bought %1$d last time; this store sells %2$d per order, so %2$d is added.', 'wp-sell-services' ),
+			$bought_quantity,
+			$quantity
+		);
+	}
+
+	// What the last order cost for the same quantity, so a lower quantity is not read as a price change.
+	$previous = round( ( (float) $order->subtotal * $quantity / max( 1, $bought_quantity ) ) + (float) $order->addons_total, wpss_get_currency_decimals() );
 	$current  = round( (float) $line['subtotal'] + (float) $line['addons_total'], wpss_get_currency_decimals() );
 	$changed  = abs( $current - $previous ) > 0.005;
 

@@ -45,3 +45,8 @@ As the buyer, tip a completed order (pending or paid) and reload the order page.
 On the Woo rail open ?pay_order=<second phase id> as the buyer while phase one is unpaid.
 
 **Expect** no payment page; the buyer lands on the order. Guard: `static:locked-phase-pay-seam`.
+
+### A declined phase stays closed (combo walk 1.9.0)
+As the buyer decline a phase, then open its old Woo pay link (and ?pay_order=<id>).
+
+**Expect** no payment page, the Woo order is cancelled, and the order page says it is cancelled; a phase that is locked shows "unlocks once the previous phase is approved" and no Pay button. Guards: `static:closed-order-cannot-be-paid`, `static:pro-declined-phase-cancels-store-order`.

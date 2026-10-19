@@ -1972,7 +1972,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
 		</div>
-		<form class="wpss-review-form" id="wpss-review-form">
+		<form class="wpss-review-form" id="wpss-review-form" novalidate data-rating-error="<?php esc_attr_e( 'Choose a star rating to leave your review.', 'wp-sell-services' ); ?>">
 			<?php wp_nonce_field( 'wpss_submit_review', 'wpss_review_nonce' ); ?>
 			<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
 
