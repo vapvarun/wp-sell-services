@@ -79,8 +79,9 @@ site owner:
 - **Uploaded order files are not private.** The claim is gone; the honest limit
   is stated.
 - **Menu Visibility instructions were inverted** -- a ticked box means visible.
-- **Cloud storage is not connected to deliveries**, despite four pages
-  describing an automatic transfer.
+- **Cloud storage pages lagged the code.** Order files have uploaded to the
+  active bucket since 1.7.0, but four pages still said they did not. Corrected
+  in 1.9.0.
 - Four Pro features that do not ship were being advertised.
 
 ## Known gaps, not yet written

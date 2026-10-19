@@ -78,16 +78,14 @@ charge currency is stated at checkout. It is not multi-currency settlement.
 | Admin order, vendor, dispute, withdrawal management | Yes | Yes |
 | Moderation queues | Yes | Yes |
 | Analytics | Basic stats | Full dashboards; CSV export on the admin screen |
-| File storage | Your server | Your server. S3, Google Cloud and DigitalOcean can be configured, but delivery files are **not** sent to them yet -- the bucket is reachable only through the REST API. See the note below. |
+| File storage | Your server | Your server, or Amazon S3, Google Cloud Storage or DigitalOcean Spaces. See the note below. |
 | Audit log | Yes | Yes |
 | REST API | Yes | Yes |
 | WP-CLI | Yes | Yes |
 
-**Cloud storage is not connected to deliveries.** The S3, Google Cloud and
-DigitalOcean drivers work and the connection test really does reach your bucket,
-but nothing routes a delivery file through them -- deliveries are still stored in
-the WordPress media library. Configure it only if you are building against the
-REST API. If you want delivery storage offloaded, wait for that to ship.
+**Cloud storage covers every order file.** With a provider active, new delivery,
+requirement, message, dispute and receipt files upload to your bucket and the
+local copy is removed. If an upload fails, the local copy is kept and served.
 
 ## Not shipping yet
 

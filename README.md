@@ -1,87 +1,58 @@
 # WP Sell Services
 
-A complete Fiverr-style service marketplace platform for WordPress. Vendors list services with tiered pricing, buyers purchase through a managed order workflow, and administrators earn commissions on every transaction.
+A Fiverr-style service marketplace for WordPress. Vendors list services with tiered packages, buyers order through a managed workflow with requirements, deliveries and revisions, and the site owner earns a commission on every sale. Buyer requests can run as Upwork-style milestone contracts.
 
-**No WooCommerce required** — includes a built-in standalone checkout with offline payments out of the box.
+No WooCommerce needed: the free plugin has its own checkout with Stripe, PayPal and offline payments.
 
-[Try Live Demo](https://app.instawp.io/launch?s=wp-sell-services&d=v2) | [Product Page](https://store.wbcomdesigns.com/wp-sell-services/) | [Documentation](https://store.wbcomdesigns.com/wp-sell-services/docs/)
+## What it does
 
-**For the team:** [`CAPABILITIES.md`](CAPABILITIES.md) answers "can it do X" for buyers. [`APP-COVERAGE.md`](APP-COVERAGE.md) tracks what the mobile app reaches of this REST surface — 183 paths, 76 called, 58 real gaps, regenerated from the running site rather than edited by hand.
+- **Services**: a step-by-step service wizard with Basic, Standard and Premium packages, add-ons, gallery, video, FAQs and buyer requirements.
+- **Orders**: requirements collection, messaging with attachments, deliveries, revision requests, deadline extensions, cancellations and a full order timeline.
+- **Buyer requests and proposals**: buyers post a job, vendors send proposals, and accepted proposals can be paid in milestone phases.
+- **Vendors**: open, approval-based or closed registration, seller levels, portfolio, intro video, vacation mode and a vendor dashboard.
+- **Reviews and disputes**: multi-criteria ratings with moderation, and a dispute workflow with evidence and admin mediation.
+- **Money**: global and per-vendor commission, an earnings ledger, withdrawal requests, mark-paid payouts and CSV export of what is owed. Refunds are made by the payment rail that collected the money.
+- **Extras**: tipping, paid extensions, favorites, email and in-app notifications, guided tours for admins and members, and dark mode on every frontend screen.
+- **Display**: 20 shortcodes and 6 blocks for service grids, search, categories, seller cards, buyer requests and dashboards.
 
-## Features
+## Who it is for
 
-### Marketplace Core
-- Multi-step service creation wizard with live preview
-- Three-tier pricing packages (Basic, Standard, Premium)
-- Service add-ons, gallery, video embeds, FAQs, and requirements
-- Category and tag organization
+Site owners building a freelance, coaching, tutoring or agency services marketplace on WordPress, who want the whole order flow in one plugin instead of stitching a store, a messaging plugin and a payout tool together.
 
-### Order Workflow
-- 18 distinct order statuses with complete lifecycle management
-- Requirements collection, file delivery, revision requests
-- Built-in messaging per order with file attachments
-- Deadline extensions and cancellation flow
+## Get it
 
-### Vendor System
-- Vendor registration (open, approval, or closed)
-- Seller level progression (New Seller, Rising Seller, Top Rated, Pro Seller)
-- Unified dashboard with earnings, portfolio, and vacation mode
-- Commission tracking and withdrawal requests
+- Free plugin: [wbcomdesigns.com/downloads/wp-sell-services](https://wbcomdesigns.com/downloads/wp-sell-services/)
+- [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro/) adds WooCommerce, EDD and FluentCart checkout, Razorpay, Stripe Connect and PayPal payouts, tiered commission, vendor subscription plans, wallet providers, cloud storage, white label, display currency, push notifications and analytics. Pricing is on that page.
+- Product site: [wpsellservices.com](https://wpsellservices.com/)
 
-### Buyer Features
-- Post buyer requests for vendor proposals
-- Favorites/wishlist, tipping, and order tracking
-- Full purchase history
+## Documentation
 
-### Reviews and Disputes
-- 5-star multi-criteria ratings with moderation queue
-- Structured dispute workflow with evidence submission
-- Admin mediation with multiple resolution types
-
-### Payments and Earnings
-- Standalone checkout with offline gateway (no e-commerce plugin needed)
-- Global and per-vendor commission rates (0-50%)
-- Automated withdrawal scheduling (weekly, bi-weekly, monthly)
-
-### Admin Experience
-- Unified listing UX across Vendors, Withdrawals, and Moderation — one wrapper, shared stats strip, consistent status-color palette
-- First-time admin tour — 8-step Shepherd.js walkthrough of the dashboard, sidebar, and sub-screens, with a "Replay tour" trigger on the dashboard
-- Designed empty-states — zero-data screens render an icon + body + CTA instead of bare "No X found." messages
-- Contextual Help tabs on Orders and Disputes screens
-
-### Buyer & Seller Dashboard
-- Role-aware frontend tour on the `[wpss_dashboard]` shortcode — sellers walk Orders → Requests → Services → Sales → Earnings → Messages, buyers see a shorter flow with a "Want to sell too?" CTA highlight
-- "Replay tour" trigger in the dashboard header
-
-### Operations
-- Recurring jobs run on [Action Scheduler](https://actionscheduler.org/) — durable retry, admin-visible action history (Tools → Scheduled Actions), and no more cron-starved sites
-- Automatic upgrade path scrubs legacy WP-Cron entries on first load after upgrade
-- All free-plugin actions tagged with the `wpss` group so they can be swept in a single call
-
-### Developer Features
-- 21 REST API controllers with 125+ endpoints
-- 100% REST coverage for all user-facing features (mobile-app ready)
-- Batch endpoint for mobile apps (up to 25 sub-requests)
-- 6 Gutenberg blocks and 19 shortcodes
-- Template override system
-- 17 custom database tables
-- PSR-4 autoloading, PHP 8.1+
-- 100+ action and filter hooks
-- WP-CLI commands for bulk operations
+- Docs: [wpsellservices.com/docs](https://wpsellservices.com/docs/) and [docs.wbcomdesigns.com/products/wp-sell-services](https://docs.wbcomdesigns.com/products/wp-sell-services/)
+- Release notes: [Free](https://wbcomdesigns.com/release-notes/wp-sell-services/) and [Pro](https://wbcomdesigns.com/release-notes/wp-sell-services-pro/)
+- Docs source lives in this repo under [`docs/website/`](docs/website/). Free and Pro are documented together here.
 
 ## Requirements
 
-- WordPress 6.4+
-- PHP 8.1+
-- MySQL 5.7+
+- WordPress 6.4 or later
+- PHP 8.1 or later
 
 ## Installation
 
-1. Download the plugin ZIP from [wbcomdesigns.com](https://wbcomdesigns.com/downloads/wp-sell-services/)
-2. Go to **Plugins > Add New > Upload Plugin** and upload the ZIP
-3. Activate and complete the **Setup Wizard**
+1. Download the plugin zip from [wbcomdesigns.com](https://wbcomdesigns.com/downloads/wp-sell-services/).
+2. Go to **Plugins > Add New > Upload Plugin**, upload the zip and activate it.
+3. Complete the **Setup Wizard**.
 
-Or upload the `wp-sell-services` folder to `/wp-content/plugins/` manually.
+## For developers
+
+| | |
+|---|---|
+| REST API | `/wp-json/wpss/v1/`, covering every member-facing feature, plus `POST /wpss/v1/batch` for up to 25 sub-requests. See the [REST API overview](docs/website/developer-guide/rest-api-overview.md). |
+| Hooks | Actions and filters prefixed `wpss_`. See the [hooks reference](docs/website/developer-guide/hooks-reference.md). |
+| WP-CLI | `wp wpss` commands. See [WP-CLI commands](docs/website/developer-guide/wp-cli-commands.md). |
+| Template overrides | Copy a file from `templates/` to `your-theme/wp-sell-services/`. See [theme integration](docs/website/developer-guide/theme-integration.md). |
+| Background jobs | Action Scheduler, group `wpss`. |
+| Namespace and prefix | `WPSellServices\`, functions `wpss_` |
+| Text domain | `wp-sell-services` |
 
 ## Development
 
@@ -112,7 +83,7 @@ composer phpcbf    # Auto-fix WPCS issues
 vendor/bin/phpstan analyse --memory-limit=1G
 ```
 
-PHPStan is configured at level 5 with a baseline. New code must pass without regressions.
+PHPStan is configured at level 6 with a baseline. New code must pass without regressions.
 
 ### Tests
 
@@ -130,7 +101,7 @@ GitHub Actions runs on every push and PR to `main`:
 |-------|-------------|----------|
 | PHP Lint | Syntax check on PHP 8.1, 8.2, 8.3, 8.4 | Yes |
 | WPCS | WordPress Coding Standards (0 errors required) | Yes |
-| PHPStan | Static analysis level 5 | Yes |
+| PHPStan | Static analysis level 6 | Yes |
 | PHPUnit | Unit tests across PHP/WP matrix | No |
 
 Branch protection requires all blocking checks to pass before merge. PRs require 1 approval.
@@ -165,19 +136,10 @@ All endpoints are under `/wp-json/wpss/v1/`. Authentication via WordPress cookie
 
 Batch endpoint: `POST /wpss/v1/batch` (up to 25 sub-requests per call)
 
-## Pro Extension
+## Support
 
-[WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro/) adds:
-
-- E-commerce adapters (WooCommerce, EDD, FluentCart)
-- Additional payment gateway (Razorpay) — Stripe, PayPal, and Offline are included free
-- Wallet integrations (Internal, TeraWallet, WooWallet, MyCred)
-- Cloud storage (S3, GCS, DigitalOcean Spaces)
-- Advanced analytics with Chart.js
-- Tiered commissions, White-label, Stripe Connect, PayPal Payouts
-- Vendor subscription plans
-- 10 additional REST API controllers
+Open a ticket at [wbcomdesigns.com/support](https://wbcomdesigns.com/support/#submit-ticket-section).
 
 ## License
 
-GPL v2 or later. See [LICENSE](LICENSE) for details.
+GPL v2 or later. See [LICENSE](LICENSE).

@@ -13,7 +13,7 @@ The free version of WP Sell Services is a complete, production-ready marketplace
 | **Payment gateways** | Stripe, PayPal, Offline | + Razorpay |
 | **Service creation limits** | Conservative (see below) | Unlimited |
 | **Analytics** | Basic stats | Full dashboards; CSV export on the admin screen |
-| **File storage** | Your server | Your server. Cloud buckets can be configured but do not yet receive delivery files |
+| **File storage** | Your server | Your server, or Amazon S3, Google Cloud Storage or DigitalOcean Spaces |
 | **Vendor wallet** | Built-in wallet, earnings and withdrawals | Same, plus automatic payouts with Stripe Connect or PayPal Payouts |
 
 ---
@@ -102,17 +102,14 @@ An owner can therefore pay every vendor with **zero integrations** using Free al
 
 ### Cloud Storage
 
-> **Not yet connected to deliveries.** These drivers exist and their connection
-> test really does reach your bucket, but delivery files are still stored in the
-> WordPress media library. The bucket is currently reachable only through the
-> REST API. Do not upgrade for this alone.
+Once a provider is active, new order files upload to your bucket. See [Cloud Storage](../cloud-storage/cloud-overview.md).
 
 | Provider | Free | Pro |
 |----------|------|-----|
 | Local server storage | Yes | Yes |
-| Amazon S3 | -- | **[PRO]**, API only |
-| Google Cloud Storage | -- | **[PRO]**, API only |
-| DigitalOcean Spaces | -- | **[PRO]**, API only |
+| Amazon S3 | -- | **[PRO]** |
+| Google Cloud Storage | -- | **[PRO]** |
+| DigitalOcean Spaces | -- | **[PRO]** |
 
 ### Service Wizard
 
@@ -167,7 +164,7 @@ Pro makes sense when you need:
 - **WooCommerce or other e-commerce integration** -- You already use WooCommerce, EDD or FluentCart
 - **Razorpay payments** -- Popular for marketplaces in India and Southeast Asia
 - **Detailed analytics** -- Revenue charts, performance dashboards, and data export
-- **Cloud file storage** -- configurable for S3, Google Cloud or DigitalOcean, but **not yet connected to deliveries**. Do not upgrade for this alone.
+- **Cloud file storage** -- Keep order files on Amazon S3, Google Cloud Storage or DigitalOcean Spaces instead of your server
 
 ## Upgrading from Free to Pro
 
