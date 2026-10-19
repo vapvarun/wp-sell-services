@@ -60,6 +60,10 @@ buyer approves.
 > proposal are exempt and wait indefinitely. See
 > [The 48-hour abandon sweep](#the-48-hour-abandon-sweep).
 
+### Locked and closed phases
+
+A phase stays locked until the previous phase is approved. Its page says so instead of offering a Pay button. A phase that was declined or deleted can no longer be paid, and on a store checkout its pending store order is cancelled. A payment that arrives for a closed order is not applied; it is logged so you can refund it.
+
 ### Delivering a phase
 
 When the buyer pays a phase:

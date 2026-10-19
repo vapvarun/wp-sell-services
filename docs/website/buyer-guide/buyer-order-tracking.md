@@ -93,7 +93,7 @@ If you take too long (default: 7 days), the marketplace may either auto-start th
 - **Tip the vendor** -- If you are especially happy with the work, you can send a tip as a thank-you.
 ![The "Need this again?" section on a completed order, with the Order again button](../images/order-again.webp)
 
-- **Order again** -- Put the same package and options back in your cart in one click, at today's price. If the price changed or an option is gone, the page tells you before you pay. It is not offered for custom quotes, and it is unavailable while the vendor is away or the service is paused.
+- **Order again** -- Put the same package and options back in your cart in one click, at today's price. If the price changed or an option is gone, the page tells you before you pay. On a WooCommerce, EDD or FluentCart store the button adds one, and the page tells you when your last order had a larger quantity. The built-in checkout keeps the quantity. It is not offered for custom quotes, and it is unavailable while the vendor is away or the service is paused.
 - **Open a dispute** (if needed) -- You have a dispute window (default: 14 days) after completion to raise issues if something goes wrong after acceptance.
 
 ---

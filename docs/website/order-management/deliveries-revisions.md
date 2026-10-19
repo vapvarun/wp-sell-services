@@ -16,6 +16,8 @@ The order immediately moves to "Pending Approval" and the buyer gets an email no
 
 **Supported file types include:** images, documents, archives, audio, video, design files, and data files. For security, SVG, HTML, CSS, and JavaScript files are not allowed -- use a ZIP archive if you need to deliver those formats.
 
+If any file in a delivery is refused (blocked type or too large), the whole delivery is refused and the message names the file. Nothing is delivered until every file is accepted, so the buyer never receives a partial delivery.
+
 ## What the Buyer Sees
 
 When a delivery arrives, the buyer can download the files and review the work. They have three options:
