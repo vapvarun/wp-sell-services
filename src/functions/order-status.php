@@ -304,6 +304,11 @@ function wpss_get_payment_status_label( string $payment_status, bool $paid_at_se
 		return '' !== $method ? sprintf( __( 'Refunded · %s', 'wp-sell-services' ), $method ) : __( 'Refunded', 'wp-sell-services' );
 	}
 
+	// Cash on delivery marks the store order paid before any cash changes hands; do not claim money was received.
+	if ( 'cod' === $payment_method ) {
+		return __( 'Pay on delivery', 'wp-sell-services' );
+	}
+
 	if ( 'paid' === $payment_status || $paid_at_set ) {
 		/* translators: %s: payment method, e.g. Stripe. */
 		return '' !== $method ? sprintf( __( 'Paid · %s', 'wp-sell-services' ), $method ) : __( 'Paid', 'wp-sell-services' );
