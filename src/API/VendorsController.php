@@ -199,6 +199,27 @@ class VendorsController extends RestController {
 			)
 		);
 
+		// Admin: write off a vendor's negative balance.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/balance/write-off',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'write_off_balance' ),
+					'permission_callback' => array( $this, 'check_admin_permissions' ),
+					'args'                => array(
+						'reason' => array(
+							'description'       => __( 'Why the debt is written off. Kept in the ledger.', 'wp-sell-services' ),
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
 		// Become a vendor (registration).
 		register_rest_route(
 			$this->namespace,
@@ -221,6 +242,33 @@ class VendorsController extends RestController {
 					),
 				),
 			)
+		);
+	}
+
+	/**
+	 * Write off a vendor's negative balance (admin only).
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function write_off_balance( $request ) {
+		$result = ( new \WPSellServices\Services\EarningsService() )->write_off_negative_balance(
+			(int) $request->get_param( 'id' ),
+			(string) $request->get_param( 'reason' ),
+			get_current_user_id()
+		);
+
+		if ( ! $result['success'] ) {
+			$status = 'invalid_vendor' === $result['code'] ? 404 : ( 'write_failed' === $result['code'] ? 500 : 409 );
+			return new WP_Error( 'wpss_' . $result['code'], $result['message'], array( 'status' => $status ) );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'written_off' => $result['amount'],
+				'balance'     => wpss_get_ledger_balance( (int) $request->get_param( 'id' ) ),
+			),
+			200
 		);
 	}
 
@@ -298,7 +346,7 @@ class VendorsController extends RestController {
 				// and /vendors?search= returned nothing.
 				$profiles             = $wpdb->prefix . 'wpss_vendor_profiles';
 				$column               = 'orders' === $orderby ? 'completed_orders' : 'avg_rating';
-				$query->query_orderby = "ORDER BY COALESCE( ( SELECT sort_prof.{$column} FROM {$profiles} AS sort_prof WHERE sort_prof.user_id = {$wpdb->users}.ID LIMIT 1 ), 0 ) DESC";
+				$query->query_orderby = "ORDER BY COALESCE( ( SELECT sort_prof.{$column} FROM {$profiles} AS sort_prof WHERE sort_prof.user_id = {$wpdb->users}.ID LIMIT 1 ), 0 ) DESC, {$wpdb->users}.ID DESC";
 			};
 			add_action( 'pre_user_query', $sort );
 		}

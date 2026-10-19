@@ -221,10 +221,7 @@ class Message {
 			return '';
 		}
 
-		return wp_date(
-			get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
-			$this->created_at->getTimestamp()
-		);
+		return wpss_datetime_label( $this->created_at->getTimestamp() );
 	}
 
 	/**

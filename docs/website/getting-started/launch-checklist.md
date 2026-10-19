@@ -41,7 +41,7 @@ Get this right before a single real order.
 
 ## 4. Vendors
 
-- [ ] **Settings > Vendors** -- registration mode: open, requires approval, or closed
+- [ ] **Settings > Vendor Settings** -- registration mode: open, requires approval, or closed
 - [ ] Max services per vendor [20], identity verification [off]
 - [ ] Service moderation [**off**]. Left off, new listings publish immediately. Turn it on if you want to review every service first -- [Service Moderation](../admin-tools/service-moderation.md)
 - [ ] **[PRO]** Vendor subscription plans, if vendors will pay to sell
@@ -57,7 +57,7 @@ Revision limits are **not** here -- vendors set those per package.
 
 - [ ] **Settings > Emails** -- send the **deliverability test** first. If it does not arrive, no notification will
 - [ ] Install an SMTP plugin if the test fails. WordPress's default mail is unreliable on most hosts
-- [ ] Review the 24 notification types [all on] and switch off any you do not want
+- [ ] Review the 30 notification types [all on] and switch off any you do not want
 
 ## 7. Branding and display
 
@@ -85,7 +85,7 @@ Do not let a customer find the first bug.
 
 - [ ] Swap every gateway from sandbox to **live** keys, and re-point webhooks at the live endpoints
 - [ ] Delete demo content
-- [ ] Turn off debug mode in **Settings > Advanced**
+- [ ] Turn off debug mode in **Settings > System**
 - [ ] Place one real order yourself, then refund it
 - [ ] Confirm your backups run and include the database -- orders, earnings, and the wallet ledger all live there
 

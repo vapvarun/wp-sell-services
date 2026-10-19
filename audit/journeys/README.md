@@ -35,38 +35,53 @@ None of those fail a unit test. All of them fail a journey.
 A journey passes only if every Expect holds. Record failures as Basecamp cards
 with the step number.
 
-## Roles (verified 2026-08-17 against the live site)
+## What a journey is now
 
-| Role | Slug | WPSS capabilities |
+One role walking one flow that exists in the product, from the screens an admin or member actually has
+(the Sell Services menu, the vendor and buyer dashboards, the public pages). A journey names its rail
+(`standalone`, `woo`), seeds its own data, and never says `any`. Bugs become check lines inside the flow
+they belong to, tagged `card:<id>`. The conditions every flow is walked under (theme, dark mode, 390px, RTL,
+upgraded site, time zone) live in [`../gate-parameters.md`](../gate-parameters.md); they are parameters,
+not journeys.
+
+## Roles
+
+| Role | Slug | Notes |
 |---|---|---|
-| Administrator | `administrator` | `wpss_manage_disputes`, `wpss_manage_orders`, `wpss_manage_services`, `wpss_manage_settings`, `wpss_manage_vendors`, `wpss_respond_to_requests`, `wpss_vendor`, `wpss_view_analytics` |
-| Vendor | `wpss_vendor` | `wpss_manage_orders`, `wpss_manage_services`, `wpss_respond_to_requests`, `wpss_vendor`, `wpss_view_analytics` |
-| Buyer | `subscriber` | none — a buyer is a plain WordPress subscriber |
+| Visitor | (logged out) | public catalog, vendors, requests, sign-up |
+| Buyer | `subscriber` | holds no `wpss_*` capability |
+| Seller | `wpss_vendor` | an ACTIVE row in `wpss_vendor_profiles` is what makes a vendor |
+| Admin | `administrator` | the site owner |
 
-Note the buyer has **no** WPSS capability. Any gate written as "buyer can X"
-must therefore be an ownership check (is this their order?), never a capability
-check. `wpss_user_can_view_order()` is the correct participant check; there are
-~20 hand-rolled variants elsewhere that are not.
+Users and data are created by the walk (or `bin/qa-fixtures.sh` for users). Do not rely on any named account.
 
 ## The journeys
 
-| File | Covers | Status |
+| Journey | Role and flow | Rail |
 |---|---|---|
-| `01-buyer-hires-seller.md` | request → proposal → hire → pay | passes (step 7 fixed in `7deda27`) |
-| `02-dispute.md` | open → both parties reply → admin reads → back to order | passes |
-| `03-install-and-upgrade.md` | activation, pages, settings, preflight | passes |
-| `04-vendor-discovery.md` | directory → profile → service | passes |
-| `05-vendor-creates-a-service.md` | wizard: categories, checklist, admin access | passes |
-| `06-standalone-checkout.md` | container, 390px, guest account, offline method | passes |
-| `07-service-page-media.md` | gallery: image first, video thumb, no render writes | passes |
-| `08-mobile-app-session.md` | login, token expiry, revoke, payload contract | passes |
-| `09-request-files-to-order.md` | request file → order page, requirements merge, REST, another buyer | passes |
+| `01-buyer-hires-seller.md` | buyer posts a request, sellers propose, buyer accepts and pays | standalone |
+| `02-dispute.md` | buyer and seller dispute an order, admin decides | standalone, woo |
+| `03-install-and-upgrade.md` | admin installs, upgrades from the previous release, first-run setup | standalone |
+| `04-visitor-browses-and-views-service.md` | visitor finds vendors and services, opens a service with a video | standalone, woo |
+| `05-vendor-creates-a-service.md` | seller creates and publishes a service; account standing limits new work | standalone, woo |
+| `06-standalone-checkout.md` | buyer pays on the standalone rail | standalone |
+| `07-buyer-pays-woo-rail.md` | guest add-to-cart, carrier product, plan limits on the Woo rail | woo |
+| `08-api-client-acts-as-each-role.md` | app token session and API writes match the screens | standalone, woo |
+| `09-request-files-to-order.md` | request files follow into the order | standalone |
+| `10-vendor-withdrawal-payout.md` | seller requests a payout, admin approves and marks paid | standalone |
+| `11-member-notifications.md` | member finds, filters and reads notifications | standalone, woo |
+| `12-admin-configures-the-plugin.md` | every admin screen and Settings tab | standalone, woo |
+| `13-admin-moderates-and-manages.md` | moderation, reviews, vendors, reports, orders, audit log | standalone, woo |
+| `14-member-reviews-favorites-messages.md` | reviews and replies, favourites, messages | standalone, woo |
+| `15-seller-runs-the-business.md` | profile, portfolio, earnings, analytics, plans | standalone, woo |
+| `16-milestones-extensions-and-tips.md` | milestone contracts, paid and deadline extensions, tips | standalone, woo |
+
+Walk dates and results are recorded in `.qa-results/walks.json`, not in these files.
 
 ## Not yet written
 
-Worth adding as the remaining cards are cleared: messages/unread, review
-submission and display, withdrawal + payout, milestone contracts, extensions,
-and the three non-standalone rails (WooCommerce, EDD, FluentCart).
+Wallet providers (TeraWallet, myCred), Razorpay, Stripe Connect and PayPal payouts, EDD and FluentCart rails
+(beta), vendor subscription plan purchase, seller levels, the blocks and shortcodes, recurring services (switched off).
 
 ## Two things these journeys have taught, the hard way
 

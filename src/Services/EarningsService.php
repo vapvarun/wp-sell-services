@@ -33,6 +33,9 @@ class EarningsService {
 	public const WITHDRAWAL_REJECTED  = 'rejected';
 	public const WITHDRAWAL_CANCELLED = 'cancelled';
 
+	/** Marks that the auto-withdrawal schedule is the single-action chain, not a recurring action. */
+	private const AUTO_WITHDRAWAL_CHAIN = 'single';
+
 	/**
 	 * Earnings grouping periods (consumed by get_by_period() and the REST
 	 * `period` filter). Canonical source for both.
@@ -88,7 +91,7 @@ class EarningsService {
 		// Lifetime credits net of reversals, for display: the same SUM the
 		// vendor profile row caches, so the two cannot disagree.
 		$txn_table    = $wpdb->prefix . 'wpss_wallet_transactions';
-		$debit_types  = wpss_get_ledger_debit_types_sql();
+		$debit_types  = wpss_get_ledger_not_earned_types_sql();
 		$total_earned = wpss_get_ledger_total_earned( $vendor_id );
 
 		// Credits still inside the clearance window are not withdrawable yet.
@@ -110,9 +113,9 @@ class EarningsService {
 				WHERE user_id = %d AND status = 'completed'
 				AND type NOT IN ({$debit_types})
 				AND amount > 0
-				AND created_at > DATE_SUB(NOW(), INTERVAL %d DAY)",
+				AND created_at > %s",
 				$vendor_id,
-				$clearance_days
+				gmdate( 'Y-m-d H:i:s', time() - $clearance_days * DAY_IN_SECONDS )
 			)
 		);
 
@@ -389,6 +392,117 @@ class EarningsService {
 	}
 
 	/**
+	 * Write off a vendor's negative balance (admin decision).
+	 *
+	 * A negative balance is carried by default: nothing is deducted, the vendor
+	 * cannot withdraw, and new earnings clear it. When the owner decides the debt
+	 * will not be recovered, this posts ONE credit row that brings the balance
+	 * back to exactly zero. The row type is not an earning
+	 * (wpss_get_ledger_non_earning_types()), so Total earned does not move.
+	 *
+	 * Idempotent by state: the balance is re-read under the ledger lock, and a
+	 * balance already at or above zero writes nothing, so a double click or a
+	 * second admin cannot credit twice.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param int    $vendor_id Vendor user ID.
+	 * @param string $reason    Why the debt is written off (required, kept in the ledger description).
+	 * @param int    $admin_id  Admin user ID doing it.
+	 * @return array{success: bool, code?: string, message: string, amount?: float}
+	 */
+	public function write_off_negative_balance( int $vendor_id, string $reason, int $admin_id ): array {
+		global $wpdb;
+
+		$reason = trim( sanitize_text_field( $reason ) );
+
+		if ( $vendor_id <= 0 || ! get_userdata( $vendor_id ) ) {
+			return array(
+				'success' => false,
+				'code'    => 'invalid_vendor',
+				'message' => __( 'Vendor not found.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( '' === $reason ) {
+			return array(
+				'success' => false,
+				'code'    => 'reason_required',
+				'message' => __( 'A reason is required to write off a balance.', 'wp-sell-services' ),
+			);
+		}
+
+		$wpdb->query( 'START TRANSACTION' );
+
+		$balance = wpss_get_ledger_balance( $vendor_id, true );
+
+		if ( $balance >= 0 ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'code'    => 'not_negative',
+				'message' => __( 'This vendor does not have a negative balance.', 'wp-sell-services' ),
+			);
+		}
+
+		$amount    = round( abs( $balance ), 2 );
+		$ref_type  = 'write_off_' . $vendor_id;
+		$txn_table = $wpdb->prefix . 'wpss_wallet_transactions';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$prior = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(*) FROM {$txn_table} WHERE reference_type = %s", $ref_type )
+		);
+
+		$written = wpss_insert_ledger_row(
+			array(
+				'user_id'        => $vendor_id,
+				'type'           => 'balance_write_off',
+				'amount'         => $amount,
+				'balance_after'  => 0.0,
+				'description'    => sprintf(
+					/* translators: %s: the admin's reason */
+					__( 'Negative balance written off: %s', 'wp-sell-services' ),
+					$reason
+				),
+				'reference_type' => $ref_type,
+				'reference_id'   => $prior + 1,
+			)
+		);
+
+		if ( ! $written ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'code'    => 'write_failed',
+				'message' => __( 'The write-off could not be recorded.', 'wp-sell-services' ),
+			);
+		}
+
+		$wpdb->query( 'COMMIT' );
+
+		wpss_log( sprintf( 'Admin %d wrote off %.2f of vendor %d negative balance: %s', $admin_id, $amount, $vendor_id, $reason ), 'info' );
+
+		/**
+		 * Fires after an admin writes off a vendor's negative balance.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param int    $vendor_id Vendor user ID.
+		 * @param float  $amount    Amount written off (positive).
+		 * @param string $reason    Admin's reason.
+		 * @param int    $admin_id  Admin user ID.
+		 */
+		do_action( 'wpss_balance_written_off', $vendor_id, $amount, $reason, $admin_id );
+
+		return array(
+			'success' => true,
+			'message' => __( 'Negative balance written off.', 'wp-sell-services' ),
+			'amount'  => $amount,
+		);
+	}
+
+	/**
 	 * Mark a withdrawal as paid — THE terminal step of every payout rail.
 	 *
 	 * Manual admin clicks, bulk actions, the REST controller and (later) the
@@ -519,6 +633,8 @@ class EarningsService {
 		// Side effects only after commit — the money record is already safe.
 		// The wpss_withdrawal_processed listener re-runs record_withdrawal_debit,
 		// which finds the row we just wrote and skips (idempotent by design).
+		$withdrawal = $this->as_processed( $withdrawal, self::WITHDRAWAL_COMPLETED, $note );
+
 		$this->notify_withdrawal_processed( $withdrawal_id, self::WITHDRAWAL_COMPLETED, $withdrawal );
 
 		/** This action is documented in process_withdrawal(). */
@@ -591,12 +707,12 @@ class EarningsService {
 		// Site-time bounds against the UTC column.
 		if ( $args['start_date'] ) {
 			$where[]  = 'completed_at >= %s';
-			$params[] = get_gmt_from_date( (string) $args['start_date'] );
+			$params[] = (string) wpss_datetime_input_to_utc( (string) $args['start_date'] );
 		}
 
 		if ( $args['end_date'] ) {
 			$where[]  = 'completed_at <= %s';
-			$params[] = get_gmt_from_date( (string) $args['end_date'] );
+			$params[] = (string) wpss_datetime_input_to_utc( (string) $args['end_date'] );
 		}
 
 		$where_clause = implode( ' AND ', $where );
@@ -606,7 +722,7 @@ class EarningsService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, order_number, service_id, total, vendor_earnings, commission_rate, platform_fee, status, completed_at, created_at
+				"SELECT id, order_number, service_id, product_type, total, vendor_earnings, commission_rate, platform_fee, status, completed_at, created_at
 				FROM {$orders_table}
 				WHERE {$where_clause}
 				ORDER BY completed_at DESC
@@ -617,13 +733,14 @@ class EarningsService {
 
 		return array_map(
 			function ( $order ) {
-				$service = get_post( $order->service_id );
+				$type  = wpss()->get_product_type( (string) ( $order->product_type ?: 'service' ) );
+				$title = $type ? $type->get_title( (int) $order->service_id ) : '';
 				// Use vendor_earnings when available (commission calculated), fall back to total for older orders.
 				$amount = null !== $order->vendor_earnings ? (float) $order->vendor_earnings : (float) $order->total;
 				return array(
 					'id'              => (int) $order->id,
 					'order_number'    => $order->order_number,
-					'service_name'    => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
+					'service_name'    => '' !== $title ? $title : __( 'Deleted Service', 'wp-sell-services' ),
 					'amount'          => $amount,
 					'order_total'     => (float) $order->total,
 					'commission_rate' => null !== $order->commission_rate ? (float) $order->commission_rate : null,
@@ -973,6 +1090,8 @@ class EarningsService {
 
 		$wpdb->query( 'COMMIT' );
 
+		$withdrawal = $this->as_processed( $withdrawal, $status, $note );
+
 		$this->notify_withdrawal_processed( $withdrawal_id, $status, $withdrawal );
 
 		/**
@@ -988,6 +1107,28 @@ class EarningsService {
 			'success' => true,
 			'message' => __( 'Withdrawal updated successfully.', 'wp-sell-services' ),
 		);
+	}
+
+	/**
+	 * The withdrawal row as it now stands. The row was read before the update, so a listener
+	 * handed it saw the old status and no admin note: the rejection email left out the reason.
+	 *
+	 * `previous_status` keeps the state it moved from, for the audit log.
+	 *
+	 * @param object $withdrawal Row read before the update.
+	 * @param string $status     Status just written.
+	 * @param string $note       Admin note just written.
+	 * @return object
+	 */
+	private function as_processed( object $withdrawal, string $status, string $note ): object {
+		$processed                  = clone $withdrawal;
+		$processed->previous_status = (string) ( $withdrawal->status ?? '' );
+		$processed->status          = $status;
+		$processed->admin_note      = sanitize_textarea_field( $note );
+		$processed->processed_at    = current_time( 'mysql', true );
+		$processed->processed_by    = get_current_user_id();
+
+		return $processed;
 	}
 
 	/**
@@ -1055,30 +1196,95 @@ class EarningsService {
 	}
 
 	/**
-	 * Get withdrawal methods.
+	 * The payout methods a vendor can withdraw by, keyed by method id.
 	 *
-	 * @return array Available methods.
+	 * One registry: each method names itself and the details it collects, so a
+	 * new method (a regional bank rail, a wallet) is added with one filter entry
+	 * and no core edit.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @return array<string, array{label: string, fields: array<string, array{label: string, type: string, required: bool}>}>
 	 */
-	public static function get_withdrawal_methods(): array {
+	public static function get_payout_methods(): array {
 		$methods = array(
-			'paypal'        => __( 'PayPal', 'wp-sell-services' ),
-			'bank_transfer' => __( 'Bank Transfer', 'wp-sell-services' ),
+			'paypal'        => array(
+				'label'  => __( 'PayPal', 'wp-sell-services' ),
+				'fields' => array(
+					'email' => array(
+						'label'    => __( 'PayPal email', 'wp-sell-services' ),
+						'type'     => 'email',
+						'required' => true,
+					),
+				),
+			),
+			'bank_transfer' => array(
+				'label'  => __( 'Bank Transfer', 'wp-sell-services' ),
+				'fields' => array(
+					'account_name'   => array(
+						'label'    => __( 'Account holder name', 'wp-sell-services' ),
+						'type'     => 'text',
+						'required' => true,
+					),
+					'bank_name'      => array(
+						'label'    => __( 'Bank name', 'wp-sell-services' ),
+						'type'     => 'text',
+						'required' => true,
+					),
+					'account_number' => array(
+						'label'    => __( 'Account number or IBAN', 'wp-sell-services' ),
+						'type'     => 'text',
+						'required' => true,
+					),
+					'routing_number' => array(
+						'label'    => __( 'Routing, SWIFT or IFSC code', 'wp-sell-services' ),
+						'type'     => 'text',
+						'required' => false,
+					),
+				),
+			),
 		);
 
 		/**
-		 * Filter withdrawal methods.
+		 * Filter the payout methods. Replaces wpss_withdrawal_methods and wpss_payout_fields.
 		 *
-		 * @param array $methods Available methods.
+		 * @since 1.9.0
+		 *
+		 * @param array $methods id => { label: string, fields: key => { label, type, required } }.
 		 */
-		return apply_filters( 'wpss_withdrawal_methods', $methods );
+		$filtered = (array) apply_filters( 'wpss_payout_method_registry', $methods );
+		$valid    = array();
+
+		foreach ( $filtered as $id => $method ) {
+			if ( is_string( $id ) && '' !== $id && is_array( $method ) && ! empty( $method['label'] ) ) {
+				// A method that names no fields gets one free-text field.
+				$method['fields'] = ! empty( $method['fields'] ) && is_array( $method['fields'] ) ? $method['fields'] : array(
+					'details' => array(
+						'label'    => __( 'Payout details', 'wp-sell-services' ),
+						'type'     => 'textarea',
+						'required' => true,
+					),
+				);
+				$valid[ $id ]     = $method;
+			} else {
+				_doing_it_wrong( 'wpss_payout_method_registry', esc_html__( 'A payout method needs a string id and a label.', 'wp-sell-services' ), '1.9.0' );
+			}
+		}
+
+		return $valid;
+	}
+
+	/**
+	 * Withdrawal methods as id => label.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_withdrawal_methods(): array {
+		return wp_list_pluck( self::get_payout_methods(), 'label' );
 	}
 
 	/**
 	 * The fields a payout method needs, keyed by detail name.
-	 *
-	 * PayPal needs an email; a bank transfer needs holder, bank and account.
-	 * A method added by filter gets one free-text field unless it declares its
-	 * own through wpss_payout_fields.
 	 *
 	 * @since 1.8.0
 	 *
@@ -1086,55 +1292,7 @@ class EarningsService {
 	 * @return array<string, array{label: string, type: string, required: bool}>
 	 */
 	public static function get_payout_fields( string $method ): array {
-		$fields = array(
-			'paypal'        => array(
-				'email' => array(
-					'label'    => __( 'PayPal email', 'wp-sell-services' ),
-					'type'     => 'email',
-					'required' => true,
-				),
-			),
-			'bank_transfer' => array(
-				'account_name'   => array(
-					'label'    => __( 'Account holder name', 'wp-sell-services' ),
-					'type'     => 'text',
-					'required' => true,
-				),
-				'bank_name'      => array(
-					'label'    => __( 'Bank name', 'wp-sell-services' ),
-					'type'     => 'text',
-					'required' => true,
-				),
-				'account_number' => array(
-					'label'    => __( 'Account number or IBAN', 'wp-sell-services' ),
-					'type'     => 'text',
-					'required' => true,
-				),
-				'routing_number' => array(
-					'label'    => __( 'Routing, SWIFT or IFSC code', 'wp-sell-services' ),
-					'type'     => 'text',
-					'required' => false,
-				),
-			),
-		);
-
-		$method_fields = $fields[ $method ] ?? array(
-			'details' => array(
-				'label'    => __( 'Payout details', 'wp-sell-services' ),
-				'type'     => 'textarea',
-				'required' => true,
-			),
-		);
-
-		/**
-		 * Filter the details a payout method collects.
-		 *
-		 * @since 1.8.0
-		 *
-		 * @param array  $method_fields Fields: key => {label, type, required}.
-		 * @param string $method        Withdrawal method key.
-		 */
-		return (array) apply_filters( 'wpss_payout_fields', $method_fields, $method );
+		return self::get_payout_methods()[ $method ]['fields'] ?? array();
 	}
 
 	/**
@@ -1658,7 +1816,13 @@ class EarningsService {
 	}
 
 	/**
-	 * Schedule auto withdrawal cron job.
+	 * Arm the next auto-withdrawal run.
+	 *
+	 * One single action at the next calendar anchor (Monday, the 1st/15th, the
+	 * 1st), re-armed by run_scheduled_auto_withdrawals() after each run. A
+	 * recurring action with a 14/30 day interval drifts off the date the settings
+	 * screen promises: Action Scheduler adds N seconds to the last run, so a
+	 * "1st of month" payout slid to the 31st, the 30th, and on (Basecamp 10403479953).
 	 *
 	 * @return void
 	 */
@@ -1670,66 +1834,61 @@ class EarningsService {
 			return;
 		}
 
-		$schedule         = self::get_auto_withdrawal_schedule();
-		$desired_interval = self::schedule_interval( $schedule );
-		$stored_schedule  = (string) get_option( 'wpss_auto_withdrawal_schedule_type', '' );
+		$schedule = self::get_auto_withdrawal_schedule();
 
-		// Reschedule only when the admin-selected schedule changes — AS
-		// recurring actions persist across requests so we don't want to
-		// cancel-and-reinsert on every bootstrap.
-		if ( $stored_schedule === $schedule && Scheduler::has_pending( $hook ) ) {
+		// Pending, on this schedule, and a single action (not a pre-1.9.0 recurring one): nothing to do.
+		if ( (string) get_option( 'wpss_auto_withdrawal_schedule_type', '' ) === $schedule
+			&& self::AUTO_WITHDRAWAL_CHAIN === get_option( 'wpss_auto_withdrawal_chain', '' )
+			&& Scheduler::has_pending( $hook ) ) {
 			return;
 		}
 
 		Scheduler::unschedule_all( $hook );
-		\as_schedule_recurring_action(
-			self::get_next_schedule_time( $schedule ),
-			$desired_interval,
-			$hook,
-			array(),
-			Scheduler::GROUP_FREE
-		);
+		Scheduler::schedule_single( $hook, self::get_next_schedule_time( $schedule ) );
 		update_option( 'wpss_auto_withdrawal_schedule_type', $schedule, false );
+		update_option( 'wpss_auto_withdrawal_chain', self::AUTO_WITHDRAWAL_CHAIN, false );
 	}
 
 	/**
-	 * Map the admin-selected cadence to the AS interval in seconds.
+	 * Action Scheduler callback: run the payouts, then arm the next date.
 	 *
-	 * @param string $schedule Cadence identifier: weekly | biweekly | monthly.
-	 * @return int Interval seconds.
+	 * The re-arm sits in a finally so a failed run cannot end the chain.
+	 *
+	 * @return void
 	 */
-	private static function schedule_interval( string $schedule ): int {
-		return match ( $schedule ) {
-			'monthly'  => 30 * DAY_IN_SECONDS,
-			'biweekly' => 14 * DAY_IN_SECONDS,
-			default    => WEEK_IN_SECONDS,
-		};
+	public static function run_scheduled_auto_withdrawals(): void {
+		try {
+			( new self() )->process_auto_withdrawals();
+		} finally {
+			self::schedule_auto_withdrawal_cron();
+		}
 	}
 
 	/**
 	 * Get next schedule time for auto withdrawal.
 	 *
-	 * @param string $schedule Schedule type (weekly, biweekly, or monthly).
+	 * @param string                  $schedule Schedule type (weekly, biweekly, or monthly).
+	 * @param \DateTimeInterface|null $from     Moment to count from; now when omitted.
 	 * @return int Unix timestamp for next run.
 	 */
-	private static function get_next_schedule_time( string $schedule ): int {
+	private static function get_next_schedule_time( string $schedule, ?\DateTimeInterface $from = null ): int {
 		$timezone = wp_timezone();
-		$now      = new \DateTime( 'now', $timezone );
+		$now      = $from ? \DateTime::createFromInterface( $from )->setTimezone( $timezone ) : new \DateTime( 'now', $timezone );
+		$next     = clone $now;
 
 		if ( 'monthly' === $schedule ) {
 			// First day of next month at 2 AM.
-			$next = new \DateTime( 'first day of next month 02:00:00', $timezone );
+			$next->modify( 'first day of next month' )->setTime( 2, 0 );
 		} elseif ( 'biweekly' === $schedule ) {
 			// Next 1st or 15th of the month at 2 AM.
-			$day = (int) $now->format( 'j' );
-			if ( $day < 15 ) {
-				$next = new \DateTime( $now->format( 'Y-m' ) . '-15 02:00:00', $timezone );
+			if ( (int) $now->format( 'j' ) < 15 ) {
+				$next->setDate( (int) $now->format( 'Y' ), (int) $now->format( 'n' ), 15 )->setTime( 2, 0 );
 			} else {
-				$next = new \DateTime( 'first day of next month 02:00:00', $timezone );
+				$next->modify( 'first day of next month' )->setTime( 2, 0 );
 			}
 		} else {
 			// Next Monday at 2 AM.
-			$next = new \DateTime( 'next monday 02:00:00', $timezone );
+			$next->modify( 'next monday' )->setTime( 2, 0 );
 		}
 
 		return $next->getTimestamp();
@@ -1743,6 +1902,7 @@ class EarningsService {
 	public static function unschedule_auto_withdrawal_cron(): void {
 		Scheduler::unschedule_all( 'wpss_process_auto_withdrawals' );
 		delete_option( 'wpss_auto_withdrawal_schedule_type' );
+		delete_option( 'wpss_auto_withdrawal_chain' );
 		// Also clear any WP-Cron residue from pre-1.1.0.
 		wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
 	}

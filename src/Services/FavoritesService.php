@@ -7,6 +7,8 @@
 
 namespace WPSellServices\Services;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Canonical accessor for a user's favorite services.
  *

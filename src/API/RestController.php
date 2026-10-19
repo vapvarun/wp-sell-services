@@ -139,6 +139,31 @@ abstract class RestController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Check that the signed-in user is a party to the order named by the `order_id` parameter (or an admin).
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool|WP_Error
+	 */
+	public function check_order_permission( WP_REST_Request $request ) {
+		$permission = $this->check_permissions( $request );
+		if ( is_wp_error( $permission ) ) {
+			return $permission;
+		}
+
+		$order_id = (int) $request->get_param( 'order_id' );
+
+		if ( ! $this->user_owns_resource( $order_id, 'order' ) && ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error(
+				'wpss_not_owner',
+				__( 'You do not have permission to access this order.', 'wp-sell-services' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
 	 * Check if user owns the resource.
 	 *
 	 * @param int    $resource_id   Resource ID.

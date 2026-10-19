@@ -11,11 +11,12 @@
  *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;
 ?>
-<div class="wpss-modal" id="wpss-report-modal" role="dialog" aria-modal="true" aria-labelledby="wpss-report-modal-title">
+<div class="wpss-modal" id="wpss-report-modal" hidden role="dialog" aria-modal="true" aria-labelledby="wpss-report-modal-title">
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">

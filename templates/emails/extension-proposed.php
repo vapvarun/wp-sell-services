@@ -6,8 +6,12 @@
  * order. Includes the reason + amount + extra days + Accept & Pay deep
  * link so the buyer can move without hunting through the dashboard.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/emails/extension-proposed.php
+ *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\ServiceOrder $extension
  * @var \WP_User                            $recipient Buyer.
@@ -32,7 +36,7 @@ do_action( 'wpss_email_content_before', 'extension_proposed', $extension, $recip
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php printf( esc_html__( 'Hi %s,', 'wp-sell-services' ), esc_html( $buyer_name ) ); ?>
+	<?php /* translators: %s: recipient first name. */ printf( esc_html__( 'Hi %s,', 'wp-sell-services' ), esc_html( $buyer_name ) ); ?>
 </p>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -53,7 +57,7 @@ do_action( 'wpss_email_content_before', 'extension_proposed', $extension, $recip
 			<?php endif; ?>
 			<div style="margin-bottom: 6px;"><strong><?php esc_html_e( 'Extra amount:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( $format( $amount ) ); ?></div>
 			<?php if ( $extra_days > 0 ) : ?>
-				<div><strong><?php esc_html_e( 'Extra delivery time:', 'wp-sell-services' ); ?></strong> <?php printf( esc_html( _n( '+%d day', '+%d days', $extra_days, 'wp-sell-services' ) ), (int) $extra_days ); ?></div>
+				<div><strong><?php esc_html_e( 'Extra delivery time:', 'wp-sell-services' ); ?></strong> <?php printf( esc_html( /* translators: %d: number of extra days. */ _n( '+%d day', '+%d days', $extra_days, 'wp-sell-services' ) ), (int) $extra_days ); ?></div>
 			<?php endif; ?>
 		</td>
 	</tr>

@@ -6,8 +6,12 @@
  * service cards / detail pages. Provides a one-click unfavorite action
  * that refreshes the grid without a full page reload.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/favorites.php
+ *
  * @package WPSellServices\Templates
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var int $user_id Current user ID.
  */
@@ -111,6 +115,7 @@ $favorites_pages = $favorites_query ? (int) $favorites_query->max_num_pages : 0;
 									/* translators: %s: starting price with currency */
 									echo esc_html(
 										sprintf(
+											/* translators: %s: formatted starting price. */
 											__( 'From %s', 'wp-sell-services' ),
 											function_exists( 'wpss_format_price' )
 												? wpss_format_price( $price_cents, $currency )

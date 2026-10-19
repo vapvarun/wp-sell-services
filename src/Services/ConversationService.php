@@ -232,6 +232,31 @@ class ConversationService {
 	}
 
 	/**
+	 * Why a member may not start or continue a pre-sale conversation.
+	 *
+	 * A suspended or closed account stops NEW activity (contact-seller and other
+	 * direct threads). A conversation tied to an order is exempt: finishing paid
+	 * work needs it (see wpss_account_status_block()).
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param int $conversation_id Conversation ID; 0 for a thread not created yet.
+	 * @param int $user_id         Sender.
+	 * @return \WP_Error|null Error when blocked, null when allowed.
+	 */
+	public function standing_block( int $conversation_id, int $user_id ): ?\WP_Error {
+		$conversation = $conversation_id > 0 ? $this->get( $conversation_id ) : null;
+
+		if ( $conversation && (int) $conversation->order_id > 0 ) {
+			return null;
+		}
+
+		$block = wpss_account_status_block( $user_id );
+
+		return $block instanceof \WP_Error ? $block : null;
+	}
+
+	/**
 	 * Send message.
 	 *
 	 * @param int    $conversation_id Conversation ID.
@@ -250,7 +275,7 @@ class ConversationService {
 	): ?Message {
 		$conversation = $this->get( $conversation_id );
 
-		if ( ! $conversation || ! $conversation->can_reply( $sender_id ) ) {
+		if ( ! $conversation || ! $conversation->can_reply( $sender_id ) || $this->standing_block( $conversation_id, $sender_id ) ) {
 			return null;
 		}
 

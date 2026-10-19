@@ -33,6 +33,7 @@ use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Services\AuditLogService;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\OrderService;
+use WPSellServices\Services\PendingRefundService;
 use WPSellServices\Services\OrderWorkflowManager;
 use WPSellServices\Assets\ScriptRegistry;
 
@@ -443,6 +444,7 @@ class Admin {
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
 		add_action( 'admin_post_wpss_mark_refund_sent', array( $this, 'handle_mark_refund_sent' ) );
 		add_action( 'admin_post_wpss_retry_refund', array( $this, 'handle_retry_refund' ) );
+		add_action( 'admin_post_wpss_assign_pending_refund', array( $this, 'handle_assign_pending_refund' ) );
 	}
 
 	/**
@@ -603,8 +605,29 @@ class Admin {
 		if ( ! empty( $review['uncascaded'] ) ) {
 			$deferred = $this->defer_notice( __( 'refunded orders with extensions or tips still paid', 'wp-sell-services' ) ) || $deferred;
 		}
+		if ( ! empty( $review['unassigned'] ) ) {
+			/* translators: %d: number of refunds */
+			$deferred = $this->defer_notice( sprintf( _n( '%d refund waiting to be assigned to a gig', '%d refunds waiting to be assigned to a gig', count( $review['unassigned'] ), 'wp-sell-services' ), count( $review['unassigned'] ) ) ) || $deferred;
+		}
 		if ( $deferred ) {
 			return;
+		}
+
+		if ( ! empty( $review['unassigned'] ) ) {
+			$items = array();
+
+			foreach ( $review['unassigned'] as $record ) {
+				$orders  = array_map( 'intval', (array) $record['orders'] );
+				$items[] = '<li>' . esc_html( wpss_format_price( (float) $record['remaining'], (string) $record['currency'] ) ) . ': '
+					. implode( ', ', array_map( $link, $orders ) ) . '</li>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built from escaped links.
+			}
+
+			printf(
+				'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><ul style="list-style: disc; margin-inline-start: 1.5em;">%s</ul></div>',
+				esc_html( _n( 'A refund was made at the payment platform without saying which gig it was for.', 'Refunds were made at the payment platform without saying which gig they were for.', count( $items ), 'wp-sell-services' ) ),
+				esc_html__( 'The buyer has the money back. Open the gig it was for and assign the refund, so the right vendor is charged.', 'wp-sell-services' ),
+				implode( '', $items ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each item escaped above.
+			);
 		}
 
 		if ( ! empty( $review['failed'] ) ) {
@@ -630,6 +653,39 @@ class Admin {
 				implode( '', array_map( static fn( int $id ): string => '<li>' . $link( $id ) . '</li>', $review['uncascaded'] ) ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built from escaped links.
 			);
 		}
+	}
+
+	/**
+	 * Admin assigned a refund the payment platform reported without a gig to this order.
+	 *
+	 * @since 1.9.0
+	 * @return void
+	 */
+	public function handle_assign_pending_refund(): void {
+		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		if ( ! isset( $_POST['wpss_assign_refund_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_assign_refund_nonce'] ) ), 'wpss_assign_pending_refund_' . $order_id ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		$amount = isset( $_POST['amount'] ) ? (float) wp_unslash( $_POST['amount'] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to float.
+		$result = ( new PendingRefundService() )->assign( $order_id, $amount );
+		$args   = array(
+			'page'     => 'wpss-orders',
+			'action'   => 'view',
+			'order_id' => $order_id,
+		);
+
+		if ( $result['ok'] ) {
+			$args['updated'] = '1';
+		}
+
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	/**
@@ -1294,17 +1350,9 @@ class Admin {
 			wp_die( esc_html__( 'Security check failed.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
 		}
 
-		// Check capabilities — admins can update any order, vendors can update their own.
+		// Admin only: hold, resume and status changes are the site owner's tools (vendors act through the dashboard).
 		$order_id   = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 		$has_access = current_user_can( 'manage_options' );
-
-		if ( ! $has_access && current_user_can( 'wpss_vendor_orders' ) && $order_id ) {
-			// Vendors can only update orders they are the vendor on.
-			$check_order = wpss_get_order( $order_id );
-			if ( $check_order && (int) $check_order->vendor_id === get_current_user_id() ) {
-				$has_access = true;
-			}
-		}
 
 		if ( ! $has_access ) {
 			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
@@ -1713,7 +1761,7 @@ class Admin {
 		add_menu_page(
 			__( 'WP Sell Services', 'wp-sell-services' ),
 			$menu_label,
-			'edit_posts',
+			'manage_options',
 			'wp-sell-services',
 			array( $this, 'render_dashboard_page' ),
 			$menu_icon,
@@ -1948,7 +1996,7 @@ class Admin {
 				<h2 class="wpss-stats-heading"><?php esc_html_e( 'Action items', 'wp-sell-services' ); ?></h2>
 				<div class="wpss-stats-row wpss-stats-row--action wpss-stats-row--queues">
 					<?php foreach ( $queues as $queue ) : ?>
-						<a class="wpss-stat-card wpss-stat-card--action <?php echo $queue['count'] > 0 ? 'is-active' : 'is-empty'; ?>" href="<?php echo esc_url( $queue['url'] ); ?>">
+						<a class="wpss-admin-stat-card wpss-admin-stat-card--action <?php echo $queue['count'] > 0 ? 'is-active' : 'is-empty'; ?>" href="<?php echo esc_url( $queue['url'] ); ?>">
 							<i data-lucide="<?php echo esc_attr( $queue['icon'] ); ?>" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 							<div class="wpss-stat-info">
 								<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $queue['count'] ) ); ?></span>
@@ -1961,7 +2009,7 @@ class Admin {
 				<!-- Marketplace health (rolling totals — read-only at-a-glance). -->
 				<h2 class="wpss-stats-heading"><?php esc_html_e( 'Marketplace health', 'wp-sell-services' ); ?></h2>
 				<div class="wpss-stats-row">
-					<div class="wpss-stat-card">
+					<div class="wpss-admin-stat-card">
 						<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->total ); ?></span>
@@ -1969,7 +2017,7 @@ class Admin {
 						</div>
 					</div>
 
-					<div class="wpss-stat-card">
+					<div class="wpss-admin-stat-card">
 						<i data-lucide="clock" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->in_progress ); ?></span>
@@ -1977,7 +2025,7 @@ class Admin {
 						</div>
 					</div>
 
-					<div class="wpss-stat-card">
+					<div class="wpss-admin-stat-card">
 						<i data-lucide="check-circle-2" class="wpss-icon wpss-stat-icon wpss-stat-icon--success" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->completed ); ?></span>
@@ -1985,7 +2033,7 @@ class Admin {
 						</div>
 					</div>
 
-					<div class="wpss-stat-card">
+					<div class="wpss-admin-stat-card">
 						<i data-lucide="banknote" class="wpss-icon wpss-stat-icon wpss-stat-icon--revenue" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( (float) ( $revenue ?? 0 ) ) ); ?></span>
@@ -2060,7 +2108,7 @@ class Admin {
 												<?php echo esc_html( wpss_get_order_status_label( (string) $order->status ) ); ?>
 											</span>
 										</td>
-										<td data-colname="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>"><?php echo esc_html( wp_date( 'M j, Y', strtotime( $order->created_at ) ) ); ?></td>
+										<td data-colname="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>"><?php echo esc_html( wpss_date_label( $order->created_at, '—', 'M j, Y' ) ); ?></td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>
@@ -2258,6 +2306,30 @@ class Admin {
 	}
 
 	/**
+	 * Result notice after the order status form posts back with ?updated=.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @return void
+	 */
+	private function render_order_update_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$result = isset( $_GET['updated'] ) ? sanitize_key( wp_unslash( $_GET['updated'] ) ) : '';
+
+		$notices = array(
+			'1'         => array( 'notice-success', __( 'Order status updated.', 'wp-sell-services' ) ),
+			'unchanged' => array( 'notice-info', __( 'The order already has that status. Nothing changed.', 'wp-sell-services' ) ),
+			'error'     => array( 'notice-error', __( 'The status could not be changed. The order may not be allowed to move to that status from where it is.', 'wp-sell-services' ) ),
+		);
+
+		if ( ! isset( $notices[ $result ] ) ) {
+			return;
+		}
+
+		printf( '<div class="notice %s is-dismissible"><p>%s</p></div>', esc_attr( $notices[ $result ][0] ), esc_html( $notices[ $result ][1] ) );
+	}
+
+	/**
 	 * Render order detail view.
 	 *
 	 * @param int $order_id Order ID.
@@ -2325,6 +2397,7 @@ class Admin {
 		}
 		?>
 		<div class="wrap wpss-admin-order">
+			<?php $this->render_order_update_notice(); ?>
 			<h1 class="wp-heading-inline">
 				<?php
 				printf(
@@ -2455,12 +2528,12 @@ class Admin {
 								<?php endif; ?>
 								<div class="wpss-order-detail-item">
 									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Created', 'wp-sell-services' ); ?></span>
-									<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '—' ); ?></span>
+									<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wpss_datetime_label( $order->created_at->getTimestamp() ) : '—' ); ?></span>
 								</div>
 								<?php if ( $order->delivery_deadline ) : ?>
 									<div class="wpss-order-detail-item">
 										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
-										<span class="wpss-order-detail-item__value"><?php echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) ); ?></span>
+										<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_deadline_label( $order->delivery_deadline->getTimestamp() ) ); ?></span>
 									</div>
 								<?php endif; ?>
 								<?php wpss_get_template_part( 'order/payment', '', array( 'wpss_order' => $order ) ); ?>
@@ -2566,7 +2639,7 @@ class Admin {
 								<ol class="wpss-admin-order__activity">
 									<?php foreach ( $wpss_activity as $wpss_event ) : ?>
 										<li>
-											<time datetime="<?php echo esc_attr( (string) $wpss_event['created_at'] ); ?>"><?php echo esc_html( $wpss_event['created_at'] ? wp_date( 'M j, Y g:i a', (int) strtotime( (string) $wpss_event['created_at'] ) ) : '—' ); ?></time>
+											<time datetime="<?php echo esc_attr( (string) $wpss_event['created_at'] ); ?>"><?php echo esc_html( $wpss_event['created_at'] ? wpss_date_label( (string) $wpss_event['created_at'], '—', 'M j, Y g:i a' ) : '—' ); ?></time>
 											<span><?php echo esc_html( $wpss_event['actor']['name'] ?? __( 'System', 'wp-sell-services' ) ); ?></span>
 											<span><?php echo esc_html( (string) $wpss_event['message'] ); ?></span>
 										</li>
@@ -2591,7 +2664,7 @@ class Admin {
 												<?php // No sender means the plugin wrote it (a status change, a note) - not an "Unknown" person. ?>
 												<strong><?php echo esc_html( $msg_user ? $msg_user->display_name : ( empty( $message->sender_id ) ? __( 'System', 'wp-sell-services' ) : __( 'Deleted user', 'wp-sell-services' ) ) ); ?></strong>
 												<span style="color: #666; margin-left: 10px;">
-													<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
+													<?php echo esc_html( wpss_datetime_label( $message->created_at ) ); ?>
 												</span>
 											</div>
 											<div><?php echo wp_kses_post( wpautop( $message->content ?? '' ) ); ?></div>
@@ -2677,8 +2750,63 @@ class Admin {
 						</div>
 					<?php endif; ?>
 
+					<?php
+					// A refund is made where the money was collected. A shop platform refunds its own orders.
+					$wpss_money_rail = wpss_order_money_rail( $order );
+
+					if ( '' !== $wpss_money_rail && current_user_can( 'manage_options' ) && wpss_order_is_refundable( $order ) ) :
+						?>
+						<div class="postbox">
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Refund', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<p>
+									<?php
+									printf(
+										/* translators: %s: platform name, for example WooCommerce. */
+										esc_html__( 'This order was paid through %s. Refund it there; the refund is recorded here when it is made.', 'wp-sell-services' ),
+										esc_html( $wpss_money_rail )
+									);
+									?>
+								</p>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<?php
+					// A refund the payment platform reported without naming the gig.
+					$wpss_unassigned = current_user_can( 'manage_options' ) ? PendingRefundService::get( $order_id ) : null;
+
+					if ( null !== $wpss_unassigned ) :
+						?>
+						<div class="postbox wpss-refund-unassigned">
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Refund waiting for a gig', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<p>
+									<?php
+									printf(
+										/* translators: 1: amount, 2: transaction id */
+										esc_html__( '%1$s was refunded at the payment platform (%2$s) without saying which gig it was for. If it was this one, assign it here. The vendor\'s earnings are reversed only for the gig you assign it to.', 'wp-sell-services' ),
+										'<strong>' . esc_html( wpss_format_price( (float) $wpss_unassigned['remaining'], (string) $wpss_unassigned['currency'] ) ) . '</strong>',
+										esc_html( (string) $wpss_unassigned['transaction_id'] )
+									);
+									?>
+								</p>
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+									<input type="hidden" name="action" value="wpss_assign_pending_refund">
+									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
+									<?php wp_nonce_field( 'wpss_assign_pending_refund_' . $order_id, 'wpss_assign_refund_nonce' ); ?>
+									<p>
+										<label for="wpss-assign-refund-<?php echo esc_attr( (string) $order_id ); ?>"><strong><?php esc_html_e( 'Amount for this gig', 'wp-sell-services' ); ?></strong></label><br>
+										<input type="number" id="wpss-assign-refund-<?php echo esc_attr( (string) $order_id ); ?>" name="amount" min="0" step="0.01" max="<?php echo esc_attr( (string) $wpss_unassigned['remaining'] ); ?>" value="<?php echo esc_attr( (string) $wpss_unassigned['remaining'] ); ?>" style="width: 140px;">
+									</p>
+									<?php submit_button( __( 'Assign to this gig', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+								</form>
+							</div>
+						</div>
+					<?php endif; ?>
+
 					<!-- Admin Actions -->
-					<?php if ( current_user_can( 'manage_options' ) && wpss_order_is_refundable( $order ) ) : ?>
+					<?php if ( '' === $wpss_money_rail && current_user_can( 'manage_options' ) && wpss_order_is_refundable( $order ) ) : ?>
 						<?php
 						$wpss_already_refunded = wpss_get_order_refunded_amount( $order );
 						$wpss_refundable_left  = max( 0, (float) $order->total - $wpss_already_refunded );
@@ -3167,7 +3295,7 @@ class Admin {
 									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Opened', 'wp-sell-services' ); ?></span>
 									<span class="wpss-order-detail-item__value">
 										<?php
-										echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dispute->created_at ) ) );
+										echo esc_html( wpss_datetime_label( $dispute->created_at ) );
 										if ( $initiated_by ) {
 											/* translators: %s: member name */
 											echo '<br><small>' . esc_html( sprintf( __( 'by %s', 'wp-sell-services' ), wpss_get_member_display_name( (int) $initiated_by->ID ) ) ) . '</small>';
@@ -3341,14 +3469,14 @@ class Admin {
 								</p>
 								<?php if ( ! empty( $dispute->resolution_notes ) ) : ?>
 									<p>
-										<strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong><br>
+										<strong><?php esc_html_e( 'Decision note:', 'wp-sell-services' ); ?></strong><br>
 										<?php echo wp_kses_post( wpautop( $dispute->resolution_notes ) ); ?>
 									</p>
 								<?php endif; ?>
 								<?php if ( ! empty( $dispute->resolved_at ) ) : ?>
 									<p>
 										<strong><?php esc_html_e( 'Resolved At:', 'wp-sell-services' ); ?></strong><br>
-										<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dispute->resolved_at ) ) ); ?>
+										<?php echo esc_html( wpss_datetime_label( $dispute->resolved_at ) ); ?>
 									</p>
 								<?php endif; ?>
 								<p class="description"><?php esc_html_e( 'A resolved or closed dispute is final: the order has already moved, and money moves once.', 'wp-sell-services' ); ?></p>

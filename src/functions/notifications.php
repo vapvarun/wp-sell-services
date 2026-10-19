@@ -316,6 +316,7 @@ function wpss_notification_type_settings(): array {
 		'withdrawal_requested'       => 'notify_withdrawal_requested',
 		'withdrawal_auto'            => 'notify_withdrawal_requested',
 		'withdrawal_approved'        => 'notify_withdrawal_approved',
+		'withdrawal_completed'       => 'notify_withdrawal_completed',
 		'withdrawal_rejected'        => 'notify_withdrawal_rejected',
 		// Proposals, milestones, extensions.
 		'proposal_submitted'         => 'notify_proposal_submitted',
@@ -389,4 +390,335 @@ function wpss_save_email_preferences( int $user_id, array $submitted ): ?array {
 	wp_cache_delete( $user_id, 'user_meta' );
 
 	return get_user_meta( $user_id, 'wpss_email_preferences', true ) === $preferences ? $preferences : null;
+}
+
+/**
+ * Add a notification for a user.
+ *
+ * Helper function to simplify adding notifications via NotificationService.
+ *
+ * @since 1.0.0
+ *
+ * @param int    $user_id User ID to notify.
+ * @param string $type    Notification type.
+ * @param string $message Notification message.
+ * @param array  $data    Additional data.
+ * @return int|false Notification ID or false on failure.
+ */
+function wpss_add_notification( int $user_id, string $type, string $message, array $data = array() ) {
+	$notification_service = new \WPSellServices\Services\NotificationService();
+
+	// Generate title from type.
+	$type_titles = array(
+		'order_created'        => __( 'New Order', 'wp-sell-services' ),
+		'order_status'         => __( 'Order Update', 'wp-sell-services' ),
+		'new_message'          => __( 'New Message', 'wp-sell-services' ),
+		'delivery_submitted'   => __( 'Delivery Submitted', 'wp-sell-services' ),
+		'delivery_accepted'    => __( 'Delivery Accepted', 'wp-sell-services' ),
+		'revision_requested'   => __( 'Revision Requested', 'wp-sell-services' ),
+		'review_received'      => __( 'New Review', 'wp-sell-services' ),
+		'dispute_opened'       => __( 'Dispute Opened', 'wp-sell-services' ),
+		'dispute_resolved'     => __( 'Dispute Resolved', 'wp-sell-services' ),
+		'deadline_warning'     => __( 'Deadline Warning', 'wp-sell-services' ),
+		'service_approved'     => __( 'Service Approved', 'wp-sell-services' ),
+		'service_rejected'     => __( 'Service Requires Changes', 'wp-sell-services' ),
+		'withdrawal_pending'   => __( 'Withdrawal Request', 'wp-sell-services' ),
+		'withdrawal_approved'  => __( 'Withdrawal Approved', 'wp-sell-services' ),
+		'withdrawal_completed' => __( 'Withdrawal Paid', 'wp-sell-services' ),
+		'withdrawal_rejected'  => __( 'Withdrawal Rejected', 'wp-sell-services' ),
+	);
+
+	$title = $type_titles[ $type ] ?? ucwords( str_replace( '_', ' ', $type ) );
+
+	return $notification_service->create( $user_id, $type, $title, $message, $data );
+}
+
+/**
+ * Where a notification leads: the thing it is about.
+ *
+ * An explicit action_url wins; otherwise the IDs the notification already
+ * carries name the target - a thread with no order goes to Messages, anything
+ * with an order goes to that order (the dashboard picks the buyer or seller
+ * side), then a request, a withdrawal. Most rows carry only an order_id, so
+ * the list, the REST payload and the email button all read the link from here
+ * instead of each rows' empty action_url column (Basecamp 10337217098).
+ *
+ * @since 1.8.0
+ *
+ * @param array       $data       The notification's data payload.
+ * @param string|null $action_url The stored action_url column, if any.
+ * @return string URL, or '' when the notification points at nothing.
+ */
+function wpss_get_notification_url( array $data, ?string $action_url = null ): string {
+	foreach ( array( $action_url, $data['action_url'] ?? '', $data['link'] ?? '' ) as $url ) {
+		if ( ! empty( $url ) ) {
+			return (string) $url;
+		}
+	}
+
+	if ( ! empty( $data['conversation_id'] ) && empty( $data['order_id'] ) ) {
+		return add_query_arg(
+			array(
+				'section'         => 'messages',
+				'conversation_id' => (int) $data['conversation_id'],
+			),
+			wpss_get_dashboard_url()
+		);
+	}
+
+	// A dispute notification opens the dispute, not its order (Basecamp
+	// 10337159668). The dashboard view admits only the two parties, so the
+	// site's admin goes to the admin dispute screen.
+	if ( ! empty( $data['dispute_id'] ) ) {
+		return current_user_can( 'manage_options' )
+			? admin_url( 'admin.php?page=wpss-disputes&action=view&dispute_id=' . (int) $data['dispute_id'] )
+			: add_query_arg( 'dispute', (int) $data['dispute_id'], wpss_get_dashboard_url( 'disputes' ) );
+	}
+
+	foreach ( array( 'order_id', 'parent_order_id' ) as $key ) {
+		if ( ! empty( $data[ $key ] ) ) {
+			$url = wpss_get_order_url( (int) $data[ $key ] );
+			if ( '' !== $url ) {
+				return $url;
+			}
+		}
+	}
+
+	if ( ! empty( $data['request_id'] ) ) {
+		return (string) get_permalink( (int) $data['request_id'] );
+	}
+
+	if ( ! empty( $data['withdrawal_id'] ) ) {
+		return wpss_get_dashboard_url( 'earnings' );
+	}
+
+	return '';
+}
+
+/**
+ * WHERE clause for a member's notifications: the one place list, count and pager agree.
+ *
+ * @since 1.9.0
+ *
+ * @param int   $user_id User ID.
+ * @param array $args    unread_only (bool), is_read (0|1), type (string notification type).
+ * @return array{0: string, 1: array} SQL fragment starting at "user_id = %d", and its params.
+ */
+function wpss_notifications_where( int $user_id, array $args ): array {
+	$sql    = 'user_id = %d';
+	$params = array( $user_id );
+
+	if ( ! empty( $args['unread_only'] ) ) {
+		$sql .= ' AND is_read = 0';
+	} elseif ( isset( $args['is_read'] ) ) {
+		$sql     .= ' AND is_read = %d';
+		$params[] = (int) (bool) $args['is_read'];
+	}
+
+	if ( ! empty( $args['type'] ) ) {
+		$sql     .= ' AND type = %s';
+		$params[] = sanitize_key( (string) $args['type'] );
+	}
+
+	return array( $sql, $params );
+}
+
+/**
+ * Get notifications for a user, newest first.
+ *
+ * Ordered by created_at then id so rows written in the same second page
+ * without repeats or gaps.
+ *
+ * @since 1.2.0
+ *
+ * @param int   $user_id User ID.
+ * @param array $args    Query arguments (limit, offset, unread_only, type).
+ * @return array Array of notification objects.
+ */
+function wpss_get_user_notifications( int $user_id, array $args = array() ): array {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_notifications';
+
+	$args = wp_parse_args(
+		$args,
+		array(
+			'limit'  => 20,
+			'offset' => 0,
+		)
+	);
+
+	list( $where, $params ) = wpss_notifications_where( $user_id, $args );
+	$params[]               = max( 1, (int) $args['limit'] );
+	$params[]               = max( 0, (int) $args['offset'] );
+
+	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is hardcoded fragments with placeholders; values come via prepare().
+	return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE {$where} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d", $params ) );
+}
+
+/**
+ * Count a user's notifications.
+ *
+ * Needed so the notifications screen can page: it used to take the 50 most
+ * recent and stop, with nothing in the UI to reach anything older.
+ *
+ * @since 1.7.2
+ *
+ * @param int   $user_id User ID.
+ * @param array $args    Query arguments (unread_only, type).
+ * @return int
+ */
+function wpss_count_user_notifications( int $user_id, array $args = array() ): int {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_notifications';
+
+	list( $where, $params ) = wpss_notifications_where( $user_id, $args );
+
+	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is hardcoded fragments with placeholders; values come via prepare().
+	return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$where}", $params ) );
+}
+
+/**
+ * Every notification type this plugin writes: label and Lucide icon.
+ *
+ * The one vocabulary behind the notification center's Type dropdown, the row
+ * icon and the REST `icon` field. A type absent here still lists, filters and
+ * shows a humanised label with the bell, so a new event is never hidden from the
+ * filter; add a row to give it its own icon.
+ *
+ * @since 1.9.0
+ *
+ * @return array<string, array{label: string, icon: string}>
+ */
+function wpss_notification_types(): array {
+	$types = array(
+		'order_created'              => array( __( 'New order', 'wp-sell-services' ), 'package' ),
+		'new_order'                  => array( __( 'New order', 'wp-sell-services' ), 'package' ),
+		'order_confirmation'         => array( __( 'Order confirmation', 'wp-sell-services' ), 'package' ),
+		'order_status'               => array( __( 'Order update', 'wp-sell-services' ), 'refresh-cw' ),
+		'order_started'              => array( __( 'Order ready to start', 'wp-sell-services' ), 'play' ),
+		'order_in_progress'          => array( __( 'Order in progress', 'wp-sell-services' ), 'refresh-cw' ),
+		'order_late'                 => array( __( 'Order late', 'wp-sell-services' ), 'triangle-alert' ),
+		'order_cancelled'            => array( __( 'Order cancelled', 'wp-sell-services' ), 'x-circle' ),
+		'order_completed'            => array( __( 'Order completed', 'wp-sell-services' ), 'check-circle' ),
+		'order_completed_vendor'     => array( __( 'Order completed', 'wp-sell-services' ), 'check-circle' ),
+		'order_auto_completed'       => array( __( 'Order auto-completed', 'wp-sell-services' ), 'check-circle' ),
+		'deadline_reminder'          => array( __( 'Deadline reminder', 'wp-sell-services' ), 'calendar-clock' ),
+		'deadline_warning'           => array( __( 'Deadline warning', 'wp-sell-services' ), 'calendar-clock' ),
+		'requirements_pending'       => array( __( 'Requirements needed', 'wp-sell-services' ), 'clipboard-list' ),
+		'requirements_reminder'      => array( __( 'Requirements reminder', 'wp-sell-services' ), 'clipboard-list' ),
+		'requirements_submitted'     => array( __( 'Requirements submitted', 'wp-sell-services' ), 'clipboard-check' ),
+		'submit_requirements'        => array( __( 'Requirements needed', 'wp-sell-services' ), 'clipboard-list' ),
+		'requirements_timeout'       => array( __( 'Requirements timed out', 'wp-sell-services' ), 'triangle-alert' ),
+		'new_message'                => array( __( 'New message', 'wp-sell-services' ), 'message-circle' ),
+		'vendor_contact'             => array( __( 'Vendor enquiry', 'wp-sell-services' ), 'message-circle' ),
+		'delivery_submitted'         => array( __( 'Delivery submitted', 'wp-sell-services' ), 'upload' ),
+		'delivery_ready'             => array( __( 'Delivery ready', 'wp-sell-services' ), 'upload' ),
+		'delivery_received'          => array( __( 'Delivery received', 'wp-sell-services' ), 'upload' ),
+		'delivery_accepted'          => array( __( 'Delivery accepted', 'wp-sell-services' ), 'check-circle' ),
+		'revision_requested'         => array( __( 'Revision requested', 'wp-sell-services' ), 'rotate-ccw' ),
+		'cancellation_requested'     => array( __( 'Cancellation requested', 'wp-sell-services' ), 'x-circle' ),
+		'cancellation_submitted'     => array( __( 'Cancellation requested', 'wp-sell-services' ), 'x-circle' ),
+		'cancellation_auto_approved' => array( __( 'Cancellation approved', 'wp-sell-services' ), 'x-circle' ),
+		'refund_pending'             => array( __( 'Refund pending', 'wp-sell-services' ), 'receipt' ),
+		'refund_failed'              => array( __( 'Refund failed', 'wp-sell-services' ), 'triangle-alert' ),
+		'review_received'            => array( __( 'Review received', 'wp-sell-services' ), 'star' ),
+		'review_reply'               => array( __( 'Review reply', 'wp-sell-services' ), 'star' ),
+		'dispute_opened'             => array( __( 'Dispute opened', 'wp-sell-services' ), 'alert-triangle' ),
+		'dispute_resolved'           => array( __( 'Dispute resolved', 'wp-sell-services' ), 'check' ),
+		'dispute_response_received'  => array( __( 'Dispute response', 'wp-sell-services' ), 'message-square' ),
+		'dispute_reminder'           => array( __( 'Dispute reminder', 'wp-sell-services' ), 'alert-triangle' ),
+		'dispute_admin'              => array( __( 'Dispute update', 'wp-sell-services' ), 'alert-triangle' ),
+		'dispute_escalated'          => array( __( 'Dispute escalated', 'wp-sell-services' ), 'alert-triangle' ),
+		'dispute_cancelled'          => array( __( 'Dispute cancelled', 'wp-sell-services' ), 'x-circle' ),
+		'proposal_submitted'         => array( __( 'Proposal submitted', 'wp-sell-services' ), 'briefcase' ),
+		'proposal_received'          => array( __( 'Proposal received', 'wp-sell-services' ), 'briefcase' ),
+		'proposal_accepted'          => array( __( 'Proposal accepted', 'wp-sell-services' ), 'thumbs-up' ),
+		'proposal_rejected'          => array( __( 'Proposal rejected', 'wp-sell-services' ), 'thumbs-down' ),
+		'milestone_proposed'         => array( __( 'Milestone proposed', 'wp-sell-services' ), 'flag' ),
+		'milestone_paid'             => array( __( 'Milestone paid', 'wp-sell-services' ), 'banknote' ),
+		'milestone_submitted'        => array( __( 'Milestone submitted', 'wp-sell-services' ), 'upload' ),
+		'milestone_approved'         => array( __( 'Milestone approved', 'wp-sell-services' ), 'check-circle' ),
+		'milestone_cancel_warning'   => array( __( 'Milestone cancellation', 'wp-sell-services' ), 'triangle-alert' ),
+		'extension_proposed'         => array( __( 'Extension proposed', 'wp-sell-services' ), 'clock' ),
+		'extension_approved'         => array( __( 'Extension approved', 'wp-sell-services' ), 'calendar' ),
+		'extension_declined'         => array( __( 'Extension declined', 'wp-sell-services' ), 'x' ),
+		'tip_received'               => array( __( 'Tip received', 'wp-sell-services' ), 'heart' ),
+		'tip_receipt'                => array( __( 'Tip sent', 'wp-sell-services' ), 'heart' ),
+		'withdrawal_requested'       => array( __( 'Withdrawal requested', 'wp-sell-services' ), 'landmark' ),
+		'withdrawal_auto'            => array( __( 'Automatic withdrawal', 'wp-sell-services' ), 'landmark' ),
+		'withdrawal_approved'        => array( __( 'Withdrawal approved', 'wp-sell-services' ), 'landmark' ),
+		'withdrawal_completed'       => array( __( 'Withdrawal paid', 'wp-sell-services' ), 'landmark' ),
+		'withdrawal_rejected'        => array( __( 'Withdrawal rejected', 'wp-sell-services' ), 'x-circle' ),
+		'moderation_approved'        => array( __( 'Service approved', 'wp-sell-services' ), 'check-circle' ),
+		'service_approved'           => array( __( 'Service approved', 'wp-sell-services' ), 'check-circle' ),
+		'moderation_rejected'        => array( __( 'Service rejected', 'wp-sell-services' ), 'x-circle' ),
+		'service_rejected'           => array( __( 'Service rejected', 'wp-sell-services' ), 'x-circle' ),
+		'moderation_pending'         => array( __( 'Service awaiting review', 'wp-sell-services' ), 'clock' ),
+		'request_expired'            => array( __( 'Request expired', 'wp-sell-services' ), 'clock' ),
+		'vendor_approved'            => array( __( 'Vendor approved', 'wp-sell-services' ), 'check-circle' ),
+		'vendor_rejected'            => array( __( 'Vendor rejected', 'wp-sell-services' ), 'x-circle' ),
+		'vendor_suspended'           => array( __( 'Vendor suspended', 'wp-sell-services' ), 'triangle-alert' ),
+	);
+
+	$rows = array();
+	foreach ( $types as $type => $row ) {
+		$rows[ $type ] = array(
+			'label' => $row[0],
+			'icon'  => $row[1],
+		);
+	}
+
+	/**
+	 * Filter the notification type registry.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param array<string, array{label: string, icon: string}> $rows Type => label and Lucide icon name.
+	 */
+	return (array) apply_filters( 'wpss_notification_types', $rows );
+}
+
+/**
+ * Display label for a notification type; unknown types are humanised.
+ *
+ * @since 1.9.0
+ *
+ * @param string $type Notification type.
+ * @return string
+ */
+function wpss_notification_type_label( string $type ): string {
+	return wpss_notification_types()[ $type ]['label'] ?? ucfirst( str_replace( '_', ' ', $type ) );
+}
+
+/**
+ * Lucide icon name for a notification type; the bell when the type is unknown.
+ *
+ * @since 1.9.0
+ *
+ * @param string $type Notification type.
+ * @return string
+ */
+function wpss_notification_type_icon( string $type ): string {
+	return wpss_notification_types()[ $type ]['icon'] ?? 'bell';
+}
+
+/**
+ * The notification types this member actually has, for the Type filter.
+ *
+ * Built from the member's own rows so the dropdown never offers an empty option
+ * and never hides a type that exists. Covered by idx_user_created.
+ *
+ * @since 1.9.0
+ *
+ * @param int $user_id User ID.
+ * @return string[] Types, sorted by their label.
+ */
+function wpss_get_user_notification_types( int $user_id ): array {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_notifications';
+
+	$types = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT type FROM {$table} WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	usort( $types, static fn( string $a, string $b ): int => strcasecmp( wpss_notification_type_label( $a ), wpss_notification_type_label( $b ) ) );
+
+	return $types;
 }

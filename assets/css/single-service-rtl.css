@@ -79,12 +79,12 @@
 	color: var(--wpss-primary-hover);
 }
 
-.wpss-single-service a.wpss-btn-secondary {
+.wpss-single-service a.wpss-btn--secondary {
     background: var(--wpss-secondary);
     color: var(--wpss-white);
 }
 
-.wpss-single-service a.wpss-btn-secondary:hover {
+.wpss-single-service a.wpss-btn--secondary:hover {
     background: var(--wpss-secondary);
     color: var(--wpss-white);
 }
@@ -121,27 +121,27 @@
 	border: none;
 }
 
-.wpss-single-service .wpss-btn-primary,
-.wpss-single-service .wpss-btn-primary:visited {
+.wpss-single-service .wpss-btn--primary,
+.wpss-single-service .wpss-btn--primary:visited {
 	background-color: var(--wpss-primary);
 	color: var(--wpss-white);
 }
 
-.wpss-single-service .wpss-btn-primary:hover,
-.wpss-single-service .wpss-btn-primary:focus {
+.wpss-single-service .wpss-btn--primary:hover,
+.wpss-single-service .wpss-btn--primary:focus {
 	background-color: var(--wpss-primary-hover);
 	color: var(--wpss-white);
 }
 
-.wpss-single-service .wpss-btn-outline,
-.wpss-single-service .wpss-btn-outline:visited {
+.wpss-single-service .wpss-btn--outline,
+.wpss-single-service .wpss-btn--outline:visited {
 	background-color: transparent;
 	color: var(--wpss-text);
 	border: 1px solid var(--wpss-border);
 }
 
-.wpss-single-service .wpss-btn-outline:hover,
-.wpss-single-service .wpss-btn-outline:focus {
+.wpss-single-service .wpss-btn--outline:hover,
+.wpss-single-service .wpss-btn--outline:focus {
 	background-color: var(--wpss-bg);
 	color: var(--wpss-text);
 	border-color: var(--wpss-border);
@@ -239,48 +239,6 @@
 		order: 2;
 		margin-block-end: var(--wpss-space-8, 2rem);
 	}
-}
-
-/* ==========================================================================
-   Breadcrumb
-   ========================================================================== */
-
-.wpss-breadcrumb {
-	margin-bottom: 1rem;
-}
-
-.wpss-breadcrumb-list {
-	display: flex;
-	flex-wrap: wrap;
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	font-size: 0.875rem;
-}
-
-.wpss-breadcrumb-item {
-	display: flex;
-	align-items: center;
-}
-
-.wpss-breadcrumb-item:not(:last-child)::after {
-	content: "/";
-	margin: 0 0.5rem;
-	color: var(--wpss-text-muted);
-}
-
-.wpss-breadcrumb-item a {
-	color: var(--wpss-text-muted);
-	text-decoration: none;
-}
-
-.wpss-breadcrumb-item a:hover {
-	color: var(--wpss-primary-accent);
-}
-
-.wpss-breadcrumb-current {
-	color: var(--wpss-text);
-	font-weight: 500;
 }
 
 /* ==========================================================================
@@ -1035,6 +993,20 @@
 	border-color: var(--wpss-primary-accent);
 }
 
+.wpss-review-helpful-btn.marked {
+	color: var(--wpss-primary-accent);
+	border-color: var(--wpss-primary-accent);
+}
+
+.wpss-review-helpful-btn:disabled {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+.wpss-helpful-note {
+	font-size: 13px;
+}
+
 .wpss-no-reviews {
 	display: block !important;
 	visibility: visible !important;
@@ -1058,6 +1030,8 @@
    ========================================================================== */
 
 .wpss-packages-widget {
+	/* Where the Continue button starts: the content panel's padding plus the package pane's. */
+	--wpss-package-inset: calc(1.5rem + 20px);
 	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	box-shadow: var(--wpss-shadow);
@@ -1233,8 +1207,16 @@
 	flex-direction: column;
 	gap: 0.75rem;
 	margin-top: 1rem;
-	padding-top: 1rem;
+	padding: 1rem var(--wpss-package-inset) 1.5rem;
 	border-top: 1px solid var(--wpss-border);
+}
+
+/* Anything appended straight to the widget takes the same inline padding as
+   .wpss-packages-content, or it sits against the widget edge while the
+   Continue button is inset. */
+.wpss-packages-widget > .wpss-package-extras-note {
+	margin: 0;
+	padding: 0 var(--wpss-package-inset) 1rem;
 }
 
 /* The favourite toggle spans the sidebar like the order CTA above it. */
@@ -1366,165 +1348,9 @@
    repeat(4, minmax(0, 1fr)); the canonical version and its responsive step-down
    are strictly better, so the copy here is removed. */
 
-/* ==========================================================================
-   Buttons
-   ========================================================================== */
-
-.wpss-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	padding: 0.75rem 1.5rem;
-	font-size: 0.9375rem;
-	font-weight: 500;
-	border-radius: var(--wpss-radius);
-	border: none;
-	cursor: pointer;
-	text-decoration: none;
-	transition: all var(--wpss-transition);
-}
-
-.wpss-btn-primary {
-	background: var(--wpss-primary);
-	color: var(--wpss-white);
-}
-
-.wpss-btn-primary:hover {
-	background: var(--wpss-primary-hover);
-}
-
-.wpss-btn-secondary {
-	background: var(--wpss-secondary);
-	color: var(--wpss-white);
-}
-
-.wpss-btn-outline {
-	background: transparent;
-	border: 1px solid var(--wpss-border);
-	color: var(--wpss-text);
-}
-
-.wpss-btn-outline:hover {
-	border-color: var(--wpss-primary);
-	color: var(--wpss-primary-accent);
-}
-
-.wpss-btn-block {
-	display: flex;
-	width: 100%;
-}
-
-.wpss-btn:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-
 .wpss-btn-price {
 	font-weight: 400;
 	opacity: 0.9;
-}
-
-/* ==========================================================================
-   Modals
-   ========================================================================== */
-
-.wpss-modal {
-	position: fixed;
-	top: 0;
-	right: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 9991;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 1rem;
-}
-
-.wpss-modal[hidden] {
-	display: none;
-}
-
-.wpss-modal-overlay {
-	position: absolute;
-	top: 0;
-	right: 0;
-	width: 100%;
-	height: 100%;
-	background: rgb(0 0 0 / 50%);
-}
-
-.wpss-modal-content {
-	position: relative;
-	background: var(--wpss-surface);
-	border-radius: var(--wpss-radius-lg);
-	width: 100%;
-	max-width: 480px;
-	max-height: 90vh;
-	overflow-y: auto;
-	box-shadow: var(--wpss-shadow-lg);
-}
-
-.wpss-modal-large {
-	max-width: 800px;
-}
-
-.wpss-modal-close {
-	position: absolute;
-	top: 1rem;
-	left: 1rem;
-	background: none !important;
-	border: none !important;
-	font-size: 1.5rem !important;
-	cursor: pointer;
-	color: var(--wpss-text-muted);
-	padding: 0 !important;
-	width: 32px;
-	height: 32px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 10;
-}
-
-.wpss-modal-close:hover {
-	background: none;
-	color: var(--wpss-text);
-	border: none;
-}
-
-.wpss-modal-header {
-	padding: 1.5rem 1.5rem 1rem;
-	border-bottom: 1px solid var(--wpss-border);
-}
-
-.wpss-modal-header h3 {
-	margin: 0;
-	font-size: 1.25rem;
-}
-
-.wpss-modal-body {
-	padding: 1.5rem;
-}
-
-.wpss-modal-footer {
-	padding: 1rem 1.5rem 1.5rem;
-	border-top: 1px solid var(--wpss-border);
-}
-
-.wpss-modal-error {
-	background: var(--wpss-danger-light, #fef2f2);
-	border: 1px solid var(--wpss-danger-border, #fecaca);
-	color: var(--wpss-error);
-	padding: 0.75rem 1rem;
-	border-radius: var(--wpss-radius);
-	margin-bottom: 1rem;
-	font-size: 0.875rem;
-}
-
-body.wpss-modal-open {
-	overflow: hidden;
 }
 
 /* ==========================================================================
@@ -1690,6 +1516,21 @@ body.wpss-modal-open {
 	font-weight: 700;
 	font-size: 1.25rem;
 }
+
+/* The converted hint is a third child of the row; on its own line under the price it
+   no longer pushes the price to the middle. */
+.wpss-summary-total { flex-wrap: wrap; align-items: baseline; }
+.wpss-summary-total .wpss-price-approx {
+	flex: 1 0 100%;
+	margin: 0;
+	text-align: end;
+	font-size: 0.813rem;
+	color: var(--wpss-text-muted);
+}
+
+/* An order modal with nothing to choose (no add-ons, no express delivery for the package)
+   shows only the summary, not an empty band under the header. */
+#wpss-order-modal .wpss-modal__body:not(:has(.wpss-order-extras:not([hidden]))) { display: none; }
 
 .wpss-cart-success {
 	text-align: center;
@@ -1893,12 +1734,6 @@ body.wpss-modal-open {
 	.wpss-contact-btn {
 		width: 100%;
 		margin-top: 1rem;
-	}
-
-	.wpss-modal-content {
-		max-height: 100vh;
-		height: 100%;
-		border-radius: 0;
 	}
 }
 

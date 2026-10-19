@@ -12,8 +12,12 @@
  * `$review->vendor_reply`) while everything else uses the Review model
  * (`content`, `response`). This partial takes the MODEL, so there is one shape.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/review-body.php
+ *
  * @package WPSellServices\Templates
  * @since   1.6.0
+ * @version 1.9.0
  *
  * @var WPSellServices\Models\Review $wpss_review Review to render.
  */

@@ -15,11 +15,12 @@
  *
  * @package WPSellServices\Templates
  * @since   1.2.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;
 
-get_header();
+wpss_get_header();
 ?>
 
 <?php // Container div, not <main>: most themes already open a <main> landmark in header.php. ?>
@@ -39,4 +40,4 @@ get_header();
 </div>
 
 <?php
-get_footer();
+wpss_get_footer();

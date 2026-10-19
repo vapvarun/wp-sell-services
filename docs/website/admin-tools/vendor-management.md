@@ -2,7 +2,7 @@
 
 The vendor management page gives you a bird's-eye view of everyone selling on your marketplace -- their activity, earnings, ratings, and account status.
 
-![Vendor Management](../images/admin-vendors-list.png)
+![Vendor Management](../images/admin-vendors-list.webp)
 
 ## Where to Find It
 
@@ -49,7 +49,7 @@ Click the tabs above the table to filter:
 
 If you want to screen vendors before they can sell, enable vendor verification:
 
-1. Go to **Sell Services > Settings > Vendors**
+1. Go to **Sell Services > Settings > Vendor Settings**
 2. Check **Require Verification**
 3. Click **Save Changes**
 

@@ -2,8 +2,12 @@
 /**
  * Vendor Services - My Account Template
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/myaccount/vendor-services.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var array $services WordPress posts.
  * @var int   $user_id  Current user ID.

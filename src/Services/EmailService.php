@@ -44,6 +44,7 @@ class EmailService {
 	public const TYPE_WITHDRAWAL_AUTO        = 'withdrawal_auto';
 	public const TYPE_VENDOR_CONTACT         = 'vendor_contact';
 	public const TYPE_WITHDRAWAL_APPROVED    = 'withdrawal_approved';
+	public const TYPE_WITHDRAWAL_COMPLETED   = 'withdrawal_completed';
 	public const TYPE_WITHDRAWAL_REJECTED    = 'withdrawal_rejected';
 	public const TYPE_PROPOSAL_SUBMITTED     = 'proposal_submitted';
 	public const TYPE_PROPOSAL_ACCEPTED      = 'proposal_accepted';
@@ -423,7 +424,9 @@ class EmailService {
 				array(
 					'order'         => $order,
 					'recipient'     => $vendor,
-					'email_heading' => __( 'Requirements Received - Start Working', 'wp-sell-services' ),
+					'email_heading' => wpss_order_needs_requirements( $order )
+						? __( 'Requirements Received - Start Working', 'wp-sell-services' )
+						: __( 'New Order - Start Working', 'wp-sell-services' ),
 					'customer_name' => $this->get_customer_name( $order->customer_id ),
 					'is_customer'   => false,
 				)
@@ -1367,8 +1370,8 @@ class EmailService {
 		} catch ( \Exception $e ) {
 			$requested_at = new \DateTimeImmutable();
 		}
-		$deadline     = $requested_at->modify( '+48 hours' );
-		$deadline_str = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $deadline->getTimestamp() );
+		$deadline    = $requested_at->modify( '+48 hours' );
+		$deadline_ts = $deadline->getTimestamp();
 
 		// Send to vendor.
 		if ( $vendor ) {
@@ -1390,7 +1393,7 @@ class EmailService {
 					'buyer_name'     => $this->get_customer_name( $order->customer_id ),
 					'reason'         => $reason_label,
 					'note'           => $note,
-					'deadline'       => $deadline_str,
+					'deadline'       => wpss_deadline_label( $deadline_ts, '—', (int) $vendor->ID ),
 					'is_customer'    => false,
 					'reply_to_email' => $customer ? $customer->user_email : '',
 					'reply_to_name'  => $customer ? $customer->display_name : '',
@@ -1419,7 +1422,7 @@ class EmailService {
 					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
 					'reason'         => $reason_label,
 					'note'           => $note,
-					'deadline'       => $deadline_str,
+					'deadline'       => wpss_deadline_label( $deadline_ts, '—', (int) $customer->ID ),
 					'is_customer'    => true,
 					'reply_to_email' => $vendor ? $vendor->user_email : '',
 					'reply_to_name'  => $vendor ? $vendor->display_name : '',
@@ -1813,26 +1816,27 @@ class EmailService {
 		$amount = wpss_format_price( (float) $withdrawal->amount );
 
 		if ( 'rejected' === $status ) {
-			$subject = sprintf(
-				/* translators: 1: platform name, 2: amount */
-				__( '[%1$s] Withdrawal Request for %2$s Rejected', 'wp-sell-services' ),
-				wpss_get_platform_name(),
-				$amount
-			);
-			$type = self::TYPE_WITHDRAWAL_REJECTED;
+			$type    = self::TYPE_WITHDRAWAL_REJECTED;
+			$heading = __( 'Withdrawal Rejected', 'wp-sell-services' );
+			/* translators: 1: platform name, 2: amount */
+			$subject = __( '[%1$s] Withdrawal Request for %2$s Rejected', 'wp-sell-services' );
+		} elseif ( 'completed' === $status ) {
+			$type    = self::TYPE_WITHDRAWAL_COMPLETED;
+			$heading = __( 'Withdrawal Paid', 'wp-sell-services' );
+			/* translators: 1: platform name, 2: amount */
+			$subject = __( '[%1$s] Withdrawal of %2$s Paid', 'wp-sell-services' );
 		} else {
-			$subject = sprintf(
-				/* translators: 1: platform name, 2: amount */
-				__( '[%1$s] Withdrawal of %2$s Approved', 'wp-sell-services' ),
-				wpss_get_platform_name(),
-				$amount
-			);
-			$type = self::TYPE_WITHDRAWAL_APPROVED;
+			$type    = self::TYPE_WITHDRAWAL_APPROVED;
+			$heading = __( 'Withdrawal Approved', 'wp-sell-services' );
+			/* translators: 1: platform name, 2: amount */
+			$subject = __( '[%1$s] Withdrawal of %2$s Approved', 'wp-sell-services' );
 		}
+
+		$subject = sprintf( $subject, wpss_get_platform_name(), $amount );
 
 		$template_vars = array(
 			'recipient'     => $vendor,
-			'email_heading' => 'rejected' === $status ? __( 'Withdrawal Rejected', 'wp-sell-services' ) : __( 'Withdrawal Approved', 'wp-sell-services' ),
+			'email_heading' => $heading,
 			'amount'        => $amount,
 			'withdrawal_id' => $withdrawal_id,
 			'status'        => $status,
@@ -2245,7 +2249,7 @@ class EmailService {
 	/**
 	 * Get template file path.
 	 *
-	 * Checks theme override first, then plugin templates.
+	 * Resolved by wpss_locate_template(), so the theme override and the wpss_get_template filter apply.
 	 *
 	 * @param string $type Email type.
 	 * @return string|null
@@ -2253,19 +2257,9 @@ class EmailService {
 	private function get_template_file( string $type ): ?string {
 		$template_name = $this->get_template_name( $type );
 
-		// Check theme override.
-		$theme_template = locate_template( 'wp-sell-services/emails/' . $template_name );
-		if ( $theme_template ) {
-			return $theme_template;
-		}
+		$template = wpss_locate_template( 'emails/' . $template_name );
 
-		// Plugin template.
-		$plugin_template = WPSS_PLUGIN_DIR . 'templates/emails/' . $template_name;
-		if ( file_exists( $plugin_template ) ) {
-			return $plugin_template;
-		}
-
-		return null;
+		return file_exists( $template ) ? $template : null;
 	}
 
 	/**
@@ -2278,9 +2272,7 @@ class EmailService {
 	private function get_template_part( string $part, array $template_vars ): string {
 		$template_name = "email-{$part}.php";
 
-		// Check theme override.
-		$theme_template = locate_template( 'wp-sell-services/emails/' . $template_name );
-		$template_file  = $theme_template ?: WPSS_PLUGIN_DIR . 'templates/emails/' . $template_name;
+		$template_file = wpss_locate_template( 'emails/' . $template_name );
 
 		if ( ! file_exists( $template_file ) ) {
 			return '';
@@ -2316,6 +2308,7 @@ class EmailService {
 			self::TYPE_WITHDRAWAL_AUTO        => 'withdrawal-auto.php',
 			self::TYPE_VENDOR_CONTACT         => 'vendor-contact.php',
 			self::TYPE_WITHDRAWAL_APPROVED    => 'withdrawal-approved.php',
+			self::TYPE_WITHDRAWAL_COMPLETED   => 'withdrawal-completed.php',
 			self::TYPE_WITHDRAWAL_REJECTED    => 'withdrawal-rejected.php',
 			self::TYPE_PROPOSAL_SUBMITTED     => 'generic.php',
 			self::TYPE_PROPOSAL_ACCEPTED      => 'generic.php',
@@ -2451,6 +2444,7 @@ class EmailService {
 			self::TYPE_WITHDRAWAL_REQUESTED   => 'withdrawals',
 			self::TYPE_WITHDRAWAL_AUTO        => 'withdrawals',
 			self::TYPE_WITHDRAWAL_APPROVED    => 'withdrawals',
+			self::TYPE_WITHDRAWAL_COMPLETED   => 'withdrawals',
 			self::TYPE_WITHDRAWAL_REJECTED    => 'withdrawals',
 			self::TYPE_PROPOSAL_SUBMITTED     => 'proposals',
 			self::TYPE_PROPOSAL_ACCEPTED      => 'proposals',

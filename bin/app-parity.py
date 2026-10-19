@@ -91,7 +91,7 @@ CONFIG = {
         "display currency": ["settings"],
         "email notifications": ["notifications"],
         "in-app notifications": ["notifications"],
-        "realtime messaging": ["realtime"],
+        "realtime alerts": ["realtime"],
         "analytics": ["analytics"],
         # Pro's SubscriptionPlanController registers /subscription-plans/*; the
         # feature was reported as a gap only because it had no mapping entry.

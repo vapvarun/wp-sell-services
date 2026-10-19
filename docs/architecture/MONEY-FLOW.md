@@ -146,20 +146,32 @@ exactly one row and one transfer.
 
 ### 2.11 Rail-side refunds enter through one seam
 
-A refund that happened AT the gateway (Stripe / PayPal / Razorpay dashboard,
-a Woo refund) reaches us as a webhook. Every webhook fires
-`wpss_gateway_refund_received( $gateway, $transaction_id, $amount, $context )`
-and nothing else; `OrderWorkflowManager::handle_gateway_refund()` is the only
-listener. It resolves every order paid with that transaction (a cart stamps
-one id on several orders), splits an unnamed amount by order total, skips a
-refund id it has already seen, and records each share through
-`apply_refund_status( …, settled_at_rail = true )` so the vendor share is
-reversed and the gateway is never called back. No gateway applies a refund
-inline.
+**The rail that collected the money refunds it.** `wpss_order_money_rail( $order )` names the
+platform that collected an order's money (a shop platform's adapter answers through the filter of
+the same name) and is empty when we collected it. Our screens refuse to refund a platform-paid order
+and point to the platform; the platform's own refund comes back to us as an event.
+
+A refund made AT a rail (a gateway dashboard, a shop platform) reaches us as an event. Every rail
+fires `wpss_gateway_refund_received( $gateway, $transaction_id, $amount, $context )` and nothing
+else; `OrderWorkflowManager::handle_gateway_refund()` is the only listener. The rail reports what it
+knows in `$context`: `order_id` (the gig), `order_ids` (the gigs it could be), `full_charge` (the rail says the whole charge, made only of these gigs, came back), `cumulative` (the
+amount is a running total, so what it adds is the difference from what we recorded), `refund_id`,
+`currency`. The listener never splits an amount by price:
+
+- a named gig, or the only gig on the transaction, takes the refund;
+- a refund that covers everything left on the charge refunds every gig in full;
+- anything else could be for any of several gigs, so `PendingRefundService` parks it on each gig of
+  the charge. An admin assigns it from the order screen, `POST /orders/{id}/assign-refund` or
+  `wp wpss refunds assign`. The vendor's earnings are reversed only when it is assigned.
+
+A refund id already seen is skipped, a running total already recorded adds nothing, and a refund we
+are sending at that moment (a per-order lock held from the gateway call to the write) is ours, not
+the rail's. Each applied refund goes through `OrderService::refund( …, settled_at_rail = true )`, so
+the vendor share is reversed and the gateway is never called back. No gateway applies a refund inline.
 
 Store-side refunds run the other way: `attempt_payment_refund()` first offers
-`wpss_pre_process_gateway_refund` (a rail that owns the money settles it and
-returns the seam-3 array), then calls the order's gateway. Every
+`wpss_pre_process_gateway_refund` (an extension that holds the money can settle it and
+return the seam-3 array), then calls the order's gateway. Every
 `process_refund()` returns `{success, transaction_id, message, manual}`. A
 gateway that cannot move money (offline, test) returns `manual = true`: the
 order gets `_wpss_refund_pending` = amount, the admin sees a notice and a

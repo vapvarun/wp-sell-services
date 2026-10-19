@@ -174,7 +174,7 @@ class PortfolioService {
 				'media'        => wp_json_encode( $data['media'] ?? [] ),
 				'external_url' => esc_url_raw( $data['external_url'] ?? '' ),
 				'tags'         => wp_json_encode( $data['tags'] ?? [] ),
-				'is_featured'  => ! empty( $data['is_featured'] ) ? 1 : 0,
+				'is_featured'  => ( ! empty( $data['is_featured'] ) && $this->can_feature_another( $vendor_id ) ) ? 1 : 0,
 				'sort_order'   => ( $max_sort ?? 0 ) + 1,
 				'created_at'   => current_time( 'mysql', true ),
 			],
@@ -227,6 +227,13 @@ class PortfolioService {
 		$formats     = [];
 
 		if ( isset( $data['title'] ) ) {
+			if ( '' === trim( (string) $data['title'] ) ) {
+				return [
+					'success' => false,
+					'message' => __( 'Title is required.', 'wp-sell-services' ),
+				];
+			}
+
 			$update_data['title'] = sanitize_text_field( $data['title'] );
 			$formats[]            = '%s';
 		}
@@ -252,7 +259,8 @@ class PortfolioService {
 		}
 
 		if ( isset( $data['is_featured'] ) ) {
-			$update_data['is_featured'] = $data['is_featured'] ? 1 : 0;
+			// Unfeaturing is always allowed; featuring is capped, the item itself not counted against it.
+			$update_data['is_featured'] = ( $data['is_featured'] && $this->can_feature_another( (int) $item['vendor_id'], $item_id ) ) ? 1 : 0;
 			$formats[]                  = '%d';
 		}
 
@@ -378,6 +386,34 @@ class PortfolioService {
 	}
 
 	/**
+	 * Whether a vendor may feature one more item (wpss_max_featured_portfolio; 0 means no cap).
+	 *
+	 * @param int $vendor_id  Vendor user ID.
+	 * @param int $exclude_id Item being edited, left out of the count.
+	 * @return bool
+	 */
+	public function can_feature_another( int $vendor_id, int $exclude_id = 0 ): bool {
+		global $wpdb;
+
+		$max = (int) get_option( 'wpss_max_featured_portfolio', 6 );
+
+		if ( $max <= 0 ) {
+			return true;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$this->table} WHERE vendor_id = %d AND is_featured = 1 AND id <> %d",
+				$vendor_id,
+				$exclude_id
+			)
+		);
+
+		return $count < $max;
+	}
+
+	/**
 	 * Toggle featured status.
 	 *
 	 * @param int $item_id   Item ID.
@@ -395,26 +431,15 @@ class PortfolioService {
 		}
 
 		// Check max featured items.
-		if ( ! $item['is_featured'] ) {
-			$max_featured     = (int) get_option( 'wpss_max_featured_portfolio', 6 );
-			$current_featured = $this->get_by_vendor(
-				$vendor_id,
-				[
-					'featured' => true,
-					'limit'    => 100,
-				]
-			);
-
-			if ( count( $current_featured ) >= $max_featured ) {
-				return [
-					'success' => false,
-					'message' => sprintf(
-						/* translators: %d: maximum featured items */
-						__( 'You can only feature up to %d portfolio items.', 'wp-sell-services' ),
-						$max_featured
-					),
-				];
-			}
+		if ( ! $item['is_featured'] && ! $this->can_feature_another( $vendor_id, $item_id ) ) {
+			return [
+				'success' => false,
+				'message' => sprintf(
+					/* translators: %d: maximum featured items */
+					__( 'You can only feature up to %d portfolio items.', 'wp-sell-services' ),
+					(int) get_option( 'wpss_max_featured_portfolio', 6 )
+				),
+			];
 		}
 
 		return $this->update( $item_id, [ 'is_featured' => ! $item['is_featured'] ] );

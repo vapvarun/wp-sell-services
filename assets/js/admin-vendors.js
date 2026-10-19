@@ -206,8 +206,8 @@
 			}
 		}
 
-		// Settings tab handlers.
-		function initSettingsHandlers() {
+		// Commission rate save/reset. Rendered on both the Earnings and Settings tabs, so both bind it.
+		function initCommissionHandlers() {
 			// Commission rate save.
 			$('#wpss-save-commission-detail').off('click').on('click', function() {
 				var rate = $('#wpss-commission-rate-detail').val();
@@ -226,7 +226,7 @@
 					},
 					success: function(response) {
 						if (response.success) {
-							$('#wpss-commission-detail-status').html('<span style="color: #00a32a;">' + response.message + '</span>');
+							$('#wpss-commission-detail-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
 							delete tabCache['settings'];
 							delete tabCache['earnings'];
 						} else {
@@ -277,6 +277,11 @@
 				});
 				});
 			});
+		}
+
+		// Settings tab handlers.
+		function initSettingsHandlers() {
+			initCommissionHandlers();
 
 			// Vacation mode toggle (and return-date change re-saves with the
 			// current toggle state so admins can set/clear the date directly).
@@ -420,6 +425,8 @@
 
 		// Earnings tab handlers (pagination).
 		function initEarningsHandlers() {
+			initCommissionHandlers();
+
 			$('.wpss-withdrawals-pagination a').off('click').on('click', function(e) {
 				e.preventDefault();
 				var page = $(this).data('page');

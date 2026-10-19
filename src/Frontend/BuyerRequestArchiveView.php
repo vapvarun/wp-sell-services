@@ -214,7 +214,7 @@ class BuyerRequestArchiveView {
 		$current_sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : 'newest';
 		?>
 		<div class="wpss-filters-bar">
-			<button type="button" class="wpss-btn wpss-btn-outline wpss-filter-toggle" aria-expanded="false" aria-controls="wpss-sidebar">
+			<button type="button" class="wpss-btn wpss-btn--outline wpss-filter-toggle" aria-expanded="false" aria-controls="wpss-sidebar">
 				<span class="wpss-icon-filter"></span>
 				<?php esc_html_e( 'Filters', 'wp-sell-services' ); ?>
 			</button>
@@ -323,7 +323,7 @@ class BuyerRequestArchiveView {
 		<aside class="wpss-request-sidebar" id="wpss-sidebar">
 			<div class="wpss-sidebar-header">
 				<h3><?php esc_html_e( 'Filters', 'wp-sell-services' ); ?></h3>
-				<button type="button" class="wpss-sidebar-close wpss-btn-icon" aria-label="<?php esc_attr_e( 'Close filters', 'wp-sell-services' ); ?>">
+				<button type="button" class="wpss-sidebar-close wpss-btn--icon" aria-label="<?php esc_attr_e( 'Close filters', 'wp-sell-services' ); ?>">
 					&times;
 				</button>
 			</div>
@@ -363,10 +363,10 @@ class BuyerRequestArchiveView {
 
 				<div class="wpss-filter-actions">
 					<?php // Filters apply as soon as they are picked (frontend.js); this stays for keyboard and no-JS use and shows when focused. ?>
-					<button type="submit" class="wpss-btn wpss-btn-primary wpss-btn-block screen-reader-text">
+					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--block screen-reader-text">
 						<?php esc_html_e( 'Apply Filters', 'wp-sell-services' ); ?>
 					</button>
-					<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_request' ) ); ?>" class="wpss-btn wpss-btn-outline wpss-btn-block">
+					<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_request' ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--block">
 						<?php esc_html_e( 'Clear All', 'wp-sell-services' ); ?>
 					</a>
 				</div>

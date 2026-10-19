@@ -15,7 +15,6 @@ namespace WPSellServices\Integrations\Gateways;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
 
 /**
  * Offline payment gateway implementation.
@@ -25,7 +24,7 @@ use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
  *
  * @since 1.0.0
  */
-class OfflineGateway implements PaymentGatewayInterface {
+class OfflineGateway extends AbstractPaymentGateway {
 
 	/**
 	 * Gateway ID.
@@ -613,7 +612,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 				return;
 			}
 			if ( 'pending_payment' !== $order->status ) {
-				wp_send_json_error( array( 'message' => __( 'This order has already been paid.', 'wp-sell-services' ) ) );
+				wp_send_json_error( array( 'message' => wpss_get_order_not_payable_message( $order ) ) );
 				return;
 			}
 
@@ -928,7 +927,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 		wp_send_json_success(
 			array(
 				'message'    => __( 'Order marked as paid successfully.', 'wp-sell-services' ),
-				'new_status' => 'pending_requirements',
+				'new_status' => (string) ( wpss_get_order( $order_id )->status ?? 'pending_requirements' ),
 			)
 		);
 	}
@@ -1082,7 +1081,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 						/* translators: 1: uploader name, 2: date */
 						__( 'uploaded by %1$s on %2$s', 'wp-sell-services' ),
 						$who ? $who->display_name : __( 'a buyer', 'wp-sell-services' ),
-						wp_date( get_option( 'date_format' ), strtotime( (string) $receipt->created_at ) )
+						wpss_date_label( (string) $receipt->created_at )
 					)
 				)
 			);
@@ -1542,7 +1541,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 						<?php if ( $paid_ts ) : ?>
 							<tr>
 								<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Paid on', 'wp-sell-services' ); ?></th>
-								<td style="text-align:right;"><?php echo esc_html( wp_date( get_option( 'date_format' ), $paid_ts ) ); ?></td>
+								<td style="text-align:right;"><?php echo esc_html( wpss_date_label( $paid_ts ) ); ?></td>
 							</tr>
 						<?php endif; ?>
 						<?php
@@ -1556,7 +1555,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 						<?php if ( $verified_ts ) : ?>
 							<tr>
 								<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Verified on', 'wp-sell-services' ); ?></th>
-								<td style="text-align:right;"><?php echo esc_html( wp_date( get_option( 'date_format' ), $verified_ts ) ); ?></td>
+								<td style="text-align:right;"><?php echo esc_html( wpss_date_label( $verified_ts ) ); ?></td>
 							</tr>
 						<?php endif; ?>
 					</tbody>
@@ -1717,7 +1716,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 
 		<?php $this->render_methods_editor(); ?>
 
-		<h4><?php esc_html_e( 'Available Placeholders for Instructions', 'wp-sell-services' ); ?></h4>
+		<h3><?php esc_html_e( 'Available Placeholders for Instructions', 'wp-sell-services' ); ?></h3>
 		<p class="description">
 			<?php esc_html_e( 'You can use these placeholders in the Payment Instructions:', 'wp-sell-services' ); ?>
 		</p>
@@ -1752,7 +1751,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 		$slots   = (int) apply_filters( 'wpss_offline_method_slots', 4 );
 		$slots   = max( count( $methods ), max( 1, $slots ) );
 		?>
-		<h4><?php esc_html_e( 'Payment Methods', 'wp-sell-services' ); ?></h4>
+		<h3><?php esc_html_e( 'Payment Methods', 'wp-sell-services' ); ?></h3>
 		<p class="description">
 			<?php esc_html_e( 'Name each way a buyer can pay you offline. Leave a slot blank to skip it. Buyers choose from the enabled ones at checkout, and the method they picked is recorded on the order, so renaming or removing one later never changes what a past order says.', 'wp-sell-services' ); ?>
 		</p>
@@ -1886,5 +1885,24 @@ class OfflineGateway implements PaymentGatewayInterface {
 	private function get_settings(): array {
 		$settings = get_option( self::OPTION_NAME, array() );
 		return is_array( $settings ) ? $settings : array();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function rest_create_intent( \WPSellServices\Checkout\CheckoutIntent $intent, array $request ) {
+		return $this->create_offline_rest_order( $request );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_settings_card(): ?array {
+		return array(
+			'title'        => __( 'Offline Payment', 'wp-sell-services' ),
+			'description'  => __( 'Accept bank transfer, cash, and other manual payments.', 'wp-sell-services' ),
+			'option_group' => 'wpss_offline_settings',
+			'order'        => 90,
+		);
 	}
 }

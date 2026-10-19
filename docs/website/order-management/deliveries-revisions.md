@@ -16,6 +16,8 @@ The order immediately moves to "Pending Approval" and the buyer gets an email no
 
 **Supported file types include:** images, documents, archives, audio, video, design files, and data files. For security, SVG, HTML, CSS, and JavaScript files are not allowed -- use a ZIP archive if you need to deliver those formats.
 
+If any file in a delivery is refused (blocked type or too large), the whole delivery is refused and the message names the file. Nothing is delivered until every file is accepted, so the buyer never receives a partial delivery.
+
 ## What the Buyer Sees
 
 When a delivery arrives, the buyer can download the files and review the work. They have three options:
@@ -24,7 +26,7 @@ When a delivery arrives, the buyer can download the files and review the work. T
 
 If the work meets expectations, the buyer clicks **Accept Delivery**. The order is marked as complete, the vendor gets paid, and both parties can leave reviews.
 
-![Order confirmation screen after accepting delivery](../images/frontend-order-confirmation.png)
+![Order confirmation screen after accepting delivery](../images/frontend-order-confirmation.webp)
 
 ### Request a Revision
 
@@ -34,7 +36,7 @@ If changes are needed, the buyer clicks **Request Revision** and provides specif
 
 If there is a serious problem that cannot be resolved through revisions, the buyer can open a formal dispute. See [Opening a Dispute](../disputes-resolution/opening-a-dispute.md) for details.
 
-![Delivery review interface where buyer can accept, revise, or dispute](../images/frontend-delivery-review.png)
+![Delivery review interface where buyer can accept, revise, or dispute](../images/frontend-delivery-review.webp)
 
 ## Auto-Complete
 

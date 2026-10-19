@@ -148,8 +148,8 @@
 
 			// Skip to full editor.
 			$skipBtn.on('click', function() {
-				// Save the post to convert from auto-draft.
-				self.savePost();
+				// Save as a draft: skipping is not finishing, so it must never publish.
+				self.savePost(true);
 			});
 		},
 
@@ -195,9 +195,16 @@
 		 * block editor (wp.data store). After saving in the block
 		 * editor the page is reloaded so the metabox switches from
 		 * wizard mode to the normal tabbed view.
+		 *
+		 * @param {boolean} asDraft Save a draft instead of publishing (Skip to full editor).
 		 */
-		savePost: function() {
-			// Classic editor: the #publish submit button exists.
+		savePost: function(asDraft) {
+			// Classic editor: Skip clicks Save Draft, Finish clicks Publish.
+			if (asDraft && $('#save-post').length) {
+				$('#save-post').trigger('click');
+				return;
+			}
+
 			if ($('#publish').length) {
 				$('#publish').trigger('click');
 				return;

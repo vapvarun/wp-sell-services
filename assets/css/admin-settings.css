@@ -405,6 +405,93 @@
 	overflow-x: auto;
 }
 
+/* Menu Visibility: one row per role. The whole summary is the control, so it carries a chevron,
+   a hover state and a focus ring; the state on the right is a badge, not loose text. */
+.wpss-visibility-note {
+	margin: 0 0 var(--wpss-space-4, 16px);
+}
+
+.wpss-visibility-role {
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: var(--wpss-admin-radius-md);
+	margin-block-end: 12px;
+}
+
+.wpss-visibility-role__summary {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	padding: 12px 14px;
+	font-weight: 600;
+	cursor: pointer;
+	list-style: none;
+	border-radius: var(--wpss-admin-radius-md);
+}
+
+.wpss-visibility-role__summary::-webkit-details-marker {
+	display: none;
+}
+
+.wpss-visibility-role__summary::before {
+	content: "";
+	flex: none;
+	inline-size: 8px;
+	block-size: 8px;
+	border-inline-end: 2px solid var(--wpss-admin-text-tertiary);
+	border-block-end: 2px solid var(--wpss-admin-text-tertiary);
+	transform: rotate(-45deg);
+	transition: transform 0.15s ease;
+}
+
+.wpss-visibility-role[open] > .wpss-visibility-role__summary::before {
+	transform: rotate(45deg);
+}
+
+.wpss-visibility-role__summary:focus-visible {
+	outline: 2px solid var(--wpss-admin-accent);
+	outline-offset: -2px;
+}
+
+.wpss-visibility-role__name {
+	flex: 1 1 8rem;
+	min-inline-size: 0;
+}
+
+.wpss-visibility-role__state {
+	flex: none;
+	padding: 2px 10px;
+	border-radius: 999px;
+	background: var(--wpss-admin-bg-secondary);
+	color: var(--wpss-admin-text-light);
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.wpss-visibility-role__state--hidden {
+	background: #fcf3dc;
+	background: color-mix(in srgb, var(--wpss-admin-warning) 18%, var(--wpss-admin-white));
+	color: var(--wpss-admin-text);
+}
+
+.wpss-visibility-role__body {
+	padding: 0 14px 14px;
+}
+
+.wpss-visibility-role__item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 0;
+	border-block-end: 1px solid var(--wpss-admin-border);
+}
+
+@media (hover: hover) {
+	.wpss-visibility-role__summary:hover {
+		background: var(--wpss-admin-bg-secondary);
+	}
+}
+
 /* Tablet: the side nav becomes a wrapping row of tabs above the content, and
    the form table stacks its label over its field. */
 @media (max-width: 1024px) {

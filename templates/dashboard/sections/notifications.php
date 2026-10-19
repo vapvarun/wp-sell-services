@@ -6,8 +6,12 @@
  * standalone account page and the myaccount template all render the identical
  * surface (list + working mark-read) instead of three divergent copies.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/notifications.php
+ *
  * @package WPSellServices\Templates
  * @since   1.2.2
+ * @version 1.9.0
  *
  * @var int           $user_id        Current user ID.
  * @var VendorService $vendor_service Vendor service instance.
@@ -24,6 +28,6 @@ do_action( 'wpss_dashboard_section_before', 'notifications', $user_id );
 	// partial must not repeat it here. The other two surfaces have no page title
 	// of their own and keep theirs.
 	$wpss_show_heading = false;
-	require WPSS_PLUGIN_DIR . 'templates/partials/notifications-list.php';
+	require wpss_locate_template( 'partials/notifications-list.php' );
 	?>
 </div>

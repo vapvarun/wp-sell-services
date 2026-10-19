@@ -11,6 +11,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.8.0
+ * @version 1.9.0
  *
  * @var int    $service_id   Service ID.
  * @var string $resubmit_url Link to fix and resubmit; omitted inside the wizard.

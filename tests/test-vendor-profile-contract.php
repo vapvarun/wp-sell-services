@@ -45,33 +45,28 @@ echo "\nVendor profile resolution contract\n\n";
 global $wpdb;
 $table = $wpdb->prefix . 'wpss_vendor_profiles';
 
+require_once __DIR__ . '/fixtures.php';
+$f = wpss_test_fixtures();
+
 // A real vendor WITH a row.
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-$with_row = (int) $wpdb->get_var( "SELECT user_id FROM {$table} ORDER BY id DESC LIMIT 1" );
+$with_row = $f->vendor;
 
 // A vendor by ROLE with no row - the case that broke.
-$role_only = 0;
-foreach ( get_users( array( 'number' => 200, 'fields' => array( 'ID' ) ) ) as $u ) {
-	$uid = (int) $u->ID;
-	if ( ! wpss_is_vendor( $uid ) ) {
-		continue;
-	}
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$rows = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE user_id = %d", $uid ) );
-	if ( 0 === $rows ) {
-		$role_only = $uid;
-		break;
-	}
-}
+$role_only = (int) wp_insert_user(
+	array(
+		'user_login' => $f->tag . '_roleonly',
+		'user_pass'  => wp_generate_password(),
+		'user_email' => $f->tag . '_roleonly@example.test',
+		'role'       => 'wpss_vendor',
+	)
+);
+$f->users[] = $role_only;
+$wpdb->delete( $table, array( 'user_id' => $role_only ) );
+// "Promoted by a filter" is the only way to be a vendor with no row.
+add_filter( 'wpss_is_vendor', static fn( $is, $id ) => (int) $id === $role_only ? true : $is, 10, 2 );
 
 // Somebody who is not a vendor at all.
-$not_vendor = 0;
-foreach ( get_users( array( 'number' => 200, 'fields' => array( 'ID' ) ) ) as $u ) {
-	if ( ! wpss_is_vendor( (int) $u->ID ) ) {
-		$not_vendor = (int) $u->ID;
-		break;
-	}
-}
+$not_vendor = $f->buyer;
 
 wpss_t( function_exists( 'wpss_get_vendor_profile_or_default' ), 'the defaulting accessor exists' );
 

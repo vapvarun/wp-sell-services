@@ -19,6 +19,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -238,7 +239,7 @@ do_action( 'wpss_before_request_card', $request_id );
 					<span class="wpss-request-card__meta-value">
 						<?php
 						if ( $expires_at ) {
-							echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $expires_at . ' UTC' ) ) );
+							echo esc_html( wpss_deadline_label( $expires_at ) );
 						} else {
 							printf(
 								/* translators: %d: number of days */
@@ -267,11 +268,11 @@ do_action( 'wpss_before_request_card', $request_id );
 
 			<?php // A visitor is told what it takes, as on the request page itself (Basecamp 10337197376). ?>
 			<?php if ( is_user_logged_in() ) : ?>
-				<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn-primary wpss-btn-sm">
+				<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
 					<?php esc_html_e( 'Send Proposal', 'wp-sell-services' ); ?>
 				</a>
 			<?php else : ?>
-				<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn-primary wpss-btn-sm">
+				<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
 					<?php esc_html_e( 'Log in to send a proposal', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>

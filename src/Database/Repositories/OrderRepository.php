@@ -81,6 +81,12 @@ class OrderRepository extends AbstractRepository {
 			$data['platform_order_ref'] = (string) $data['platform_order_id'];
 		}
 
+		// What was bought, product-neutrally. 'service' is the only type today, so the
+		// product is the service. Same inferred-formats condition as above.
+		if ( empty( $format ) && ! isset( $data['product_id'] ) && isset( $data['service_id'] ) ) {
+			$data['product_id'] = (int) $data['service_id'];
+		}
+
 		return parent::insert( $data, $format );
 	}
 
@@ -286,7 +292,7 @@ class OrderRepository extends AbstractRepository {
 
 		if ( ! empty( $args['date_from'] ) ) {
 			$sql     .= ' AND created_at >= %s';
-			$params[] = get_gmt_from_date( (string) $args['date_from'] ); // Site time in, UTC column.
+			$params[] = (string) wpss_datetime_input_to_utc( (string) $args['date_from'] ); // Display time in, UTC column.
 		}
 
 		if ( ! empty( $args['search'] ) ) {
@@ -668,9 +674,10 @@ class OrderRepository extends AbstractRepository {
 			'total_orders'         => (int) ( $stats['total_orders'] ?? 0 ),
 			'completed_orders'     => (int) ( $stats['completed_orders'] ?? 0 ),
 			'active_orders'        => (int) ( $stats['active_orders'] ?? 0 ),
-			// The vendor's share of what buyers paid, net of refunds and
-			// commission, by the one revenue definition (get_revenue()).
-			'total_earnings'       => $this->get_revenue( array( 'vendor_id' => $vendor_id ) )[0]->vendor_earnings ?? 0.0,
+			// What the vendor has earned, from the ledger: the same figure the Earnings
+			// page and the vendor profile show. Summing order rows counted disputed
+			// orders and ran 159.00 above the ledger on the demo seller.
+			'total_earnings'       => wpss_get_ledger_total_earned( $vendor_id ),
 			'avg_completion_hours' => (float) ( $stats['avg_completion_hours'] ?? 0 ),
 		);
 	}
@@ -957,8 +964,8 @@ class OrderRepository extends AbstractRepository {
 				"SELECT * FROM {$this->table}
 				WHERE created_at BETWEEN %s AND %s
 				ORDER BY created_at DESC",
-				get_gmt_from_date( $start_date . ' 00:00:00' ),
-				get_gmt_from_date( $end_date . ' 23:59:59' )
+				(string) wpss_datetime_input_to_utc( $start_date . ' 00:00:00' ),
+				(string) wpss_datetime_input_to_utc( $end_date . ' 23:59:59' )
 			)
 		);
 	}
@@ -1139,14 +1146,14 @@ class OrderRepository extends AbstractRepository {
 		// COALESCE, so a period stays an index range at 100k orders. The
 		// bounds arrive in site time and the columns are UTC (10351460106).
 		if ( '' !== (string) $args['from'] ) {
-			$from     = get_gmt_from_date( (string) $args['from'] );
+			$from     = (string) wpss_datetime_input_to_utc( (string) $args['from'] );
 			$where[]  = '( paid_at >= %s OR ( paid_at IS NULL AND created_at >= %s ) )';
 			$values[] = $from;
 			$values[] = $from;
 		}
 
 		if ( '' !== (string) $args['to'] ) {
-			$to       = get_gmt_from_date( (string) $args['to'] );
+			$to       = (string) wpss_datetime_input_to_utc( (string) $args['to'] );
 			$where[]  = '( paid_at <= %s OR ( paid_at IS NULL AND created_at <= %s ) )';
 			$values[] = $to;
 			$values[] = $to;

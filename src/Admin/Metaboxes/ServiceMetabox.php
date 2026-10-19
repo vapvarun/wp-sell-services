@@ -25,6 +25,12 @@ defined( 'ABSPATH' ) || exit;
 class ServiceMetabox {
 
 	/**
+	 * Post meta marking a service whose publish was refused (a draft the owner tried to put live).
+	 */
+	public const PUBLISH_BLOCKED_META = '_wpss_publish_blocked';
+
+
+	/**
 	 * Initialize metabox.
 	 *
 	 * @return void
@@ -525,7 +531,7 @@ class ServiceMetabox {
 		$view_count     = ! empty( $view_count ) ? $view_count : 0;
 		?>
 		<div class="wpss-stats-wrapper">
-			<div class="wpss-stats-grid">
+			<div class="wpss-admin-stats-grid">
 				<div class="wpss-stat-item">
 					<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 					<div class="wpss-stat-data">
@@ -723,32 +729,7 @@ class ServiceMetabox {
 		// The field is not rendered for them either, so a vendor's save
 		// carries no wpss_featured key and leaves the owner's choice intact.
 		if ( isset( $_POST['wpss_featured'] ) && wpss_user_can_feature_service( $post_id ) ) {
-			$wpss_featured = ! empty( $_POST['wpss_featured'] );
-
-			/**
-			 * Filter whether a service is featured as it saves.
-			 *
-			 * The owner's checkbox is the default. A site can force the flag from
-			 * its own rule - a vendor tier, a paid placement, a campaign window -
-			 * without having to intercept save_post.
-			 *
-			 * @since 1.7.1
-			 *
-			 * @param bool $wpss_featured Whether the service should be featured.
-			 * @param int  $post_id       Service post ID.
-			 */
-			$wpss_featured = (bool) apply_filters( 'wpss_service_is_featured', $wpss_featured, $post_id );
-
-			if ( $wpss_featured ) {
-				update_post_meta( $post_id, '_wpss_featured', 1 );
-			} else {
-				// Deleted rather than stored as 0. Both readers compare the value
-				// to '1', so a 0 would not match either way - but leaving rows
-				// behind for every service anyone ever unticked is meta nobody
-				// reads, and EXISTS is the obvious way for a future query to ask
-				// this question.
-				delete_post_meta( $post_id, '_wpss_featured' );
-			}
+			wpss_set_service_featured( $post_id, ! empty( $_POST['wpss_featured'] ) );
 		}
 
 		// Only active / paused: visibility belongs to the post status, so the
@@ -1077,6 +1058,8 @@ class ServiceMetabox {
 		$errors = wpss_get_service_publish_errors( $post_id );
 
 		if ( empty( $errors ) ) {
+			// Nothing blocks it any more: a flag left by an earlier refused publish is stale.
+			delete_post_meta( $post_id, self::PUBLISH_BLOCKED_META );
 			return;
 		}
 
@@ -1123,6 +1106,10 @@ class ServiceMetabox {
 				'post_status' => 'draft',
 			)
 		);
+		// Remembered, not flashed: ServiceListScreen::publish_blocked_notice() reads the reasons live from
+		// the rules for as long as this stays set, so a refused publish is explained on the editor and the
+		// list however many screens the owner passes through (a one-shot transient was consumed unseen).
+		update_post_meta( $post_id, self::PUBLISH_BLOCKED_META, time() );
 		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'save_meta' ), 10, 2 );
 		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'enforce_publish_rules' ), 99, 2 );
 	}
@@ -1492,7 +1479,7 @@ class ServiceMetabox {
 
 			<div class="wpss-overview-section">
 				<h4><?php esc_html_e( 'Statistics', 'wp-sell-services' ); ?></h4>
-				<div class="wpss-stats-grid">
+				<div class="wpss-admin-stats-grid">
 					<div class="wpss-stat-item">
 						<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-data">

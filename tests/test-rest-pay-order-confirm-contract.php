@@ -14,7 +14,6 @@
  * @package WPSellServices
  */
 
-use WPSellServices\API\PaymentController;
 use WPSellServices\Integrations\Stripe\StripeGateway;
 
 require_once __DIR__ . '/exit-on-fail.php';
@@ -89,11 +88,15 @@ $stub     = static function ( $pre, $args, $url ) use ( $currency, $buyer, &$mad
 add_filter( 'pre_http_request', $stub, 10, 3 );
 add_filter( 'pre_wp_mail', '__return_true' );
 
-// The route hands straight to this method; calling it keeps the test off the
+// The route hands straight to the gateway; calling it keeps the test off the
 // site's own gateway settings, so it runs on a site with no Stripe keys too.
 $confirm = static function ( string $payment_id, int $pay_order ) {
-	$method = new ReflectionMethod( PaymentController::class, 'confirm_stripe_payment' );
-	return $method->invoke( new PaymentController(), new StripeGateway(), $payment_id, 0, 0, $pay_order );
+	return ( new StripeGateway() )->rest_confirm_payment(
+		array(
+			'payment_id' => $payment_id,
+			'pay_order'  => $pay_order,
+		)
+	);
 };
 
 $paid_fired = 0;

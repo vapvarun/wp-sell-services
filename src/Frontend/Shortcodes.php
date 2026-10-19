@@ -545,10 +545,7 @@ class Shortcodes {
 			return '<p class="wpss-notice wpss-notice--error">' . esc_html__( 'Vendor not found.', 'wp-sell-services' ) . '</p>';
 		}
 
-		$template = locate_template( 'wp-sell-services/vendor/profile.php' );
-		if ( ! $template ) {
-			$template = WPSS_PLUGIN_DIR . 'templates/vendor/profile.php';
-		}
+		$template = wpss_locate_template( 'vendor/profile.php' );
 
 		ob_start();
 		if ( file_exists( $template ) ) {
@@ -812,7 +809,7 @@ class Shortcodes {
 									// strtotime() - which this used while it read raw $wpdb rows -
 									// throws a TypeError. Same accessor the admin order screen uses.
 									echo $order->created_at
-										? esc_html( wp_date( get_option( 'date_format' ), $order->created_at->getTimestamp() ) )
+										? esc_html( wpss_date_label( $order->created_at->getTimestamp() ) )
 										: '&mdash;';
 									?>
 								</td>
@@ -900,10 +897,7 @@ class Shortcodes {
 		// (it resolves the order from $order_id, which is set above). The old
 		// lookup targeted order/details.php, which never existed, so the shortcode
 		// always fell back to a reduced inline copy (Basecamp #10110742943).
-		$template = locate_template( 'wp-sell-services/order/order-view.php' );
-		if ( ! $template ) {
-			$template = WPSS_PLUGIN_DIR . 'templates/order/order-view.php';
-		}
+		$template = wpss_locate_template( 'order/order-view.php' );
 
 		ob_start();
 		include $template;
@@ -1127,7 +1121,7 @@ class Shortcodes {
 						// written out here and again below, so a copy correction
 						// had to be made twice or the page told two different
 						// stories depending on who was reading it.
-						require WPSS_PLUGIN_DIR . 'templates/partials/vendor-benefits.php';
+						require wpss_locate_template( 'partials/vendor-benefits.php' );
 
 						$this->render_vendor_pitch_steps();
 						?>
@@ -1201,7 +1195,7 @@ class Shortcodes {
 					// out here and again above, so a copy correction had to be made
 					// twice or the page told two different stories depending on who
 					// was reading it.
-					require WPSS_PLUGIN_DIR . 'templates/partials/vendor-benefits.php';
+					require wpss_locate_template( 'partials/vendor-benefits.php' );
 
 					$this->render_vendor_pitch_steps();
 					?>
@@ -1450,6 +1444,7 @@ class Shortcodes {
 		}
 		.wpss-vr__actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 		.wpss-vr__btn {
+			box-sizing: border-box; max-width: 100%; text-align: center;
 			display: inline-flex; align-items: center; justify-content: center;
 			padding: 12px 28px; font-size: 15px; font-weight: 600;
 			border-radius: 10px; text-decoration: none; cursor: pointer;

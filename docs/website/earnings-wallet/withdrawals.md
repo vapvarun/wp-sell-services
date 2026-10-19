@@ -2,7 +2,7 @@
 
 When vendors are ready to get paid, they submit a withdrawal request from their dashboard. Here is how the entire process works -- from request to payment.
 
-![Withdrawal Request](../images/vendor-wallet-withdrawal.png)
+![Withdrawal Request](../images/vendor-wallet-withdrawal.webp)
 
 ## How Withdrawals Work
 
@@ -68,7 +68,7 @@ The vendor sees a confirmation with a request ID and status. They also receive a
 | **Pending** | Request submitted, waiting for admin review |
 | **Approved** | Admin approved it, payment is being processed |
 | **Completed** | Payment has been sent to the vendor |
-| **Rejected** | Request denied -- funds return to vendor's available balance |
+| **Rejected** | Request denied -- funds return to vendor's available balance. The note the admin typed shows under the badge as "Reason: ..." and is in the email |
 
 The typical flow is: **Pending > Approved > Completed**
 
@@ -105,6 +105,14 @@ After an order is completed, your marketplace may apply a clearance period befor
 - Quality issues discovered after delivery
 
 Admins can adjust the clearance period (0-90 days) in **Settings > Payouts**.
+
+## If Your Balance Is Below Zero
+
+A refund or dispute can return money to a buyer after you were already paid. Your balance then reads below zero. Nothing is taken from you: your next earnings pay it down first, and withdrawals resume once the balance is positive again. You cannot request a withdrawal while it is below zero.
+
+![The Earnings page notice explaining a balance below zero](../images/earnings-debt-notice.webp)
+
+The notice states how much a previous payout exceeded your earnings. If a withdrawal is still in progress it is counted against you until it is processed, and the notice says so. The site owner can see every ledger entry behind the figure and can write the amount off, which brings your balance back to zero.
 
 ## Common Questions
 

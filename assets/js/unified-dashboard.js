@@ -65,7 +65,7 @@
 			$(document).on('click', '.wpss-portfolio-toggle-featured', this.handlePortfolioToggleFeatured.bind(this));
 			$(document).on('submit', '#wpss-portfolio-form', this.handlePortfolioSave.bind(this));
 			$(document).on('click', '#wpss-portfolio-upload-media', this.handlePortfolioMediaUpload.bind(this));
-			$(document).on('click', '.wpss-modal__close, .wpss-modal__close-btn, .wpss-modal__overlay', this.handleModalClose.bind(this));
+			$(document).on('click', '.wpss-portfolio-media-remove', this.handlePortfolioMediaRemove.bind(this));
 
 			// Favorites — unfavorite from the saved grid.
 			$(document).on('click', '.wpss-favorites__remove', this.handleFavoriteRemove.bind(this));
@@ -293,13 +293,8 @@
 			var isDebit = ( typeof txn.is_debit !== 'undefined' ) ? !! txn.is_debit : ( amount < 0 );
 			var $row = $('<tr>').addClass(isDebit ? 'wpss-wallet__row--debit' : 'wpss-wallet__row--credit');
 
-			var dateText = txn.created_at || '';
-			if (dateText && window.Date) {
-				var d = new Date(dateText);
-				if (!isNaN(d.getTime())) {
-					dateText = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-				}
-			}
+			// Formatted by the server in the display timezone; never the browser's.
+			var dateText = txn.created_at_label || '';
 
 			var typeLabel = (txn.type || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, function (c) {
 				return c.toUpperCase();
@@ -957,7 +952,7 @@
 			e.preventDefault();
 			this.resetPortfolioForm();
 			$('#wpss-portfolio-modal-title').text(wpssUnifiedDashboard.i18n.addPortfolioItem);
-			$('#wpss-portfolio-modal').addClass('wpss-modal-open');
+			window.wpssModal.open('wpss-portfolio-modal');
 		},
 
 		/**
@@ -1003,13 +998,13 @@
 			if (mediaIds.length) {
 				var $preview = $('#wpss-portfolio-media-preview');
 				$preview.empty();
-				mediaThumbs.forEach(function (thumbUrl) {
-					$preview.append('<img src="' + thumbUrl + '" class="wpss-portfolio-media-thumb">');
-				});
+				mediaThumbs.forEach(function (thumbUrl, i) {
+					$preview.append(this.portfolioThumb(mediaIds[i], thumbUrl));
+				}, this);
 				$('#wpss-portfolio-media').val(JSON.stringify(mediaIds));
 			}
 
-			$('#wpss-portfolio-modal').addClass('wpss-modal-open');
+			window.wpssModal.open('wpss-portfolio-modal');
 		},
 
 		/**
@@ -1101,7 +1096,9 @@
 				title: $form.find('[name="title"]').val(),
 				description: $form.find('[name="description"]').val(),
 				external_url: $form.find('[name="external_url"]').val() || '',
-				media: mediaVal ? JSON.parse(mediaVal) : []
+				media: mediaVal ? JSON.parse(mediaVal) : [],
+				// Sent as typed ("logo, branding"); the route splits it. Sent empty on edit so clearing the field clears the tags.
+				tags: $form.find('[name="tags"]').val() || ''
 			};
 			var serviceId = $form.find('[name="service_id"]').val();
 			if (serviceId) {
@@ -1126,7 +1123,7 @@
 					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 				},
 				success: function () {
-					$('#wpss-portfolio-modal').removeClass('wpss-modal-open');
+					window.wpssModal.close('wpss-portfolio-modal');
 					window.location.reload();
 				},
 				error: function (xhr) {
@@ -1166,8 +1163,8 @@
 				$preview.empty();
 				attachments.forEach(function (att) {
 					var url = att.sizes && att.sizes.thumbnail ? att.sizes.thumbnail.url : att.url;
-					$preview.append('<img src="' + url + '" class="wpss-portfolio-media-thumb">');
-				});
+					$preview.append(this.portfolioThumb(att.id, url));
+				}, this);
 				$('#wpss-portfolio-media').val(JSON.stringify(ids));
 			}.bind(this));
 
@@ -1215,13 +1212,40 @@
 		},
 
 		/**
-		 * Close modal.
+		 * One staged portfolio image: the thumbnail plus a control to drop it.
+		 *
+		 * @param {number} id  Attachment ID.
+		 * @param {string} url Thumbnail URL.
+		 * @return {jQuery} Thumb wrapper.
+		 */
+		portfolioThumb: function (id, url) {
+			var $item = $('<span class="wpss-portfolio-media-item"></span>').attr('data-id', id);
+			$('<img class="wpss-portfolio-media-thumb" alt="">').attr('src', url).appendTo($item);
+			$('<button type="button" class="wpss-portfolio-media-remove"><span aria-hidden="true">&times;</span></button>')
+				.attr('aria-label', wpssUnifiedDashboard.i18n.removeImage)
+				.appendTo($item);
+			return $item;
+		},
+
+		/**
+		 * Drop one staged image and keep the hidden id list in step.
 		 *
 		 * @param {Event} e Click event.
 		 */
-		handleModalClose: function (e) {
+		handlePortfolioMediaRemove: function (e) {
 			e.preventDefault();
-			$(e.currentTarget).closest('.wpss-modal').removeClass('wpss-modal-open');
+			var $item = $(e.currentTarget).closest('.wpss-portfolio-media-item');
+			var id = parseInt($item.attr('data-id'), 10);
+			var ids = [];
+
+			try {
+				ids = JSON.parse($('#wpss-portfolio-media').val() || '[]');
+			} catch (ex) {
+				ids = [];
+			}
+
+			$('#wpss-portfolio-media').val(JSON.stringify(ids.filter(function (v) { return parseInt(v, 10) !== id; })));
+			$item.remove();
 		},
 
 		/**

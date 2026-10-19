@@ -37,7 +37,7 @@ buyer requests with proposals, and conversations. Use `marketplace` for staging
 sites, theme testing, and client demos; use `create` when you just need catalog
 volume.
 
-`demo delete` and **Settings > Advanced > Delete Demo Content** run the same
+`demo delete` and **Settings > System > Delete Demo Content** run the same
 routine (`wpss_delete_demo_content()`): flagged services, buyer requests and
 media, the demo vendor accounts with their profile rows, and any category the
 demo created that is now empty. A demo service that a real buyer has ordered

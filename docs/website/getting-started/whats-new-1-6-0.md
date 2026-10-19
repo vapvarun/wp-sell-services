@@ -28,7 +28,7 @@ move to WooCommerce, EDD or FluentCart, or run the built-in standalone checkout.
 ## Push notifications
 
 Members can get the events they already receive in the app pushed to their
-phones. Enter Firebase credentials under **Settings > Advanced**; it stays off
+phones. Enter Firebase credentials under **Settings > Integrations**; it stays off
 until you do.
 
 Note that the companion app is what receives them, and every member-facing Pro

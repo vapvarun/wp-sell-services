@@ -43,6 +43,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var int $vendor_id Vendor user ID.
  */
@@ -125,7 +126,7 @@ $reviews = $wpdb->get_results(
 	)
 );
 
-get_header();
+wpss_get_header();
 
 /**
  * Hook: wpss_before_vendor_profile
@@ -251,7 +252,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							printf(
 								/* translators: %s: date */
 								esc_html__( 'Member since %s', 'wp-sell-services' ),
-								esc_html( wp_date( 'F Y', strtotime( $member_since ) ) )
+								esc_html( wpss_date_label( $member_since, '—', 'F Y' ) )
 							);
 							?>
 						</span>
@@ -260,12 +261,12 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 
 				<div class="wpss-profile-actions">
 					<?php if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) : ?>
-						<button type="button" class="wpss-btn wpss-btn-primary wpss-contact-btn"
+						<button type="button" class="wpss-btn wpss-btn--primary wpss-contact-btn"
 							data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
 							<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
 						</button>
 					<?php elseif ( ! is_user_logged_in() ) : ?>
-						<a href="<?php echo esc_url( wp_login_url( wpss_get_vendor_url( $vendor_id ) ) ); ?>" class="wpss-btn wpss-btn-primary">
+						<a href="<?php echo esc_url( wp_login_url( wpss_get_vendor_url( $vendor_id ) ) ); ?>" class="wpss-btn wpss-btn--primary">
 							<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
 						</a>
 					<?php endif; ?>
@@ -649,17 +650,14 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 	$response_time_display = $vendor_service->get_response_time( $vendor_id );
 	?>
 	<div id="wpss-contact-modal" class="wpss-modal" hidden role="dialog" aria-modal="true" aria-labelledby="wpss-contact-modal-title">
-		<div class="wpss-modal-backdrop wpss-modal-overlay"></div>
-		<div class="wpss-modal-dialog wpss-modal-content">
-			<button type="button" class="wpss-modal-close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-				&times;
-			</button>
-
-			<div class="wpss-modal-header">
-				<h3 id="wpss-contact-modal-title"><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
+		<div class="wpss-modal__backdrop"></div>
+		<div class="wpss-modal__dialog">
+			<div class="wpss-modal__header">
+				<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
+				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 			</div>
 
-			<div class="wpss-modal-body">
+			<div class="wpss-modal__body">
 				<div class="wpss-contact-vendor-info">
 					<img src="<?php echo esc_url( get_avatar_url( $vendor_id, array( 'size' => 50 ) ) ); ?>"
 						alt="<?php echo esc_attr( $vendor->display_name ); ?>"
@@ -709,10 +707,10 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 					</div>
 
 					<div class="wpss-form-actions">
-						<button type="submit" class="wpss-btn wpss-btn-primary">
+						<button type="submit" class="wpss-btn wpss-btn--primary">
 							<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
 						</button>
-						<button type="button" class="wpss-btn wpss-btn-secondary wpss-modal-close">							
+						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">							
 							&times;
 						</button>
 					</div>
@@ -730,4 +728,4 @@ endif;
  */
 do_action( 'wpss_after_vendor_profile', $vendor_id );
 
-get_footer();
+wpss_get_footer();

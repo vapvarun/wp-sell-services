@@ -2,8 +2,12 @@
 /**
  * Dashboard Section: Portfolio
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/portfolio.php
+ *
  * @package WPSellServices\Templates
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -217,13 +221,14 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 
 	<!-- Add/Edit Portfolio Modal -->
 	<div class="wpss-modal" id="wpss-portfolio-modal" role="dialog" aria-modal="true" aria-labelledby="wpss-portfolio-modal-title">
-		<div class="wpss-modal__overlay"></div>
-		<div class="wpss-modal__content">
+		<div class="wpss-modal__backdrop"></div>
+		<div class="wpss-modal__dialog">
 			<div class="wpss-modal__header">
-				<h3 id="wpss-portfolio-modal-title"><?php esc_html_e( 'Add Portfolio Item', 'wp-sell-services' ); ?></h3>
+				<h3 id="wpss-portfolio-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Add Portfolio Item', 'wp-sell-services' ); ?></h3>
 				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 			</div>
-			<form id="wpss-portfolio-form" method="post">
+			<form id="wpss-portfolio-form" class="wpss-modal__form" method="post">
+				<div class="wpss-modal__body">
 				<?php wp_nonce_field( 'wpss_portfolio_nonce', 'portfolio_nonce' ); ?>
 				<input type="hidden" name="item_id" id="wpss-portfolio-item-id" value="0">
 
@@ -276,6 +281,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 						<input type="checkbox" name="is_featured" value="1" id="portfolio-featured">
 						<span class="wpss-toggle__label"><?php esc_html_e( 'Mark as Featured', 'wp-sell-services' ); ?></span>
 					</label>
+				</div>
 				</div>
 
 				<div class="wpss-modal__footer">

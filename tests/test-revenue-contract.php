@@ -91,7 +91,7 @@ try {
 
 	// 8. Vendor side.
 	$stats = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_vendor_stats( $vendor );
-	$check( sprintf( '8. Sales "Earnings" is the vendor share, 171 (got %s)', $stats['total_earnings'] ), $money( $stats['total_earnings'], 171 ) );
+	$check( sprintf( '8. Sales "Earnings" is the ledger total earned, the one earned figure (got %s)', $stats['total_earnings'] ), $money( $stats['total_earnings'], wpss_get_ledger_total_earned( $vendor ) ) );
 	$summary = ( new \WPSellServices\Services\CommissionService() )->get_vendor_summary( $vendor );
 	$check( '8. admin vendor Earnings tab: revenue 190, commission 19, net 171', $money( $summary['total_revenue'], 190 ) && $money( $summary['total_commission'], 19 ) && $money( $summary['net_earnings'], 171 ) );
 	$pending = wpss_get_order_revenue( $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$orders} WHERE id = %d", $e ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -109,9 +109,9 @@ try {
 
 	$sales   = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_vendor_stats( $clr )['total_earnings'];
 	$summary = ( new \WPSellServices\Services\EarningsService() )->get_summary( $clr );
-	$check( sprintf( '9. a credited partial refund counts once: H + I = 14.87 + 22.50 = 37.37 (got %s)', $sales ), $money( $sales, 37.37 ) );
+	$check( sprintf( '9. a credited partial refund counts once: only H is credited, 22.50 - 7.63 = 14.87 (got %s)', $sales ), $money( $sales, 14.87 ) );
 	$check( sprintf( '9. Clearing is the uncredited order I, 22.50 (got %s)', $summary['pending_clearance'] - $summary['in_clearance'] ), $money( $summary['pending_clearance'] - $summary['in_clearance'], 22.5 ) );
-	$check( '9. Total earned + Clearing = Sales earnings', $money( wpss_get_ledger_total_earned( $clr ) + $summary['pending_clearance'] - $summary['in_clearance'], $sales ) );
+	$check( '9. Sales earnings equals Total earned; Clearing is shown beside it, not added to it', $money( wpss_get_ledger_total_earned( $clr ), $sales ) );
 	$wpdb->delete( $ledger, array( 'user_id' => $clr ) );
 	wp_delete_user( $clr );
 

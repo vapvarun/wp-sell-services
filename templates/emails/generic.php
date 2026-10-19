@@ -5,8 +5,12 @@
  * Used for notification emails that don't have a dedicated template.
  * Renders a heading, content paragraph, and optional CTA button.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/emails/generic.php
+ *
  * @package WPSellServices\Templates\Emails
  * @since   1.2.0
+ * @version 1.9.0
  *
  * @var WP_User $recipient     Recipient user object.
  * @var string  $email_heading Email heading.

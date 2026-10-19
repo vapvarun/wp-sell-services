@@ -56,6 +56,38 @@ class API {
 
 		// Filter REST response.
 		add_filter( 'rest_pre_serve_request', [ $this, 'serve_request' ], 10, 4 );
+
+		// One place that guarantees ISO 8601 on every wpss route, so a new endpoint
+		// cannot ship a bare MySQL datetime (Time Standard rule 7).
+		add_filter( 'rest_post_dispatch', [ $this, 'normalise_response_dates' ], 10, 3 );
+	}
+
+	/**
+	 * Turn a stored UTC datetime in any wpss/ response into ISO 8601.
+	 *
+	 * Controllers that already format a date are untouched (the value is no longer a
+	 * MySQL datetime). Only keys ending _at, _on or _deadline are converted, so a
+	 * filter echoed back to the caller (start_date) keeps the value it was sent.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param \WP_HTTP_Response $response Response.
+	 * @param \WP_REST_Server   $server   Server.
+	 * @param \WP_REST_Request  $request  Request.
+	 * @return \WP_HTTP_Response
+	 */
+	public function normalise_response_dates( $response, $server, $request ) {
+		if ( ! $response instanceof \WP_REST_Response || 0 !== strpos( $request->get_route(), '/wpss/' ) || $response->is_error() ) {
+			return $response;
+		}
+
+		$data = $response->get_data();
+
+		if ( is_array( $data ) ) {
+			$response->set_data( wpss_rest_normalise_dates( $data, '/(_at|_on|_deadline)$/i' ) );
+		}
+
+		return $response;
 	}
 
 	/**
@@ -1176,9 +1208,8 @@ class API {
 				'pending_orders'   => (int) $vendor_orders->pending,
 				'active_orders'    => (int) $vendor_orders->in_progress,
 				'completed_orders' => (int) $vendor_orders->completed,
-				// Paid orders, net of refunds and commission: the same figure as
-				// the web dashboard's Sales tile (wpss_get_revenue()).
-				'total_earnings'   => (float) ( wpss_get_revenue( array( 'vendor_id' => (int) $user_id ) )[0]->vendor_earnings ?? 0 ),
+				// The ledger total: the same figure as the web Sales tile and Earnings page.
+				'total_earnings'   => wpss_get_ledger_total_earned( (int) $user_id ),
 				'rating'           => $wpss_vp ? (float) $wpss_vp->rating : 0.0,
 				'review_count'     => $wpss_vp ? (int) $wpss_vp->review_count : 0,
 			];

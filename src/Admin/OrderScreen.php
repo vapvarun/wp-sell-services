@@ -129,17 +129,10 @@ class OrderScreen {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'wpss_order_admin' ),
 				'i18n'    => array(
-					'confirmStatusChange'  => __( 'Are you sure you want to change the order status?', 'wp-sell-services' ),
 					'confirmRefund'        => __( 'Refund this order? The gateway payment will be refunded where supported.', 'wp-sell-services' ),
 					'confirmPartialRefund' => __( 'Issue this partial refund? The buyer is refunded the amount entered and the vendor\'s proportional share is clawed back.', 'wp-sell-services' ),
 					'refund'               => __( 'Refund', 'wp-sell-services' ),
-					'noteAdded'            => __( 'Note added successfully.', 'wp-sell-services' ),
-					'requirementsSaved'    => __( 'Requirements saved successfully.', 'wp-sell-services' ),
 					'error'                => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'enterNote'            => __( 'Please enter a note.', 'wp-sell-services' ),
-					'update'               => __( 'Update', 'wp-sell-services' ),
-					'updating'             => __( 'Updating...', 'wp-sell-services' ),
-					'savingRequirements'   => __( 'Saving...', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -155,7 +148,7 @@ class OrderScreen {
 	public function ajax_update_status(): void {
 		check_ajax_referer( 'wpss_order_admin', 'nonce' );
 
-		if ( ! current_user_can( 'wpss_manage_orders' ) && ! current_user_can( 'wpss_vendor_orders' ) ) {
+		if ( ! current_user_can( 'wpss_manage_orders' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
@@ -164,14 +157,6 @@ class OrderScreen {
 
 		if ( ! $order_id || ! $status ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
-		}
-
-		// Non-admin users must be the vendor on the order.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			$order_check = $this->order_service->get( $order_id );
-			if ( ! $order_check || (int) $order_check->vendor_id !== get_current_user_id() ) {
-				wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
-			}
 		}
 
 		// A refund is a money action, not a bare status flip: refund() sizes the
@@ -286,7 +271,7 @@ class OrderScreen {
 				'note'    => array(
 					'content'    => $note,
 					'author'     => wp_get_current_user()->display_name,
-					'created_at' => wp_date( 'M j, g:i a' ),
+					'created_at' => wpss_date_label( time(), '', 'M j, g:i a' ),
 				),
 			)
 		);

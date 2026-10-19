@@ -284,12 +284,23 @@ function wpss_get_known_dashboard_sections(): array {
 		'subscriptions',
 	);
 
+	// A section registered on `wpss_dashboard_sections` is a known route too, so an add-on
+	// registers once. The guard stops get_sections() from re-entering through the resolver.
+	static $resolving = false;
+	$dashboard        = $resolving ? null : wpss()->get_unified_dashboard();
+	if ( $dashboard ) {
+		$resolving = true;
+		foreach ( $dashboard->get_sections() as $group ) {
+			$sections = array_merge( $sections, array_keys( (array) ( $group['items'] ?? array() ) ) );
+		}
+		$resolving = false;
+	}
+
 	/**
 	 * Filter the set of known dashboard section slugs.
 	 *
-	 * Anything not in this set is treated as a mistyped URL and redirected to
-	 * the dashboard's default landing section, so add-ons that register their
-	 * own section must add its slug here as well as to `wpss_dashboard_sections`.
+	 * Sections registered on `wpss_dashboard_sections` are already included; use this only for a
+	 * slug that has no menu item (a direct-link page).
 	 *
 	 * @since 1.6.0
 	 *
@@ -1042,6 +1053,25 @@ function wpss_ensure_pay_order( int $order_id ): string {
 
 	if ( '' === $url ) {
 		return '';
+	}
+
+	// A locked milestone phase is never funded before the previous phase is approved. The
+	// standalone page and the checkout intent say so, but a store rail's pay link came through
+	// here and got its payment page anyway, so the rule is held at the one seam every rail uses.
+	$wpss_pay_order = wpss_get_order( $order_id );
+	if (
+		$wpss_pay_order
+		&& (
+			in_array( $wpss_pay_order->status ?? '', array( 'cancelled', 'refunded' ), true )
+			|| (
+				\WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $wpss_pay_order->platform ?? '' )
+				&& ( new \WPSellServices\Services\MilestoneService() )->is_locked( $order_id )
+			)
+		)
+	) {
+		// A closed order is never offered for payment either: a stale link to a declined phase
+		// still reached the store's pay page and took the money.
+		return wpss_get_order_url( $order_id, '', $wpss_pay_order );
 	}
 
 	/**

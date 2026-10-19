@@ -21,6 +21,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -197,15 +198,15 @@ do_action( 'wpss_before_service_card', $service_id );
 					// default, so this only surfaces if a site opts to include them
 					// via filter. Reuses the already-loaded profile (no extra query).
 					if ( $card_vendor_profile->is_on_vacation() && ! empty( $card_vendor_profile->vacation_return_date ) ) {
-						$card_vacation_ts = strtotime( (string) $card_vendor_profile->vacation_return_date );
-						if ( $card_vacation_ts ) {
+						$card_vacation_label = wpss_calendar_date_label( (string) $card_vendor_profile->vacation_return_date, '' );
+						if ( '' !== $card_vacation_label ) {
 							?>
 							<span class="wpss-seller-badge wpss-seller-badge--vacation">
 								<?php
 								printf(
 									/* translators: %s: formatted return date */
 									esc_html__( 'Back on %s', 'wp-sell-services' ),
-									esc_html( date_i18n( get_option( 'date_format' ), $card_vacation_ts ) )
+									esc_html( $card_vacation_label )
 								);
 								?>
 							</span>

@@ -2,11 +2,11 @@
 
 Keep your marketplace quality high by reviewing vendor services before they go live. When moderation is enabled, every new service submission needs your approval.
 
-![Service Moderation Queue](../images/admin-moderation.png)
+![Service Moderation Queue](../images/admin-moderation.webp)
 
 ## Turning On Moderation
 
-1. Go to **Sell Services > Settings > Vendors**
+1. Go to **Sell Services > Settings > Vendor Settings**
 2. Check **Require Service Moderation**
 3. Click **Save Changes**
 
@@ -102,7 +102,7 @@ When rejected:
 
 ## Who Bypasses Moderation?
 
-Admins and shop managers always bypass the moderation queue. Services they create publish immediately.
+Administrators (anyone with `manage_options`) bypass the moderation queue: services they create publish immediately, and publishing a pending service from the editor, Quick Edit or bulk edit approves it. Shop managers are not administrators and go through the queue like any other seller.
 
 ## Notifications
 

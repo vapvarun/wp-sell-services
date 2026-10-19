@@ -16,7 +16,7 @@ Instead of browsing services, you flip the script. Post a description of your pr
 4. You accept the best one -- an order is created automatically
 5. The standard order workflow begins
 
-![Post a buyer request form](../images/frontend-post-request-form.png)
+![Post a buyer request form](../images/frontend-post-request-form.webp)
 
 ---
 
@@ -62,7 +62,7 @@ Upload reference files, mockups, design briefs, or any documents that help expla
 
 Each file uploads as soon as you pick it. Request files are visible to sellers browsing your request, so do not attach anything private.
 
-![Public buyer requests listing](../images/frontend-buyer-requests-listing.png)
+![Public buyer requests listing](../images/frontend-buyer-requests-listing.webp)
 
 ---
 

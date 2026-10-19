@@ -43,11 +43,12 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;
 
-get_header();
+wpss_get_header();
 
 /**
  * Filter: wpss_archive_service_columns
@@ -148,4 +149,4 @@ do_action( 'wpss_before_service_archive' );
  */
 do_action( 'wpss_after_service_archive' );
 
-get_footer();
+wpss_get_footer();

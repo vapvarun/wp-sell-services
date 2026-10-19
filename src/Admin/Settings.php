@@ -639,10 +639,10 @@ class Settings {
 			)
 		);
 
-		// Only worth showing when a second cart actually exists to be confused
-		// with — on a site without WooCommerce there is only one cart and the
-		// option would be noise.
-		if ( class_exists( 'WooCommerce' ) ) {
+		// Only worth showing when a second cart exists to be confused with AND the
+		// marketplace is the one taking payment. When WooCommerce owns checkout its
+		// cart holds the order, the link is never redirected, and the box would be inert.
+		if ( class_exists( 'WooCommerce' ) && wpss_uses_standalone_payments() ) {
 			add_settings_field(
 				'use_marketplace_cart_link',
 				__( 'Site cart link', 'wp-sell-services' ),
@@ -652,7 +652,7 @@ class Settings {
 				array(
 					'option_name' => 'wpss_general',
 					'field'       => 'use_marketplace_cart_link',
-					'label'       => __( 'Point the theme\'s cart link at the marketplace cart. Turn this on for a marketplace-only site; leave it off if you also sell WooCommerce products, or their cart link will send buyers to the wrong place.', 'wp-sell-services' ),
+					'label'       => __( 'Always point the theme\'s cart link at the marketplace cart. Left unticked, the plugin decides: marketplace cart when you sell no WooCommerce products, WooCommerce\'s cart when you do.', 'wp-sell-services' ),
 				)
 			);
 		}
@@ -1133,20 +1133,6 @@ class Settings {
 				'option_name' => 'wpss_orders',
 				'field'       => 'allow_disputes',
 				'label'       => __( 'Allow buyers to open disputes on orders', 'wp-sell-services' ),
-			)
-		);
-
-		add_settings_field(
-			'allow_vendor_refunds',
-			__( 'Vendor Refunds', 'wp-sell-services' ),
-			array( $this, 'render_checkbox_field' ),
-			'wpss_orders',
-			'wpss_orders_section',
-			array(
-				'option_name' => 'wpss_orders',
-				'field'       => 'allow_vendor_refunds',
-				'label'       => __( 'Let vendors refund their own orders from the dashboard', 'wp-sell-services' ),
-				'description' => __( 'Off by default: refunds reverse the vendor\'s credit and return money to the buyer, so only an administrator can issue them unless you enable this.', 'wp-sell-services' ),
 			)
 		);
 
@@ -1887,7 +1873,7 @@ class Settings {
 	 */
 	private function render_payments_tab(): void {
 		echo '<div class="wpss-settings-subhead">';
-		echo '<p class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</p>';
+		echo '<h2 class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</h2>';
 		echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
 		echo '</div>';
 
@@ -1960,14 +1946,23 @@ class Settings {
 			)
 		);
 
-		printf(
-			'<p class="description wpss-settings-crosslink">%s</p>',
-			wp_kses_post(
-				sprintf(
-					/* translators: %s: link to the Withdrawals admin screen. */
-					__( 'Work the payout batch itself on the %s screen.', 'wp-sell-services' ),
-					'<a href="' . esc_url( admin_url( 'admin.php?page=wpss-withdrawals' ) ) . '">' . esc_html__( 'Withdrawals', 'wp-sell-services' ) . '</a>'
-				)
+		// A card, like every other direct child of a settings panel.
+		$this->render_single_section(
+			array(
+				'id'       => 'payout-batches',
+				'title'    => __( 'Payout batches', 'wp-sell-services' ),
+				'callback' => static function (): void {
+					printf(
+						'<p class="description wpss-settings-crosslink">%s</p>',
+						wp_kses_post(
+							sprintf(
+								/* translators: %s: link to the Withdrawals admin screen. */
+								__( 'Work the payout batch itself on the %s screen.', 'wp-sell-services' ),
+								'<a href="' . esc_url( admin_url( 'admin.php?page=wpss-withdrawals' ) ) . '">' . esc_html__( 'Withdrawals', 'wp-sell-services' ) . '</a>'
+							)
+						)
+					);
+				},
 			)
 		);
 	}
@@ -1975,11 +1970,9 @@ class Settings {
 	/**
 	 * Render the consolidated payment-gateway cards.
 	 *
-	 * Renders Stripe, PayPal, and Offline gateway settings as collapsible
-	 * cards. Pro and extensions inject additional gateways via the
-	 * wpss_gateway_cards and wpss_settings_sections_gateways hooks, which are
-	 * preserved here unchanged so the Pro contract is unaffected by moving the
-	 * cards from a standalone tab into the Payments tab.
+	 * One collapsible card per registered gateway, described by the gateway's
+	 * own get_settings_card(). wpss_gateway_cards and
+	 * wpss_settings_sections_gateways stay for panels that are not gateways.
 	 *
 	 * @since 1.1.0
 	 * @return void
@@ -2017,36 +2010,29 @@ class Settings {
 			return;
 		}
 
-		// Test Gateway section (only in debug mode).
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			$this->render_gateway_card(
-				'test',
-				__( 'Test Gateway', 'wp-sell-services' ),
-				__( 'Test payment gateway for development. No real charges.', 'wp-sell-services' ),
-				'wpss_test_gateway_settings'
-			);
+		// Each registered gateway describes its own card (see
+		// PaymentGatewayInterface::get_settings_card()); core never names one.
+		$cards = array();
+		foreach ( \WPSellServices\Core\Plugin::get_instance()->get_payment_gateways() as $id => $gateway ) {
+			$card = $gateway->get_settings_card();
+			if ( $card ) {
+				$cards[ (string) $id ] = $card;
+			}
+		}
+		uasort( $cards, static fn( array $a, array $b ): int => $a['order'] <=> $b['order'] );
+
+		// Cards ordered below 80 print before the extension hooks, the rest (Offline) after.
+		$split = static fn( bool $before ): array => array_filter( $cards, static fn( array $c ): bool => $before === ( $c['order'] < 80 ) );
+
+		foreach ( $split( true ) as $id => $card ) {
+			$this->render_gateway_card( $id, $card['title'], $card['description'], $card['option_group'] );
 		}
 
-		// Stripe section.
-		$this->render_gateway_card(
-			'stripe',
-			__( 'Stripe', 'wp-sell-services' ),
-			__( 'Accept credit card payments via Stripe.', 'wp-sell-services' ),
-			'wpss_stripe_settings'
-		);
-
-		// PayPal section.
-		$this->render_gateway_card(
-			'paypal',
-			__( 'PayPal', 'wp-sell-services' ),
-			__( 'Accept payments via PayPal.', 'wp-sell-services' ),
-			'wpss_paypal_settings'
-		);
-
 		/**
-		 * Fires after core gateways, before Offline.
+		 * Fires after the registered gateway cards, before Offline.
 		 *
-		 * Pro uses this to add Razorpay and other gateways.
+		 * For panels that belong beside a gateway but are not one (Stripe Connect).
+		 * A gateway adds its own card through get_settings_card().
 		 *
 		 * @since 1.1.0
 		 */
@@ -2056,19 +2042,14 @@ class Settings {
 		 * Unified gateway sections hook.
 		 *
 		 * Fires alongside the legacy wpss_gateway_cards hook.
-		 * Pro and extensions can use either hook to inject gateway settings.
 		 *
 		 * @since 1.3.0
 		 */
 		do_action( 'wpss_settings_sections_gateways' );
 
-		// Offline section.
-		$this->render_gateway_card(
-			'offline',
-			__( 'Offline Payment', 'wp-sell-services' ),
-			__( 'Accept bank transfer, cash, and other manual payments.', 'wp-sell-services' ),
-			'wpss_offline_settings'
-		);
+		foreach ( $split( false ) as $id => $card ) {
+			$this->render_gateway_card( $id, $card['title'], $card['description'], $card['option_group'] );
+		}
 	}
 
 	/**
@@ -2094,7 +2075,7 @@ class Settings {
 		<div class="wpss-card<?php echo esc_attr( $collapsed ); ?>" data-gateway="<?php echo esc_attr( $gateway_id ); ?>">
 			<div class="wpss-card__head wpss-card__head--with-badge">
 				<div>
-					<p class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></p>
+					<h2 class="wpss-card__title"><?php echo esc_html( $title ); ?></h2>
 					<p class="wpss-card__desc"><?php echo esc_html( $description ); ?></p>
 				</div>
 				<span class="wpss-gateway-badge <?php echo esc_attr( $badge_class ); ?>">
@@ -2159,6 +2140,13 @@ class Settings {
 					'description' => __( 'Import sample services, vendors, and categories to preview your marketplace. Demo content can be removed at any time.', 'wp-sell-services' ),
 					'collapsed'   => true,
 					'callback'    => array( $this, 'render_demo_content_section' ),
+				),
+				array(
+					'id'          => 'template-overrides',
+					'title'       => __( 'Template Overrides', 'wp-sell-services' ),
+					'description' => __( 'Templates your theme replaces, and whether each is older than the version this plugin ships.', 'wp-sell-services' ),
+					'collapsed'   => true,
+					'callback'    => array( $this, 'render_template_overrides_section' ),
 				),
 				array(
 					'id'          => 'setup-wizard',
@@ -2442,6 +2430,28 @@ class Settings {
 	 */
 	public function render_realtime_section(): void {
 		echo '<p>' . esc_html__( 'Real-time updates power live order messages and notifications without page refreshes. Paste credentials from a Pusher.com app, or point the host at any self-hosted Pusher-compatible server (e.g. Soketi).', 'wp-sell-services' ) . '</p>';
+
+		$link = static function ( string $url, string $label ): string {
+			return '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $label ) . '</a>';
+		};
+
+		echo '<ol class="wpss-realtime-steps">';
+		echo '<li>' . wp_kses_post(
+			sprintf(
+				/* translators: %s: link to the Pusher Channels dashboard */
+				__( 'Open the %s and create a Channels app (or pick an existing one).', 'wp-sell-services' ),
+				$link( 'https://dashboard.pusher.com/channels', __( 'Pusher Channels dashboard', 'wp-sell-services' ) )
+			)
+		) . '</li>';
+		echo '<li>' . esc_html__( 'Open the app, go to App Keys, and copy the App ID, Key, Secret and Cluster into the fields below.', 'wp-sell-services' ) . '</li>';
+		echo '<li>' . wp_kses_post(
+			sprintf(
+				/* translators: %s: link to the Soketi documentation */
+				__( 'Running your own server instead? Follow the %s and enter its host and port.', 'wp-sell-services' ),
+				$link( 'https://docs.soketi.app/', __( 'Soketi documentation', 'wp-sell-services' ) )
+			)
+		) . '</li>';
+		echo '</ol>';
 	}
 
 	/**
@@ -2503,7 +2513,7 @@ class Settings {
 	 *
 	 * Section definition keys:
 	 *   - id           (string) Section identifier.
-	 *   - title        (string) Section heading text (auto-uppercased in card head).
+	 *   - title        (string) Section heading text.
 	 *   - description  (string) Optional description paragraph.
 	 *   - option_group (string) Option group for settings_fields(). Omit if using callback.
 	 *   - settings_id  (string) Settings ID for do_settings_sections(). Omit if using callback.
@@ -2520,7 +2530,7 @@ class Settings {
 		<div class="wpss-card" data-section="<?php echo esc_attr( $section['id'] ?? '' ); ?>">
 			<?php if ( empty( $section['option_group'] ) || ! $this->page_leads_with( (string) ( $section['settings_id'] ?? $section['option_group'] ), $title ) ) : ?>
 				<div class="wpss-card__head">
-					<p class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></p>
+					<h2 class="wpss-card__title"><?php echo esc_html( $title ); ?></h2>
 					<?php if ( ! empty( $section['description'] ) ) : ?>
 						<p class="wpss-card__desc"><?php echo esc_html( $section['description'] ); ?></p>
 					<?php endif; ?>
@@ -2695,6 +2705,50 @@ class Settings {
 	}
 
 	/**
+	 * Render the theme template overrides and their versions.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @return void
+	 */
+	public function render_template_overrides_section(): void {
+		$rows   = wpss_get_template_overrides();
+		$labels = array(
+			'current'     => __( 'Up to date', 'wp-sell-services' ),
+			'outdated'    => __( 'Outdated', 'wp-sell-services' ),
+			'unversioned' => __( 'No version', 'wp-sell-services' ),
+		);
+
+		if ( ! $rows ) {
+			echo '<p>' . esc_html__( 'Your theme does not override any templates.', 'wp-sell-services' ) . '</p>';
+			return;
+		}
+		?>
+		<table class="widefat striped">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Template', 'wp-sell-services' ); ?></th>
+					<th><?php esc_html_e( 'Your version', 'wp-sell-services' ); ?></th>
+					<th><?php esc_html_e( 'Plugin version', 'wp-sell-services' ); ?></th>
+					<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $rows as $row ) : ?>
+					<tr>
+						<td><code><?php echo esc_html( $row['path'] ); ?></code></td>
+						<td><?php echo esc_html( $row['theirs'] ? $row['theirs'] : '-' ); ?></td>
+						<td><?php echo esc_html( $row['shipped'] ? $row['shipped'] : '-' ); ?></td>
+						<td><?php echo esc_html( $labels[ $row['status'] ] ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<p class="description"><?php esc_html_e( 'Compare an outdated or unversioned override with the plugin file and copy across what changed.', 'wp-sell-services' ); ?></p>
+		<?php
+	}
+
+	/**
 	 * Render setup wizard re-run section.
 	 *
 	 * Used as a callback in render_advanced_tab()'s section definition.
@@ -2730,7 +2784,7 @@ class Settings {
 					printf(
 						/* translators: %s: completion date */
 						esc_html__( 'Setup wizard was completed on %s.', 'wp-sell-services' ),
-						esc_html( wp_date( get_option( 'date_format' ), $completed_at ) )
+						esc_html( wpss_date_label( $completed_at ) )
 					);
 					?>
 				</p>
@@ -3640,7 +3694,8 @@ class Settings {
 		// The checkbox sends a hidden 0, so present means "this form"; the
 		// General form no longer carries it since the Checkout tab split.
 		if ( array_key_exists( 'use_marketplace_cart_link', $input ) ) {
-			$sanitized['use_marketplace_cart_link'] = ! empty( $input['use_marketplace_cart_link'] );
+			// '' (not false) when unticked, so the derived default stays in charge.
+			$sanitized['use_marketplace_cart_link'] = empty( $input['use_marketplace_cart_link'] ) ? '' : true;
 		}
 
 		if ( array_key_exists( 'checkout_account_creation', $input ) ) {
@@ -3719,16 +3774,16 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['min_withdrawal'] = absint( $input['min_withdrawal'] ?? 50 );
+		$sanitized['min_withdrawal'] = max( 0, (int) ( $input['min_withdrawal'] ?? 50 ) );
 
 		// 0 is a legitimate, supported value: pay vendors out the moment an
 		// order completes (owner decision 2026-07-23 — see the field definition
 		// for why the wallet ledger makes that safe). Capped at 90 to match the
 		// field, enforced HERE and not just by the max attribute, which is only
 		// a browser hint a posted value can sail straight past.
-		$sanitized['clearance_days']            = min( 90, absint( $input['clearance_days'] ?? 0 ) );
+		$sanitized['clearance_days']            = min( 90, max( 0, (int) ( $input['clearance_days'] ?? 0 ) ) );
 		$sanitized['auto_withdrawal_enabled']   = ! empty( $input['auto_withdrawal_enabled'] );
-		$sanitized['auto_withdrawal_threshold'] = absint( $input['auto_withdrawal_threshold'] ?? 500 );
+		$sanitized['auto_withdrawal_threshold'] = max( 0, (int) ( $input['auto_withdrawal_threshold'] ?? 500 ) );
 		$sanitized['auto_withdrawal_schedule']  = sanitize_key( $input['auto_withdrawal_schedule'] ?? 'monthly' );
 
 		// Validate schedule.
@@ -3750,8 +3805,12 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['enable_tax']   = ! empty( $input['enable_tax'] );
-		$sanitized['tax_label']    = sanitize_text_field( $input['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) );
+		$sanitized['enable_tax'] = ! empty( $input['enable_tax'] );
+		$sanitized['tax_label']  = sanitize_text_field( $input['tax_label'] ?? '' );
+		// A blank label would print as " (20%)" on checkout; keep the default instead.
+		if ( '' === trim( $sanitized['tax_label'] ) ) {
+			$sanitized['tax_label'] = __( 'Tax', 'wp-sell-services' );
+		}
 		$sanitized['tax_rate']     = min( 50, max( 0, (float) ( $input['tax_rate'] ?? 0 ) ) );
 		$sanitized['tax_included'] = ! empty( $input['tax_included'] );
 
@@ -3769,7 +3828,7 @@ class Settings {
 		$sanitized = array();
 
 		$sanitized['vendor_registration']     = sanitize_key( $input['vendor_registration'] ?? 'open' );
-		$sanitized['max_services_per_vendor'] = absint( $input['max_services_per_vendor'] ?? 20 );
+		$sanitized['max_services_per_vendor'] = max( 0, (int) ( $input['max_services_per_vendor'] ?? 20 ) );
 		// Vendor verification is not yet implemented — setting removed to avoid confusion.
 		$sanitized['require_service_moderation'] = ! empty( $input['require_service_moderation'] );
 		$sanitized['moderate_reviews']           = ! empty( $input['moderate_reviews'] );
@@ -3787,16 +3846,15 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['auto_complete_days'] = absint( $input['auto_complete_days'] ?? 3 );
+		$sanitized['auto_complete_days'] = max( 0, (int) ( $input['auto_complete_days'] ?? 3 ) );
 		// Revision limits are defined per-package in service packages, not as a global setting.
 		$sanitized['allow_disputes']            = ! empty( $input['allow_disputes'] );
-		$sanitized['allow_vendor_refunds']      = ! empty( $input['allow_vendor_refunds'] );
-		$sanitized['dispute_window_days']       = absint( $input['dispute_window_days'] ?? 14 );
-		$sanitized['auto_dispute_late_days']    = absint( $input['auto_dispute_late_days'] ?? 3 );
+		$sanitized['dispute_window_days']       = max( 0, (int) ( $input['dispute_window_days'] ?? 14 ) );
+		$sanitized['auto_dispute_late_days']    = max( 0, (int) ( $input['auto_dispute_late_days'] ?? 3 ) );
 		$sanitized['allow_late_requirements']   = ! empty( $input['allow_late_requirements'] );
-		$sanitized['requirements_timeout_days'] = absint( $input['requirements_timeout_days'] ?? 0 );
+		$sanitized['requirements_timeout_days'] = max( 0, (int) ( $input['requirements_timeout_days'] ?? 0 ) );
 		$sanitized['auto_start_on_timeout']     = ! empty( $input['auto_start_on_timeout'] );
-		$sanitized['review_window_days']        = absint( $input['review_window_days'] ?? 30 );
+		$sanitized['review_window_days']        = max( 0, (int) ( $input['review_window_days'] ?? 30 ) );
 
 		return $sanitized;
 	}
@@ -3823,7 +3881,7 @@ class Settings {
 			// rather than the key going missing - the reader treats a missing
 			// key as "on", which is how this defaulted unreachable before.
 			'skip_message_email_when_online' => ! empty( $input['skip_message_email_when_online'] ),
-			'message_email_delay_minutes'    => min( 120, max( 0, absint( $input['message_email_delay_minutes'] ?? 0 ) ) ),
+			'message_email_delay_minutes'    => min( 120, max( 0, (int) ( $input['message_email_delay_minutes'] ?? 0 ) ) ),
 		);
 	}
 
@@ -3921,7 +3979,7 @@ class Settings {
 		$sanitized['delete_data_on_uninstall'] = ! empty( $input['delete_data_on_uninstall'] );
 		$sanitized['enable_debug_mode']        = ! empty( $input['enable_debug_mode'] );
 
-		$sanitized['max_file_size']      = absint( $input['max_file_size'] ?? 10 );
+		$sanitized['max_file_size']      = max( 0, (int) ( $input['max_file_size'] ?? 10 ) );
 		$sanitized['allowed_file_types'] = sanitize_text_field( $input['allowed_file_types'] ?? 'jpg,jpeg,png,gif,pdf,doc,docx' );
 
 		// Keep stored keys this form does not own. currency_position moved to
@@ -4033,6 +4091,7 @@ class Settings {
 			'new_review'             => array( 'vendor', __( 'When a buyer reviews the seller.', 'wp-sell-services' ) ),
 			'vendor_contact'         => array( 'vendor', __( 'When someone messages the seller from their profile.', 'wp-sell-services' ) ),
 			'withdrawal_approved'    => array( 'vendor', __( 'When you approve the seller\'s withdrawal.', 'wp-sell-services' ) ),
+			'withdrawal_completed'   => array( 'vendor', __( 'When you mark the seller\'s withdrawal as paid.', 'wp-sell-services' ) ),
 			'withdrawal_rejected'    => array( 'vendor', __( 'When you reject the seller\'s withdrawal.', 'wp-sell-services' ) ),
 			'proposal_accepted'      => array( 'vendor', __( 'When the buyer hires the seller from a proposal.', 'wp-sell-services' ) ),
 			'tip_received'           => array( 'vendor', __( 'To the seller, when a buyer tips them.', 'wp-sell-services' ) ),
@@ -4090,6 +4149,7 @@ class Settings {
 				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
 				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
 				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
+				'withdrawal_completed'   => __( 'Withdrawal Paid', 'wp-sell-services' ),
 				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
 				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
 				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),

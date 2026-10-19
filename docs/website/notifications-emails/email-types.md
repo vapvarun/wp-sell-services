@@ -1,8 +1,8 @@
 # Email Notifications
 
-WP Sell Services emails buyers, vendors, and admins at every stage of an order. **24 notification types have their own on/off switch** in **Sell Services > Settings > Emails**, and all 23 are on by default. A handful of operational emails (requirement reminders, seller-level promotions, proposal rejections) send automatically and are not individually switchable.
+WP Sell Services emails buyers, vendors, and admins at every stage of an order. **30 notification types have their own on/off switch** in **Sell Services > Settings > Emails**, and all are on by default. A handful of operational emails (requirement reminders, seller-level promotions, proposal rejections) send automatically and are not individually switchable.
 
-![Email Notification Settings](../images/settings-emails-tab.png)
+![Email Notification Settings](../images/settings-emails-tab.webp)
 
 ---
 
@@ -19,6 +19,7 @@ These keep your sellers informed about their business activity.
 | **Cancellation Requested** | The buyer or admin requests to cancel an order |
 | **Dispute Opened** | A dispute is filed on one of the vendor's orders |
 | **Withdrawal Approved** | The admin approves a payout withdrawal request |
+| **Withdrawal Paid** | The admin marks an approved payout as paid |
 | **Withdrawal Rejected** | The admin declines a payout withdrawal request |
 | **Proposal Accepted** | A buyer accepts the vendor's proposal on a request |
 | **Vendor Contact** | Someone sends a message through the vendor's contact form |
@@ -91,6 +92,7 @@ bold is the label you will see.
 | **Dispute Opened** | A dispute is opened on an order |
 | **Withdrawal Requested** | A vendor requests a payout |
 | **Withdrawal Approved** | You approve a payout request |
+| **Withdrawal Paid** | You mark an approved payout as paid |
 | **Withdrawal Rejected** | You reject a payout request |
 | **Proposal Submitted** | A vendor proposes on a buyer request |
 | **Proposal Accepted** | A buyer accepts a proposal |

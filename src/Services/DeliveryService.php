@@ -24,7 +24,27 @@ use WPSellServices\Models\Message;
 class DeliveryService {
 
 	/**
+	 * Why the last submit() returned false, in words the seller can act on. Empty when
+	 * the refusal was about the order, not the files.
+	 *
+	 * @var string
+	 */
+	private string $last_error = '';
+
+	/**
+	 * The reason the last submit() refused, or '' when it gave none.
+	 *
+	 * @return string
+	 */
+	public function get_last_error(): string {
+		return $this->last_error;
+	}
+
+	/**
 	 * Submit delivery for order.
+	 *
+	 * A file the site refuses (type, size) stops the whole delivery. It used to be logged and
+	 * dropped, so the buyer received a delivery without the file the seller meant to send.
 	 *
 	 * @param int    $order_id    Order ID.
 	 * @param string $message     Delivery message.
@@ -32,7 +52,8 @@ class DeliveryService {
 	 * @return bool
 	 */
 	public function submit( int $order_id, string $message, array $files = array() ): bool {
-		$order = wpss_get_order( $order_id );
+		$this->last_error = '';
+		$order            = wpss_get_order( $order_id );
 
 		if ( ! $order ) {
 			return false;
@@ -41,6 +62,15 @@ class DeliveryService {
 		// Validate order status allows delivery.
 		if ( ! in_array( $order->status, array( ServiceOrder::STATUS_IN_PROGRESS, ServiceOrder::STATUS_REVISION_REQUESTED, ServiceOrder::STATUS_LATE ), true ) ) {
 			return false;
+		}
+
+		// Check every file before anything is stored, so a refusal leaves no half delivery.
+		foreach ( $files as $file ) {
+			$refused = wpss_check_upload( $file, 'delivery' );
+			if ( null !== $refused ) {
+				$this->last_error = sprintf( '%s: %s', (string) ( $file['name'] ?? '' ), $refused->get_error_message() );
+				return false;
+			}
 		}
 
 		global $wpdb;
@@ -76,6 +106,9 @@ class DeliveryService {
 				sprintf( 'Order %d delivery: %d of %d files failed to process', $order_id, count( $failed_files ), count( $files ) ),
 				'warning'
 			);
+			/* translators: %s: file names */
+			$this->last_error = sprintf( __( 'These files could not be saved: %s. Nothing was delivered.', 'wp-sell-services' ), implode( ', ', $failed_files ) );
+			return false;
 		}
 
 		$delivery_data = array(

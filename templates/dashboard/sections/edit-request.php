@@ -4,8 +4,12 @@
  *
  * Allows users to edit their existing buyer requests.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/edit-request.php
+ *
  * @package WPSellServices\Templates
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -47,7 +51,7 @@ $expires_at = get_post_meta( $request_id, '_wpss_expires_at', true );
 $deadline   = '';
 if ( $expires_at ) {
 	// Stored in UTC; the date input shows the site's calendar day.
-	$deadline = get_date_from_gmt( (string) $expires_at, 'Y-m-d' );
+	$deadline = substr( wpss_datetime_local_input( (string) $expires_at ), 0, 10 );
 }
 $skills_required = get_post_meta( $request_id, '_wpss_skills_required', true );
 $skills_string   = is_array( $skills_required ) ? implode( ', ', $skills_required ) : ( $skills_required ?: '' );
@@ -71,8 +75,7 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 ?>
 
 <div class="wpss-request-wizard">
-	<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-		<h2 style="margin: 0;"><?php esc_html_e( 'Edit Request', 'wp-sell-services' ); ?></h2>
+	<div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
 		<a href="<?php echo esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'requests' ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 			<?php esc_html_e( 'Back to Requests', 'wp-sell-services' ); ?>
 		</a>

@@ -12,6 +12,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\ServiceOrder $wpss_order      The order.
  * @var object[]                            $wpss_deliveries Rows from wpss_deliveries, newest first.
@@ -69,7 +70,7 @@ $wpss_viewer     = $wpss_viewer ?? 'buyer';
 				<div class="wpss-delivery-item">
 					<div class="wpss-delivery-item__header">
 						<span class="wpss-delivery-item__date">
-							<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
+							<?php echo esc_html( wpss_datetime_label( $delivery->created_at ) ); ?>
 						</span>
 						<span class="<?php echo esc_attr( wpss_status_class( $delivery->status ) ); ?>">
 							<?php echo esc_html( wpss_get_order_status_label( (string) $delivery->status ) ); ?>

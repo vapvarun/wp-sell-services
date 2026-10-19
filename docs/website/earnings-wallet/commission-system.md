@@ -2,7 +2,7 @@
 
 The commission system controls how revenue is split between your platform and your vendors on every completed order.
 
-![Commission and tax settings](../images/settings-commission-tax.png)
+![Commission and tax settings](../images/settings-commission-tax.webp)
 
 ## The Basic Idea
 

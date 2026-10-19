@@ -16,9 +16,9 @@ Give your marketplace a custom name that appears throughout the platform: in ema
 
 **Examples:** "Creative Hub Marketplace", "Expert Services Network", "DesignPro Market"
 
-![General settings tab](../images/settings-general-tab.png)
+![General settings tab](../images/settings-general-tab.webp)
 
-![Full general settings](../images/settings-general-tab.png)
+![Full general settings](../images/settings-general-tab.webp)
 
 ---
 
@@ -28,18 +28,7 @@ Choose the currency for all transactions on your marketplace. This affects how p
 
 ### Supported Currencies
 
-| Currency | Symbol | Code |
-|----------|--------|------|
-| US Dollar | $ | USD |
-| Euro | EUR | EUR |
-| British Pound | GBP | GBP |
-| Canadian Dollar | C$ | CAD |
-| Australian Dollar | A$ | AUD |
-| Indian Rupee | INR | INR |
-| Japanese Yen | JPY | JPY |
-| Chinese Yuan | CNY | CNY |
-| Brazilian Real | R$ | BRL |
-| Mexican Peso | MXN | MXN |
+The marketplace supports 148 currencies. See the [full list with codes, symbols and decimal places](../payments-checkout/currency-reference.md); it is generated from the plugin, so it is always current.
 
 ### Setting Your Currency
 
@@ -53,7 +42,7 @@ Your entire marketplace operates in one currency. All service prices, order tota
 
 **Tip:** Set your currency during initial setup. Changing it later can create confusion since existing service prices stay at their original numbers.
 
-**[PRO]** Multi-currency support is available in the Pro version -- automatic currency detection by buyer location, live exchange rates, and localized price displays.
+**[PRO]** Multi-currency support is available in the Pro version -- currency detected from the shopper's timezone, live exchange rates, and localized price displays.
 
 ---
 
@@ -98,7 +87,7 @@ You can change platforms at any time under **Settings > General**. Keep in mind:
 
 ## Site cart link
 
-Only appears when WooCommerce is active, because it only means anything then.
+Only appears when WooCommerce is active and the marketplace takes payment itself. When WooCommerce handles checkout its cart holds the order, so there is nothing to choose.
 
 With WooCommerce installed there are genuinely two carts: WooCommerce's `/cart/`
 and the marketplace's `/service-cart/`. That split is deliberate -- the
@@ -113,9 +102,10 @@ setting answers is which one your **theme's cart icon** points at.
 | Marketplace checkout, and you sell no WooCommerce products | The marketplace cart |
 | Marketplace checkout, and you *do* sell WooCommerce products | WooCommerce's cart -- two real shops, so you decide |
 
-Tick or untick it to override that in either direction. The third row is the one
-worth knowing about: if you sell both services and WooCommerce products, only
-you can say which cart the header should serve, so the plugin leaves it alone.
+Tick it to always use the marketplace cart. Left unticked, the plugin decides as
+in the table. The third row is the one worth knowing about: if you sell both
+services and WooCommerce products, only you can say which cart the header should
+serve, so the plugin leaves it alone until you tick the box.
 
 If buyers report adding a service and then finding an empty cart, this is the
 setting -- turn it on.

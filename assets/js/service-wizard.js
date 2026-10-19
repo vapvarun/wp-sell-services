@@ -306,6 +306,10 @@ function wpssServiceWizard(existingData = {}) {
 					}
 					break;
 
+				case 'requirements':
+					this.validationErrors.push(...this.requirementsErrors());
+					break;
+
 				case 'extras':
 					this.validationErrors.push(...this.extrasErrors());
 					break;
@@ -383,6 +387,24 @@ function wpssServiceWizard(existingData = {}) {
 		 *
 		 * @return {Array} Validation messages, empty when every offered tier is complete.
 		 */
+		/**
+		 * Errors for the requirements step: a row needs a question.
+		 *
+		 * @return {string[]} Validation messages.
+		 */
+		requirementsErrors() {
+			const errors = [];
+
+			// A row without a question is dropped on save, so say so here instead.
+			(this.data.requirements || []).forEach((req, i) => {
+				if (!(req.label || '').trim()) {
+					errors.push(wpssWizard.strings.validationRequirementLabel.replace('%d', i + 1));
+				}
+			});
+
+			return errors;
+		},
+
 		/**
 		 * Errors on the Extras step.
 		 *
@@ -465,9 +487,9 @@ function wpssServiceWizard(existingData = {}) {
 		},
 
 		/**
-		 * Pick the right Basic-price error: the currency-aware "at least $X"
-		 * message when a price is set but below the minimum, otherwise the
-		 * generic "set a price" prompt.
+		 * Pick the right Basic-package error: the currency-aware "at least $X"
+		 * message when a price is below the minimum, the "set a price" prompt when
+		 * there is none, and the delivery-time prompt when the price is fine.
 		 *
 		 * @return {string} Validation message.
 		 */
@@ -479,7 +501,11 @@ function wpssServiceWizard(existingData = {}) {
 				return wpssWizard.strings.validationPriceMin;
 			}
 
-			return wpssWizard.strings.validationPrice;
+			if (isNaN(basicPrice) || basicPrice <= 0) {
+				return wpssWizard.strings.validationPrice;
+			}
+
+			return wpssWizard.strings.validationDelivery;
 		},
 
 		/**

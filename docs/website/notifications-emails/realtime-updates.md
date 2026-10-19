@@ -1,6 +1,6 @@
 # Real-Time Updates (Live Messages & Notifications)
 
-Real-time updates let order messages and notification badges appear instantly, without a page refresh. This feature is disabled by default and requires a WebSocket connection you configure.
+Real-time updates tell a logged-in user the moment a new order message or notification arrives, with a short on-screen alert and a live unread count on the dashboard menu. They do not insert the message into an open conversation: the thread shows it on the next load. This feature is disabled by default and requires a WebSocket connection you configure.
 
 ---
 
@@ -8,8 +8,8 @@ Real-time updates let order messages and notification badges appear instantly, w
 
 When enabled, the plugin opens a private, authenticated WebSocket channel for each logged-in user. Two events are delivered live:
 
-- **`message.created`** -- A new order message appears in the conversation immediately.
-- **`notification.created`** -- The notification bell badge increments and the new alert appears without reload.
+- **`message.created`** -- A short alert shows the start of the new message. The conversation thread itself does not change until you reload it.
+- **`notification.created`** -- A short alert shows the notification and the unread count on the dashboard Notifications menu item goes up by one, without a reload.
 
 When disabled, the marketplace behaves exactly as before -- messages and notifications appear on the next page load or navigation. No third-party connection is made in disabled state.
 
@@ -18,13 +18,13 @@ When disabled, the marketplace behaves exactly as before -- messages and notific
 ## Enabling Real-Time Updates
 
 1. Go to **Sell Services > Settings**
-2. Click the **Advanced** tab
+2. Click the **Integrations** tab
 3. Find the **Real-time (WebSockets)** card
 4. Toggle **Enable** to on
 5. Fill in the connection fields (see below)
 6. Save settings
 
-![Real-time settings card](../images/settings-realtime.png)
+![Real-time settings card](../images/settings-realtime.webp)
 
 ---
 
@@ -81,8 +81,10 @@ The plugin speaks the **Pusher protocol**. You can connect to either a hosted se
 
 Buyers and vendors do not need to configure anything. When real-time is active and they are logged in:
 
-- New messages in an order conversation appear immediately in the thread.
-- The notification bell updates its badge count and shows the new notification without requiring a page reload.
+- A new order message shows a short alert with its first words. Reload the conversation to read it in the thread.
+- A new notification shows a short alert and raises the unread count on the dashboard Notifications menu item without a page reload.
+
+Developers can react to the same events: the browser fires `wpss:realtime:message` and `wpss:realtime:notification` on `document` with the event payload as `detail`.
 
 Real-time only works for **logged-in users**. Guests are unaffected.
 
@@ -122,4 +124,4 @@ When real-time is enabled, message and notification metadata transits the config
 
 - [In-App Notification System](in-app-notifications.md) -- Dashboard bell and notification list
 - [Order Messaging & File Sharing](../order-management/order-messaging.md) -- How order conversations work
-- [Advanced Settings](../platform-settings/advanced-settings.md) -- Full Advanced tab reference
+- [System Settings](../platform-settings/advanced-settings.md) -- Full System tab reference

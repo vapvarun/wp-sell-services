@@ -181,7 +181,7 @@ ksort( $artefacts );
 // ---------------------------------------------------------------------------
 
 $wpss_cov_evidence = array();
-foreach ( array_merge( $wpss_cov_php( $wpss_cov_dir . 'tests' ), glob( $wpss_cov_dir . 'audit/journeys/*.md' ), array( $wpss_cov_dir . 'docs/qa/AGENT_SMOKE_RUNBOOK.md' ) ) as $f ) {
+foreach ( array_merge( $wpss_cov_php( $wpss_cov_dir . 'tests' ), glob( $wpss_cov_dir . 'audit/journeys/*.md' ), array( $wpss_cov_dir . 'docs/qa/README.md' ) ) as $f ) {
 	$text = (string) file_get_contents( $f );
 	// A PHP concatenation or a {placeholder} inside a path stands for one segment:
 	// '/wpss/v1/orders/' . $id . '/requirements' and /orders/{id}/requirements
@@ -264,6 +264,12 @@ foreach ( $map as $kind => $items ) {
 	}
 }
 printf( "%-11s %4d / %4d covered  (%5.1f%%)\n", 'TOTAL', $hit, $total, $total ? 100 * $hit / $total : 100 );
+
+// The crawl record is test output and is not committed, so a clean checkout cannot judge page coverage.
+if ( ! $wpss_cov_render && in_array( $wpss_cov_mode, array( 'check', 'write' ), true ) ) {
+	echo "SKIP  no recorded crawl (audit/render-coverage.json); run bin/coverage-run.sh first.\n";
+	exit( 'write' === $wpss_cov_mode ? 1 : 0 );
+}
 
 if ( 'write' === $wpss_cov_mode ) {
 	file_put_contents( $wpss_cov_dir . 'audit/coverage.json', wp_json_encode( array( 'artefacts' => $map ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n" );

@@ -9,6 +9,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var string   $service_title Service title.
  * @var string   $status        Moderation status: 'approved' or 'rejected'.

@@ -3,7 +3,7 @@
 WP Sell Services Pro uses a license key to unlock Pro features, deliver
 automatic updates, and give you priority support.
 
-![The License screen under Sell Services](../images/admin-pro-license.png)
+![The License screen under Sell Services](../images/admin-pro-license.webp)
 
 ## Activate your license
 

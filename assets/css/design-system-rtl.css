@@ -33,6 +33,7 @@
    ========================================================================== */
 
 :root {
+	--wpss-modal-offset: 0px; /* set by WPSS.offsetModalFromHeader() when a sticky header covers the top */
 	/* ---- Colors ---- */
 	--wpss-primary: #4f46e5;
 	--wpss-primary-hover: #4338ca;
@@ -83,6 +84,8 @@
 	--wpss-success: #10b981;
 	--wpss-success-light: #ecfdf5;
 	--wpss-success-dark: #065f46;
+	/* Fill behind white text (filled buttons, toasts). --wpss-success is 2.5:1 with white; this is 5.5:1 in both modes. */
+	--wpss-success-solid: #047857;
 	--wpss-success-border: #a7f3d0;
 	--wpss-warning: #f59e0b;
 	--wpss-warning-light: #fffbeb;
@@ -95,6 +98,11 @@
 	--wpss-danger-light: #fef2f2;
 	--wpss-danger-dark: #991b1b;
 	--wpss-danger-border: #fecaca;
+	/* Danger as text or a ghost-button label, and its hover wash: dark mode swaps these
+	   because #dc2626 on a dark card is only 3:1. */
+	--wpss-danger-text: #dc2626;
+	--wpss-danger-text-hover: #b91c1c;
+	--wpss-danger-wash: #fef2f2;
 	--wpss-info: #3b82f6;
 	--wpss-info-light: #eff6ff;
 	--wpss-info-dark: #1e40af;
@@ -349,10 +357,24 @@
 .wpss-app select,
 .wpss-app textarea,
 input.wpss-input,
+select.wpss-input,
+textarea.wpss-input,
+textarea.wpss-textarea,
+select.wpss-select,
 input.wpss-form-input,
 select.wpss-form-select,
 textarea.wpss-form-textarea {
 	color-scheme: light;
+}
+
+/* One declaration per plugin surface, so every control inside inherits it instead of
+   needing its class listed below (the message composer and any new textarea were
+   missed that way and kept a light scrollbar on a dark page). The per-class lists
+   remain for controls rendered outside these containers. */
+:root[data-theme="dark"] :is(.wpss-app, .wpss-app-shell, .wpss-dashboard, .wpss-modal, .wpss-confirm, .wpss-messaging),
+:root[data-bx-mode="dark"] :is(.wpss-app, .wpss-app-shell, .wpss-dashboard, .wpss-modal, .wpss-confirm, .wpss-messaging),
+.wpss-dark :is(.wpss-app, .wpss-app-shell, .wpss-dashboard, .wpss-modal, .wpss-confirm, .wpss-messaging) {
+	color-scheme: dark;
 }
 
 /* The same set under theme dark mode. Scoped to the plugin's own classes as
@@ -363,6 +385,10 @@ textarea.wpss-form-textarea {
 :root[data-theme="dark"] .wpss-app select,
 :root[data-theme="dark"] .wpss-app textarea,
 :root[data-theme="dark"] input.wpss-input,
+:root[data-theme="dark"] select.wpss-input,
+:root[data-theme="dark"] textarea.wpss-input,
+:root[data-theme="dark"] textarea.wpss-textarea,
+:root[data-theme="dark"] select.wpss-select,
 :root[data-theme="dark"] input.wpss-form-input,
 :root[data-theme="dark"] select.wpss-form-select,
 :root[data-theme="dark"] textarea.wpss-form-textarea,
@@ -370,6 +396,10 @@ textarea.wpss-form-textarea {
 :root[data-bx-mode="dark"] .wpss-app select,
 :root[data-bx-mode="dark"] .wpss-app textarea,
 :root[data-bx-mode="dark"] input.wpss-input,
+:root[data-bx-mode="dark"] select.wpss-input,
+:root[data-bx-mode="dark"] textarea.wpss-input,
+:root[data-bx-mode="dark"] textarea.wpss-textarea,
+:root[data-bx-mode="dark"] select.wpss-select,
 :root[data-bx-mode="dark"] input.wpss-form-input,
 :root[data-bx-mode="dark"] select.wpss-form-select,
 :root[data-bx-mode="dark"] textarea.wpss-form-textarea,
@@ -377,6 +407,10 @@ textarea.wpss-form-textarea {
 .wpss-dark .wpss-app select,
 .wpss-dark .wpss-app textarea,
 .wpss-dark input.wpss-input,
+.wpss-dark select.wpss-input,
+.wpss-dark textarea.wpss-input,
+.wpss-dark textarea.wpss-textarea,
+.wpss-dark select.wpss-select,
 .wpss-dark input.wpss-form-input,
 .wpss-dark select.wpss-form-select,
 .wpss-dark textarea.wpss-form-textarea {
@@ -391,6 +425,9 @@ textarea.wpss-form-textarea {
 	--wpss-text-muted: #9ca3af;
 	--wpss-text-light: #9ca3af;
 	--wpss-text-hint: #6b7280;
+	--wpss-danger-text: #f87171;
+	--wpss-danger-text-hover: #fca5a5;
+	--wpss-danger-wash: rgba(248, 113, 113, 0.16);
 
 	--wpss-bg: #111827;
 	--wpss-bg-subtle: #1f2937;
@@ -537,7 +574,8 @@ textarea.wpss-form-textarea {
 	display: inline-flex; align-items: center; justify-content: center;
 	gap: var(--wpss-space-2);
 	min-height: var(--wpss-space-10); /* 40px tap-target floor */
-	padding: var(--wpss-space-3) var(--wpss-space-5);
+	/* 10px, not space-3: every live surface rendered 10px 20px, a 44px button with the 2px border. */
+	padding: calc(var(--wpss-space-3) - 2px) var(--wpss-space-5);
 	font-size: var(--wpss-text-base); font-weight: 600; line-height: 1.4;
 	text-decoration: none; border: 2px solid transparent;
 	border-radius: var(--wpss-radius); cursor: pointer;
@@ -554,12 +592,9 @@ textarea.wpss-form-textarea {
 .wpss-btn--primary:hover { background: var(--wpss-primary-hover); border-color: var(--wpss-primary-hover); color: var(--wpss-white, #fff); }
 .wpss-btn--secondary { background: var(--wpss-bg-muted); color: var(--wpss-text-secondary); }
 .wpss-btn--secondary:hover { background: var(--wpss-border); color: var(--wpss-text); }
-/* Two classes, and the full border shorthand, on purpose. `.wpss-btn` is
-   declared in four stylesheets - here, frontend.css, unified-dashboard.css and
-   Pro's dashboard.css - and two of those say `border: none`. At one class each
-   the base wins on load order alone, so a single-class modifier here could
-   never paint a border. Consolidating those four is 1.8.0 work; until then this
-   is what makes the owner actually own the component. */
+/* Two classes, and the full border shorthand, on purpose: a theme's bare `button` or `a`
+   rule would otherwise beat a one-class modifier and strip the border. `.wpss-btn` is
+   declared here only; bin/check-ux-conformance.php fails if another sheet redeclares it. */
 .wpss-btn.wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
 /* The background matters as much as the colour here. Declaring only border and
    text left the background to whatever the theme gives a hovered control, and
@@ -568,24 +603,12 @@ textarea.wpss-form-textarea {
    surface, so hover looks the same on every theme. */
 .wpss-btn.wpss-btn--outline:hover { background: var(--wpss-bg-subtle); border-color: var(--wpss-text-muted); color: var(--wpss-text); }
 
-/* Legacy single-dash aliases, carrying the same two-class weight on purpose.
-   The one-class `.wpss-btn-outline` in frontend.css scores (0,1,0) and loses to
-   a theme's anchor rule, so an <a class="wpss-btn wpss-btn-outline"> took the
-   theme link colour: #4f46e5 measured 3.34 on white and 2.33 on the dark
-   surface, against the same class on a <button> at 14.68. Matching the BEM
-   selector's (0,2,0) is enough on its own - no !important, unlike the filled
-   variants, because nothing here has to beat BuddyX's (0,5,1) content-wrapper
-   rule for a foreground ON a fill.
-
-   `.wpss-btn-ghost` is defined in no stylesheet at all, so the favourites
-   toggle on the packages widget has been rendering unstyled; it gets the ghost
-   treatment here rather than staying a dead class. */
-.wpss-btn.wpss-btn-outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
-.wpss-btn.wpss-btn-outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
-.wpss-btn.wpss-btn-ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
-.wpss-btn.wpss-btn-ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
-.wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
-.wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
+/* Ghost, with the same two-class weight as outline above: the one-class rule loses to a
+   theme's anchor colour, so an <a class="wpss-btn wpss-btn--ghost"> would take the theme
+   link colour. The old one-dash modifier names are gone: every template, script and Pro
+   screen uses the double-dash BEM modifier. */
+.wpss-btn.wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
+.wpss-btn.wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
 
 /* Ghost + danger = a low-emphasis destructive action: transparent like a ghost,
    but danger-coloured text so it still reads as "delete". Defines what the two
@@ -600,19 +623,19 @@ a.wpss-btn--ghost.wpss-btn--danger,
 button.wpss-btn--ghost.wpss-btn--danger {
 	background: transparent;
 	border-color: transparent;
-	color: var(--wpss-danger);
+	color: var(--wpss-danger-text, var(--wpss-danger));
 }
 
 .wpss-btn--ghost.wpss-btn--danger:hover,
 a.wpss-btn--ghost.wpss-btn--danger:hover,
 button.wpss-btn--ghost.wpss-btn--danger:hover {
-	background: var(--wpss-danger-light, #fef2f2);
-	color: var(--wpss-danger-dark, #b91c1c);
+	background: var(--wpss-danger-wash, #fef2f2);
+	color: var(--wpss-danger-text-hover, #b91c1c);
 }
 
 /* .wpss-btn--danger base declarations live in the theme-proof block below. */
 .wpss-btn--danger:hover { background: var(--wpss-danger-dark, #b91c1c); border-color: var(--wpss-danger-dark, #b91c1c); color: var(--wpss-white, #fff); }
-.wpss-btn--success { background: var(--wpss-success); color: var(--wpss-white, #fff); border-color: var(--wpss-success); }
+.wpss-btn--success { background: var(--wpss-success-solid); color: var(--wpss-white, #fff); border-color: var(--wpss-success-solid); }
 
 /* Theme-proof filled CTAs — when a .wpss-btn renders OUTSIDE the .wpss-app
    scope (e.g. a confirm modal appended straight to <body>), or INSIDE the
@@ -641,7 +664,7 @@ button.wpss-btn--danger,
 .wpss-btn--danger { background: var(--wpss-danger); border-color: var(--wpss-danger); color: var(--wpss-white, #fff); }
 a.wpss-btn--success, a.wpss-btn--success:link, a.wpss-btn--success:visited,
 button.wpss-btn--success,
-.wpss-btn--success { background: var(--wpss-success); border-color: var(--wpss-success); color: var(--wpss-white, #fff); }
+.wpss-btn--success { background: var(--wpss-success-solid); border-color: var(--wpss-success-solid); color: var(--wpss-white, #fff); }
 
 /* Link-state foreground, pinned. The block above loses the specificity race
    inside a theme's content wrapper: BuddyX ships
@@ -674,30 +697,7 @@ a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline),
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):link,
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):visited,
-a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
-/* Legacy single-dash variants. Templates predating the BEM rename still ship
-   `wpss-btn-primary` (55 call sites across 13 files as of 1.7.1), and they were
-   never given the protection above, so an ANCHOR carrying one took the theme's
-   link colour while a <button> carrying the same class rendered correctly.
-   Measured on the empty category archive: "Browse All Services" came out
-   #4f46e5 on a #4f46e5 fill - contrast 1.00, the label invisible - beside an
-   "Apply Filters" <button> at 6.29 with the identical class. Reported as poor
-   dark-mode visibility, but it fails in both modes and for the same reason.
-   Guarding the alias here fixes every one of those call sites at once; the
-   template migration to BEM is 1.8.0 work alongside the .wpss-btn
-   consolidation noted above. */
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
-a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
-a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
-a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
+a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
 	color: var(--wpss-white, #fff) !important;
 }
 
@@ -728,35 +728,33 @@ a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
 }
 button.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline),
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
-	background: var(--wpss-success) !important; border-color: var(--wpss-success) !important;
-}
-
-/* Legacy single-dash variants, same reasoning as the colour block above: the
-   fill has to be pinned too, or a themed submit button keeps the theme's
-   background under the now-white label. */
-button.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
-	background: var(--wpss-primary) !important; border-color: var(--wpss-primary) !important;
-}
-button.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
-	background: var(--wpss-primary-hover) !important; border-color: var(--wpss-primary-hover) !important;
-}
-button.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
-	background: var(--wpss-danger) !important; border-color: var(--wpss-danger) !important;
-}
-button.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
-	background: var(--wpss-danger-dark, #b91c1c) !important; border-color: var(--wpss-danger-dark, #b91c1c) !important;
-}
-button.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
-	background: var(--wpss-success) !important; border-color: var(--wpss-success) !important;
+	background: var(--wpss-success-solid) !important; border-color: var(--wpss-success-solid) !important;
 }
 
 .wpss-btn--sm { min-height: 34px; padding: var(--wpss-space-2) var(--wpss-space-4); font-size: var(--wpss-text-sm); }
 .wpss-btn--lg { padding: var(--wpss-space-4) var(--wpss-space-8); font-size: var(--wpss-text-lg); }
+.wpss-btn--block { display: flex; width: 100%; }
+.wpss-btn--disabled, .wpss-btn.wpss-btn--disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+/* Outlined destructive action. Anchors repeat both classes and the :visited state: a theme
+   styles anchor buttons harder than <button> (BuddyX puts a 2px transparent border on them,
+   which left "View Dispute" as floating red text) and recolours :visited. */
+.wpss-btn--danger-outline,
+a.wpss-btn.wpss-btn--danger-outline,
+a.wpss-btn.wpss-btn--danger-outline:visited {
+	background: transparent;
+	border: 1px solid var(--wpss-danger-text, var(--wpss-danger));
+	color: var(--wpss-danger-text, var(--wpss-danger));
+	text-decoration: none;
+}
+.wpss-btn--danger-outline:hover,
+a.wpss-btn.wpss-btn--danger-outline:hover,
+a.wpss-btn.wpss-btn--danger-outline:focus-visible {
+	background: var(--wpss-danger);
+	border-color: var(--wpss-danger);
+	color: var(--wpss-white, #fff);
+	text-decoration: none;
+}
 .wpss-btn--xl { padding: var(--wpss-space-4) var(--wpss-space-10); font-size: var(--wpss-text-xl); }
 .wpss-btn--full { width: 100%; }
 .wpss-btn--icon { padding: var(--wpss-space-2); border-radius: var(--wpss-radius-full); }
@@ -893,9 +891,96 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
    6. FORMS
    ========================================================================== */
 
+/* Form controls and buttons size to their border box. Reign and BuddyX reset this globally; Twenty Twenty-Five and
+   other block themes do not, so a width: 100% field with padding poked out of its column on a phone. */
+.wpss-field__input, .wpss-field__select, .wpss-field__textarea,
+input.wpss-input, select.wpss-input, textarea.wpss-input, select.wpss-select,
+/* Label and help text for the shared controls below. */
+.wpss-form-label {
+	display: block;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
+	color: var(--wpss-text, #1f2937);
+	margin-bottom: 8px;
+}
+
+.wpss-form-help {
+	margin: 6px 0 0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--wpss-text-light, #6b7280);
+}
+
+/* Form controls shared by the wizard, buyer requests, disputes and signup. */
+.wpss-form-input,
+.wpss-form-select,
+.wpss-form-textarea {
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+	padding: 12px 16px;
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--wpss-text, #1f2937);
+	background: var(--wpss-surface, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius, 8px);
+	transition: border-color var(--wpss-transition, 0.2s ease), box-shadow var(--wpss-transition, 0.2s ease);
+}
+
+.wpss-form-input:focus,
+.wpss-form-select:focus,
+.wpss-form-textarea:focus {
+	border-color: var(--wpss-primary, #4f46e5);
+	box-shadow: 0 0 0 3px var(--wpss-primary-light, #eef2ff);
+}
+
+.wpss-form-input:focus-visible,
+.wpss-form-select:focus-visible,
+.wpss-form-textarea:focus-visible {
+	outline: 2px solid var(--wpss-primary, #4f46e5);
+	outline-offset: 1px;
+}
+
+.wpss-form-input::placeholder,
+.wpss-form-textarea::placeholder {
+	color: var(--wpss-text-light, #9ca3af);
+}
+
+.wpss-form-textarea {
+	min-height: 120px;
+	resize: vertical;
+}
+
+/* Select Dropdowns - Proper Height and Arrow */
+.wpss-form-select,
+select.wpss-form-input {
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	height: 48px;
+	line-height: 1.5;
+	padding-left: 44px;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: left 14px center;
+	background-size: 16px;
+	cursor: pointer;
+}
+
+.wpss-form-select::-ms-expand,
+select.wpss-form-input::-ms-expand {
+	display: none;
+}
+
+.wpss-btn { box-sizing: border-box; }
+
 .wpss-field { margin-bottom: var(--wpss-space-5); }
 .wpss-field__label { display: block; font-size: var(--wpss-text-base); font-weight: 500; color: var(--wpss-text); margin-bottom: var(--wpss-space-2); }
-.wpss-field__label .wpss-required { color: var(--wpss-danger); }
+.wpss-field__label .wpss-required { color: var(--wpss-danger-text, var(--wpss-danger)); }
 
 .wpss-field__input, .wpss-field__select, .wpss-field__textarea {
 	width: 100%; min-height: var(--wpss-space-10); padding: var(--wpss-space-3) var(--wpss-space-4); font-size: var(--wpss-text-base); font-family: inherit;
@@ -1034,30 +1119,35 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
    10. MODALS
    ========================================================================== */
 
+/* The one modal. Markup: .wpss-modal > .wpss-modal__backdrop + .wpss-modal__dialog >
+   (.wpss-modal__header > .wpss-modal__title + .wpss-modal__close) + .wpss-modal__body +
+   .wpss-modal__footer. Open it with window.wpssModal.open( el | id ) (wpss-ui.js): that sets
+   .wpss-modal-open, drops [hidden], locks the page and traps focus. Sections carry the
+   padding, the dialog carries none, so a header, body and footer line up on one edge. */
 .wpss-modal { position: fixed; inset: 0; z-index: var(--wpss-z-modal); display: none; align-items: center; justify-content: center; padding: var(--wpss-space-5); }
-/* `display: flex !important` is load-bearing, not lazy. Two modal show/hide
-   contracts coexist in this codebase: the design-system's `.wpss-modal-open`
-   (used by the global confirm dialog and the order-action modals) and
-   messaging/single-service's `.wpss-modal:not(.active)` / `[hidden]`. Those
-   `:not(.active)` hide rules match ANY modal lacking `.active` — including one
-   opened via `.wpss-modal-open` — at equal (0,2,0) specificity, so whichever of
-   messaging.css / single-service.css loads AFTER this file wins and forces the
-   open confirm dialog to `display: none`. That silently broke "Accept &
-   Complete", "Request Revision", "Open Dispute" and every other wpssConfirm()
-   action on the order view (which embeds the conversation, so messaging.css is
-   present): the confirm modal was in the DOM with `.wpss-modal-open` but 0×0 and
-   unclickable. Until the modal systems are unified (scoped task 2.8), the
-   `-open` contract must win whenever it is applied — an open modal always shows.
-   Only affects elements that carry `.wpss-modal-open`; messaging's own
-   `.active` modals never do, so they are untouched. */
-.wpss-modal.wpss-modal-open { display: flex !important; }
-.wpss-modal__overlay { position: absolute; inset: 0; background: var(--wpss-overlay); backdrop-filter: blur(2px); }
-.wpss-modal__dialog { position: relative; background: var(--wpss-bg); border-radius: var(--wpss-radius-xl); padding: var(--wpss-space-8); max-width: 480px; width: 100%; box-shadow: var(--wpss-shadow-xl); max-height: 90vh; overflow-y: auto; }
-.wpss-modal__close { position: absolute; top: var(--wpss-space-4); inset-inline-end: var(--wpss-space-4); background: none; border: none; cursor: pointer; padding: var(--wpss-space-1); color: var(--wpss-text-hint); transition: color var(--wpss-ease); border-radius: var(--wpss-radius); }
-.wpss-modal__close:hover { color: var(--wpss-text); }
+.wpss-modal.wpss-modal-open { display: flex; }
+.wpss-modal__backdrop { position: absolute; inset: 0; background: var(--wpss-overlay); backdrop-filter: blur(2px); }
+.wpss-modal__dialog { position: relative; display: flex; flex-direction: column; background: var(--wpss-bg); border-radius: var(--wpss-radius-xl); max-width: 480px; width: 100%; box-shadow: var(--wpss-shadow-xl); max-height: 90vh; overflow-y: auto; }
+/* Fields inside a modal take background and text colour from the plugin tokens, not the host theme (Reign styles bare textarea and input at higher specificity), so dark mode stays readable. */
+.wpss-modal__body :is(input:not([type=checkbox]):not([type=radio]), select, textarea),
+.wpss-ui-confirm-wrap .wpss-confirm__input { background-color: var(--wpss-bg); color: var(--wpss-text); }
+.wpss-modal__dialog--sm { max-width: 360px; }
+.wpss-modal__dialog--lg { max-width: 720px; }
+.wpss-modal__header { position: relative; padding: var(--wpss-space-6) var(--wpss-space-6) var(--wpss-space-4); border-bottom: 1px solid var(--wpss-border); }
+.wpss-modal__title { margin: 0; padding-inline-end: var(--wpss-space-10); font-size: var(--wpss-text-xl); font-weight: 600; line-height: 1.3; color: var(--wpss-text); }
+.wpss-modal__close { position: absolute; top: var(--wpss-space-4); inset-inline-end: var(--wpss-space-4); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; background: none; border: none; border-radius: var(--wpss-radius); font-size: var(--wpss-text-2xl); line-height: 1; color: var(--wpss-text-hint); cursor: pointer; transition: color var(--wpss-ease); }
+.wpss-modal__close:hover { color: var(--wpss-text); background: none; }
 .wpss-modal__close:focus-visible { outline: var(--wpss-ring-width) solid var(--wpss-ring-color); outline-offset: var(--wpss-ring-offset); }
-.wpss-modal__title { font-size: var(--wpss-text-2xl); font-weight: 600; color: var(--wpss-text); margin: 0 0 var(--wpss-space-6); padding-inline-end: var(--wpss-space-10); }
-.wpss-modal__actions { display: flex; gap: var(--wpss-space-3); justify-content: flex-end; margin-top: var(--wpss-space-6); }
+.wpss-modal__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: var(--wpss-space-6); }
+.wpss-modal__form { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+.wpss-modal__intro { margin: 0 0 var(--wpss-space-4); color: var(--wpss-text-secondary); }
+.wpss-modal__feedback { margin-bottom: var(--wpss-space-4); font-size: var(--wpss-text-sm); }
+.wpss-modal__feedback--error { color: var(--wpss-danger-dark, var(--wpss-danger)); }
+.wpss-modal__feedback--success { color: var(--wpss-success-dark, var(--wpss-success)); }
+.wpss-modal__footer { display: flex; flex-wrap: wrap; gap: var(--wpss-space-3); justify-content: flex-end; padding: var(--wpss-space-4) var(--wpss-space-6) var(--wpss-space-6); border-top: 1px solid var(--wpss-border); }
+/* A footer that holds a summary above one full-width action. */
+.wpss-modal__footer--stack { flex-direction: column; align-items: stretch; }
+body.wpss-modal-active { overflow: hidden; }
 
 /* Confirm dialog (WPSS.showConfirm) — ONE clean surface: title + message +
    action row. The dialog card is the only box; there is no nested
@@ -1088,7 +1178,7 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 /* Text-only button. Lived only in vendor-dashboard.css, which the member
    dashboard does not load - so the Remove control under the profile photo had
    NO rule at all and fell through to the theme: pure black on the dark card,
-   measured 1.18:1 (Basecamp 10300330443). Same shape as wpss-btn-ghost and the
+   measured 1.18:1 (Basecamp 10300330443). Same shape as wpss-btn--ghost and the
    toast: a class the markup uses that the loaded stylesheets never define.
    --wpss-primary-accent carries a dark value, so it follows the mode. */
 .wpss-btn--link { background: none; border: none; padding: 0; color: var(--wpss-primary-accent, #4f46e5); text-decoration: none; }
@@ -1108,6 +1198,8 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 .wpss-confirm__label { text-align: start; font-size: var(--wpss-text-sm); font-weight: 600; color: var(--wpss-text); }
 .wpss-confirm__input { width: 100%; box-sizing: border-box; padding: var(--wpss-space-3); border: 1px solid var(--wpss-border); border-radius: var(--wpss-radius); background: var(--wpss-bg); color: var(--wpss-text); font: inherit; font-size: var(--wpss-text-base); line-height: 1.5; resize: vertical; text-align: start; }
 .wpss-confirm__input:focus { outline: 2px solid var(--wpss-primary); outline-offset: 1px; border-color: var(--wpss-primary); }
+.wpss-confirm__input[aria-invalid="true"] { border-color: var(--wpss-danger); }
+.wpss-confirm__error { margin: 0; text-align: start; font-size: var(--wpss-text-sm); color: var(--wpss-danger-dark, var(--wpss-danger)); }
 
 /* wpss-ui.js confirm primitive — overlay + dialog wrapper.
    The dialog reuses .wpss-modal__dialog.wpss-confirm (above) + .wpss-btn
@@ -1115,6 +1207,15 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 .wpss-ui-confirm-wrap { position: fixed; inset: 0; z-index: 160001; display: flex; align-items: center; justify-content: center; padding: var(--wpss-space-5, 20px); }
 .wpss-ui-confirm-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
 .wpss-ui-modal { position: relative; /* stacks above overlay */ }
+
+@media (max-width: 640px) {
+	/* The modal becomes a bottom sheet on a phone. */
+	.wpss-modal { padding: var(--wpss-space-3); align-items: flex-end; }
+	.wpss-modal__dialog { max-width: none; max-height: 92vh; border-radius: var(--wpss-radius-xl) var(--wpss-radius-xl) 0 0; }
+	.wpss-modal__header { padding: var(--wpss-space-4) var(--wpss-space-4) var(--wpss-space-3); }
+	.wpss-modal__body { padding: var(--wpss-space-4); }
+	.wpss-modal__footer { padding: var(--wpss-space-3) var(--wpss-space-4) var(--wpss-space-4); }
+}
 
 @media (max-width: 640px) {
 	.wpss-ui-confirm-wrap { padding: var(--wpss-space-4, 16px); align-items: flex-end; }
@@ -1133,7 +1234,7 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 .wpss-toast-container { position: fixed; bottom: var(--wpss-space-5, 20px); inset-inline-end: var(--wpss-space-5, 20px); z-index: 160000; display: flex; flex-direction: column-reverse; gap: var(--wpss-space-2, 8px); pointer-events: none; }
 .wpss-toast { padding: var(--wpss-space-3, 12px) var(--wpss-space-5, 20px); border-radius: var(--wpss-radius, 8px); font-size: var(--wpss-text-sm, 13px); line-height: 1.5; color: var(--wpss-white, #fff); background: var(--wpss-text, #111827); box-shadow: var(--wpss-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)); max-width: 360px; opacity: 0; transform: translateY(8px); transition: opacity 0.3s, transform 0.3s; }
 .wpss-toast.is-visible { opacity: 1; transform: translateY(0); }
-.wpss-toast--success { background: var(--wpss-success, #10b981); }
+.wpss-toast--success { background: var(--wpss-success-solid, #047857); }
 .wpss-toast--error { background: var(--wpss-danger, #dc2626); display: flex; align-items: flex-start; gap: var(--wpss-space-3, 12px); pointer-events: auto; }
 .wpss-toast__close { flex-shrink: 0; margin-inline-start: auto; padding: 0 var(--wpss-space-1, 4px); border: 0; background: none; color: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
 .wpss-toast__close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
@@ -1178,7 +1279,7 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 .wpss-grid--4 { grid-template-columns: repeat(4, 1fr); }
 
 .wpss-layout { display: grid; gap: var(--wpss-space-8); }
-.wpss-layout--sidebar-right { grid-template-columns: 1fr 360px; }
+.wpss-layout--sidebar-right { grid-template-columns: minmax(0, 1fr) 360px; }
 .wpss-layout--sidebar-left { grid-template-columns: 360px 1fr; }
 
 .wpss-stack { display: flex; flex-direction: column; }
@@ -1211,6 +1312,122 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 
 .wpss-skeleton { background: linear-gradient(-90deg, var(--wpss-bg-muted) 25%, var(--wpss-bg-subtle) 50%, var(--wpss-bg-muted) 75%); background-size: 200% 100%; animation: wpss-shimmer 1.5s ease-in-out infinite; border-radius: var(--wpss-radius); }
 @keyframes wpss-shimmer { 0% { background-position: -100% 0; } 100% { background-position: 300% 0; } }
+
+/* ==========================================================================
+   13. STAT CARDS (UX PRIMITIVE)
+   ----------------------------------------------------------------------------
+   One figure card and one grid for every dashboard, account and analytics
+   screen, Free and Pro. Markup:
+     .wpss-stats-grid > .wpss-stat-card > .wpss-stat-card__value + __label [+ __meta]
+   With an icon, add --icon and wrap the text in __content:
+     .wpss-stat-card.wpss-stat-card--icon > __icon.__icon--{tone} + __content
+   Modifiers: --highlight (accent fill), --negative (red figure).
+   Tones: primary, success, warning, info, neutral, danger, tip, milestone.
+   Surface sheets add only scoped deltas (column count, type size).
+   ========================================================================== */
+.wpss-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	grid-auto-rows: 1fr; /* every row as tall as the tallest card, so a wrapped caption does not step the grid */
+	gap: var(--wpss-space-4);
+	margin-bottom: var(--wpss-space-6);
+}
+.wpss-stats-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.wpss-stat-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wpss-space-1);
+	min-width: 0;
+	padding: var(--wpss-space-5);
+	background: var(--wpss-surface);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius-lg);
+	box-shadow: var(--wpss-shadow-sm);
+}
+.wpss-stat-card--icon { flex-direction: row; align-items: flex-start; gap: var(--wpss-space-4); }
+
+.wpss-stat-card__icon {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border-radius: var(--wpss-radius);
+	background: var(--wpss-primary-light);
+	color: var(--wpss-primary-accent);
+}
+.wpss-stat-card__icon--success { background: var(--wpss-success-light); color: var(--wpss-success); }
+.wpss-stat-card__icon--warning { background: var(--wpss-warning-light); color: var(--wpss-warning-dark); }
+.wpss-stat-card__icon--info { background: var(--wpss-info-light); color: var(--wpss-info); }
+.wpss-stat-card__icon--danger { background: var(--wpss-danger-light); color: var(--wpss-danger); }
+.wpss-stat-card__icon--neutral { background: var(--wpss-bg-subtle); color: var(--wpss-text-muted); }
+.wpss-stat-card__icon--tip { background: var(--wpss-badge-tip-bg, var(--wpss-danger-light)); color: var(--wpss-badge-tip-icon-fg, var(--wpss-danger)); }
+.wpss-stat-card__icon--milestone { background: var(--wpss-badge-milestone-icon-bg, var(--wpss-info-light)); color: var(--wpss-badge-milestone-icon-fg, var(--wpss-info)); }
+
+.wpss-stat-card__content { display: flex; flex: 1; flex-direction: column; gap: var(--wpss-space-1); min-width: 0; }
+
+.wpss-stat-card__value {
+	display: block;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	font-size: 1.75rem;
+	font-weight: 700;
+	line-height: 1.2;
+	color: var(--wpss-text);
+}
+.wpss-stat-card__label {
+	display: block;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: var(--wpss-text-muted);
+}
+.wpss-stat-card__meta { display: block; font-size: 0.75rem; color: var(--wpss-text-muted); }
+
+.wpss-stat-card__trend {
+	display: inline-flex;
+	align-items: center;
+	align-self: flex-start;
+	margin-top: var(--wpss-space-1);
+	padding: var(--wpss-space-1) var(--wpss-space-2);
+	border-radius: var(--wpss-radius-full, 999px);
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1.2;
+}
+.wpss-stat-card__trend--up { background: var(--wpss-success-light); color: var(--wpss-success-dark, var(--wpss-success)); }
+.wpss-stat-card__trend--down { background: var(--wpss-danger-light); color: var(--wpss-danger-dark, var(--wpss-danger)); }
+
+/* Higher specificity than the bare card: a host theme that paints generic
+   cards grey must not flatten the accent. */
+.wpss-stats-grid .wpss-stat-card--highlight,
+.wpss-stat-card.wpss-stat-card--highlight {
+	background: var(--wpss-primary);
+	border-color: var(--wpss-primary);
+}
+.wpss-stat-card--highlight .wpss-stat-card__value,
+.wpss-stat-card--highlight .wpss-stat-card__label,
+.wpss-stat-card--highlight .wpss-stat-card__meta { color: var(--wpss-white, #fff); }
+/* A debt is not the accent tile: red on the indigo fill read 1.3:1. Surface fill, danger border,
+   --wpss-danger-text (which lightens in dark mode) for the figure. */
+.wpss-stats-grid .wpss-stat-card--negative,
+.wpss-stat-card.wpss-stat-card--negative {
+	background: var(--wpss-surface);
+	border-color: var(--wpss-danger);
+}
+.wpss-stat-card--negative .wpss-stat-card__value { color: var(--wpss-danger-text); }
+.wpss-stat-card--negative .wpss-stat-card__label { color: var(--wpss-text-secondary); }
+
+@media (max-width: 640px) {
+	.wpss-stats-grid,
+	.wpss-stats-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wpss-space-3); }
+	.wpss-stat-card { padding: var(--wpss-space-4); }
+	.wpss-stat-card--icon { flex-direction: column; gap: var(--wpss-space-2); }
+	.wpss-stat-card__value { font-size: 1.375rem; }
+}
 
 /* ==========================================================================
    14. FORM ERROR (UX PRIMITIVE)
@@ -1429,7 +1646,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 /* ── Tablet (<= 1024px) ── */
 @media (max-width: 1024px) {
 	.wpss-grid--3, .wpss-grid--4 { grid-template-columns: repeat(2, 1fr); }
-	.wpss-layout--sidebar-right, .wpss-layout--sidebar-left { grid-template-columns: 1fr; }
+	.wpss-layout--sidebar-right, .wpss-layout--sidebar-left { grid-template-columns: minmax(0, 1fr); }
 	.wpss-services-grid--3,
 	.wpss-services-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -1437,15 +1654,12 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 /* ── Mobile (<= 640px) ── */
 @media (max-width: 640px) {
 	.wpss-app-shell__container { padding-inline: var(--wpss-space-3); }
-	.wpss-grid--2, .wpss-grid--3, .wpss-grid--4 { grid-template-columns: 1fr; }
-	.wpss-layout--sidebar-right, .wpss-layout--sidebar-left { grid-template-columns: 1fr; }
+	.wpss-grid--2, .wpss-grid--3, .wpss-grid--4 { grid-template-columns: minmax(0, 1fr); }
+	.wpss-layout--sidebar-right, .wpss-layout--sidebar-left { grid-template-columns: minmax(0, 1fr); }
 	.wpss-services-grid,
 	.wpss-services-grid--2,
 	.wpss-services-grid--3,
-	.wpss-services-grid--4 { grid-template-columns: 1fr; }
-	.wpss-modal__dialog { padding: var(--wpss-space-6); margin: var(--wpss-space-4); }
-	.wpss-modal__actions { flex-direction: column; }
-	.wpss-modal__actions .wpss-btn { width: 100%; }
+	.wpss-services-grid--4 { grid-template-columns: minmax(0, 1fr); }
 	.wpss-banner { flex-direction: column; text-align: center; gap: var(--wpss-space-3); }
 	.wpss-banner__action { width: 100%; }
 	.wpss-card { padding: var(--wpss-space-4); }
@@ -1455,6 +1669,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 /* Billing summary — the read-only "Billed to" block on an order / invoice.
    One component for the buyer order view and the admin order screen, so the
    customer and the admin never see different invoice detail. */
+.wpss-billing__title { margin: 0 0 var(--wpss-space-3); font-size: var(--wpss-text-md); font-weight: 600; color: var(--wpss-text); }
 .wpss-billing-summary { padding: var(--wpss-space-5) var(--wpss-space-6); border: 1px solid var(--wpss-border); border-radius: var(--wpss-radius-lg); margin-bottom: var(--wpss-space-6); }
 .wpss-billing-summary__title { margin: 0 0 var(--wpss-space-3); font-size: var(--wpss-text-md); font-weight: 600; color: var(--wpss-text); }
 .wpss-billing-summary__address { display: flex; flex-direction: column; gap: 2px; font-style: normal; font-size: var(--wpss-text-sm); color: var(--wpss-text-secondary); line-height: 1.5; }
@@ -1502,7 +1717,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 /* Phones: one column. In two ~116px columns dates and totals wrapped to two
    or three lines (Basecamp 10345275760); a full row keeps every value on one. */
 @media (max-width: 480px) {
-	.wpss-order-details-grid { grid-template-columns: 1fr; gap: var(--wpss-space-2); }
+	.wpss-order-details-grid { grid-template-columns: minmax(0, 1fr); gap: var(--wpss-space-2); }
 }
 .wpss-order-detail-item--highlight .wpss-order-detail-item__value { font-weight: 700; font-size: var(--wpss-text-md); }
 .wpss-order-detail-item--refunded .wpss-order-detail-item__label,
@@ -1641,7 +1856,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-line-items__total td {
 	border-block-end: 0;
 	font-weight: 600;
-	color: var(--wpss-text-primary, var(--wpss-text-secondary));
+	color: var(--wpss-text-secondary);
 }
 
 /* Checkout: the second Pay button under the payment methods sat against the
@@ -1688,3 +1903,53 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-evidence-filename{font-size:12px;color:var(--wpss-gray-500,#6b7280)}
 .wpss-evidence-locked{font-size:13px;color:var(--wpss-gray-500,#6b7280);margin:12px 0 0}
 @media (max-width:480px){.wpss-evidence-bubble{max-width:100%}.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:0;width:100%}}
+
+/* ==========================================================================
+   Breadcrumb
+   ========================================================================== */
+
+.wpss-breadcrumb {
+	margin-bottom: 1rem;
+}
+
+.wpss-breadcrumb-list {
+	display: flex;
+	flex-wrap: wrap;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	font-size: 0.875rem;
+}
+
+.wpss-breadcrumb-item {
+	display: flex;
+	align-items: center;
+}
+
+.wpss-breadcrumb-item:not(:last-child)::after {
+	content: "/";
+	margin: 0 0.5rem;
+	color: var(--wpss-text-muted);
+}
+
+.wpss-breadcrumb-item a {
+	color: var(--wpss-text-muted);
+	text-decoration: none;
+}
+
+.wpss-breadcrumb-item a:hover {
+	color: var(--wpss-primary-accent);
+}
+
+.wpss-breadcrumb-current {
+	color: var(--wpss-text);
+	font-weight: 500;
+}
+
+/* Modals clear a fixed/sticky theme header. wpssModal.open() measures what covers the
+   top edge into --wpss-modal-offset. Two classes beat the dialog's own
+   max-height: 90vh, whichever stylesheet loads last. */
+.wpss-modal .wpss-modal__dialog {
+	margin-top: var(--wpss-modal-offset, 0px);
+	max-height: calc(100vh - var(--wpss-modal-offset, 0px) - 2 * var(--wpss-space-5, 20px));
+}

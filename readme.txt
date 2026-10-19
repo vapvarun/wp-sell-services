@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.8.0
+Stable tag: 1.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -234,7 +234,7 @@ Yes. Vendors can enable "Vacation Mode" which automatically pauses all their ser
 
 = Does it support multiple currencies? =
 
-Yes. The plugin supports 10 currencies: USD, EUR, GBP, AUD, CAD, INR, JPY, BRL, MXN, and ZAR. You configure one primary currency for your marketplace in settings.
+Yes. The plugin supports 148 currencies, including USD, EUR, GBP, AUD, CAD, INR, JPY, CNY, BRL, MXN, and ZAR. You configure one primary currency for your marketplace in settings.
 
 = Is it translation ready? =
 
@@ -266,6 +266,43 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.9.0 - October 2026 =
+
+Refunds and payments follow the rail that collected the money, negative balances are handled end to end, and every date, button and setting follows one standard.
+
+* New      - Order Again puts a finished order's package and options back in the cart in one click, on every checkout rail.
+* New      - Admins can write off a vendor's negative balance, and the REST API reports the balance state.
+* New      - Reviews have a Helpful toggle that remembers the vote and refuses a vote on your own review.
+* New      - A refused publish explains why, with a notice on the service editor and the list.
+* New      - Mark as featured and Remove from featured bulk actions on the Services list.
+* New      - Each package tier in the service wizard has its own description field.
+* New      - The My Services status tiles filter the list.
+* New      - The notification center filters by unread and type, shows an unread badge and clears notifications after 90 days.
+* New      - A withdrawal marked as paid sends its own Paid email and notification.
+* New      - A rejected withdrawal shows the reason on the vendor's Earnings page and in the rejection email.
+* Improve  - Refunds are made by the rail that collected the money; refunding stays admin-only and the wpss_can_refund_order filter opens it per site.
+* Improve  - One earned figure: the Sales tile, the profile and the Earnings page all read the ledger.
+* Improve  - Paid orders start at once when the service asks for no requirements.
+* Improve  - A delivery with a file the site refuses is refused whole and names the file, and the message composer shows a notice for refused attachments.
+* Improve  - A cancelled, refunded or declined order can no longer be paid, and a locked milestone phase says when it unlocks.
+* Improve  - Cash on delivery orders read Pay on delivery instead of Paid.
+* Improve  - Every date goes through one timezone helper and prints its zone on deadlines.
+* Improve  - Dark mode, contrast and focus rings are fixed across the dashboard, checkout, settings and order screens.
+* Improve  - Email templates resolve through the one template locator, carry a version, and outdated theme overrides are listed.
+* Improve  - PayPal caches its access token per credentials and keeps PayPal's own error text.
+* Fix      - The order page no longer fatals after a tip.
+* Fix      - The buyer no longer gets two Order Completed emails.
+* Fix      - Auto-withdrawal keeps to its 1st, 15th or Monday schedule, and negative balances no longer flip to positive.
+* Fix      - Hold and resume are admin only, and a suspended seller can finish paid work but start nothing new.
+* Fix      - A Stripe charge that cannot be settled is refunded, and a rail refund already recorded adds nothing twice.
+* Fix      - A service blocked from publishing no longer shows the notice to people who cannot edit it.
+* Fix      - Admin publish approves a service and Quick Edit stops rewriting moderation.
+* Fix      - Learnomy account pages resolve because the plugin no longer claims the /account/ base.
+* Fix      - The checkout tax summary follows the priced lines and a blank tax label falls back to Tax.
+* Dev      - Payment gateways share one base class and three contract methods, and orders record what was bought product-neutrally.
+* Dev      - Release gates date the smoke walk by surface across Free and Pro.
+* Compat   - Aligned with WP Sell Services Pro 1.9.0. Install both updates together.
 
 = 1.8.0 - October 2026 =
 
@@ -929,6 +966,9 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * WP 6.7+ compatible (lazy-loaded translations)
 
 == Upgrade Notice ==
+
+= 1.9.0 =
+Update Free and Pro together. Refunds, negative balances, delivery files and dates now follow one standard on every checkout rail.
 
 = 1.8.0 =
 Stored dates are converted to UTC once, in the background, after updating; run wp wpss utc-migrate --dry-run first on a site whose database server is in a different time zone from WordPress. A PayPal payment left unfinished at the moment of updating is not charged and the buyer pays again. Updating does not create a Log In page or change how the site signs in. Requires WP Sell Services Pro 1.8.0 if Pro is active - install both updates together.

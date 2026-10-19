@@ -9,8 +9,12 @@
  * app already uses (POST /wpss/v1/reviews/{id}/reply), so both clients share
  * one write path.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/reviews.php
+ *
  * @package WPSellServices\Templates
  * @since   1.7.1
+ * @version 1.9.0
  *
  * @var int           $user_id        Current user ID.
  * @var VendorService $vendor_service Vendor service instance.
@@ -72,7 +76,7 @@ $avg_rating   = $profile ? (float) $profile->rating : 0.0;
 							<a href="<?php echo esc_url( wpss_get_order_url( $wpss_review->order_id, 'sales' ) ); ?>"><?php echo esc_html( $service_title ); ?></a>
 						</p>
 					<?php endif; ?>
-					<?php include WPSS_PLUGIN_DIR . 'templates/partials/review-body.php'; ?>
+					<?php include wpss_locate_template( 'partials/review-body.php' ); ?>
 					<?php if ( ! $wpss_review->has_response() ) : ?>
 						<form class="wpss-review-reply-form" data-review-id="<?php echo esc_attr( (string) $wpss_review->id ); ?>">
 							<label for="wpss-review-reply-<?php echo esc_attr( (string) $wpss_review->id ); ?>">

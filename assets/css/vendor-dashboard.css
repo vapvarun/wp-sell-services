@@ -168,89 +168,6 @@
 }
 
 /* ==========================================================================
-   Stats Grid
-   ========================================================================== */
-
-.wpss-stats-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-	gap: 1.5rem;
-}
-
-.wpss-stat-card {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-	padding: 1.5rem;
-	background: var(--wpss-surface, #fff);
-	border-radius: var(--wpss-radius-lg, 12px);
-	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
-}
-
-.wpss-stat-card__icon {
-	width: 48px;
-	height: 48px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: var(--wpss-radius, 8px);
-	font-size: 1.25rem;
-}
-
-.wpss-stat-card__icon--primary {
-	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary-accent, #4f46e5);
-}
-
-.wpss-stat-card__icon--success {
-	background: var(--wpss-success-light, #d1fae5);
-	color: var(--wpss-success, #10b981);
-}
-
-.wpss-stat-card__icon--warning {
-	background: var(--wpss-warning-light, #fef3c7);
-	color: var(--wpss-warning, #f59e0b);
-}
-
-.wpss-stat-card__icon--info {
-	background: var(--wpss-info-light, #dbeafe);
-	color: var(--wpss-info, #3b82f6);
-}
-
-.wpss-stat-card__content {
-	flex: 1;
-}
-
-.wpss-stat-card__value {
-	display: block;
-	font-size: 1.5rem;
-	font-weight: 700;
-	color: var(--wpss-text, #1f2937);
-	line-height: 1.2;
-}
-
-.wpss-stat-card__label {
-	font-size: 0.875rem;
-	color: var(--wpss-text-muted, #6b7280);
-}
-
-.wpss-stat-card__trend {
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-	font-size: 0.75rem;
-	font-weight: 500;
-}
-
-.wpss-stat-card__trend--up {
-	color: var(--wpss-success, #10b981);
-}
-
-.wpss-stat-card__trend--down {
-	color: var(--wpss-danger, #ef4444);
-}
-
-/* ==========================================================================
    Card Grid
    ========================================================================== */
 
@@ -472,11 +389,6 @@
 	font-weight: 600;
 }
 
-.wpss-table {
-	width: 100%;
-	border-collapse: collapse;
-}
-
 .wpss-table th,
 .wpss-table td {
 	padding: 0.875rem 1rem;
@@ -517,96 +429,6 @@
 .wpss-table__cell-actions {
 	display: flex;
 	gap: 0.5rem;
-}
-
-/* ==========================================================================
-   Button Component
-   ========================================================================== */
-
-.wpss-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	padding: 0.625rem 1.25rem;
-	font-size: 0.875rem;
-	font-weight: 500;
-	border-radius: var(--wpss-radius, 8px);
-	border: none;
-	cursor: pointer;
-	text-decoration: none;
-	transition: all var(--wpss-transition, 0.2s ease);
-}
-
-/* .wpss-btn--primary: see design-system.css (single owner) */
-.wpss-btn--secondary {
-	background: var(--wpss-secondary, #1e293b);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-btn--success {
-	background: var(--wpss-success, #10b981);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-btn--danger {
-	background: var(--wpss-danger, #ef4444);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-btn--danger-outline {
-	background: transparent;
-	border: 1px solid var(--wpss-danger, #ef4444);
-	color: var(--wpss-danger, #ef4444);
-}
-
-.wpss-btn--danger-outline:hover {
-	background: var(--wpss-danger, #ef4444);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-btn--disabled,
-.wpss-btn.wpss-btn--disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-	pointer-events: none;
-}
-
-.wpss-btn--ghost {
-	background: transparent;
-	border: 1px solid var(--wpss-border, #e5e7eb);
-	color: var(--wpss-text, #1f2937);
-}
-
-.wpss-btn--ghost:hover {
-	background: var(--wpss-background, #f9fafb);
-	border-color: var(--wpss-gray-300, #cbd5e1);
-}
-
-.wpss-btn--sm {
-	padding: 0.375rem 0.75rem;
-	font-size: 0.8125rem;
-}
-
-.wpss-btn--lg {
-	padding: 0.75rem 1.5rem;
-	font-size: 1rem;
-}
-
-.wpss-btn--icon {
-	padding: 0.5rem;
-	width: 36px;
-	height: 36px;
-}
-
-.wpss-btn--block {
-	display: flex;
-	width: 100%;
-}
-
-.wpss-btn:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
 }
 
 /* ==========================================================================
@@ -867,30 +689,6 @@ select.wpss-input::-ms-expand {
 	gap: 0.75rem;
 	color: var(--wpss-text-light, #6b7280);
 	font-size: 0.875rem;
-}
-
-/* ==========================================================================
-   Stat Card Icon Variants (BEM)
-   ========================================================================== */
-
-.wpss-stat-card__icon--active {
-	background: var(--wpss-warning-light, #fef3c7);
-	color: var(--wpss-warning-dark, #d97706);
-}
-
-.wpss-stat-card__icon--completed {
-	background: var(--wpss-success-light, #d1fae5);
-	color: var(--wpss-success, #059669);
-}
-
-.wpss-stat-card__icon--earnings {
-	background: var(--wpss-status-delivered-bg, #dbeafe);
-	color: var(--wpss-info, #2563eb);
-}
-
-.wpss-stat-card__icon--rating {
-	background: var(--wpss-status-late-bg, #fef9c3);
-	color: var(--wpss-warning-dark, #ca8a04);
 }
 
 /* ==========================================================================

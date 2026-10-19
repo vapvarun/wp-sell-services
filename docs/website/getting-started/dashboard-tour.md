@@ -1,8 +1,8 @@
 # Buyer & Seller Dashboard Tour
 
-The `[wpss_dashboard]` shortcode — where buyers track orders and sellers manage services — ships with a role-aware onboarding tour. The first time a logged-in user opens the page they see a short Shepherd.js walkthrough that points out the sections they actually need.
+The `[wpss_dashboard]` shortcode - where buyers track orders and sellers manage services - ships with a role-aware onboarding tour. The first time a logged-in user opens the page they see a short Shepherd.js walkthrough that points out the sections they actually need.
 
-![The unified dashboard, seller view](../images/frontend-dashboard-vendor.png)
+![The unified dashboard, seller view](../images/frontend-dashboard-vendor.webp)
 
 ## Who Sees What
 
@@ -22,9 +22,9 @@ The tour inspects the viewer's role and tailors the steps:
 
 **Buyers (no vendor role)** see a shorter **7-step walkthrough** that swaps the seller-specific steps for a single "Want to sell too?" step highlighting the **Start Selling** CTA in the sidebar.
 
-**Pending vendors** (application submitted, waiting for admin approval) see the buyer flow without the "Start Selling" prompt — that button is already absent from their sidebar.
+**Pending vendors** (application submitted, waiting for admin approval) see the buyer flow without the "Start Selling" prompt - that button is already absent from their sidebar.
 
-**Logged-out visitors** never see the tour — the shortcode renders a login prompt instead, so there's nothing meaningful to walk.
+**Logged-out visitors** never see the tour - the shortcode renders a login prompt instead, so there's nothing meaningful to walk.
 
 ## When It Opens
 
@@ -34,7 +34,7 @@ Clicking Skip, Finish, or the close icon all count as completion.
 
 ## Replaying The Tour
 
-The dashboard header has a subtle **Replay tour** button next to the primary CTAs (Create Service, Post Request). Click it any time to walk through again — no setting to toggle.
+The dashboard header has a subtle **Replay tour** button next to the primary CTAs (Create Service, Post Request). Click it any time to walk through again - no setting to toggle.
 
 The replay uses `window.wpssTour.start()` under the hood, so you can also wire a theme-level "Take the tour" link anywhere on your site:
 
@@ -48,8 +48,8 @@ The replay uses `window.wpssTour.start()` under the hood, so you can also wire a
 
 Two good moments to nudge buyers/sellers toward the tour:
 
-1. **Post-registration email** — after a vendor is approved, link them to the dashboard with a line like "Not sure where to start? We'll walk you through it."
-2. **Empty-state CTA** — the buyer-orders empty state already has a Browse Services CTA; you can add a secondary "Take the tour" link by overriding `templates/dashboard/sections/orders.php` in your theme.
+1. **Post-registration email** - after a vendor is approved, link them to the dashboard with a line like "Not sure where to start? We'll walk you through it."
+2. **Empty-state CTA** - the buyer-orders empty state already has a Browse Services CTA; you can add a secondary "Take the tour" link by overriding `templates/dashboard/sections/orders.php` in your theme.
 
 ## Resetting Completion
 
@@ -87,9 +87,9 @@ add_filter( 'wpss_tour_steps', function ( array $steps ): array {
 } );
 ```
 
-If your selector doesn't match anything on the page, the step renders centered — the built-in fallback keeps the tour walking through instead of aborting.
+If your selector doesn't match anything on the page, the step renders centered - the built-in fallback keeps the tour walking through instead of aborting.
 
 ## Related
 
-- [Admin Guided Tour](../admin-tools/guided-tour.md) — the sister walkthrough on the WP admin side
-- [Buyer Dashboard Overview](../buyer-guide/buyer-dashboard.md) — reference for every section the tour covers
+- [Admin Guided Tour](../admin-tools/guided-tour.md) - the sister walkthrough on the WP admin side
+- [Buyer Dashboard Overview](../buyer-guide/buyer-dashboard.md) - reference for every section the tour covers

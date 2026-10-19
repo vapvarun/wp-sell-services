@@ -1,8 +1,8 @@
-# Journey 09 — A buyer's files follow a request into the order
+# Journey 09 - A buyer's request files follow into the order
 
 **Roles:** buyer (`subscriber`), second buyer, seller (`wpss_vendor`), admin
-**Rail:** standalone payments
-**Status:** passes (2026-10-07, after the 1.8.0 release was rejected)
+**Rail:** standalone
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 Guards cards 10380173025, 10380395139, 10380601755.
 

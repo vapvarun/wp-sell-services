@@ -8,8 +8,12 @@
  * to the parties, instead of a separate notes box (Basecamp 10337171525).
  * The reply is posted by assets/js/dispute-thread.js.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/dispute-thread.php
+ *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  *
  * @var object $wpss_dispute     The dispute.
  * @var array  $wpss_evidence    DisputeService::get_evidence().

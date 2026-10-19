@@ -78,7 +78,13 @@ function wpss_payment_site_mark(): string {
 /**
  * Whether a site address written on a payment is this site's.
  *
- * Scheme, case and a trailing slash are ignored. An empty address is not ours.
+ * Scheme, case, a leading www and a trailing slash are ignored, and so is a
+ * language folder this site serves (WPML or Polylang, /fr): payments started on 1.6.0-1.7.2 were stamped
+ * with home_url(), which a multilingual plugin filters per request
+ * (Basecamp 10415810962). Any other path stays significant, because another
+ * install on the same host sharing the gateway account is not this site.
+ * An empty address is not ours. Sites whose address differs in some other way
+ * (domain mapping, a CDN host) can answer through the filter.
  *
  * @since 1.8.0
  *
@@ -86,9 +92,41 @@ function wpss_payment_site_mark(): string {
  * @return bool
  */
 function wpss_is_own_payment_site( string $site_url ): bool {
-	$bare = static fn( string $url ): string => untrailingslashit( strtolower( (string) preg_replace( '#^https?://#i', '', trim( $url ) ) ) );
+	// Only the language folders this site really serves (WPML, Polylang) are ignored. A generic
+	// two-letter folder could be another install on the same host sharing the gateway account.
+	$languages = array_filter(
+		array_map(
+			'strtolower',
+			array_merge(
+				array_keys( (array) apply_filters( 'wpml_active_languages', null ) ),
+				function_exists( 'pll_languages_list' ) ? (array) pll_languages_list() : array()
+			)
+		)
+	);
 
-	return '' !== $bare( $site_url ) && $bare( $site_url ) === $bare( wpss_payment_site_mark() );
+	$bare = static function ( string $url ) use ( $languages ): string {
+		$url = untrailingslashit( strtolower( (string) preg_replace( '#^https?://(www\.)?#i', '', trim( $url ) ) ) );
+
+		foreach ( $languages as $code ) {
+			if ( preg_match( '#^([^/]+)/' . preg_quote( (string) $code, '#' ) . '$#', $url, $m ) ) {
+				return $m[1];
+			}
+		}
+
+		return $url;
+	};
+
+	$own = '' !== $bare( $site_url ) && $bare( $site_url ) === $bare( wpss_payment_site_mark() );
+
+	/**
+	 * Filters whether a payment's site address is this site's.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param bool   $own      Whether the address matched.
+	 * @param string $site_url Address read back from the gateway.
+	 */
+	return (bool) apply_filters( 'wpss_is_own_payment_site', $own, $site_url );
 }
 
 /**

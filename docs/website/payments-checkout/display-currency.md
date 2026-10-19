@@ -7,7 +7,7 @@ This is a **display-only hint**. Orders, earnings, commission, refunds, and
 payouts are always calculated and recorded in your base currency. Nothing about
 the stored price changes -- only what a visitor sees while browsing.
 
-![Display Currency settings on the Advanced tab](../images/settings-cloud-storage-currency.png)
+![Display Currency settings on the Integrations tab](../images/settings-cloud-storage-currency.webp)
 
 ## Why display-only
 
@@ -23,7 +23,7 @@ drift** between the price a shopper sees at checkout and the amount they pay.
 ## Setup
 
 1. Sign up at [openexchangerates.org](https://openexchangerates.org/signup) and copy your App ID. The free tier is enough for a typical marketplace.
-2. Go to **Sell Services > Settings > Advanced** and find the **Display Currency** card.
+2. Go to **Sell Services > Settings > Integrations** and find the **Display Currency** card.
 3. Tick **Enable**, paste your App ID, and list the currencies you want to offer.
 4. Save.
 
@@ -38,7 +38,9 @@ picks this up for free.
 - Their choice is remembered in a `wpss_display_currency` cookie, so it persists across pages.
 - Checkout always shows and charges the base-currency amount.
 
-Add a currency picker anywhere with the shortcode:
+The currency is detected from the shopper's timezone, so there is no picker by
+default: a picker would suggest the shopper is charged in that currency, and they
+are not. If you still want an opt-in selector, add it anywhere with the shortcode:
 
 ```
 [wpss_currency_switcher]
@@ -66,7 +68,6 @@ Buyer-facing prices carry it:
   buyer's own dashboard list
 - proposal prices, milestone phase amounts, and a proposal's project total
 - cart line items, add-on prices, the cart subtotal and total
-- the order confirmation totals
 
 Deliberately left in base currency: **vendor earnings and sales screens, admin
 screens, and every email**. Those show money that has already moved, or is owed

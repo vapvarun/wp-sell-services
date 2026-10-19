@@ -168,7 +168,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 	 *
 	 * This used to be a checkbox that was off by default, so the common case
 	 * shipped broken and the owner had to know to go and find the switch. It is
-	 * derived now, and the checkbox overrides the derivation either way:
+	 * derived now, and ticking the checkbox forces it on:
 	 *
 	 *  - Woo owns checkout      -> leave Woo's cart alone. It holds the order.
 	 *  - Standalone, no Woo products -> point at the marketplace cart. Woo is
@@ -187,9 +187,10 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 	public static function should_use_marketplace_cart_link(): bool {
 		$general = get_option( 'wpss_general', array() );
 
-		// An explicit choice always wins, in both directions.
-		if ( array_key_exists( 'use_marketplace_cart_link', $general ) && '' !== $general['use_marketplace_cart_link'] ) {
-			return ! empty( $general['use_marketplace_cart_link'] );
+		// Ticked forces it on. Unticked (stored as '', or false by 1.8.x) means "work it out below";
+		// an unticked box used to be saved as an explicit "off" that killed the derived default.
+		if ( ! empty( $general['use_marketplace_cart_link'] ) ) {
+			return true;
 		}
 
 		if ( ! function_exists( 'wpss_uses_standalone_payments' ) || ! wpss_uses_standalone_payments() ) {
@@ -201,8 +202,15 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		}
 
 		$products = wp_count_posts( 'product' );
+		$sold     = (int) ( $products->publish ?? 0 );
 
-		return empty( $products->publish );
+		// Pro's published, catalog-hidden carrier product is plumbing, not something the site sells.
+		$carrier = (int) get_option( 'wpss_wc_carrier_product_id', 0 );
+		if ( $carrier && 'product' === get_post_type( $carrier ) && 'publish' === get_post_status( $carrier ) ) {
+			--$sold;
+		}
+
+		return $sold <= 0;
 	}
 
 	/**
@@ -244,12 +252,8 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		// Note: /service-order/{id}/ is handled by Plugin::register_rewrite_rules()
 		// via the wpss_service_order query var → TemplateLoader → order-view.php.
 
-		// Account pages.
-		add_rewrite_rule(
-			'^account/([^/]+)/?$',
-			'index.php?wpss_account=1&wpss_account_page=$matches[1]',
-			'top'
-		);
+		// No /account/{page}/ rule: that base belongs to the site (Learnomy and other plugins answer
+		// /account/billing/ and friends). [wpss_account] still reads ?wpss_account_page= from the query string.
 
 		// Payment callback.
 		add_rewrite_rule(
@@ -385,7 +389,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		);
 
 		// Use get_header/get_footer for theme integration.
-		get_header();
+		wpss_get_header();
 		?>
 		<main id="primary" class="site-main">
 			<?php
@@ -428,7 +432,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			</div>
 		</main>
 		<?php
-		get_footer();
+		wpss_get_footer();
 	}
 
 	/**

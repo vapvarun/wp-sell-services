@@ -142,6 +142,150 @@ function wpss_get_template_part( string $slug, string $name = '', array $args = 
 }
 
 /**
+ * Resolve a template file: the theme's `wp-sell-services/` folder first, then the plugin's.
+ *
+ * Use it wherever a template is included in place and must share the caller's variables.
+ * Never build `WPSS_PLUGIN_DIR . 'templates/...'` for a template, a theme override would be ignored.
+ *
+ * @since 1.9.0
+ *
+ * @param string $template_name Path under templates/, e.g. 'order/tip-view.php'.
+ * @return string Absolute path of the file to include.
+ */
+function wpss_locate_template( string $template_name ): string {
+	$template = locate_template( 'wp-sell-services/' . $template_name );
+
+	if ( ! $template ) {
+		$template = WPSS_PLUGIN_DIR . 'templates/' . $template_name;
+	}
+
+	/** This filter is documented in src/functions/templates.php wpss_get_template() */
+	return (string) apply_filters( 'wpss_get_template', $template, $template_name, array() );
+}
+
+/**
+ * Read the `@version` a template file declares in its header.
+ *
+ * @since 1.9.0
+ *
+ * @param string $file Absolute path.
+ * @return string Version, or '' when the file declares none.
+ */
+function wpss_template_version( string $file ): string {
+	$head = (string) file_get_contents( $file, false, null, 0, 4096 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+	return preg_match( '/^[ \t\/*#@]*@version\s+(\S+)/mi', $head, $m ) ? $m[1] : '';
+}
+
+/**
+ * Templates a theme overrides, with the version each side declares.
+ *
+ * A template that changes in a release bumps its `@version`; an override older than the shipped
+ * file is `outdated`, one that declares no version is `unversioned` (copied before versions existed).
+ *
+ * @since 1.9.0
+ *
+ * @param string[]|null $dirs Folders to scan; defaults to the child and parent theme `wp-sell-services/` folders.
+ * @return array<int, array{path:string, file:string, theirs:string, shipped:string, status:string}>
+ */
+function wpss_get_template_overrides( ?array $dirs = null ): array {
+	if ( null === $dirs ) {
+		$dirs = array_unique( array( get_stylesheet_directory() . '/wp-sell-services', get_template_directory() . '/wp-sell-services' ) );
+	}
+
+	$rows = array();
+	foreach ( $dirs as $dir ) {
+		if ( ! is_dir( $dir ) ) {
+			continue;
+		}
+		$base = trailingslashit( $dir );
+		foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ) ) as $file ) {
+			if ( 'php' !== $file->getExtension() ) {
+				continue;
+			}
+			$path    = ltrim( str_replace( '\\', '/', substr( $file->getPathname(), strlen( $base ) ) ), '/' );
+			$shipped = WPSS_PLUGIN_DIR . 'templates/' . $path;
+			if ( isset( $rows[ $path ] ) || ! is_file( $shipped ) ) {
+				continue; // The child theme wins; a file we do not ship is not ours.
+			}
+			$theirs  = wpss_template_version( $file->getPathname() );
+			$current = wpss_template_version( $shipped );
+			if ( '' === $theirs ) {
+				$status = 'unversioned';
+			} else {
+				$status = version_compare( $theirs, $current, '<' ) ? 'outdated' : 'current';
+			}
+			$rows[ $path ] = array(
+				'path'    => $path,
+				'file'    => $file->getPathname(),
+				'theirs'  => $theirs,
+				'shipped' => $current,
+				'status'  => $status,
+			);
+		}
+	}
+	ksort( $rows );
+
+	return array_values( $rows );
+}
+
+/**
+ * Open the page chrome for a plugin template that is not a block template.
+ *
+ * Classic themes: get_header(). Block themes have no header.php, so get_header() logs a core
+ * deprecation and prints core's theme-compat chrome instead of the theme's. There the document
+ * shell is printed here and the theme's own header template part is rendered.
+ *
+ * @since 1.9.0
+ *
+ * @return void
+ */
+function wpss_get_header(): void {
+	if ( ! wp_is_block_theme() ) {
+		get_header();
+		return;
+	}
+	// Core hooks the <title> only inside its own template canvas, and block themes declare no title-tag support.
+	if ( ! has_action( 'wp_head', '_block_template_render_title_tag' ) && ! current_theme_supports( 'title-tag' ) ) {
+		add_action( 'wp_head', '_block_template_render_title_tag', 1 );
+	}
+	?>
+<!DOCTYPE html>
+<html <?php language_attributes(); ?>>
+<head>
+<meta charset="<?php bloginfo( 'charset' ); ?>">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+	<?php wp_head(); ?>
+</head>
+<body <?php body_class(); ?>>
+	<?php wp_body_open(); ?>
+<div class="wp-site-blocks">
+	<?php block_template_part( 'header' ); ?>
+	<?php
+}
+
+/**
+ * Close the page chrome opened by wpss_get_header().
+ *
+ * @since 1.9.0
+ *
+ * @return void
+ */
+function wpss_get_footer(): void {
+	if ( ! wp_is_block_theme() ) {
+		get_footer();
+		return;
+	}
+	block_template_part( 'footer' );
+	?>
+</div>
+	<?php wp_footer(); ?>
+</body>
+</html>
+	<?php
+}
+
+/**
  * Get template.
  *
  * @param string $template_name Template name.
@@ -504,7 +648,7 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 	} else {
 		$created_ts = $created ? strtotime( (string) $created ) : time();
 	}
-	$time_text = wp_date( get_option( 'time_format' ), $created_ts );
+	$time_text = wpss_date_label( $created_ts, '—', get_option( 'time_format' ) );
 
 	// Normalise attachments + read_by to arrays.
 	$attachments = $message->attachments ?? array();
@@ -665,6 +809,21 @@ function wpss_register_design_system( bool $enqueue = false ): void {
 function wpss_enqueue_order_view_style(): void {
 	wpss_register_design_system();
 	wpss_enqueue_style( 'wpss-order-view', 'assets/css/order-view.css' );
+}
+
+/**
+ * Enqueue the notification list stylesheet (assets/css/notifications.css).
+ *
+ * The list renders on the dashboard, My Account and the admin Notifications page from one
+ * partial, which calls this before its markup.
+ *
+ * @since 1.9.0
+ *
+ * @return void
+ */
+function wpss_enqueue_notifications_style(): void {
+	wpss_register_design_system();
+	wpss_enqueue_style( 'wpss-notifications', 'assets/css/notifications.css' );
 }
 
 /**

@@ -271,11 +271,11 @@ class ReportsPage {
 			</p>
 
 			<div class="wpss-listing-stats wpss-reports-stats">
-				<div class="wpss-stat-card wpss-stat-pending">
+				<div class="wpss-admin-stat-card wpss-stat-pending">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $open_count ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Needs review', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-stat-card wpss-stat-completed">
+				<div class="wpss-admin-stat-card wpss-stat-completed">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $done_count ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Dealt with', 'wp-sell-services' ); ?></span>
 				</div>

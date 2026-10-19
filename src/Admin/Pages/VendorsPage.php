@@ -113,6 +113,7 @@ class VendorsPage {
 		add_action( 'wp_ajax_wpss_moderate_portfolio_item', array( $this, 'ajax_moderate_portfolio_item' ) );
 		add_action( 'admin_post_wpss_vendor_role_cleanup', array( $this, 'handle_role_cleanup' ) );
 		add_action( 'admin_post_wpss_vendor_role_undo', array( $this, 'handle_role_undo' ) );
+		add_action( 'admin_post_wpss_write_off_balance', array( $this, 'handle_write_off_balance' ) );
 		add_action( 'pre_get_users', array( $this, 'filter_users_to_role_only' ) );
 	}
 
@@ -351,7 +352,7 @@ class VendorsPage {
 		// per-row PHP call to get_summary(), which would N+1 at 500 vendors.
 		// $debit_types_sql values are sanitize_key()'d in the helper, safe to
 		// interpolate into the IN () list.
-		$debit_types_sql   = wpss_get_ledger_debit_types_sql();
+		$debit_types_sql   = wpss_get_ledger_not_earned_types_sql();
 		$ledger_earned_sql = "(SELECT COALESCE( SUM( wt.amount ), 0 )
 			FROM {$wallet_table} wt
 			WHERE wt.user_id = vp.user_id
@@ -568,6 +569,28 @@ class VendorsPage {
 				? wpss_get_negative_ledger_balances( 20 )
 				: array();
 
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display of the redirect result only.
+			$wpss_wo = isset( $_GET['wpss_write_off'] ) ? sanitize_key( wp_unslash( $_GET['wpss_write_off'] ) ) : '';
+			if ( '' !== $wpss_wo ) :
+				?>
+				<div class="notice <?php echo 'ok' === $wpss_wo ? 'notice-success' : 'notice-error'; ?> is-dismissible">
+					<p>
+						<?php
+						echo esc_html(
+							'ok' === $wpss_wo
+								? __( 'Negative balance written off. The entry is in the vendor\'s ledger.', 'wp-sell-services' )
+								: ( 'reason_required' === $wpss_wo
+									? __( 'A reason is required to write off a balance.', 'wp-sell-services' )
+									: ( 'not_negative' === $wpss_wo
+										? __( 'That vendor no longer has a negative balance, so nothing was written off.', 'wp-sell-services' )
+										: __( 'The balance could not be written off.', 'wp-sell-services' ) ) )
+						);
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+
+			<?php
 			if ( $wpss_negative ) :
 				$wpss_owed = 0.0;
 				foreach ( $wpss_negative as $wpss_row ) {
@@ -617,6 +640,17 @@ class VendorsPage {
 								}
 								printf( ' <strong>%s</strong>', esc_html( wpss_format_price( $wpss_row['balance'] ) ) );
 								?>
+								<details class="wpss-negative-balances__writeoff">
+									<summary><?php esc_html_e( 'Write off', 'wp-sell-services' ); ?></summary>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+										<input type="hidden" name="action" value="wpss_write_off_balance" />
+										<input type="hidden" name="vendor_id" value="<?php echo esc_attr( (string) $wpss_row['user_id'] ); ?>" />
+										<?php wp_nonce_field( 'wpss_write_off_balance_' . $wpss_row['user_id'] ); ?>
+										<label for="wpss-wo-reason-<?php echo esc_attr( (string) $wpss_row['user_id'] ); ?>"><?php esc_html_e( 'Reason (kept in the ledger)', 'wp-sell-services' ); ?></label>
+										<input type="text" id="wpss-wo-reason-<?php echo esc_attr( (string) $wpss_row['user_id'] ); ?>" name="reason" class="regular-text" required maxlength="200" />
+										<button type="submit" class="button"><?php esc_html_e( 'Write off to zero', 'wp-sell-services' ); ?></button>
+									</form>
+								</details>
 							</li>
 						<?php endforeach; ?>
 					</ul>
@@ -624,11 +658,11 @@ class VendorsPage {
 			<?php endif; ?>
 
 			<div class="wpss-listing-stats wpss-vendor-stats">
-				<div class="wpss-stat-card">
+				<div class="wpss-admin-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['total'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Total Vendors', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-stat-card">
+				<div class="wpss-admin-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( $stats['total_earnings'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Total Earned', 'wp-sell-services' ); ?></span>
 				</div>
@@ -872,6 +906,35 @@ class VendorsPage {
 	}
 
 	/**
+	 * Write off a vendor's negative balance (admin-post).
+	 *
+	 * @return void
+	 */
+	public function handle_write_off_balance(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), 403 );
+		}
+
+		$vendor_id = absint( $_POST['vendor_id'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified on the next line.
+		check_admin_referer( 'wpss_write_off_balance_' . $vendor_id );
+
+		$result = ( new \WPSellServices\Services\EarningsService() )->write_off_negative_balance(
+			$vendor_id,
+			sanitize_text_field( wp_unslash( (string) ( $_POST['reason'] ?? '' ) ) ),
+			get_current_user_id()
+		);
+
+		wp_safe_redirect(
+			add_query_arg(
+				'wpss_write_off',
+				$result['success'] ? 'ok' : (string) ( $result['code'] ?? 'failed' ),
+				admin_url( 'admin.php?page=wpss-vendors' )
+			)
+		);
+		exit;
+	}
+
+	/**
 	 * Undo the last role cleanup (admin-post).
 	 *
 	 * @return void
@@ -946,7 +1009,7 @@ class VendorsPage {
 								printf(
 									/* translators: %s: date the vendor joined. */
 									esc_html__( 'Joined %s', 'wp-sell-services' ),
-									esc_html( wp_date( get_option( 'date_format' ), strtotime( $joined ) ) )
+									esc_html( wpss_date_label( $joined ) )
 								);
 								?>
 							</div>
@@ -1141,7 +1204,7 @@ class VendorsPage {
 						printf(
 							/* translators: %s: date */
 							esc_html__( 'Member since: %s', 'wp-sell-services' ),
-							esc_html( wp_date( get_option( 'date_format' ), strtotime( $vendor->created_at ?? $user->user_registered ) ) )
+							esc_html( wpss_date_label( $vendor->created_at ?? $user->user_registered ) )
 						);
 						?>
 					</p>
@@ -1554,7 +1617,7 @@ class VendorsPage {
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Verified At', 'wp-sell-services' ); ?></span>
 					<span class="wpss-info-value">
-						<?php echo $profile->verified_at ? esc_html( wp_date( get_option( 'date_format' ), strtotime( $profile->verified_at ) ) ) : '-'; ?>
+						<?php echo $profile->verified_at ? esc_html( wpss_date_label( $profile->verified_at ) ) : '-'; ?>
 					</span>
 				</div>
 				<div class="wpss-info-item">
@@ -1671,7 +1734,7 @@ class VendorsPage {
 						</td>
 						<td><?php echo $price ? esc_html( wpss_format_price( (float) $price ) ) : '-'; ?></td>
 						<td><?php echo esc_html( number_format_i18n( $order_count ) ); ?></td>
-						<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $service->post_date ) ) ); ?></td>
+						<td><?php echo esc_html( wpss_date_label( $service->post_date_gmt ) ); ?></td>
 						<td>
 							<a href="<?php echo esc_url( get_edit_post_link( $service->ID ) ); ?>" class="button button-small">
 								<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
@@ -1816,7 +1879,7 @@ class VendorsPage {
 									<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 								</span>
 							</td>
-							<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $order->created_at ) ) ); ?></td>
+							<td><?php echo esc_html( wpss_date_label( $order->created_at ) ); ?></td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>
@@ -2004,9 +2067,9 @@ class VendorsPage {
 										<?php echo esc_html( ucfirst( $withdrawal->status ) ); ?>
 									</span>
 								</td>
-								<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $withdrawal->created_at ) ) ); ?></td>
+								<td><?php echo esc_html( wpss_date_label( $withdrawal->created_at ) ); ?></td>
 								<td>
-									<?php echo $withdrawal->processed_at ? esc_html( wp_date( get_option( 'date_format' ), strtotime( $withdrawal->processed_at ) ) ) : '-'; ?>
+									<?php echo $withdrawal->processed_at ? esc_html( wpss_date_label( $withdrawal->processed_at ) ) : '-'; ?>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -2119,7 +2182,7 @@ class VendorsPage {
 					<tbody>
 						<?php foreach ( $transactions as $txn ) : ?>
 							<tr>
-								<td><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $txn->created_at ) ) ); ?></td>
+								<td><?php echo esc_html( wpss_datetime_label( $txn->created_at ) ); ?></td>
 								<td><?php echo esc_html( ucwords( str_replace( '_', ' ', (string) $txn->type ) ) ); ?></td>
 								<td><?php echo esc_html( (string) ( $txn->description ?? '' ) ); ?></td>
 								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount ) ); ?></td>
@@ -2228,7 +2291,7 @@ class VendorsPage {
 									<strong><?php echo esc_html( $review->reviewer_display_name ?? __( 'Anonymous', 'wp-sell-services' ) ); ?></strong>
 								</div>
 								<span class="wpss-review-meta">
-									<?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?>
+									<?php echo esc_html( wpss_date_label( $review->created_at ) ); ?>
 									<?php if ( $review->service_title ) : ?>
 										• <?php echo esc_html( $review->service_title ); ?>
 									<?php endif; ?>
@@ -2353,7 +2416,7 @@ class VendorsPage {
 										<span class="wpss-status-line__muted">&mdash;</span>
 									<?php endif; ?>
 								</td>
-								<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( (string) $item->created_at ) ) ); ?></td>
+								<td><?php echo esc_html( wpss_date_label( (string) $item->created_at ) ); ?></td>
 								<td>
 									<button type="button" class="button button-small wpss-portfolio-action"
 											data-item-id="<?php echo esc_attr( (string) $item->id ); ?>"
@@ -2543,7 +2606,7 @@ class VendorsPage {
 				<?php if ( $profile->verified_at ) : ?>
 					<p>
 						<strong><?php esc_html_e( 'Verified:', 'wp-sell-services' ); ?></strong>
-						<?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $profile->verified_at ) ) ); ?>
+						<?php echo esc_html( wpss_date_label( $profile->verified_at ) ); ?>
 					</p>
 				<?php endif; ?>
 			</div>

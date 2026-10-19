@@ -777,6 +777,62 @@ function wpss_count_vendor_services( int $vendor_id, $post_status = 'publish', a
 }
 
 /**
+ * The WP_Query args for a vendor's My Services list, optionally narrowed to one status tile.
+ *
+ * A rejected service is a draft carrying `_wpss_moderation_status = rejected`, so Drafts leaves those out
+ * and Rejected selects only them - the same split the status tiles count. An unknown filter is "all".
+ *
+ * @since 1.9.0
+ *
+ * @param int    $vendor_id Vendor user ID.
+ * @param string $filter    One of publish, draft, pending, rejected, or '' for every status.
+ * @param int    $page      Page number, 1-based.
+ * @return array<string, mixed>
+ */
+function wpss_vendor_services_list_args( int $vendor_id, string $filter = '', int $page = 1 ): array {
+	$args = array(
+		'post_type'      => 'wpss_service',
+		'author'         => $vendor_id,
+		'posts_per_page' => 20,
+		'paged'          => max( 1, $page ),
+		'post_status'    => array( 'publish', 'draft', 'pending' ),
+		'orderby'        => 'date',
+		'order'          => 'DESC',
+	);
+
+	if ( in_array( $filter, array( 'publish', 'draft', 'pending' ), true ) ) {
+		$args['post_status'] = $filter;
+	}
+
+	if ( 'draft' === $filter ) {
+		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed key, bounded by one author.
+		$args['meta_query'] = array(
+			'relation' => 'OR',
+			array(
+				'key'     => '_wpss_moderation_status',
+				'compare' => 'NOT EXISTS',
+			),
+			array(
+				'key'     => '_wpss_moderation_status',
+				'value'   => 'rejected',
+				'compare' => '!=',
+			),
+		);
+	} elseif ( 'rejected' === $filter ) {
+		$args['post_status'] = 'draft';
+		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed key, bounded by one author.
+		$args['meta_query'] = array(
+			array(
+				'key'   => '_wpss_moderation_status',
+				'value' => 'rejected',
+			),
+		);
+	}
+
+	return $args;
+}
+
+/**
  * Proof points for the Become a Vendor page.
  *
  * Real figures, read from this marketplace rather than invented, and each one
@@ -875,16 +931,7 @@ function wpss_render_vendor_vacation_notice( int $vendor_id ): void {
 		$message = __( 'This seller is currently on vacation.', 'wp-sell-services' );
 	}
 
-	$return_display = '';
-	$return_date    = $profile->vacation_return_date ?? null;
-
-	if ( $return_date ) {
-		$timestamp = strtotime( (string) $return_date );
-
-		if ( $timestamp ) {
-			$return_display = date_i18n( get_option( 'date_format' ), $timestamp );
-		}
-	}
+	$return_display = wpss_calendar_date_label( $profile->vacation_return_date ?? null, '' );
 
 	/**
 	 * Filter the vendor vacation notice before it renders.

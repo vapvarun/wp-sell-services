@@ -4,8 +4,12 @@
  *
  * Displays vendor information card on service pages.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/vendor-card.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var int    $vendor_id         Vendor user ID.
  * @var object $vendor            Vendor WP_User object.
@@ -143,7 +147,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 				<i data-lucide="calendar" class="wpss-icon" aria-hidden="true"></i>
 			</span>
 			<span class="wpss-detail-label"><?php esc_html_e( 'Member since', 'wp-sell-services' ); ?></span>
-			<span class="wpss-detail-value"><?php echo esc_html( wp_date( 'M Y', strtotime( $member_since ) ) ); ?></span>
+			<span class="wpss-detail-value"><?php echo esc_html( wpss_date_label( $member_since, '—', 'M Y' ) ); ?></span>
 		</li>
 
 		<?php if ( $response_time ) : ?>
@@ -169,7 +173,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 
 	<div class="wpss-vendor-actions">
 		<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor_id ) ); ?>"
-			class="wpss-btn wpss-btn-outline wpss-btn-block">
+			class="wpss-btn wpss-btn--outline wpss-btn--block">
 			<?php esc_html_e( 'View Profile', 'wp-sell-services' ); ?>
 		</a>
 	</div>

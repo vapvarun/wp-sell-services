@@ -2,7 +2,7 @@
 
 Vendor reputation is built one review at a time. This guide explains how ratings shape a vendor's standing on your marketplace and how you can manage reviews as an admin.
 
-![The review moderation queue](../images/admin-review-moderation.png)
+![The review moderation queue](../images/admin-review-moderation.webp)
 
 ## How Reputation Works
 
@@ -54,8 +54,8 @@ By default, every review is published as soon as the buyer submits it. The vendo
 
 If you want to review submissions before they go public:
 
-1. Go to **Settings > General**.
-2. Enable **Moderate Reviews**.
+1. Go to **Settings > Vendor Settings**.
+2. Enable **Review Moderation** ("Hold new reviews for admin approval before they are published").
 3. Save changes.
 
 With moderation enabled, new reviews go into "Pending" status. They are hidden from the public until you approve them.
@@ -64,11 +64,9 @@ With moderation enabled, new reviews go into "Pending" status. They are hidden f
 
 Go to **Sell Services > Review Moderation** to manage pending reviews.
 
-**To approve:** Click **Approve**. The review goes live instantly, the vendor is notified, and ratings are updated.
+**To approve:** Click **Approve**. The review goes live instantly and the service and vendor ratings are updated.
 
 **To reject:** Click **Reject**. The review stays hidden permanently. Only reject reviews that contain spam, personal attacks, harassment, prohibited content, or content unrelated to the actual service.
-
-You can also bulk-approve multiple reviews at once to save time.
 
 ### When to Enable Moderation
 
@@ -80,14 +78,13 @@ For established marketplaces with a trusted user base, auto-approval is usually 
 
 ## Admin Review Management
 
-From the Reviews page in your admin panel, you can:
+The **Review Moderation** page lists reviews newest first. You can:
 
-- **Filter** by status (Pending, Approved, Rejected), service, vendor, or rating.
-- **Sort** by date, rating, or service.
-- **Edit** a review's rating or text if needed (for example, to remove personal information or fix formatting).
-- **Change status** between pending, approved, and rejected.
+- **Filter** by status with the tabs: All, Pending, Approved, and Rejected.
+- **Search** by reviewer name or review text.
+- **Approve** or **Reject** each review. A rejected review can be approved later and an approved one rejected, so a decision is never final.
 
-Editing reviews should be rare and done only for clear policy reasons -- not to change the sentiment.
+Reviews are approved or rejected one at a time; there is no bulk action. A review's rating and text cannot be edited, so reject one that contains personal information rather than rewriting it.
 
 ## Reputation Recovery for Vendors
 

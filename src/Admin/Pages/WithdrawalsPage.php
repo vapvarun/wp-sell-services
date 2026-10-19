@@ -388,22 +388,22 @@ class WithdrawalsPage {
 
 			<!-- Stats Cards -->
 			<div class="wpss-listing-stats wpss-withdrawal-stats">
-				<div class="wpss-stat-card wpss-stat-pending">
+				<div class="wpss-admin-stat-card wpss-stat-pending">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['pending'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
 					<span class="wpss-stat-amount"><?php echo esc_html( wpss_format_price( $stats['pending_amount'] ) ); ?></span>
 				</div>
-				<div class="wpss-stat-card wpss-stat-approved">
+				<div class="wpss-admin-stat-card wpss-stat-approved">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['approved'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Approved, not yet paid', 'wp-sell-services' ); ?></span>
 					<span class="wpss-stat-amount"><?php echo esc_html( wpss_format_price( $stats['approved_amount'] ) ); ?></span>
 				</div>
-				<div class="wpss-stat-card wpss-stat-completed">
+				<div class="wpss-admin-stat-card wpss-stat-completed">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['completed'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
 					<span class="wpss-stat-amount"><?php echo esc_html( wpss_format_price( $stats['completed_amount'] ) ); ?></span>
 				</div>
-				<div class="wpss-stat-card wpss-stat-rejected">
+				<div class="wpss-admin-stat-card wpss-stat-rejected">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['rejected'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
 				</div>
@@ -646,14 +646,14 @@ class WithdrawalsPage {
 				// Stored in UTC since 1.8.0 (10351460106), shown in site time.
 				// Same short date as the Orders list, full date and time on hover.
 				?>
-				<span title="<?php echo esc_attr( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $withdrawal->created_at . ' UTC' ) ) ); ?>"><?php echo esc_html( wp_date( 'M j, Y', strtotime( $withdrawal->created_at . ' UTC' ) ) ); ?></span>
+				<span title="<?php echo esc_attr( wpss_datetime_label( $withdrawal->created_at ) ); ?>"><?php echo esc_html( wpss_date_label( $withdrawal->created_at, '—', 'M j, Y' ) ); ?></span>
 				<?php if ( ! empty( $withdrawal->processed_at ) ) : ?>
 					<div class="wpss-withdrawal-details">
 						<?php
 						printf(
 							/* translators: %s: date */
 							esc_html__( 'Processed: %s', 'wp-sell-services' ),
-							esc_html( wp_date( 'M j, Y', strtotime( $withdrawal->processed_at . ' UTC' ) ) )
+							esc_html( wpss_date_label( $withdrawal->processed_at, '—', 'M j, Y' ) )
 						);
 						?>
 					</div>

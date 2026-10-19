@@ -9,8 +9,12 @@
  * Rows reuse the request-card markup, so the list stacks under 480px with the
  * same rules as Buyer Requests and needs no stylesheet of its own.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/proposals.php
+ *
  * @package WPSellServices\Templates
  * @since   1.7.1
+ * @version 1.9.0
  *
  * @var int           $user_id        Current user ID.
  * @var VendorService $vendor_service Vendor service instance.
@@ -88,7 +92,7 @@ if ( $request_ids ) {
 				$status        = (string) $proposal->status;
 				$status_text   = $status_labels[ $status ] ?? ucfirst( $status );
 				$request_title = get_the_title( $request_id );
-				$sent_on       = $proposal->created_at ? wp_date( get_option( 'date_format' ), strtotime( (string) $proposal->created_at ) ) : '';
+				$sent_on       = $proposal->created_at ? wpss_date_label( (string) $proposal->created_at ) : '';
 				?>
 				<div class="wpss-request-card">
 					<div class="wpss-request-card__main">

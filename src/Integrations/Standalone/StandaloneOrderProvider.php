@@ -349,6 +349,26 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			return true;
 		}
 
+		// A cancelled or refunded order is closed. Marking it paid revived a declined milestone
+		// phase under a completed parent when a stale store link was still paid. The payment
+		// is announced instead, so the owner can refund it.
+		if ( in_array( $order->status ?? '', array( ServiceOrder::STATUS_CANCELLED, ServiceOrder::STATUS_REFUNDED ), true ) ) {
+			wpss_log( sprintf( 'mark_as_paid refused for order #%d: it is %s (incoming transaction %s)', $order_id, $order->status, $transaction_id ), 'warning' );
+
+			/**
+			 * Fires when a payment arrives for an order that is already closed.
+			 *
+			 * @since 1.9.0
+			 *
+			 * @param int    $order_id       WPSS order ID.
+			 * @param string $transaction_id Gateway transaction.
+			 * @param string $payment_method Gateway slug.
+			 */
+			do_action( 'wpss_payment_for_closed_order', $order_id, $transaction_id, $payment_method );
+
+			return false;
+		}
+
 		// Sub-order platforms (tip, extension, milestone) do NOT go through
 		// the requirements workflow — they have their own service handler
 		// wired to `wpss_order_paid` which credits the vendor wallet and
@@ -398,8 +418,16 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			}
 		}
 
+		// A service with no requirement questions starts at once; the others wait for the buyer.
+		$paid_status = ServiceOrder::STATUS_PENDING_REQUIREMENTS;
+
+		if ( ! $is_sub_order && ! wpss_order_needs_requirements( $order ) ) {
+			$paid_status               = ServiceOrder::STATUS_IN_PROGRESS;
+			$update_data['started_at'] = $update_data['paid_at'];
+		}
+
 		if ( ! $is_sub_order ) {
-			$update_data['status'] = ServiceOrder::STATUS_PENDING_REQUIREMENTS;
+			$update_data['status'] = $paid_status;
 
 			// Calculate delivery deadline only if not already set (e.g., by convert_to_order).
 			if ( empty( $order->delivery_deadline ) ) {
@@ -425,8 +453,12 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			// Fire status-change hooks only for real service orders. Sub-orders
 			// manage their own lifecycle via their service handler on wpss_order_paid.
 			if ( ! $is_sub_order ) {
-				do_action( 'wpss_order_status_changed', $order_id, ServiceOrder::STATUS_PENDING_REQUIREMENTS, ServiceOrder::STATUS_PENDING_PAYMENT );
-				do_action( 'wpss_order_status_pending_requirements', $order_id, ServiceOrder::STATUS_PENDING_PAYMENT );
+				do_action( 'wpss_order_status_changed', $order_id, $paid_status, ServiceOrder::STATUS_PENDING_PAYMENT );
+				if ( ServiceOrder::STATUS_IN_PROGRESS === $paid_status ) {
+					do_action( 'wpss_order_status_in_progress', $order_id, ServiceOrder::STATUS_PENDING_PAYMENT );
+				} else {
+					do_action( 'wpss_order_status_pending_requirements', $order_id, ServiceOrder::STATUS_PENDING_PAYMENT );
+				}
 			}
 
 			/**
@@ -565,7 +597,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 	 * @param int $order_id Order ID.
 	 * @return bool
 	 */
-	public function has_service_items( int $order_id ): bool {
+	public function has_sellable_items( int $order_id ): bool {
 		$order = $this->get_order( $order_id );
 		return $order !== null;
 	}
@@ -578,7 +610,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 	 * @param int $order_id Order ID.
 	 * @return ServiceItem[]
 	 */
-	public function get_service_items( int $order_id ): array {
+	public function get_sellable_items( int $order_id ): array {
 		$item = $this->get_order_item( $order_id );
 		return $item ? [ $item ] : [];
 	}

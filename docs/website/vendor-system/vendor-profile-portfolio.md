@@ -6,7 +6,7 @@ Your vendor profile is your marketplace identity. A complete, professional profi
 
 Go to **Dashboard > Profile** to edit your information.
 
-![Vendor profile editor](../images/vendor-profile-editor.png)
+![Vendor profile editor](../images/vendor-profile-editor.webp)
 
 ### What to Fill In
 
@@ -74,15 +74,15 @@ Your profile appears in several places:
 
 This is your full public page, showing your cover image, avatar, bio, location, social links, all your services, portfolio gallery, reviews, and statistics.
 
-![Public vendor profile page](../images/frontend-vendor-profile-full.png)
+![Public vendor profile page](../images/frontend-vendor-profile-full.webp)
 
-![Vendor profile reviews section](../images/frontend-vendor-profile-reviews.png)
+![Vendor profile reviews section](../images/frontend-vendor-profile-reviews.webp)
 
 ### Service Pages
 
 A summary of your profile appears in the sidebar of each service page -- your avatar, name, rating, response time, and a link to your full profile.
 
-![Vendor sidebar on service page](../images/frontend-vendor-sidebar.png)
+![Vendor sidebar on service page](../images/frontend-vendor-sidebar.webp)
 
 ### Search Results
 

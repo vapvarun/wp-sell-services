@@ -37,7 +37,7 @@ function wpss_settings_defaults(): array {
 			'currency'                  => wpss_detect_currency_from_locale(),
 			'ecommerce_platform'        => 'auto',
 			'checkout_badges_enabled'   => true,
-			'use_marketplace_cart_link' => false,
+			'use_marketplace_cart_link' => '',
 			'checkout_account_creation' => false,
 		),
 		'wpss_commission'    => array(
@@ -71,7 +71,6 @@ function wpss_settings_defaults(): array {
 		'wpss_orders'        => array(
 			'auto_complete_days'        => 3,
 			'allow_disputes'            => true,
-			'allow_vendor_refunds'      => false,
 			'dispute_window_days'       => 14,
 			'auto_dispute_late_days'    => 3,
 			'allow_late_requirements'   => false,
@@ -95,6 +94,7 @@ function wpss_settings_defaults(): array {
 			'notify_dispute_opened'         => true,
 			'notify_withdrawal_requested'   => true,
 			'notify_withdrawal_approved'    => true,
+			'notify_withdrawal_completed'   => true,
 			'notify_withdrawal_rejected'    => true,
 			'notify_proposal_submitted'     => true,
 			'notify_proposal_accepted'      => true,

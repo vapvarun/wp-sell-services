@@ -14,6 +14,29 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * Why an order that is not pending_payment cannot be paid, in words the buyer can act on.
+ *
+ * Every pay door answered "This order has already been paid." for any status but
+ * pending_payment, so a buyer who was charged and then refunded on a cancelled order read it as a
+ * double charge (Basecamp 10416548799). Cancelled and refunded orders now say what happened.
+ *
+ * @since 1.9.0
+ *
+ * @param \WPSellServices\Models\ServiceOrder $order The order.
+ * @return string Message.
+ */
+function wpss_get_order_not_payable_message( $order ): string {
+	switch ( (string) ( $order->status ?? '' ) ) {
+		case 'cancelled':
+			return __( 'This order was cancelled and can no longer be paid.', 'wp-sell-services' );
+		case 'refunded':
+			return __( 'This order was refunded and can no longer be paid.', 'wp-sell-services' );
+		default:
+			return __( 'This order has already been paid.', 'wp-sell-services' );
+	}
+}
+
+/**
  * Get order by ID.
  *
  * @param int $order_id Order ID.
@@ -79,81 +102,6 @@ function wpss_generate_order_number(): string {
 	return $prefix . strtoupper( wp_generate_password( 8, false ) ) . '-' . time();
 }
 
-
-/**
- * The words for a cancellation reason.
- *
- * The one list: the order screens, the notification, the email and the status
- * history each carried their own copy, and an immediate cancel stored the raw
- * key ("changed_mind") where a person would read it (Basecamp 10351457462).
- * A reason that is not one of the keys - free text from a vendor or an app -
- * is returned as written.
- *
- * @since 1.8.0
- *
- * @param string $reason Reason key, or free text.
- * @return string
- */
-function wpss_get_cancellation_reason_label( string $reason ): string {
-	$labels = array(
-		'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
-		'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
-		'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
-		'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
-		'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
-		'other'                => __( 'Other', 'wp-sell-services' ),
-	);
-
-	return $labels[ $reason ] ?? $reason;
-}
-
-/**
- * Get order status label.
- *
- * @param string $status Status key.
- * @return string
- */
-function wpss_get_order_status_label( string $status ): string {
-	$statuses = wpss_get_order_statuses();
-
-	return $statuses[ $status ] ?? ucfirst( str_replace( '_', ' ', $status ) );
-}
-
-/**
- * Get all order statuses.
- *
- * @return array
- */
-function wpss_get_order_statuses(): array {
-	$statuses = array(
-		'pending_payment'        => __( 'Pending Payment', 'wp-sell-services' ),
-		'pending_requirements'   => __( 'Pending Requirements', 'wp-sell-services' ),
-		'pending_approval'       => __( 'Pending Approval', 'wp-sell-services' ),
-		'pending'                => __( 'Pending', 'wp-sell-services' ),
-		'accepted'               => __( 'Accepted', 'wp-sell-services' ),
-		'rejected'               => __( 'Rejected', 'wp-sell-services' ),
-		'requirements_submitted' => __( 'Requirements Submitted', 'wp-sell-services' ),
-		'in_progress'            => __( 'In Progress', 'wp-sell-services' ),
-		'delivered'              => __( 'Delivered', 'wp-sell-services' ),
-		'on_hold'                => __( 'On Hold', 'wp-sell-services' ),
-		'late'                   => __( 'Late', 'wp-sell-services' ),
-		'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
-		'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
-		'completed'              => __( 'Completed', 'wp-sell-services' ),
-		'cancelled'              => __( 'Cancelled', 'wp-sell-services' ),
-		'disputed'               => __( 'Disputed', 'wp-sell-services' ),
-		'refunded'               => __( 'Refunded', 'wp-sell-services' ),
-		'partially_refunded'     => __( 'Partially Refunded', 'wp-sell-services' ),
-	);
-
-	/**
-	 * Filter order statuses.
-	 *
-	 * @param array $statuses Order statuses array.
-	 */
-	return apply_filters( 'wpss_order_statuses', $statuses );
-}
-
 /**
  * Check if user can view order.
  *
@@ -217,6 +165,63 @@ function wpss_order_actor_role( object $order, int $user_id ): string {
 	}
 
 	return '';
+}
+
+/**
+ * The platform that collected the money for an order, or '' when WP Sell Services did.
+ *
+ * Standalone checkout and our own gateways collect the money here, so we refund it
+ * here. An order paid through a shop platform (WooCommerce, EDD, FluentCart) is
+ * refunded in that platform; we only record the refund it reports. Ownership is
+ * decided by where the order was paid, never by its payment method: a Woo order
+ * can carry "stripe" as its method and still belongs to Woo.
+ *
+ * @since 1.9.0
+ *
+ * @param object $order Order row or model.
+ * @return string Human-readable platform name, or '' when we collected the money.
+ */
+function wpss_order_money_rail( object $order ): string {
+	/**
+	 * Filters the platform that owns an order's money.
+	 *
+	 * An ecommerce adapter returns its name for orders it collected (for
+	 * example "WooCommerce"); everything else is ours to refund.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param string $rail  Platform name, '' for orders we collected.
+	 * @param object $order Order row or model.
+	 */
+	return (string) apply_filters( 'wpss_order_money_rail', '', $order );
+}
+
+/**
+ * Whether a user may refund an order from the dashboard.
+ *
+ * Admin only by default. The filter is the extension point for letting vendors
+ * (or a support role) refund; it must also size the amount, since the verb only
+ * knows full refunds today.
+ *
+ * @since 1.9.0
+ *
+ * @param string $actor   Role from wpss_order_actor_role().
+ * @param object $order   Order being refunded.
+ * @param int    $user_id Acting user ID.
+ * @return bool
+ */
+function wpss_actor_can_refund_order( string $actor, object $order, int $user_id ): bool {
+	/**
+	 * Filters whether a user may refund an order.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param bool   $allowed Default: true for the admin actor only.
+	 * @param object $order   Order being refunded.
+	 * @param int    $user_id Acting user ID.
+	 * @param string $actor   'admin', 'vendor', 'buyer' or ''.
+	 */
+	return (bool) apply_filters( 'wpss_can_refund_order', 'admin' === $actor, $order, $user_id, $actor );
 }
 
 /**
@@ -325,386 +330,6 @@ function wpss_get_order_url( int $order_id, string $section = '', ?object $order
 }
 
 /**
- * Human label for a submitted requirement key.
- *
- * The buyer's freeform brief is stored under the key `description`, and both
- * the order view and the admin order screen had to decide what to call it.
- * Only the order view did: admin printed the raw key, so the site owner read
- * "description" where the buyer and seller read "What the buyer asked for"
- * (Basecamp 10254444197). One flow, two labels.
- *
- * Any other key is a question the owner configured, so it is titled from its
- * own text rather than renamed.
- *
- * @since 1.7.0
- *
- * @param string $key Submitted field key.
- * @return string Label to show.
- */
-function wpss_requirement_field_label( string $key ): string {
-	$label = 'description' === $key
-		? __( 'What the buyer asked for', 'wp-sell-services' )
-		: ucfirst( str_replace( array( '_', '-' ), ' ', $key ) );
-
-	/**
-	 * Filter the label shown for a submitted requirement field.
-	 *
-	 * @since 1.7.0
-	 *
-	 * @param string $label Resolved label.
-	 * @param string $key   Raw field key.
-	 */
-	return (string) apply_filters( 'wpss_requirement_field_label', $label, $key );
-}
-
-/**
- * Get order requirements URL.
- *
- * Pretty shape: `/{dashboard}/orders/{id}/requirements/`.
- *
- * A SUB-ORDER has no requirements step. A tip, a paid extension and a
- * milestone phase are all payments against work that already has its brief, so
- * sending the buyer to `/requirements/` gave them a URL and a page heading that
- * described something the screen was not - the content underneath is a tip
- * receipt or a phase receipt, and correct. Those land on the order itself.
- *
- * Every gateway routes its post-payment redirect through here, so fixing it in
- * one place covers Stripe, PayPal, offline and the intent service rather than
- * four separate redirects that would drift.
- *
- * @param int $order_id Order ID.
- * @return string
- */
-function wpss_get_order_requirements_url( int $order_id ): string {
-	$order = wpss_get_order( $order_id );
-
-	if ( ! $order ) {
-		return '';
-	}
-
-	$sub_order_platforms = function_exists( 'wpss_get_sub_order_platforms' ) ? wpss_get_sub_order_platforms() : array();
-
-	if ( in_array( (string) ( $order->platform ?? '' ), $sub_order_platforms, true ) ) {
-		return wpss_get_order_url( $order_id );
-	}
-
-	$dashboard_url = wpss_get_dashboard_url( 'orders' );
-
-	if ( $dashboard_url ) {
-		return wpss_append_dashboard_order( $dashboard_url, $order_id, 'requirements' );
-	}
-
-	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
-	return home_url( '/' . $order_slug . '/' . $order_id . '/requirements/' );
-}
-
-/**
- * Requirement field types a service may ask a buyer for.
- *
- * @since 1.7.1
- *
- * @return string[]
- */
-function wpss_requirement_types(): array {
-	return array( 'text', 'textarea', 'number', 'checkbox', 'select', 'multiselect', 'radio', 'file', 'date', 'url', 'email' );
-}
-
-/**
- * Requirement types a vendor can choose, with their labels.
- *
- * The one list every authoring surface renders from. Three had drifted: the
- * frontend wizard hardcoded four options, the admin metabox returned eight, and
- * the canonical whitelist above allows eleven. A vendor using the wizard - the
- * primary authoring path - could not add Number, Yes/No, Multiple Choice or
- * Date at all, though every one of them stores, renders and submits correctly
- * on the buyer's requirements form.
- *
- * Worse than the missing four: the two lists disagreed on what a label MEANT.
- * The wizard called `select` "Multiple Choice"; the metabox calls `select`
- * "Dropdown" and reserves "Multiple Choice" for `radio`. The same words
- * produced a different field depending on where the vendor was standing.
- *
- * Narrower than wpss_requirement_types() on purpose: `multiselect`, `url` and
- * `email` stay accepted for data already stored and for REST callers, but are
- * not offered in the authoring UI until they have a reviewed editing
- * experience. Widen here and both surfaces pick it up.
- *
- * @since 1.7.1
- *
- * @see Basecamp 10286129293
- *
- * @return array<string, string> Type slug => translated label.
- */
-function wpss_requirement_type_labels(): array {
-	return array(
-		'text'     => __( 'Short Text', 'wp-sell-services' ),
-		'textarea' => __( 'Long Text', 'wp-sell-services' ),
-		'number'   => __( 'Number', 'wp-sell-services' ),
-		'checkbox' => __( 'Yes/No', 'wp-sell-services' ),
-		'select'   => __( 'Dropdown', 'wp-sell-services' ),
-		'radio'    => __( 'Multiple Choice', 'wp-sell-services' ),
-		'file'     => __( 'File Upload', 'wp-sell-services' ),
-		'date'     => __( 'Date', 'wp-sell-services' ),
-	);
-}
-
-/**
- * Requirement types that need a caller-supplied list of choices.
- *
- * @since 1.7.1
- *
- * @return string[]
- */
-function wpss_requirement_choice_types(): array {
-	return array( 'select', 'radio', 'multiselect' );
-}
-
-/**
- * Normalise a requirement list into the one schema every surface reads.
- *
- * Four shapes shared the `_wpss_requirements` key: the wizard wrote
- * question/type/options-string, the admin metabox question/type/choices, REST
- * and ServiceManager field_type/label/description/options-array/is_required,
- * and the REST validator looked for an `id` nothing wrote. Every reader
- * picked one shape, so requirements saved on one surface came up blank on
- * another and REST submissions failed on every field (Basecamp 10264288662).
- *
- * Output rows are exactly {id, label, type, required, options, description}.
- * The id is stable: it is kept when present and otherwise derived from the
- * label and position, so answers keyed by id survive a label edit.
- *
- * @since 1.7.1
- *
- * @param array<int|string, mixed> $raw Requirement rows in any historical shape.
- * @return array<int, array{id: string, label: string, type: string, required: bool, options: string[], description: string}>
- */
-function wpss_normalize_service_requirements( array $raw ): array {
-	$types   = wpss_requirement_types();
-	$aliases = array(
-		'multiple' => 'multiselect',
-		'dropdown' => 'select',
-		'upload'   => 'file',
-	);
-	$choice  = array( 'select', 'multiselect', 'radio', 'checkbox' );
-	$out     = array();
-	$seen    = array();
-
-	foreach ( array_values( $raw ) as $index => $req ) {
-		if ( ! is_array( $req ) ) {
-			continue;
-		}
-
-		$label = sanitize_text_field( (string) ( $req['label'] ?? $req['question'] ?? '' ) );
-		if ( '' === $label ) {
-			continue;
-		}
-
-		$type = sanitize_key( (string) ( $req['type'] ?? $req['field_type'] ?? 'text' ) );
-		$type = $aliases[ $type ] ?? $type;
-		if ( ! in_array( $type, $types, true ) ) {
-			$type = 'text';
-		}
-
-		$options = array();
-		if ( in_array( $type, $choice, true ) ) {
-			$raw_options = $req['options'] ?? $req['choices'] ?? array();
-			if ( is_string( $raw_options ) ) {
-				// A comma list from the wizard / metabox, or JSON from the retired table.
-				$raw_options = str_starts_with( ltrim( $raw_options ), '[' ) ? (array) json_decode( $raw_options, true ) : explode( ',', $raw_options );
-			}
-			foreach ( (array) $raw_options as $key => $value ) {
-				// Lists of strings, and the older value => label map, both land here.
-				$value = is_scalar( $value ) ? trim( (string) $value ) : '';
-				if ( '' === $value && is_string( $key ) ) {
-					$value = trim( $key );
-				}
-				if ( '' !== $value ) {
-					$options[] = sanitize_text_field( $value );
-				}
-			}
-			$options = array_values( array_unique( $options ) );
-		}
-
-		// A bare number is a row id from the retired table, not a name.
-		$id = sanitize_key( (string) ( $req['id'] ?? '' ) );
-		if ( '' === $id || ctype_digit( $id ) ) {
-			$id = sanitize_key( sanitize_title( $label ) );
-			$id = ( '' === $id ? 'req' : $id ) . '-' . $index;
-		}
-		if ( isset( $seen[ $id ] ) ) {
-			$id .= '-' . $index;
-		}
-		$seen[ $id ] = true;
-
-		$out[] = array(
-			'id'          => $id,
-			'label'       => $label,
-			'type'        => $type,
-			'required'    => ! empty( $req['required'] ) || ! empty( $req['is_required'] ),
-			'options'     => $options,
-			'description' => sanitize_textarea_field( (string) ( $req['description'] ?? '' ) ),
-		);
-	}
-
-	return $out;
-}
-
-/**
- * Get service requirements (questions buyer must answer), normalised.
- *
- * The one reader. Rows are in the shape wpss_normalize_service_requirements()
- * produces whichever surface saved them.
- *
- * @param int $service_id Service ID.
- * @return array<int, array{id: string, label: string, type: string, required: bool, options: string[], description: string}>
- */
-function wpss_get_service_requirements( int $service_id ): array {
-	$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
-
-	return wpss_normalize_service_requirements( is_array( $requirements ) ? $requirements : array() );
-}
-
-/**
- * Save a service's requirements, normalised.
- *
- * The one writer. Callers cap the list with wpss_enforce_service_limits()
- * first; this stores what is left in the canonical shape, or clears the key
- * when nothing is left.
- *
- * @since 1.7.1
- *
- * @param int                      $service_id   Service ID.
- * @param array<int|string, mixed> $requirements Requirement rows in any shape.
- * @return void
- */
-function wpss_save_service_requirements( int $service_id, array $requirements ): void {
-	$requirements = wpss_normalize_service_requirements( $requirements );
-
-	if ( empty( $requirements ) ) {
-		delete_post_meta( $service_id, '_wpss_requirements' );
-		return;
-	}
-
-	update_post_meta( $service_id, '_wpss_requirements', $requirements );
-}
-
-/**
- * The buyer's answer to one requirement.
- *
- * Answers are keyed by the requirement id. Orders submitted before 1.7.1 were
- * keyed by the question text, so that is read as the fallback.
- *
- * @since 1.7.1
- *
- * @param array<string, mixed> $requirement Normalised requirement row.
- * @param array<string, mixed> $answers     Submitted field_data.
- * @return mixed Answer, '' when none.
- */
-function wpss_requirement_answer( array $requirement, array $answers ) {
-	return $answers[ $requirement['id'] ] ?? $answers[ $requirement['label'] ] ?? '';
-}
-
-/**
- * Get submitted order requirements.
- *
- * @param int $order_id Order ID.
- * @return array
- */
-function wpss_get_order_requirements( int $order_id ): array {
-	global $wpdb;
-
-	// Primed by wpss_prime_order_requirements() for a list; consumed once so a
-	// write later in the same request is never answered from here.
-	$primed = wpss_prime_order_requirements();
-
-	if ( array_key_exists( $order_id, $primed ) ) {
-		$value = $primed[ $order_id ];
-		wpss_prime_order_requirements( array(), $order_id );
-		return $value;
-	}
-
-	// The table is created by the installer, and the installed schema version
-	// is an autoloaded option: reading it costs nothing, where the SHOW TABLES
-	// this used to run cost one query per order on every list.
-	if ( '0.0.0' === (string) get_option( \WPSellServices\Database\SchemaManager::VERSION_OPTION, '0.0.0' ) ) {
-		// Fall back to order meta.
-		$requirements = get_metadata( 'wpss_order', $order_id, '_requirements', true );
-		return is_array( $requirements ) ? $requirements : array();
-	}
-
-	$table = $wpdb->prefix . 'wpss_order_requirements';
-
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$row = $wpdb->get_row(
-		$wpdb->prepare(
-			"SELECT field_data FROM {$table} WHERE order_id = %d ORDER BY id DESC LIMIT 1",
-			$order_id
-		),
-		ARRAY_A
-	);
-
-	if ( ! $row || empty( $row['field_data'] ) ) {
-		return array();
-	}
-
-	$decoded = json_decode( $row['field_data'], true );
-
-	return is_array( $decoded ) ? $decoded : array();
-}
-
-/**
- * Load the submitted requirements for a page of orders in one query.
- *
- * GET /orders ran wpss_get_order_requirements() per row - two queries each,
- * one of them a SHOW TABLES. Priming here turns that into one SELECT for the
- * page. Each primed value is handed out ONCE by wpss_get_order_requirements()
- * and then forgotten, so a submission written later in the same request reads
- * fresh from the table rather than from a stale prime.
- *
- * @since 1.7.1
- *
- * @param int[]    $order_ids Orders about to be shaped. Empty to only read the store.
- * @param int|null $forget    Internal: drop one primed id after it has been read.
- * @return array<int,array<string,mixed>> The current primed map.
- */
-function wpss_prime_order_requirements( array $order_ids = array(), ?int $forget = null ): array {
-	static $primed = array();
-
-	if ( null !== $forget ) {
-		unset( $primed[ $forget ] );
-		return $primed;
-	}
-
-	$order_ids = array_values( array_unique( array_filter( array_map( 'intval', $order_ids ) ) ) );
-
-	if ( empty( $order_ids ) || '0.0.0' === (string) get_option( \WPSellServices\Database\SchemaManager::VERSION_OPTION, '0.0.0' ) ) {
-		return $primed;
-	}
-
-	global $wpdb;
-
-	$table        = $wpdb->prefix . 'wpss_order_requirements';
-	$placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
-
-	// Ascending id so the newest row for an order overwrites the older ones -
-	// the same "ORDER BY id DESC LIMIT 1" the single read uses.
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT order_id, field_data FROM {$table} WHERE order_id IN ({$placeholders}) ORDER BY id ASC", $order_ids ), ARRAY_A );
-
-	foreach ( $order_ids as $order_id ) {
-		$primed[ $order_id ] = array();
-	}
-
-	foreach ( (array) $rows as $row ) {
-		$decoded = json_decode( (string) $row['field_data'], true );
-
-		$primed[ (int) $row['order_id'] ] = is_array( $decoded ) ? $decoded : array();
-	}
-
-	return $primed;
-}
-
-/**
  * Get order confirmation URL (thank you page).
  *
  * Custom confirmation pages keep a single `?order_id=` arg (one-shot thank-you
@@ -799,225 +424,6 @@ function wpss_get_post_checkout_url( int $order_id, string $fallback_url = '', s
 	 *                         intent, cart, edd.
 	 */
 	return (string) apply_filters( 'wpss_post_checkout_url', $url, $order_id, $context );
-}
-
-/**
- * Check if late requirements submission is allowed.
- *
- * @since 1.0.0
- *
- * @return bool Whether late requirements submission is enabled.
- */
-function wpss_allow_late_requirements_submission(): bool {
-	$allow_late = (bool) wpss_get_option( 'orders', 'allow_late_requirements' );
-
-	/**
-	 * Filter whether late requirements submission is allowed.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param bool $allow_late Whether late submission is allowed.
-	 */
-	return (bool) apply_filters( 'wpss_allow_late_requirements_submission', $allow_late );
-}
-
-/**
- * Get order status labels array.
- *
- * Alias for wpss_get_order_statuses() for backward compatibility.
- *
- * @since 1.1.0
- *
- * @return array<string, string> Status key => label pairs.
- */
-function wpss_get_order_status_labels(): array {
-	return wpss_get_order_statuses();
-}
-
-/**
- * Group every order status into the handful of buckets a buyer thinks in.
- *
- * A buyer with 149 orders does not scan eighteen statuses; they want to know
- * what needs them, what is running, and what is over. This is the single
- * definition of those buckets - the filter chips, the query behind them and
- * the per-chip counts all read it, so a status cannot end up in a chip that
- * does not select it (Basecamp 10240019463).
- *
- * Order matters: it is the order the chips render in, and the order the list
- * sorts by when no chip is chosen, so the rows that need the buyer come first.
- * `all` deliberately carries no statuses - it means "no WHERE clause", not
- * "every status", so a status added later still appears under All without
- * being added here first.
- *
- * Every status ServiceOrder declares belongs to exactly one bucket. That is
- * asserted in tests/test-order-filters-contract.php rather than trusted.
- *
- * @since 1.7.0
- *
- * @return array<string, array{label: string, statuses: string[]}>
- */
-function wpss_get_order_status_groups(): array {
-	$groups = array(
-		'all'       => array(
-			'label'    => __( 'All', 'wp-sell-services' ),
-			'statuses' => array(),
-		),
-		'awaiting'  => array(
-			'label'    => __( 'Awaiting payment', 'wp-sell-services' ),
-			'statuses' => array( 'pending_payment', 'pending' ),
-		),
-		'active'    => array(
-			'label'    => __( 'Active', 'wp-sell-services' ),
-			'statuses' => array(
-				'pending_requirements',
-				'requirements_submitted',
-				'accepted',
-				'in_progress',
-				'revision_requested',
-				'delivered',
-				'pending_approval',
-				'on_hold',
-				'late',
-			),
-		),
-		'disputed'  => array(
-			'label'    => __( 'Needs attention', 'wp-sell-services' ),
-			'statuses' => array( 'disputed', 'cancellation_requested' ),
-		),
-		'completed' => array(
-			'label'    => __( 'Completed', 'wp-sell-services' ),
-			'statuses' => array( 'completed' ),
-		),
-		'closed'    => array(
-			'label'    => __( 'Cancelled', 'wp-sell-services' ),
-			'statuses' => array( 'cancelled', 'rejected', 'refunded', 'partially_refunded' ),
-		),
-	);
-
-	/**
-	 * Filter the order status groups used by the dashboard filter chips.
-	 *
-	 * A group whose statuses are removed disappears from the chip row; adding
-	 * a status to a group makes it selectable there. Keep the buckets mutually
-	 * exclusive - a status in two groups is counted twice.
-	 *
-	 * @since 1.7.0
-	 *
-	 * @param array<string, array{label: string, statuses: string[]}> $groups Status groups.
-	 */
-	return apply_filters( 'wpss_order_status_groups', $groups );
-}
-
-/**
- * Resolve a group key from the request into the statuses it selects.
- *
- * Returns an empty array for `all` and for anything unrecognised, which the
- * repository reads as "no status filter" - so a hand-edited query arg widens
- * the list rather than emptying it.
- *
- * @since 1.7.0
- *
- * @param string $group_key Group key.
- * @return string[] Statuses, empty for no filter.
- */
-function wpss_resolve_order_status_group( string $group_key ): array {
-	$groups = wpss_get_order_status_groups();
-
-	return isset( $groups[ $group_key ] ) ? $groups[ $group_key ]['statuses'] : array();
-}
-
-/**
- * Status groups for a dashboard list, plus an `Other` chip for any status the
- * data holds that no group claims (see wpss_resolve_ungrouped_statuses()).
- *
- * Appended rather than inserted, so a stray status never outranks a real one.
- * Buyer and seller lists both resolve their chips through here.
- *
- * @since 1.7.1
- *
- * @param array<string, int> $status_counts Status => count, from a *_grouped() repository count.
- * @return array<string, array{label: string, statuses: string[]}> Groups keyed by chip.
- */
-function wpss_get_order_filter_groups( array $status_counts ): array {
-	$groups    = wpss_get_order_status_groups();
-	$ungrouped = wpss_resolve_ungrouped_statuses( $status_counts );
-
-	if ( $ungrouped ) {
-		$groups['other'] = array(
-			'label'    => __( 'Other', 'wp-sell-services' ),
-			'statuses' => $ungrouped,
-		);
-	}
-
-	return $groups;
-}
-
-/**
- * Statuses present in the data that no group claims.
- *
- * The buckets are built from ServiceOrder's declared statuses, but the column
- * is a plain varchar and the database has been written by more than one
- * release. This install carries an order whose status is `pending_review` -
- * a DISPUTE status, not an order status, so it is in no bucket and the chips
- * summed to 14 against a real total of 15. One order the buyer could not reach
- * from any filter.
- *
- * Rather than name that one value and wait for the next one, anything the
- * groups do not claim is collected here and offered as its own chip. The chips
- * then always add up to the list, whatever ends up in the column.
- *
- * @since 1.7.0
- *
- * @param array<string, int> $status_counts Status => count, from count_by_customer_grouped().
- * @return string[] Statuses no group claims and that actually have rows.
- */
-function wpss_resolve_ungrouped_statuses( array $status_counts ): array {
-	$claimed = array();
-
-	foreach ( wpss_get_order_status_groups() as $key => $group ) {
-		if ( 'all' === $key ) {
-			continue;
-		}
-		foreach ( $group['statuses'] as $status ) {
-			$claimed[ $status ] = true;
-		}
-	}
-
-	$ungrouped = array();
-
-	foreach ( $status_counts as $status => $count ) {
-		if ( $count > 0 && ! isset( $claimed[ $status ] ) ) {
-			$ungrouped[] = (string) $status;
-		}
-	}
-
-	return $ungrouped;
-}
-
-/**
- * Statuses in the order a buyer should meet them, most actionable first.
- *
- * Flattened from the group order above so the default list surfaces the orders
- * waiting on the buyer before the ones that are finished, without hiding
- * anything. Used to build the ORDER BY.
- *
- * @since 1.7.0
- *
- * @return string[]
- */
-function wpss_get_order_status_priority(): array {
-	$priority = array();
-
-	foreach ( wpss_get_order_status_groups() as $key => $group ) {
-		if ( 'all' === $key ) {
-			continue;
-		}
-		foreach ( $group['statuses'] as $status ) {
-			$priority[] = $status;
-		}
-	}
-
-	return $priority;
 }
 
 /**
@@ -1255,60 +661,6 @@ function wpss_capture_order_package_snapshot( int $order_id ): bool {
 }
 
 /**
- * The one payment label for an order: "Refunded · Stripe", "Paid · Stripe",
- * "Not paid · Offline Payment".
- *
- * The order screens and the admin Orders list each had a copy; the list's
- * copy had no refunded branch and showed "Paid · Stripe" on a refunded order
- * (Basecamp 10346167214).
- *
- * @since 1.8.0
- *
- * @param string $payment_status The order's payment_status.
- * @param bool   $paid_at_set    Whether the order has a paid_at time.
- * @param string $payment_method The order's payment_method slug.
- * @return string
- */
-function wpss_get_payment_status_label( string $payment_status, bool $paid_at_set, string $payment_method ): string {
-	$method = wpss_get_payment_method_label( $payment_method );
-
-	if ( 'refunded' === $payment_status ) {
-		/* translators: %s: payment method, e.g. Stripe. */
-		return '' !== $method ? sprintf( __( 'Refunded · %s', 'wp-sell-services' ), $method ) : __( 'Refunded', 'wp-sell-services' );
-	}
-
-	if ( 'paid' === $payment_status || $paid_at_set ) {
-		/* translators: %s: payment method, e.g. Stripe. */
-		return '' !== $method ? sprintf( __( 'Paid · %s', 'wp-sell-services' ), $method ) : __( 'Paid', 'wp-sell-services' );
-	}
-
-	/* translators: %s: payment method, e.g. Offline Payment. */
-	return '' !== $method ? sprintf( __( 'Not paid · %s', 'wp-sell-services' ), $method ) : __( 'Not paid', 'wp-sell-services' );
-}
-
-/**
- * Human label for an order's payment_method.
- *
- * A registered gateway names itself (get_name()); anything else - a rail slug
- * such as woocommerce or bacs, or 'manual' from Create Order - is shown as
- * words. Empty means no method was recorded (Basecamp 10337161480).
- *
- * @since 1.8.0
- *
- * @param string $method Stored payment_method.
- * @return string Label, '' when none was recorded.
- */
-function wpss_get_payment_method_label( string $method ): string {
-	if ( '' === $method ) {
-		return '';
-	}
-
-	$gateway = wpss()->get_payment_gateway( $method );
-
-	return $gateway ? $gateway->get_name() : ucwords( str_replace( array( '_', '-' ), ' ', $method ) );
-}
-
-/**
  * Get the payment-rail receipt reference for an order, if any.
  *
  * A WPSS order is the order, and its lifecycle is the same whichever rail took
@@ -1495,474 +847,6 @@ function wpss_get_order_subject( object $order, string $context = 'public' ): ar
 	return $subject;
 }
 
-/**
- * Get total order count for a user (as customer).
- *
- * @since 1.2.0
- *
- * @param int $user_id User ID.
- * @return int Order count.
- */
-function wpss_get_user_order_count( int $user_id ): int {
-	global $wpdb;
-	$table = $wpdb->prefix . 'wpss_orders';
-
-	return (int) $wpdb->get_var(
-		$wpdb->prepare(
-			"SELECT COUNT(*) FROM {$table} WHERE customer_id = %d",
-			$user_id
-		)
-	);
-}
-
-/**
- * Get active order count for a user (as customer).
- *
- * Active orders are those not in completed, cancelled, or refunded status.
- *
- * @since 1.2.0
- *
- * @param int $user_id User ID.
- * @return int Active order count.
- */
-function wpss_get_user_active_order_count( int $user_id ): int {
-	global $wpdb;
-	$table = $wpdb->prefix . 'wpss_orders';
-
-	return (int) $wpdb->get_var(
-		$wpdb->prepare(
-			"SELECT COUNT(*) FROM {$table} WHERE customer_id = %d AND status NOT IN ('completed', 'cancelled', 'refunded')",
-			$user_id
-		)
-	);
-}
-
-/**
- * Get orders for a user (as customer).
- *
- * @since 1.2.0
- *
- * @param int   $user_id User ID.
- * @param array $args    Query arguments (limit, offset, status).
- * @return array Array of order objects.
- */
-function wpss_get_user_orders( int $user_id, array $args = array() ): array {
-	global $wpdb;
-	$table = $wpdb->prefix . 'wpss_orders';
-
-	$defaults = array(
-		'limit'  => 10,
-		'offset' => 0,
-		'status' => '',
-	);
-	$args     = wp_parse_args( $args, $defaults );
-
-	$sql    = "SELECT * FROM {$table} WHERE customer_id = %d";
-	$params = array( $user_id );
-
-	if ( ! empty( $args['status'] ) ) {
-		$sql     .= ' AND status = %s';
-		$params[] = $args['status'];
-	}
-
-	$sql     .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
-	$params[] = $args['limit'];
-	$params[] = $args['offset'];
-
-	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is hardcoded fragments with %d/%s placeholders; values come via prepare().
-	$rows = $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
-
-	// Return hydrated models, never raw rows. $wpdb hands back every column as a
-	// string, and the callers are strict_types files that pass these values into
-	// typed helpers - `wpss_format_price( float $price, ... )` threw
-	// "must be of type float, string given" and white-screened [wpss_account]
-	// for any logged-in user with at least one order.
-	return array_map( array( \WPSellServices\Models\ServiceOrder::class, 'from_db' ), $rows ?: array() );
-}
-
-/**
- * Get orders for a vendor.
- *
- * @since 1.2.0
- *
- * @param int   $vendor_id Vendor user ID.
- * @param array $args      Query arguments (limit, offset, status).
- * @return array Array of order objects.
- */
-function wpss_get_vendor_orders( int $vendor_id, array $args = array() ): array {
-	global $wpdb;
-	$table = $wpdb->prefix . 'wpss_orders';
-
-	$defaults = array(
-		'limit'  => 10,
-		'offset' => 0,
-		'status' => '',
-	);
-	$args     = wp_parse_args( $args, $defaults );
-
-	$sql    = "SELECT * FROM {$table} WHERE vendor_id = %d";
-	$params = array( $vendor_id );
-
-	if ( ! empty( $args['status'] ) ) {
-		$sql     .= ' AND status = %s';
-		$params[] = $args['status'];
-	}
-
-	$sql     .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
-	$params[] = $args['limit'];
-	$params[] = $args['offset'];
-
-	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is hardcoded fragments with %d/%s placeholders; values come via prepare().
-	$rows = $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
-
-	// Return hydrated models, never raw rows. $wpdb hands back every column as a
-	// string, and the callers are strict_types files that pass these values into
-	// typed helpers - `wpss_format_price( float $price, ... )` threw
-	// "must be of type float, string given" and white-screened [wpss_account]
-	// for any logged-in user with at least one order.
-	return array_map( array( \WPSellServices\Models\ServiceOrder::class, 'from_db' ), $rows ?: array() );
-}
-
-/**
- * Count a buyer's orders.
- *
- * A dedicated COUNT(*) so a caller never fetches rows just to size a list.
- * Pairs with wpss_get_user_orders(), which already takes limit + offset but had
- * no way to learn the total - so nothing built on it could paginate, and
- * [wpss_my_orders] simply showed the first 20 with no route to the rest.
- *
- * @since 1.5.1
- *
- * @param int    $user_id Customer user ID.
- * @param string $status  Optional. Restrict to one order status.
- * @return int Number of matching orders.
- */
-function wpss_count_user_orders( int $user_id, string $status = '' ): int {
-	return wpss_count_orders_for( 'customer_id', $user_id, $status );
-}
-
-/**
- * Count a vendor's orders.
- *
- * @since 1.5.1
- *
- * @param int    $vendor_id Vendor user ID.
- * @param string $status    Optional. Restrict to one order status.
- * @return int Number of matching orders.
- */
-function wpss_count_vendor_orders( int $vendor_id, string $status = '' ): int {
-	return wpss_count_orders_for( 'vendor_id', $vendor_id, $status );
-}
-
-/**
- * Shared COUNT(*) behind the two order-count helpers.
- *
- * A column name cannot be bound with a placeholder, so it is chosen from a
- * fixed allow-list instead of being interpolated from the caller. Anything else
- * returns 0 rather than reaching the query.
- *
- * @since 1.5.1
- *
- * @param string $column  Either 'customer_id' or 'vendor_id'.
- * @param int    $user_id User ID to match.
- * @param string $status  Optional. Restrict to one order status.
- * @return int Number of matching orders.
- */
-function wpss_count_orders_for( string $column, int $user_id, string $status = '' ): int {
-	global $wpdb;
-
-	if ( ! in_array( $column, array( 'customer_id', 'vendor_id' ), true ) ) {
-		return 0;
-	}
-
-	$table = $wpdb->prefix . 'wpss_orders';
-
-	if ( '' !== $status ) {
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $column is allow-listed above; both values are bound.
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$column} = %d AND status = %s", $user_id, $status );
-	} else {
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $column is allow-listed above; the value is bound.
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$column} = %d", $user_id );
-	}
-
-	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is the prepared statement built above.
-	return (int) $wpdb->get_var( $sql );
-}
-
-/**
- * Map a payment rail's order status onto a WPSS order status.
- *
- * ONE table for every rail, replacing the private arrays that used to live in
- * WCOrderProvider, FluentCartAdapter and EDDOrderProvider. Those three had
- * drifted into disagreeing about the same event:
- *
- * - WooCommerce mapped `refunded` to `refunded`; FluentCart mapped it to
- *   `cancelled`, losing the refund state entirely. The Woo map carried a comment
- *   explaining why `cancelled` was wrong and the fix was never carried across.
- * - FluentCart mapped `partially_refunded` to `on_hold`, even though WPSS has a
- *   real `partially_refunded` status.
- * - The same status was spelled `on_hold` by one rail and `on-hold` by another.
- * - EDD emitted `processing` and `failed`, which are not WPSS statuses at all.
- *
- * Two rules make the table safe to extend:
- *
- * 1. KEYS ARE NORMALISED. Rails spell the same status differently ('on-hold' vs
- *    'on_hold', 'complete' vs 'completed'), so the incoming key is lowercased
- *    and hyphens folded to underscores before lookup. The spelling divergence
- *    cannot come back.
- *
- * 2. PAID TRANSITIONS ARE NOT IN THE TABLE. `completed` / `processing` /
- *    `complete` deliberately return null. Payment must go through
- *    StandaloneOrderProvider::mark_as_paid(), which is the only place
- *    `wpss_order_paid` is fired - and that hook is what credits the vendor,
- *    records commission and drives milestones, extensions and tips. A rail that
- *    "helpfully" mapped completed -> in_progress moved the order forward while
- *    paying nobody, which is exactly how three rails shipped without ever
- *    crediting a vendor. Returning null here is load-bearing, not an omission.
- *
- * @since 1.6.0
- *
- * @param string $platform    Rail identifier ('woocommerce', 'edd', 'fluentcart').
- * @param string $rail_status The rail's own status string.
- * @return string|null WPSS status, or null when the rail status must not drive a status change.
- */
-function wpss_map_rail_status( string $platform, string $rail_status ): ?string {
-	$key = str_replace( '-', '_', strtolower( trim( $rail_status ) ) );
-
-	// Shared across every rail. A refund is a refund on all of them.
-	$shared = array(
-		'cancelled'          => 'cancelled',
-		'canceled'           => 'cancelled',
-		'failed'             => 'cancelled',
-		'refunded'           => 'refunded',
-		'partially_refunded' => 'partially_refunded',
-		'on_hold'            => 'on_hold',
-		'pending'            => 'pending_payment',
-	);
-
-	// Rail-specific vocabulary only. Anything a rail shares with the others
-	// belongs above, not here.
-	$per_rail = array(
-		'edd' => array(
-			'abandoned' => 'cancelled',
-			'revoked'   => 'cancelled',
-		),
-	);
-
-	$map = array_merge( $shared, $per_rail[ strtolower( $platform ) ] ?? array() );
-
-	/**
-	 * Filters the rail status map.
-	 *
-	 * Keys must already be normalised (lowercase, underscores). Values must be
-	 * real WPSS statuses - anything else is discarded below.
-	 *
-	 * @since 1.6.0
-	 *
-	 * @param array<string, string> $map      Normalised rail status => WPSS status.
-	 * @param string                $platform Rail identifier.
-	 */
-	$map = (array) apply_filters( 'wpss_rail_status_map', $map, $platform );
-
-	$mapped = $map[ $key ] ?? null;
-
-	if ( null === $mapped ) {
-		return null;
-	}
-
-	// Never hand back a status the plugin does not know. A rail (or a filter)
-	// producing an unregistered status is how EDD came to write 'processing',
-	// which then had no label, no filter entry and no transition rules.
-	return array_key_exists( $mapped, wpss_get_order_statuses() ) ? $mapped : null;
-}
-
-/**
- * Marketplace-wide order aggregates for the admin dashboard.
- *
- * One full-table scan cached for five minutes; dropped the moment an order is
- * created, paid or changes status so the tiles never show a stale count for
- * longer than it takes to reload the page.
- *
- * @since 1.7.1
- *
- * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float,commission:float}
- */
-function wpss_get_order_aggregates(): object {
-	$cached = get_transient( 'wpss_order_aggregates' );
-
-	if ( is_object( $cached ) ) {
-		return $cached;
-	}
-
-	$aggregates = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_aggregates();
-	set_transient( 'wpss_order_aggregates', $aggregates, 5 * MINUTE_IN_SECONDS );
-
-	return $aggregates;
-}
-
-/**
- * Revenue - what buyers paid, net of refunds - by the one definition.
- *
- * Every revenue figure shown anywhere comes from here; see
- * OrderRepository::get_revenue() for the rule and the arguments. Ungrouped,
- * the result is one row; read `[0]`.
- *
- * @since 1.8.0
- *
- * @param array<string, mixed> $args from, to, vendor_id, group_by, limit.
- * @return array<int, object{key:string,orders:int,gross:float,refunded:float,revenue:float,commission:float,vendor_earnings:float}>
- */
-function wpss_get_revenue( array $args = array() ): array {
-	return ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_revenue( $args );
-}
-
-/**
- * Revenue per day across a date range, with every day present.
- *
- * Days with no paid orders are 0 rather than missing, so a chart spaces its
- * points by time and a curve never invents a value between them. The one
- * series behind the admin Analytics chart, its REST route and the vendor
- * Analytics chart.
- *
- * @since 1.8.0
- *
- * @param string               $from First day (Y-m-d).
- * @param string               $to   Last day (Y-m-d).
- * @param array<string, mixed> $args Other wpss_get_revenue() filters (vendor_id, platform).
- * @return array{labels:string[],revenue:float[],commission:float[],vendor_earnings:float[],orders:int[]}
- */
-function wpss_get_revenue_series( string $from, string $to, array $args = array() ): array {
-	$rows = wpss_get_revenue(
-		array(
-			'from'     => $from . ' 00:00:00',
-			'to'       => $to . ' 23:59:59',
-			'group_by' => 'day',
-		) + $args
-	);
-
-	$by_day = array();
-	foreach ( $rows as $row ) {
-		$by_day[ $row->key ] = $row;
-	}
-
-	$series = array(
-		'labels'          => array(),
-		'revenue'         => array(),
-		'commission'      => array(),
-		'vendor_earnings' => array(),
-		'orders'          => array(),
-	);
-
-	$last = strtotime( $to );
-
-	for ( $day = strtotime( $from ); $day <= $last; $day = strtotime( '+1 day', $day ) ) {
-		$key                         = gmdate( 'Y-m-d', $day );
-		$row                         = $by_day[ $key ] ?? null;
-		$series['labels'][]          = $key;
-		$series['revenue'][]         = $row ? $row->revenue : 0.0;
-		$series['commission'][]      = $row ? $row->commission : 0.0;
-		$series['vendor_earnings'][] = $row ? $row->vendor_earnings : 0.0;
-		$series['orders'][]          = $row ? $row->orders : 0;
-	}
-
-	return $series;
-}
-
-/**
- * One order's part of revenue: the PHP twin of OrderRepository::get_revenue().
- *
- * For rendering a single row the same way the totals count it: an order that
- * is unpaid, cancelled or rejected counts for nothing (so its row shows no
- * earnings), and a refund takes its share off the commission and the vendor's
- * earnings. Keep the rule in step with the SQL.
- *
- * @since 1.8.0
- *
- * @param object $order Order row (status, payment_status, paid_at, total, refunded_amount, platform_fee, vendor_earnings).
- * @return object{counts:bool,revenue:float,commission:float,vendor_earnings:float}
- */
-function wpss_get_order_revenue( object $order ): object {
-	$status = (string) ( $order->status ?? '' );
-	$paid   = ! empty( $order->paid_at ) || in_array( (string) ( $order->payment_status ?? '' ), array( 'paid', 'completed', 'refunded' ), true );
-	$counts = $paid && ! in_array( $status, array( 'pending_payment', 'pending', 'cancelled', 'rejected' ), true );
-	$total  = (float) ( $order->total ?? 0 );
-
-	if ( ! $counts || $total <= 0 ) {
-		return (object) array(
-			'counts'          => $counts,
-			'revenue'         => 0.0,
-			'commission'      => 0.0,
-			'vendor_earnings' => 0.0,
-		);
-	}
-
-	if ( null !== ( $order->refunded_amount ?? null ) ) {
-		$refunded = (float) $order->refunded_amount;
-	} else {
-		$refunded = ( 'refunded' === $status || ( 'refunded' === ( $order->payment_status ?? '' ) && 'partially_refunded' !== $status ) ) ? $total : 0.0;
-	}
-
-	$refunded = min( $total, $refunded );
-	$share    = ( $total - $refunded ) / $total;
-
-	// Credited orders already carry the net after a refund's reversal; see
-	// OrderRepository::get_revenue().
-	$credited = in_array( (int) ( $order->id ?? 0 ), wpss_get_credited_order_ids( array( (int) ( $order->id ?? 0 ) ) ), true );
-	$scale    = $credited ? 1.0 : $share;
-
-	return (object) array(
-		'counts'          => true,
-		'revenue'         => $total - $refunded,
-		'commission'      => (float) ( $order->platform_fee ?? 0 ) * $scale,
-		'vendor_earnings' => (float) ( $order->vendor_earnings ?? 0 ) * $scale,
-	);
-}
-
-/**
- * Which of these orders the vendor has been credited for (a ledger credit).
- *
- * Remembered for the request, so a list primes its page in one query and each
- * row's wpss_get_order_revenue() reads from memory.
- *
- * @since 1.8.0
- *
- * @param int[] $order_ids Order IDs.
- * @return int[] The credited ones.
- */
-function wpss_get_credited_order_ids( array $order_ids ): array {
-	static $known = array();
-
-	$order_ids = array_values( array_filter( array_map( 'intval', $order_ids ) ) );
-	$missing   = array_diff( $order_ids, array_keys( $known ) );
-
-	if ( $missing ) {
-		global $wpdb;
-		$placeholders = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$credited = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT reference_id FROM {$wpdb->prefix}wpss_wallet_transactions WHERE reference_type = 'order' AND amount > 0 AND reference_id IN ({$placeholders})", ...$missing ) ) );
-		foreach ( $missing as $id ) {
-			$known[ $id ] = in_array( $id, $credited, true );
-		}
-	}
-
-	return array_values( array_filter( $order_ids, static fn( $id ) => ! empty( $known[ $id ] ) ) );
-}
-
-/**
- * Drop the cached admin order aggregates.
- *
- * @since 1.7.1
- *
- * @return void
- */
-function wpss_flush_order_aggregates(): void {
-	delete_transient( 'wpss_order_aggregates' );
-}
-
-// A second partial refund is not a status change, so the refund hooks are listed too.
-foreach ( array( 'wpss_order_created', 'wpss_order_paid', 'wpss_order_status_changed', 'wpss_order_status_refunded', 'wpss_order_status_partially_refunded' ) as $wpss_aggregates_hook ) {
-	add_action( $wpss_aggregates_hook, 'wpss_flush_order_aggregates' );
-}
 unset( $wpss_aggregates_hook );
 
 /**
@@ -2026,4 +910,141 @@ function wpss_offline_payment_notice( object $order ): string {
 	return $proof
 		? __( 'Payment proof received. We will confirm it shortly and let you know.', 'wp-sell-services' )
 		: __( 'Order placed and waiting for your payment. Work starts once it is confirmed.', 'wp-sell-services' );
+}
+
+/**
+ * What "Order again" would put in the buyer's cart for a finished order, or why it cannot.
+ *
+ * The one reader behind the order page's button and POST /orders/{id}/reorder, so the
+ * two can never disagree. It rebuilds the choice the buyer made (package, add-ons,
+ * quantity) against what the service offers TODAY and prices it through the pricer
+ * checkout charges through, so what the button promises is what checkout shows. Three
+ * things move since the first order and each is said, never hidden: a package that was
+ * removed refuses (a different tier would be a silent substitution), an add-on that is
+ * gone is dropped and named, and a changed price is reported with both figures.
+ * A service that is deleted, paused or whose seller is away is refused by the pricer
+ * with its own reason.
+ *
+ * Not offered for a custom quote or proposal order (there is no package to repeat), a
+ * tip, milestone or extension (they belong to a parent order), or an order that is not
+ * completed.
+ *
+ * @since 1.9.0
+ *
+ * @param \WPSellServices\Models\ServiceOrder $order     The finished order.
+ * @param int                                 $viewer_id Who is asking; only the order's customer may repeat it.
+ * @return array{service_id:int, package_id:int, quantity:int, line:array<string,mixed>, warnings:string[], price_changed:bool, previous_total:float, current_total:float}|\WP_Error
+ */
+function wpss_get_reorder_plan( \WPSellServices\Models\ServiceOrder $order, int $viewer_id ) {
+	if ( $viewer_id < 1 || (int) $order->customer_id !== $viewer_id ) {
+		return new WP_Error( 'wpss_reorder_not_owner', __( 'Only the buyer can order this again.', 'wp-sell-services' ), array( 'status' => 403 ) );
+	}
+
+	$sub_orders = array(
+		\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_TIP,
+		\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_MILESTONE,
+		\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_EXTENSION,
+	);
+	$snapshot   = $order->get_package_snapshot();
+
+	if ( \WPSellServices\Models\ServiceOrder::STATUS_COMPLETED !== $order->status
+		|| in_array( $order->platform, $sub_orders, true )
+		|| ! empty( $order->meta['proposal_snapshot'] )
+		|| null === $order->package_id
+		|| ! $snapshot ) {
+		return new WP_Error( 'wpss_reorder_not_available', __( 'This order cannot be ordered again.', 'wp-sell-services' ), array( 'status' => 409 ) );
+	}
+
+	$service_id = (int) $order->service_id;
+
+	// The package by its stable id; a legacy snapshot without one by its position, but only if
+	// it is still the same package (same name) - a different tier is not "the same order".
+	$resolved = isset( $snapshot['id'] ) ? wpss_resolve_service_package( $service_id, (int) $snapshot['id'] ) : null;
+
+	if ( ! $resolved && ! isset( $snapshot['id'] ) ) {
+		$live = wpss_get_service_packages( $service_id )[ (int) $order->package_id ] ?? null;
+
+		if ( is_array( $live ) && (string) ( $live['name'] ?? '' ) === (string) ( $snapshot['name'] ?? '' ) ) {
+			$resolved = array(
+				'package' => $live,
+				'index'   => (int) $order->package_id,
+			);
+		}
+	}
+
+	if ( ! $resolved ) {
+		return new WP_Error( 'wpss_reorder_package_gone', __( 'The package you bought is no longer offered. Open the service to choose another.', 'wp-sell-services' ), array( 'status' => 409 ) );
+	}
+
+	// Quantity is not stored on the order; it is whole multiples of the package price.
+	$unit     = (float) ( $snapshot['price'] ?? 0 );
+	$ratio    = $unit > 0 ? (float) $order->subtotal / $unit : 1.0;
+	$quantity = ( $ratio >= 1 && abs( $ratio - round( $ratio ) ) < 0.001 ) ? (int) round( $ratio ) : 1;
+
+	// A store rail sells one delivery per line: asking for more priced a quantity its cart then
+	// dropped to 1 (combo walk, 1.9.0). The standalone cart keeps the quantity.
+	$bought_quantity = $quantity;
+	$adapter         = wpss_get_active_adapter();
+	if ( $adapter && 'standalone' !== $adapter->get_id() ) {
+		$quantity = 1;
+	}
+
+	$selection = wpss_normalize_addon_selection( $order->addons );
+	$line      = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, (int) $resolved['index'], $quantity, $selection );
+
+	if ( is_wp_error( $line ) ) {
+		return $line;
+	}
+
+	$warnings = array();
+	$dropped  = array_diff( array_keys( $selection ), array_map( 'intval', array_column( $line['addons'], 'id' ) ) );
+
+	if ( $dropped ) {
+		$names = array();
+		foreach ( (array) $order->addons as $row ) {
+			if ( is_array( $row ) && in_array( (int) ( $row['id'] ?? -1 ), $dropped, true ) ) {
+				$names[] = (string) ( $row['title'] ?? $row['name'] ?? '' );
+			}
+		}
+
+		$warnings[] = sprintf(
+			/* translators: %s: comma-separated add-on names */
+			__( 'No longer available, so left out: %s.', 'wp-sell-services' ),
+			implode( ', ', array_filter( $names ) ) ?: __( 'an add-on from your last order', 'wp-sell-services' )
+		);
+	}
+
+	if ( $quantity < $bought_quantity ) {
+		$warnings[] = sprintf(
+			/* translators: 1: quantity on the last order, 2: quantity added now */
+			__( 'You bought %1$d last time; this store sells %2$d per order, so %2$d is added.', 'wp-sell-services' ),
+			$bought_quantity,
+			$quantity
+		);
+	}
+
+	// What the last order cost for the same quantity, so a lower quantity is not read as a price change.
+	$previous = round( ( (float) $order->subtotal * $quantity / max( 1, $bought_quantity ) ) + (float) $order->addons_total, wpss_get_currency_decimals() );
+	$current  = round( (float) $line['subtotal'] + (float) $line['addons_total'], wpss_get_currency_decimals() );
+	$changed  = abs( $current - $previous ) > 0.005;
+
+	if ( $changed ) {
+		$warnings[] = sprintf(
+			/* translators: 1: price on the last order, 2: price today */
+			__( 'The price has changed since your last order: it was %1$s and is now %2$s.', 'wp-sell-services' ),
+			wpss_format_price( $previous ),
+			wpss_format_price( $current )
+		);
+	}
+
+	return array(
+		'service_id'     => $service_id,
+		'package_id'     => (int) $resolved['index'],
+		'quantity'       => $quantity,
+		'line'           => $line,
+		'warnings'       => $warnings,
+		'price_changed'  => $changed,
+		'previous_total' => $previous,
+		'current_total'  => $current,
+	);
 }

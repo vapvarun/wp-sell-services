@@ -4,8 +4,12 @@
  *
  * Uses CSS classes from vendor-dashboard.css design system.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/myaccount/vendor-dashboard.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\VendorProfile|null $vendor  Vendor profile.
  * @var object                                     $stats   Vendor statistics.
@@ -93,8 +97,8 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 
 			<!-- Stats Grid -->
 			<div class="wpss-stats-grid">
-				<div class="wpss-stat-card">
-					<div class="wpss-stat-card__icon wpss-stat-card__icon--earnings">
+				<div class="wpss-stat-card wpss-stat-card--icon">
+					<div class="wpss-stat-card__icon wpss-stat-card__icon--info">
 						<i data-lucide="dollar-sign" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 					<div class="wpss-stat-card__content">
@@ -103,8 +107,8 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 					</div>
 				</div>
 
-				<div class="wpss-stat-card">
-					<div class="wpss-stat-card__icon wpss-stat-card__icon--completed">
+				<div class="wpss-stat-card wpss-stat-card--icon">
+					<div class="wpss-stat-card__icon wpss-stat-card__icon--success">
 						<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 					<div class="wpss-stat-card__content">
@@ -113,8 +117,8 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 					</div>
 				</div>
 
-				<div class="wpss-stat-card">
-					<div class="wpss-stat-card__icon wpss-stat-card__icon--active">
+				<div class="wpss-stat-card wpss-stat-card--icon">
+					<div class="wpss-stat-card__icon wpss-stat-card__icon--warning">
 						<i data-lucide="clock" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 					<div class="wpss-stat-card__content">
@@ -123,8 +127,8 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 					</div>
 				</div>
 
-				<div class="wpss-stat-card">
-					<div class="wpss-stat-card__icon wpss-stat-card__icon--rating">
+				<div class="wpss-stat-card wpss-stat-card--icon">
+					<div class="wpss-stat-card__icon wpss-stat-card__icon--warning">
 						<i data-lucide="star" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 					<div class="wpss-stat-card__content">

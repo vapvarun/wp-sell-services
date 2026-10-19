@@ -5,8 +5,12 @@
  * Rendered by the thread (templates/partials/dispute-thread.php) and by the
  * AJAX reply, which used to build its own copy of this markup.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/dispute-evidence-item.php
+ *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  *
  * @var array $wpss_item        One row from DisputeService::get_evidence().
  * @var int   $wpss_viewer_id   The user looking at the thread.
@@ -49,7 +53,7 @@ if ( '' === $ev_file ) {
 	$ev_path = (string) wp_parse_url( $ev_content, PHP_URL_PATH );
 	$ev_file = '' !== $ev_path ? basename( $ev_path ) : __( 'Attachment', 'wp-sell-services' );
 }
-$ev_when = ! empty( $wpss_item['created_at'] ) ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $wpss_item['created_at'] . ' UTC' ) ) : '';
+$ev_when = ! empty( $wpss_item['created_at'] ) ? wpss_datetime_label( $wpss_item['created_at'] ) : '';
 ?>
 <div class="wpss-evidence-item <?php echo $ev_own ? 'wpss-evidence-own' : 'wpss-evidence-other'; ?>">
 	<div class="wpss-evidence-bubble">

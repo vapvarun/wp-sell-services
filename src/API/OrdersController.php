@@ -208,7 +208,7 @@ class OrdersController extends RestController {
 		// having them.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund)',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund|assign-refund)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -228,6 +228,10 @@ class OrdersController extends RestController {
 						'reason' => array(
 							'description' => __( 'Reason for action (required for reject, cancel, dispute).', 'wp-sell-services' ),
 							'type'        => 'string',
+						),
+						'amount' => array(
+							'description' => __( 'assign-refund only: part of the waiting refund to assign to this order.', 'wp-sell-services' ),
+							'type'        => 'number',
 						),
 					),
 				),
@@ -353,6 +357,26 @@ class OrdersController extends RestController {
 							'default' => 50,
 							'minimum' => 1,
 							'maximum' => 100,
+						),
+					),
+				),
+			)
+		);
+
+		// Order again: put a finished order's package and add-ons back in the buyer's cart.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/reorder',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'reorder' ),
+					'permission_callback' => array( $this, 'check_item_permissions' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'The finished order to repeat.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'required'    => true,
 						),
 					),
 				),
@@ -862,6 +886,10 @@ class OrdersController extends RestController {
 		$delivery_service = new DeliveryService();
 		$result           = $delivery_service->submit( $order_id, $description, $files );
 
+		if ( ! $result && '' !== $delivery_service->get_last_error() ) {
+			return new WP_Error( 'rest_deliverable_file_refused', $delivery_service->get_last_error(), array( 'status' => 400 ) );
+		}
+
 		if ( ! $result ) {
 			return new WP_Error(
 				'rest_deliverable_failed',
@@ -1018,8 +1046,9 @@ class OrdersController extends RestController {
 				break;
 
 			case 'hold':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor or admin can put an order on hold.', 'wp-sell-services' );
+				// Admin only: a seller pausing their own deadline clock is a loophole (see order-lifecycle docs).
+				if ( ! $is_admin ) {
+					$error = __( 'Only an administrator can put an order on hold.', 'wp-sell-services' );
 				} elseif ( 'in_progress' !== $order->status ) {
 					$error = __( 'Only in-progress orders can be put on hold.', 'wp-sell-services' );
 				} else {
@@ -1041,9 +1070,23 @@ class OrdersController extends RestController {
 				}
 				break;
 
+			case 'assign-refund':
+				// A refund the payment platform reported without naming the gig.
+				if ( ! $is_admin ) {
+					$error = __( 'Only an administrator can assign a refund.', 'wp-sell-services' );
+				} else {
+					$amount   = $request->get_param( 'amount' );
+					$assigned = ( new \WPSellServices\Services\PendingRefundService() )->assign( $order_id, is_numeric( $amount ) ? (float) $amount : null );
+					$result   = $assigned['ok'];
+					if ( ! $result ) {
+						$error = $assigned['message'];
+					}
+				}
+				break;
+
 			case 'resume':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor or admin can resume an order.', 'wp-sell-services' );
+				if ( ! $is_admin ) {
+					$error = __( 'Only an administrator can resume an order.', 'wp-sell-services' );
 				} elseif ( 'on_hold' !== $order->status ) {
 					$error = __( 'Only on-hold orders can be resumed.', 'wp-sell-services' );
 				} else {
@@ -1685,6 +1728,55 @@ class OrdersController extends RestController {
 	}
 
 	/**
+	 * Order again: add a finished order's package and add-ons to the buyer's cart.
+	 *
+	 * Everything is decided by wpss_get_reorder_plan() (shared with the order page's
+	 * button); the cart write goes through ServiceCart, so it lands in the active
+	 * rail's cart. Warnings (a changed price, an add-on that no longer exists) are
+	 * returned so a client can say them before the buyer pays.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function reorder( WP_REST_Request $request ) {
+		$order = ServiceOrder::find( (int) $request->get_param( 'id' ) );
+
+		if ( ! $order ) {
+			return new WP_Error( 'wpss_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		$plan = wpss_get_reorder_plan( $order, get_current_user_id() );
+
+		if ( is_wp_error( $plan ) ) {
+			return $plan;
+		}
+
+		$added = \WPSellServices\Checkout\ServiceCart::add( get_current_user_id(), $plan['service_id'], $plan['line'], $plan['quantity'] );
+
+		if ( is_wp_error( $added ) ) {
+			return $added;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success'        => true,
+				'checkout_url'   => $added['checkout_url'],
+				'cart_count'     => $added['cart_count'],
+				'service_id'     => $plan['service_id'],
+				'package_id'     => (int) ( $plan['line']['package']['id'] ?? $plan['package_id'] ),
+				'quantity'       => $plan['quantity'],
+				'previous_total' => $plan['previous_total'],
+				'current_total'  => $plan['current_total'],
+				'price_changed'  => $plan['price_changed'],
+				'warnings'       => $plan['warnings'],
+			),
+			201
+		);
+	}
+
+	/**
 	 * Check if user can access the specific order.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -2134,7 +2226,7 @@ class OrdersController extends RestController {
 				if ( $is_vendor || $is_admin ) {
 					$actions[] = 'deliver';
 				}
-				if ( ( $is_vendor || $is_admin ) && 'in_progress' === $order->status ) {
+				if ( $is_admin && 'in_progress' === $order->status ) {
 					$actions[] = 'hold';
 				}
 				if ( $is_customer && 'in_progress' === $order->status && $this->can_buyer_cancel_in_progress( $order ) ) {
@@ -2181,7 +2273,7 @@ class OrdersController extends RestController {
 				break;
 
 			case 'on_hold':
-				if ( $is_vendor || $is_admin ) {
+				if ( $is_admin ) {
 					$actions[] = 'resume';
 				}
 				if ( $is_admin ) {

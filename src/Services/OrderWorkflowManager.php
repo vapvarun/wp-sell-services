@@ -774,7 +774,7 @@ class OrderWorkflowManager {
 		// the admin sees Retry instead of an order that looks settled.
 		$refund = $this->attempt_payment_refund( $order );
 
-		if ( is_array( $refund ) && empty( $refund['success'] ) && empty( $refund['manual'] ) ) {
+		if ( is_array( $refund ) && empty( $refund['success'] ) && empty( $refund['manual'] ) && empty( $refund['rail_owned'] ) ) {
 			self::flag_refund_failed(
 				$order_id,
 				max( 0.0, (float) $order->total - wpss_get_order_refunded_amount( $order ) ),
@@ -784,6 +784,12 @@ class OrderWorkflowManager {
 					'origin' => 'cancel',
 				)
 			);
+		}
+
+		// The buyer's money is back, so a dispute on this order has nothing left to decide. A refund
+		// the gateway refused leaves it open: the retry closes it through refund().
+		if ( is_array( $refund ) && ( ! empty( $refund['success'] ) || ! empty( $refund['manual'] ) ) ) {
+			( new DisputeService() )->close_for_refund( $order_id, 'cancel' );
 		}
 
 		// Cancelling a paid order gives the buyer their money back, so its paid
@@ -876,43 +882,52 @@ class OrderWorkflowManager {
 	/**
 	 * Record a refund that already happened at the payment rail.
 	 *
-	 * THE one listener for `wpss_gateway_refund_received`. Stripe, PayPal,
-	 * Razorpay and WooCommerce webhooks all fire that action instead of
-	 * touching orders themselves; until 1.7.1 only Stripe applied its refund
-	 * (inline) and the PayPal / Razorpay actions had no listener, so a
-	 * dashboard refund left the order paid and the vendor credited.
+	 * THE one listener for `wpss_gateway_refund_received`. A gateway or a shop platform reports a
+	 * refund it made and this decides which gig it belongs to; no rail touches orders itself.
 	 *
-	 * A multi-item cart stamps one transaction id on every order it created,
-	 * so the amount is split across those orders in proportion to their
-	 * totals (oldest first) unless the gateway hands over per-order amounts
-	 * in `$context['amounts']`. Each order then goes through
-	 * OrderService::apply_refund_status() with settled_at_rail = true, which
-	 * reverses the vendor's share and skips the second gateway call.
+	 * What a rail reports is described by its context:
+	 * - `order_id`: the gig the refund was for, when the rail knows.
+	 * - `full_charge`: the rail says the whole charge, made up of these gigs only, was refunded.
+	 * - `order_ids`: the gigs the refund could be for, when the rail knows only that much (a shop
+	 *   order with other lines, or an amount-only refund). It waits for an admin like an unnamed one.
+	 * - `cumulative`: `$amount` is the running total refunded for that gig (or, with no `order_id`,
+	 *   for the whole transaction) rather than this event's amount. What this event adds is the
+	 *   difference from what we already recorded.
 	 *
-	 * Idempotent: an order whose recorded refund already covers its share is
-	 * skipped, and a refund id seen before on that order is skipped.
+	 * Which gig it lands on:
+	 * - A named gig, or the only gig on the transaction: that gig.
+	 * - Several gigs on the transaction and no name: we cannot know which one was meant, and
+	 *   splitting by price would reverse the wrong vendor's earnings. The refund is parked in
+	 *   PendingRefundService until an admin assigns it.
+	 *
+	 * Idempotent: a total already recorded adds nothing, a refund id seen before is skipped, and a
+	 * refund this plugin is sending at the moment is ours, not the rail's.
 	 *
 	 * @since 1.7.1
+	 * @since 1.9.0 No split by price; unnamed refunds on a multi-gig payment wait for an admin.
 	 *
-	 * @param string               $gateway        Gateway slug ('stripe', 'paypal', 'razorpay', 'woocommerce').
+	 * @param string               $gateway        Rail slug (for example 'stripe' or 'woocommerce').
 	 * @param string               $transaction_id The transaction / intent / capture / payment id the orders were paid with.
 	 * @param float                $amount         Amount refunded, in major units of the order currency.
-	 * @param array<string, mixed> $context        Optional: order_id (int), amounts (order_id => amount),
-	 *                                             cumulative (bool: $amount is the running total on the
-	 *                                             transaction, as Stripe reports it), refund_id (string),
+	 * @param array<string, mixed> $context        Optional: order_id (int), order_ids (int[]), full_charge (bool), cumulative (bool), refund_id (string),
 	 *                                             charge_id (string), currency (string).
 	 * @return void
 	 */
 	public function handle_gateway_refund( string $gateway, string $transaction_id, float $amount, array $context = array() ): void {
-		$orders = array();
-
-		// A gateway that names the order (PayPal custom_id, Woo) knows exactly
-		// what was refunded; only an unnamed refund is spread over every order
-		// paid with the transaction.
-		$named = ! empty( $context['order_id'] ) ? ServiceOrder::find( (int) $context['order_id'] ) : null;
+		$orders    = array();
+		$named     = ! empty( $context['order_id'] ) ? ServiceOrder::find( (int) $context['order_id'] ) : null;
+		$ambiguous = ! $named && ! empty( $context['order_ids'] );
 
 		if ( $named ) {
 			$orders[ (int) $named->id ] = $named;
+		} elseif ( $ambiguous ) {
+			foreach ( (array) $context['order_ids'] as $oid ) {
+				$found = ServiceOrder::find( (int) $oid );
+
+				if ( $found ) {
+					$orders[ (int) $found->id ] = $found;
+				}
+			}
 		} else {
 			$rows = ( new OrderRepository() )->get_by_transaction_ids( array( $transaction_id, (string) ( $context['charge_id'] ?? '' ) ) );
 
@@ -928,88 +943,161 @@ class OrderWorkflowManager {
 
 		ksort( $orders );
 
-		$currency = (string) ( $context['currency'] ?? '' );
-		$decimals = wpss_get_currency_decimals( $currency );
-		$shares   = array();
+		$first     = reset( $orders );
+		$currency  = (string) ( $context['currency'] ?? $first->currency ?? '' );
+		$decimals  = wpss_get_currency_decimals( $currency );
+		$refund_id = (string) ( $context['refund_id'] ?? '' );
 
-		if ( ! empty( $context['amounts'] ) && is_array( $context['amounts'] ) ) {
-			foreach ( $context['amounts'] as $oid => $share ) {
-				$shares[ (int) $oid ] = (float) $share;
+		// A refund this plugin is sending right now comes back as the rail's own event, but so could a
+		// different refund on a sibling gig. Neither is dropped: the event is run again once the lock
+		// has gone, when what we recorded makes our own echo add nothing and anything else still counts.
+		$deferred = (int) ( $context['deferred'] ?? 0 );
+
+		foreach ( array_keys( $orders ) as $oid ) {
+			if ( ! OrderService::is_refund_locked( (int) $oid ) ) {
+				continue;
 			}
-		} elseif ( 1 === count( $orders ) ) {
-			$shares[ array_key_first( $orders ) ] = $amount;
-		} else {
-			// Split by order total, last order takes the rounding remainder so
-			// the shares add up to exactly what the gateway refunded.
-			$sum       = array_sum( array_map( static fn( ServiceOrder $o ): float => (float) $o->total, $orders ) );
-			$allocated = 0.0;
-			$last_id   = array_key_last( $orders );
 
-			foreach ( $orders as $oid => $order ) {
-				$share          = $oid === $last_id || $sum <= 0
-					? round( $amount - $allocated, $decimals )
-					: round( $amount * (float) $order->total / $sum, $decimals );
-				$share          = min( $share, (float) $order->total );
-				$shares[ $oid ] = $share;
-				$allocated     += $share;
+			if ( $deferred < 3 ) {
+				Scheduler::schedule_single(
+					'wpss_gateway_refund_received',
+					time() + MINUTE_IN_SECONDS + 15,
+					array( $gateway, $transaction_id, $amount, array_merge( $context, array( 'deferred' => $deferred + 1 ) ) )
+				);
+				wpss_log( sprintf( 'Order %d: a refund is being sent from here; "%s" refund %s will be checked again shortly.', $oid, $gateway, $refund_id ), 'info' );
+				return;
+			}
+
+			break; // The lock never cleared: go on, what is already recorded still prevents a double.
+		}
+
+		// A refund this site already recorded (one it sent, or an event the rail repeats) adds nothing,
+		// whichever gig of the charge it was recorded on. A rail that reports each refund on its own,
+		// not as a running total, has no other way to tell its echo of our refund from new money.
+		if ( '' !== $refund_id ) {
+			foreach ( array_keys( $orders ) as $oid ) {
+				if ( in_array( $refund_id, (array) wpss_get_order_provider()->get_item_meta( (int) $oid, '_wpss_gateway_refund_ids' ), true ) ) {
+					wpss_log( sprintf( '"%s" refund %s is already recorded on order %d; nothing to add.', $gateway, $refund_id, (int) $oid ), 'info' );
+					return;
+				}
 			}
 		}
 
-		$cumulative = ! empty( $context['cumulative'] );
-		$refund_id  = (string) ( $context['refund_id'] ?? '' );
-		$provider   = wpss_get_order_provider();
-		$service    = new OrderService();
+		// What this event adds. A running total is measured against what is already recorded on the
+		// orders it covers, plus anything already parked for them.
+		$recorded = array_sum( array_map( static fn( ServiceOrder $o ): float => wpss_get_order_refunded_amount( $o ), $orders ) );
+		$parked   = $named ? 0.0 : PendingRefundService::outstanding( array_keys( $orders ) );
+		$delta    = ! empty( $context['cumulative'] ) ? round( $amount - $recorded - $parked, $decimals ) : round( $amount, $decimals );
+
+		if ( $delta <= 0 ) {
+			wpss_log( sprintf( '"%s" refund %s on %s is already recorded (%s of it); nothing to add.', $gateway, $refund_id, $transaction_id, (string) $recorded ), 'info' );
+			return;
+		}
+
+		if ( count( $orders ) > 1 || $ambiguous ) {
+			// Everything left on the charge came back: each gig is refunded in full, no choice to make.
+			// Only when the charge is known to hold gigs and nothing else: a transaction we paid
+			// ourselves, or a rail that says so (`full_charge`). An amount that merely matches could be
+			// a refund of something else on the order.
+			$room = array_sum( array_map( static fn( ServiceOrder $o ): float => max( 0.0, (float) $o->total - wpss_get_order_refunded_amount( $o ) ), $orders ) );
+
+			if ( ! empty( $context['full_charge'] ) || ( ! $ambiguous && wpss_amounts_match( $delta, $room, $currency ) ) ) {
+				$this->refund_all_on_charge( $orders, $gateway, $refund_id );
+				return;
+			}
+
+			PendingRefundService::record(
+				array_keys( $orders ),
+				$gateway,
+				$transaction_id,
+				$delta,
+				$currency,
+				md5( $gateway . '|' . $transaction_id . '|' . ( '' !== $refund_id ? $refund_id : (string) $amount ) )
+			);
+			return;
+		}
+
+		$oid   = (int) array_key_first( $orders );
+		$order = $first;
+		$seen  = '' !== $refund_id ? (array) wpss_get_order_provider()->get_item_meta( $oid, '_wpss_gateway_refund_ids' ) : array();
+		$total = (float) $order->total;
+		$new   = round( $recorded + $delta, $decimals );
+
+		if ( ServiceOrder::STATUS_REFUNDED === $order->status || in_array( $refund_id, $seen, true ) ) {
+			wpss_log( sprintf( 'Order %d: "%s" refund %s already recorded (%s of %s refunded); skipped.', $oid, $gateway, $refund_id, (string) $recorded, (string) $total ), 'info' );
+			return;
+		}
+
+		$status = wpss_amounts_match( $new, $total, $currency ) || $new > $total
+			? ServiceOrder::STATUS_REFUNDED
+			: ServiceOrder::STATUS_PARTIALLY_REFUNDED;
+
+		// refund() takes this event's slice, reverses that share of the vendor's earnings and skips
+		// the gateway call, which already happened. The origin names the rail in a dispute's closing
+		// note; a full refund closes the dispute itself.
+		$moved = ( new OrderService() )->refund(
+			$oid,
+			$delta,
+			$status,
+			array(
+				'settled_at_rail' => true,
+				'origin'          => $gateway,
+			)
+		)['ok'];
+
+		if ( $moved ) {
+			self::remember_gateway_refund( $oid, $refund_id );
+		}
+
+		wpss_log(
+			sprintf(
+				'Order %d: "%s" refund of %s recorded from the rail (%s of %s now refunded, status %s%s).',
+				$oid,
+				$gateway,
+				(string) $delta,
+				(string) $new,
+				(string) $total,
+				$status,
+				$moved ? '' : ' REFUSED'
+			),
+			$moved ? 'info' : 'error'
+		);
+	}
+
+	/**
+	 * Refund every gig on a charge in full because the rail refunded the whole charge.
+	 *
+	 * @param array<int, ServiceOrder> $orders    Orders paid with the charge.
+	 * @param string                   $gateway   Rail slug.
+	 * @param string                   $refund_id Rail refund id, '' when unknown.
+	 * @return void
+	 */
+	private function refund_all_on_charge( array $orders, string $gateway, string $refund_id ): void {
+		$service  = new OrderService();
+		$provider = wpss_get_order_provider();
 
 		foreach ( $orders as $oid => $order ) {
-			$share = (float) ( $shares[ $oid ] ?? 0 );
+			$seen = '' !== $refund_id ? (array) $provider->get_item_meta( $oid, '_wpss_gateway_refund_ids' ) : array();
 
-			if ( $share <= 0 ) {
+			if ( ServiceOrder::STATUS_REFUNDED === $order->status || in_array( $refund_id, $seen, true ) ) {
 				continue;
 			}
 
-			$already = wpss_get_order_refunded_amount( $order );
-			$seen    = '' !== $refund_id ? (array) $provider->get_item_meta( $oid, '_wpss_gateway_refund_ids' ) : array();
-
-			// Non-cumulative gateways (PayPal, Razorpay) report each refund on
-			// its own, so the new running total is what was already back plus
-			// this event. Stripe reports the running total itself.
-			$target = $cumulative ? $share : round( $already + $share, $decimals );
-			$total  = (float) $order->total;
-
-			if ( ServiceOrder::STATUS_REFUNDED === $order->status || $target <= $already || in_array( $refund_id, $seen, true ) ) {
-				wpss_log( sprintf( 'Order %d: "%s" refund %s already recorded (%s of %s refunded); skipped.', $oid, $gateway, $refund_id, (string) $already, (string) $total ), 'info' );
-				continue;
-			}
-
-			$status = wpss_amounts_match( $target, $total, $currency ) || $target > $total
-				? ServiceOrder::STATUS_REFUNDED
-				: ServiceOrder::STATUS_PARTIALLY_REFUNDED;
-
-			// apply_refund_status() accumulates: hand it this event's slice,
-			// not the running total. Each slice reverses its own vendor share.
-			$moved = $service->apply_refund_status( $oid, round( $target - $already, $decimals ), $status, true );
+			$moved = $service->refund(
+				$oid,
+				null,
+				ServiceOrder::STATUS_REFUNDED,
+				array(
+					'settled_at_rail' => true,
+					'origin'          => $gateway,
+				)
+			)['ok'];
 
 			if ( $moved ) {
 				self::remember_gateway_refund( $oid, $refund_id );
-
-				if ( ServiceOrder::STATUS_REFUNDED === $status ) {
-					( new DisputeService() )->close_for_refund( $oid, $gateway );
-				}
 			}
 
-			wpss_log(
-				sprintf(
-					'Order %d: "%s" refund of %s recorded from the rail (%s of %s now refunded, status %s%s).',
-					$oid,
-					$gateway,
-					(string) $share,
-					(string) $target,
-					(string) $total,
-					$status,
-					$moved ? '' : ' REFUSED'
-				),
-				$moved ? 'info' : 'error'
-			);
+			wpss_log( sprintf( 'Order %d: "%s" refunded the whole charge; order refunded in full%s.', $oid, $gateway, $moved ? '' : ' REFUSED' ), $moved ? 'info' : 'error' );
 		}
 	}
 
@@ -1334,9 +1422,8 @@ class OrderWorkflowManager {
 	/**
 	 * Attempt to refund the buyer's original payment via the payment gateway.
 	 *
-	 * Runs the `wpss_pre_process_gateway_refund` filter first so a rail that
-	 * owns the money (Pro's WooCommerce / EDD / FluentCart adapters) can settle
-	 * the refund itself; otherwise resolves the order's gateway and calls its
+	 * Runs the `wpss_pre_process_gateway_refund` filter first so an extension
+	 * can settle the refund itself; otherwise resolves the order's gateway and calls its
 	 * process_refund(). Every result is the seam-3 shape
 	 * {success, transaction_id, message, manual}. A `manual` result means the
 	 * gateway cannot move money (offline, test): the order is flagged with
@@ -1368,12 +1455,10 @@ class OrderWorkflowManager {
 			return $result;
 		}
 
-		// The refund started AT the rail — a Stripe dashboard refund arriving on
-		// charge.refunded, or a Woo refund. That money is already back with the
-		// buyer; calling the gateway now pays them twice. Verified in the Stripe
-		// sandbox on 2026-08-01: a $5.00 dashboard refund on order #114 echoed
-		// into a second $5.00 refund four seconds later, $10.00 out the door on
-		// a $12.50 charge.
+		// The refund started AT the rail: a refund made in the gateway's dashboard
+		// or in a shop platform. That money is already back with the buyer;
+		// calling the gateway now pays them twice (a $5.00 dashboard refund once
+		// echoed into a second $5.00 refund, $10.00 out on a $12.50 charge).
 		//
 		// Only this step is skipped. settle_refund() still reverses the vendor's
 		// earnings afterwards, because the rail knows nothing about our wallet.
@@ -1426,13 +1511,32 @@ class OrderWorkflowManager {
 
 		$order_total = (float) $order->total;
 
+		// A shop platform that collected the money refunds it. A cancel reaches this point too, and
+		// the cancellation stands; the refund is recorded when the platform reports it.
+		$rail = wpss_order_money_rail( $order );
+
+		if ( '' !== $rail ) {
+			return array(
+				'success'        => false,
+				'manual'         => false,
+				'rail_owned'     => true,
+				'transaction_id' => '',
+				'message'        => sprintf(
+					/* translators: %s: platform name, for example WooCommerce. */
+					__( 'This order was paid through %s. Refund it there; the refund is recorded here when it is made.', 'wp-sell-services' ),
+					$rail
+				),
+			);
+		}
+
 		/**
 		 * Short-circuit the gateway refund.
 		 *
 		 * Return a seam-3 array {success, transaction_id, message, manual} to
-		 * settle the refund yourself (a rail that owns the money, e.g. a
-		 * WooCommerce order refunded through wc_create_refund()); return null
-		 * to let the order's registered gateway handle it.
+		 * settle the refund yourself (a payout or escrow extension that holds
+		 * the money); return null to let the order's registered gateway handle
+		 * it. Shop platforms that collected the money are not refunded here:
+		 * see wpss_order_money_rail().
 		 *
 		 * @since 1.7.1
 		 *
@@ -1861,11 +1965,11 @@ class OrderWorkflowManager {
 			return;
 		}
 
-		// Transition to pending requirements.
+		// Transition to pending requirements, or straight to in progress when the service asks for none.
 		// This fires wpss_order_status_changed → Plugin.php handles notifications.
 		$this->order_service->update_status(
 			$order_id,
-			ServiceOrder::STATUS_PENDING_REQUIREMENTS,
+			wpss_order_needs_requirements( $order ) ? ServiceOrder::STATUS_PENDING_REQUIREMENTS : ServiceOrder::STATUS_IN_PROGRESS,
 			__( 'Payment received', 'wp-sell-services' )
 		);
 	}

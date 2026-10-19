@@ -63,6 +63,7 @@ class Deactivator {
 			'wpss_process_auto_withdrawals',
 			'wpss_cron_daily',
 			\WPSellServices\Services\AuditLogService::CLEANUP_HOOK,
+			\WPSellServices\Services\NotificationService::CLEANUP_HOOK,
 			\WPSellServices\Services\TippingService::CLEANUP_HOOK,
 			\WPSellServices\Services\ExtensionOrderService::CLEANUP_HOOK,
 			\WPSellServices\Services\MilestoneService::CLEANUP_HOOK,

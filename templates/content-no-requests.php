@@ -15,6 +15,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -52,7 +53,7 @@ $message = apply_filters( 'wpss_no_requests_message', $default_message );
 	?>
 
 	<?php if ( ! empty( $_GET ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-		<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_request' ) ); ?>" class="wpss-btn wpss-btn-outline">
+		<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_request' ) ); ?>" class="wpss-btn wpss-btn--outline">
 			<?php esc_html_e( 'Clear Filters', 'wp-sell-services' ); ?>
 		</a>
 	<?php endif; ?>

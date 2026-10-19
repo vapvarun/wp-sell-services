@@ -136,20 +136,20 @@ final class Plugin {
 	private array $wallet_providers = array();
 
 	/**
+	 * Registered product types (id => ProductTypeInterface).
+	 *
+	 * @var array
+	 * @since 1.9.0
+	 */
+	private array $product_types = array();
+
+	/**
 	 * Registered storage providers.
 	 *
 	 * @var array
 	 * @since 1.1.0
 	 */
 	private array $storage_providers = array();
-
-	/**
-	 * Registered email providers.
-	 *
-	 * @var array
-	 * @since 1.1.0
-	 */
-	private array $email_providers = array();
 
 	/**
 	 * Registered analytics widgets.
@@ -282,6 +282,14 @@ final class Plugin {
 		// activation) to the pruning handler. Without this the cron fired with
 		// no listener, so the retention setting never trimmed the table.
 		( new \WPSellServices\Services\AuditLogService() )->init();
+
+		// Notification retention: read rows older than 90 days (UTC cutoff).
+		add_action(
+			\WPSellServices\Services\NotificationService::CLEANUP_HOOK,
+			static function (): void {
+				( new \WPSellServices\Services\NotificationService() )->cleanup_expired();
+			}
+		);
 
 		// Guided onboarding tour — registers its own admin/front hooks and
 		// the REST completion endpoint internally.
@@ -466,6 +474,12 @@ final class Plugin {
 			// them back to pending so they re-enter the queue.
 			if ( $installed_version && version_compare( $installed_version, '1.7.2', '<' ) ) {
 				self::migrate_unapproved_published_services();
+			}
+
+			// 1.9.0 stores a buyer request's deadline in UTC through every door; the dates typed
+			// before 1.8.0 are still midnight with no zone.
+			if ( $installed_version && version_compare( $installed_version, '1.9.0', '<' ) ) {
+				\WPSellServices\Database\UtcMigration::repair_request_deadlines();
 			}
 
 			// Note: the wallet-ledger reconciliation is NOT here. It runs off its
@@ -2175,6 +2189,10 @@ final class Plugin {
 					$user_id = (int) $id_or_email->post_author;
 				} elseif ( $id_or_email instanceof \WP_Comment ) {
 					$user_id = (int) $id_or_email->user_id;
+				} elseif ( is_string( $id_or_email ) && is_email( $id_or_email ) ) {
+					// Themes pass the current user's email (BuddyX and Reign headers).
+					$by_email = get_user_by( 'email', $id_or_email );
+					$user_id  = $by_email ? (int) $by_email->ID : 0;
 				}
 
 				if ( ! $user_id ) {
@@ -2724,7 +2742,7 @@ final class Plugin {
 		 *
 		 * @param array $gateways Array of payment gateway instances.
 		 */
-		$this->payment_gateways = apply_filters( 'wpss_payment_gateways', $this->payment_gateways );
+		$this->payment_gateways = wpss_validate_registry( apply_filters( 'wpss_payment_gateways', $this->payment_gateways ), \WPSellServices\Integrations\Contracts\PaymentGatewayInterface::class, 'wpss_payment_gateways' );
 
 		// Test gateway LAST, on purpose: it decides whether to register by asking
 		// whether any real gateway is usable, and that is only correct once
@@ -2743,7 +2761,24 @@ final class Plugin {
 		 *
 		 * @param array $providers Array of wallet provider instances.
 		 */
-		$this->wallet_providers = apply_filters( 'wpss_wallet_providers', $this->wallet_providers );
+		/**
+		 * Filter the registered product types.
+		 *
+		 * "service" is registered by core. A type added here is known to the
+		 * REST payment routes, earnings labels and any code that asks the registry;
+		 * it still needs an item-based checkout intent before it can be bought.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param array $types Map of type id to ProductTypeInterface instance.
+		 */
+		$this->product_types = wpss_validate_registry(
+			apply_filters( 'wpss_product_types', array( 'service' => new \WPSellServices\Integrations\ProductTypes\ServiceProductType() ) ),
+			\WPSellServices\Integrations\Contracts\ProductTypeInterface::class,
+			'wpss_product_types'
+		);
+
+		$this->wallet_providers = wpss_validate_registry( apply_filters( 'wpss_wallet_providers', $this->wallet_providers ), \WPSellServices\Integrations\Contracts\WalletProviderInterface::class, 'wpss_wallet_providers' );
 
 		/**
 		 * Filter the registered storage providers.
@@ -2755,19 +2790,7 @@ final class Plugin {
 		 *
 		 * @param array $providers Array of storage provider instances.
 		 */
-		$this->storage_providers = apply_filters( 'wpss_storage_providers', $this->storage_providers );
-
-		/**
-		 * Filter the registered email providers.
-		 *
-		 * Allows Pro or third-party plugins to register email services
-		 * (SendGrid, Mailgun, SES, etc.).
-		 *
-		 * @since 1.1.0
-		 *
-		 * @param array $providers Array of email provider instances.
-		 */
-		$this->email_providers = apply_filters( 'wpss_email_providers', $this->email_providers );
+		$this->storage_providers = wpss_validate_registry( apply_filters( 'wpss_storage_providers', $this->storage_providers ), \WPSellServices\Integrations\Contracts\StorageProviderInterface::class, 'wpss_storage_providers' );
 
 		/**
 		 * Filter the registered analytics widgets.
@@ -3136,9 +3159,17 @@ final class Plugin {
 		// Auto-withdrawal processing.
 		$this->loader->add_action(
 			'wpss_process_auto_withdrawals',
-			function (): void {
-				$earnings_service = new \WPSellServices\Services\EarningsService();
-				$earnings_service->process_auto_withdrawals();
+			array( \WPSellServices\Services\EarningsService::class, 'run_scheduled_auto_withdrawals' )
+		);
+
+		// Moves a site that upgraded with the old recurring action onto the dated chain,
+		// and re-arms it if a run ever died; cheap, and only when auto-withdrawal is on.
+		add_action(
+			'action_scheduler_init',
+			static function (): void {
+				if ( \WPSellServices\Services\EarningsService::is_auto_withdrawal_enabled() ) {
+					\WPSellServices\Services\EarningsService::schedule_auto_withdrawal_cron();
+				}
 			}
 		);
 	}
@@ -3316,6 +3347,17 @@ final class Plugin {
 	}
 
 	/**
+	 * The member dashboard, once its hooks are defined.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @return UnifiedDashboard|null
+	 */
+	public function get_unified_dashboard(): ?UnifiedDashboard {
+		return $this->unified_dashboard;
+	}
+
+	/**
 	 * Get registered wallet providers.
 	 *
 	 * @since 1.1.0
@@ -3323,6 +3365,27 @@ final class Plugin {
 	 */
 	public function get_wallet_providers(): array {
 		return $this->wallet_providers;
+	}
+
+	/**
+	 * Get registered product types.
+	 *
+	 * @since 1.9.0
+	 * @return array<string, \WPSellServices\Integrations\Contracts\ProductTypeInterface>
+	 */
+	public function get_product_types(): array {
+		return $this->product_types;
+	}
+
+	/**
+	 * Get one product type by id.
+	 *
+	 * @since 1.9.0
+	 * @param string $id Type id.
+	 * @return \WPSellServices\Integrations\Contracts\ProductTypeInterface|null
+	 */
+	public function get_product_type( string $id ): ?\WPSellServices\Integrations\Contracts\ProductTypeInterface {
+		return $this->product_types[ $id ] ?? null;
 	}
 
 	/**
@@ -3335,15 +3398,6 @@ final class Plugin {
 		return $this->storage_providers;
 	}
 
-	/**
-	 * Get registered email providers.
-	 *
-	 * @since 1.1.0
-	 * @return array
-	 */
-	public function get_email_providers(): array {
-		return $this->email_providers;
-	}
 
 	/**
 	 * Get registered analytics widgets.

@@ -824,12 +824,17 @@ class MarketplaceSeeder {
 			$is_completed = ServiceOrder::STATUS_COMPLETED === $status;
 			$db_status    = ServiceOrder::STATUS_DISPUTED === $status ? ServiceOrder::STATUS_IN_PROGRESS : $status;
 
+			// Same shape a live checkout stores, so a demo order can be ordered again (Order Again
+			// needs the package id and its snapshot; a bare row never offers it).
+			$demo_packages = wpss_get_service_packages( (int) $service['id'] );
+			$demo_package  = $demo_packages ? reset( $demo_packages ) : null;
+
 			$data = array(
 				'order_number'       => sprintf( 'WPSS-%s-%04d', gmdate( 'Ymd', strtotime( $created_at ) ), $i + 1 ),
 				'customer_id'        => $customer,
 				'vendor_id'          => $service['vendor_id'],
 				'service_id'         => $service['id'],
-				'package_id'         => null,
+				'package_id'         => $demo_package ? (int) key( $demo_packages ) : null,
 				'addons'             => wp_json_encode( array() ),
 				'platform'           => 'standalone',
 				'subtotal'           => $subtotal,
@@ -855,14 +860,17 @@ class MarketplaceSeeder {
 				'updated_at'         => $created_at,
 				'started_at'         => $is_paid ? $created_at : null,
 				'meta'               => wp_json_encode(
-					array(
-						'status_history' => array(
-							array(
-								'status'    => $db_status,
-								'timestamp' => $created_at,
-								'note'      => 'Seeded demo order.',
+					array_filter(
+						array(
+							'package_snapshot' => $demo_package,
+							'status_history'   => array(
+								array(
+									'status'    => $db_status,
+									'timestamp' => $created_at,
+									'note'      => 'Seeded demo order.',
+								),
 							),
-						),
+						)
 					)
 				),
 				'completed_at'       => $is_completed ? $deadline : null,

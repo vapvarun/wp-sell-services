@@ -1,7 +1,8 @@
-# Journey 03 — Install, upgrade and first run
+# Journey 03 - Admin installs, upgrades and runs first-run setup
 
 **Role:** admin
-**Status:** passing as of commit `c341923`
+**Rail:** standalone (install default)
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 Guards cards 10208003415, 10208047602, and the activation fatal found the
 same day.

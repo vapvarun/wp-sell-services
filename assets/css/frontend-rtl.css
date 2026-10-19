@@ -147,105 +147,6 @@
    so the token-driven .wpss-container there is the one definition. Nested
    containers collapse to fluid width via the rule in design-system.css. */
 
-/* ==========================================================================
-   Buttons
-   ========================================================================== */
-
-.wpss-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	padding: 10px 20px;
-	font-size: 14px;
-	font-weight: 600;
-	line-height: 1.4;
-	text-decoration: none;
-	border: 2px solid transparent;
-	border-radius: var(--wpss-radius);
-	cursor: pointer;
-	transition: all var(--wpss-transition);
-}
-
-.wpss-btn:hover {
-	text-decoration: none;
-}
-
-.wpss-btn-primary {
-	background: var(--wpss-primary);
-	color: var(--wpss-white);
-	border-color: var(--wpss-primary);
-}
-
-.wpss-btn-primary:hover {
-	background: var(--wpss-primary-dark);
-	border-color: var(--wpss-primary-dark);
-	color: var(--wpss-white);
-}
-
-.wpss-btn-secondary {
-	background: var(--wpss-secondary);
-	color: var(--wpss-white);
-	border-color: var(--wpss-secondary);
-}
-
-.wpss-btn-outline {
-	background: transparent;
-	color: var(--wpss-secondary-accent);
-	border-color: var(--wpss-border);
-}
-
-.wpss-btn-outline:hover {
-	background: var(--wpss-background);
-	border-color: var(--wpss-secondary);
-}
-
-.wpss-btn-success {
-	background: var(--wpss-success);
-	color: var(--wpss-white);
-	border-color: var(--wpss-success);
-}
-
-.wpss-btn-danger {
-	background: var(--wpss-danger);
-	color: var(--wpss-white);
-	border-color: var(--wpss-danger);
-}
-
-.wpss-btn-sm {
-	padding: 6px 12px;
-	font-size: 13px;
-}
-
-.wpss-btn-block {
-	display: flex;
-	width: 100%;
-}
-
-.wpss-btn-icon {
-	padding: 8px;
-	border-radius: 50%;
-}
-
-/* Disabled & Loading States */
-.wpss-btn:disabled,
-.wpss-btn[aria-disabled="true"],
-.wpss-btn--loading {
-	opacity: 0.6;
-	cursor: not-allowed;
-	pointer-events: none;
-}
-
-.wpss-btn:active:not(:disabled) {
-	transform: scale(0.97);
-}
-
-/* Focus Indicators */
-.wpss-btn:focus-visible {
-	outline: 2px solid var(--wpss-primary);
-	outline-offset: 2px;
-}
-
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
@@ -1157,7 +1058,7 @@ article.wpss-service-card:hover {
 	margin-top: 0.25rem;
 }
 
-.wpss-contact-form .wpss-btn-block {
+.wpss-contact-form .wpss-btn--block {
 	width: 100%;
 }
 
@@ -1381,7 +1282,7 @@ article.wpss-service-card:hover {
 
 @media (max-width: 992px) {
 	.wpss-dashboard-layout {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -1450,27 +1351,6 @@ article.wpss-service-card:hover {
 	padding: 30px;
 }
 
-/* Stats Grid */
-.wpss-stats-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-	gap: 20px;
-	margin-bottom: 30px;
-}
-
-.wpss-stat-card {
-	display: flex;
-	align-items: center;
-	gap: 15px;
-	padding: 20px;
-	background: var(--wpss-background);
-	border-radius: var(--wpss-radius-lg);
-}
-
-.wpss-stat-card.wpss-stat-highlight {
-	background: var(--wpss-primary-light);
-}
-
 /* .wpss-stat-icon deliberately NOT styled here.
  *
  * It is an ADMIN component - only ServiceMetabox and Admin.php render it, and
@@ -1499,11 +1379,6 @@ article.wpss-service-card:hover {
 }
 
 /* Tables */
-.wpss-table {
-	width: 100%;
-	border-collapse: collapse;
-}
-
 .wpss-table th,
 .wpss-table td {
 	padding: 12px;
@@ -1662,13 +1537,13 @@ a.wpss-back-link:focus {
 
 .wpss-order-layout {
 	display: grid;
-	grid-template-columns: 1fr 300px;
+	grid-template-columns: minmax(0, 1fr) 300px;
 	gap: 30px;
 }
 
 @media (max-width: 992px) {
 	.wpss-order-layout {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -2418,14 +2293,14 @@ a.wpss-back-link:focus {
 
 .wpss-profile-layout {
 	display: grid;
-	grid-template-columns: 1fr 300px;
+	grid-template-columns: minmax(0, 1fr) 300px;
 	gap: 30px;
 	margin-top: 30px;
 }
 
 @media (max-width: 992px) {
 	.wpss-profile-layout {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	/* One column: the at-a-glance card (response time, active services,
@@ -2772,13 +2647,13 @@ a.wpss-back-link:focus {
 
 .wpss-requirements-layout {
 	display: grid;
-	grid-template-columns: 1fr 320px;
+	grid-template-columns: minmax(0, 1fr) 320px;
 	gap: 30px;
 }
 
 @media (max-width: 992px) {
 	.wpss-requirements-layout {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -2856,6 +2731,7 @@ a.wpss-back-link:focus {
 .wpss-requirement-field select:focus {
 	outline: none;
 	border-color: var(--wpss-primary);
+	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
 }
 
 .wpss-requirement-field textarea {
@@ -2905,11 +2781,6 @@ a.wpss-back-link:focus {
 	text-align: center;
 	padding-top: 20px;
 	border-top: 1px solid var(--wpss-border);
-}
-
-.wpss-btn-lg {
-	padding: 15px 40px;
-	font-size: 16px;
 }
 
 .wpss-requirements-note {
@@ -3162,105 +3033,6 @@ a.wpss-back-link:focus {
 }
 
 /* ==========================================================================
-   Modals (Review & Dispute)
-   ========================================================================== */
-
-.wpss-modal {
-	position: fixed;
-	top: 0;
-	right: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 9991;
-	display: none;
-	align-items: center;
-	justify-content: center;
-	padding: 1rem;
-}
-
-.wpss-modal.wpss-modal-open {
-	display: flex;
-}
-
-.wpss-modal-backdrop {
-	position: absolute;
-	top: 0;
-	right: 0;
-	width: 100%;
-	height: 100%;
-	background: rgb(0 0 0 / 50%);
-	z-index: 1;
-}
-
-.wpss-modal-dialog {
-	position: relative;
-	background: var(--wpss-surface);
-	border-radius: var(--wpss-radius-lg);
-	width: 100%;
-	max-width: 480px;
-	max-height: 90vh;
-	overflow-y: auto;
-	box-shadow: var(--wpss-shadow-lg);
-	z-index: 2;
-}
-
-.wpss-modal-header {
-	padding: 1.5rem 1.5rem 1rem;
-	border-bottom: 1px solid var(--wpss-border);
-	position: relative;
-}
-
-.wpss-modal-header h3 {
-	margin: 0;
-	font-size: 1.25rem;
-}
-
-.wpss-modal-close {
-	position: absolute;
-	top: 1rem;
-	left: 1rem;
-	background: none !important;
-	border: none !important;
-	font-size: 1.5rem !important;
-	cursor: pointer;
-	color: var(--wpss-text-light);
-	padding: 0 !important;
-	width: 32px;
-	height: 32px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	line-height: 1;
-	z-index: 1;
-}
-
-.wpss-modal-close:hover {
-	background: none !important;
-	color: var(--wpss-text);
-	border: none !important;
-}
-
-.wpss-modal-body {
-	padding: 1.5rem;
-}
-
-.wpss-modal-footer {
-	padding: 1rem 1.5rem 1.5rem;
-	border-top: 1px solid var(--wpss-border);
-	display: flex;
-	gap: 0.75rem;
-	justify-content: flex-end;
-}
-
-#wpss-order-modal .wpss-modal-footer {
-	flex-direction: column;
-}
-
-body.wpss-modal-active {
-	overflow: hidden;
-}
-
-/* ==========================================================================
    Star Rating Input
    ========================================================================== */
 
@@ -3336,6 +3108,7 @@ body.wpss-modal-active {
 .wpss-form-group input:focus {
 	outline: none;
 	border-color: var(--wpss-primary);
+	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
 }
 
 .wpss-form-group textarea {
@@ -3375,6 +3148,7 @@ body.wpss-modal-active {
 .wpss-form-group__textarea:focus {
 	outline: none;
 	border-color: var(--wpss-primary);
+	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
 }
 
 .wpss-form-group__textarea {
@@ -3420,100 +3194,6 @@ body.wpss-modal-active {
 	width: 18px;
 	height: 18px;
 	accent-color: var(--wpss-primary);
-}
-
-/* ==========================================================================
-   Modal (BEM)
-   ========================================================================== */
-
-.wpss-modal__backdrop {
-	position: absolute;
-	top: 0;
-	right: 0;
-	width: 100%;
-	height: 100%;
-	background: rgb(0 0 0 / 50%);
-}
-
-.wpss-modal__dialog {
-	position: relative;
-	background: var(--wpss-surface);
-	border-radius: var(--wpss-radius-lg);
-	width: 100%;
-	max-width: 480px;
-	max-height: 90vh;
-	overflow-y: auto;
-	box-shadow: var(--wpss-shadow-lg);
-}
-
-.wpss-modal__content {
-	display: flex;
-	flex-direction: column;
-}
-
-.wpss-modal__header {
-	padding: 1.5rem 1.5rem 1rem;
-	border-bottom: 1px solid var(--wpss-border);
-	position: relative;
-}
-
-.wpss-modal__title {
-	margin: 0;
-	font-size: 1.25rem;
-	color: var(--wpss-secondary-accent);
-}
-
-/* Only `__close` - the icon in the corner. `__close-btn` was grouped in here
-   and it is not an icon: every one of its seven uses is a footer button,
-   `<button class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">Cancel</button>`
-   in the deliver, tip, extension, revision and portfolio modals. This rule
-   pulled each of them out of the footer with position:absolute, parked them at
-   top:1rem right:1rem on top of the real close icon, squashed them to 32x32 and
-   pushed the word "Cancel" 99999px off-screen with text-indent. The buttons were
-   in the DOM, styled, and invisible. They keep their `.wpss-btn` styling now,
-   which is what the markup already asked for. */
-.wpss-modal__close {
-	position: absolute;
-	top: 1rem;
-	left: 1rem;
-	background: none !important;
-	border: none !important;
-	font-size: 1.5rem !important;
-	cursor: pointer;
-	color: var(--wpss-text-light);
-	padding: 0 !important;
-	width: 32px;
-	height: 32px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	line-height: 1;
-	text-indent: -99999px;
-}
-
-.wpss-modal__close:hover {
-	background: none;
-	color: var(--wpss-text);
-	border: none;
-}
-
-.wpss-modal__body {
-	padding: 1.5rem;
-}
-
-.wpss-modal__footer {
-	padding: 1rem 1.5rem 1.5rem;
-	border-top: 1px solid var(--wpss-border);
-	display: flex;
-	gap: 0.75rem;
-	justify-content: flex-end;
-}
-
-.wpss-modal__body select,
-.wpss-modal__body .wpss-select {
-	font-size: 14px !important;
-	max-width: 100%;
-	box-sizing: border-box;
 }
 
 /* ==========================================================================
@@ -3881,6 +3561,50 @@ body.wpss-modal-active {
 }
 
 /* ==========================================================================
+   Order again - order-view CTA for a finished order
+   ========================================================================== */
+
+.wpss-order-section--reorder {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	margin-top: 16px;
+	padding: 20px;
+	background: var(--wpss-bg-subtle);
+	border: 1px solid var(--wpss-border);
+	border-radius: 12px;
+}
+
+.wpss-reorder__title {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--wpss-text);
+}
+
+.wpss-reorder__text {
+	margin: 0;
+	font-size: 14px;
+	color: var(--wpss-text-muted);
+}
+
+.wpss-order-section--reorder .wpss-notice {
+	margin: 0;
+}
+
+@media (max-width: 640px) {
+	.wpss-order-section--reorder {
+		padding: 16px;
+	}
+
+	.wpss-order-section--reorder .wpss-reorder-btn,
+	.wpss-order-section--reorder .wpss-btn {
+		width: 100%;
+	}
+}
+
+/* ==========================================================================
    Tip UI — order-view CTA + modal (Tipping feature)
    ========================================================================== */
 
@@ -3974,6 +3698,10 @@ body.wpss-modal-active {
 	outline: none;
 }
 
+.wpss-tip-form__preset:focus-visible {
+	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
+}
+
 .wpss-tip-form__preset.is-selected {
 	border-color: var(--wpss-info, #2563eb);
 	background: var(--wpss-info-light, #eff6ff);
@@ -4035,6 +3763,7 @@ body.wpss-modal-active {
 
 .wpss-fullwidth-page {
 	width: 100%;
+	box-sizing: border-box;
 	padding: var( --wpss-space-6, 24px ) var( --wpss-space-4, 16px );
 }
 .wpss-fullwidth-inner {
@@ -4294,7 +4023,7 @@ body.wpss-modal-active {
 	.wpss-vendors-grid.wpss-columns-2,
 	.wpss-vendors-grid.wpss-columns-3,
 	.wpss-vendors-grid.wpss-columns-4 {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -4371,7 +4100,7 @@ body.wpss-modal-active {
 	.wpss-categories-grid.wpss-columns-3,
 	.wpss-categories-grid.wpss-columns-4,
 	.wpss-categories-grid.wpss-columns-5 {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -4440,7 +4169,7 @@ body.wpss-modal-active {
 	gap: 6px;
 	margin: 0 0 12px;
 	font-size: 13px;
-	color: var(--wpss-text-muted, #757575);
+	color: var(--wpss-text-secondary, #4b5563);
 }
 
 /* ==========================================================================
@@ -4608,9 +4337,6 @@ a.wpss-order-filter.is-active:focus {
    support. Semantic colour, separate from the accent, and token-driven so it
    follows the theme's dark mode. */
 
-.wpss-stat-card--negative .wpss-stat-card__value {
-	color: var(--wpss-danger, #ef4444);
-}
 
 /* .wpss-notice is a flex ROW built for one line of text plus an icon. This
    notice is a heading and two paragraphs, so inheriting that laid it out as

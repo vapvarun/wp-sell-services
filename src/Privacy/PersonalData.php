@@ -11,6 +11,8 @@ namespace WPSellServices\Privacy;
 
 use WPSellServices\Services\AccountDeletionService;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Puts marketplace data into Tools > Export Personal Data and Erase Personal Data.
  *

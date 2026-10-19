@@ -6,8 +6,12 @@
  * offer the same filter from the same status groups. Query args are
  * namespaced by $filter_prefix: {prefix}_status, {prefix}_search, {prefix}_page.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/partials/order-filters.php
+ *
  * @package WPSellServices\Templates
  * @since   1.7.1
+ * @version 1.9.0
  *
  * @var string                                                   $filter_prefix Query-arg prefix: 'orders' or 'sales'.
  * @var array<string, array{label: string, statuses: string[]}> $status_groups Status groups, incl. any runtime 'other' group.

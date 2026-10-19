@@ -374,7 +374,7 @@ class UpgradePage {
 			<?php foreach ( $features as $section_label => $section_features ) : ?>
 				<div class="wpss-card wpss-comparison-section">
 					<div class="wpss-card__head">
-						<p class="wpss-card__title"><?php echo esc_html( $section_label ); ?></p>
+						<h2 class="wpss-card__title"><?php echo esc_html( $section_label ); ?></h2>
 					</div>
 					<div class="wpss-card__body">
 						<table class="wpss-comparison-table widefat">

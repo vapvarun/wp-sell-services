@@ -340,38 +340,38 @@
 	transition: all 0.2s ease;
 }
 
-.wpss-requests-archive .wpss-btn-primary,
-.wpss-requests-archive .wpss-btn-primary:visited,
-.wpss-single-request .wpss-btn-primary,
-.wpss-single-request .wpss-btn-primary:visited {
+.wpss-requests-archive .wpss-btn--primary,
+.wpss-requests-archive .wpss-btn--primary:visited,
+.wpss-single-request .wpss-btn--primary,
+.wpss-single-request .wpss-btn--primary:visited {
 	background: var(--wpss-primary, #4f46e5) !important;
 	color: var(--wpss-white, #ffffff) !important;
 	border-color: var(--wpss-primary, #4f46e5) !important;
 }
 
-.wpss-requests-archive .wpss-btn-primary:hover,
-.wpss-requests-archive .wpss-btn-primary:focus,
-.wpss-single-request .wpss-btn-primary:hover,
-.wpss-single-request .wpss-btn-primary:focus {
+.wpss-requests-archive .wpss-btn--primary:hover,
+.wpss-requests-archive .wpss-btn--primary:focus,
+.wpss-single-request .wpss-btn--primary:hover,
+.wpss-single-request .wpss-btn--primary:focus {
 	background: var(--wpss-primary-dark, #4338ca) !important;
 	color: var(--wpss-white, #ffffff) !important;
 	border-color: var(--wpss-primary-dark, #4338ca) !important;
 }
 
 /* Outline button variant */
-.wpss-requests-archive .wpss-btn-outline,
-.wpss-requests-archive .wpss-btn-outline:visited,
-.wpss-single-request .wpss-btn-outline,
-.wpss-single-request .wpss-btn-outline:visited {
+.wpss-requests-archive .wpss-btn--outline,
+.wpss-requests-archive .wpss-btn--outline:visited,
+.wpss-single-request .wpss-btn--outline,
+.wpss-single-request .wpss-btn--outline:visited {
 	background: transparent !important;
 	color: var(--wpss-text, #1f2937) !important;
 	border-color: var(--wpss-border, #e5e7eb) !important;
 }
 
-.wpss-requests-archive .wpss-btn-outline:hover,
-.wpss-requests-archive .wpss-btn-outline:focus,
-.wpss-single-request .wpss-btn-outline:hover,
-.wpss-single-request .wpss-btn-outline:focus {
+.wpss-requests-archive .wpss-btn--outline:hover,
+.wpss-requests-archive .wpss-btn--outline:focus,
+.wpss-single-request .wpss-btn--outline:hover,
+.wpss-single-request .wpss-btn--outline:focus {
 	background: var(--wpss-bg, #f9fafb) !important;
 	color: var(--wpss-text, #1f2937) !important;
 	border-color: var(--wpss-border, #e5e7eb) !important;
@@ -659,7 +659,8 @@
 
 .wpss-request-layout {
 	display: grid;
-	grid-template-columns: 1fr;
+	/* minmax(0, 1fr): a bare 1fr will not shrink below its content, so one long word pushed the page sideways on a phone. */
+	grid-template-columns: minmax(0, 1fr);
 	gap: 2rem;
 }
 
@@ -780,6 +781,10 @@
 .wpss-attachment-item:hover {
 	background: var(--wpss-gray-200, #e5e7eb);
 }
+
+/* A long file name wraps inside the chip instead of pushing it past the column on a phone. */
+.wpss-attachment-item { max-width: 100%; box-sizing: border-box; }
+.wpss-attachment-name { min-width: 0; overflow-wrap: anywhere; }
 
 /* ==========================================================================
    Proposals Section
@@ -1173,7 +1178,7 @@
 
 	/* Single request layout */
 	.wpss-request-layout {
-		grid-template-columns: 1fr 340px;
+		grid-template-columns: minmax(0, 1fr) 340px;
 	}
 
 	.wpss-request-sidebar:not(.wpss-request-sidebar) {
@@ -1229,7 +1234,7 @@
 	}
 
 	.wpss-services-grid {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -1323,8 +1328,14 @@
 
 .wpss-milestone-row__meta {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 10px;
+}
+
+.wpss-milestone-row__meta input {
+	min-width: 0;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 .wpss-milestone-row__meta label {
@@ -1353,7 +1364,7 @@
 		padding: var(--wpss-space-3, 12px);
 	}
 	.wpss-milestone-row__meta {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 	.wpss-milestones-builder [data-add-milestone] {
 		width: 100%;

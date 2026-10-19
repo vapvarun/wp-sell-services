@@ -10,14 +10,18 @@
  * Available filters:
  * - wpss_no_services_message - Modify the message text
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/content-no-services.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;
 
 // Determine context-specific message.
-if ( is_search() ) {
+if ( is_search() || '' !== trim( (string) get_query_var( 's' ) ) || isset( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only.
 	$default_message = sprintf(
 		/* translators: %s: search query */
 		esc_html__( 'No services match your search for "%s". Try different keywords or browse categories.', 'wp-sell-services' ),
@@ -58,14 +62,14 @@ $message = apply_filters( 'wpss_no_services_message', $default_message );
 		<div class="wpss-empty-actions">
 			<?php if ( is_search() || is_tax() ) : ?>
 				<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_service' ) ); ?>"
-					class="wpss-btn wpss-btn-primary">
+					class="wpss-btn wpss-btn--primary">
 					<?php esc_html_e( 'Browse All Services', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
 
 			<?php if ( wpss_is_vendor() ) : ?>
 				<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>"
-					class="wpss-btn wpss-btn-outline">
+					class="wpss-btn wpss-btn--outline">
 					<?php esc_html_e( 'Create a Service', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>

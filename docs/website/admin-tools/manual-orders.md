@@ -2,7 +2,7 @@
 
 Sometimes orders happen outside the normal checkout flow -- a phone call, a special arrangement, or a migration from another system. The manual order tool lets you create orders directly from the admin panel.
 
-![Create Manual Order](../images/admin-create-manual-order.png)
+![Create Manual Order](../images/admin-create-manual-order.webp)
 
 ## When to Use Manual Orders
 

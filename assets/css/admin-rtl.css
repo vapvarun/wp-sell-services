@@ -14,8 +14,8 @@
 	--wpss-admin-primary-dark: var(--wpss-vendor-green-dark);
 	--wpss-admin-secondary: var(--wpss-gray-700, #404145);
 	--wpss-admin-text: var(--wpss-gray-800, #1e1e1e);
-	--wpss-admin-text-light: var(--wpss-text-muted, #757575);
-	--wpss-admin-text-tertiary: var(--wpss-text-hint, #9ca3af);
+	--wpss-admin-text-light: #50575e; /* AA on wp-admin's #f0f0f1 grey (the design-system muted grey is 4.24:1 there) */
+	--wpss-admin-text-tertiary: #646970; /* AA on white and on #f0f0f1; the hint grey was 2.4:1 */
 	--wpss-admin-border: var(--wpss-border, #e2e8f0);
 	--wpss-admin-border-heavy: rgba(0, 0, 0, 0.12);
 	--wpss-admin-bg: var(--wpss-wp-admin-bg, #f0f0f1);
@@ -158,7 +158,7 @@
    mouse click (ux-foundation Rule 14). */
 .wpss-btn:focus-visible,
 .wpss-action-btn:focus-visible,
-.wpss-stat-card--action:focus-visible,
+.wpss-admin-stat-card--action:focus-visible,
 .wpss-package-toggle:focus-visible,
 .wpss-package-nav-btn:focus-visible,
 .wpss-detail-tab:focus-visible,
@@ -193,6 +193,22 @@
 	letter-spacing: 0.04em;
 	color: var(--wpss-admin-text);
 	margin: 0 0 2px;
+}
+
+/* Real headings inside cards keep the card look; WP core's ".wrap h2" padding must not apply. */
+h2.wpss-card__title,
+h2.wpss-settings-subhead__title {
+	padding: 0;
+	line-height: 1.4;
+}
+
+.wpss-card__body h3,
+.wpss-card h3 {
+	margin: 16px 0 8px;
+	padding: 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--wpss-admin-text);
 }
 
 .wpss-card__desc {
@@ -434,7 +450,7 @@
 	gap: 20px;
 }
 
-.wpss-stat-card {
+.wpss-admin-stat-card {
 	background: var(--wpss-admin-white);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 4px;
@@ -447,24 +463,24 @@
 /* Action-item tile variant. Highlight when there's something to do (.is-active),
    dim out when count is 0 (.is-empty) so the row keeps its shape but the admin
    can confirm "nothing on my plate" at a glance. */
-.wpss-stat-card--action {
+.wpss-admin-stat-card--action {
 	text-decoration: none;
 	color: inherit;
 	transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.wpss-stat-card--action:hover,
-.wpss-stat-card--action:focus {
+.wpss-admin-stat-card--action:hover,
+.wpss-admin-stat-card--action:focus {
 	border-color: var(--wpss-admin-primary, #2271b1);
 	background: var(--wpss-wp-admin-bg-alt, #f6f7f7);
 	color: inherit;
 }
 
-.wpss-stat-card--action.is-active {
+.wpss-admin-stat-card--action.is-active {
 	border-right: 3px solid var(--wpss-admin-primary, #2271b1);
 }
 
-.wpss-stat-card--action.is-empty {
+.wpss-admin-stat-card--action.is-empty {
 	opacity: 0.55;
 }
 
@@ -1613,7 +1629,7 @@
 	padding: 5px 0;
 }
 
-.wpss-stats-grid {
+.wpss-admin-stats-grid {
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
 	gap: 10px;
@@ -1862,7 +1878,7 @@
 	margin: 20px 0;
 }
 
-.wpss-listing-stats .wpss-stat-card {
+.wpss-listing-stats .wpss-admin-stat-card {
 	display: block;
 	text-align: center;
 }
@@ -2093,10 +2109,6 @@
 }
 
 .wpss-moderation-metabox select { margin-top: 5px; }
-
-/* Quick Edit: the core status dropdown is hidden because moderation status is
-   driven by the queue's own approve/reject actions, not by post status. */
-.inline-edit-row .inline-edit-status { display: none !important; }
 
 /* Withdrawals (Payouts) page */
 /* Fixed widths: the label, its sort arrows and a 5-digit id stay on one line at 820px (ID, Amount, Status). */
@@ -2606,6 +2618,16 @@
 	margin-top: 10px;
 }
 
+.wpss-vacation-message label,
+.wpss-vacation-return-date label {
+	display: block;
+	margin-bottom: 4px;
+}
+
+.wpss-vacation-return-date {
+	margin-top: 10px;
+}
+
 .wpss-vacation-message textarea {
 	width: 100%;
 	max-width: 400px;
@@ -2924,6 +2946,24 @@
 	color: var(--wpss-admin-text);
 }
 
+/* Settings tabs: a card or sub-heading title reads the same as the section
+   headings the Settings API prints (General, Checkout), not as a small caps
+   label. Scoped so other admin screens keep the compact card head. */
+.wpss-settings-content h2,
+.wpss-settings-content h2.wpss-card__title,
+.wpss-settings-content h2.wpss-settings-subhead__title {
+	font-size: 18px;
+	letter-spacing: 0;
+	text-transform: none;
+}
+
+/* The first sub-heading on a tab is the tab heading: no divider or gap above it. */
+.wpss-settings-section > .wpss-settings-subhead:first-child {
+	margin-top: 0;
+	padding-top: 0;
+	border-top: 0;
+}
+
 .wpss-settings-subhead__desc {
 	margin: 0;
 	font-size: 13px;
@@ -3096,7 +3136,7 @@
 		margin-right: 0;
 	}
 
-	.wpss-stats-grid {
+	.wpss-admin-stats-grid {
 		grid-template-columns: 1fr;
 	}
 
@@ -4042,4 +4082,16 @@ button.wpss-change-status:focus {
 .wpss-reports-account__menu .button.button-link-delete:focus {
 	color: var(--wpss-admin-white);
 	background: var(--wpss-admin-danger);
+}
+
+/* Review moderation search: the placeholder must fit. */
+.wpss-review-search input[type="search"] {
+	min-width: 240px;
+}
+
+@media (max-width: 640px) {
+	.wpss-review-search input[type="search"] {
+		min-width: 0;
+		width: 100%;
+	}
 }

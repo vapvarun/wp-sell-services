@@ -2,7 +2,7 @@
 
 The dashboard is where vendors and buyers manage everything -- orders, services, messages, earnings, and profile settings. It adapts based on your role, showing buying features to everyone and selling features to vendors.
 
-![Vendor dashboard overview](../images/vendor-dashboard-overview.png)
+![Vendor dashboard overview](../images/vendor-dashboard-overview.webp)
 
 ## Dashboard Sections
 
@@ -20,9 +20,13 @@ From here you can:
 - Message the buyer
 - Request a deadline extension
 
-![Vendor sales orders list](../images/vendor-orders-list.png)
+![Vendor sales orders list](../images/vendor-orders-list.webp)
 
 ### My Services (Vendor View)
+
+![The My Services status tiles: All, Active, Drafts and Pending Review](../images/my-services-tiles.webp)
+
+Select a tile to list only the services in that status.
 
 Create and manage your service listings. You can see each service's title, status (Published, Draft, or Paused), price range, total orders, average rating, and active order count.
 
@@ -32,7 +36,7 @@ Available actions:
 - **Pause or activate** a service to control its availability.
 - **Delete** a service (only if there are no active orders).
 
-![Service management interface](../images/vendor-services-management.png)
+![Service management interface](../images/vendor-services-management.webp)
 
 ### Buyer Requests
 

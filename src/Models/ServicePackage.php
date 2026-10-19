@@ -210,8 +210,8 @@ class ServicePackage {
 			return __( 'No revisions', 'wp-sell-services' );
 		}
 
-		/* translators: %d: number of revisions */
 		return sprintf(
+			/* translators: %d: number of revisions. */
 			_n( '%d revision', '%d revisions', $this->revisions, 'wp-sell-services' ),
 			$this->revisions
 		);

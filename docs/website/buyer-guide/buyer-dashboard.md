@@ -2,7 +2,7 @@
 
 Your dashboard is the central hub for managing everything you do on the marketplace -- tracking orders, communicating with vendors, managing buyer requests, and updating your profile.
 
-![Dashboard overview](../images/vendor-dashboard-overview.png)
+![Dashboard overview](../images/vendor-dashboard-overview.webp)
 
 ## Accessing the Dashboard
 

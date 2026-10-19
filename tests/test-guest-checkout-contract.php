@@ -87,13 +87,20 @@ wpss_t(
 	false !== strpos( $ajax, 'handle_guest_checkout_intent' ),
 	'add_service_to_cart delegates the guest case to one place'
 );
-// The referer survives only as a last resort. What must never happen again is
-// the referer being the FIRST choice, which is what dropped the selection.
+// Where the guest returns after logging in: the built checkout URL on the standalone
+// rail, otherwise the service page; the referer is only a last resort.
 $guest_fn = substr( $ajax, strpos( $ajax, 'private function handle_guest_checkout_intent' ) );
 $guest_fn = substr( $guest_fn, 0, strpos( $guest_fn, "\n\t}\n" ) );
+$return_fn = substr( $ajax, strpos( $ajax, 'private function guest_return_url' ) );
+$return_fn = substr( $return_fn, 0, strpos( $return_fn, "\n\t}\n" ) );
 wpss_t(
-	strpos( $guest_fn, '$checkout_url ?: ( wp_get_referer()' ) !== false,
-	'the login redirect prefers the checkout URL and falls back to the referer, not the reverse'
+	strpos( $guest_fn, 'wp_login_url( $this->guest_return_url(' ) !== false,
+	'the guest login redirect is built by the one return-url helper'
+);
+wpss_t(
+	strpos( $return_fn, '$checkout_url && wpss_uses_standalone_payments()' ) !== false
+		&& strpos( $return_fn, 'get_permalink( $service_id )' ) < strpos( $return_fn, 'wp_get_referer()' ),
+	'the return url prefers the checkout URL on standalone, then the service page, and the referer last'
 );
 wpss_t(
 	strpos( $guest_fn, "check_ajax_referer( 'wpss_service_nonce', 'nonce' )" ) !== false,

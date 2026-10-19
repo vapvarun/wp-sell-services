@@ -239,20 +239,22 @@ class BlocksManager {
 
 		$categories = [];
 
+		// Term names are stored HTML-escaped ("Graphics &amp; Design"); the control prints a label as
+		// text, so decode them or the editor shows the literal entity.
 		// The control takes a flat value/label list, so a child can only be
 		// distinguished by its label. Without this a subcategory looked exactly
 		// like a top-level category in the block sidebar (Basecamp 10208080926).
 		foreach ( wpss_group_category_terms( $terms ) as $group ) {
 			$categories[] = [
 				'value' => $group['term']->term_id,
-				'label' => $group['term']->name,
+				'label' => wp_specialchars_decode( $group['term']->name, ENT_QUOTES ),
 			];
 
 			foreach ( $group['children'] as $child ) {
 				$categories[] = [
 					'value' => $child->term_id,
 					/* translators: %s: subcategory name, indented under its parent. */
-					'label' => sprintf( __( '— %s', 'wp-sell-services' ), $child->name ),
+					'label' => sprintf( __( '— %s', 'wp-sell-services' ), wp_specialchars_decode( $child->name, ENT_QUOTES ) ),
 				];
 			}
 		}

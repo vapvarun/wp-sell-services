@@ -6,8 +6,12 @@
  * party to. Previously the dispute backend (REST + services) existed but had no
  * member-facing list/detail view anywhere — only a modal to OPEN a dispute.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/disputes.php
+ *
  * @package WPSellServices\Templates
  * @since   1.2.2
+ * @version 1.9.0
  *
  * @var int           $user_id        Current user ID.
  * @var VendorService $vendor_service Vendor service instance.
@@ -165,7 +169,7 @@ if ( $view_dispute_id ) {
 						printf(
 							/* translators: %s: date the dispute was resolved */
 							esc_html__( 'Resolved on %s', 'wp-sell-services' ),
-							esc_html( wp_date( get_option( 'date_format' ), $dispute->resolved_at->getTimestamp() ) )
+							esc_html( wpss_date_label( $dispute->resolved_at->getTimestamp() ) )
 						);
 						?>
 					</p>
@@ -193,7 +197,7 @@ if ( $view_dispute_id ) {
 					<?php
 					foreach ( $timeline as $entry ) :
 						$entry_name  = ! empty( $entry['user_id'] ) ? wpss_get_member_display_name( (int) $entry['user_id'] ) : __( 'System', 'wp-sell-services' );
-						$entry_when  = ! empty( $entry['created_at'] ) ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $entry['created_at'] . ' UTC' ) ) : '';
+						$entry_when  = ! empty( $entry['created_at'] ) ? wpss_datetime_label( $entry['created_at'] ) : '';
 						$entry_text  = (string) ( $entry['content'] ?? '' );
 						$entry_class = 'wpss-dispute-timeline__item wpss-dispute-timeline__item--' . sanitize_html_class( (string) ( $entry['type'] ?? 'event' ) );
 						?>
@@ -354,7 +358,7 @@ $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 					// white-screening this whole section. Same accessor the admin
 					// order screen uses.
 					$opened = $dispute->created_at
-						? wp_date( get_option( 'date_format' ), $dispute->created_at->getTimestamp() )
+						? wpss_date_label( $dispute->created_at->getTimestamp() )
 						: '';
 					?>
 					<?php

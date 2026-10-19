@@ -134,22 +134,29 @@ class ReviewService {
 	 * @since 1.7.1
 	 *
 	 * @param int    $review_id  Review ID.
-	 * @param string $new_status Review::STATUS_APPROVED or Review::STATUS_REJECTED.
+	 * @param string $new_status Review::STATUS_APPROVED, STATUS_REJECTED or STATUS_PENDING.
 	 * @return bool True when the row was updated.
 	 */
 	public function moderate( int $review_id, string $new_status ): bool {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_reviews';
 
-		if ( ! in_array( $new_status, array( Review::STATUS_APPROVED, Review::STATUS_REJECTED ), true ) ) {
+		if ( ! in_array( $new_status, array_keys( Review::get_statuses() ), true ) ) {
 			return false;
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$old = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$table} WHERE id = %d", $review_id ) );
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT status, service_id, vendor_id FROM {$table} WHERE id = %d", $review_id ) );
 
-		if ( null === $old ) {
+		if ( ! $row ) {
 			return false;
+		}
+
+		$old = $row->status;
+
+		// Nothing to change: no audit row, no hook.
+		if ( $old === $new_status ) {
+			return true;
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -159,12 +166,20 @@ class ReviewService {
 			return false;
 		}
 
+		// The star averages count approved rows only, so every status change refreshes them here
+		// - the one writer - rather than in a listener that only loads on admin screens.
+		\WPSellServices\API\ReviewsController::update_rating_cache( (int) $row->service_id, (int) $row->vendor_id );
+
 		( new AuditLogService() )->log(
 			'review.' . $new_status,
 			'review',
 			$review_id,
 			array(
-				'action'     => Review::STATUS_APPROVED === $new_status ? 'approve' : 'reject',
+				'action'     => match ( $new_status ) {
+					Review::STATUS_APPROVED => 'approve',
+					Review::STATUS_REJECTED => 'reject',
+					default                 => 'unapprove',
+				},
 				'from_value' => (string) $old,
 				'to_value'   => $new_status,
 			)

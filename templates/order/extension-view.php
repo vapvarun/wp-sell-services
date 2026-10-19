@@ -9,8 +9,12 @@
  * card tailored to the viewer (buyer or vendor) with the extra days
  * + amount spelled out.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/order/extension-view.php
+ *
  * @package WPSellServices\Templates
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\ServiceOrder $current_order Extension sub-order row.
  * @var int                                 $user_id       Current user ID.

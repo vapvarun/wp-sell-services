@@ -13,15 +13,17 @@ namespace WPSellServices\Integrations\PayPal;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
+use WPSellServices\Integrations\Gateways\AbstractPaymentGateway;
 use WPSellServices\Assets\ScriptRegistry;
+use WP_Error;
+use WP_REST_Response;
 
 /**
  * PayPal payment gateway implementation using PayPal REST API.
  *
  * @since 1.0.0
  */
-class PayPalGateway implements PaymentGatewayInterface {
+class PayPalGateway extends AbstractPaymentGateway {
 
 	/**
 	 * Gateway ID.
@@ -681,18 +683,8 @@ class PayPalGateway implements PaymentGatewayInterface {
 		// addon_ids / addon_sel come from the intent's own metadata
 		// (CheckoutIntentService::selection_metadata()).
 
-		switch ( $intent->kind ) {
-			case \WPSellServices\Checkout\CheckoutIntent::KIND_CART:
-				$metadata['description'] = __( 'Multi-service cart checkout', 'wp-sell-services' );
-				break;
-			case \WPSellServices\Checkout\CheckoutIntent::KIND_ORDER:
-				/* translators: %d: order ID */
-				$metadata['description'] = sprintf( __( 'Order #%d', 'wp-sell-services' ), $intent->order_id );
-				break;
-			default:
-				/* translators: %d: Service ID */
-				$metadata['description'] = sprintf( __( 'Service #%d', 'wp-sell-services' ), $intent->service_id );
-		}
+		// The intent names its own receipt line; the gateway never looks the product up.
+		$metadata['description'] = $metadata['description'] ?? __( 'Payment', 'wp-sell-services' );
 
 		return $metadata;
 	}
@@ -1167,7 +1159,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 		</table>
 
 		<div class="wpss-gateway-setup-guide" style="margin-top: 20px; padding: 15px; background: #f0f6fc; border: 1px solid #c8d8e6; border-radius: 4px;">
-			<h4 style="margin-top: 0;"><?php esc_html_e( 'PayPal Setup Guide', 'wp-sell-services' ); ?></h4>
+			<h3 style="margin-top: 0;"><?php esc_html_e( 'PayPal Setup Guide', 'wp-sell-services' ); ?></h3>
 
 			<p><strong><?php esc_html_e( 'Step 1: Create a REST API App', 'wp-sell-services' ); ?></strong></p>
 			<ol style="margin-left: 20px;">
@@ -1362,7 +1354,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 		}
 
 		// Check cached token.
-		$cached = get_transient( 'wpss_paypal_access_token' );
+		$cached = get_transient( $this->token_cache_key() );
 
 		if ( $cached ) {
 			$this->access_token = $cached;
@@ -1395,7 +1387,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 			$this->access_token = $body['access_token'];
 			$expires_in         = (int) ( $body['expires_in'] ?? 3600 ) - 60; // Buffer of 60 seconds.
 
-			set_transient( 'wpss_paypal_access_token', $this->access_token, $expires_in );
+			set_transient( $this->token_cache_key(), $this->access_token, $expires_in );
 
 			return $this->access_token;
 		}
@@ -1404,14 +1396,27 @@ class PayPalGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Cache name of the access token for the credentials in use.
+	 *
+	 * Keyed by mode and client id, so a token minted for other keys (sandbox before live, rotated
+	 * or replaced keys) is never sent with these ones.
+	 *
+	 * @return string
+	 */
+	private function token_cache_key(): string {
+		return 'wpss_paypal_token_' . substr( md5( ( $this->is_sandbox_mode() ? 'sandbox|' : 'live|' ) . $this->get_client_id() ), 0, 12 );
+	}
+
+	/**
 	 * Make PayPal API request.
 	 *
 	 * @param string $endpoint API endpoint.
 	 * @param array  $data     Request data.
 	 * @param string $method   HTTP method.
+	 * @param bool   $retried  Whether this is the repeat after a refused token.
 	 * @return array
 	 */
-	private function api_request( string $endpoint, array $data = array(), string $method = 'POST' ): array {
+	private function api_request( string $endpoint, array $data = array(), string $method = 'POST', bool $retried = false ): array {
 		$access_token = $this->get_access_token();
 
 		if ( ! $access_token ) {
@@ -1450,15 +1455,126 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$body = json_decode( wp_remote_retrieve_body( $response ), true ) ?: array();
 		$code = wp_remote_retrieve_response_code( $response );
 
+		// A token PayPal no longer accepts (revoked, or minted for other keys) is dropped and the
+		// call made once more with a fresh one, instead of failing until the cache runs out.
+		if ( 401 === $code && ! $retried ) {
+			delete_transient( $this->token_cache_key() );
+			$this->access_token = null;
+
+			return $this->api_request( $endpoint, $data, $method, true );
+		}
+
 		if ( $code >= 400 ) {
 			return array(
 				'error' => array(
-					'message' => $body['message'] ?? $body['details'][0]['description'] ?? __( 'PayPal API error.', 'wp-sell-services' ),
+					'message' => $body['message'] ?? $body['details'][0]['description'] ?? $body['error_description'] ?? __( 'PayPal API error.', 'wp-sell-services' ),
 					'details' => $body,
 				),
 			);
 		}
 
 		return $body;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * Creates a PayPal order and returns its approval URL.
+	 */
+	public function rest_create_intent( \WPSellServices\Checkout\CheckoutIntent $intent, array $request ) {
+		$checkout_request = $request;
+
+		// PayPalGateway::create_order() resolves the request itself and keeps
+		// the add-on selection for its capture leg.
+		$result = $this->create_order( $checkout_request );
+
+		if ( empty( $result['success'] ) ) {
+			return new WP_Error( 'paypal_error', $result['error'] ?? __( 'Failed to create PayPal order.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'gateway'         => 'paypal',
+				'paypal_order_id' => $result['id'],
+				'approval_url'    => $result['approval_url'],
+			),
+			201
+		);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * Captures the PayPal payment for a new purchase or an existing order.
+	 */
+	public function rest_confirm_payment( array $params ) {
+		$payment_id = (string) ( $params['payment_id'] ?? '' );
+		$service_id = (int) ( $params['service_id'] ?? 0 );
+		$package_id = (int) ( $params['package_id'] ?? 0 );
+		$pay_order  = (int) ( $params['pay_order'] ?? 0 );
+
+		// Paying an existing order: answer the plain refusals before PayPal is
+		// asked for anything.
+		if ( $pay_order ) {
+			$order = wpss_get_order( $pay_order );
+
+			if ( ! $order ) {
+				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+			}
+
+			if ( get_current_user_id() !== (int) $order->customer_id ) {
+				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			}
+
+			// Idempotency: never re-process an order that is already paid.
+			if ( 'paid' === (string) ( $order->payment_status ?? '' ) ) {
+				return new WP_REST_Response(
+					array(
+						'gateway'      => 'paypal',
+						'order_id'     => $pay_order,
+						'order_number' => $order->order_number,
+						'status'       => 'paid',
+					)
+				);
+			}
+		}
+
+		// One capture path for a new purchase and an existing order, the one the
+		// website uses. It reads the buyer and the order from the PayPal payment
+		// itself, so a payment pays what it was started for and only for the
+		// member who started it. This route used to capture whatever PayPal
+		// payment it was handed and mark the named order paid.
+		$result = $this->capture_order(
+			array(
+				'paypal_order_id' => $payment_id,
+				'service_id'      => $service_id,
+				'package_id'      => $package_id,
+			)
+		);
+
+		if ( empty( $result['success'] ) ) {
+			return new WP_Error( 'paypal_confirm_error', $result['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'gateway'      => 'paypal',
+				'order_id'     => (int) $result['order_id'],
+				'order_number' => $result['order_number'] ?? '',
+				'status'       => 'paid',
+			)
+		);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_settings_card(): ?array {
+		return array(
+			'title'        => __( 'PayPal', 'wp-sell-services' ),
+			'description'  => __( 'Accept payments via PayPal.', 'wp-sell-services' ),
+			'option_group' => 'wpss_paypal_settings',
+			'order'        => 20,
+		);
 	}
 }

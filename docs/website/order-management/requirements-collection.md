@@ -11,7 +11,7 @@ For example, a logo design vendor might ask:
 - Upload your brand guidelines
 - What colors do you prefer?
 
-![Requirements section on the order page](../images/frontend-order-requirements.png)
+![Requirements section on the order page](../images/frontend-order-requirements.webp)
 
 ## How Buyers Fill Them In
 
@@ -24,7 +24,7 @@ After payment is confirmed, the order moves to "Pending Requirements" status and
 
 Once submitted, the order moves to "In Progress" and the vendor's delivery deadline starts.
 
-![Submit requirements button and form interface](../images/frontend-submit-requirements.png)
+![Submit requirements button and form interface](../images/frontend-submit-requirements.webp)
 
 ## Automatic Reminders
 
@@ -42,14 +42,14 @@ Vendors build their requirements form when creating or editing a service. Four q
 
 - **Text** -- Short answers like a website URL, company name, or social media handle.
 - **Textarea** -- Longer descriptions like project overview, design preferences, or feature requirements.
-- **File Upload** -- Reference materials, brand logos, content documents, or design mockups. The accepted formats and the size cap are set by the site owner under **Settings > Advanced** (defaults: `jpg, jpeg, png, gif, pdf, doc, docx`, 10 MB).
+- **File Upload** -- Reference materials, brand logos, content documents, or design mockups. The accepted formats and the size cap are set by the site owner under **Settings > System** (defaults: `jpg, jpeg, png, gif, pdf, doc, docx`, 10 MB).
 - **Dropdown** -- A single choice from predefined options, like preferred style or package type.
 
 Each question can be marked as required or optional, and vendors can add helpful placeholder text and instructions.
 
 **Note:** When admins create or edit services from the WordPress admin panel, additional requirement field types are available beyond these four: Number, Checkbox, Radio, Multiple File Upload, and Date. These extra types are only accessible through the admin interface, not the vendor service creation wizard.
 
-![Requirements form fields displayed on the order page](../images/frontend-requirements-form.png)
+![Requirements form fields displayed on the order page](../images/frontend-requirements-form.webp)
 
 ## Skipping Requirements
 
@@ -71,7 +71,7 @@ You can control what happens if a buyer never submits their requirements. Go to 
 
 **Vendors** see the submitted requirements in the order detail page under the Requirements tab. Each answer is displayed with its question, and file uploads include download links.
 
-![Completed requirements view showing all submitted information](../images/frontend-requirements-completed.png)
+![Completed requirements view showing all submitted information](../images/frontend-requirements-completed.webp)
 
 **Admins** can view requirements from the order detail page in **Sell Services > Orders**.
 

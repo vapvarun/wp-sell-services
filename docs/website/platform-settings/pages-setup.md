@@ -46,7 +46,7 @@ most other stores already own those slugs. Before the slugs were made explicit,
 WordPress would find `cart` taken and append a number, so sites ended up on
 `/cart-2/` and worse while the intended slug was never used.
 
-![Pages settings tab](../images/settings-pages-tab.png)
+![Pages settings tab](../images/settings-pages-tab.webp)
 
 ---
 

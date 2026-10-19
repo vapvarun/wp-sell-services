@@ -1,7 +1,8 @@
-# Journey 06 — Paying on the standalone rail
+# Journey 06 - Buyer pays on the standalone rail
 
 **Role:** logged-out visitor, then buyer, then administrator
-**Status:** passing as of commits `7deda27`, `345cc0c`, `9b1acd0`, `e13921f`
+**Rail:** standalone
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 Guards cards 10208392848, 10208094640, 10163575694.
 
@@ -97,9 +98,32 @@ than the `/service-checkout/{id}/` rewrite.
 normal page flow and never touched the renderer this journey exercises — which
 is worth confirming precisely because it is easy to assume one fix covered both.
 
+### 8. Tax reads the same on one item and on a cart
+Settings > Payment Gateways > Tax: enable, label VAT, 20%. Buy one service, then a cart of two.
+
+**Expect** (card:10403205865, card:10403205035)
+- Both summaries read "VAT (20%)" and the total equals the charge.
+- Clear the label and save: it stores and shows "Tax", never a bare "(20%)".
+- A site that lowers the rate per seller through `wpss_checkout_tax_rate` sees that rate (or the label alone when the cart mixes rates) in the summary, never the settings rate.
+
+### Sidebar cards never overlap (card:10411948180)
+At 1440x900 scroll the checkout from top to bottom in 100px steps.
+
+**Expect** the Order Summary, About the Seller and What happens next cards never intersect at any step, each is fully readable at some step, and at 390 the summary comes first and nothing overflows sideways (guard `tests/test-layout-surface-css.php`).
+
 ## Notes for whoever runs this
 
 - The container behaviour is decided in JS on load. If you disable JavaScript,
   the wrapper stays constrained; that is the safe direction and not a failure.
 - `?pay_order={id}` and `/service-checkout/{id}/` are **different routes** with
   different renderers. A pass on one says nothing about the other.
+
+### Payment methods, summary and legal links
+`checkout/payment-methods` lists only enabled gateways and hides the list when one is enough; `checkout/summary` totals match the charge; `partials/legal-links` shows the terms and privacy links only when those pages are mapped.
+
+**Expect** with no pages mapped there is no empty "Terms" link.
+
+### A closed order is not "already paid" (card:10416548799)
+Open the pay link of an order that was cancelled or refunded.
+
+**Expect** the page says the order was cancelled (or refunded) and can no longer be paid; "already been paid" appears only for an order that is paid.

@@ -211,7 +211,7 @@
                 self.state.selectedPackage = packageIndex;
 
                 // If modal is already open, update it with new package info.
-                if ($(self.config.orderModal).hasClass('active')) {
+                if ($(self.config.orderModal).hasClass('wpss-modal-open')) {
                     self.updateOrderSummary();
                 }
             });
@@ -349,16 +349,18 @@
                 }, 500);
             });
 
-            // Helpful button — REST POST /reviews/{id}/helpful.
+            // Helpful button: REST POST /reviews/{id}/helpful toggles the vote.
             $reviews.on('click', '.wpss-review-helpful-btn', function(e) {
                 e.preventDefault();
 
                 const $btn = $(this);
                 const reviewId = $btn.data('review');
 
-                if ($btn.hasClass('marked')) {
+                // One request at a time, so a double click cannot flip it twice.
+                if ($btn.prop('disabled')) {
                     return;
                 }
+                $btn.prop('disabled', true);
 
                 $.ajax({
                     url: wpssService.apiUrl + '/reviews/' + reviewId + '/helpful',
@@ -367,15 +369,23 @@
                         xhr.setRequestHeader('X-WP-Nonce', wpssService.restNonce);
                     },
                     success: function(response) {
-                        if (response && typeof response.count !== 'undefined') {
-                            let $count = $btn.find('.wpss-helpful-count');
+                        if (!response || typeof response.count === 'undefined') {
+                            return;
+                        }
+                        let $count = $btn.find('.wpss-helpful-count');
+                        if (response.count > 0) {
                             if (!$count.length) {
                                 // Server omits the count span at zero; add it now.
                                 $count = $('<span class="wpss-helpful-count"></span>').appendTo($btn);
                             }
                             $count.text('(' + response.count + ')');
-                            $btn.addClass('marked');
+                        } else {
+                            $count.remove();
                         }
+                        $btn.toggleClass('marked', !!response.marked).attr('aria-pressed', response.marked ? 'true' : 'false');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false);
                     }
                 });
             });
@@ -438,52 +448,15 @@
                     '<div class="wpss-review-content">' + (review.review_html || '') + '</div>' +
                     reply +
                     '<div class="wpss-review-actions">' +
-                        '<button type="button" class="wpss-review-helpful-btn" data-review="' + esc(review.id) + '">' +
+                        (!review.viewer_can_vote ? '' :
+                        '<button type="button" class="wpss-review-helpful-btn' + (review.viewer_marked ? ' marked' : '') + '" data-review="' + esc(review.id) + '" aria-pressed="' + (review.viewer_marked ? 'true' : 'false') + '">' +
                             '<span class="wpss-helpful-icon"><i data-lucide="thumbs-up" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i></span>' +
                             '<span class="wpss-helpful-text">' + esc(i18n.helpful) + '</span>' +
                             count +
-                        '</button>' +
+                        '</button>') +
                     '</div>' +
                 '</div>'
             );
-        },
-
-        /**
-         * Ensure the popup stylesheet is present on the page.
-         *
-         * The single-service page only enqueues single-service.css, but all
-         * message/inquiry popup styling now lives in messaging.css (the single
-         * source of truth). When that stylesheet is not already loaded, derive
-         * its URL from the single-service stylesheet link and inject it once so
-         * the popup renders with a solid, readable surface on every theme.
-         *
-         * @return {void}
-         */
-        ensurePopupStyles: function() {
-            // Already loaded (e.g. dashboard messaging view) - nothing to do.
-            if (document.querySelector('link[href*="messaging.css"], link[href*="messaging.min.css"]')) {
-                return;
-            }
-
-            // Find the single-service stylesheet to borrow its directory + version.
-            const links = document.querySelectorAll('link[rel="stylesheet"][href*="single-service"]');
-
-            if (!links.length) {
-                return;
-            }
-
-            const ref = links[0].getAttribute('href');
-            // Swap the filename, preserve any ?ver= query string and .min variant.
-            const href = ref.replace(/single-service(-rtl)?(\.min)?\.css/, 'messaging$2.css');
-
-            if (href === ref) {
-                return;
-            }
-
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = href;
-            document.head.appendChild(link);
         },
 
         /**
@@ -491,27 +464,6 @@
          */
         initModals: function() {
             const self = this;
-
-            // Make sure the popup surface styles are available on this page.
-            this.ensurePopupStyles();
-
-            // Close on overlay click.
-            $(document).on('click', '.wpss-modal-overlay', function() {
-                self.closeModals();
-            });
-
-            // Close button.
-            $(document).on('click', '.wpss-modal-close', function(e) {
-                e.preventDefault();
-                self.closeModals();
-            });
-
-            // Escape key.
-            $(document).on('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    self.closeModals();
-                }
-            });
 
             // Contact seller link.
             $(document).on('click', '.wpss-contact-link, .wpss-contact-btn', function(e) {
@@ -531,11 +483,7 @@
             this.updateOrderSummary();
 
             // Show modal.
-            $modal.prop('hidden', false).addClass('active');
-            $('body').addClass('wpss-modal-open');
-
-            // Focus first input.
-            $modal.find('input:first').focus();
+            window.wpssModal.open($modal[0]);
         },
 
         /**
@@ -544,9 +492,7 @@
         openContactModal: function() {
             const $modal = $(this.config.contactModal);
 
-            $modal.prop('hidden', false).addClass('active');
-            $('body').addClass('wpss-modal-open');
-
+            window.wpssModal.open($modal[0]);
             $modal.find('textarea').focus();
         },
 
@@ -554,8 +500,7 @@
          * Close all modals.
          */
         closeModals: function() {
-            $('.wpss-modal').prop('hidden', true).removeClass('active');
-            $('body').removeClass('wpss-modal-open');
+            window.wpssModal.closeAll();
         },
 
         /**
@@ -818,7 +763,7 @@
          */
         showCartOptions: function() {
             const $modal = $(this.config.orderModal);
-            const $footer = $modal.find('.wpss-modal-footer');
+            const $footer = $modal.find('.wpss-modal__footer');
             const checkoutUrl = this.state.checkoutUrl || wpssService.checkoutUrl;
             const cartUrl = wpssService.cartUrl || checkoutUrl;
 
@@ -827,12 +772,12 @@
             // now, so this only ever drops a button it cannot point anywhere.
             let actions = '';
             if (cartUrl) {
-                actions += '<a href="' + cartUrl + '" class="wpss-btn wpss-btn-outline">' +
+                actions += '<a href="' + cartUrl + '" class="wpss-btn wpss-btn--outline">' +
                     wpssService.i18n.viewCart +
                     '</a>';
             }
             if (checkoutUrl) {
-                actions += '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn-primary">' +
+                actions += '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn--primary">' +
                     wpssService.i18n.checkout +
                     '</a>';
             }
@@ -924,11 +869,11 @@
          * Show error message.
          */
         showError: function(message) {
-            const $modal = $('.wpss-modal.active');
+            const $modal = $('.wpss-modal.wpss-modal-open');
 
             if ($modal.length) {
-                const $error = $('<div class="wpss-modal-error">' + this.escapeHtml(message) + '</div>');
-                $modal.find('.wpss-modal-body').prepend($error);
+                const $error = $('<div class="wpss-modal__feedback wpss-modal__feedback--error" role="alert">' + this.escapeHtml(message) + '</div>');
+                $modal.find('.wpss-modal__body').prepend($error);
 
                 setTimeout(function() {
                     $error.fadeOut(function() {
@@ -993,11 +938,12 @@
             });
 
             // Build comparison table.
-            let html = '<div class="wpss-comparison-modal wpss-modal">';
-            html += '<div class="wpss-modal-overlay"></div>';
-            html += '<div class="wpss-modal-content wpss-modal-large">';
-            html += '<button class="wpss-modal-close">&times;</button>';
-            html += '<h3>' + wpssService.i18n.comparePackages + '</h3>';
+            let html = '<div class="wpss-comparison-modal wpss-modal" role="dialog" aria-modal="true" aria-labelledby="wpss-comparison-title" hidden>';
+            html += '<div class="wpss-modal__backdrop"></div>';
+            html += '<div class="wpss-modal__dialog wpss-modal__dialog--lg">';
+            html += '<div class="wpss-modal__header"><h3 id="wpss-comparison-title" class="wpss-modal__title">' + wpssService.i18n.comparePackages + '</h3>';
+            html += '<button type="button" class="wpss-modal__close" aria-label="' + WPSSService.escapeHtml(wpssService.i18n.close || 'Close') + '">&times;</button></div>';
+            html += '<div class="wpss-modal__body">';
             html += '<table class="wpss-comparison-table">';
             html += '<thead><tr><th></th>';
 
@@ -1041,10 +987,11 @@
             }
 
             html += '</tbody></table>';
-            html += '</div></div>';
+            html += '</div></div></div>';
 
+            $('.wpss-comparison-modal').remove();
             $('body').append(html);
-            $('.wpss-comparison-modal').prop('hidden', false).addClass('active');
+            window.wpssModal.open($('.wpss-comparison-modal')[0]);
         }
     };
 

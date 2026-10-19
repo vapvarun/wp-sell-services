@@ -10,8 +10,12 @@
  * (wpss_get_service_requirements()) and posted as requirements[index]; the
  * AJAX handler maps the index back to the requirement id.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/order/requirements-form.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var int    $order_id        Order ID.
  * @var object $order           Order object (service_id is read).
@@ -435,7 +439,7 @@ do_action( 'wpss_after_requirements_form_component', $order_id, $order );
 			var capped = Math.min( filled, totalRequired );
 			var pct = Math.round( ( capped / totalRequired ) * 100 );
 			progressFill.style.width = pct + '%';
-			progressLabel.textContent = <?php echo wp_json_encode( __( '%1$d of %2$d required answered', 'wp-sell-services' ) ); ?>
+			progressLabel.textContent = <?php /* translators: 1: questions answered, 2: questions required. */ echo wp_json_encode( __( '%1$d of %2$d required answered', 'wp-sell-services' ) ); ?>
 				.replace( '%1$d', String( capped ) )
 				.replace( '%2$d', String( totalRequired ) );
 			progressBar.setAttribute( 'aria-valuenow', String( capped ) );

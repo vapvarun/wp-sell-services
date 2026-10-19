@@ -700,13 +700,9 @@ class DisputeService {
 			ARRAY_A
 		);
 
-		if ( ! $rows ) {
-			return array();
-		}
-
 		$items = array();
 
-		foreach ( $rows as $row ) {
+		foreach ( (array) $rows as $row ) {
 			$attachments = ! empty( $row['attachments'] ) ? json_decode( (string) $row['attachments'], true ) : array();
 			$attachments = is_array( $attachments ) ? $attachments : array();
 			$content     = (string) $row['message'];
@@ -729,6 +725,29 @@ class DisputeService {
 				'created_at'  => (string) $row['created_at'],
 			);
 		}
+
+		// Decision notes saved with a status change live in the evidence column, not
+		// the messages table; without them an admin's note vanished after saving.
+		$dispute = $this->get( $dispute_id );
+
+		foreach ( (array) ( $dispute->evidence ?? array() ) as $entry ) {
+			if ( ! is_array( $entry ) || 'status_note' !== ( $entry['type'] ?? '' ) || '' === (string) ( $entry['note'] ?? '' ) ) {
+				continue;
+			}
+
+			$items[] = array(
+				'id'          => (string) ( $entry['id'] ?? '' ),
+				'user_id'     => (int) ( $entry['user_id'] ?? 0 ),
+				'sender_role' => 'admin',
+				'type'        => 'status_note',
+				'content'     => (string) $entry['note'],
+				'description' => '',
+				'attachments' => array(),
+				'created_at'  => (string) ( $entry['created_at'] ?? '' ),
+			);
+		}
+
+		usort( $items, static fn( array $a, array $b ): int => strcmp( (string) $a['created_at'], (string) $b['created_at'] ) );
 
 		return $items;
 	}
@@ -794,6 +813,7 @@ class DisputeService {
 			$evidence[]       = array(
 				'id'         => uniqid( 'note_' ),
 				'type'       => 'status_note',
+				'user_id'    => get_current_user_id(),
 				'note'       => sanitize_textarea_field( $note ),
 				'status'     => $to,
 				'created_at' => current_time( 'mysql', true ),

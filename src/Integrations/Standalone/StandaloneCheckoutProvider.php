@@ -96,7 +96,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 *
 	 * @return bool
 	 */
-	public function cart_has_services(): bool {
+	public function cart_has_sellable_items(): bool {
 		$cart = $this->get_cart();
 		return ! empty( $cart );
 	}
@@ -106,7 +106,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 *
 	 * @return array
 	 */
-	public function get_cart_services(): array {
+	public function get_cart_sellable_items(): array {
 		return $this->get_cart();
 	}
 
@@ -195,7 +195,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			<div class="wpss-checkout-return wpss-checkout-return--paid">
 				<h2><?php esc_html_e( 'Payment received', 'wp-sell-services' ); ?></h2>
 				<p><?php esc_html_e( 'Thank you. Your payment is confirmed and your order is on its way to the seller.', 'wp-sell-services' ); ?></p>
-				<p><a class="wpss-btn wpss-btn-primary" href="<?php echo esc_url( $order_url ); ?>"><?php esc_html_e( 'View your order', 'wp-sell-services' ); ?></a></p>
+				<p><a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( $order_url ); ?>"><?php esc_html_e( 'View your order', 'wp-sell-services' ); ?></a></p>
 			</div>
 			<?php
 		} elseif ( 'processing' === $result['status'] ) {
@@ -219,7 +219,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				<h2><?php esc_html_e( 'Payment not completed', 'wp-sell-services' ); ?></h2>
 				<p><?php echo esc_html( $result['message'] ); ?></p>
 				<?php if ( $continue ) : ?>
-					<p><a class="wpss-btn wpss-btn-primary" href="<?php echo esc_url( $continue ); ?>"><?php esc_html_e( 'Try another payment method', 'wp-sell-services' ); ?></a></p>
+					<p><a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( $continue ); ?>"><?php esc_html_e( 'Try another payment method', 'wp-sell-services' ); ?></a></p>
 				<?php endif; ?>
 			</div>
 			<?php
@@ -469,7 +469,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		if ( 'pending_payment' !== $order->status ) {
 			return sprintf(
 				'<p class="wpss-alert wpss-alert-info">%s</p><p><a class="wpss-btn wpss-btn--secondary" href="%s">%s</a></p>',
-				esc_html__( 'This order has already been paid.', 'wp-sell-services' ),
+				esc_html( wpss_get_order_not_payable_message( $order ) ),
 				esc_url( $back_to_order ),
 				esc_html__( 'Back to order', 'wp-sell-services' )
 			);
@@ -908,19 +908,21 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			 * sticky here is the intent, not a side effect.
 			 */
 			/*
-			 * Only the Order Summary sticks (Basecamp 10337204220). The whole
-			 * column used to, and it is taller than a laptop screen, so its top
-			 * scrolled out of view (-17px) with the total and Pay button in it.
-			 * The column stretches to the form's height to give the card room to
-			 * stick; the cards below it pass underneath.
+			 * The aside sticks as ONE column (Basecamp 10411948180). Sticking only the
+			 * summary made it pin at the top while the cards after it scrolled up
+			 * through the same space, so they overlapped whatever z-index said. As a
+			 * single sticky box the cards stack in flow and can never intersect; when
+			 * the column is taller than the viewport it scrolls inside itself, so the
+			 * top (total) and the bottom card are both reachable.
 			 */
-			.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { z-index: 2; }
+			.wpss-checkout-page .wpss-co-aside { position: sticky; top: var(--wpss-sticky-top, 32px); align-self: start; max-height: calc(100vh - var(--wpss-sticky-top, 32px) - 16px); overflow-y: auto; overscroll-behavior: contain; }
+			.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { position: static; }
 
 			@media (max-width: 1024px) {
 				.wpss-checkout-page .wpss-layout--sidebar-right { display: flex; flex-direction: column; }
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack,
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside { display: contents; }
-				.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { position: static; align-self: stretch; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside { display: contents; position: static; max-height: none; overflow: visible; }
+				.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { align-self: stretch; }
 				/*
 				 * Service details, the total, what happens next, then the form.
 				 *
@@ -1169,7 +1171,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 						</div><!-- /left column -->
 
-						<!-- RIGHT COLUMN: only the Order Summary card sticks (summary.php). -->
+						<!-- RIGHT COLUMN: the whole aside sticks as one column. -->
 						<div class="wpss-co-aside">
 							<?php
 							wpss_get_template(
@@ -1192,7 +1194,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								$reviews_table     = $wpdb->prefix . 'wpss_reviews';
 								$vendor_orders     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 								$vendor_member_obj = get_userdata( $vendor_id_for_stats );
-								$vendor_joined     = $vendor_member_obj ? wp_date( 'M Y', strtotime( $vendor_member_obj->user_registered ) ) : '';
+								$vendor_joined     = $vendor_member_obj ? wpss_date_label( $vendor_member_obj->user_registered, '—', 'M Y' ) : '';
 
 								// Get latest review for this vendor.
 								$latest_review = $wpdb->get_row( $wpdb->prepare( "SELECT r.review as content, r.rating, COALESCE(NULLIF(u.display_name, ''), r.reviewer_name) as reviewer_display_name FROM {$reviews_table} r LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID WHERE r.vendor_id = %d AND r.status = 'approved' ORDER BY r.created_at DESC LIMIT 1", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -1378,12 +1380,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$enriched_items = array();
 		$grand_total    = 0.0;
 
-		// Tax settings.
-		$tax_settings = get_option( 'wpss_tax', array() );
-		$tax_enabled  = ! empty( $tax_settings['enable_tax'] );
-		$tax_rate     = $tax_enabled ? (float) ( $tax_settings['tax_rate'] ?? 0 ) : 0;
-		$tax_included = ! empty( $tax_settings['tax_included'] );
-		$tax_label    = $tax_settings['tax_label'] ?? __( 'Tax', 'wp-sell-services' );
+		// Tax comes from the priced lines (the amount charged), never re-read from the option:
+		// a wpss_checkout_tax_rate filter changes the rate per line.
+		$tax_rates    = array();
+		$tax_included = false;
+		$tax_label    = '';
 		$tax_amount   = 0.0;
 
 		foreach ( $cart_items as $key => $item ) {
@@ -1409,6 +1410,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$addons_total     = (float) $line['addons_total'];
 			$line_total       = (float) $line['total'];
 			$tax_amount      += (float) $line['tax'];
+			if ( (float) $line['tax'] > 0 ) {
+				$tax_rates[]  = (float) $line['tax_rate'];
+				$tax_included = ! empty( $line['tax_included'] );
+				$tax_label    = (string) $line['tax_label'];
+			}
 
 			$vendor        = get_userdata( $service->vendor_id );
 			$vendor_name   = $vendor ? $vendor->display_name : '';
@@ -1450,7 +1456,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			);
 		}
 		if ( $tax_amount > 0 ) {
-			$summary_lines[] = $this->tax_summary_line( (string) $tax_label, $tax_rate, $tax_amount, $tax_included );
+			// One rate shows as "(20%)"; lines taxed at different rates show the label alone.
+			$tax_rate        = 1 === count( array_unique( $tax_rates ) ) ? $tax_rates[0] : null;
+			$summary_lines[] = $this->tax_summary_line( $tax_label, $tax_rate, $tax_amount, $tax_included );
 		}
 
 		$this->enqueue_checkout_script();
@@ -1770,13 +1778,26 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * does: listed as a plain line it read as an extra charge, and the lines no
 	 * longer added up to the total (Basecamp 10346279564).
 	 *
-	 * @param string $label    Tax label.
-	 * @param float  $rate     Tax rate in percent.
-	 * @param float  $amount   Tax amount.
-	 * @param bool   $included Whether the prices above already include it.
+	 * @param string     $label    Tax label.
+	 * @param float|null $rate  Tax rate in percent; null when the lines carry different rates.
+	 * @param float      $amount   Tax amount.
+	 * @param bool       $included Whether the prices above already include it.
 	 * @return array
 	 */
-	private function tax_summary_line( string $label, float $rate, float $amount, bool $included = false ): array {
+	private function tax_summary_line( string $label, ?float $rate, float $amount, bool $included = false ): array {
+		$label = '' !== trim( $label ) ? $label : __( 'Tax', 'wp-sell-services' );
+
+		if ( null === $rate ) {
+			return array(
+				'label'  => $included
+					/* translators: %s: tax label, e.g. VAT. */
+					? sprintf( __( '%s (included)', 'wp-sell-services' ), $label )
+					: $label,
+				'amount' => $amount,
+				'type'   => 'tax',
+			);
+		}
+
 		return array(
 			'label'  => $included
 				/* translators: 1: tax label, e.g. VAT. 2: tax rate in percent. */

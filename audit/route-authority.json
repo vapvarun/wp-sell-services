@@ -870,7 +870,7 @@
       "object_id": false,
       "writes": true
     },
-    "POST /wpss/v1/orders/(?P<id>[\\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund)": {
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund|assign-refund)": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\OrdersController::check_action_permissions",
       "object_id": true,
@@ -895,6 +895,12 @@
       "writes": true
     },
     "POST /wpss/v1/orders/(?P<id>[\\d]+)/receipts": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/reorder": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
       "object_id": true,
@@ -1051,6 +1057,12 @@
       "audience": "member",
       "permission_callback": "wpss_rest_require_login",
       "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/vendors/(?P<id>[\\d]+)/balance/write-off": {
+      "audience": "admin",
+      "permission_callback": "WPSellServices\\API\\VendorsController::check_admin_permissions",
+      "object_id": true,
       "writes": true
     },
     "POST /wpss/v1/vendors/register": {

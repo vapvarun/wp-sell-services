@@ -2,7 +2,7 @@
 
 Accept credit cards, debit cards, Apple Pay, and Google Pay on your marketplace using Stripe -- the most popular online payment processor.
 
-![Stripe Gateway Settings](../images/settings-payment-gateways.png)
+![Stripe Gateway Settings](../images/settings-payment-gateways.webp)
 
 ## What You Need
 
@@ -125,6 +125,10 @@ To refund an order:
 2. Click **Refund**
 3. Choose full or partial refund
 4. Click **Process Refund**
+
+If a cart paid for several gigs in one charge, refund each gig from its own order: the refund is recorded on that gig and only its vendor is charged.
+
+A refund made directly in the Stripe dashboard is recorded too. On a single-gig payment it lands on that gig. On a payment that covers several gigs, Stripe does not say which gig the refund was for, so it waits for you: open the gig and use **Refund waiting for a gig**, or run `wp wpss refunds assign <order_id>`. Refunding the whole charge refunds every gig in full.
 
 Refunds appear in the buyer's account within 5-10 business days. Stripe refunds the percentage fee but keeps the fixed fee (typically $0.30 per transaction).
 

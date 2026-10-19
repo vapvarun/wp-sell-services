@@ -15,7 +15,6 @@ namespace WPSellServices\Integrations\Gateways;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
 
 /**
  * Test payment gateway implementation.
@@ -24,7 +23,7 @@ use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
  *
  * @since 1.2.0
  */
-class TestGateway implements PaymentGatewayInterface {
+class TestGateway extends AbstractPaymentGateway {
 
 	/**
 	 * Gateway ID.
@@ -268,7 +267,7 @@ class TestGateway implements PaymentGatewayInterface {
 				return;
 			}
 			if ( 'pending_payment' !== $order->status ) {
-				wp_send_json_error( array( 'message' => __( 'This order has already been paid.', 'wp-sell-services' ) ) );
+				wp_send_json_error( array( 'message' => wpss_get_order_not_payable_message( $order ) ) );
 				return;
 			}
 			$transaction_id = 'test_' . wp_generate_uuid4();
@@ -560,5 +559,28 @@ class TestGateway implements PaymentGatewayInterface {
 	private function get_settings(): array {
 		$settings = get_option( self::OPTION_NAME, array() );
 		return is_array( $settings ) ? $settings : array();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function rest_create_intent( \WPSellServices\Checkout\CheckoutIntent $intent, array $request ) {
+		return $this->create_offline_rest_order( $request );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_settings_card(): ?array {
+		if ( ! ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ) {
+			return null;
+		}
+
+		return array(
+			'title'        => __( 'Test Gateway', 'wp-sell-services' ),
+			'description'  => __( 'Test payment gateway for development. No real charges.', 'wp-sell-services' ),
+			'option_group' => 'wpss_test_gateway_settings',
+			'order'        => 5,
+		);
 	}
 }

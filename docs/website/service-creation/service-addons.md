@@ -2,7 +2,7 @@
 
 Add-ons let vendors offer optional upgrades that buyers can select during checkout. They are a proven way to increase order value while giving buyers flexibility to customize their order.
 
-![Service Add-ons Interface](../images/frontend-addons-interface.png)
+![Service Add-ons Interface](../images/frontend-addons-interface.webp)
 
 ## What You Can Do with Add-ons
 

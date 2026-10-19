@@ -5,13 +5,11 @@
 
 This is the framing document — it says *how* to judge what you see.
 
-- **What to test right now**: [`RFT-1.7.0-CHECKLIST.md`](RFT-1.7.0-CHECKLIST.md)
-  — all 45 cards in Ready for Testing, grouped by surface, each written as the
-  expectation that has to be true for the card to pass.
+- **What to test, in order**: [`README.md`](README.md), against the
+  [feature catalog](FEATURE-CATALOG.md).
 - **How to walk it**: [`../../audit/journeys/`](../../audit/journeys/).
-- **Release gate**: [`PRE_RELEASE_SMOKE.md`](PRE_RELEASE_SMOKE.md) where present.
 
-Read this page once, then work from the checklist.
+Read this page once, then work from the README.
 
 ---
 

@@ -1,7 +1,8 @@
-# Journey 05 — A vendor creates a service
+# Journey 05 - Seller creates and publishes a service; standing limits what they can start
 
 **Role:** vendor, then administrator
-**Status:** passing as of commits `afbbbdf`, `c954ed0`, `f8eeb43` / Pro `8500b76`
+**Rail:** standalone, woo
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 Guards cards 10208080926, 10208086929, 10212521285, 10212520711.
 
@@ -115,3 +116,68 @@ limits are off for everybody and that is a worse bug than the one being guarded.
   enforcer at priority 20. `PlanEnforcer::can_create_service()` can answer
   `true` while the filter still answers `false`.
 - 390px on every step that renders UI.
+
+## Admin moderation doors (added 2026-10-18)
+
+### M1. Quick Edit never changes moderation (card:10398957993, card:10398959570)
+With service moderation on, Services > Quick Edit on an approved, live service: change only the title, Update.
+
+**Expect** the service stays published and Approved; the Moderation column is unchanged; there is no Moderation dropdown in Quick Edit and core's Status dropdown is visible. On Buyer Requests Quick Edit the Status dropdown is visible too.
+
+### M2. An admin Publish is the approval (card:10398958911)
+Open a Pending service in the editor and click Publish (also: Quick Edit > Status Published).
+
+**Expect** the Moderation column says Approved, the Pending count drops, the service shows on /services/, and the vendor gets the approved email.
+
+### M3. Skip to full editor saves a draft (card:10398686546)
+New Service wizard (admin), fill step 1, click Skip to full editor.
+
+**Expect** the service is a draft in the normal tabbed editor, nothing appears on /services/ until Publish is clicked.
+
+
+# Part 2 - account standing (was journey 12)
+
+## Steps
+
+### 1. Seller cannot pause their own order (card:10399370449)
+As the seller, open an in-progress order, then `POST /orders/{id}/hold`.
+
+**Expect** no Hold button anywhere, the route refuses with "Only an administrator can put an order on hold", the status is unchanged. As admin both hold and resume work.
+
+### 2. Suspend a seller with an open paid order (card:10384354109)
+Admin sets the seller to Suspended. As the seller open the dashboard.
+
+**Expect** a Selling > Sales Orders item and nothing else under Selling; the open order can be delivered and messaged inside; My Services, Proposals, Portfolio and Earnings are not reachable by URL.
+
+### 3. Suspended seller starts nothing new (card:10384354109)
+As the suspended seller submit a proposal (form and `POST /requests/{id}/proposals`), use Contact seller on another seller's service, send a message in a pre-sale thread.
+
+**Expect** each is refused with a plain message ("Your vendor account is suspended" or "Your account is suspended"), nothing is created, no notification reaches the other person.
+
+### 4. Plugin menu is not offered to sellers (card:10379867128)
+As a seller who also has `edit_posts`, open wp-admin.
+
+**Expect** no WP Sell Services menu item and no 403 page reachable from the admin bar or menu.
+
+
+**Doors to assert together** (the REST twin and the AJAX door must agree): dashboard publish, bulk publish, wizard draft and publish, portfolio add and update, REST services and proposals. Guard: `tests/test-ajax-standing-gate.php`.
+
+### 5. Each tier has its own description (card:10244588840)
+In the wizard Pricing step, switch between Basic, Standard and Premium.
+
+**Expect** every tier has a Tier description field that saves and shows under the tier on the service page; leaving it empty is allowed.
+
+### 6. A refused publish says why (card:10399161587)
+Publish an incomplete service from the editor and from the list.
+
+**Expect** the service stays a draft and an explicit notice names what is missing, visible only to someone who may edit that service.
+
+### 7. My Services status tiles (card:10403854262)
+Open Dashboard > My Services.
+
+**Expect** the All, Active, Drafts and Pending Review tiles are links; selecting one lists only that status and the count matches the list; at 390px they wrap without horizontal scroll.
+
+### A refused file stops a delivery (vendor sweep 1.9.0)
+As the vendor deliver an order with an .exe attached.
+
+**Expect** an error naming the file and no delivery sent; in a message, a refused attachment shows a notice. Guard: `static:delivery-refuses-bad-file`.

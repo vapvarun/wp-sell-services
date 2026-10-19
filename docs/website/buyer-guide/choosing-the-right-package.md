@@ -2,7 +2,7 @@
 
 Every service on the marketplace offers up to three pricing tiers -- Basic, Standard, and Premium. This guide helps you understand the differences and pick the package that fits your needs and budget.
 
-![Package comparison on a service page](../images/frontend-package-cards.png)
+![Package comparison on a service page](../images/frontend-package-cards.webp)
 
 ## How Packages Work
 

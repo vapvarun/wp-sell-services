@@ -1,6 +1,6 @@
 # CLAUDE.md — WP Sell Services
 
-> **READ FIRST (v1.7.0, released 2026-09-01):** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory. Counts re-measured 2026-09-01 at the 1.7.0 release gate: **209 PHP files in `src/`**, **152 `register_rest_route` calls across 26 controllers**, **121 AJAX handlers**, **20 custom DB tables**, **6 Gutenberg blocks**, **20 shortcodes**, **9 WP-CLI command files**, **417 hook firings (184 do_action + 233 apply_filters)**, **37 HTML email templates** (the 14 unloaded plain-text ones were removed in 1.8.0), **24 switchable notification types**. Use this before grepping. See also [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md), [`audit/FLOW-AUDIT.md`](audit/FLOW-AUDIT.md) (gap analysis — rows marked `NOT AUDITED` mean *unknown*, not *fine*), [`audit/ROLE_MATRIX.md`](audit/ROLE_MATRIX.md), [`audit/journeys/`](audit/journeys/) (browser walks; run these before handing anything to QA). **manifest_refresh: agent-enumeration-only** — REST is registered through a controller-array wrapper (`src/API/API.php`), so the deterministic generator (`write-manifest.mjs`) undercounts REST and will silently clobber this manifest. Do NOT run the generator against this plugin; refresh categories by agent enumeration only. *(Done in 1.7.0: `bin/generate-hook-reference.py` writes the hook reference from source and `bin/docs-audit.py` fails when it is stale, so hook citations no longer rot between releases. `bin/gen-openapi.php` does the same for the REST catalogue.)*
+> **READ FIRST (v1.7.0, released 2026-09-01):** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory. Counts re-measured 2026-09-01 at the 1.7.0 release gate: **209 PHP files in `src/`**, **152 `register_rest_route` calls across 26 controllers**, **121 AJAX handlers**, **20 custom DB tables**, **6 Gutenberg blocks**, **20 shortcodes**, **9 WP-CLI command files**, **417 hook firings (184 do_action + 233 apply_filters)**, **37 HTML email templates** (the 14 unloaded plain-text ones were removed in 1.8.0), **30 switchable notification types**. Use this before grepping. See also [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md), [`audit/FLOW-AUDIT.md`](audit/FLOW-AUDIT.md) (gap analysis — rows marked `NOT AUDITED` mean *unknown*, not *fine*), [`audit/ROLE_MATRIX.md`](audit/ROLE_MATRIX.md), [`audit/journeys/`](audit/journeys/) (browser walks; run these before handing anything to QA). **manifest_refresh: agent-enumeration-only** — REST is registered through a controller-array wrapper (`src/API/API.php`), so the deterministic generator (`write-manifest.mjs`) undercounts REST and will silently clobber this manifest. Do NOT run the generator against this plugin; refresh categories by agent enumeration only. *(Done in 1.7.0: `bin/generate-hook-reference.py` writes the hook reference from source and `bin/docs-audit.py` fails when it is stale, so hook citations no longer rot between releases. `bin/gen-openapi.php` does the same for the REST catalogue.)*
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -135,7 +135,7 @@ your tools back.
 |---|---|---|
 | Lint + PHPStan | `php vendor/bin/phpstan analyse` | type and namespace bugs; found a real fatal in 1.7.0 |
 | Contract audit | `contract-audit.php --pair=…` | key/hook contract drift between Free and Pro |
-| Browser smoke | `wp-plugin-smoke` skill | rendered behaviour; writes `docs/qa/.last-smoke-pass.json` |
+| Browser smoke | `wp-plugin-smoke` skill | rendered behaviour; writes `.qa-results/last-smoke-pass.json` (untracked) |
 | Docs truth | `bin/docs-audit.py` | docs contradicting the code being shipped |
 | REST | `tests/audit/rest-reachability.php` | an unguarded or fataling endpoint anywhere |
 | Catalogue | `bin/gen-openapi.php` | the published API spec going stale |
@@ -178,6 +178,10 @@ WPSellServices\Admin\         # Admin functionality
 WPSellServices\Frontend\      # Frontend functionality
 WPSellServices\API\           # REST API endpoints
 ```
+
+### Where does X go
+
+Class, helper, CSS and JS placement is one table in `docs/standards/skeleton.md`; `php bin/check-skeleton.php` enforces the helper rules. New third-party integrations follow `docs/standards/integration-seams.md` (base class + filter registry, no core edit).
 
 ### Directory Structure
 ```
@@ -284,6 +288,15 @@ Real cases found and fixed in 1.2.2:
 2. **Money math lives in exactly one place.** All fee/earnings computation goes
    through `CommissionService::compute_breakdown()`. Gateways are execution
    adapters: they move the amount we already persisted, they never re-derive it.
+   Tax, tip commission and refund amounts have one owner each (`wpss_calculate_tax()`,
+   `TippingService`, `OrderService::refund()` with `OrderWorkflowManager::handle_gateway_refund()`);
+   `tests/test-money-rules-gateway-independent.php` fails if a gateway or a refund owner holds
+   those rules or names a provider.
+   **The rail that collected the money refunds it.** `wpss_order_money_rail( $order )` is empty
+   for orders we collected and names the shop platform otherwise; our refund screens step aside for
+   those and only record what the platform reports through `wpss_gateway_refund_received`. A
+   refund names its gig (`order_id`) or waits for an admin (`PendingRefundService`); never split
+   an amount by price. Who may refund is `wpss_can_refund_order` (admin by default).
 3. **A shared UI surface is a shared partial.** If two locations show the same
    thing (notifications, service cards, order rows), extract
    `templates/partials/*.php` and have both `require` it — see

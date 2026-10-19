@@ -6,15 +6,15 @@ buyer pays and approves each phase one at a time. It's the right fit for
 larger, scoped work where neither side wants to commit the full amount
 up front.
 
-![Milestone timeline on a buyer's order page](../images/order-management/milestone-timeline-wpss.png)
+![Milestone timeline on a buyer's order page](../images/order-management/milestone-timeline-wpss.webp)
 
 ## When to use a milestone contract
 
-Milestone contracts live on **buyer-request orders only** — projects
+Milestone contracts live on **buyer-request orders only** - projects
 that started with a buyer posting a brief and a vendor responding with a
 custom proposal. For a fixed-price catalog service, use a
 [Paid Extension](extensions-wpss.md) instead. The two features are
-mutually exclusive — a single order will only ever show one or the other.
+mutually exclusive - a single order will only ever show one or the other.
 
 Milestone contracts work well when:
 
@@ -33,14 +33,14 @@ When you reply to a buyer request, choose **Milestone** as the contract
 type on the proposal form. You'll see a repeater where you enter each
 phase:
 
-- **Title** — a clear name the buyer will recognise (e.g. "Homepage
+- **Title** - a clear name the buyer will recognise (e.g. "Homepage
   wireframes").
-- **Description** — what's delivered at the end of this phase.
-- **Amount** — what the buyer pays for this phase.
-- **Days** — how many days this phase takes.
+- **Description** - what's delivered at the end of this phase.
+- **Amount** - what the buyer pays for this phase.
+- **Days** - how many days this phase takes.
 
 The total of the phases is what the buyer sees as the project total.
-There's no separate upfront fee — the parent order's base price is $0,
+There's no separate upfront fee - the parent order's base price is $0,
 and all money flows through the phase payments.
 
 Once you submit, the buyer can compare your proposal against others,
@@ -51,7 +51,7 @@ expand the phase list, and review the full breakdown before accepting.
 Custom projects often grow. After the contract is under way you can
 still propose additional phases from the order page with the
 **+ Propose a phase** button. A later addition is treated
-the same way as any predefined phase — the buyer pays, you deliver, the
+the same way as any predefined phase - the buyer pays, you deliver, the
 buyer approves.
 
 > **Ad-hoc phases expire; contract phases do not.** A phase you add
@@ -59,6 +59,10 @@ buyer approves.
 > within **48 hours**. Phases that came from the original accepted
 > proposal are exempt and wait indefinitely. See
 > [The 48-hour abandon sweep](#the-48-hour-abandon-sweep).
+
+### Locked and closed phases
+
+A phase stays locked until the previous phase is approved. Its page says so instead of offering a Pay button. A phase that was declined or deleted can no longer be paid, and on a store checkout its pending store order is cancelled. A payment that arrives for a closed order is not applied; it is logged so you can refund it.
 
 ### Delivering a phase
 
@@ -76,12 +80,12 @@ When the buyer pays a phase:
    an admin) is credited the same way, once.
 
 If the buyer wants changes, the phase comes back to you marked
-**Changes requested — over to you**, with their notes on the phase and in
+**Changes requested - over to you**, with their notes on the phase and in
 the order conversation. Fix the work and use **Resubmit delivery**; the
 phase returns to awaiting approval.
 
 Revisions on a phase aren't counted against the main order's revision
-limit — a phase carries no revision allowance of its own, so there is no
+limit - a phase carries no revision allowance of its own, so there is no
 counter to run down.
 
 ## The buyer journey
@@ -97,7 +101,7 @@ plan before accepting, so nothing is a surprise later.
 
 When you accept, the order is created with all phases pre-populated in
 the timeline and the project kicks off. You don't pay the base of the
-order — it's $0 by design. Money only moves when you pay individual
+order - it's $0 by design. Money only moves when you pay individual
 phases.
 
 ### The lock-step rule, and where it actually holds
@@ -105,21 +109,21 @@ phases.
 The **lock-step rule** is the key thing to understand about milestone
 contracts:
 
-> Phase N only becomes payable once every earlier phase has **finished** —
+> Phase N only becomes payable once every earlier phase has **finished** -
 > approved, declined, cancelled, or swept away unpaid.
 
 So on a 3-phase contract, phase 1 is payable immediately. Phases 2 and 3
-show a disabled "Locked — pay phase 1 first" pill. This keeps both sides
-in rhythm — the vendor isn't working on multiple phases in parallel with
+show a disabled "Locked - pay phase 1 first" pill. This keeps both sides
+in rhythm - the vendor isn't working on multiple phases in parallel with
 no payment history, and you aren't stacking up prepayments on phases you
 haven't seen yet.
 
 **Paying a phase does not unlock the next one.** A paid phase is *In
 progress*, which still counts as open. Phase 2 unlocks when phase 1 is
-approved (or declined, or cancelled) — not when it is paid. Only one
+approved (or declined, or cancelled) - not when it is paid. Only one
 phase is ever in flight at a time, by design.
 
-#### Where the rule is enforced — and where it is not
+#### Where the rule is enforced - and where it is not
 
 This matters if you are choosing a payment platform, and it is the part
 most easily mis-stated. The lock is enforced at **checkout entry points on
@@ -127,18 +131,18 @@ the standalone rail** and on the two REST pay endpoints:
 
 | Entry point | Locked phase refused? |
 |---|---|
-| The order page pay button (any rail) | Yes — the button is disabled |
-| `POST /orders/{id}/pay`, `POST /milestones/{id}/pay` | Yes — HTTP 409 `wpss_milestone_locked` |
-| Standalone checkout via `?pay_order=N` | Yes — shows a notice instead of the form |
-| Standalone Stripe and Razorpay intents | Yes — `wpss_phase_locked` |
+| The order page pay button (any rail) | Yes - the button is disabled |
+| `POST /orders/{id}/pay`, `POST /milestones/{id}/pay` | Yes - HTTP 409 `wpss_milestone_locked` |
+| Standalone checkout via `?pay_order=N` | Yes - shows a notice instead of the form |
+| Standalone Stripe and Razorpay intents | Yes - `wpss_phase_locked` |
 | **WooCommerce order-pay URL** | **No** |
 | **FluentCart checkout URL** | **No** |
 | **`POST /payments/create-intent` / `/payments/confirm` with `pay_order`** | **No** |
 | **PayPal's direct create-payment path** | **No** |
 
 On both store rails the pay-order URL is generated by a resolver that checks
-only "is this unpaid?" — `WCPayOrderResolver` and `FluentCartPayOrderResolver`
-share that one test — so a determined buyer who has the URL for a later phase
+only "is this unpaid?" - `WCPayOrderResolver` and `FluentCartPayOrderResolver`
+share that one test - so a determined buyer who has the URL for a later phase
 can pay it out of order, and the payment settles normally.
 Treat lock-step as **a workflow rail that keeps honest buyers in sequence,
 not a security control.** If sequencing must be enforced absolutely, run on
@@ -157,7 +161,7 @@ are asked what needs changing; the phase goes back to the seller marked
 **Sent back to your seller**, your notes appear on the phase, and the same
 notes are posted into the order conversation labelled with the phase name.
 A phase has no conversation of its own, which is why they land on the
-parent contract's thread — where the seller is already reading.
+parent contract's thread - where the seller is already reading.
 
 Only you can send a phase back, and only while it is awaiting your
 approval. An approved phase is final; if something is wrong after that,
@@ -174,7 +178,7 @@ screens. The whole run, start to finish:
 | 2 | Vendor | Dashboard → Sales Orders → the order | **Propose a phase** (title, amount, days) |
 | 3 | Buyer | Dashboard → My Orders → the order → timeline | **Pay** on that phase |
 | 4 | Vendor | Same order, same phase | Works, then **Submit Delivery** |
-| 5 | Buyer | Same phase | **Approve** — which unlocks the next phase |
+| 5 | Buyer | Same phase | **Approve** - which unlocks the next phase |
 
 Repeat 2–5 per phase. Only one phase is payable at a time: the next stays
 **Locked** until the current one is approved or cancelled.
@@ -194,7 +198,7 @@ against.
 | Site setup | Phase Pay |
 |---|---|
 | Standalone WPSS payments | Supported |
-| WooCommerce | Supported — a real WooCommerce order is created for the phase, so the Pay link keeps working even from an email days later |
+| WooCommerce | Supported - a real WooCommerce order is created for the phase, so the Pay link keeps working even from an email days later |
 
 If your marketplace runs on another ecommerce platform, use **Extensions** for
 extra paid work instead, or ask the site owner about milestone support.
@@ -211,7 +215,7 @@ flips to **Completed** automatically. Both parties receive the standard
 order-completed email, a "Project complete" summary card appears at the
 top of the timeline showing total phases paid and total spent, and the
 Rate Your Experience CTA goes out to the buyer. The same completion hooks
-run as for any other order type — vendor stats update, seller-level
+run as for any other order type - vendor stats update, seller-level
 progress ticks up, and the order moves to completed archives.
 
 **"Terminal" includes declined, not only approved.** If the buyer
@@ -241,16 +245,16 @@ more than **48 hours**.
 |---|---|
 | What it targets | Phases in *Awaiting payment*, created more than 48 hours ago |
 | What it does | Sets them to **Cancelled**. The row is kept, not deleted |
-| What it skips | **Contract phases** — anything that came from the original accepted proposal. Those wait indefinitely |
+| What it skips | **Contract phases** - anything that came from the original accepted proposal. Those wait indefinitely |
 | How often | Once a day |
 | Who is told | **Nobody.** No email, no in-app notification, no timeline entry |
 
 This is the behaviour most likely to surprise you, so state it plainly:
 
-- **Vendors** — a phase you add mid-project is a 48-hour offer. If the buyer
+- **Vendors** - a phase you add mid-project is a 48-hour offer. If the buyer
   hasn't paid by then it disappears from their list without either of you
   being told. If the buyer still wants it, propose it again.
-- **Buyers** — if a phase you meant to pay has vanished, it most likely
+- **Buyers** - if a phase you meant to pay has vanished, it most likely
   expired. Ask the vendor to re-propose it; nothing was charged.
 
 Because a cancelled phase counts as finished, an abandoned phase also
@@ -262,7 +266,7 @@ Cancellation rules follow what's actually fair for split-phase work:
 
 - **Paid and approved phases stand.** Those payments are earned and
   stay with the vendor.
-- **Unpaid phases are auto-cancelled** when the parent is cancelled —
+- **Unpaid phases are auto-cancelled** when the parent is cancelled -
   no money has moved so there's nothing to unwind.
 - **Paid but still open phases** (the vendor is mid-work or the
   delivery is awaiting your approval) have not been credited to the vendor
@@ -271,7 +275,7 @@ Cancellation rules follow what's actually fair for split-phase work:
   what's fair (full or partial refund, extra revision, or mutual
   agreement that the work delivered was complete).
 
-This matches how phased contracts work in the real world — completed
+This matches how phased contracts work in the real world - completed
 phases are settled, in-flight phases need to be talked through.
 
 ## When something is refused
@@ -279,7 +283,7 @@ phases are settled, in-flight phases need to be talked through.
 Milestone actions are guarded on the server, and the guards are strict.
 Most "why can't I click this?" reports are one of the rows below rather
 than a fault. Developers: the `code` column is the machine-readable
-`code` in the REST error body — branch on it, never on the message.
+`code` in the REST error body - branch on it, never on the message.
 
 ### Proposing a phase
 
@@ -324,7 +328,7 @@ than a fault. Developers: the `code` column is the machine-readable
 | Refused when | Code | HTTP |
 |---|---|---|
 | Not a milestone row | `wpss_milestone_not_found` | 404 |
-| **Already paid.** A paid phase cannot be declined — open a dispute instead | `wpss_milestone_not_declinable` | 409 |
+| **Already paid.** A paid phase cannot be declined - open a dispute instead | `wpss_milestone_not_declinable` | 409 |
 | Already paid, on the vendor's cancel action | `wpss_milestone_not_cancellable` | 409 |
 | You are neither the buyer nor the vendor | `wpss_forbidden` | 403 |
 | The underlying write failed | `wpss_milestone_decline_failed` / `wpss_milestone_cancel_failed` | 400 |
@@ -355,16 +359,16 @@ holds.
 | Who sets it up | Vendor at proposal time (+ ad-hoc later) | Vendor, on an already-paid order |
 | What it charges for | The whole project, split into phases | Extra work on top of the already-paid scope |
 | Payment order | Lock-step (phase N must finish before N+1 unlocks) | Single quote, accept or decline |
-| Terminal state | Every phase terminal — approved, declined or cancelled | Quote paid or declined |
+| Terminal state | Every phase terminal - approved, declined or cancelled | Quote paid or declined |
 
 ## Tips
 
 **For vendors:**
 
-- Keep phases deliverable — each one should produce something the
+- Keep phases deliverable - each one should produce something the
   buyer can look at and sign off. Three to five phases works well for
   most projects.
-- Price phases independently. Don't save a "big" phase for the end —
+- Price phases independently. Don't save a "big" phase for the end -
   you want steady payments, not a back-loaded risk.
 - Communicate in the order chat as you work. The timeline shows state;
   the chat shows context.
@@ -375,14 +379,14 @@ holds.
   What looks clear at proposal time is what you're committing to for
   the whole project.
 - Approve promptly once you're satisfied with a phase. Approval
-  unlocks the next phase — stalling one holds the whole contract.
+  unlocks the next phase - stalling one holds the whole contract.
 - Use the chat for revision requests. It keeps a record and avoids a
   separate reject status.
 
 ## Related documentation
 
 - [Paid Extensions](extensions-wpss.md)
-- [WooCommerce Checkout — paying a milestone, tip or extension](../payments-checkout/woocommerce-checkout.md#paying-a-milestone-tip-or-extension) — which platforms can take a phase payment at all
+- [WooCommerce Checkout - paying a milestone, tip or extension](../payments-checkout/woocommerce-checkout.md#paying-a-milestone-tip-or-extension) - which platforms can take a phase payment at all
 - [Proposal Contracts (Fixed vs Milestone)](../buyer-requests/proposal-contracts-wpss.md)
 - [Order Lifecycle & 11 Statuses](order-lifecycle.md)
 - [Deliveries & Revisions](deliveries-revisions.md)

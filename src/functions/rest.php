@@ -473,13 +473,14 @@ function wpss_rest_date( $value ): ?string {
  *
  * @since 1.6.0
  *
- * @param array<string, mixed> $data Arbitrary stored data.
+ * @param array<string, mixed> $data        Arbitrary stored data.
+ * @param string               $key_pattern Regex a key must match to count as a date.
  * @return array<string, mixed>
  */
-function wpss_rest_normalise_dates( array $data ): array {
+function wpss_rest_normalise_dates( array $data, string $key_pattern = '/(_at|_on|_deadline|_date|date|since|expires)$/i' ): array {
 	foreach ( $data as $key => $value ) {
 		if ( is_array( $value ) ) {
-			$data[ $key ] = wpss_rest_normalise_dates( $value );
+			$data[ $key ] = wpss_rest_normalise_dates( $value, $key_pattern );
 			continue;
 		}
 
@@ -487,7 +488,7 @@ function wpss_rest_normalise_dates( array $data ): array {
 			continue;
 		}
 
-		$looks_like_a_date = (bool) preg_match( '/(_at|_on|_deadline|_date|date|since|expires)$/i', $key );
+		$looks_like_a_date = (bool) preg_match( $key_pattern, $key );
 
 		if ( $looks_like_a_date && preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value ) ) {
 			$data[ $key ] = wpss_rest_date( $value );

@@ -4,11 +4,11 @@ Every important event in your marketplace triggers an in-app notification so use
 
 ---
 
-![In-app notifications in the dashboard](../images/frontend-notifications.png)
+![In-app notifications in the dashboard](../images/frontend-notifications.webp)
 
 ## How It Works
 
-A notification bell appears in the dashboard with an unread count badge. When something happens -- a new order, a message, a delivery, a review -- a notification is created instantly. Users click the bell to see their alerts and navigate directly to the relevant page.
+The dashboard's Notifications menu item shows an unread count badge. When something happens -- a new order, a message, a delivery, a review -- a notification is created instantly. Users click the bell to see their alerts and navigate directly to the relevant page.
 
 ---
 
@@ -37,14 +37,14 @@ These in-app notifications are always created, regardless of whether email notif
 
 ## Viewing Notifications
 
-From the dashboard, click the notification bell to see your notifications list. Each notification shows:
+From the dashboard, open **Notifications** in the menu. Each notification shows:
 
 - An icon indicating the type of event
 - A brief message describing what happened
 - A relative timestamp (e.g., "2 minutes ago")
 - A link to the relevant order, message, or page
 
-You can filter to see only unread notifications or browse by notification type.
+Use the two drop-downs above the list to show only unread notifications, one type of notification, or both. The page numbers keep your filter.
 
 ---
 
@@ -60,13 +60,13 @@ Click the **Mark All as Read** button at the top of the notification list to cle
 
 ### Automatic Cleanup
 
-Read notifications are automatically deleted after 90 days to keep things tidy. Unread notifications are kept until you read or dismiss them. Important notifications (disputes, order completions) are preserved longer.
+Read notifications are deleted after 90 days by a daily background job. Unread notifications are never deleted. Dispute and completed-delivery notices are kept for a year once read. Developers can change the 90 days with the `wpss_notification_retention_days` filter (return 0 to keep everything).
 
 ---
 
 ## The Unread Badge
 
-The notification bell shows a number badge indicating how many unread notifications you have. This count updates as new events occur and decreases as you read or dismiss notifications.
+The Notifications menu item shows a number badge indicating how many unread notifications you have. This count updates as new events occur and decreases as you read or dismiss notifications.
 
 ---
 
@@ -98,7 +98,7 @@ gets sent - push follows the notifications you already have.
 
 1. Create a Firebase project at console.firebase.google.com and generate a
    **service account key** - a JSON file Google gives you once.
-2. Go to **Sell Services > Settings > Advanced**.
+2. Go to **Sell Services > Settings > Integrations**.
 3. Paste the JSON into the push notification credentials field and enable it.
 4. Save.
 

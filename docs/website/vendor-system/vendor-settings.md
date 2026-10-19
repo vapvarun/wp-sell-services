@@ -1,8 +1,8 @@
 # Vendor Settings (Admin)
 
-These settings control how vendors join your marketplace, how many services they can create, and whether their services need your approval before going live. Find them at **Sell Services > Settings > Vendors**.
+These settings control how vendors join your marketplace, how many services they can create, and whether their services need your approval before going live. Find them at **Sell Services > Settings > Vendor Settings**.
 
-![Vendor Settings Tab](../images/settings-vendors-tab.png)
+![Vendor Settings Tab](../images/settings-vendors-tab.webp)
 
 ## Vendor Registration Mode
 
@@ -58,11 +58,11 @@ This adds an extra quality gate -- vendors must be verified before they can list
 
 When enabled, every new service a vendor creates goes into "Pending Review" status instead of being published immediately. You review each service and approve or reject it.
 
-To review pending services, go to **Sell Services > Moderation** — the queue carries a pending count in the menu. To browse everything else, go to **Sell Services > All Services** and filter by status.
+To review pending services, go to **Sell Services > Moderation** - the queue carries a pending count in the menu. To browse everything else, go to **Sell Services > All Services** and filter by status.
 
 This is useful for maintaining marketplace quality, especially in the early days. As you build trust with your top vendors, you might consider disabling this to speed things up.
 
-![Full vendor settings panel](../images/settings-vendors-tab.png)
+![Full vendor settings panel](../images/settings-vendors-tab.webp)
 
 ## Registration Form Fields
 

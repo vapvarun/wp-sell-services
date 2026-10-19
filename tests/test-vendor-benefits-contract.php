@@ -101,7 +101,7 @@ wpss_t(
 //    survivable - a correction in one branch left the other lying.
 $shortcodes = file_get_contents( WPSS_PLUGIN_DIR . 'src/Frontend/Shortcodes.php' );
 wpss_t(
-	2 === substr_count( $shortcodes, "templates/partials/vendor-benefits.php" ),
+	2 === substr_count( $shortcodes, "partials/vendor-benefits.php" ),
 	'both branches require the shared partial'
 );
 // Matched on the MARKUP, not the class name: Shortcodes.php still carries an

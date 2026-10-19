@@ -8,6 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var WPSellServices\Models\ServiceOrder $order Service order object.
  * @var WP_User $recipient   Recipient user object.

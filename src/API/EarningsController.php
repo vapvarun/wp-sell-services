@@ -275,6 +275,10 @@ class EarningsController extends RestController {
 				'pending_withdrawal'       => round( $summary['pending_withdrawal'], 2 ),
 				'available_balance'        => round( $summary['available_balance'], 2 ),
 				'in_clearance'             => round( $summary['in_clearance'], 2 ),
+				// 'negative' when the vendor owes the platform; clients show an explanation, not a bare minus figure.
+				// What the admin Vendors screen shows; available_balance also subtracts a withdrawal in progress.
+				'ledger_balance'           => round( $summary['ledger_balance'], 2 ),
+				'balance_state'            => \WPSellServices\Services\EarningsService::classify_balance( (float) $summary['available_balance'] ),
 				'total_earned_minor'       => wpss_amount_to_minor_units( (float) $summary['total_earned'], $currency ),
 				'total_withdrawn_minor'    => wpss_amount_to_minor_units( (float) $summary['withdrawn'], $currency ),
 				'pending_withdrawal_minor' => wpss_amount_to_minor_units( (float) $summary['pending_withdrawal'], $currency ),
@@ -454,6 +458,9 @@ class EarningsController extends RestController {
 				'reference_url'    => $reference_url,
 				'status'           => $row['status'],
 				'created_at'       => $this->format_datetime( $row['created_at'] ),
+				// The date the way every other screen prints it, in the display timezone, so the
+				// ledger does not show the browser's day (an evening entry would land on tomorrow).
+				'created_at_label' => wpss_date_label( $row['created_at'], '', 'M j, Y' ),
 			);
 		}
 
@@ -693,16 +700,6 @@ class EarningsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_withdrawal_methods( WP_REST_Request $request ): WP_REST_Response {
-		$methods = array(
-			'bank_transfer' => __( 'Bank Transfer', 'wp-sell-services' ),
-			'paypal'        => __( 'PayPal', 'wp-sell-services' ),
-		);
-
-		/**
-		 * Filter available withdrawal methods.
-		 *
-		 * @param array $methods Withdrawal methods.
-		 */
-		return new WP_REST_Response( apply_filters( 'wpss_withdrawal_methods', $methods ) );
+		return new WP_REST_Response( \WPSellServices\Services\EarningsService::get_withdrawal_methods() );
 	}
 }

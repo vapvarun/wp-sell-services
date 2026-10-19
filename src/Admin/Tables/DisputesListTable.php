@@ -292,7 +292,7 @@ class DisputesListTable extends \WP_List_Table {
 			'<time datetime="%s" title="%s">%s</time>',
 			esc_attr( gmdate( 'c', $opened ) ),
 			/* translators: %s: date the dispute was opened. */
-			esc_attr( sprintf( __( 'Opened %s', 'wp-sell-services' ), wp_date( get_option( 'date_format' ), $opened ) ) ),
+			esc_attr( sprintf( __( 'Opened %s', 'wp-sell-services' ), wpss_date_label( $opened ) ) ),
 			/* translators: %s: number of days. */
 			esc_html( sprintf( _n( '%s day', '%s days', $days, 'wp-sell-services' ), number_format_i18n( $days ) ) )
 		);

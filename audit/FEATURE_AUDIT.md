@@ -160,7 +160,7 @@ No custom capability slugs registered. Plugin uses standard WP capabilities (`ed
 
 ## Known issues surfaced by audit
 
-See the current baseline, `audit/wppqa-baseline-2026-06-10/`:
+Findings from the 2026-06 audit (since worked down):
 - 5 `alert()`/`confirm()` calls in admin JS (admin-ux Rule 10) — replace with toast
 - 3 `$_POST/$_GET` iteration patterns (security.md) — read explicit keys
 - ~13 nonce-without-current_user_can findings (some valid object-ownership patterns; 3-5 in `Admin.php`/`ServiceModerationPage.php` may be real gaps)

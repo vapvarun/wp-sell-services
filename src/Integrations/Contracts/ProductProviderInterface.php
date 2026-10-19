@@ -30,7 +30,7 @@ interface ProductProviderInterface {
 	 * @param int $product_id Platform product ID.
 	 * @return bool
 	 */
-	public function is_service_product( int $product_id ): bool;
+	public function is_sellable_product( int $product_id ): bool;
 
 	/**
 	 * Get service data from platform product.

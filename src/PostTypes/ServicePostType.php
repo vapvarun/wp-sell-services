@@ -304,7 +304,7 @@ class ServicePostType {
 			'public'             => true,
 			'publicly_queryable' => true,
 			'show_ui'            => true,
-			'show_in_menu'       => 'wp-sell-services', // Show under our custom admin menu.
+			'show_in_menu'       => wpss_cpt_menu_parent(), // Under our menu for the admin, own entry for anyone else.
 			'query_var'          => true,
 			'rewrite'            => [
 				'slug'       => $this->get_slug(),
@@ -462,7 +462,7 @@ class ServicePostType {
 			9  => sprintf(
 				/* translators: 1: Publish box date format, 2: Post permalink */
 				__( 'Service scheduled for: <strong>%1$s</strong>. <a target="_blank" href="%2$s">Preview Service</a>', 'wp-sell-services' ),
-				date_i18n( __( 'M j, Y @ G:i', 'wp-sell-services' ), strtotime( $post->post_date ) ),
+				wpss_date_label( $post->post_date_gmt, '', __( 'M j, Y @ G:i', 'wp-sell-services' ) ),
 				esc_url( $permalink )
 			),
 			/* translators: %s: post permalink */

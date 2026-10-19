@@ -48,41 +48,6 @@ class AuditLogService {
 	public const RETENTION_DEFAULT = 365;
 
 	/**
-	 * Every event type the plugin writes. The admin filter lists these;
-	 * add the name here when adding a log() call.
-	 *
-	 * @since 1.7.1
-	 * @var string[]
-	 */
-	public const EVENT_TYPES = array(
-		'order.status_change',
-		'order.paid',
-		'order.cancel',
-		'order.refund',
-		'order.refund_pending',
-		'order.refund_failed',
-		'order.earnings_reversal_failed',
-		'withdrawal.requested',
-		'withdrawal.approved',
-		'withdrawal.rejected',
-		'withdrawal.paid',
-		'dispute.transition',
-		'vendor.approved',
-		'vendor.rejected',
-		'vendor.suspended',
-		'vendor.pending',
-		'vendor.migrated',
-		'vendor.role_removed',
-		'vendor.role_restored',
-		'commission.rate_changed',
-		'service.approved',
-		'service.rejected',
-		'review.approved',
-		'review.rejected',
-		'ledger.insert',
-	);
-
-	/**
 	 * What each event means, in the owner's words (Basecamp 10337159668).
 	 *
 	 * The Audit Log showed the raw keys. A key missing here reads as words
@@ -119,6 +84,8 @@ class AuditLogService {
 			'review.approved'                => __( 'Review approved', 'wp-sell-services' ),
 			'review.rejected'                => __( 'Review rejected', 'wp-sell-services' ),
 			'ledger.insert'                  => __( 'Wallet entry', 'wp-sell-services' ),
+			'ledger.duplicate_removed'       => __( 'Duplicate wallet entry removed', 'wp-sell-services' ),
+			'review.duplicate_removed'       => __( 'Duplicate review removed', 'wp-sell-services' ),
 			'email.failed'                   => __( 'Email not sent', 'wp-sell-services' ),
 		);
 	}
@@ -210,7 +177,7 @@ class AuditLogService {
 					$withdrawal_id,
 					array(
 						'action'     => 'completed' === $status ? 'pay' : $status,
-						'from_value' => (string) ( $withdrawal->status ?? '' ),
+						'from_value' => (string) ( $withdrawal->previous_status ?? $withdrawal->status ?? '' ),
 						'to_value'   => $status,
 						'context'    => array(
 							'vendor_id' => (int) ( $withdrawal->vendor_id ?? 0 ),
@@ -421,7 +388,7 @@ class AuditLogService {
 	 *     Optional. Query filters.
 	 *
 	 *     @type string $object_type Filter by object type.
-	 *     @type int    $object_id   Filter by object ID (requires object_type).
+	 *     @type int    $object_id   Filter by object ID (pair with object_type; IDs repeat across types).
 	 *     @type int    $actor_id    Filter by actor ID.
 	 *     @type string $event_type  Filter by event type.
 	 *     @type bool   $is_forced   Return only forced (bypass) events if true.
@@ -445,11 +412,12 @@ class AuditLogService {
 		if ( ! empty( $args['object_type'] ) ) {
 			$where[]  = 'object_type = %s';
 			$values[] = (string) $args['object_type'];
+		}
 
-			if ( ! empty( $args['object_id'] ) ) {
-				$where[]  = 'object_id = %d';
-				$values[] = (int) $args['object_id'];
-			}
+		// Applied on its own: dropping it without object_type returned the whole log to a caller who asked for one object.
+		if ( ! empty( $args['object_id'] ) ) {
+			$where[]  = 'object_id = %d';
+			$values[] = (int) $args['object_id'];
 		}
 
 		if ( ! empty( $args['actor_id'] ) ) {
@@ -472,13 +440,13 @@ class AuditLogService {
 		if ( ! empty( $args['from_date'] ) ) {
 			$from     = (string) $args['from_date'];
 			$where[]  = 'created_at >= %s';
-			$values[] = get_gmt_from_date( 10 === strlen( $from ) ? $from . ' 00:00:00' : $from );
+			$values[] = (string) wpss_datetime_input_to_utc( 10 === strlen( $from ) ? $from . ' 00:00:00' : $from );
 		}
 
 		if ( ! empty( $args['to_date'] ) ) {
 			$to       = (string) $args['to_date'];
 			$where[]  = 'created_at <= %s';
-			$values[] = get_gmt_from_date( 10 === strlen( $to ) ? $to . ' 23:59:59' : $to );
+			$values[] = (string) wpss_datetime_input_to_utc( 10 === strlen( $to ) ? $to . ' 23:59:59' : $to );
 		}
 
 		$where_sql = implode( ' AND ', $where );
@@ -533,8 +501,8 @@ class AuditLogService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$deleted = $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM {$this->table} WHERE created_at < DATE_SUB( NOW(), INTERVAL %d DAY )",
-				$retention_days
+				"DELETE FROM {$this->table} WHERE created_at < %s",
+				gmdate( 'Y-m-d H:i:s', time() - $retention_days * DAY_IN_SECONDS )
 			)
 		);
 

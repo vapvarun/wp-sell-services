@@ -5,8 +5,12 @@
  * Displays the requirements form for buyers to submit after purchase.
  * Uses CSS classes from orders.css design system.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/order/order-requirements.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var int $order_id Order ID passed from parent template.
  *
@@ -100,7 +104,7 @@ do_action( 'wpss_before_requirements_form', $order );
 				</div>
 			</div>
 
-			<?php require WPSS_PLUGIN_DIR . 'templates/order/requirements-form.php'; ?>
+			<?php require wpss_locate_template( 'order/requirements-form.php' ); ?>
 		</div>
 
 		<aside class="wpss-requirements-page__sidebar">
@@ -124,7 +128,7 @@ do_action( 'wpss_before_requirements_form', $order );
 								$deadline = $order->delivery_deadline instanceof \DateTimeImmutable
 									? $order->delivery_deadline->format( 'Y-m-d H:i:s' )
 									: $order->delivery_deadline;
-								echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $deadline ) ) );
+								echo esc_html( wpss_deadline_label( $deadline ) );
 								?>
 							</dd>
 						<?php endif; ?>

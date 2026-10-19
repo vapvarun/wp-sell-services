@@ -68,11 +68,12 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;
 
-get_header();
+wpss_get_header();
 
 $service    = wpss_get_service( get_the_ID() );
 $service_id = get_the_ID();
@@ -209,4 +210,4 @@ do_action( 'wpss_before_single_service', $service );
  */
 do_action( 'wpss_after_single_service', $service );
 
-get_footer();
+wpss_get_footer();

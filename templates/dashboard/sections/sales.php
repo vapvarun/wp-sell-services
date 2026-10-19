@@ -2,8 +2,12 @@
 /**
  * Dashboard Section: Sales Orders (vendor only)
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/sections/sales.php
+ *
  * @package WPSellServices\Templates
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -35,7 +39,7 @@ if ( $order_id ) {
 		// Tip orders render a dedicated receipt view — vendors should see
 		// "Tip received from X" rather than the full service-order UI.
 		if ( \WPSellServices\Services\TippingService::ORDER_TYPE === ( $current_order->platform ?? '' ) ) {
-			include WPSS_PLUGIN_DIR . 'templates/order/tip-view.php';
+			include wpss_locate_template( 'order/tip-view.php' );
 			return;
 		}
 
@@ -43,7 +47,7 @@ if ( $order_id ) {
 		// vendors see "Extension approved" (or awaiting payment) and buyers
 		// see the accept/decline UI — not the service-delivery workflow.
 		if ( \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE === ( $current_order->platform ?? '' ) ) {
-			include WPSS_PLUGIN_DIR . 'templates/order/extension-view.php';
+			include wpss_locate_template( 'order/extension-view.php' );
 			return;
 		}
 
@@ -51,7 +55,7 @@ if ( $order_id ) {
 		// title/deliverables and the lifecycle-appropriate action for the
 		// viewer (buyer accepts & pays / vendor submits / buyer approves).
 		if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $current_order->platform ?? '' ) ) {
-			include WPSS_PLUGIN_DIR . 'templates/order/milestone-view.php';
+			include wpss_locate_template( 'order/milestone-view.php' );
 			return;
 		}
 
@@ -59,10 +63,10 @@ if ( $order_id ) {
 
 		switch ( $order_action ) {
 			case 'requirements':
-				include WPSS_PLUGIN_DIR . 'templates/order/order-requirements.php';
+				include wpss_locate_template( 'order/order-requirements.php' );
 				break;
 			default:
-				include WPSS_PLUGIN_DIR . 'templates/order/order-view.php';
+				include wpss_locate_template( 'order/order-view.php' );
 				break;
 		}
 		return;

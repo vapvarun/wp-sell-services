@@ -9,6 +9,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\ServiceOrder $wpss_order The order.
  */
@@ -32,7 +33,7 @@ if ( empty( $wpss_order ) ) {
 				<div class="wpss-timeline__marker"></div>
 				<div class="wpss-timeline__content">
 					<span class="wpss-timeline__title"><?php esc_html_e( 'Order Placed', 'wp-sell-services' ); ?></span>
-					<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->created_at ? wp_date( 'M j, Y \a\t g:i A', $wpss_order->created_at->getTimestamp() ) : '' ); ?></span>
+					<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->created_at ? wpss_date_label( $wpss_order->created_at->getTimestamp(), '—', 'M j, Y \a\t g:i A' ) : '' ); ?></span>
 				</div>
 			</div>
 
@@ -41,7 +42,7 @@ if ( empty( $wpss_order ) ) {
 					<div class="wpss-timeline__marker"></div>
 					<div class="wpss-timeline__content">
 						<span class="wpss-timeline__title"><?php esc_html_e( 'Work Started', 'wp-sell-services' ); ?></span>
-						<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $wpss_order->started_at->getTimestamp() ) ); ?></span>
+						<span class="wpss-timeline__date"><?php echo esc_html( wpss_date_label( $wpss_order->started_at->getTimestamp(), '—', 'M j, Y \a\t g:i A' ) ); ?></span>
 					</div>
 				</div>
 			<?php endif; ?>
@@ -60,7 +61,7 @@ if ( empty( $wpss_order ) ) {
 					<div class="wpss-timeline__marker"></div>
 					<div class="wpss-timeline__content">
 						<span class="wpss-timeline__title"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
-						<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $wpss_order->completed_at->getTimestamp() ) ); ?></span>
+						<span class="wpss-timeline__date"><?php echo esc_html( wpss_date_label( $wpss_order->completed_at->getTimestamp(), '—', 'M j, Y \a\t g:i A' ) ); ?></span>
 					</div>
 				</div>
 			<?php endif; ?>
@@ -85,7 +86,7 @@ if ( empty( $wpss_order ) ) {
 							}
 							?>
 						</span>
-						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $wpss_order->updated_at->getTimestamp() ) : '' ); ?></span>
+						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wpss_date_label( $wpss_order->updated_at->getTimestamp(), '—', 'M j, Y \a\t g:i A' ) : '' ); ?></span>
 					</div>
 				</div>
 			<?php elseif ( 'cancellation_requested' === $wpss_order->status ) : ?>
@@ -93,7 +94,7 @@ if ( empty( $wpss_order ) ) {
 					<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
 					<div class="wpss-timeline__content">
 						<span class="wpss-timeline__title"><?php esc_html_e( 'Cancellation Requested', 'wp-sell-services' ); ?></span>
-						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $wpss_order->updated_at->getTimestamp() ) : '' ); ?></span>
+						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wpss_date_label( $wpss_order->updated_at->getTimestamp(), '—', 'M j, Y \a\t g:i A' ) : '' ); ?></span>
 					</div>
 				</div>
 
@@ -102,7 +103,7 @@ if ( empty( $wpss_order ) ) {
 					<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
 					<div class="wpss-timeline__content">
 						<span class="wpss-timeline__title"><?php esc_html_e( 'Disputed', 'wp-sell-services' ); ?></span>
-						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $wpss_order->updated_at->getTimestamp() ) : '' ); ?></span>
+						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wpss_date_label( $wpss_order->updated_at->getTimestamp(), '—', 'M j, Y \a\t g:i A' ) : '' ); ?></span>
 					</div>
 				</div>
 
@@ -111,7 +112,7 @@ if ( empty( $wpss_order ) ) {
 					<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
 					<div class="wpss-timeline__content">
 						<span class="wpss-timeline__title"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
-						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $wpss_order->updated_at->getTimestamp() ) : '' ); ?></span>
+						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wpss_date_label( $wpss_order->updated_at->getTimestamp(), '—', 'M j, Y \a\t g:i A' ) : '' ); ?></span>
 					</div>
 				</div>
 
@@ -120,7 +121,7 @@ if ( empty( $wpss_order ) ) {
 					<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
 					<div class="wpss-timeline__content">
 						<span class="wpss-timeline__title"><?php esc_html_e( 'Revision Requested', 'wp-sell-services' ); ?></span>
-						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $wpss_order->updated_at->getTimestamp() ) : '' ); ?></span>
+						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wpss_date_label( $wpss_order->updated_at->getTimestamp(), '—', 'M j, Y \a\t g:i A' ) : '' ); ?></span>
 						<?php $revision_reason = $wpss_order->get_revision_reason(); ?>
 						<?php if ( '' !== $revision_reason ) : ?>
 							<p class="wpss-timeline__note wpss-revision-reason"><?php echo esc_html( $revision_reason ); ?></p>
@@ -133,7 +134,7 @@ if ( empty( $wpss_order ) ) {
 					<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
 					<div class="wpss-timeline__content">
 						<span class="wpss-timeline__title"><?php esc_html_e( 'Order Late', 'wp-sell-services' ); ?></span>
-						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $wpss_order->updated_at->getTimestamp() ) : '' ); ?></span>
+						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wpss_date_label( $wpss_order->updated_at->getTimestamp(), '—', 'M j, Y \a\t g:i A' ) : '' ); ?></span>
 					</div>
 				</div>
 
@@ -142,7 +143,7 @@ if ( empty( $wpss_order ) ) {
 					<div class="wpss-timeline__marker" style="background: var(--wpss-info, #3b82f6);"></div>
 					<div class="wpss-timeline__content">
 						<span class="wpss-timeline__title"><?php esc_html_e( 'Awaiting Approval', 'wp-sell-services' ); ?></span>
-						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $wpss_order->updated_at->getTimestamp() ) : '' ); ?></span>
+						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wpss_date_label( $wpss_order->updated_at->getTimestamp(), '—', 'M j, Y \a\t g:i A' ) : '' ); ?></span>
 					</div>
 				</div>
 
@@ -151,7 +152,7 @@ if ( empty( $wpss_order ) ) {
 					<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
 					<div class="wpss-timeline__content">
 						<span class="wpss-timeline__title"><?php esc_html_e( 'On Hold', 'wp-sell-services' ); ?></span>
-						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $wpss_order->updated_at->getTimestamp() ) : '' ); ?></span>
+						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wpss_date_label( $wpss_order->updated_at->getTimestamp(), '—', 'M j, Y \a\t g:i A' ) : '' ); ?></span>
 					</div>
 				</div>
 

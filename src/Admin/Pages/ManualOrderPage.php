@@ -590,7 +590,7 @@ class ManualOrderPage {
 		$revisions_included = $revisions_input ?? (int) ( $package['revisions'] ?? 2 );
 
 		// --- 8. Smart status ---
-		$service_has_requirements = ! empty( wpss_get_service_requirements( $service_id ) );
+		$service_has_requirements = wpss_order_needs_requirements( (object) array( 'service_id' => $service_id ) );
 
 		$requirements_skipped = false;
 		if ( 'pending_requirements' === $status && ! $service_has_requirements ) {

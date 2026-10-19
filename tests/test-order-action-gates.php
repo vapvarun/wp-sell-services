@@ -130,8 +130,15 @@ $check( '  and the order is untouched', 'in_progress' === $row->status && null =
 $set_order( 'in_progress' );
 $reply = $call( $vendor_id, 'refund', array( 'refund_amount' => 5 ) );
 $row   = $order_row();
-$check( 'vendor refund is refused while allow_vendor_refunds is off', false === $reply['success'] );
+$check( 'vendor refund is refused by default', false === $reply['success'] );
 $check( '  and the order is untouched', 'in_progress' === $row->status && null === $row->refunded_amount );
+
+$set_order( 'in_progress' );
+add_filter( 'wpss_can_refund_order', '__return_true' );
+$reply = $call( $vendor_id, 'refund', array( 'refund_amount' => 5 ) );
+remove_filter( 'wpss_can_refund_order', '__return_true' );
+$check( 'wpss_can_refund_order can open refund to a vendor', true === $reply['success'] );
+$set_order( 'in_progress' );
 
 $set_order( 'completed' );
 $reply = $call( $vendor_id, 'cancel' );

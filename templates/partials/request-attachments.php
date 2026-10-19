@@ -9,7 +9,11 @@
  * The form carries `attachments_present=1` plus one `attachments[]` per kept
  * file, so the update handler can tell "removed them all" from "not sent".
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/request-attachments.php
+ *
  * @package WPSellServices
+ * @version 1.9.0
  *
  * @var array<int> $wpss_attachment_ids Attachment IDs already on the request (edit). Optional.
  * @var bool       $wpss_files_locked   A vendor has proposed: the files already on the request stay. Optional.

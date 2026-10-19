@@ -3,7 +3,7 @@
 Change how service cards, vendor profiles, dashboards, and order screens look --
 through your theme, without touching plugin files.
 
-The plugin ships **98 templates**: 47 frontend templates plus 51 email
+The plugin ships **107 templates**: 68 frontend templates plus 39 email
 templates. Any of them can be overridden, and most of them also expose hooks so
 you can add markup without overriding at all.
 
@@ -11,6 +11,17 @@ you can add markup without overriding at all.
 > updates. Every fix, accessibility change, and new feature in that template is
 > now yours to merge by hand. If a hook can do the job, use the hook -- the
 > [full hook list](#template-hooks) is on this page.
+
+## Keeping an override current
+
+Every template declares an `@version` in its header, and the version changes only when
+the template does. Your copy keeps the version it was copied at. Open
+**Sell Services > Settings > System > Template Overrides** to see each override your
+theme carries next to the version the plugin ships now. **Outdated** means the plugin
+file has changed since you copied it; **No version** means your copy predates
+versions, so compare it with the plugin file. Email templates resolve through the same
+path as every other template, so the `wpss_get_template` filter can swap an email
+template from a plugin as well.
 
 ## How overriding works
 
@@ -131,7 +142,7 @@ overriding.
 
 ### Emails
 
-51 templates under `emails/`. They override the same way, but see
+39 templates under `emails/`. They override the same way, but see
 [Email Customization](../developer-guide/email-customization.md) first -- most
 changes are better made through the email filters than by copying a template.
 

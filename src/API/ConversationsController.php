@@ -256,31 +256,6 @@ class ConversationsController extends RestController {
 	}
 
 	/**
-	 * Check if user can access order conversation.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return bool|WP_Error
-	 */
-	public function check_order_permission( WP_REST_Request $request ) {
-		$permission = $this->check_permissions( $request );
-		if ( is_wp_error( $permission ) ) {
-			return $permission;
-		}
-
-		$order_id = (int) $request->get_param( 'order_id' );
-
-		if ( ! $this->user_owns_resource( $order_id, 'order' ) && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error(
-				'wpss_not_owner',
-				__( 'You do not have permission to access this order.', 'wp-sell-services' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		return true;
-	}
-
-	/**
 	 * Get user's conversations.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -498,11 +473,14 @@ class ConversationsController extends RestController {
 			return $blocked;
 		}
 
-		// Standing is deliberately NOT checked here. Messaging is how a member
-		// finishes an order someone already paid for, and cutting it off would
-		// strand the counterparty mid-delivery with no way to reach the person
-		// holding their money. Suspension stops new supply; it does not sever a
-		// conversation about work in flight.
+		// Standing is checked only for pre-sale threads. Messaging inside an order
+		// is how a member finishes work someone already paid for; cutting it off
+		// would strand the counterparty mid-delivery. Suspension stops new
+		// activity, not work in flight (ConversationService::standing_block()).
+		$standing = $this->conversation_service->standing_block( $conversation_id, $user_id );
+		if ( $standing ) {
+			return $standing;
+		}
 
 		// Multipart file uploads (the order/dashboard composer posts raw files
 		// as attachments[]). Validate + ingest them through the shared helper so

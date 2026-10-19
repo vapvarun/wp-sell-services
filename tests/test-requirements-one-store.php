@@ -225,7 +225,7 @@ if ( $buyer ) {
 $tpl = (string) file_get_contents( WPSS_PLUGIN_DIR . 'templates/order/order-requirements.php' );
 $view = (string) file_get_contents( WPSS_PLUGIN_DIR . 'templates/order/order-view.php' );
 foreach ( array( 'order-requirements.php' => $tpl, 'order-view.php' => $view ) as $name => $src ) {
-	if ( false === strpos( $src, "templates/order/requirements-form.php" ) || preg_match( '/<form[^>]*wpss-requirements-form/', $src ) ) {
+	if ( false === strpos( $src, "order/requirements-form.php" ) || preg_match( '/<form[^>]*wpss-requirements-form/', $src ) ) {
 		$failures[] = "{$name} renders its own requirements form instead of including requirements-form.php.";
 	}
 }

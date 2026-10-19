@@ -8,6 +8,8 @@
 
 namespace WPSellServices\Services;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Builds the "what happened on this order" event log.
  *

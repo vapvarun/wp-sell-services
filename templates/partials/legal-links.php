@@ -6,8 +6,12 @@
  * is core's. wpss_get_legal_links() returns null for anything unmapped, so a
  * site that has set neither renders nothing at all - no empty link, no nag.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/legal-links.php
+ *
  * @package WPSellServices
  * @since   1.7.0
+ * @version 1.9.0
  */
 
 defined( 'ABSPATH' ) || exit;

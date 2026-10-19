@@ -8,8 +8,12 @@
  * amount, when it is due (late when overdue, wpss_is_order_late()) and what
  * the viewer has to do next.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/dashboard/partials/order-row.php
+ *
  * @package WPSellServices
  * @since   1.8.0
+ * @version 1.9.0
  *
  * @var object $order_item    Order row from OrderRepository.
  * @var string $wpss_side     'buyer' (My Orders) or 'seller' (Sales Orders).
@@ -167,7 +171,7 @@ $is_working = in_array( $order_item->status, array( 'in_progress', 'revision_req
 						printf(
 							/* translators: %s: delivery due date */
 							esc_html__( 'Due %s', 'wp-sell-services' ),
-							esc_html( wp_date( get_option( 'date_format' ), strtotime( $order_item->delivery_deadline . ' UTC' ) ) )
+							esc_html( wpss_deadline_label( $order_item->delivery_deadline ) )
 						);
 						?>
 					</span>
@@ -177,7 +181,7 @@ $is_working = in_array( $order_item->status, array( 'in_progress', 'revision_req
 					printf(
 						/* translators: %s: order date */
 						esc_html__( 'Ordered %s', 'wp-sell-services' ),
-						esc_html( wp_date( get_option( 'date_format' ), strtotime( $order_item->created_at . ' UTC' ) ) )
+						esc_html( wpss_date_label( $order_item->created_at ) )
 					);
 					?>
 				<?php endif; ?>

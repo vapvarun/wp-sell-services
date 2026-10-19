@@ -52,3 +52,29 @@ register_shutdown_function(
 		}
 	}
 );
+
+if ( ! function_exists( 'wpss_test_activate_vendor' ) ) {
+	/**
+	 * Give a throwaway user an active vendor profile (ProposalService::submit
+	 * refuses anyone without one) and remove the row when the script ends.
+	 *
+	 * @param int $user_id Throwaway user.
+	 */
+	function wpss_test_activate_vendor( int $user_id ): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_vendor_profiles';
+		$wpdb->insert(
+			$table,
+			array(
+				'user_id'      => $user_id,
+				'display_name' => 'QA vendor ' . $user_id,
+				'status'       => 'active',
+			)
+		);
+		register_shutdown_function(
+			static function () use ( $wpdb, $table, $user_id ) {
+				$wpdb->delete( $table, array( 'user_id' => $user_id ) );
+			}
+		);
+	}
+}

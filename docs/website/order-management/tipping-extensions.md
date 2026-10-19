@@ -2,7 +2,7 @@
 
 Buyers can show appreciation with a tip after an order is completed, and vendors can request extra time if they need it. Both features help keep your marketplace flexible and fair.
 
-![Order Actions](../images/admin-order-actions.png)
+![Order Actions](../images/admin-order-actions.webp)
 
 ## Tipping **[PRO]**
 

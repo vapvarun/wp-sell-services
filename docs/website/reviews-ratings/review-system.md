@@ -10,7 +10,7 @@ Reviews are the backbone of trust on your marketplace. After a buyer completes a
 - Vendors can reply to reviews publicly.
 - Buyers must submit their review within the review window (default: 30 days after completion).
 
-![Review display with ratings](../images/frontend-service-reviews.png)
+![Review display with ratings](../images/frontend-service-reviews.webp)
 
 ## What Buyers Rate
 
@@ -66,7 +66,9 @@ Replies are public and visible to everyone. Vendors get one reply per review. A 
 
 ## "Mark as Helpful" Feature
 
-Buyers browsing reviews can mark a review as helpful. The most helpful reviews surface higher in the list, making it easier for potential buyers to find the most useful feedback.
+![A review with the Helpful button under it](../images/review-helpful-marked.webp)
+
+Buyers browsing reviews can mark a review as helpful. The most helpful reviews surface higher in the list, making it easier for potential buyers to find the most useful feedback. Press the button again to take your vote back. You cannot vote on your own review.
 
 ## Review Moderation
 
@@ -74,7 +76,7 @@ By default, reviews are published immediately after submission. If you want to r
 
 ### Enabling Moderation
 
-Go to **Settings > General** and enable **Moderate Reviews**. Once enabled:
+Go to **Settings > Vendor Settings** and enable **Review Moderation**. Once enabled:
 
 - New reviews go into "Pending" status instead of publishing immediately.
 - You review them from **Sell Services > Review Moderation**.

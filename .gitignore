@@ -50,3 +50,12 @@ debug.log
 .env
 .env.local
 __pycache__/
+
+# Test output never goes in the repo: smoke reports, walk ledger, recorded coverage, Playwright artefacts.
+/.qa-results/
+/audit/render-coverage.json
+playwright-report/
+blob-report/
+test-results/
+.playwright*/
+*.log

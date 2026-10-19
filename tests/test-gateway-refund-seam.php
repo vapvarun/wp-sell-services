@@ -6,8 +6,8 @@
  *
  * Guards F4 / F5 / F22 (1.7.1): `wpss_gateway_refund_received` is the ONE
  * listener for refunds that happened at Stripe / PayPal / Razorpay. It must
- * hit only the order the gateway named, split an unnamed cart refund by order
- * total, ignore a replayed refund id, and never call the gateway again. An
+ * hit only the order the gateway named, never split an unnamed cart refund by price (it waits
+ * for an admin unless it covers everything left), ignore a replayed refund id, and never call the gateway again. An
  * offline / test gateway cannot move money, so its refund must be flagged as
  * pending manual payment and never logged as successful.
  *
@@ -95,7 +95,7 @@ try {
 	do_action( 'wpss_gateway_refund_received', 'paypal', $txn, 30.0, array( 'order_id' => $a, 'refund_id' => 'r1', 'currency' => 'USD' ) );
 	$check( 'replaying the same refund id does not add a second 30', 30.0 === (float) $row( $a )->refunded_amount );
 
-	// --- An unnamed cumulative refund is split by order total -------------------
+	// --- An unnamed refund that covers everything left refunds every gig in full --
 	do_action( 'wpss_gateway_refund_received', 'stripe', $txn, 150.0, array( 'cumulative' => true, 'refund_id' => 're_1', 'currency' => 'USD' ) );
 	$ra = $row( $a );
 	$rb = $row( $b );

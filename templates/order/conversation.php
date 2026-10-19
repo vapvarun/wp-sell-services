@@ -5,8 +5,12 @@
  * Displays the conversation/messaging interface for an order.
  * Uses CSS classes from messaging.css design system.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/order/conversation.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var int    $order_id     Order ID.
  * @var object $order        Order object.
@@ -219,13 +223,13 @@ do_action( 'wpss_before_conversation', $order );
 			// for older messages. Replaces the previous "April 25, 2026"
 			// repeated across every divider.
 			$current_date_key  = '';
-			$today_key         = wp_date( 'Y-m-d' );
-			$yesterday_key     = wp_date( 'Y-m-d', strtotime( '-1 day' ) );
+			$today_key         = wpss_date_label( time(), '', 'Y-m-d' );
+			$yesterday_key     = wpss_date_label( time() - DAY_IN_SECONDS, '', 'Y-m-d' );
 			$week_threshold_ts = strtotime( '-6 days', strtotime( $today_key ) );
 			$weekday_format    = 'l'; // e.g. "Monday".
 
 			$format_divider = static function ( int $message_ts ) use ( $today_key, $yesterday_key, $week_threshold_ts, $weekday_format ): string {
-				$message_key = wp_date( 'Y-m-d', $message_ts );
+				$message_key = wpss_date_label( $message_ts, '—', 'Y-m-d' );
 				if ( $message_key === $today_key ) {
 					return __( 'Today', 'wp-sell-services' );
 				}
@@ -233,14 +237,14 @@ do_action( 'wpss_before_conversation', $order );
 					return __( 'Yesterday', 'wp-sell-services' );
 				}
 				if ( $message_ts >= $week_threshold_ts ) {
-					return wp_date( $weekday_format, $message_ts );
+					return wpss_date_label( $message_ts, '—', $weekday_format );
 				}
-				return wp_date( get_option( 'date_format', 'F j, Y' ), $message_ts );
+				return wpss_date_label( $message_ts, '—', get_option( 'date_format', 'F j, Y' ) );
 			};
 
 	foreach ( $messages as $message ) :
 		$message_ts   = strtotime( $message->created_at );
-		$divider_key  = wp_date( 'Y-m-d', $message_ts );
+		$divider_key  = wpss_date_label( $message_ts, '—', 'Y-m-d' );
 		$divider_text = $format_divider( $message_ts );
 		$is_own       = (int) $message->sender_id === $user_id;
 		$is_system    = 'system' === ( isset( $message->type ) ? $message->type : ( isset( $message->content_type ) ? $message->content_type : 'text' ) );
@@ -452,10 +456,14 @@ document.addEventListener('DOMContentLoaded', function() {
 		$attachmentsPreview.empty();
 		selectedFiles.forEach(function(file, index) {
 			var $preview = $('<div class="wpss-messaging__composer-attachment">')
-				.append('<span class="wpss-messaging__composer-attachment-name">' + file.name + '</span>')
-				.append('<button type="button" class="wpss-messaging__composer-attachment-remove" data-index="' + index + '"><i data-lucide="x" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i></button>');
+				.append($('<span class="wpss-messaging__composer-attachment-name">').text(file.name))
+				.append('<button type="button" class="wpss-messaging__composer-attachment-remove" data-index="' + index + '" aria-label="' + <?php echo wp_json_encode( esc_attr__( 'Remove attachment', 'wp-sell-services' ) ); ?> + '"><i data-lucide="x" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i></button>');
 			$attachmentsPreview.append($preview);
 		});
+		// The icons are inserted after Lucide's one-time swap at load, so hydrate them here.
+		if (window.lucide && typeof window.lucide.createIcons === 'function') {
+			window.lucide.createIcons();
+		}
 	}
 
 	// Remove attachment.
@@ -531,6 +539,11 @@ document.addEventListener('DOMContentLoaded', function() {
 				}
 				if (response.data && response.data.id && response.data.id > lastMessageId) {
 					lastMessageId = response.data.id;
+				}
+
+				// Files the site refused come back as warnings; say so instead of dropping them.
+				if (response.warnings && response.warnings.length) {
+					wpssShowNotice($('<div>').text(response.warnings.join(' | ')).html(), 'error');
 				}
 
 				// Clear form.

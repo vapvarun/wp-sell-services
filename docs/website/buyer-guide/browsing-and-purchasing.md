@@ -2,7 +2,7 @@
 
 This guide walks you through the complete buying experience -- from discovering a service to placing your order and getting started with your vendor.
 
-![Services catalog with search and filters](../images/frontend-services-catalog.png)
+![Services catalog with search and filters](../images/frontend-services-catalog.webp)
 
 ## Step 1: Browse the Marketplace
 

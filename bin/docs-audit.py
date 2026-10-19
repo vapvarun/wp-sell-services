@@ -47,8 +47,8 @@ ADMIN_PATH_ROOTS = [
 # The Settings tabs that actually exist (src/Admin/Settings.php::init_tabs,
 # plus Branding added by Pro). Anything else in a "Settings > X" path is stale.
 VALID_TABS = {
-    "General", "Pages", "Payment Gateways", "Commission & Tax", "Payouts",
-    "Vendors", "Orders & Disputes", "Emails", "Advanced", "Branding",
+    "General", "Checkout", "Pages", "Payment Gateways", "Commission & Tax", "Payouts",
+    "Vendor Settings", "Orders & Disputes", "Emails", "Integrations", "System", "Branding",
 }
 
 # Tab names retired by the July 2026 settings regroup. They read as plausible,
@@ -56,7 +56,9 @@ VALID_TABS = {
 # each one has a specific successor and the message should say which.
 RETIRED_TABS = {
     "Payments": "Payment Gateways (gateways) / Payouts (withdrawals, clearance)",
-    "Vendor": "Vendors",
+    "Vendor": "Vendor Settings",
+    "Vendors": "Vendor Settings",
+    "Advanced": "System (site plumbing) or Integrations (outside services)",
     "Orders": "Orders & Disputes",
     "Gateways": "Payment Gateways",
     "Commission": "Commission & Tax",
@@ -426,6 +428,29 @@ if generator and os.path.exists(generator):
     else:
         fail("hook-reference", (result.stdout or result.stderr).strip() or "hooks-reference.md is out of date")
 
+# ---------------------------------------------------------------------------
+# One currency table, generated from the registry.
+#
+# Two hand-typed ten-row tables once disagreed with each other and with the
+# 148-currency registry (Euro shown as "E"). currency-reference.md is the only
+# table; every other page links to it, and it must match wpss_get_currency_registry().
+# ---------------------------------------------------------------------------
+import subprocess
+
+cur_gen = os.path.join(FREE, "bin/generate-currency-reference.py")
+cur_res = subprocess.run([sys.executable, cur_gen, "--check"], capture_output=True, text=True, cwd=FREE)
+if cur_res.returncode == 0:
+    ok("currency-reference", "the generated currency table matches the registry")
+else:
+    fail("currency-reference", (cur_res.stdout or cur_res.stderr).strip() or "currency-reference.md is out of date")
+
+cur_row = re.compile(r"^\|\s*(US Dollar|Euro|British Pound)\s*\|", re.M)
+for root, _dirs, names in os.walk(DOCS):
+    for name in names:
+        path = os.path.join(root, name)
+        if name.endswith(".md") and name != "currency-reference.md" and cur_row.search(open(path, encoding="utf-8").read()):
+            fail("currency-reference", "%s carries its own currency table; link currency-reference.md instead" % os.path.relpath(path, DOCS))
+
 if os.path.exists(hooks_doc):
     cite_re = re.compile(
         r"^\|\s*`(wpss_[a-z0-9_]+)`[^|]*\|[^|]*\|\s*`([A-Za-z0-9_/.-]+\.php):(\d+)`",
@@ -659,7 +684,26 @@ WRONG_LABELS = {
     # If the STATUS ever gets described that way, catch it with the status name
     # rather than a substring that also matches the notification.
     "Recurring Subscriptions page": "the Subscriptions page",
+    # The review-moderation switch is on the Vendor Settings tab, labelled "Review Moderation".
+    "Settings > General** and enable **Moderate Reviews": "Settings > Vendor Settings > Review Moderation",
+    "Enable **Moderate Reviews**": "Review Moderation (Settings > Vendor Settings)",
 }
+# "Settings > <Tab> > <Field>" must name a field registered on that tab. Fields are read from
+# Settings.php (add_settings_field label + settings page), so a field that lives on another tab -
+# "Account at checkout" documented under General - fails here.
+SETTINGS_PAGE_TAB = {"wpss_general": "General", "wpss_checkout": "Checkout", "wpss_pages": "Pages"}
+settings_src = open(os.path.join(FREE, "src/Admin/Settings.php"), encoding="utf-8").read()
+field_tab = {}
+for label, page in re.findall(r"add_settings_field\(\s*'[^']+',\s*__\( '((?:[^'\\]|\\.)+)',[^;]*?'(wpss_[a-z_]+)',\s*'wpss_", settings_src, re.S):
+    field_tab.setdefault(label.replace("\\'", "'"), set()).add(SETTINGS_PAGE_TAB.get(page, page))
+field_tab_re = re.compile(r"Settings > (General|Checkout|Pages) > \*{0,2}([A-Za-z][\w &'/-]*)")
+for p in md_files(DOCS):
+    rel = os.path.relpath(p, DOCS)
+    for i, line in enumerate(open(p), 1):
+        for tab, tail in field_tab_re.findall(line):
+            for field, tabs in field_tab.items():
+                if tail.startswith(field) and tab not in tabs:
+                    fail("labels", f"{rel}:{i} puts '{field}' under Settings > {tab}; it is on {', '.join(sorted(tabs))}")
 drift = 0
 for p in md_files(DOCS):
     rel = os.path.relpath(p, DOCS)
@@ -670,6 +714,27 @@ for p in md_files(DOCS):
                 drift += 1
 if not drift:
     ok("labels", "doc labels match the strings the plugin renders")
+
+# --- 6b. template counts in the overrides page must match the folder ------------
+def audit_template_counts():
+    tdir = os.path.join(FREE, "templates")
+    allf, emails = 0, 0
+    for root, _, files in os.walk(tdir):
+        for f in files:
+            if f.endswith(".php"):
+                allf += 1
+                emails += 1 if os.path.relpath(root, tdir).split(os.sep)[0] == "emails" else 0
+    page = os.path.join(FREE, "docs/website/marketplace-display/template-overrides.md")
+    text = open(page, encoding="utf-8").read()
+    m = re.search(r"ships \*\*(\d+) templates\*\*: (\d+) frontend templates plus (\d+) email", text)
+    if not m or (int(m.group(1)), int(m.group(2)), int(m.group(3))) != (allf, allf - emails, emails):
+        fail("template-counts", "template-overrides.md should say %d templates: %d frontend plus %d email" % (allf, allf - emails, emails))
+    m = re.search(r"(\d+) templates under `emails/`", text)
+    if not m or int(m.group(1)) != emails:
+        fail("template-counts", "template-overrides.md should say %d templates under `emails/`" % emails)
+
+
+audit_template_counts()
 
 # --- 7. Pro tree must not publish --------------------------------------------
 pro_cfg = os.path.join(PRO, "docs", "website", "docs_config.json")

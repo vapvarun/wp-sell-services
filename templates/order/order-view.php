@@ -5,8 +5,12 @@
  * Displays a single order with all details in a single-column layout.
  * Uses CSS classes from orders.css design system.
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/order/order-view.php
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
+ * @version 1.9.0
  *
  * @var int $order_id Order ID passed from parent template.
  *
@@ -139,7 +143,7 @@ do_action( 'wpss_before_order_view', $order );
 				printf(
 					/* translators: %s: order number */
 					esc_html__( 'Order #%s', 'wp-sell-services' ),
-					esc_html( $order->order_number )
+					'<bdi>' . esc_html( $order->order_number ) . '</bdi>'
 				);
 				?>
 			</h1>
@@ -566,7 +570,7 @@ do_action( 'wpss_before_order_view', $order );
 							printf(
 								/* translators: %s: completion date */
 								esc_html__( 'Finished %s.', 'wp-sell-services' ),
-								esc_html( wp_date( get_option( 'date_format' ), $order->completed_at->getTimestamp() ) )
+								esc_html( wpss_date_label( $order->completed_at->getTimestamp() ) )
 							);
 						}
 						?>
@@ -625,7 +629,7 @@ do_action( 'wpss_before_order_view', $order );
 				?>
 				<div class="wpss-order-detail-item">
 					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Number', 'wp-sell-services' ); ?></span>
-					<span class="wpss-order-detail-item__value wpss-order-detail-item__value--id">#<?php echo esc_html( $order->order_number ); ?></span>
+					<span class="wpss-order-detail-item__value wpss-order-detail-item__value--id">#<bdi><?php echo esc_html( $order->order_number ); ?></bdi></span>
 					<?php if ( $wpss_payment_ref ) : ?>
 						<span class="wpss-order-detail-item__sub">
 							<?php
@@ -646,7 +650,7 @@ do_action( 'wpss_before_order_view', $order );
 				</div>
 				<div class="wpss-order-detail-item">
 					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Date', 'wp-sell-services' ); ?></span>
-					<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '—' ); ?></span>
+					<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wpss_datetime_label( $order->created_at->getTimestamp() ) : '—' ); ?></span>
 				</div>
 				<?php wpss_get_template_part( 'order/payment', '', array( 'wpss_order' => $order ) ); ?>
 				<?php
@@ -659,7 +663,7 @@ do_action( 'wpss_before_order_view', $order );
 				<?php if ( $order->delivery_deadline ) : ?>
 					<div class="wpss-order-detail-item">
 						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
-						<span class="wpss-order-detail-item__value"><?php echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) ); ?></span>
+						<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_deadline_label( $order->delivery_deadline->getTimestamp() ) ); ?></span>
 					</div>
 				<?php endif; ?>
 				<?php
@@ -991,7 +995,7 @@ do_action( 'wpss_before_order_view', $order );
 
 				<?php
 				$late_submission = $show_late_requirements_form;
-				include WPSS_PLUGIN_DIR . 'templates/order/requirements-form.php';
+				include wpss_locate_template( 'order/requirements-form.php' );
 				?>
 			</div>
 		</section>
@@ -1228,7 +1232,7 @@ do_action( 'wpss_before_order_view', $order );
 				<div class="wpss-review">
 					<?php
 					$wpss_review = $wpss_order_review;
-					require WPSS_PLUGIN_DIR . 'templates/partials/review-body.php';
+					require wpss_locate_template( 'partials/review-body.php' );
 					?>
 				</div>
 				<?php
@@ -1473,7 +1477,7 @@ do_action( 'wpss_before_order_view', $order );
 						</div>
 						<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 						<div class="wpss-modal__footer">
-							<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+							<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
 							<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send to buyer', 'wp-sell-services' ); ?></button>
 						</div>
 					</form>
@@ -1488,12 +1492,7 @@ do_action( 'wpss_before_order_view', $order );
 			var form = modal.querySelector('.wpss-milestone-form');
 			var feedback = modal.querySelector('.wpss-modal__feedback');
 
-			// Dashboard CSS gates .wpss-modal visibility on the
-			// .wpss-modal-open class, not the [hidden] attribute — toggling
-			// .hidden alone leaves 'display: none' winning from the default
-			// rule, which is why the Propose button appeared to do nothing.
-			document.querySelectorAll('.wpss-open-milestone-modal').forEach(function (b) { b.addEventListener('click', function () { modal.hidden = false; modal.classList.add('wpss-modal-open'); try { document.dispatchEvent(new CustomEvent('wpss:icons:refresh')); } catch(_e){} }); });
-			modal.querySelectorAll('.wpss-modal__close, .wpss-modal__cancel, .wpss-modal__backdrop').forEach(function (b) { b.addEventListener('click', function () { modal.hidden = true; modal.classList.remove('wpss-modal-open'); }); });
+			document.querySelectorAll('.wpss-open-milestone-modal').forEach(function (b) { b.addEventListener('click', function () { window.wpssModal.open(modal); }); });
 
 			form.addEventListener('submit', function (e) {
 				e.preventDefault();
@@ -1673,7 +1672,7 @@ do_action( 'wpss_before_order_view', $order );
 						/* translators: 1: amount, 2: days */
 						esc_html__( 'You requested %1$s / %2$s. Buyer has not responded yet.', 'wp-sell-services' ),
 						esc_html( wpss_format_price( (float) $pending_extension->amount, $ext_currency ) ),
-						esc_html( sprintf( _n( '%d day', '%d days', (int) $pending_extension->extra_days, 'wp-sell-services' ), absint( $pending_extension->extra_days ) ) )
+						esc_html( sprintf( /* translators: %d: number of days. */ _n( '%d day', '%d days', (int) $pending_extension->extra_days, 'wp-sell-services' ), absint( $pending_extension->extra_days ) ) )
 					);
 					?>
 				</p>
@@ -1695,6 +1694,51 @@ do_action( 'wpss_before_order_view', $order );
 		</section>
 	<?php endif; ?>
 
+	<?php
+	// Order again: the buyer's own finished order, same package and add-ons at today's price.
+	// The plan is the one the REST route uses, so the button never promises what the cart refuses.
+	$wpss_reorder = null;
+	if ( 'completed' === $order->status && $is_customer ) {
+		$wpss_reorder = wpss_get_reorder_plan( $order, get_current_user_id() );
+
+		// Not repeatable at all (a tip, a custom quote): say nothing rather than explain a button that was never there.
+		if ( is_wp_error( $wpss_reorder ) && in_array( $wpss_reorder->get_error_code(), array( 'wpss_reorder_not_owner', 'wpss_reorder_not_available' ), true ) ) {
+			$wpss_reorder = null;
+		}
+	}
+	?>
+	<?php if ( null !== $wpss_reorder ) : ?>
+		<section class="wpss-order-section wpss-order-section--reorder" aria-labelledby="wpss-reorder-title">
+			<h3 id="wpss-reorder-title" class="wpss-reorder__title"><?php esc_html_e( 'Need this again?', 'wp-sell-services' ); ?></h3>
+			<?php if ( is_wp_error( $wpss_reorder ) ) : ?>
+				<p class="wpss-reorder__text"><?php echo esc_html( $wpss_reorder->get_error_message() ); ?></p>
+				<?php $wpss_reorder_service = get_permalink( (int) $order->service_id ); ?>
+				<?php if ( $wpss_reorder_service && 'wpss_reorder_package_gone' === $wpss_reorder->get_error_code() ) : ?>
+					<a class="wpss-btn wpss-btn--outline" href="<?php echo esc_url( $wpss_reorder_service ); ?>"><?php esc_html_e( 'View the service', 'wp-sell-services' ); ?></a>
+				<?php endif; ?>
+			<?php else : ?>
+				<p class="wpss-reorder__text">
+					<?php
+					printf(
+						/* translators: 1: package name, 2: total at today's price */
+						esc_html__( 'Same package (%1$s) and options as this order, for %2$s at today\'s price.', 'wp-sell-services' ),
+						esc_html( (string) ( $wpss_reorder['line']['package']['name'] ?? $order->get_package_name() ) ),
+						esc_html( wpss_format_price( $wpss_reorder['current_total'] ) )
+					);
+					?>
+				</p>
+				<?php foreach ( $wpss_reorder['warnings'] as $wpss_reorder_warning ) : ?>
+					<p class="wpss-notice wpss-notice--warning"><?php echo esc_html( $wpss_reorder_warning ); ?></p>
+				<?php endforeach; ?>
+				<button type="button" class="wpss-btn wpss-btn--primary wpss-reorder-btn" data-order="<?php echo esc_attr( (string) $order_id ); ?>">
+					<i data-lucide="repeat" class="wpss-icon" aria-hidden="true"></i>
+					<?php esc_html_e( 'Order again', 'wp-sell-services' ); ?>
+				</button>
+				<p class="wpss-reorder__error wpss-notice wpss-notice--error" role="alert" hidden></p>
+			<?php endif; ?>
+		</section>
+	<?php endif; ?>
+
 	<!-- Tip CTA (for completed orders, buyer only, once per order, on a rail that can take the payment) -->
 	<?php
 	if ( 'completed' === $order->status && $is_customer && wpss_can_pay_single_order() && wpss_tipping_enabled() ) :
@@ -1707,16 +1751,7 @@ do_action( 'wpss_before_order_view', $order );
 		// related tip order by parent order ID.
 		$tip_order_row = null;
 		if ( $already_tipped ) {
-			$tip_order_row = $wpdb->get_row(
-				$wpdb->prepare(
-					"SELECT total, status FROM {$wpdb->prefix}wpss_orders
-					WHERE platform = %s AND platform_order_id = %d AND customer_id = %d
-					ORDER BY id DESC LIMIT 1",
-					\WPSellServices\Services\TippingService::ORDER_TYPE,
-					$order_id,
-					get_current_user_id()
-				)
-			);
+			$tip_order_row = $tipping_service->get_buyer_tip_order( $order_id, get_current_user_id() );
 		}
 		?>
 		<section class="wpss-order-section wpss-order-section--tip">
@@ -1937,7 +1972,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
 		</div>
-		<form class="wpss-review-form" id="wpss-review-form">
+		<form class="wpss-review-form" id="wpss-review-form" novalidate data-rating-error="<?php esc_attr_e( 'Choose a star rating to leave your review.', 'wp-sell-services' ); ?>">
 			<?php wp_nonce_field( 'wpss_submit_review', 'wpss_review_nonce' ); ?>
 			<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
 
@@ -2200,15 +2235,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	document.querySelectorAll('.wpss-cancel-btn').forEach(function(btn) {
 		btn.addEventListener('click', function(e) {
 			e.preventDefault();
-			if (typeof jQuery !== 'undefined' && typeof WPSS !== 'undefined' && WPSS.showModal) {
-				WPSS.showModal('wpss-cancel-modal');
-			} else {
-				var modal = document.getElementById('wpss-cancel-modal');
-				if (modal) {
-					modal.classList.add('wpss-modal-open');
-					document.body.classList.add('wpss-modal-active');
-				}
-			}
+			window.wpssModal.open('wpss-cancel-modal');
 		});
 	});
 
@@ -2296,7 +2323,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					</div>
 					<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 					<div class="wpss-modal__footer">
-						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
 						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send Payment Link', 'wp-sell-services' ); ?></button>
 					</div>
 				</form>
@@ -2309,19 +2336,11 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		var modal = document.getElementById('wpss-extension-modal');
 		if (!modal) return;
 		var openBtns = document.querySelectorAll('.wpss-open-extension-modal');
-		var closeBtns = modal.querySelectorAll('.wpss-modal__close, .wpss-modal__cancel, .wpss-modal__backdrop');
 		var form = modal.querySelector('.wpss-extension-form');
 		var feedback = modal.querySelector('.wpss-modal__feedback');
 
-		// Same class-based visibility gate the milestone modal uses: the
-		// dashboard CSS default is display:none and the .wpss-modal-open
-		// class is what flips it to flex. Toggling .hidden alone silently
-		// no-ops because display:none wins specificity.
-		function show() { modal.hidden = false; modal.classList.add('wpss-modal-open'); try { document.dispatchEvent(new CustomEvent('wpss:icons:refresh')); } catch(_e){} }
-		function hide() { modal.hidden = true; modal.classList.remove('wpss-modal-open'); if (feedback) { feedback.hidden = true; feedback.textContent = ''; feedback.className = 'wpss-modal__feedback'; } }
-
-		openBtns.forEach(function (btn) { btn.addEventListener('click', show); });
-		closeBtns.forEach(function (btn) { btn.addEventListener('click', hide); });
+		openBtns.forEach(function (btn) { btn.addEventListener('click', function () { window.wpssModal.open(modal); }); });
+		modal.addEventListener('wpss:modal:close', function () { if (feedback) { feedback.hidden = true; feedback.textContent = ''; feedback.className = 'wpss-modal__feedback'; } });
 
 		form.addEventListener('submit', function (e) {
 			e.preventDefault();

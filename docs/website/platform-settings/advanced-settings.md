@@ -1,8 +1,8 @@
-# Advanced Settings
+# System Settings
 
 Configure data management, debugging, and learn about the automated background tasks that keep your marketplace running smoothly.
 
-![Advanced Settings Tab](../images/settings-advanced-tab.png)
+![System Settings Tab](../images/settings-advanced-tab.webp)
 
 ---
 
@@ -38,7 +38,7 @@ Even with this option enabled, some things are not removed:
 
 Enable detailed logging when you need to troubleshoot issues. When active, the plugin records information about orders, payments, emails, file uploads, and background tasks to your WordPress debug log.
 
-1. Go to **Sell Services > Settings > Advanced**
+1. Go to **Sell Services > Settings > System**
 2. Check **Enable Debug Mode**
 3. Save Changes
 
@@ -121,7 +121,7 @@ filter -- see [Hooks and Filters](../developer-guide/hooks-filters.md).
 
 ### Import Demo Content
 
-Quickly populate your marketplace with sample services, vendors, and categories for testing or demonstration purposes. Go to **Settings > Advanced** and click **Import Demo Content**.
+Quickly populate your marketplace with sample services, vendors, and categories for testing or demonstration purposes. Go to **Settings > System** and click **Import Demo Content**.
 
 ### Delete Demo Content
 

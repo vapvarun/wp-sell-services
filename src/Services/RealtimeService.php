@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  * Speaks the Pusher Channels HTTP API so one driver covers both Pusher.com
  * and any self-hosted Pusher-compatible server (e.g. Soketi) via a custom
  * host. Disabled by default — every publish no-ops until an admin saves
- * credentials under Settings → Advanced → Real-time (WebSockets).
+ * credentials under Settings → Integrations → Real-time (WebSockets).
  *
  * The app secret never leaves the server: clients receive only the
  * publishable key plus connection details ({@see get_client_config()}),

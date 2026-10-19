@@ -66,7 +66,7 @@ class IntegrationManager {
 		 *
 		 * @param array<string, EcommerceAdapterInterface> $adapters Registered adapters.
 		 */
-		$this->adapters = apply_filters( 'wpss_ecommerce_adapters', $this->adapters );
+		$this->adapters = wpss_validate_registry( apply_filters( 'wpss_ecommerce_adapters', $this->adapters ), EcommerceAdapterInterface::class, 'wpss_ecommerce_adapters' );
 	}
 
 	/**

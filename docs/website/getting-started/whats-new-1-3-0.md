@@ -4,7 +4,7 @@ Version 1.3.0 is a large stability and polish release: payments are hardened acr
 
 ## Full dark mode on every surface
 
-WP Sell Services now follows your **theme's** dark mode. When the active theme (BuddyX, BuddyX Pro, Reign, or any theme with a dark toggle) switches to dark, every plugin surface — dashboard, service pages, buyer requests, checkout — goes dark with it, at readable AA contrast. The plugin never darkens on top of a light theme, and it does not follow the OS setting independently of the theme.
+WP Sell Services now follows your **theme's** dark mode. When the active theme (BuddyX, BuddyX Pro, Reign, or any theme with a dark toggle) switches to dark, every plugin surface - dashboard, service pages, buyer requests, checkout - goes dark with it, at readable AA contrast. The plugin never darkens on top of a light theme, and it does not follow the OS setting independently of the theme.
 
 Theme developers: see the [Theme Integration](../developer-guide/theme-integration.md) guide for the token system and how to match your palette.
 
@@ -41,4 +41,4 @@ Buyers and vendors can now message each other and attach evidence directly on a 
 - New filters: `wpss_pro_upgrade_url`, `wpss_docs_url`, `wpss_catalog_price_html`, `wpss_can_access_dashboard_section`. See [Hooks and Filters](../developer-guide/hooks-filters.md).
 - The plugin ships with zero `wp i18n make-pot` warnings; buyer-facing JavaScript strings are fully translatable.
 
-See the full changelog in `readme.txt`. Pro users: install **WP Sell Services Pro 1.3.0** alongside this release — the two are lockstep.
+See the full changelog in `readme.txt`. Pro users: install **WP Sell Services Pro 1.3.0** alongside this release - the two are lockstep.

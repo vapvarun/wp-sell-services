@@ -4,6 +4,7 @@
  * Exposes two globals:
  *   window.wpssConfirm( message, options ) → Promise<boolean>
  *   window.wpssToast( message, type )
+ *   window.wpssModal.open( el | id ) / .close( el | id ) / .closeAll()
  *
  * Single source of truth for both helpers across admin and frontend.
  * Vanilla JS, no jQuery dependency.  IIFE so it is idempotent across
@@ -31,7 +32,9 @@
 		 * @param {string} [options.cancelText]  Label for the cancel button (default 'Cancel').
 		 * @param {string} [options.tone]        'danger' tints the confirm button red.
 		 * @param {Object} [options.prompt]      Ask for text as well as consent. Renders a
-		 *                                       textarea; {label, placeholder, maxLength}.
+		 *                                       textarea; {label, placeholder, maxLength,
+		 *                                       required, requiredMessage}. With required the
+		 *                                       dialog stays open until the field has text.
 		 * @return {Promise<boolean|string>} Without options.prompt: true on confirm, false
 		 *                                   otherwise. With it: the entered string on
 		 *                                   confirm (possibly empty), false on
@@ -67,14 +70,17 @@
 				if ( titleText ) {
 					var h2 = document.createElement( 'h2' );
 					h2.className = 'wpss-confirm__title';
+					h2.id = 'wpss-confirm-title';
 					h2.textContent = titleText;
 					dialog.appendChild( h2 );
 				}
 
 				var p = document.createElement( 'p' );
 				p.className = 'wpss-confirm__message';
+				p.id = 'wpss-confirm-message';
 				p.textContent = message;
 				dialog.appendChild( p );
+				dialog.setAttribute( 'aria-labelledby', titleText ? 'wpss-confirm-title' : 'wpss-confirm-message' );
 
 				/*
 				 * Optional text input. Exists so nothing in this plugin has to reach
@@ -83,8 +89,10 @@
 				 * service got a half-translated dialog (Basecamp 10304333428).
 				 */
 				var field = null;
+				var promptOpts = {};
+				var feedback = null;
 				if ( options.prompt ) {
-					var promptOpts = 'object' === typeof options.prompt ? options.prompt : {};
+					promptOpts = 'object' === typeof options.prompt ? options.prompt : {};
 
 					if ( promptOpts.label ) {
 						var label = document.createElement( 'label' );
@@ -98,6 +106,9 @@
 					field.className = 'wpss-confirm__input';
 					field.id = 'wpss-confirm-input';
 					field.rows = 3;
+					if ( ! promptOpts.label ) {
+						field.setAttribute( 'aria-labelledby', 'wpss-confirm-message' );
+					}
 					if ( promptOpts.placeholder ) {
 						field.placeholder = promptOpts.placeholder;
 					}
@@ -183,6 +194,21 @@
 				document.addEventListener( 'keydown', onEsc );
 
 				confirmBtn.addEventListener( 'click', function() {
+					if ( field && promptOpts.required && ! field.value.trim() ) {
+						// Keep the dialog open rather than send something the server would refuse.
+						field.setAttribute( 'aria-invalid', 'true' );
+						if ( ! feedback ) {
+							feedback = document.createElement( 'p' );
+							feedback.className = 'wpss-confirm__error';
+							feedback.setAttribute( 'role', 'alert' );
+							feedback.textContent = promptOpts.requiredMessage || i18n.required || 'Please fill this in.';
+							field.insertAdjacentElement( 'afterend', feedback );
+							field.setAttribute( 'aria-describedby', 'wpss-confirm-error' );
+							feedback.id = 'wpss-confirm-error';
+						}
+						field.focus();
+						return;
+					}
 					teardown( field ? field.value : true );
 				} );
 
@@ -302,5 +328,164 @@
 			summary.setAttribute( 'hidden', 'hidden' );
 		}
 		trigger.setAttribute( 'hidden', 'hidden' );
+	} );
+}() );
+
+/* -------------------------------------------------------------------------
+   wpssModal - the one open/close contract for .wpss-modal.
+   Markup and CSS: design-system.css section 10. Open sets .wpss-modal-open and
+   drops [hidden], locks the page, traps focus, and keeps the dialog clear of a
+   fixed theme header. Close buttons, the backdrop and Esc close the top modal.
+   ---------------------------------------------------------------------- */
+( function() {
+	'use strict';
+
+	if ( window.wpssModal ) {
+		return;
+	}
+
+	var FOCUSABLE = 'button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])';
+	var lastFocused = null;
+
+	function resolve( target ) {
+		return 'string' === typeof target ? document.getElementById( target ) : target;
+	}
+
+	function visible( root ) {
+		return Array.prototype.filter.call( root.querySelectorAll( FOCUSABLE ), function( el ) {
+			return el.offsetParent !== null;
+		} );
+	}
+
+	function openModals() {
+		return document.querySelectorAll( '.wpss-modal.wpss-modal-open' );
+	}
+
+	// Hand the height of a fixed/sticky header covering the top edge to the CSS.
+	function offsetFromHeader( modal ) {
+		var offset = 0;
+		document.elementsFromPoint( Math.round( window.innerWidth / 2 ), 2 ).forEach( function( el ) {
+			if ( modal.contains( el ) || el === document.body || el === document.documentElement ) {
+				return;
+			}
+			var pos = window.getComputedStyle( el ).position;
+			if ( 'fixed' === pos || 'sticky' === pos ) {
+				offset = Math.max( offset, Math.ceil( el.getBoundingClientRect().bottom ) );
+			}
+		} );
+		modal.style.setProperty( '--wpss-modal-offset', offset + 'px' );
+	}
+
+	// A modal inside .wpss-app-shell is trapped by the shell's stacking context (isolation: isolate), so any
+	// themed header, footer or back-to-top button with its own z-index paints over it. While open, a modal
+	// lives at the end of <body>; a marker keeps its place so close puts it back.
+	var homes = new WeakMap();
+
+	function lift( modal ) {
+		if ( homes.has( modal ) || ! modal.closest( '.wpss-app-shell' ) ) {
+			return;
+		}
+		var marker = document.createComment( 'wpss-modal-home' );
+		modal.parentNode.insertBefore( marker, modal );
+		homes.set( modal, marker );
+		document.body.appendChild( modal );
+	}
+
+	function lower( modal ) {
+		var marker = homes.get( modal );
+		if ( marker && marker.parentNode ) {
+			marker.parentNode.insertBefore( modal, marker );
+			marker.remove();
+		}
+		homes.delete( modal );
+	}
+
+	function trap( e ) {
+		if ( 'Tab' !== e.key ) {
+			return;
+		}
+		var items = visible( e.currentTarget );
+		if ( ! items.length ) {
+			return;
+		}
+		var first = items[ 0 ];
+		var last  = items[ items.length - 1 ];
+		if ( e.shiftKey && document.activeElement === first ) {
+			e.preventDefault();
+			last.focus();
+		} else if ( ! e.shiftKey && document.activeElement === last ) {
+			e.preventDefault();
+			first.focus();
+		}
+	}
+
+	function open( target ) {
+		var modal = resolve( target );
+		if ( ! modal ) {
+			return;
+		}
+		lastFocused = document.activeElement;
+		lift( modal );
+		modal.hidden = false;
+		modal.classList.add( 'wpss-modal-open' );
+		document.body.classList.add( 'wpss-modal-active' );
+		offsetFromHeader( modal );
+		modal.addEventListener( 'keydown', trap );
+		// Icons inside a modal rendered hidden need hydrating once it shows.
+		document.dispatchEvent( new CustomEvent( 'wpss:icons:refresh' ) );
+		// First field, else the footer's first button (the safe one), never the close icon.
+		var body   = modal.querySelector( '.wpss-modal__body' );
+		var footer = modal.querySelector( '.wpss-modal__footer' );
+		var first  = ( body && visible( body )[ 0 ] ) || ( footer && visible( footer )[ 0 ] ) || visible( modal )[ 0 ];
+		if ( first ) {
+			first.focus();
+		}
+		modal.dispatchEvent( new CustomEvent( 'wpss:modal:open', { bubbles: true } ) );
+	}
+
+	function close( target ) {
+		var modal = target ? resolve( target ) : openModals()[ openModals().length - 1 ];
+		if ( ! modal ) {
+			return;
+		}
+		modal.classList.remove( 'wpss-modal-open' );
+		modal.hidden = true;
+		lower( modal );
+		modal.removeEventListener( 'keydown', trap );
+		if ( ! openModals().length ) {
+			document.body.classList.remove( 'wpss-modal-active' );
+		}
+		if ( lastFocused && lastFocused.focus ) {
+			lastFocused.focus();
+		}
+		lastFocused = null;
+		modal.dispatchEvent( new CustomEvent( 'wpss:modal:close', { bubbles: true } ) );
+	}
+
+	function closeAll() {
+		Array.prototype.forEach.call( openModals(), close );
+	}
+
+	window.wpssModal = { open: open, close: close, closeAll: closeAll };
+
+	document.addEventListener( 'click', function( e ) {
+		var opener = e.target.closest( '[data-wpss-modal-open]' );
+		if ( opener ) {
+			e.preventDefault();
+			open( opener.getAttribute( 'data-wpss-modal-open' ) );
+			return;
+		}
+		var closer = e.target.closest( '.wpss-modal__backdrop, .wpss-modal__close, .wpss-modal__close-btn' );
+		var modal  = closer && closer.closest( '.wpss-modal' );
+		if ( modal ) {
+			e.preventDefault();
+			close( modal );
+		}
+	} );
+
+	document.addEventListener( 'keydown', function( e ) {
+		if ( 'Escape' === e.key ) {
+			close();
+		}
 	} );
 }() );

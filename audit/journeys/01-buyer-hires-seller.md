@@ -1,8 +1,8 @@
-# Journey 01 — Buyer hires a seller from a request
+# Journey 01 - Buyer hires a seller from a request
 
 **Roles:** buyer (`subscriber`), two sellers (`wpss_vendor`), admin
-**Rail:** standalone payments
-**Status:** passes (steps 7 + 8 fixed 2026-08-17, Basecamp 10208094640 / 10208199238)
+**Rail:** standalone
+**Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
 Guards cards 10208094430, 10208094503, 10208094640, 10208199238.
 
@@ -100,7 +100,27 @@ Same check on the admin **Recent Orders** table and the admin Orders list: every
 request order and every sub-order names its source, and only a genuinely removed
 service post says "Deleted service #N".
 
+### Modals sit above the theme (card:10384248570, card:10416190285)
+Open Deliver Work, Open Dispute and Quote Extra Work on an order, then the same on a block theme and Reign at 1440 and 390.
+
+**Expect** the title, close button and primary button each receive the click (`document.elementFromPoint` on them returns the modal), the theme header, footer and back-to-top sit underneath, Esc closes, and the modal is back inside the page afterwards (guard `tests/test-modal-portal.php`).
+
 ## Regression checks
 
 - 390px on every screen above.
 - Seller proposing on their **own** request notifies nobody.
+
+### One completion email (combo-walk 1.9.0)
+Complete an order as the buyer (accept delivery) with Mailpit open.
+
+**Expect** exactly one "Completed" email to the buyer and one to the seller; no second plain copy titled "Order Completed". Guard: `static:notification-no-double-email`.
+
+### Order again (card:9696986584)
+As the buyer, open a completed order that was bought from a package.
+
+**Expect** a "Need this again?" section with the package name and today's price; Order again puts the same package and options in the cart and lands on checkout; if the price changed the section says so before the click; a custom-quote order, a paused service and an order that is not yours show no section; an option the vendor removed is dropped with a warning, never silently.
+
+### Order again on a store rail (combo walk 1.9.0)
+On the Woo rail order again from an order bought with quantity 2.
+
+**Expect** the button and the cart both show one, with a line saying the store sells one per order. Guard: `static:order-again`.

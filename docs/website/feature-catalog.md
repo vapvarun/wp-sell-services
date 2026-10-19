@@ -3,9 +3,9 @@
 The canonical list of what WP Sell Services does, and which tier it is in. If a
 feature is not on this page, treat it as not shipping.
 
-**Version**: 1.7.0-dev · **Last verified**: 2026-08-26 — every row checked against source
+**Version**: 1.7.0-dev · **Last verified**: 2026-08-26 - every row checked against source
 
-Free and Pro documentation both live in this folder — the Free plugin's
+Free and Pro documentation both live in this folder - the Free plugin's
 `docs/website/` is the single source of truth. There is no separate Pro docs
 tree.
 
@@ -34,23 +34,23 @@ Legend: **Yes** ships and is exercised · **Partial** ships with a stated limit 
 |---|---|---|
 | Standalone checkout (no other plugin needed) | Yes | Yes |
 | Payment gateways | Stripe, PayPal, Offline | + Razorpay |
-| Ecommerce integrations | — | WooCommerce; EDD and FluentCart (beta, enabled with the `wpss_pro_beta_rails` filter) |
+| Ecommerce integrations | - | WooCommerce; EDD and FluentCart (beta, enabled with the `wpss_pro_beta_rails` filter) |
 | Commission, per-vendor rates | Yes | + tiered rules |
-| Vendor subscription plans (charge vendors to sell) | — | Yes, off until you enable it |
+| Vendor subscription plans (charge vendors to sell) | - | Yes, off until you enable it |
 | Service limits: gallery images, add-ons, FAQs, buyer requirements | 4 / 3 / 5 / 5 | Unlimited |
-| Service limits: pricing packages, video embeds | 3 / 1 | Same — Pro does not raise these |
+| Service limits: pricing packages, video embeds | 3 / 1 | Same - Pro does not raise these |
 | Vendor wallet and withdrawals | Yes, built in | Same, plus automatic payouts with Stripe Connect or PayPal Payouts |
 | Manual payouts (mark paid, CSV export) | Yes | Yes |
-| Stripe Connect automated payouts | — | Yes |
-| PayPal Payouts batches | — | Yes |
+| Stripe Connect automated payouts | - | Yes |
+| PayPal Payouts batches | - | Yes |
 | Tips | Yes | Yes |
 | Paid extensions on catalog orders | Yes | Yes |
 | Milestone contracts on buyer-request orders | Yes | Yes |
 | Refunds, including partial | Yes | Yes |
-| Display currency (approximate price in the shopper's currency) | — | Yes |
+| Display currency (approximate price in the shopper's currency) | - | Yes |
 
-**Paying a single existing amount** — a tip, a milestone phase, a paid
-extension — is supported on **Standalone** and **WooCommerce**. If your
+**Paying a single existing amount** - a tip, a milestone phase, a paid
+extension - is supported on **Standalone** and **WooCommerce**. If your
 marketplace needs those, run it on one of those two.
 
 **Display currency is presentation only.** The shopper's currency is detected
@@ -68,8 +68,8 @@ charge currency is stated at checkout. It is not multi-currency settlement.
 | Gutenberg blocks and shortcodes | Yes | Yes |
 | Email notifications | Yes | + white-label branding |
 | In-app notifications | Yes | Yes |
-| Push notifications to phones (Firebase) | — | Yes |
-| Realtime messaging (Pusher-protocol) | Yes | Yes |
+| Push notifications to phones (Firebase) | - | Yes |
+| Realtime alerts for messages and notifications (Pusher-protocol) | Yes | Yes |
 
 ## Operations
 

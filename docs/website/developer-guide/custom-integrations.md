@@ -10,8 +10,7 @@ WP Sell Services provides six contract interfaces in `src/Integrations/Contracts
 |---------------|-----------------|------|-----|
 | E-commerce Platform | `EcommerceAdapterInterface` | Standalone (built-in) | WooCommerce, EDD, FluentCart **[PRO]** |
 | Payment Gateway | `PaymentGatewayInterface` | Stripe, PayPal, Offline | Razorpay **[PRO]** |
-| Storage Provider | `wpss_storage_providers` | Local uploads | S3, GCS, DigitalOcean Spaces **[PRO]** |
-| Email Provider | `wpss_email_providers` | WordPress mail | SendGrid, Mailgun, SES |
+| Storage Provider | `StorageProviderInterface` + `wpss_storage_providers` | Local uploads | S3, GCS, DigitalOcean Spaces **[PRO]** |
 | REST API Controller | `wpss_api_controllers` | 23 controllers | Additional endpoints |
 | Analytics Widget | `wpss_analytics_widgets` | Basic stats | Revenue, conversion, vendor analytics **[PRO]** |
 
@@ -37,11 +36,11 @@ interface EcommerceAdapterInterface {
 
 ### Provider Interfaces
 
-**OrderProviderInterface** (`src/Integrations/Contracts/OrderProviderInterface.php`) -- Handles order data retrieval: `get_order()`, `get_order_item()`, `get_customer_orders()`, `get_vendor_orders()`, `has_service_items()`, `get_service_items()`, `update_item_meta()`, `get_item_meta()`, `get_customer_data()`, `handle_order_complete()`.
+**OrderProviderInterface** (`src/Integrations/Contracts/OrderProviderInterface.php`) -- Handles order data retrieval: `get_order()`, `get_order_item()`, `get_customer_orders()`, `get_vendor_orders()`, `has_sellable_items()`, `get_sellable_items()`, `update_item_meta()`, `get_item_meta()`, `get_customer_data()`, `handle_order_complete()`.
 
-**ProductProviderInterface** (`src/Integrations/Contracts/ProductProviderInterface.php`) -- Handles service-to-product mapping: `is_service_product()`, `get_service()`, `get_service_vendors()`, `get_requirements()`, `get_delivery_time()`, `set_service_type()`, `add_service_type_option()`, `save_service_meta()`, `sync_with_service()`.
+**ProductProviderInterface** (`src/Integrations/Contracts/ProductProviderInterface.php`) -- Handles service-to-product mapping: `is_sellable_product()`, `get_service()`, `get_service_vendors()`, `get_requirements()`, `get_delivery_time()`, `set_service_type()`, `add_service_type_option()`, `save_service_meta()`, `sync_with_service()`.
 
-**CheckoutProviderInterface** (`src/Integrations/Contracts/CheckoutProviderInterface.php`) -- Handles cart and checkout: `add_cart_item_data()`, `validate_add_to_cart()`, `get_checkout_url()`, `cart_has_services()`, `get_cart_services()`, `process_checkout()`, `get_thankyou_redirect()`, `filter_quantity_max()`.
+**CheckoutProviderInterface** (`src/Integrations/Contracts/CheckoutProviderInterface.php`) -- Handles cart and checkout: `add_cart_item_data()`, `validate_add_to_cart()`, `get_checkout_url()`, `cart_has_sellable_items()`, `get_cart_sellable_items()`, `process_checkout()`, `get_thankyou_redirect()`, `filter_quantity_max()`.
 
 **AccountProviderInterface** (`src/Integrations/Contracts/AccountProviderInterface.php`) -- Handles user account integration: `add_menu_items()`, `register_endpoints()`, `get_account_url()`, `get_orders_url()`, `get_vendor_dashboard_url()`, `render_orders_endpoint()`, `render_services_endpoint()`, `render_notifications_endpoint()`, `can_access_vendor_dashboard()`, `get_login_url()`, `get_register_url()`.
 
@@ -126,7 +125,7 @@ Key methods to implement:
 
 ### The CheckoutIntent seam (gateway-agnostic)
 
-_Added in 1.3.0._ Every purchase — pay an existing order, buy a multi-item cart, or buy a single service + add-ons — resolves to a single value object, `CheckoutIntent`, before any gateway is involved. This is the seam that lets Stripe, PayPal, Razorpay (Pro), and your custom gateway all charge the same way, and it guarantees the amount is **server-computed, never trusted from the client**.
+_Added in 1.3.0._ Every purchase - pay an existing order, buy a multi-item cart, or buy a single service + add-ons - resolves to a single value object, `CheckoutIntent`, before any gateway is involved. This is the seam that lets Stripe, PayPal, Razorpay (Pro), and your custom gateway all charge the same way, and it guarantees the amount is **server-computed, never trusted from the client**.
 
 The flow is always resolve → charge → settle:
 
@@ -135,23 +134,23 @@ use WPSellServices\Checkout\CheckoutIntentService;
 
 $service = new CheckoutIntentService();
 
-// 1. RESOLVE — the server computes the authoritative amount + currency from the
+// 1. RESOLVE - the server computes the authoritative amount + currency from the
 //    request. Returns a CheckoutIntent, or a WP_Error if the request is invalid.
 $intent = $service->resolve( $request, $buyer_id );   // $request: service_id/package_id, or cart, or order_id
 if ( is_wp_error( $intent ) ) {
     return $intent;
 }
 
-// $intent->amount / ->currency are authoritative — charge THIS, never a client value.
+// $intent->amount / ->currency are authoritative - charge THIS, never a client value.
 
-// 2. CHARGE — run your gateway with $intent->amount and $intent->currency.
+// 2. CHARGE - run your gateway with $intent->amount and $intent->currency.
 
-// 3. SETTLE — record the completed charge; the plugin creates/links the order,
+// 3. SETTLE - record the completed charge; the plugin creates/links the order,
 //    delivery deadline, commission split, and ledger entries.
 $result = $service->settle( $intent, 'custom_pay', $transaction_id, $charged_amount, $charged_currency );
 ```
 
-`CheckoutIntent` is built through three factories that mirror the three purchase kinds — `CheckoutIntent::order()`, `::cart()`, `::single()` — but you normally get one back from `resolve()` rather than constructing it yourself. Base currency stays authoritative throughout; the `charged_currency` you pass to `settle()` records what the gateway actually took.
+`CheckoutIntent` is built through three factories that mirror the three purchase kinds - `CheckoutIntent::order()`, `::cart()`, `::single()` - but you normally get one back from `resolve()` rather than constructing it yourself. Base currency stays authoritative throughout; the `charged_currency` you pass to `settle()` records what the gateway actually took.
 
 ## REST API Controllers
 
@@ -196,15 +195,9 @@ add_filter( 'wpss_api_controllers', function( $controllers ) {
 ## Provider Registration Filters **[PRO]**
 
 ```php
-// Storage providers (Plugin.php:837)
+// Storage providers 
 add_filter( 'wpss_storage_providers', function( $providers ) {
     $providers['custom_storage'] = new \MyPlugin\CustomStorageProvider();
-    return $providers;
-} );
-
-// Email providers (Plugin.php:849)
-add_filter( 'wpss_email_providers', function( $providers ) {
-    $providers['custom_email'] = new \MyPlugin\CustomEmailProvider();
     return $providers;
 } );
 

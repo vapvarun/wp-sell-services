@@ -8,6 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.2.2
+ * @version 1.9.0
  *
  * @var WP_User $recipient      Vendor (recipient) user object.
  * @var WP_User $sender         Sender (customer) user object.

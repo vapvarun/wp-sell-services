@@ -13,8 +13,12 @@
  *   - Buyer, pending_approval   → Approve / Request changes
  *   - Either, completed         → Read-only receipt with commission split
  *
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/order/milestone-view.php
+ *
  * @package WPSellServices\Templates
  * @since   1.1.0
+ * @version 1.9.0
  *
  * @var \WPSellServices\Models\ServiceOrder $current_order Milestone sub-order row.
  * @var int                                 $user_id       Current user ID.
@@ -64,6 +68,8 @@ $is_cancelled = 'cancelled' === $status;
 // sites while the same phase paid fine from the notification email, which
 // does use the seam.
 $pay_url = wpss_get_pay_order_url( (int) $current_order->id, $current_order );
+// A locked phase cannot be paid yet; the Pay button used to loop back to this page.
+$wpss_phase_locked = ( new \WPSellServices\Services\MilestoneService() )->is_locked( (int) $current_order->id );
 
 $counterparty_id = $is_buyer ? (int) $current_order->vendor_id : (int) $current_order->customer_id;
 $counterparty    = get_userdata( $counterparty_id );
@@ -218,6 +224,9 @@ do_action( 'wpss_before_milestone_view', $current_order );
 
 		<div class="wpss-tip-view__actions">
 			<?php if ( $is_buyer && $is_unpaid && '' !== $pay_url ) : ?>
+				<?php if ( $wpss_phase_locked ) : ?>
+					<p class="wpss-text-muted"><?php esc_html_e( 'This phase unlocks once the previous phase is approved.', 'wp-sell-services' ); ?></p>
+				<?php else : ?>
 				<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php
 					printf(
@@ -227,6 +236,7 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					);
 					?>
 				</a>
+				<?php endif; ?>
 				<button type="button" class="wpss-btn wpss-btn--secondary wpss-milestone-decline-btn"
 					data-milestone="<?php echo esc_attr( (int) $current_order->id ); ?>">
 					<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
@@ -320,7 +330,7 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					</div>
 					<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 					<div class="wpss-modal__footer">
-						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
 						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Submit delivery', 'wp-sell-services' ); ?></button>
 					</div>
 				</form>
@@ -349,7 +359,7 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					</div>
 					<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 					<div class="wpss-modal__footer">
-						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
 						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send back to seller', 'wp-sell-services' ); ?></button>
 					</div>
 				</form>
@@ -446,18 +456,12 @@ do_action( 'wpss_after_milestone_view', $current_order );
 		var form = modal.querySelector('.' + formClass);
 		var feedback = modal.querySelector('.wpss-modal__feedback');
 
-		function close() { modal.hidden = true; modal.classList.remove('wpss-modal-open'); }
-
 		document.querySelectorAll('.' + openerClass).forEach(function (btn) {
 			btn.addEventListener('click', function () {
-				modal.hidden = false;
-				modal.classList.add('wpss-modal-open');
+				window.wpssModal.open(modal);
 				var input = form.querySelector('[name=' + field + ']');
 				if (input) input.focus();
 			});
-		});
-		modal.querySelectorAll('.wpss-modal__close, .wpss-modal__cancel, .wpss-modal__backdrop').forEach(function (el) {
-			el.addEventListener('click', close);
 		});
 
 		form.addEventListener('submit', function (e) {

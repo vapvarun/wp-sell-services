@@ -13,15 +13,17 @@ namespace WPSellServices\Integrations\Stripe;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
+use WPSellServices\Integrations\Gateways\AbstractPaymentGateway;
 use WPSellServices\Assets\ScriptRegistry;
+use WP_Error;
+use WP_REST_Response;
 
 /**
  * Stripe payment gateway implementation.
  *
  * @since 1.0.0
  */
-class StripeGateway implements PaymentGatewayInterface {
+class StripeGateway extends AbstractPaymentGateway {
 
 	/**
 	 * Gateway ID.
@@ -233,10 +235,9 @@ class StripeGateway implements PaymentGatewayInterface {
 		// accounts (and is good practice everywhere — it shows on the customer's
 		// statement/receipt). Without it confirmPayment() fails outright with
 		// "As per Indian regulations, export transactions require a description".
-		$service_id  = (int) ( $metadata['service_id'] ?? 0 );
-		$description = $service_id ? get_the_title( $service_id ) : '';
-		if ( '' === trim( (string) $description ) ) {
-			$description = __( 'Service purchase', 'wp-sell-services' );
+		$description = trim( (string) ( $metadata['description'] ?? '' ) );
+		if ( '' === $description ) {
+			$description = __( 'Payment', 'wp-sell-services' );
 		}
 		if ( $order_id ) {
 			$description .= ' (#' . $order_id . ')';
@@ -1461,13 +1462,21 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		// Path 1: Order already created via AJAX — just confirm payment.
 		if ( ! empty( $metadata['order_id'] ) ) {
-			( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
+			$refusal = '';
+			$settled = ( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
 				(int) $metadata['order_id'],
 				'stripe',
 				(string) $payment_intent['id'],
 				$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ?? 0 ), (string) ( $payment_intent['currency'] ?? 'usd' ) ),
-				(string) ( $payment_intent['currency'] ?? '' )
+				(string) ( $payment_intent['currency'] ?? '' ),
+				$refusal
 			);
+
+			// A charge the order's own total refuses is given back, as browser confirm does. Any other
+			// refusal (spent elsewhere, already refunded, a write that failed) is left to the owner.
+			if ( ! $settled && 'mismatch' === $refusal ) {
+				$this->refund_unsettled_charge( (string) $payment_intent['id'] );
+			}
 
 			return array(
 				'success' => true,
@@ -1596,12 +1605,9 @@ class StripeGateway implements PaymentGatewayInterface {
 		$refunds   = (array) ( $charge['refunds']['data'] ?? array() );
 		$refund_id = (string) ( $refunds[0]['id'] ?? '' );
 
-		// Through the ONE listener that owns rail-side refunds. It resolves
-		// every order paid with this intent (a cart stamps one intent on
-		// several orders), splits the amount across them and records each via
-		// apply_refund_status() with settled_at_rail = true, so the vendor's
-		// share is reversed and the buyer is not refunded a second time. This
-		// handler used to do that inline for the FIRST order only.
+		// Through the ONE listener that owns rail-side refunds. A charge event names no gig, so the
+		// listener books the new money only where it is unambiguous and otherwise parks it for an
+		// admin; a refund this plugin sent is already recorded and adds nothing.
 		do_action(
 			'wpss_gateway_refund_received',
 			'stripe',
@@ -1736,7 +1742,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		</table>
 
 		<div class="wpss-gateway-setup-guide" style="margin-top: 20px; padding: 15px; background: #f0f6fc; border: 1px solid #c8d8e6; border-radius: 4px;">
-			<h4 style="margin-top: 0;"><?php esc_html_e( 'Stripe Setup Guide', 'wp-sell-services' ); ?></h4>
+			<h3 style="margin-top: 0;"><?php esc_html_e( 'Stripe Setup Guide', 'wp-sell-services' ); ?></h3>
 
 			<p><strong><?php esc_html_e( 'Step 1: Get your API keys', 'wp-sell-services' ); ?></strong></p>
 			<ol style="margin-left: 20px;">
@@ -2095,5 +2101,146 @@ class StripeGateway implements PaymentGatewayInterface {
 	private function parse_amount( int $amount, string $currency ): float {
 		// Inverse of format_amount(); same canonical, currency-aware conversion.
 		return wpss_amount_from_minor_units( $amount, $currency );
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * Creates a Stripe PaymentIntent and returns its client secret.
+	 */
+	public function rest_create_intent( \WPSellServices\Checkout\CheckoutIntent $intent, array $request ) {
+		// The resolved intent's metadata carries what the confirm leg needs to
+		// re-price the same purchase - service, package, quantity, add-ons -
+		// and the order it pays, so a succeeded charge can be matched back.
+		$result = $this->create_payment( (float) $intent->amount, (string) $intent->currency, (array) $intent->metadata );
+
+		if ( empty( $result['success'] ) ) {
+			return new WP_Error( 'stripe_error', $result['error'] ?? __( 'Failed to create payment intent.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'gateway'           => 'stripe',
+				'client_secret'     => $result['client_secret'],
+				'payment_intent_id' => $result['id'],
+			),
+			201
+		);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * Verifies the PaymentIntent and settles the order it pays, or creates the order for a new purchase.
+	 */
+	public function rest_confirm_payment( array $params ) {
+		$payment_id = (string) ( $params['payment_id'] ?? '' );
+		$service_id = (int) ( $params['service_id'] ?? 0 );
+		$package_id = (int) ( $params['package_id'] ?? 0 );
+		$pay_order  = (int) ( $params['pay_order'] ?? 0 );
+
+		// For existing orders (pay_order), verify the payment without creating a new
+		// WPSS order. confirm_payment() creates an order internally, so we use
+		// process_payment() for the verify-only path.
+		if ( $pay_order ) {
+			$order = wpss_get_order( $pay_order );
+
+			// The order must exist, belong to the caller, and still be awaiting
+			// payment — none of which was checked before. Without these guards a
+			// buyer could confirm a small payment intent (e.g. a $5 capture)
+			// against someone else's $500 order and have it marked paid.
+			if ( ! $order ) {
+				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+			}
+
+			if ( get_current_user_id() !== (int) $order->customer_id && ! current_user_can( 'manage_options' ) ) {
+				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			}
+
+			// Idempotency: never re-process an order that is already paid.
+			if ( 'paid' === (string) ( $order->payment_status ?? '' ) ) {
+				return new WP_REST_Response(
+					array(
+						'gateway'      => 'stripe',
+						'order_id'     => $pay_order,
+						'order_number' => $order->order_number,
+						'status'       => 'paid',
+					)
+				);
+			}
+
+			$payment = $this->process_payment( $payment_id );
+
+			if ( empty( $payment['success'] ) ) {
+				return new WP_Error( 'stripe_confirm_error', $payment['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+			}
+
+			// The payment names the member who started it and the order it was
+			// started for. Amount and reuse alone let a member confirm someone
+			// else's paid, not yet settled payment of the same price against
+			// their own order.
+			$meta = (array) ( $payment['metadata'] ?? array() );
+
+			if ( (int) ( $meta['customer_id'] ?? 0 ) !== (int) $order->customer_id || (int) ( $meta['order_id'] ?? 0 ) !== $pay_order ) {
+				return new WP_Error( 'wpss_payment_not_for_order', __( 'This payment was not made for this order.', 'wp-sell-services' ), array( 'status' => 409 ) );
+			}
+
+			$settled = $this->settle_pay_order( $order, 'stripe', $payment_id, (float) ( $payment['amount'] ?? 0 ), (string) ( $payment['currency'] ?? '' ) );
+
+			// The charge is captured and cannot pay this order (cancelled or repriced since
+			// the intent, phase locked, spent elsewhere): give it back. The payment was
+			// proved to be this member's for this order above, so it is theirs to refund;
+			// a charge that already paid an order is left alone by refund_unsettled().
+			if ( is_wp_error( $settled ) ) {
+				$this->refund_unsettled_charge( $payment_id );
+
+				return $settled;
+			}
+
+			$order = wpss_get_order( $pay_order );
+
+			return new WP_REST_Response(
+				array(
+					'gateway'      => 'stripe',
+					'order_id'     => $pay_order,
+					'order_number' => $order ? $order->order_number : '',
+					'status'       => 'paid',
+				)
+			);
+		}
+
+		// New order: verify + create order via gateway.
+		$result = $this->confirm_payment(
+			array(
+				'payment_intent_id' => $payment_id,
+				'service_id'        => $service_id,
+				'package_id'        => $package_id,
+			)
+		);
+
+		if ( empty( $result['success'] ) ) {
+			return new WP_Error( 'stripe_confirm_error', $result['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'gateway'      => 'stripe',
+				'order_id'     => (int) $result['order_id'],
+				'order_number' => $result['order_number'] ?? '',
+				'status'       => 'paid',
+			)
+		);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_settings_card(): ?array {
+		return array(
+			'title'        => __( 'Stripe', 'wp-sell-services' ),
+			'description'  => __( 'Accept credit card payments via Stripe.', 'wp-sell-services' ),
+			'option_group' => 'wpss_stripe_settings',
+			'order'        => 10,
+		);
 	}
 }

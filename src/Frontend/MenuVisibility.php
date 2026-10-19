@@ -241,7 +241,7 @@ class MenuVisibility {
 		?>
 		<div class="wpss-card" data-section="menu-visibility">
 			<div class="wpss-card__head">
-				<p class="wpss-card__title"><?php esc_html_e( 'MENU VISIBILITY', 'wp-sell-services' ); ?></p>
+				<h2 class="wpss-card__title"><?php esc_html_e( 'Menu Visibility', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-card__desc">
 					<?php esc_html_e( 'Choose which dashboard sections each role can see. Everything is visible by default; unticking a section also blocks its direct URL for that role.', 'wp-sell-services' ); ?>
 				</p>
@@ -250,7 +250,7 @@ class MenuVisibility {
 				<form method="post" action="options.php">
 					<?php settings_fields( 'wpss_menu_visibility' ); ?>
 
-					<p class="description" style="margin:0 0 var(--wpss-space-4,16px);">
+					<p class="description wpss-visibility-note">
 						<?php esc_html_e( 'A member who has more than one role sees a section only if every one of their roles allows it. Hiding a section from Subscriber also hides it from someone who is both a Subscriber and a Vendor.', 'wp-sell-services' ); ?>
 					</p>
 
@@ -260,10 +260,10 @@ class MenuVisibility {
 						$hidden_count = count( array_intersect( $role_hidden, array_keys( $sections ) ) );
 						$field        = self::OPTION . '[' . $role_slug . ']';
 						?>
-						<details class="wpss-visibility-role" style="border:1px solid var(--wpss-admin-border,#dcdcde);border-radius:var(--wpss-radius,6px);margin-bottom:12px;">
-							<summary style="cursor:pointer;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:600;">
-								<span><?php echo esc_html( $role_name ); ?></span>
-								<span style="font-weight:400;color:#646970;">
+						<details class="wpss-visibility-role">
+							<summary class="wpss-visibility-role__summary">
+								<span class="wpss-visibility-role__name"><?php echo esc_html( $role_name ); ?></span>
+								<span class="wpss-visibility-role__state<?php echo $hidden_count ? ' wpss-visibility-role__state--hidden' : ''; ?>">
 									<?php
 									if ( 0 === $hidden_count ) {
 										esc_html_e( 'Sees everything', 'wp-sell-services' );
@@ -278,13 +278,13 @@ class MenuVisibility {
 								</span>
 							</summary>
 
-							<div style="padding:0 14px 14px;">
+							<div class="wpss-visibility-role__body">
 								<?php // Marks this role as present in the submission; see sanitize(). ?>
 								<input type="hidden" name="<?php echo esc_attr( $field ); ?>[_present]" value="1">
 
 								<?php foreach ( $sections as $section_key => $section_label ) : ?>
 									<?php $is_visible = ! in_array( $section_key, $role_hidden, true ); ?>
-									<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--wpss-admin-border,#f0f0f1);">
+									<label class="wpss-visibility-role__item">
 										<input type="checkbox"
 											name="<?php echo esc_attr( $field ); ?>[visible][]"
 											value="<?php echo esc_attr( $section_key ); ?>"

@@ -1,6 +1,6 @@
 # Action Scheduler Integration
 
-Since version 1.1.0 every recurring job in WP Sell Services runs on [Action Scheduler](https://actionscheduler.org/) instead of WP-Cron. This gives operators a real queue with durable retry, admin-visible run history (Tools > Scheduled Actions), and proper task isolation — no more dispute cron blocking page loads on a cron-starved site.
+Since version 1.1.0 every recurring job in WP Sell Services runs on [Action Scheduler](https://actionscheduler.org/) instead of WP-Cron. This gives operators a real queue with durable retry, admin-visible run history (Tools > Scheduled Actions), and proper task isolation - no more dispute cron blocking page loads on a cron-starved site.
 
 ## What Runs On Action Scheduler
 
@@ -22,18 +22,18 @@ All free-plugin jobs use the `wpss` group; Pro uses `wpss-pro`. The group conven
 | `wpss_cleanup_abandoned_tips` | Daily | Clears unpaid tip sub-orders past the abandon window |
 | `wpss_cleanup_abandoned_extensions` | Daily | Same contract for extension sub-orders |
 | `wpss_cleanup_abandoned_milestones` | Daily | Same contract for non-contract milestones |
-| `wpss_cleanup_review_votes` | Daily | Expires guest "marked review helpful" idempotency rows from `wp_options` |
+| `wpss_cleanup_review_votes` | Daily | Expires signed-out "marked review helpful" idempotency rows from `wp_options` |
 | `wpss_recalculate_seller_levels` | Weekly | Seller level progression recalculation |
-| `wpss_process_auto_withdrawals` | Admin-selected (weekly / biweekly / monthly) | Auto-payout run if enabled in Settings |
+| `wpss_process_auto_withdrawals` | Single action on the next Monday / 1st / 15th, re-armed after each run | Auto-payout run if enabled in Settings |
 
 ## The Scheduler Facade
 
-Every scheduling call in the plugin routes through `WPSellServices\Services\Scheduler`. You should use it too — it's easier to stub in tests, enforces the `wpss` group by default, and handles the "data store not ready" race that Action Scheduler has on early `plugins_loaded`.
+Every scheduling call in the plugin routes through `WPSellServices\Services\Scheduler`. You should use it too - it's easier to stub in tests, enforces the `wpss` group by default, and handles the "data store not ready" race that Action Scheduler has on early `plugins_loaded`.
 
 ```php
 use WPSellServices\Services\Scheduler;
 
-// Schedule a recurring job. Idempotent — if an action with this hook
+// Schedule a recurring job. Idempotent - if an action with this hook
 // is already pending, the call is a no-op.
 Scheduler::schedule_recurring( 'my_hook', HOUR_IN_SECONDS );
 
@@ -61,13 +61,13 @@ Scheduler handles this with `is_ready()` and `on_ready()`:
 
 ```php
 // Defer the call until AS is up. Safe to use from plugins_loaded
-// or any earlier hook — if AS is already ready, it runs immediately.
+// or any earlier hook - if AS is already ready, it runs immediately.
 Scheduler::on_ready( function () {
     Scheduler::schedule_recurring( 'my_hook', HOUR_IN_SECONDS );
 } );
 ```
 
-All of Scheduler's public methods already auto-defer via `on_ready` internally — `on_ready()` itself is only needed when you want to wrap a larger block of work.
+All of Scheduler's public methods already auto-defer via `on_ready` internally - `on_ready()` itself is only needed when you want to wrap a larger block of work.
 
 ## Upgrade Path From Pre-1.1.0
 
@@ -99,7 +99,7 @@ Then `Activator::schedule_cron_events()` re-runs, registering everything against
    add_action( 'my_addon_nightly_cleanup', array( $this, 'nightly_cleanup' ) );
    ```
 
-2. Schedule it once — either on activation, or from a `Scheduler::on_ready()` call during bootstrap:
+2. Schedule it once - either on activation, or from a `Scheduler::on_ready()` call during bootstrap:
 
    ```php
    use WPSellServices\Services\Scheduler;
@@ -113,18 +113,18 @@ Then `Activator::schedule_cron_events()` re-runs, registering everything against
 
 ## Monitoring
 
-Scheduled Actions admin screen lives at **Tools > Scheduled Actions**. Filter by the `wpss` group to see every free-plugin job, its next run, last run, status, and log. Failed actions show their exception message inline — useful when debugging a flaky third-party API.
+Scheduled Actions admin screen lives at **Tools > Scheduled Actions**. Filter by the `wpss` group to see every free-plugin job, its next run, last run, status, and log. Failed actions show their exception message inline - useful when debugging a flaky third-party API.
 
 ## Why File-Load Require
 
-`wp-sell-services.php` requires `action-scheduler.php` at file-load time (not from a `plugins_loaded` hook). Action Scheduler's own internals bootstrap on `plugins_loaded:1` — registering the `every_minute` interval used by its queue runner. If the require runs later, AS's queue runner can't re-schedule itself and WordPress logs:
+`wp-sell-services.php` requires `action-scheduler.php` at file-load time (not from a `plugins_loaded` hook). Action Scheduler's own internals bootstrap on `plugins_loaded:1` - registering the `every_minute` interval used by its queue runner. If the require runs later, AS's queue runner can't re-schedule itself and WordPress logs:
 
 ```
 Cron reschedule event error for hook: action_scheduler_run_queue,
 Error code: invalid_schedule
 ```
 
-The file-load require is the recommended pattern documented in the Action Scheduler wiki and is safe — plugin headers run before any hook fires.
+The file-load require is the recommended pattern documented in the Action Scheduler wiki and is safe - plugin headers run before any hook fires.
 
 ## Testing
 
@@ -137,4 +137,4 @@ parameters:
         - tests/stubs/action-scheduler-stubs.php
 ```
 
-In PHPUnit tests, you can safely call `Scheduler::has_pending()` etc. — if AS isn't loaded in the test bootstrap, the facade falls through to `false`/`0` rather than a fatal.
+In PHPUnit tests, you can safely call `Scheduler::has_pending()` etc. - if AS isn't loaded in the test bootstrap, the facade falls through to `false`/`0` rather than a fatal.

@@ -68,7 +68,8 @@ $check( 'found stylesheets and PHP to scan', count( $files ) > 50 );
 $defined = array();
 $used    = array();
 foreach ( $files as $path ) {
-	$code = (string) file_get_contents( $path );
+	// Comments stripped: a token named in prose is neither a use nor a definition.
+	$code = (string) preg_replace( '#/\*.*?\*/#s', '', (string) file_get_contents( $path ) );
 	if ( preg_match_all( '/(--wpss-[a-z0-9-]+)\s*:/i', $code, $m ) ) {
 		foreach ( $m[1] as $t ) {
 			$defined[ $t ] = true;
@@ -84,42 +85,11 @@ foreach ( $files as $path ) {
 $orphans = array_diff_key( $used, $defined );
 
 /*
- * Known orphans, tracked on Basecamp 10268606549.
- *
- * Each one falls back to a hardcoded literal, so the component it styles cannot
- * follow the theme. They are the same defect that made the whole cart page
- * un-themeable, just spread thinner. Fixing them means choosing the right
- * replacement token per use and re-verifying the surface, which is 1.8.0 work.
- *
- * This list may SHRINK, never grow. A new orphan fails the contract.
+ * No orphan is tolerated. This list used to hold 25 names (Basecamp 10268606549); most were
+ * mentions inside comments, which the scan counted as uses, and the one real orphan is fixed.
+ * Do not add to it: define the token in design-system.css or use one that exists.
  */
-$known_orphans = array(
-	'--wpss-admin-font-mono',
-	'--wpss-bg-light',
-	'--wpss-border-color',
-	'--wpss-card-bg',
-	'--wpss-muted',
-	'--wpss-primary-100',
-	'--wpss-primary-700',
-	'--wpss-primary-bg',
-	'--wpss-primary-color',
-	'--wpss-primary-rgb',
-	'--wpss-radius-md',
-	'--wpss-status-cancelled-bg',
-	'--wpss-status-cancelled-text',
-	'--wpss-status-completed-text',
-	'--wpss-status-delivered-text',
-	'--wpss-status-disputed-text',
-	'--wpss-status-in-progress-text',
-	'--wpss-status-pending-text',
-	'--wpss-success-bg',
-	'--wpss-surface-hover',
-	'--wpss-surface-muted',
-	'--wpss-text-primary',
-	'--wpss-transition-slow',
-	'--wpss-warning-fg',
-	'--wpss-x',
-);
+$known_orphans = array();
 
 $new_orphans = array_diff( array_keys( $orphans ), $known_orphans );
 $check( 'no NEW undefined --wpss-* token has appeared', empty( $new_orphans ) );
@@ -161,6 +131,22 @@ foreach ( $files as $path ) {
 		$owners[] = basename( $path );
 	}
 }
+// --- 4. one owner for the .wpss-btn base rule -------------------------------------
+// Two sheets declaring the bare rule meant load order picked the winner (one said `border: none`).
+// admin.css is the wp-admin button, which never loads beside design-system.css and has its own tokens.
+$btn_owners = array();
+foreach ( $files as $path ) {
+	if ( ! str_ends_with( $path, '.css' ) ) {
+		continue;
+	}
+	$code = (string) preg_replace( '#/\*.*?\*/#s', '', (string) file_get_contents( $path ) );
+	if ( preg_match( '/^\.wpss-btn\s*\{[^}]*\b(display|padding|border)\s*:/m', $code ) ) {
+		$btn_owners[] = basename( $path );
+	}
+}
+sort( $btn_owners );
+$check( '.wpss-btn base rule is declared only in design-system.css and the admin sheet', array( 'admin.css', 'design-system.css' ) === $btn_owners );
+
 $check( '.wpss-btn--outline is defined in exactly one stylesheet', 1 === count( $owners ) );
 $check( '  and that stylesheet is design-system.css', array( 'design-system.css' ) === $owners );
 
