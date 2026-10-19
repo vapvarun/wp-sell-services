@@ -560,6 +560,14 @@
    "added": "2026-10-19",
    "fails_on": "57bacdcd (plan priced the bought quantity on a rail whose cart drops it to 1)",
    "check": "tests/test-order-again.php"
+  },
+  {
+   "card": "1.9.0 release security review: five hardening points (no card)",
+   "title": "refund assign lock is atomic, PayPal order id is shape-checked, helpful votes need an approved review, notification page size is capped, refused file names are sanitised",
+   "guard": "static:release-hardening-1-9-0",
+   "added": "2026-10-19",
+   "fails_on": "91bf1be9 (transient lock, unchecked PayPal id, unfiltered review status, uncapped limit, raw file name)",
+   "check": "tests/test-release-hardening-1-9-0.php"
   }
  ]
 }

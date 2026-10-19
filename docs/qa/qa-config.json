@@ -308,6 +308,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-closed-order-cannot-be-paid.php"
    },
    {
+    "id": "release-hardening-1-9-0",
+    "run": "${WP_CLI:-wp} eval-file tests/test-release-hardening-1-9-0.php"
+   },
+   {
     "id": "pro-declined-phase-cancels-store-order",
     "run": "${WP_CLI:-wp} eval-file tests/pro/test-declined-phase-cancels-store-order.php"
    }

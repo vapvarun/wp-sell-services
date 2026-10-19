@@ -68,7 +68,7 @@ class DeliveryService {
 		foreach ( $files as $file ) {
 			$refused = wpss_check_upload( $file, 'delivery' );
 			if ( null !== $refused ) {
-				$this->last_error = sprintf( '%s: %s', (string) ( $file['name'] ?? '' ), $refused->get_error_message() );
+				$this->last_error = sprintf( '%s: %s', sanitize_file_name( (string) ( $file['name'] ?? '' ) ), $refused->get_error_message() );
 				return false;
 			}
 		}

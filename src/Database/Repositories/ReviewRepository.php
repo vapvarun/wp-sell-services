@@ -258,7 +258,7 @@ class ReviewRepository extends AbstractRepository {
 	 */
 	public function toggle_helpful( int $review_id, int $user_id, string $ip = '' ) {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table.
-		$author = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT reviewer_id FROM {$this->table} WHERE id = %d", $review_id ) );
+		$author = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT reviewer_id FROM {$this->table} WHERE id = %d AND status = 'approved'", $review_id ) );
 
 		if ( null === $author ) {
 			return 'not_found';

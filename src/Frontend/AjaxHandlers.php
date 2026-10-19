@@ -2265,7 +2265,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_notification_nonce', 'nonce' );
 
 		$user_id = get_current_user_id();
-		$limit   = absint( $_POST['limit'] ?? 10 );
+		$limit   = min( 50, max( 1, absint( $_POST['limit'] ?? 10 ) ) );
 		$offset  = absint( $_POST['offset'] ?? 0 );
 
 		// Same query, ordering and filters as the notification center and REST.

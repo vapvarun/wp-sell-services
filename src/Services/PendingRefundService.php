@@ -212,13 +212,11 @@ class PendingRefundService {
 		}
 
 		// Two clicks must not assign the same money twice.
-		$lock = 'wpss_pending_refund_' . md5( (string) $record['key'] );
+		$lock = 'wpss_pending_refund_lock_' . md5( (string) $record['key'] );
 
-		if ( false !== get_transient( $lock ) ) {
+		if ( ! $this->claim_lock( $lock ) ) {
 			return $fail( __( 'This refund is being assigned. Reload and check the order.', 'wp-sell-services' ) );
 		}
-
-		set_transient( $lock, 1, MINUTE_IN_SECONDS );
 
 		try {
 			$decimals  = wpss_get_currency_decimals( (string) ( $order->currency ?? '' ) );
@@ -266,8 +264,39 @@ class PendingRefundService {
 				'amount'  => $apply,
 			);
 		} finally {
-			delete_transient( $lock );
+			delete_option( $lock );
 		}
+	}
+
+	/**
+	 * Claim a named lock atomically: the options table refuses a second row with the same name.
+	 *
+	 * A lock older than a minute belongs to a request that died, so it is taken over once.
+	 *
+	 * @param string $name Option name used as the lock.
+	 * @return bool True when this request holds the lock.
+	 */
+	private function claim_lock( string $name ): bool {
+		global $wpdb;
+
+		for ( $attempt = 0; $attempt < 2; $attempt++ ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic claim of a unique option name.
+			$wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", $name, (string) time() ) );
+
+			if ( 1 === (int) $wpdb->rows_affected ) {
+				return true;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads the lock row directly; the options cache can be stale.
+			$taken = (int) $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $name ) );
+			if ( $taken && time() - $taken < MINUTE_IN_SECONDS ) {
+				return false;
+			}
+
+			delete_option( $name );
+		}
+
+		return false;
 	}
 
 	/**
