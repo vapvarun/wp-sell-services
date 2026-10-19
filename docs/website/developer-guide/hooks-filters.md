@@ -164,15 +164,15 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/Integrations/Gateways/AbstractPaymentGateway.php:192` |
+| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/Integrations/Gateways/AbstractPaymentGateway.php:194` |
 
 ### Payment Filters
 
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `src/Integrations/Stripe/StripeGateway.php:301` |
-| `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `src/Integrations/Gateways/AbstractPaymentGateway.php:37` |
-| `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `src/Integrations/Gateways/AbstractPaymentGateway.php:62` |
+| `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `src/Integrations/Gateways/AbstractPaymentGateway.php:39` |
+| `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `src/Integrations/Gateways/AbstractPaymentGateway.php:64` |
 | `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:242` |
 
 **`wpss_stripe_payment_intent_args`** lets you modify Stripe PaymentIntent parameters before creation:

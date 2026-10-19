@@ -16,6 +16,8 @@ namespace WPSellServices\Integrations\Gateways;
 
 use WPSellServices\Checkout\CheckoutIntent;
 use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
+use WP_Error;
+use WP_REST_Response;
 
 defined( 'ABSPATH' ) || exit;
 

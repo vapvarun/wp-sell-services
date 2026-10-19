@@ -493,7 +493,7 @@ function wpss_price_addons( int $service_id, $selection, float $package_subtotal
 		if ( 'quantity' === $field_type ) {
 			$quantity = min( max( $choice['quantity'], (int) $definition['min_quantity'] ), max( (int) $definition['min_quantity'], (int) $definition['max_quantity'] ) );
 		} elseif ( 'dropdown' === $field_type ) {
-			$options = array_values( array_filter( array_map( 'trim', explode( ',', (string) $definition['options'] ) ), 'strlen' ) );
+			$options = array_values( array_filter( array_map( 'trim', explode( ',', (string) $definition['options'] ) ), static fn( string $option ): bool => '' !== $option ) );
 			$option  = in_array( $choice['option'], $options, true ) ? $choice['option'] : '';
 		} elseif ( 'text' === $field_type ) {
 			$text = mb_substr( trim( $choice['text'] ), 0, 500 );

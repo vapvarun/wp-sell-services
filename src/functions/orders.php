@@ -989,7 +989,7 @@ function wpss_get_reorder_plan( \WPSellServices\Models\ServiceOrder $order, int 
 		$quantity = 1;
 	}
 
-	$selection = wpss_normalize_addon_selection( is_array( $order->addons ) ? $order->addons : array() );
+	$selection = wpss_normalize_addon_selection( $order->addons );
 	$line      = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, (int) $resolved['index'], $quantity, $selection );
 
 	if ( is_wp_error( $line ) ) {
