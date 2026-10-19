@@ -1422,7 +1422,7 @@ class EarningsService {
 		return array(
 			self::WITHDRAWAL_PENDING   => __( 'Pending', 'wp-sell-services' ),
 			self::WITHDRAWAL_APPROVED  => __( 'Approved', 'wp-sell-services' ),
-			self::WITHDRAWAL_COMPLETED => __( 'Completed', 'wp-sell-services' ),
+			self::WITHDRAWAL_COMPLETED => __( 'Paid', 'wp-sell-services' ),
 			self::WITHDRAWAL_REJECTED  => __( 'Rejected', 'wp-sell-services' ),
 			self::WITHDRAWAL_CANCELLED => __( 'Cancelled', 'wp-sell-services' ),
 		);

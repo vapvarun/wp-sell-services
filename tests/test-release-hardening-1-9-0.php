@@ -43,4 +43,14 @@ $check( 'AJAX notification limit is capped at 50', false !== strpos( $read( 'src
 // 5. A refused file name is sanitised before it is shown.
 $check( 'delivery refusal message sanitises the file name', false !== strpos( $read( 'src/Services/DeliveryService.php' ), 'sanitize_file_name(' ) );
 
+// 6. Smoke walk findings: a paid-out withdrawal reads Paid, a COD receipt does not claim payment,
+//    a request order is named by its request, and the filter button is a 44px target.
+$check( 'a completed withdrawal is labelled Paid', 'Paid' === \WPSellServices\Services\EarningsService::get_withdrawal_statuses()[ \WPSellServices\Services\EarningsService::WITHDRAWAL_COMPLETED ] );
+$pro_dir = WPSS_PLUGIN_DIR . '../wp-sell-services-pro/src/Integrations/WooCommerce/';
+if ( is_readable( $pro_dir . 'WCOrderBridge.php' ) ) {
+	$check( 'the Woo receipt does not say a COD order is paid', false !== strpos( (string) file_get_contents( $pro_dir . 'WCOrderBridge.php' ), "'cod' === (string) ( \$order->payment_method" ) );
+	$check( 'a request order line is named by its request', false !== strpos( (string) file_get_contents( $pro_dir . 'WCPayOrderResolver.php' ), "'request' === \$platform && '' !== \$subject" ) );
+}
+$check( 'the notification filter button is a 44px target', false !== strpos( $read( 'assets/css/notifications.css' ), '.wpss-notif-filter button { min-height: 44px; }' ) );
+
 exit( $fails ? 1 : 0 );

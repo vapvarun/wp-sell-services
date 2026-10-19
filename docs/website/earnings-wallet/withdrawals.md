@@ -67,10 +67,10 @@ The vendor sees a confirmation with a request ID and status. They also receive a
 |--------|-------------|
 | **Pending** | Request submitted, waiting for admin review |
 | **Approved** | Admin approved it, payment is being processed |
-| **Completed** | Payment has been sent to the vendor |
+| **Paid** | Payment has been sent to the vendor |
 | **Rejected** | Request denied -- funds return to vendor's available balance. The note the admin typed shows under the badge as "Reason: ..." and is in the email |
 
-The typical flow is: **Pending > Approved > Completed**
+The typical flow is: **Pending > Approved > Paid**
 
 If rejected, the funds go right back to the vendor's balance so they are not lost.
 
@@ -82,7 +82,7 @@ See the full admin workflow in [Withdrawal Approvals](../admin-tools/withdrawal-
 2. Review pending requests (vendor info, amount, payment details)
 3. **Approve** the request
 4. Process payment externally (send the bank transfer or PayPal payment)
-5. Return to the request and click **Mark as Completed**
+5. Return to the request and click **Mark as paid**
 
 Admins can also **Reject** a request with a reason if something is wrong (incomplete payment details, outstanding disputes, etc.).
 

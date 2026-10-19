@@ -14,7 +14,7 @@ Go to **Sell Services > Withdrawals** in your WordPress admin. You will see summ
 |------|-------------|
 | **Pending** | Requests waiting for your review, with total amount |
 | **Approved** | Requests you have approved but not yet marked complete |
-| **Completed** | Successfully paid out, with total amount |
+| **Paid** | Successfully paid out, with total amount |
 | **Rejected** | Requests you denied |
 
 ## The Withdrawal Queue
@@ -53,9 +53,9 @@ Click **Confirm** in the popup. The request status changes to **Approved** and t
 
 Process the payment outside of WordPress -- send the bank transfer or PayPal payment using the vendor's account details shown in the request.
 
-### Step 4: Mark as Completed
+### Step 4: Mark as paid
 
-After you have sent the payment, return to the withdrawal request and click **Mark Completed**. Add a note with the transaction reference (e.g., PayPal transaction ID or bank transfer reference). The vendor receives a completion notification.
+After you have sent the payment, return to the withdrawal request and click **Mark as paid**. Add a note with the transaction reference (e.g., PayPal transaction ID or bank transfer reference). The vendor receives a completion notification.
 
 ## Rejecting a Withdrawal
 
@@ -73,7 +73,7 @@ For marketplaces with many vendors, the typical weekly workflow looks like this:
 1. Filter by **Pending** to see all new requests
 2. Review and **Approve** each valid request
 3. Process all approved payments in one batch (via PayPal or bank)
-4. Return and **Mark Completed** for each one, noting the transaction reference
+4. Return and **Mark as paid** for each one, noting the transaction reference
 
 ## Auto-Withdrawal Requests
 
