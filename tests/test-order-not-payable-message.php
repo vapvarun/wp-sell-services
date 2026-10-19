@@ -8,6 +8,7 @@
  */
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 global $wpdb;
 
@@ -18,15 +19,9 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 };
 
 $table = $wpdb->prefix . 'wpss_orders';
-$id    = (int) $wpdb->get_var( "SELECT id FROM {$table} ORDER BY id DESC LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$row   = $wpdb->get_row( $wpdb->prepare( "SELECT status, customer_id FROM {$table} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$buyer = (int) $row->customer_id;
-$was   = (string) $row->status;
-register_shutdown_function(
-	static function () use ( $wpdb, $table, $id, $was ) {
-		$wpdb->update( $table, array( 'status' => $was ), array( 'id' => $id ) ); // Restores even if an assertion fatals.
-	}
-);
+$f     = wpss_test_fixtures();
+$id    = ( $f->order )( array( 'status' => 'in_progress', 'customer_id' => $f->buyer, 'vendor_id' => $f->vendor, 'service_id' => ( $f->service )( 'publish' ), 'total' => 100 ) );
+$buyer = (int) $f->buyer;
 $svc   = new \WPSellServices\Checkout\CheckoutIntentService();
 $ask   = static function ( string $status ) use ( $wpdb, $table, $id, $svc, $buyer ) {
 	$wpdb->update( $table, array( 'status' => $status ), array( 'id' => $id ) );
@@ -49,5 +44,4 @@ foreach ( array( 'cancelled', 'refunded', 'in_progress' ) as $status ) {
 	$check( "shared helper, {$status}: matches the intent guard", ( 'in_progress' === $status ) === str_contains( $msg, 'already been paid' ) );
 }
 
-$wpdb->update( $table, array( 'status' => $was ), array( 'id' => $id ) );
 exit( $fails ? 1 : 0 );

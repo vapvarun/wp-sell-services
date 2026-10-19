@@ -64,7 +64,10 @@ $check( 'edit-request shows the stored deadline in the display zone', false === 
 // --- surfaces ----------------------------------------------------------------
 $check( 'cancellation email gives each recipient the deadline in their own zone', 1 < substr_count( $read( 'src/Services/EmailService.php' ), 'wpss_deadline_label( $deadline_ts' ) );
 $check( 'wallet ledger prints the server label, not the browser zone', false === strpos( $read( 'assets/js/unified-dashboard.js' ), 'toLocaleDateString' ) && false !== strpos( $read( 'src/API/EarningsController.php' ), "'created_at_label'" ) );
-$check( 'Pro report labels are formatted as UTC calendar days', false !== strpos( (string) file_get_contents( WPSS_PLUGIN_DIR . '../wp-sell-services-pro/assets/js/analytics.js' ), "timeZone: 'UTC'" ) );
+$pro_analytics = WPSS_PLUGIN_DIR . '../wp-sell-services-pro/assets/js/analytics.js';
+if ( is_readable( $pro_analytics ) ) { // Pro is not part of a Free-only checkout.
+	$check( 'Pro report labels are formatted as UTC calendar days', false !== strpos( (string) file_get_contents( $pro_analytics ), "timeZone: 'UTC'" ) );
+}
 
 // --- nothing formats a date by itself ----------------------------------------
 $gate = (string) shell_exec( 'php ' . escapeshellarg( WPSS_PLUGIN_DIR . 'bin/check-time-formatter.php' ) . ' 2>&1' );

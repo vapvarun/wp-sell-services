@@ -109,6 +109,8 @@ foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( WPSS_PL
 $tax = $readers['tax'] ?? array();
 sort( $tax );
 $check( 'wpss_tax is read only by money.php and the schema migration (' . implode( ', ', $tax ) . ')', array( 'SchemaManager.php', 'money.php' ) === $tax );
-$check( 'tip_commission_rate is read only by the Settings field and TippingService (' . implode( ', ', $readers['tip'] ?? array() ) . ')', array( 'Settings.php', 'TippingService.php' ) === ( $readers['tip'] ?? array() ) );
+$tip = $readers['tip'] ?? array();
+sort( $tip );
+$check( 'tip_commission_rate is read only by the Settings field and TippingService (' . implode( ', ', $tip ) . ')', array( 'Settings.php', 'TippingService.php' ) === $tip );
 
 exit( $fails ? 1 : 0 );
