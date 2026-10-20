@@ -31,8 +31,11 @@ they want to receive, from **Dashboard > Profile > Email Preferences**.
 The categories a member sees depend on what they actually do on your
 marketplace. A buyer is offered the five that apply to them - orders, messages,
 deliveries, reviews and disputes. Someone who also sells sees eight, adding the
-seller-side categories: sales, earnings and withdrawals, and buyer requests or
-proposals.
+seller-side categories: tips and withdrawals.
+
+Emails about payments, proposals, milestones and extensions are always sent.
+They carry an amount or a deadline, so there is no switch for them, and the
+Email Preferences screen says so.
 
 That matters more than it sounds. Before 1.6.0 every member was offered the
 seller list, so a buyer who unticked things they did not recognise could

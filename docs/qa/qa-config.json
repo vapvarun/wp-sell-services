@@ -314,6 +314,38 @@
    {
     "id": "pro-declined-phase-cancels-store-order",
     "run": "${WP_CLI:-wp} eval-file tests/pro/test-declined-phase-cancels-store-order.php"
+   },
+   {
+    "id": "unpaid-suborder-no-credit",
+    "run": "${WP_CLI:-wp} eval-file tests/test-unpaid-suborder-no-credit.php"
+   },
+   {
+    "id": "milestone-contract-totals",
+    "run": "${WP_CLI:-wp} eval-file tests/test-milestone-contract-totals.php"
+   },
+   {
+    "id": "manual-order-custom-price",
+    "run": "${WP_CLI:-wp} eval-file tests/test-manual-order-custom-price.php"
+   },
+   {
+    "id": "always-sent-emails",
+    "run": "${WP_CLI:-wp} eval-file tests/test-always-sent-emails.php"
+   },
+   {
+    "id": "signup-vendor-intent",
+    "run": "${WP_CLI:-wp} eval-file tests/test-signup-vendor-intent.php"
+   },
+   {
+    "id": "review-dedupe-guard",
+    "run": "${WP_CLI:-wp} eval-file tests/test-review-dedupe-guard.php"
+   },
+   {
+    "id": "pro-secrets-at-rest",
+    "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-secrets-at-rest.php"
+   },
+   {
+    "id": "pro-offline-submit-delegates",
+    "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-offline-submit-delegates.php"
    }
   ]
  }

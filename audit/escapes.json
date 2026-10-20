@@ -568,6 +568,70 @@
    "added": "2026-10-19",
    "fails_on": "91bf1be9 (transient lock, unchecked PayPal id, unfiltered review status, uncapped limit, raw file name)",
    "check": "tests/test-release-hardening-1-9-0.php"
+  },
+  {
+   "card": "10421776346",
+   "title": "an unpaid milestone, tip or extension is never credited to the vendor wallet, whatever status an admin gives it",
+   "guard": "static:unpaid-suborder-no-credit",
+   "added": "2026-10-20",
+   "fails_on": "e834c2a3 (credit_phase and CommissionService::record credited unpaid sub-orders)",
+   "check": "tests/test-unpaid-suborder-no-credit.php"
+  },
+  {
+   "card": "10421776732, 10421776409",
+   "title": "a milestone parent shows its contract total and paid phases from one MilestoneService method; offline sub-orders survive the abandoned sweeps",
+   "guard": "static:milestone-contract-totals",
+   "added": "2026-10-20",
+   "fails_on": "e834c2a3 (no get_contract_totals; sweeps cancelled offline phases)",
+   "check": "tests/test-milestone-contract-totals.php"
+  },
+  {
+   "card": "10421776535",
+   "title": "an admin-typed price or exact total makes a custom order that carries no package",
+   "guard": "static:manual-order-custom-price",
+   "added": "2026-10-20",
+   "fails_on": "e834c2a3 (subtotal stayed the package price, package name stayed on the order)",
+   "check": "tests/test-manual-order-custom-price.php"
+  },
+  {
+   "card": "10421776492",
+   "title": "payment-bearing email types are not mapped to a user-mutable category",
+   "guard": "static:always-sent-emails",
+   "added": "2026-10-20",
+   "fails_on": "e834c2a3 (proposal, milestone and extension emails mapped to a category buyers never saw)",
+   "check": "tests/test-always-sent-emails.php"
+  },
+  {
+   "card": "10418526208",
+   "title": "create_account is the one place a vendor intent is promoted, per registration mode",
+   "guard": "static:signup-vendor-intent",
+   "added": "2026-10-20",
+   "fails_on": "e834c2a3 (only the AJAX handler promoted; REST register made a subscriber)",
+   "check": "tests/test-signup-vendor-intent.php"
+  },
+  {
+   "card": "10421649579",
+   "title": "the schema dedupe never deletes order-less reviews and logs identifiers only",
+   "guard": "static:review-dedupe-guard",
+   "added": "2026-10-20",
+   "fails_on": "e834c2a3 (order_id 0 reviews treated as duplicates of each other)",
+   "check": "tests/test-review-dedupe-guard.php"
+  },
+  {
+   "card": "10418526128, 10418526164, 10418526204, 10418526176",
+   "title": "integration secrets are encrypted at rest through the one masked-field and wpss_encrypt_secret path and never echoed",
+   "guard": "static:pro-secrets-at-rest",
+   "added": "2026-10-20",
+   "fails_on": "Pro fbbbdd5 (plaintext secrets, ciphertext echoed into the page)",
+   "check": "wp-sell-services-pro/tests/test-secrets-at-rest.php"
+  },
+  {
+   "card": "10418526157",
+   "title": "the Pro offline route builds the order through Free's builder",
+   "guard": "static:pro-offline-submit-delegates",
+   "added": "2026-10-20",
+   "fails_on": "Pro fbbbdd5 (own insert at the flat package price, no package id)",
+   "check": "wp-sell-services-pro/tests/test-offline-submit-delegates.php"
   }
  ]
 }
