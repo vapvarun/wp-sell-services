@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**550 hooks** across **768** firing sites.
+**550 hooks** across **769** firing sites.
 
 ## Actions (280)
 
@@ -166,7 +166,7 @@ guide; this is the complete index.
 | `wpss_order_status_in_progress` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php` |  |
 | `wpss_order_status_pending_requirements` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php` |  |
 | `wpss_order_view_actions` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_actions |
-| `wpss_order_view_details` | 1 | `templates/order/milestone-view.php` *(+2 more)* |  |
+| `wpss_order_view_details` | 1 | `templates/order/extension-view.php` *(+3 more)* |  |
 | `wpss_order_view_header` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_header |
 | `wpss_order_view_sidebar` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_sidebar |
 | `wpss_orders_filters` | 1 | `templates/dashboard/sections/orders.php` | Fires in the orders filter area. |
