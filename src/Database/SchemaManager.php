@@ -271,7 +271,10 @@ class SchemaManager {
 	 * removed row written to the audit log. Ledger rows are removed only when
 	 * they are exact copies (same user, amount, key); a same-key row with a
 	 * different amount is a bookkeeping question, not a duplicate, and is
-	 * logged for a human instead. Idempotent: nothing to remove on a clean or
+	 * logged for a human instead. Reviews with order_id 0 belong to no order
+	 * (an admin-imported review), so they are never "duplicates" of each other
+	 * and are left alone; the audit row keeps the whole removed review.
+	 * Idempotent: nothing to remove on a clean or
 	 * fresh install.
 	 *
 	 * @since 1.7.1
@@ -305,9 +308,10 @@ class SchemaManager {
 
 		if ( $reviews === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $reviews ) ) ) {
 			$dupes = $this->wpdb->get_results(
-				"SELECT d.id, d.order_id, d.review_type, d.rating, d.reviewer_id, k.id AS kept_id
+				"SELECT d.*, k.id AS kept_id
 				FROM {$reviews} d
-				JOIN {$reviews} k ON k.order_id = d.order_id AND k.review_type = d.review_type AND k.id < d.id"
+				JOIN {$reviews} k ON k.order_id = d.order_id AND k.review_type = d.review_type AND k.id < d.id
+				WHERE d.order_id > 0"
 			);
 			$this->remove_duplicates( $reviews, 'review.duplicate_removed', 'review', (array) $dupes );
 		}
