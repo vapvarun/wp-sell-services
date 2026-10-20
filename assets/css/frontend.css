@@ -1249,7 +1249,7 @@ article.wpss-service-card:hover {
 /* Marks a review an admin brought in rather than one written for an order. */
 .wpss-review-imported {
 	display: inline-block;
-	margin-inline-start: 8px;
+	margin: 2px 0 6px;
 	padding: 1px 8px;
 	border: 1px solid var(--wpss-border);
 	border-radius: 999px;
@@ -4403,4 +4403,9 @@ a.wpss-order-filter.is-active:focus {
 .wpss-review-service {
 	margin: 0 0 var(--wpss-space-2, 0.5rem);
 	font-size: var(--wpss-font-size-sm, 0.875rem);
+}
+
+/* The service a review is about is a caption, quieter than the review text under it. */
+.wpss-review-service a {
+	color: var(--wpss-text-light);
 }

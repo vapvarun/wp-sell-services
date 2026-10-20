@@ -44,7 +44,7 @@ Each row: card id, fix commit, what to prove. "Test" is the repo test that fails
 
 Steps:
 
-- **Import Reviews (admin, Pro):** Sell Services > Import Reviews. Add one review (vendor search, service select, name, 1-5 stars, text, optional date). Add the same again: refused as already imported. Download the CSV template, build a file with 2 good rows, 1 repeat of a good row, 1 row with rating 9. Choose Check file: expect Ready 2, Already imported 1, Needs fixing 1, with a plain reason per row, and nothing saved. Import: expect Imported 2 and the run button disappears. Check the file again: all already imported. Also check that a file over 500 rows is refused with a plain message. Check at 390: no horizontal scroll, preview table readable.
+- **Import Reviews (admin, Pro):** Sell Services > Import Reviews. Add one review (vendor search, service select, name, 1-5 stars, text, optional date). Add the same again: refused as already imported. Download the CSV template, build a file with 2 good rows, 1 repeat of a good row, 1 row with rating 9. Choose Check file: expect Ready 2, Already imported 1, Needs fixing 1, with a plain reason per row, and nothing saved. Import: expect Imported 2 and the run button disappears. Check the file again: all already imported. Also check that a file over 500 rows is refused with a plain message. Check at 390: no horizontal scroll, preview table readable. Also: a file whose first row lacks a column (for example `reviewer` instead of `reviewer_name`) is refused with a message naming the missing column; editing a field or choosing another file clears the last message and preview; two identical bad rows both read Needs fixing, never Already imported.
 - **Who can use it:** only an admin. A vendor or buyer gets nothing (`POST /wpss/v1/reviews/import` answers 401 or 403; the menu item is absent). The menu item appears only with a valid license.
 - **Display:** imported reviews show an **Imported review** label, no Verified Purchase badge and on the service page, the vendor profile and the vendor dashboard Reviews list (its service link goes to the service, not an order). The vendor rating, service rating and seller level move; no email goes out (check Mailpit).
 - **Vendor profile** (`/vendors/?vendor=wpss_vendor_sofia`): reviews look like the service page (avatar, name, stars, date), with the service named on its own line under the header and no Helpful button.
@@ -162,3 +162,10 @@ The walks ran before these five fixes, so the smoke gate will call them stale un
 ## 7. Verdicts
 
 Per card: PASS (move to Done), BOUNCE (back to Bugs with the failing step, role, viewport and theme), or BLOCKED (say what you need). For every bounce add the check that would have caught it to the journey that owns the behaviour, tagged `card:<id>`, with a row in `audit/escapes.json`.
+
+## Added after the last walk (2026-10-21)
+
+- `10417579719` Extra-work pending card: card sits inset in its section for buyer and vendor (Free `47e70ce3`, test `test-extension-pending-card-inset.php`). Check at 1440, 1024, 390, light and dark, RTL, BuddyX and TT5.
+- `10422089720` Woo My Services page 2: re-test with a vendor of 26+ services on the Woo rail, `/my-account/vendor-services/page/2/` must show services 25 and up.
+- `10422089787` EDD My Services: the list shows the vendor's services again, 24 per page with a pager (`?services_page=2`), tile count matches. Needs a real EDD site (Pro `64bcd35`, Free test `test-edd-my-services-list.php`).
+- Import Reviews screen polish (Pro): file row aligned, template link on the text baseline, stale messages cleared, missing-column refusal. Imported label spacing and the muted service caption on reviews (Free `frontend.css`): check the label sits under the name with a gap above the stars on the service page, the vendor profile and the vendor dashboard, at 1440 and 390.
