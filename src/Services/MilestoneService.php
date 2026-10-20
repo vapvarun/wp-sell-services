@@ -369,6 +369,12 @@ class MilestoneService {
 			return false;
 		}
 
+		// An admin may complete an unpaid phase (phases are optional), but money
+		// is never credited for payment that was not received.
+		if ( 'paid' !== ( $sub->payment_status ?? '' ) && empty( $sub->paid_at ) ) {
+			return false;
+		}
+
 		$txn_table = $wpdb->prefix . 'wpss_wallet_transactions';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

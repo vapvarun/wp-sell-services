@@ -2855,9 +2855,12 @@ class Settings {
 		$field       = (string) ( $args['field'] ?? '' );
 		$options     = get_option( $option_name, array() );
 		$options     = is_array( $options ) ? $options : array();
-		$has_secret  = ! empty( $options[ $field ] );
+		$stored      = (string) ( $options[ $field ] ?? '' );
+		$has_secret  = '' !== $stored;
+		$unreadable  = $has_secret && '' === wpss_decrypt_secret( $stored );
 		$label       = (string) ( $args['label'] ?? $field );
 		$prefix_hint = isset( $args['prefix'] ) ? (string) $args['prefix'] : '';
+		$input_name  = (string) ( $args['name'] ?? $option_name . '[' . $field . ']' );
 
 		$placeholder = $has_secret
 			? __( '••••••••••••  (saved — leave blank to keep)', 'wp-sell-services' )
@@ -2869,9 +2872,9 @@ class Settings {
 		);
 
 		printf(
-			'<input type="password" id="%1$s" name="%2$s[%1$s]" value="" autocomplete="off" spellcheck="false" placeholder="%3$s" aria-label="%4$s" class="regular-text wpss-secret-field__input">',
+			'<input type="password" id="%1$s" name="%2$s" value="" autocomplete="off" spellcheck="false" placeholder="%3$s" aria-label="%4$s" class="regular-text wpss-secret-field__input">',
 			esc_attr( $field ),
-			esc_attr( $option_name ),
+			esc_attr( $input_name ),
 			esc_attr( $placeholder ),
 			esc_attr( $label )
 		);
@@ -2883,7 +2886,14 @@ class Settings {
 
 		echo '</div>';
 
-		if ( $has_secret && '' !== $prefix_hint ) {
+		if ( $unreadable ) {
+			// WordPress salts changed since this was saved, so it cannot be read back.
+			printf(
+				'<p class="description wpss-secret-field__status"><span class="wpss-secret-field__badge">%1$s</span> %2$s</p>',
+				esc_html__( 'Re-enter', 'wp-sell-services' ),
+				esc_html__( 'The saved value can no longer be read. Type it again to restore it.', 'wp-sell-services' )
+			);
+		} elseif ( $has_secret && '' !== $prefix_hint ) {
 			printf(
 				'<p class="description wpss-secret-field__status"><span class="wpss-secret-field__badge">%1$s</span> %2$s</p>',
 				esc_html__( 'Configured', 'wp-sell-services' ),
