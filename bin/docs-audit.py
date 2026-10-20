@@ -76,7 +76,7 @@ VALID_MENU_ITEMS = {
     "Moderation", "Review Moderation", "Disputes", "Vendors", "Orders",
     "Create Order", "Subscriptions", "Withdrawals", "Analytics",
     "Audit Log", "My Notifications", "Settings", "License", "Upgrade to Pro",
-    "Member Reports",
+    "Member Reports", "Import Reviews",
 }
 
 # Menu labels that used to exist, or that docs keep inventing.

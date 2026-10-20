@@ -54,6 +54,9 @@ $a      = $rs->create_imported( $vendor, $svc->ID, array( 'reviewer_name' => 'QA
 $check( 'an import is saved with no order and reads as imported', ! is_wp_error( $a ) && $a->is_imported() && '2024-01-05' === $a->created_at->format( 'Y-m-d' ) );
 $check( 'importing does not fire wpss_review_created (no email)', 0 === $sent );
 
+$dry = $rs->create_imported( $vendor, $svc->ID, array( 'reviewer_name' => 'QA-IMPORT Dry', 'rating' => 5, 'content' => 'x' ), true );
+$check( 'a dry run passes every check and saves nothing', true === $dry && ! $wpdb->get_var( "SELECT id FROM {$t} WHERE reviewer_name = 'QA-IMPORT Dry'" ) ); // phpcs:ignore WordPress.DB
+
 $dup = $rs->create_imported( $vendor, $svc->ID, array( 'reviewer_name' => 'QA-IMPORT Ann', 'rating' => 5, 'content' => 'Great work' ) );
 $check( 'the same reviewer and text is refused as a duplicate', is_wp_error( $dup ) && 'wpss_import_review_duplicate' === $dup->get_error_code() );
 

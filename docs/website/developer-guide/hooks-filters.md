@@ -778,7 +778,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_realtime_settings` | `array $settings` | `RealtimeService.php` |
-| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:534` |
+| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:604` |
 | `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/API/ReviewsController.php:437` |
 | `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:647` |
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |

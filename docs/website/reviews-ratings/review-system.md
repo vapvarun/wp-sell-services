@@ -87,6 +87,22 @@ Go to **Settings > Vendor Settings** and enable **Review Moderation**. Once enab
 
 Moderation is useful for new marketplaces where you want to ensure review quality, or if you have had problems with spam or abusive reviews. For established marketplaces with a trusted user base, auto-approval keeps the feedback loop fast.
 
+## Importing Reviews **[PRO]**
+
+When you launch a marketplace with vendors you added yourself, their profiles start empty. Admins can give them a head start with reviews gathered elsewhere. Vendors cannot add reviews for themselves.
+
+Go to **Sell Services > Import Reviews**. You can:
+
+- **Add one review** -- pick the vendor, pick one of their services, enter the reviewer name, a 1-5 star rating, the review text and an optional date.
+- **Import a CSV** -- download the template, fill it in (up to 500 rows per file), choose **Check file** to preview every row, then **Import**. The preview saves nothing and tells you which rows are ready, which are already imported and which need fixing.
+
+Imported reviews:
+
+- Count toward the service rating, the vendor rating and seller levels, like any approved review.
+- Show an **Imported review** label so visitors are not misled into reading them as verified purchases.
+- Are not tied to an order, so there is no Verified Purchase badge and no email goes to the vendor.
+- Are skipped when the same vendor, service, reviewer name and review text already exist, so running the same file twice adds nothing.
+
 ## How Ratings Are Calculated
 
 **Service rating:** The average of all approved review ratings for that specific service.

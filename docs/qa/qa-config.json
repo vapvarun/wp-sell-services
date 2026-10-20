@@ -346,6 +346,14 @@
    {
     "id": "pro-offline-submit-delegates",
     "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-offline-submit-delegates.php"
+   },
+   {
+    "id": "imported-reviews",
+    "run": "${WP_CLI:-wp} eval-file tests/test-imported-reviews.php"
+   },
+   {
+    "id": "pro-review-import-route",
+    "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-review-import-route.php"
    }
   ]
  }

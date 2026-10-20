@@ -144,9 +144,10 @@ class ReviewService {
 	 * @param int                  $vendor_id  Vendor user ID.
 	 * @param int                  $service_id Service the review is about; must be the vendor's.
 	 * @param array<string, mixed> $data       reviewer_name, rating (1-5), content, date (optional, any strtotime format).
-	 * @return Review|\WP_Error
+	 * @param bool                 $dry_run    Run every check and save nothing.
+	 * @return Review|true|\WP_Error The review, true for a dry run that would succeed, or why not.
 	 */
-	public function create_imported( int $vendor_id, int $service_id, array $data ) {
+	public function create_imported( int $vendor_id, int $service_id, array $data, bool $dry_run = false ) {
 		$service = get_post( $service_id );
 
 		if ( ! $service || 'wpss_service' !== $service->post_type || (int) $service->post_author !== $vendor_id || ! wpss_is_vendor( $vendor_id ) ) {
@@ -166,6 +167,10 @@ class ReviewService {
 
 		if ( $repo->imported_exists( $vendor_id, $service_id, $name, $content ) ) {
 			return new \WP_Error( 'wpss_import_review_duplicate', __( 'This review is already imported for this service.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
+		if ( $dry_run ) {
+			return true;
 		}
 
 		$review_id = $repo->insert(

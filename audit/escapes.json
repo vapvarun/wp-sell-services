@@ -632,6 +632,22 @@
    "added": "2026-10-20",
    "fails_on": "Pro fbbbdd5 (own insert at the flat package price, no package id)",
    "check": "wp-sell-services-pro/tests/test-offline-submit-delegates.php"
+  },
+  {
+   "card": "10421729953",
+   "title": "an admin-imported review has no order, is labelled, counts in ratings and is created through the one create_imported door",
+   "guard": "static:imported-reviews",
+   "added": "2026-10-20",
+   "fails_on": "e834c2a3 (no create_imported, order_id NOT NULL, no imported label)",
+   "check": "tests/test-imported-reviews.php"
+  },
+  {
+   "card": "10421729953",
+   "title": "the CSV import route is admin-only, caps at 500 rows, previews without saving and refuses repeats",
+   "guard": "static:pro-review-import-route",
+   "added": "2026-10-20",
+   "fails_on": "Pro fbbbdd5 (route did not exist)",
+   "check": "wp-sell-services-pro/tests/test-review-import-route.php"
   }
  ]
 }
