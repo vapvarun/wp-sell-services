@@ -103,6 +103,8 @@ do_action( 'wpss_before_extension_view', $current_order );
 					esc_html_e( 'Extra work paid', 'wp-sell-services' );
 				} elseif ( $is_pending ) {
 					esc_html_e( 'Quote sent — awaiting buyer payment', 'wp-sell-services' );
+				} elseif ( $awaiting_confirmation ) {
+					esc_html_e( 'Payment submitted — awaiting your confirmation', 'wp-sell-services' );
 				} else {
 					esc_html_e( 'Quote declined', 'wp-sell-services' );
 				}
@@ -111,6 +113,8 @@ do_action( 'wpss_before_extension_view', $current_order );
 					esc_html_e( 'Extra work paid', 'wp-sell-services' );
 				} elseif ( $is_pending ) {
 					esc_html_e( 'Quote from seller', 'wp-sell-services' );
+				} elseif ( $awaiting_confirmation ) {
+					esc_html_e( 'Payment submitted — awaiting confirmation', 'wp-sell-services' );
 				} else {
 					esc_html_e( 'Quote declined', 'wp-sell-services' );
 				}
@@ -192,11 +196,9 @@ do_action( 'wpss_before_extension_view', $current_order );
 				</button>
 			<?php endif; ?>
 
-			<?php // Acknowledged, with the alternative left open - "View original order" below carries the instructions. ?>
+			<?php // Waiting on the owner to confirm: the notice, bank instructions and proof upload hang off wpss_order_view_details (as on the milestone page); paying another way stays reachable. ?>
 			<?php if ( $is_buyer && $awaiting_confirmation ) : ?>
-				<p class="wpss-notice wpss-notice--info wpss-extension-awaiting">
-					<?php echo esc_html( wpss_offline_payment_notice( $current_order ) ); ?>
-				</p>
+				<?php do_action( 'wpss_order_view_details', $current_order ); ?>
 				<?php if ( '' !== $pay_url ) : ?>
 					<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--ghost">
 						<?php esc_html_e( 'Pay by another method', 'wp-sell-services' ); ?>

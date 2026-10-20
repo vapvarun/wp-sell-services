@@ -650,6 +650,14 @@
    "check": "tests/test-wc-my-services-paged.php"
   },
   {
+   "card": "10422268705",
+   "title": "offline extra-work pay page reads as waiting for confirmation, with bank instructions and receipt upload, not 'Quote declined'",
+   "guard": "static:extension-awaiting-view",
+   "added": "2026-10-20",
+   "fails_on": "222d3797 (heading else-branch printed Quote declined; wpss_order_view_details never fired)",
+   "check": "tests/test-extension-awaiting-view.php"
+  },
+  {
    "card": "ponytail-audit-free-2026-10-20",
    "title": "vendor and service ratings come from ReviewRepository::rating_stats() only, counting approved buyer reviews",
    "guard": "static:rating-single-source",

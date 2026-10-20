@@ -356,6 +356,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-wc-my-services-paged.php"
    },
    {
+    "id": "extension-awaiting-view",
+    "run": "${WP_CLI:-wp} eval-file tests/test-extension-awaiting-view.php"
+   },
+   {
     "id": "rating-single-source",
     "run": "${WP_CLI:-wp} eval-file tests/test-rating-single-source.php"
    },
