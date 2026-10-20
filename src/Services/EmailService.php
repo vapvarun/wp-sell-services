@@ -2446,15 +2446,9 @@ class EmailService {
 			self::TYPE_WITHDRAWAL_APPROVED    => 'withdrawals',
 			self::TYPE_WITHDRAWAL_COMPLETED   => 'withdrawals',
 			self::TYPE_WITHDRAWAL_REJECTED    => 'withdrawals',
-			self::TYPE_PROPOSAL_SUBMITTED     => 'proposals',
-			self::TYPE_PROPOSAL_ACCEPTED      => 'proposals',
-			self::TYPE_MILESTONE_PROPOSED     => 'proposals',
-			self::TYPE_MILESTONE_PAID         => 'proposals',
-			self::TYPE_MILESTONE_SUBMITTED    => 'proposals',
-			self::TYPE_MILESTONE_APPROVED     => 'proposals',
-			self::TYPE_EXTENSION_PROPOSED     => 'proposals',
-			self::TYPE_EXTENSION_APPROVED     => 'proposals',
-			self::TYPE_EXTENSION_DECLINED     => 'proposals',
+			// Proposal, milestone and extension emails are deliberately absent:
+			// they carry a payment or a deadline, so they always send (the
+			// preferences screen says so).
 			// A receipt decision is news about the buyer's own order, so it
 			// belongs to the category they already control for order updates -
 			// not a new switch nobody knows to look for.

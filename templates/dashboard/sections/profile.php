@@ -247,6 +247,9 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			<p class="wpss-email-preferences__intro">
 				<?php esc_html_e( 'Choose which emails you want to receive. In-app notifications still appear regardless of these settings.', 'wp-sell-services' ); ?>
 			</p>
+			<p class="wpss-email-preferences__intro">
+				<?php esc_html_e( 'Emails about payments, proposals, milestones and extensions are always sent, because they carry an amount or a deadline.', 'wp-sell-services' ); ?>
+			</p>
 			<?php // Saved by Save Changes with the rest of the form (wpss_save_member_profile()). ?>
 			<input type="hidden" name="email_prefs_submitted" value="1">
 			<div class="wpss-email-pref-list">

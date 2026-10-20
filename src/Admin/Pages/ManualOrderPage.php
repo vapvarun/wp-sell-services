@@ -785,8 +785,19 @@ class ManualOrderPage {
 		$package_id = $resolved ? (int) $resolved['index'] : null;
 		$package    = $resolved ? $resolved['package'] : array();
 
+		// A price the admin typed (or an exact total) is a custom order: it is no
+		// longer the package's price, so the order must not carry the package.
+		$custom = $subtotal_input > 0 || $total_override > 0;
+
+		if ( $custom ) {
+			$package_id = null;
+			$package    = array();
+		}
+
 		if ( $subtotal_input > 0 ) {
 			$subtotal = $subtotal_input;
+		} elseif ( $total_override > 0 ) {
+			$subtotal = $total_override;
 		} elseif ( $package ) {
 			$subtotal = (float) ( $package['price'] ?? 0 );
 		} else {
@@ -800,7 +811,13 @@ class ManualOrderPage {
 		}
 
 		$addons_total = (float) $priced_addons['addons_total'];
-		$line         = CheckoutIntentService::price_line( $service_id, $subtotal, $addons_total, $vendor_id );
+
+		// An exact total already includes the add-ons, so the subtotal is the rest.
+		if ( $total_override > 0 && $subtotal_input <= 0 ) {
+			$subtotal = max( 0.0, $total_override - $addons_total );
+		}
+
+		$line = CheckoutIntentService::price_line( $service_id, $subtotal, $addons_total, $vendor_id );
 
 		if ( $total_override > 0 ) {
 			$line = array(

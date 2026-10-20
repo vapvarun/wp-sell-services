@@ -86,8 +86,7 @@ function wpss_get_email_preference_categories( int $user_id = 0 ): array {
 		),
 	);
 
-	// Selling-only. A buyer is never tipped, never withdraws, and never receives
-	// a proposal or a milestone request.
+	// Selling-only. A buyer is never tipped and never withdraws.
 	if ( $is_vendor ) {
 		$categories['tips']        = array(
 			'label' => __( 'Tips received', 'wp-sell-services' ),
@@ -96,10 +95,6 @@ function wpss_get_email_preference_categories( int $user_id = 0 ): array {
 		$categories['withdrawals'] = array(
 			'label' => __( 'Withdrawal status updates', 'wp-sell-services' ),
 			'desc'  => __( 'When your withdrawal request is approved, paid out, or rejected.', 'wp-sell-services' ),
-		);
-		$categories['proposals']   = array(
-			'label' => __( 'Proposals + milestones + extensions', 'wp-sell-services' ),
-			'desc'  => __( 'When a proposal is accepted or a milestone / extension is paid.', 'wp-sell-services' ),
 		);
 	}
 

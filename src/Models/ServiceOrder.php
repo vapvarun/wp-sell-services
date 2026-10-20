@@ -1090,7 +1090,7 @@ class ServiceOrder {
 		// in has_package() so callers can branch on it without string-matching
 		// this localised label.
 		if ( ! $this->has_package() ) {
-			return __( 'Custom', 'wp-sell-services' );
+			return __( 'Custom order', 'wp-sell-services' );
 		}
 
 		// get_package_snapshot() resolves the frozen snapshot first and falls
