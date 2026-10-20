@@ -368,6 +368,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-contract-totals-paid-count.php"
    },
    {
+    "id": "manual-order-form-posts-no-price",
+    "run": "${WP_CLI:-wp} eval-file tests/test-manual-order-form-posts-no-price.php"
+   },
+   {
     "id": "rating-single-source",
     "run": "${WP_CLI:-wp} eval-file tests/test-rating-single-source.php"
    },

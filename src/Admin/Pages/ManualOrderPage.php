@@ -328,8 +328,7 @@ class ManualOrderPage {
 									<?php endif; ?>
 
 									<!-- Hidden calculated fields -->
-									<?php // The package price is the base; everything else is priced by the server (price_manual_order()). ?>
-									<input type="hidden" name="subtotal" id="wpss-calculated-subtotal" value="0">
+									<?php // Nothing is posted as a price: the server prices the package, add-ons and tax (price_manual_order()). ?>
 								</div>
 							</div>
 						</div>

@@ -20,7 +20,6 @@
 	}
 
 	var state = {
-		subtotal: 0,
 		deliveryDays: 0,
 		revisions: 0,
 		overrideTotal: false,
@@ -43,8 +42,6 @@
 	var quoteRequest = 0;
 
 	function updatePricingSummary() {
-		$('#wpss-calculated-subtotal').val(state.subtotal.toFixed(2));
-
 		clearTimeout(quoteTimer);
 		quoteTimer = setTimeout(function () {
 			if (!$('#wpss-service-id').val()) {
@@ -104,7 +101,6 @@
 		if (!serviceId) {
 			$packageRow.hide();
 			$addonsContainer.hide();
-			state.subtotal = 0;
 			updatePricingSummary();
 			return;
 		}
@@ -158,12 +154,6 @@
 					$packageRow.show();
 				} else {
 					$packageRow.hide();
-					// Use starting price from service.
-					var startPrice =
-						parseFloat(
-							$('#wpss-service-id option:selected').data('price')
-						) || 0;
-					state.subtotal = startPrice;
 					updatePricingSummary();
 				}
 			},
@@ -373,7 +363,6 @@
 		}
 
 		// Reset state.
-		state.subtotal = 0;
 
 		loadPackages(serviceId);
 		loadVendorCommissionRate(vendorId);
@@ -384,14 +373,7 @@
 		var $selected = $(this).find(':selected');
 
 		if (!$selected.val()) {
-			// No package selected, use service starting price.
-			var startPrice =
-				parseFloat(
-					$('#wpss-service-id option:selected').data('price')
-				) || 0;
-			state.subtotal = startPrice;
 		} else {
-			state.subtotal = parseFloat($selected.data('price')) || 0;
 			state.deliveryDays = parseInt($selected.data('delivery'), 10) || 0;
 			state.revisions = parseInt($selected.data('revisions'), 10) || 0;
 
@@ -515,7 +497,6 @@
 		$form[0].reset();
 		$('#wpss-package-row').hide();
 		$('#wpss-addons-container').hide();
-		state.subtotal = 0;
 		state.overrideTotal = false;
 		$('#wpss-total-override').prop('disabled', true);
 		updatePricingSummary();

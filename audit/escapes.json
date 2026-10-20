@@ -650,6 +650,14 @@
    "check": "tests/test-contract-totals-paid-count.php"
   },
   {
+   "card": "10422287658",
+   "title": "the Create Order form posts no price of its own, so a package order is not turned into Custom order",
+   "guard": "static:manual-order-form-posts-no-price",
+   "added": "2026-10-20",
+   "fails_on": "HEAD~4 (hidden subtotal field filled with the package price; two form assertions fail)",
+   "check": "tests/test-manual-order-form-posts-no-price.php"
+  },
+  {
    "card": "10422274375",
    "title": "an admin-created order set to Pending Payment is saved unpaid, never Pending Payment and Paid at once",
    "guard": "static:manual-order-payment-status",
