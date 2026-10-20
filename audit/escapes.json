@@ -642,6 +642,14 @@
    "check": "tests/test-load-reviews-vendor.php"
   },
   {
+   "card": "10422280868",
+   "title": "the admin Financial Summary counts paid phases, not the phases in the contract",
+   "guard": "static:contract-totals-paid-count",
+   "added": "2026-10-20",
+   "fails_on": "HEAD~3 (get_contract_totals had no paid_count; the label printed count)",
+   "check": "tests/test-contract-totals-paid-count.php"
+  },
+  {
    "card": "10422274375",
    "title": "an admin-created order set to Pending Payment is saved unpaid, never Pending Payment and Paid at once",
    "guard": "static:manual-order-payment-status",

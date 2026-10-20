@@ -910,7 +910,7 @@ class MilestoneService {
 	 * @since 1.9.1
 	 *
 	 * @param int $parent_order_id Parent service order ID.
-	 * @return array{total: float, paid: float, commission: float, earnings: float, count: int}
+	 * @return array{total: float, paid: float, commission: float, earnings: float, count: int, paid_count: int}
 	 */
 	public function get_contract_totals( int $parent_order_id ): array {
 		$totals = array(
@@ -919,6 +919,7 @@ class MilestoneService {
 			'commission' => 0.0,
 			'earnings'   => 0.0,
 			'count'      => 0,
+			'paid_count' => 0,
 		);
 
 		foreach ( $this->get_for_parent( $parent_order_id ) as $phase ) {
@@ -936,6 +937,7 @@ class MilestoneService {
 			// Refunded was paid and came back, so it is contracted but no longer paid.
 			if ( 'paid' === ( $phase['payment_status'] ?? '' ) && 'refunded' !== $status ) {
 				$totals['paid']       += $amount;
+				++$totals['paid_count'];
 				$totals['commission'] += (float) ( $phase['platform_fee'] ?? 0 );
 				$totals['earnings']   += (float) ( $phase['vendor_earnings'] ?? 0 );
 			}

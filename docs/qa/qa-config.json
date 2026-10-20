@@ -364,6 +364,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-manual-order-payment-status.php"
    },
    {
+    "id": "contract-totals-paid-count",
+    "run": "${WP_CLI:-wp} eval-file tests/test-contract-totals-paid-count.php"
+   },
+   {
     "id": "rating-single-source",
     "run": "${WP_CLI:-wp} eval-file tests/test-rating-single-source.php"
    },

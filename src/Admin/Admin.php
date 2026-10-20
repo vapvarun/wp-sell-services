@@ -2583,8 +2583,8 @@ class Admin {
 									<tr>
 										<td>
 											<?php
-											/* translators: %d: number of phases in the contract */
-											echo esc_html( sprintf( _n( 'Paid so far (%d phase)', 'Paid so far (%d phases)', $wpss_contract['count'], 'wp-sell-services' ), $wpss_contract['count'] ) );
+											/* translators: 1: phases paid, 2: phases in the contract */
+											echo esc_html( sprintf( _n( 'Paid so far (%1$d of %2$d phase)', 'Paid so far (%1$d of %2$d phases)', $wpss_contract['count'], 'wp-sell-services' ), $wpss_contract['paid_count'], $wpss_contract['count'] ) );
 											?>
 										</td>
 										<td><?php echo esc_html( wpss_format_price( $wpss_contract['paid'], $order->currency ) ); ?></td>
