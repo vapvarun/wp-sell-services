@@ -19,7 +19,6 @@
         "src/Frontend/TemplateLoader.php": 1,
         "src/Integrations/Gateways/OfflineGateway.php": 4,
         "src/Integrations/Standalone/StandaloneCheckoutProvider.php": 1,
-        "src/Services/FAQService.php": 1,
         "templates/cart/cart.php": 1,
         "templates/dashboard/sections/create-request.php": 1,
         "templates/dashboard/sections/edit-request.php": 1,

@@ -4399,3 +4399,8 @@ a.wpss-order-filter.is-active:focus {
 		padding-block: var(--wpss-space-5, 1.25rem) var(--wpss-space-8, 2rem);
 	}
 }
+
+.wpss-review-service {
+	margin: 0 0 var(--wpss-space-2, 0.5rem);
+	font-size: var(--wpss-font-size-sm, 0.875rem);
+}

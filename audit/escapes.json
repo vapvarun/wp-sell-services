@@ -634,6 +634,14 @@
    "check": "wp-sell-services-pro/tests/test-offline-submit-delegates.php"
   },
   {
+   "card": "ponytail-audit-free-2026-10-20",
+   "title": "vendor and service ratings come from ReviewRepository::rating_stats() only, counting approved buyer reviews",
+   "guard": "static:rating-single-source",
+   "added": "2026-10-20",
+   "fails_on": "928f26c9 (four readers ran their own SQL with no review_type filter; test fails there on the missing rating_stats method, not on a value)",
+   "check": "tests/test-rating-single-source.php"
+  },
+  {
    "card": "10421729953",
    "title": "an admin-imported review has no order, is labelled, counts in ratings and is created through the one create_imported door",
    "guard": "static:imported-reviews",

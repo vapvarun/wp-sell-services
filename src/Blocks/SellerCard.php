@@ -263,17 +263,10 @@ class SellerCard extends AbstractBlock {
 		// wpss_reviews twice for the same rows. Aggregating both in one pass also
 		// removes the chance of the two disagreeing if a review is approved
 		// between them.
-		$review_stats = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT AVG(rating) AS avg_rating, COUNT(*) AS review_count
-				FROM {$wpdb->prefix}wpss_reviews
-				WHERE vendor_id = %d AND status = 'approved' AND review_type = 'customer_to_vendor'",
-				$user_id
-			)
-		);
+		$review_stats = ( new \WPSellServices\Database\Repositories\ReviewRepository() )->rating_stats( 'vendor_id', $user_id );
 
-		$rating  = (float) ( $review_stats->avg_rating ?? 0 );
-		$reviews = (int) ( $review_stats->review_count ?? 0 );
+		$rating  = $review_stats['average'];
+		$reviews = $review_stats['count'];
 
 		// Response time comes from the response_time_hours column on the
 		// canonical wpss_vendor_profiles table.

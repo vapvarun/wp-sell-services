@@ -838,15 +838,7 @@ class VendorsController extends RestController {
 		);
 
 		// Reviews stats.
-		$reviews_table = $wpdb->prefix . 'wpss_reviews';
-		$review_stats  = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT COUNT(*) as total, AVG(rating) as average
-				FROM {$reviews_table}
-				WHERE vendor_id = %d AND status = 'approved'",
-				$vendor_id
-			)
-		);
+		$review_stats = ( new \WPSellServices\Database\Repositories\ReviewRepository() )->rating_stats( 'vendor_id', (int) $vendor_id );
 
 		// Response time (response_time_hours column on the canonical
 		// wpss_vendor_profiles table — the _wpss_avg_response_time user-meta
@@ -883,8 +875,8 @@ class VendorsController extends RestController {
 				'cancelled_orders'  => (int) $order_stats->cancelled_orders,
 				'completion_rate'   => $completion_rate,
 				'on_time_rate'      => $on_time_rate,
-				'total_reviews'     => (int) $review_stats->total,
-				'average_rating'    => round( (float) $review_stats->average, 1 ),
+				'total_reviews'     => $review_stats['count'],
+				'average_rating'    => round( $review_stats['average'], 1 ),
 				'avg_response_time' => $avg_response_time,
 				'member_since'      => $this->format_datetime( $wpss_vp && $wpss_vp->member_since ? $wpss_vp->member_since->format( 'Y-m-d H:i:s' ) : null ),
 			)

@@ -473,31 +473,19 @@ class ReviewService {
 	 */
 	private function update_vendor_rating( int $vendor_id ): void {
 		global $wpdb;
-		$reviews_table = $wpdb->prefix . 'wpss_reviews';
+
 		$vendors_table = $wpdb->prefix . 'wpss_vendor_profiles';
+		$stats         = ( new ReviewRepository() )->rating_stats( 'vendor_id', $vendor_id );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$stats = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT AVG(rating) as avg_rating, COUNT(*) as review_count
-				FROM {$reviews_table}
-				WHERE vendor_id = %d AND status = %s",
-				$vendor_id,
-				Review::STATUS_APPROVED
-			)
+		$wpdb->update(
+			$vendors_table,
+			array(
+				'avg_rating'    => round( $stats['average'], 2 ),
+				'total_reviews' => $stats['count'],
+			),
+			array( 'user_id' => $vendor_id )
 		);
-
-		if ( $stats ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$vendors_table,
-				array(
-					'avg_rating'    => round( (float) $stats->avg_rating, 2 ),
-					'total_reviews' => (int) $stats->review_count,
-				),
-				array( 'user_id' => $vendor_id )
-			);
-		}
 	}
 
 	/**

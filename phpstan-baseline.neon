@@ -1159,36 +1159,6 @@ parameters:
 			path: src/Core/SchemaValidator.php
 
 		-
-			message: '#^Method WPSellServices\\Database\\Repositories\\DisputeRepository\:\:count_by_status\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Database/Repositories/DisputeRepository.php
-
-		-
-			message: '#^Method WPSellServices\\Database\\Repositories\\DisputeRepository\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Database/Repositories/DisputeRepository.php
-
-		-
-			message: '#^Method WPSellServices\\Database\\Repositories\\ExtensionRequestRepository\:\:count_by_status\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Database/Repositories/ExtensionRequestRepository.php
-
-		-
-			message: '#^Method WPSellServices\\Database\\Repositories\\ExtensionRequestRepository\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Database/Repositories/ExtensionRequestRepository.php
-
-		-
-			message: '#^Method WPSellServices\\Database\\Repositories\\ExtensionRequestRepository\:\:get_statistics\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Database/Repositories/ExtensionRequestRepository.php
-
-		-
 			message: '#^Negated boolean expression is always true\.$#'
 			identifier: booleanNot.alwaysTrue
 			count: 1
@@ -2891,48 +2861,6 @@ parameters:
 			identifier: argument.type
 			count: 3
 			path: src/Services/ExtensionRequestService.php
-
-		-
-			message: '#^Method WPSellServices\\Services\\FAQService\:\:get_faqs\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/FAQService.php
-
-		-
-			message: '#^Method WPSellServices\\Services\\FAQService\:\:get_schema\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/FAQService.php
-
-		-
-			message: '#^Method WPSellServices\\Services\\FAQService\:\:render\(\) has parameter \$args with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/FAQService.php
-
-		-
-			message: '#^Method WPSellServices\\Services\\FAQService\:\:render_admin_item\(\) has parameter \$faq with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/FAQService.php
-
-		-
-			message: '#^Method WPSellServices\\Services\\FAQService\:\:reorder\(\) has parameter \$order with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/FAQService.php
-
-		-
-			message: '#^Method WPSellServices\\Services\\FAQService\:\:save_faqs\(\) has parameter \$faqs with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/FAQService.php
-
-		-
-			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Services/FAQService.php
 
 		-
 			message: '#^Method WPSellServices\\Services\\GalleryService\:\:add_item\(\) has parameter \$item with no value type specified in iterable type array\.$#'

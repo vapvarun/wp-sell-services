@@ -74,6 +74,33 @@ class ReviewRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Average rating and count of the approved buyer reviews for a vendor or service.
+	 *
+	 * The one query behind every stored and displayed rating, so the vendor card,
+	 * the REST stats, seller levels and the profile row cannot disagree on which
+	 * reviews count.
+	 *
+	 * @param string $column 'vendor_id' or 'service_id'.
+	 * @param int    $id     Vendor user ID or service post ID.
+	 * @return array{average: float, count: int}
+	 */
+	public function rating_stats( string $column, int $id ): array {
+		$column = 'service_id' === $column ? 'service_id' : 'vendor_id';
+
+		$row = $this->wpdb->get_row(
+			$this->wpdb->prepare(
+				"SELECT AVG(rating) AS average, COUNT(*) AS total FROM {$this->table} WHERE {$column} = %d AND status = 'approved' AND review_type = 'customer_to_vendor'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Column is whitelisted above.
+				$id
+			)
+		);
+
+		return array(
+			'average' => (float) ( $row->average ?? 0 ),
+			'count'   => (int) ( $row->total ?? 0 ),
+		);
+	}
+
+	/**
 	 * Get reviews for a service.
 	 *
 	 * @param int                  $service_id Service post ID.

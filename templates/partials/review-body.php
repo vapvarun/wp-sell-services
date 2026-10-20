@@ -52,6 +52,15 @@ $wpss_reviewer_name = $wpss_review->get_reviewer_name();
 	<?php endif; ?>
 </div>
 
+<?php
+// Set by a list that mixes services (the vendor profile): a seller with several
+// services is judged service by service.
+$wpss_review_service = ! empty( $wpss_review_show_service ) && $wpss_review->service_id ? get_post( $wpss_review->service_id ) : null;
+if ( $wpss_review_service && 'publish' === $wpss_review_service->post_status ) :
+	?>
+	<p class="wpss-review-service"><a href="<?php echo esc_url( get_permalink( $wpss_review_service ) ); ?>"><?php echo esc_html( $wpss_review_service->post_title ); ?></a></p>
+<?php endif; ?>
+
 <?php if ( '' !== $wpss_review->content ) : ?>
 	<div class="wpss-review-content">
 		<?php echo wp_kses_post( wpautop( $wpss_review->content ) ); ?>

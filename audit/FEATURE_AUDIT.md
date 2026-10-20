@@ -111,7 +111,7 @@ Stored in `wpss_*_settings` options. Tabs: General, Vendor, Orders, Earnings, Re
 
 See manifest.json `tables[]` for complete list with purpose. All managed via `WPSellServices\Database\SchemaManager::CORE_TABLES` constant. Schema migrations via `WPSellServices\Database\MigrationManager`.
 
-Repository classes in `src/Database/Repositories/` (8 repos: AbstractRepository, OrderRepository, ConversationRepository, DeliveryRepository, ProposalRepository, ReviewRepository, ServicePackageRepository, VendorProfileRepository).
+Repository classes in `src/Database/Repositories/` (7 repos: AbstractRepository, OrderRepository, ConversationRepository, ProposalRepository, ReviewRepository, ServicePackageRepository, VendorProfileRepository).
 
 ## 7. Content types (CPTs / taxonomies)
 
