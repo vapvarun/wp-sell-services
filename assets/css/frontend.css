@@ -4402,7 +4402,7 @@ a.wpss-order-filter.is-active:focus {
 
 .wpss-review-service {
 	margin: 0 0 var(--wpss-space-2, 0.5rem);
-	font-size: var(--wpss-font-size-sm, 0.875rem);
+	font-size: 0.875rem;
 }
 
 /* The service a review is about is a caption, quieter than the review text under it. */

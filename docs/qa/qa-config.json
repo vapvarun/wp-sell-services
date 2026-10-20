@@ -201,27 +201,31 @@
    },
    {
     "id": "pro-form-state-js",
-    "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-form-state-js.php"
+    "run": "${WP_CLI:-wp} eval-file tests/pro/test-form-state-js.php"
    },
    {
     "id": "pro-rest-partial-update",
-    "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-rest-partial-update.php"
+    "run": "${WP_CLI:-wp} eval-file tests/pro/test-rest-partial-update.php"
    },
    {
     "id": "pro-seams-subscriptions-carrier",
-    "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-seams-subscriptions-carrier.php"
+    "run": "${WP_CLI:-wp} eval-file tests/pro/test-seams-subscriptions-carrier.php"
    },
    {
     "id": "pro-woo-cart-session-price",
-    "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-woo-cart-session-price.php"
+    "run": "${WP_CLI:-wp} eval-file tests/pro/test-woo-cart-session-price.php"
    },
    {
     "id": "publish-blocked-notice",
     "run": "${WP_CLI:-wp} eval-file tests/test-publish-blocked-notice.php"
    },
    {
+    "id": "integration-seam-contract",
+    "run": "${WP_CLI:-wp} eval-file tests/test-integration-seam-contract.php"
+   },
+   {
     "id": "rest-matrix",
-    "run": "${WP_CLI:-wp} eval-file tests/test-integration-seam-contract.php  and tests/test-rest-matrix.php"
+    "run": "${WP_CLI:-wp} eval-file tests/test-rest-matrix.php"
    },
    {
     "id": "review-helpful-toggle",
