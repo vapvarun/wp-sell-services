@@ -48,6 +48,32 @@ class ReviewRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Whether an admin-imported review with this reviewer and text already exists.
+	 *
+	 * Imported reviews have no order, so the unique key cannot stop a repeat;
+	 * this is the one check every import path shares.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param int    $vendor_id     Vendor user ID.
+	 * @param int    $service_id    Service post ID.
+	 * @param string $reviewer_name Reviewer name.
+	 * @param string $content       Review text.
+	 * @return bool
+	 */
+	public function imported_exists( int $vendor_id, int $service_id, string $reviewer_name, string $content ): bool {
+		return (bool) $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				"SELECT id FROM {$this->table} WHERE order_id IS NULL AND vendor_id = %d AND service_id = %d AND reviewer_name = %s AND review = %s LIMIT 1",
+				$vendor_id,
+				$service_id,
+				$reviewer_name,
+				$content
+			)
+		);
+	}
+
+	/**
 	 * Get reviews for a service.
 	 *
 	 * @param int                  $service_id Service post ID.

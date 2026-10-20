@@ -432,6 +432,9 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 											<strong class="wpss-review-author">
 												<?php echo esc_html( $reviewer_name ); ?>
 											</strong>
+											<?php if ( empty( $review->order_id ) ) : ?>
+												<span class="wpss-review-imported"><?php esc_html_e( 'Imported review', 'wp-sell-services' ); ?></span>
+											<?php endif; ?>
 											<span class="wpss-review-date">
 												<?php echo esc_html( wpss_time_ago( $review->created_at ) ); ?>
 												<?php

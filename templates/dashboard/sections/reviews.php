@@ -73,7 +73,7 @@ $avg_rating   = $profile ? (float) $profile->rating : 0.0;
 				<article class="wpss-review" id="wpss-review-<?php echo esc_attr( (string) $wpss_review->id ); ?>">
 					<?php if ( '' !== $service_title ) : ?>
 						<p class="wpss-review-service">
-							<a href="<?php echo esc_url( wpss_get_order_url( $wpss_review->order_id, 'sales' ) ); ?>"><?php echo esc_html( $service_title ); ?></a>
+							<a href="<?php echo esc_url( $wpss_review->is_imported() ? get_permalink( $wpss_review->service_id ) : wpss_get_order_url( $wpss_review->order_id, 'sales' ) ); ?>"><?php echo esc_html( $service_title ); ?></a>
 						</p>
 					<?php endif; ?>
 					<?php include wpss_locate_template( 'partials/review-body.php' ); ?>

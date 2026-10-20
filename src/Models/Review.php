@@ -228,6 +228,17 @@ class Review {
 	}
 
 	/**
+	 * Whether an admin brought this review in rather than a buyer writing it for an order.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @return bool
+	 */
+	public function is_imported(): bool {
+		return 0 === $this->order_id;
+	}
+
+	/**
 	 * Get reviewer name for display.
 	 *
 	 * @return string

@@ -271,10 +271,11 @@ class SchemaManager {
 	 * removed row written to the audit log. Ledger rows are removed only when
 	 * they are exact copies (same user, amount, key); a same-key row with a
 	 * different amount is a bookkeeping question, not a duplicate, and is
-	 * logged for a human instead. Reviews with order_id 0 belong to no order
-	 * (an admin-imported review), so they are never "duplicates" of each other
-	 * and are left alone. The audit row keeps identifiers and ratings only: review
-	 * text is personal data the eraser would not reach in the log.
+	 * logged for a human instead. Reviews with no order (admin-imported) store
+	 * order_id NULL, which never joins to another review, so they are never
+	 * "duplicates"; order 0 from earlier imports is moved to NULL first. The
+	 * audit row keeps identifiers and ratings only: review text is personal
+	 * data the eraser would not reach in the log.
 	 * Idempotent: nothing to remove on a clean or
 	 * fresh install.
 	 *
@@ -308,20 +309,20 @@ class SchemaManager {
 		}
 
 		if ( $reviews === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $reviews ) ) ) {
+			// A review with no order (admin-imported) stores NULL, which the unique
+			// key allows many times; order 0, which earlier imports used, would
+			// collide. Make the column nullable and move those rows first.
+			if ( 'NO' === $this->wpdb->get_var( "SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$reviews}' AND COLUMN_NAME = 'order_id'" ) ) {
+				$this->wpdb->query( "ALTER TABLE {$reviews} MODIFY order_id bigint(20) unsigned DEFAULT NULL" );
+			}
+			$this->wpdb->query( "UPDATE {$reviews} SET order_id = NULL WHERE order_id = 0" );
+
 			$dupes = $this->wpdb->get_results(
 				"SELECT d.id, d.order_id, d.review_type, d.reviewer_id, d.reviewee_id, d.service_id, d.customer_id, d.vendor_id, d.rating, d.status, d.created_at, k.id AS kept_id
 				FROM {$reviews} d
-				JOIN {$reviews} k ON k.order_id = d.order_id AND k.review_type = d.review_type AND k.id < d.id
-				WHERE d.order_id > 0"
+				JOIN {$reviews} k ON k.order_id = d.order_id AND k.review_type = d.review_type AND k.id < d.id"
 			);
 			$this->remove_duplicates( $reviews, 'review.duplicate_removed', 'review', (array) $dupes );
-
-			// Order-less reviews are never removed, but two of one type would still
-			// block the unique key. Say so instead of letting dbDelta fail silently.
-			$orphans = (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM (SELECT 1 FROM {$reviews} WHERE order_id = 0 GROUP BY review_type HAVING COUNT(*) > 1) x" );
-			if ( $orphans ) {
-				wpss_log( 'Schema 1.7.1: several order-less reviews share a type; left in place, the unique key (order_id, review_type) cannot be added until they get an order.', 'error' );
-			}
 		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 	}
@@ -1481,7 +1482,7 @@ class SchemaManager {
 
 		return "CREATE TABLE {$table} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			order_id bigint(20) unsigned NOT NULL,
+			order_id bigint(20) unsigned DEFAULT NULL,
 			reviewer_id bigint(20) unsigned NOT NULL,
 			reviewer_name varchar(255) DEFAULT NULL,
 			reviewee_id bigint(20) unsigned NOT NULL,

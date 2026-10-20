@@ -38,6 +38,9 @@ $wpss_reviewer_name = $wpss_review->get_reviewer_name();
 		<strong class="wpss-review-author">
 			<?php echo esc_html( $wpss_reviewer_name ); ?>
 		</strong>
+		<?php if ( $wpss_review->is_imported() ) : ?>
+			<span class="wpss-review-imported"><?php esc_html_e( 'Imported review', 'wp-sell-services' ); ?></span>
+		<?php endif; ?>
 		<div class="wpss-review-rating">
 			<?php echo wpss_star_rating( (float) $wpss_review->rating ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper. ?>
 		</div>

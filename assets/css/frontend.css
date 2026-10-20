@@ -1246,6 +1246,17 @@ article.wpss-service-card:hover {
 	color: var(--wpss-text-light);
 }
 
+/* Marks a review an admin brought in rather than one written for an order. */
+.wpss-review-imported {
+	display: inline-block;
+	margin-inline-start: 8px;
+	padding: 1px 8px;
+	border: 1px solid var(--wpss-border);
+	border-radius: 999px;
+	font-size: 12px;
+	color: var(--wpss-text-light);
+}
+
 .wpss-review-content {
 	color: var(--wpss-text);
 	line-height: 1.6;
