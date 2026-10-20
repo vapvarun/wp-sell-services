@@ -279,6 +279,9 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - Updating no longer removes reviews that came from another marketplace; they are kept without an order.
 * Fix      - Registering with role vendor through the REST API now creates a vendor.
 * Fix      - Offline milestone and tip pages show bank instructions and the receipt upload once.
+* Fix      - An offline extra-work payment waiting for confirmation no longer reads Quote declined and shows the bank instructions and receipt upload.
+* Fix      - Create Order no longer turns a package order into Custom order, and an order set to Pending Payment is saved unpaid.
+* Fix      - The admin contract summary says how many phases are paid (1 of 2) instead of how many the contract has.
 * Fix      - Checkout no longer prints unfilled placeholders or every offline method's bank details.
 * Fix      - The admin order screen shows the contract total for milestone projects.
 * Fix      - An unpaid milestone, tip or extension no longer credits the seller's wallet when an admin marks the order completed.

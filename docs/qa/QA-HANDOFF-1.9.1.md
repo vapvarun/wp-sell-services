@@ -113,6 +113,18 @@ Steps:
 
 Steps: an order with a pending extension, as buyer and as vendor. The card is inset at 1440, 1024 and 390, in light and dark, and in RTL.
 
+### Found by the smoke walks, fixed after them (five cards)
+
+| Card | Fix | Test |
+|---|---|---|
+| `10422268705` Offline extra-work pay page says Quote declined, no bank instructions | Free `f14fb2bb` | `tests/test-extension-awaiting-view.php` |
+| `10422270617` Woo My Services page 2 re-renders page 1 | Free `e79c649d`, Pro (same subject) | `tests/test-wc-my-services-paged.php` |
+| `10422274375` Create Order saves Pending Payment and Paid at once | Free `aaf741f9` | `tests/test-manual-order-payment-status.php` |
+| `10422280868` "Paid so far (2 phases)" counts every phase | Free `68ce1217` | `tests/test-contract-totals-paid-count.php` |
+| `10422287658` Create Order reads Custom order for every package; line and total disagree | Free `f07a7250` | `tests/test-manual-order-form-posts-no-price.php` |
+
+Steps are on each card. The Woo pager needs the Woo rail with 25+ services; the local site runs standalone.
+
 ## 4. Also changed, with no card
 
 - **Ratings come from one query:** `ReviewRepository::rating_stats()` is the only average and count. Check that a vendor's rating on the card, profile, REST stats and seller levels all agree (see Reviews).
@@ -143,7 +155,9 @@ Not checked, so please cover them:
 
 ## 6b. Smoke walk
 
-A Sonnet combo smoke walk against these commits was running when this was written. Its report lands in `.qa-results/last-smoke-pass.json`; read it before you start, and treat anything in its `failures` or `untested` lists as extra scope.
+Both walks finished (combo `.qa-results/last-smoke-pass.json`, free `.qa-results/last-smoke-pass-free.json`): WARN, no hard fails. The soft failures that were real are the five cards above. Not carded, judged minor: mini-cart showing `1 x $0.00` after a pay-order visit (stale Woo cart, low confidence), the Replay tour button at 30px and the theme's cart remove button at 32px on a 390px screen, a request budget range showing only its low end, standalone My Services listing 20 per page against 24 on Woo, a phase pay page showing the order number as its Order Details, and a Pro-created tip viewed with Pro off saying "This item is not available".
+
+The walks ran before these five fixes, so the smoke gate will call them stale until the touched surfaces are walked again. Untested in the walks: journeys 03, 04, 11 to 15 beyond a load check, journey 16 tip, decline and deadline steps, offline on the Woo rail, RTL, block theme, dark mode at 1440, Stripe, PayPal and Razorpay, EDD and FluentCart.
 
 ## 7. Verdicts
 
