@@ -348,6 +348,14 @@
     "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-offline-submit-delegates.php"
    },
    {
+    "id": "load-reviews-vendor",
+    "run": "${WP_CLI:-wp} eval-file tests/test-load-reviews-vendor.php"
+   },
+   {
+    "id": "wc-my-services-paged",
+    "run": "${WP_CLI:-wp} eval-file tests/test-wc-my-services-paged.php"
+   },
+   {
     "id": "rating-single-source",
     "run": "${WP_CLI:-wp} eval-file tests/test-rating-single-source.php"
    },

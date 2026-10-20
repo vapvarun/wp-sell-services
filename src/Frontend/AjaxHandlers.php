@@ -1006,7 +1006,7 @@ class AjaxHandlers {
 	}
 
 	/**
-	 * Load more reviews for a service (AJAX pagination).
+	 * Load more reviews for a service or a vendor profile (AJAX pagination).
 	 *
 	 * @return void
 	 */
@@ -1014,29 +1014,34 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
 		$service_id = absint( $_POST['service_id'] ?? 0 );
-		$page       = absint( $_POST['page'] ?? 1 );
+		$vendor_id  = absint( $_POST['vendor_id'] ?? 0 );
+		$page       = max( 1, absint( $_POST['page'] ?? 1 ) );
 		$per_page   = 10;
-
-		if ( ! $service_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
-		}
-
-		$review_service = new ReviewService();
-		$reviews        = $review_service->get_service_reviews(
-			$service_id,
-			array(
-				'limit'  => $per_page,
-				'offset' => ( $page - 1 ) * $per_page,
-			)
+		$args       = array(
+			'limit'  => $per_page,
+			'offset' => ( $page - 1 ) * $per_page,
 		);
 
-		// Get total count for has_more check.
-		$rating_count = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
-		$total_loaded = $page * $per_page;
-		$has_more     = $total_loaded < $rating_count;
+		if ( ! $service_id && ! $vendor_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		$repo = new \WPSellServices\Database\Repositories\ReviewRepository();
+
+		if ( $service_id ) {
+			$reviews      = ( new ReviewService() )->get_service_reviews( $service_id, $args );
+			$rating_count = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
+		} else {
+			// A vendor's list mixes services, so each review names its service.
+			$reviews                  = array_map( array( \WPSellServices\Models\Review::class, 'from_db' ), $repo->get_by_vendor( $vendor_id, $args ) );
+			$rating_count             = $repo->rating_stats( 'vendor_id', $vendor_id )['count'];
+			$wpss_review_show_service = true;
+		}
+
+		$has_more = $page * $per_page < $rating_count;
 
 		// Generate HTML for reviews.
-		$wpss_voted = ( new \WPSellServices\Database\Repositories\ReviewRepository() )->helpful_voted_ids( wp_list_pluck( $reviews, 'id' ), get_current_user_id() );
+		$wpss_voted = $repo->helpful_voted_ids( wp_list_pluck( $reviews, 'id' ), get_current_user_id() );
 
 		ob_start();
 		foreach ( $reviews as $review ) {
@@ -1049,17 +1054,19 @@ class AjaxHandlers {
 				require wpss_locate_template( 'partials/review-body.php' );
 				?>
 
-				<div class="wpss-review-actions">
-					<?php
-					$wpss_helpful = array(
-						'review_id'     => (int) $review->id,
-						'helpful_count' => (int) $review->helpful_count,
-						'reviewer_id'   => (int) $review->reviewer_id,
-						'voted'         => in_array( (int) $review->id, $wpss_voted, true ),
-					);
-					require wpss_locate_template( 'partials/review-helpful.php' );
-					?>
-				</div>
+				<?php if ( $service_id ) : // The vendor profile list has no Helpful control, on page one or after. ?>
+					<div class="wpss-review-actions">
+						<?php
+						$wpss_helpful = array(
+							'review_id'     => (int) $review->id,
+							'helpful_count' => (int) $review->helpful_count,
+							'reviewer_id'   => (int) $review->reviewer_id,
+							'voted'         => in_array( (int) $review->id, $wpss_voted, true ),
+						);
+						require wpss_locate_template( 'partials/review-helpful.php' );
+						?>
+					</div>
+				<?php endif; ?>
 			</div>
 			<?php
 		}

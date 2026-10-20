@@ -634,6 +634,22 @@
    "check": "wp-sell-services-pro/tests/test-offline-submit-delegates.php"
   },
   {
+   "card": "10422086065",
+   "title": "load-more reviews are server-rendered with the shared partial for a vendor as well as a service; no JS review renderer",
+   "guard": "static:load-reviews-vendor",
+   "added": "2026-10-20",
+   "fails_on": "f692392d (handler refused a vendor_id; JS renderers built the markup)",
+   "check": "tests/test-load-reviews-vendor.php"
+  },
+  {
+   "card": "10422089720",
+   "title": "WooCommerce rail My Services pages at 24 and does not load the whole list",
+   "guard": "static:wc-my-services-paged",
+   "added": "2026-10-20",
+   "fails_on": "Pro bdd5aba (get_posts posts_per_page -1, no pagination)",
+   "check": "tests/test-wc-my-services-paged.php"
+  },
+  {
    "card": "ponytail-audit-free-2026-10-20",
    "title": "vendor and service ratings come from ReviewRepository::rating_stats() only, counting approved buyer reviews",
    "guard": "static:rating-single-source",

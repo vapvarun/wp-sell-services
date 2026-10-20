@@ -382,54 +382,42 @@
 	 * Reviews.
 	 */
 	WPSS.initReviews = function() {
-		// Load more reviews.
+		// Load more reviews: the server renders each page with the same partial
+		// as page one, for a service (data-service) or a vendor profile (data-vendor).
 		$(document).on('click', '.wpss-load-more-reviews', function(e) {
 			e.preventDefault();
 
 			const $btn = $(this);
-			const serviceId = $btn.data('service');
-			const vendorId = $btn.data('vendor');
 			const page = parseInt($btn.data('page')) || 2;
 
 			$btn.prop('disabled', true).text(wpssData.i18n.loading);
 
-			let endpoint = 'reviews?';
-			if (serviceId) {
-				endpoint += 'service_id=' + serviceId;
-			} else if (vendorId) {
-				endpoint += 'vendor_id=' + vendorId;
-			}
-			endpoint += '&page=' + page + '&per_page=10';
-
-			$.ajax({
-				url: wpssData.apiUrl + endpoint,
-				type: 'GET',
-				success: function(response) {
-					if (response && response.length) {
-						const $list = $('.wpss-reviews-list');
-
-						response.forEach(function(review) {
-							$list.append(WPSS.renderReview(review));
-						});
-						if (window.lucide && typeof window.lucide.createIcons === 'function') {
-							window.lucide.createIcons();
-						}
-
-						if (response.length < 10) {
-							$btn.hide();
-						} else {
-							$btn.data('page', page + 1).text(wpssData.i18n.loadMoreReviews);
-						}
-					} else {
-						$btn.hide();
-					}
-				},
-				error: function() {
+			$.post(wpssData.ajaxUrl, {
+				action: 'wpss_load_reviews',
+				nonce: wpssData.serviceNonce,
+				service_id: $btn.data('service') || 0,
+				vendor_id: $btn.data('vendor') || 0,
+				page: page
+			}).done(function(response) {
+				if (!response || !response.success) {
 					WPSS.showNotification(wpssData.i18n.reviewsFailed, 'error');
-				},
-				complete: function() {
-					$btn.prop('disabled', false);
+					return;
 				}
+
+				$('.wpss-reviews-list').append(response.data.html);
+				if (window.lucide && typeof window.lucide.createIcons === 'function') {
+					window.lucide.createIcons();
+				}
+
+				if (response.data.has_more) {
+					$btn.data('page', page + 1).text(wpssData.i18n.loadMoreReviews);
+				} else {
+					$btn.hide();
+				}
+			}).fail(function() {
+				WPSS.showNotification(wpssData.i18n.reviewsFailed, 'error');
+			}).always(function() {
+				$btn.prop('disabled', false);
 			});
 		});
 
@@ -546,46 +534,6 @@
 				}
 			});
 		});
-	};
-
-	/**
-	 * Render review HTML.
-	 */
-	WPSS.renderReview = function(review) {
-		let starsHtml = '<span class="wpss-stars">';
-		for (let i = 1; i <= 5; i++) {
-			starsHtml += `<i data-lucide="star" class="wpss-icon wpss-star${i <= review.rating ? ' filled' : ''}" aria-hidden="true"></i>`;
-		}
-		starsHtml += `<span class="screen-reader-text">${review.rating} / 5</span></span>`;
-
-		let replyHtml = '';
-		if (review.vendor_reply) {
-			replyHtml = `
-				<div class="wpss-review-reply">
-					<div class="wpss-reply-header">
-						<strong>${WPSS.escapeHtml(wpssData.i18n.sellerResponse)}</strong>
-					</div>
-					<p>${WPSS.escapeHtml(review.vendor_reply)}</p>
-				</div>
-			`;
-		}
-
-		return `
-			<div class="wpss-review">
-				<div class="wpss-review-header">
-					<img src="${review.customer_avatar}" alt="" class="wpss-review-avatar">
-					<div class="wpss-review-info">
-						<strong class="wpss-review-author">${WPSS.escapeHtml(review.customer_name)}</strong>
-						<div class="wpss-review-rating">${starsHtml}</div>
-					</div>
-					<span class="wpss-review-date">${review.time_ago || review.created_at || wpssData.i18n.justNow}</span>
-				</div>
-				<div class="wpss-review-content">
-					<p>${WPSS.escapeHtml(review.review)}</p>
-				</div>
-				${replyHtml}
-			</div>
-		`;
 	};
 
 	/**

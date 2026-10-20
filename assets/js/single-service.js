@@ -289,56 +289,11 @@
          * Initialize reviews functionality.
          */
         initReviews: function() {
-            const self = this;
             const $reviews = $(this.config.reviews);
 
             if (!$reviews.length) {
                 return;
             }
-
-            // Load more reviews — REST GET /reviews, rendered client-side with
-            // markup parity to the server-rendered review item.
-            const perPage = 10;
-            $reviews.on('click', '.wpss-load-more-reviews', function(e) {
-                e.preventDefault();
-
-                const $btn = $(this);
-                const serviceId = $btn.data('service');
-                const page = parseInt($btn.data('page'), 10);
-
-                $btn.prop('disabled', true).text(wpssService.i18n.loading);
-
-                $.ajax({
-                    url: wpssService.apiUrl + '/reviews?service_id=' + serviceId + '&page=' + page + '&per_page=' + perPage,
-                    method: 'GET',
-                    beforeSend: function(xhr) {
-                        xhr.setRequestHeader('X-WP-Nonce', wpssService.restNonce);
-                    },
-                    success: function(reviews, status, xhr) {
-                        const list = Array.isArray(reviews) ? reviews : [];
-                        const $list = $reviews.find('.wpss-reviews-list');
-                        list.forEach(function(review) {
-                            $list.append(self.renderReviewItem(review));
-                        });
-
-                        // Hydrate Lucide icons in the freshly inserted markup.
-                        if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                            window.lucide.createIcons();
-                        }
-
-                        const total = parseInt(xhr.getResponseHeader('X-WP-Total'), 10) || 0;
-                        const hasMore = (page * perPage) < total;
-                        if (hasMore) {
-                            $btn.data('page', page + 1).prop('disabled', false).text(wpssService.i18n.loadMoreReviews);
-                        } else {
-                            $btn.remove();
-                        }
-                    },
-                    error: function() {
-                        $btn.prop('disabled', false).text(wpssService.i18n.loadMoreReviews);
-                    }
-                });
-            });
 
             // Smooth scroll to reviews.
             $('a[href="#reviews"]').on('click', function(e) {
@@ -389,74 +344,6 @@
                     }
                 });
             });
-        },
-
-        /**
-         * Render a single review item from a REST /reviews object, matching the
-         * server-rendered markup so REST-loaded reviews are visually identical
-         * to the first page rendered by PHP.
-         *
-         * @param {Object} review REST review object.
-         * @return {string} HTML markup for one review.
-         */
-        renderReviewItem: function(review) {
-            const i18n = (wpssService && wpssService.i18n) || {};
-            const esc = function(s) { return $('<div>').text(s == null ? '' : s).html(); };
-
-            const author = review.customer_name || i18n.anonymous;
-            const avatar = review.customer_avatar || '';
-            const rating = parseInt(review.rating, 10) || 0;
-
-            let stars = '<span class="wpss-stars">';
-            for (let i = 1; i <= 5; i++) {
-                stars += '<i data-lucide="star" class="wpss-icon wpss-star' + (i <= rating ? ' filled' : '') + '" aria-hidden="true"></i>';
-            }
-            stars += '<span class="screen-reader-text">' + rating + ' / 5</span></span>';
-
-            let reply = '';
-            if (review.vendor_reply_html) {
-                let replyDate = '';
-                if (review.vendor_reply_human) {
-                    replyDate = '<span class="wpss-reply-date">' + esc(review.vendor_reply_human) + '</span>';
-                }
-                reply =
-                    '<div class="wpss-review-reply">' +
-                        '<div class="wpss-reply-header">' +
-                            '<strong>' + esc(i18n.sellerResponse) + '</strong>' +
-                            replyDate +
-                        '</div>' +
-                        review.vendor_reply_html +
-                    '</div>';
-            }
-
-            let count = '';
-            const helpfulCount = parseInt(review.helpful_count, 10) || 0;
-            if (helpfulCount > 0) {
-                count = '<span class="wpss-helpful-count">(' + helpfulCount + ')</span>';
-            }
-
-            return (
-                '<div class="wpss-review">' +
-                    '<div class="wpss-review-header">' +
-                        '<img src="' + esc(avatar) + '" alt="' + esc(author) + '" class="wpss-review-avatar">' +
-                        '<div class="wpss-review-info">' +
-                            '<strong class="wpss-review-author">' + esc(author) + '</strong>' +
-                            '<div class="wpss-review-rating">' + stars + '</div>' +
-                        '</div>' +
-                        '<span class="wpss-review-date">' + esc(review.created_human || '') + '</span>' +
-                    '</div>' +
-                    '<div class="wpss-review-content">' + (review.review_html || '') + '</div>' +
-                    reply +
-                    '<div class="wpss-review-actions">' +
-                        (!review.viewer_can_vote ? '' :
-                        '<button type="button" class="wpss-review-helpful-btn' + (review.viewer_marked ? ' marked' : '') + '" data-review="' + esc(review.id) + '" aria-pressed="' + (review.viewer_marked ? 'true' : 'false') + '">' +
-                            '<span class="wpss-helpful-icon"><i data-lucide="thumbs-up" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i></span>' +
-                            '<span class="wpss-helpful-text">' + esc(i18n.helpful) + '</span>' +
-                            count +
-                        '</button>') +
-                    '</div>' +
-                '</div>'
-            );
         },
 
         /**

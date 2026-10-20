@@ -9,7 +9,8 @@
  * @since   1.0.0
  * @version 1.9.0
  *
- * @var array $services WordPress posts.
+ * @var array $services       WordPress posts.
+ * @var int   $services_pages Number of pages, when the list is paginated.
  * @var int   $user_id  Current user ID.
  */
 
@@ -95,6 +96,20 @@ do_action( 'wpss_vendor_services_before', $user_id );
 				</div>
 			<?php endforeach; ?>
 		</div>
+		<?php if ( ! empty( $services_pages ) && $services_pages > 1 ) : ?>
+			<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Services pages', 'wp-sell-services' ); ?>">
+				<?php
+				echo wp_kses_post(
+					paginate_links(
+						array(
+							'total'   => (int) $services_pages,
+							'current' => max( 1, (int) get_query_var( 'paged' ) ),
+						)
+					)
+				);
+				?>
+			</nav>
+		<?php endif; ?>
 	<?php endif; ?>
 </div>
 
