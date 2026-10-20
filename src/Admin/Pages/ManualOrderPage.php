@@ -363,6 +363,7 @@ class ManualOrderPage {
 											<option value="failed"><?php esc_html_e( 'Failed', 'wp-sell-services' ); ?></option>
 											<option value="refunded"><?php esc_html_e( 'Refunded', 'wp-sell-services' ); ?></option>
 										</select>
+										<p class="description"><?php esc_html_e( 'An order set to Pending Payment is saved as unpaid, whatever this says.', 'wp-sell-services' ); ?></p>
 									</div>
 
 									<div class="wpss-form-row">
@@ -508,6 +509,10 @@ class ManualOrderPage {
 		$vendor_id_input = absint( $_POST['vendor_id'] ?? 0 );
 		$status          = sanitize_key( $_POST['status'] ?? 'pending_requirements' );
 		$payment_status  = sanitize_key( $_POST['payment_status'] ?? 'paid' );
+		// An order waiting for payment is not paid: the default Paid beside Pending Payment gave a Pay button on a paid order.
+		if ( 'pending_payment' === $status && 'paid' === $payment_status ) {
+			$payment_status = 'pending';
+		}
 		$payment_method  = sanitize_key( $_POST['payment_method'] ?? 'manual' );
 		$transaction_id  = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
 		$delivery_days   = absint( $_POST['delivery_days'] ?? 7 );

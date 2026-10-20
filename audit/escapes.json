@@ -642,6 +642,14 @@
    "check": "tests/test-load-reviews-vendor.php"
   },
   {
+   "card": "10422274375",
+   "title": "an admin-created order set to Pending Payment is saved unpaid, never Pending Payment and Paid at once",
+   "guard": "static:manual-order-payment-status",
+   "added": "2026-10-20",
+   "fails_on": "HEAD~2 (handle_create_order stored the form default payment_status=paid beside status=pending_payment)",
+   "check": "tests/test-manual-order-payment-status.php"
+  },
+  {
    "card": "10422270617",
    "title": "WooCommerce rail My Services page 2 is reachable through the real endpoint URL",
    "guard": "static:wc-my-services-paged",

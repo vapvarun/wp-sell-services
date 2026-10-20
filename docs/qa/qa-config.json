@@ -360,6 +360,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-extension-awaiting-view.php"
    },
    {
+    "id": "manual-order-payment-status",
+    "run": "${WP_CLI:-wp} eval-file tests/test-manual-order-payment-status.php"
+   },
+   {
     "id": "rating-single-source",
     "run": "${WP_CLI:-wp} eval-file tests/test-rating-single-source.php"
    },
