@@ -639,11 +639,8 @@ class AuthController extends RestController {
 			return $user_id;
 		}
 
-		// Vendor promotion is NOT repeated here: create_account() was given the
-		// intent above and the signup path already routes it through
-		// VendorService::register(), which honours the site's
-		// open/approval/closed vendor_registration mode. Calling it twice would
-		// re-run that decision.
+		// Vendor promotion happens inside create_account(), per the site's vendor
+		// registration mode.
 
 		$user = get_user_by( 'ID', $user_id );
 
