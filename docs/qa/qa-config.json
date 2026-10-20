@@ -364,6 +364,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-extension-pending-card-inset.php"
    },
    {
+    "id": "edd-my-services-list",
+    "run": "${WP_CLI:-wp} eval-file tests/test-edd-my-services-list.php"
+   },
+   {
     "id": "manual-order-payment-status",
     "run": "${WP_CLI:-wp} eval-file tests/test-manual-order-payment-status.php"
    },

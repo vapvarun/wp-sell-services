@@ -698,6 +698,14 @@
    "check": "tests/test-extension-pending-card-inset.php"
   },
   {
+   "card": "10422089787",
+   "title": "EDD rail My Services lists the vendor's services (24 per page with a pager) and the tile counts the same set",
+   "guard": "static:edd-my-services-list",
+   "added": "2026-10-21",
+   "fails_on": "4fd5262 (the get_posts that fed the grid was replaced by a count; the grid read an undefined $services and said no services)",
+   "check": "tests/test-edd-my-services-list.php"
+  },
+  {
    "card": "ponytail-audit-free-2026-10-20",
    "title": "vendor and service ratings come from ReviewRepository::rating_stats() only, counting approved buyer reviews",
    "guard": "static:rating-single-source",
