@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**550 hooks** across **761** firing sites.
+**550 hooks** across **768** firing sites.
 
 ## Actions (280)
 
@@ -166,7 +166,7 @@ guide; this is the complete index.
 | `wpss_order_status_in_progress` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php` |  |
 | `wpss_order_status_pending_requirements` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php` |  |
 | `wpss_order_view_actions` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_actions |
-| `wpss_order_view_details` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_details |
+| `wpss_order_view_details` | 1 | `templates/order/milestone-view.php` *(+2 more)* |  |
 | `wpss_order_view_header` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_header |
 | `wpss_order_view_sidebar` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_sidebar |
 | `wpss_orders_filters` | 1 | `templates/dashboard/sections/orders.php` | Fires in the orders filter area. |
@@ -203,7 +203,7 @@ guide; this is the complete index.
 | `wpss_recurring_renewal_order_created` | 3 | `src/RecurringServices/RecurringOrderFactory.php` **[PRO]** | Fires after a recurring renewal order is created. |
 | `wpss_recurring_subscription_cancelled` | 2 | `src/RecurringServices/RecurringWebhookHandler.php` **[PRO]** | Fires after a recurring subscription is cancelled via Stripe webhook. |
 | `wpss_register_tipping_settings` | 0 | `src/Admin/Settings.php` | Register fields that belong directly above the tip commission rate. |
-| `wpss_render_secret_field` | 1 | `src/Admin/Settings.php` *(+3 more)* |  |
+| `wpss_render_secret_field` | 1 | `src/Admin/Settings.php` *(+7 more)* |  |
 | `wpss_report_filed` | 4 | `src/API/ReportsController.php` | Fires when a member files a report. |
 | `wpss_request_archive_header` | 0 | `templates/archive-request.php` | Hook: wpss_request_archive_header |
 | `wpss_request_archive_sidebar` | 0 | `templates/archive-request.php` | Hook: wpss_request_archive_sidebar |
@@ -214,7 +214,7 @@ guide; this is the complete index.
 | `wpss_requirements_form_fields` | 1 | `templates/order/requirements-form.php` | Fires after the configured requirement fields, before the notes field. |
 | `wpss_requirements_submitted` | 3 | `src/Services/RequirementsService.php` | Fires after requirements are submitted. |
 | `wpss_requirements_timeout` | 2 | `src/Services/OrderWorkflowManager.php` | Fires when a requirements timeout action is taken. |
-| `wpss_rest_offline_order_created` | 3 | `src/Integrations/Gateways/AbstractPaymentGateway.php` | Fires when an offline order is created via REST API. |
+| `wpss_rest_offline_order_created` | 3 | `src/Integrations/Gateways/AbstractPaymentGateway.php` *(+1 more)* | Fires when an offline order is created via REST API. |
 | `wpss_rest_service_created` | 2 | `src/API/ServicesController.php` | Fires after a service is created via REST API. |
 | `wpss_rest_service_deleted` | 2 | `src/API/ServicesController.php` | Fires after a service is deleted via REST API. |
 | `wpss_rest_service_updated` | 2 | `src/API/ServicesController.php` | Fires after a service is updated via REST API. |
