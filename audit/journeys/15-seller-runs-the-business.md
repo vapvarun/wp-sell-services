@@ -44,3 +44,8 @@ Walk Earnings with a positive, zero and negative balance.
 As a vendor with a disputed order, compare the Sales tile, the Earnings page Total earned and the profile.
 
 **Expect** the same amount on all three. Guard: `static:vendor-earnings-one-figure`.
+
+### Woo My Services page 2 (card:10422089720)
+On the Woo rail, as a vendor with 26 or more services, open My Account → My Services at 1440 and 390. Click page 2.
+
+**Expect** page 1 shows 24 cards and a page 2 link; page 2 shows the remaining cards and a different first title. `/vendor-services/page/2/` must not repeat page 1.

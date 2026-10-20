@@ -50,3 +50,13 @@ On the Woo rail open ?pay_order=<second phase id> as the buyer while phase one i
 As the buyer decline a phase, then open its old Woo pay link (and ?pay_order=<id>).
 
 **Expect** no payment page, the Woo order is cancelled, and the order page says it is cancelled; a phase that is locked shows "unlocks once the previous phase is approved" and no Pay button. Guards: `static:closed-order-cannot-be-paid`, `static:pro-declined-phase-cancels-store-order`.
+
+### Extra Work pending card inset (card:10417579719)
+As buyer and vendor, open a catalog order with a pending extra-work quote at 1440, 1024 and 390, light and dark.
+
+**Expect** `.wpss-extension-pending-card` is inset from `.wpss-order-section` by the same padding as `.wpss-order-section--extension-cta` (not a 1px flush). Measure the coloured box, not the inner text.
+
+### Awaiting-confirmation extra-work heading (card:C-78)
+As the buyer, submit an offline payment on an extra-work quote and open the extension sub-order while it still awaits confirmation.
+
+**Expect** the heading is waiting / quote sent, never "Quote declined", and bank instructions or a single waiting notice are visible.
