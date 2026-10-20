@@ -406,7 +406,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			'auto_hold_hours' => array(
 				'type'        => 'number',
 				'label'       => __( 'Auto-Cancel (Hours)', 'wp-sell-services' ),
-				'description' => __( 'Automatically cancel unpaid orders after this many hours. Set to 0 to disable.', 'wp-sell-services' ),
+				'description' => __( 'Automatically cancel unpaid orders after this many hours. Bank transfers take days, so 72 or more is sensible. An order whose proof of payment has been sent is never cancelled. Set to 0 to disable.', 'wp-sell-services' ),
 				'default'     => '0',
 				'min'         => '0',
 				'max'         => '720',
@@ -447,15 +447,20 @@ class OfflineGateway extends AbstractPaymentGateway {
 			 * A site that configured nothing gets one SYNTHESISED method from
 			 * the legacy fallback, and has nothing to show beyond the generic
 			 * description above. A site that deliberately named a single method
-			 * has a label and instructions the buyer needs: "Bank Transfer -
-			 * send to ACC 123" is the whole point of enabling it. Hiding that
-			 * behind a count is why an owner configured a manual method, saw it
-			 * enabled in the backend, and had customers tell them it was not
-			 * there.
+			 * has a label the buyer needs to see: hiding it behind a count is why
+			 * an owner configured a manual method, saw it enabled in the backend,
+			 * and had customers tell them it was not there.
 			 *
 			 * So: the radio group still appears only for a real choice, and a
-			 * lone CONFIGURED method renders its name and instructions instead
-			 * of disappearing into a hidden field.
+			 * lone CONFIGURED method renders its name instead of disappearing into
+			 * a hidden field.
+			 *
+			 * The account details are NOT printed here (WooCommerce's bank
+			 * transfer pattern): they carry {total} and {order_number}, which only
+			 * exist after the order, so they showed as raw placeholders, and every
+			 * method's details sat open before the buyer chose one.
+			 * render_buyer_instructions() shows the chosen method's details on
+			 * the order page, and in the email, once the order is placed.
 			 */
 			$configured = ! empty( get_option( self::OPTION_NAME, array() )['methods'] );
 
@@ -476,11 +481,6 @@ class OfflineGateway extends AbstractPaymentGateway {
 							>
 							<span>
 								<strong><?php echo esc_html( $offline_method['label'] ); ?></strong>
-								<?php if ( '' !== $offline_method['instructions'] ) : ?>
-									<span style="display:block;color:#555;font-size:.9em;">
-										<?php echo esc_html( wp_strip_all_tags( $offline_method['instructions'] ) ); ?>
-									</span>
-								<?php endif; ?>
 							</span>
 						</label>
 					<?php endforeach; ?>
@@ -488,11 +488,6 @@ class OfflineGateway extends AbstractPaymentGateway {
 			<?php elseif ( $configured && $offline_methods ) : ?>
 				<div class="wpss-offline-methods wpss-offline-methods--single" style="margin:0 0 16px;">
 					<strong><?php echo esc_html( $offline_methods[0]['label'] ); ?></strong>
-					<?php if ( '' !== $offline_methods[0]['instructions'] ) : ?>
-						<span style="display:block;color:#555;font-size:.9em;margin-top:4px;">
-							<?php echo esc_html( wp_strip_all_tags( $offline_methods[0]['instructions'] ) ); ?>
-						</span>
-					<?php endif; ?>
 				</div>
 				<input type="hidden" name="offline_method" value="<?php echo esc_attr( $offline_methods[0]['id'] ); ?>">
 			<?php else : ?>

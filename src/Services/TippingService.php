@@ -126,6 +126,7 @@ class TippingService {
 				SET status = 'cancelled', updated_at = %s
 				WHERE platform = %s
 				AND status = 'pending_payment'
+				AND ( payment_method IS NULL OR payment_method <> 'offline' )
 				AND created_at < %s",
 				current_time( 'mysql', true ),
 				self::ORDER_TYPE,

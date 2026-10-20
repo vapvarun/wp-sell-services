@@ -604,7 +604,8 @@ class ExtensionOrderService {
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id FROM {$orders_table}
-				WHERE platform = %s AND status = %s AND created_at < %s",
+				WHERE platform = %s AND status = %s AND created_at < %s
+				AND ( payment_method IS NULL OR payment_method <> 'offline' )",
 				self::ORDER_TYPE,
 				'pending_payment',
 				$threshold

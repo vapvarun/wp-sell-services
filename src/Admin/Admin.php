@@ -2560,12 +2560,44 @@ class Admin {
 						<h2 class="hndle"><?php esc_html_e( 'Financial Summary', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<?php
-							// The same line items the buyer sees: package, add-ons, tax, total.
-							wpss_get_template_part( 'order/line-items', '', array( 'wpss_order' => $order ) );
+							// A milestone contract keeps its money on the phases and the parent
+							// carries 0, so its figures come from the phases (the buyer sees the same).
+							$wpss_contract = ( new \WPSellServices\Services\MilestoneService() )->get_contract_totals( $order_id );
+
+							if ( ! $wpss_contract['count'] ) {
+								// The same line items the buyer sees: package, add-ons, tax, total.
+								wpss_get_template_part( 'order/line-items', '', array( 'wpss_order' => $order ) );
+							}
 
 							$wpss_extras = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_paid_extras( $order_id );
 							?>
+							<?php if ( in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_MILESTONE, ServiceOrder::SUB_ORDER_TYPE_EXTENSION ), true ) && 'paid' !== ( $order->payment_status ?? '' ) && empty( $order->paid_at ) ) : ?>
+								<p class="description"><?php esc_html_e( 'Payment not received. Nothing is credited to the vendor until it is confirmed with Mark as Paid, whatever status this order is given.', 'wp-sell-services' ); ?></p>
+							<?php endif; ?>
 							<table class="wpss-admin-order__figures">
+								<?php if ( $wpss_contract['count'] ) : ?>
+									<tr>
+										<td><?php esc_html_e( 'Contract total', 'wp-sell-services' ); ?></td>
+										<td><?php echo esc_html( wpss_format_price( $wpss_contract['total'], $order->currency ) ); ?></td>
+									</tr>
+									<tr>
+										<td>
+											<?php
+											/* translators: %d: number of phases in the contract */
+											echo esc_html( sprintf( _n( 'Paid so far (%d phase)', 'Paid so far (%d phases)', $wpss_contract['count'], 'wp-sell-services' ), $wpss_contract['count'] ) );
+											?>
+										</td>
+										<td><?php echo esc_html( wpss_format_price( $wpss_contract['paid'], $order->currency ) ); ?></td>
+									</tr>
+									<tr>
+										<td><?php esc_html_e( 'Commission on paid phases', 'wp-sell-services' ); ?></td>
+										<td><?php echo esc_html( wpss_format_price( $wpss_contract['commission'], $order->currency ) ); ?></td>
+									</tr>
+									<tr>
+										<td><?php esc_html_e( 'Vendor earning on paid phases', 'wp-sell-services' ); ?></td>
+										<td><?php echo esc_html( wpss_format_price( $wpss_contract['earnings'], $order->currency ) ); ?></td>
+									</tr>
+								<?php endif; ?>
 								<?php foreach ( $wpss_extras as $wpss_extra ) : ?>
 									<tr>
 										<td>

@@ -1861,8 +1861,16 @@ class OrderWorkflowManager {
 			)
 		);
 
+		$receipts = new \WPSellServices\Database\Repositories\PaymentReceiptRepository();
+
 		foreach ( $pending_orders as $order ) {
 			$order_id = (int) $order->id;
+
+			// Proof already sent: the owner is checking it, so the order is waiting
+			// on them, not on the buyer.
+			if ( null !== $receipts->get_pending_for_order( $order_id ) ) {
+				continue;
+			}
 
 			$updated = $this->order_service->update_status(
 				$order_id,

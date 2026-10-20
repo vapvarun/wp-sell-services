@@ -23,6 +23,7 @@ defined( 'ABSPATH' ) || exit;
 $is_buyer   = (int) $current_order->customer_id === $user_id;
 $is_vendor  = (int) $current_order->vendor_id === $user_id;
 $is_paid    = 'completed' === $current_order->status;
+$awaiting   = wpss_order_awaits_payment_confirmation( $current_order );
 $currency   = $current_order->currency ?: wpss_get_currency();
 $gross      = (float) $current_order->total;
 $net_vendor = (float) ( $current_order->vendor_earnings ?? $gross );
@@ -99,9 +100,9 @@ do_action( 'wpss_before_tip_view', $current_order );
 		<h2 class="wpss-tip-view__title">
 			<?php
 			if ( $is_vendor ) {
-				echo esc_html( $is_paid ? __( 'Tip received', 'wp-sell-services' ) : __( "Tip pending — buyer hasn't paid yet", 'wp-sell-services' ) );
+				echo esc_html( $is_paid ? __( 'Tip received', 'wp-sell-services' ) : ( $awaiting ? __( 'Tip pending — payment awaiting confirmation', 'wp-sell-services' ) : __( "Tip pending — buyer hasn't paid yet", 'wp-sell-services' ) ) );
 			} elseif ( $is_buyer ) {
-				echo esc_html( $is_paid ? __( 'Tip sent', 'wp-sell-services' ) : __( "Tip not sent yet — payment didn't complete", 'wp-sell-services' ) );
+				echo esc_html( $is_paid ? __( 'Tip sent', 'wp-sell-services' ) : ( $awaiting ? __( 'Tip sent — payment awaiting confirmation', 'wp-sell-services' ) : __( "Tip not sent yet — payment didn't complete", 'wp-sell-services' ) ) );
 			} else {
 				echo esc_html__( 'Tip', 'wp-sell-services' );
 			}
@@ -151,6 +152,11 @@ do_action( 'wpss_before_tip_view', $current_order );
 				</div>
 			<?php endif; ?>
 		</dl>
+
+		<?php if ( $is_buyer && $awaiting ) : ?>
+			<p class="wpss-notice wpss-notice--info"><?php echo esc_html( wpss_offline_payment_notice( $current_order ) ); ?></p>
+			<?php do_action( 'wpss_order_view_details', $current_order ); ?>
+		<?php endif; ?>
 
 		<?php if ( $parent_url ) : ?>
 			<a href="<?php echo esc_url( $parent_url ); ?>" class="wpss-btn wpss-btn--primary wpss-tip-view__back">

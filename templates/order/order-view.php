@@ -678,46 +678,10 @@ do_action( 'wpss_before_order_view', $order );
 				 * So when the parent has phases, the figure comes from them:
 				 * what was contracted, and how much of it has been paid.
 				 */
-				$phase_orders = array();
-				$phase_total  = 0.0;
-				$phase_paid   = 0.0;
-				$phase_count  = 0;
-
-				// A cancelled or declined phase has been withdrawn from the
-				// contract, so counting it would overstate what was agreed - a
-				// contract with two live phases worth $500 and two cancelled
-				// ones read "$675" until this excluded them.
-				$dropped_statuses = array( 'cancelled', 'rejected' );
-
-				// Money the buyer has actually parted with. Refunded is
-				// deliberately not here: it was paid and came back, so it is
-				// still contracted but no longer paid.
-				$unpaid_statuses = array( 'pending_payment', 'refunded' );
-
-				if ( class_exists( '\WPSellServices\Services\MilestoneService' ) ) {
-					$phase_orders = ( new \WPSellServices\Services\MilestoneService() )->get_for_parent( $order_id );
-
-					// get_for_parent() returns decorated ARRAYS keyed `amount`,
-					// not order objects with `total`. Reading ->total gave 0 on
-					// every phase, which silently left the parent showing $0.00 -
-					// the very thing this block exists to fix.
-					foreach ( $phase_orders as $phase ) {
-						$phase        = (array) $phase;
-						$phase_status = (string) ( $phase['status'] ?? '' );
-						$phase_amount = (float) ( $phase['amount'] ?? 0 );
-
-						if ( in_array( $phase_status, $dropped_statuses, true ) ) {
-							continue;
-						}
-
-						++$phase_count;
-						$phase_total += $phase_amount;
-
-						if ( ! in_array( $phase_status, $unpaid_statuses, true ) ) {
-							$phase_paid += $phase_amount;
-						}
-					}
-				}
+				$phase_figures = ( new \WPSellServices\Services\MilestoneService() )->get_contract_totals( $order_id );
+				$phase_total   = $phase_figures['total'];
+				$phase_paid    = $phase_figures['paid'];
+				$phase_count   = $phase_figures['count'];
 
 				$show_phase_total = $phase_count > 0 && $phase_total > 0;
 				?>

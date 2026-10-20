@@ -245,21 +245,17 @@ do_action( 'wpss_before_milestone_view', $current_order );
 
 			<?php
 			/*
-			 * Payment submitted, waiting on the owner to confirm it. Deliberately
-			 * not a bare "waiting" state: this template does not fire
-			 * wpss_order_view_details, so the offline instructions the buyer needs
-			 * are on the parent order, and paying another way has to stay
-			 * reachable. Both routes are offered so the buyer is never left with
-			 * a status and nothing to do.
+			 * Payment submitted, waiting on the owner to confirm it. The offline
+			 * instructions and the proof upload hang off wpss_order_view_details,
+			 * so fire it for THIS phase: the parent is already paid and shows
+			 * nothing for it. Paying another way stays reachable.
 			 */
 			?>
 			<?php if ( $is_buyer && $awaiting_confirmation ) : ?>
 				<p class="wpss-notice wpss-notice--info wpss-milestone-awaiting">
 					<?php echo esc_html( wpss_offline_payment_notice( $current_order ) ); ?>
 				</p>
-				<a href="<?php echo esc_url( wpss_get_order_url( (int) ( $current_order->platform_order_id ?: $current_order->id ) ) ); ?>" class="wpss-btn wpss-btn--secondary">
-					<?php esc_html_e( 'View payment instructions', 'wp-sell-services' ); ?>
-				</a>
+				<?php do_action( 'wpss_order_view_details', $current_order ); ?>
 				<?php if ( '' !== $pay_url ) : ?>
 					<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--ghost">
 						<?php esc_html_e( 'Pay by another method', 'wp-sell-services' ); ?>
