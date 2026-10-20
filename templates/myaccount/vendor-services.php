@@ -11,6 +11,7 @@
  *
  * @var array $services       WordPress posts.
  * @var int   $services_pages Number of pages, when the list is paginated.
+ * @var int   $services_current Current page, when the list is paginated (defaults to the paged query var).
  * @var int   $user_id  Current user ID.
  */
 
@@ -103,7 +104,7 @@ do_action( 'wpss_vendor_services_before', $user_id );
 					paginate_links(
 						array(
 							'total'   => (int) $services_pages,
-							'current' => max( 1, (int) get_query_var( 'paged' ) ),
+							'current' => $services_current ?? max( 1, (int) get_query_var( 'paged' ) ),
 						)
 					)
 				);

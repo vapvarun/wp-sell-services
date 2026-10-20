@@ -38,8 +38,9 @@ for ( $i = 1; $i <= 30; $i++ ) {
 	$ids[] = wp_insert_post( array( 'post_type' => 'wpss_service', 'post_status' => 'draft', 'post_title' => "QA-RFT paged {$i}", 'post_author' => $vendor ) );
 }
 
+// The real URL /my-account/vendor-services/page/2/ reaches the renderer as the endpoint value "page/2".
 $render = static function ( int $paged ) use ( $class ) {
-	set_query_var( 'paged', $paged );
+	set_query_var( 'vendor-services', $paged > 1 ? "page/{$paged}" : '' );
 	ob_start();
 	( new $class() )->render_services_endpoint();
 	return ob_get_clean();
@@ -49,6 +50,7 @@ $p1 = $render( 1 );
 $p2 = $render( 2 );
 $check( 'page 1 shows 24 service cards', 24 === substr_count( $p1, 'class="wpss-service-card"' ) );
 $check( 'page 1 has pagination', str_contains( $p1, 'wpss-pagination' ) );
+$check( 'page 2 is not page 1 again', $p1 !== $p2 );
 $check( 'page 2 shows the rest', substr_count( $p2, 'class="wpss-service-card"' ) >= 6 && substr_count( $p2, 'class="wpss-service-card"' ) < 24 );
 
 foreach ( $ids as $id ) {

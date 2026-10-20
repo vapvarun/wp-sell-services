@@ -642,6 +642,14 @@
    "check": "tests/test-load-reviews-vendor.php"
   },
   {
+   "card": "10422270617",
+   "title": "WooCommerce rail My Services page 2 is reachable through the real endpoint URL",
+   "guard": "static:wc-my-services-paged",
+   "added": "2026-10-20",
+   "fails_on": "Pro 4fd5262 (read paged, which is 0 on a My Account endpoint; test now sends the endpoint value page/2)",
+   "check": "tests/test-wc-my-services-paged.php"
+  },
+  {
    "card": "10422089720",
    "title": "WooCommerce rail My Services pages at 24 and does not load the whole list",
    "guard": "static:wc-my-services-paged",
