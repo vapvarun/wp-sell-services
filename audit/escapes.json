@@ -706,6 +706,30 @@
    "check": "tests/test-edd-my-services-list.php"
   },
   {
+   "card": "visual-audit-2026-10-21",
+   "title": "PayPal payout batch is sent in the store currency only, and a failed submit releases every vendor's reserved balance",
+   "guard": "static:pro-paypal-batch-failure",
+   "added": "2026-10-21",
+   "fails_on": "1.9.1 audit (batch defaulted to USD; failed submit left items pending, so vendors showed 0 payable)",
+   "check": "tests/pro/test-paypal-batch-failure.php"
+  },
+  {
+   "card": "visual-audit-2026-10-21",
+   "title": "Two partial Razorpay refunds on one payment are two webhook events, not a repeat",
+   "guard": "static:pro-razorpay-webhook-dedup-key",
+   "added": "2026-10-21",
+   "fails_on": "1.9.1 audit (dedupe keyed on the payment id; the second partial refund returned Already processed)",
+   "check": "tests/pro/test-razorpay-webhook-dedup-key.php"
+  },
+  {
+   "card": "visual-audit-2026-10-21",
+   "title": "vendor profile completed/total order counts follow the sales list rule: tips and extensions are not orders",
+   "guard": "static:vendor-profile-order-counts",
+   "added": "2026-10-21",
+   "fails_on": "1.9.1 audit (update_stats counted every row; profile said 4 completed, sales list 2)",
+   "check": "tests/test-vendor-profile-order-counts.php"
+  },
+  {
    "card": "ponytail-audit-free-2026-10-20",
    "title": "vendor and service ratings come from ReviewRepository::rating_stats() only, counting approved buyer reviews",
    "guard": "static:rating-single-source",

@@ -1,6 +1,6 @@
 <?php
 /**
- * EDD rail My Services lists the vendor's services (24 per page) and the tile counts the same set.
+ * EDD rail My Services lists the vendor's services (24 per page); the tiles count every service and order.
  *
  * Run: wp eval-file tests/test-edd-my-services-list.php
  *
@@ -48,6 +48,14 @@ $render = static function ( int $page ) use ( $class ) {
 	return ob_get_clean();
 };
 
+// 22 EDD orders, 3 of them pending: past the 20 the table loads, the tiles must still count them all.
+$orders_t = $GLOBALS['wpdb']->prefix . 'wpss_orders';
+$order_ids = array();
+for ( $i = 1; $i <= 22; $i++ ) {
+	$GLOBALS['wpdb']->insert( $orders_t, array( 'order_number' => "QA-RFT-EDD-{$i}", 'customer_id' => 1, 'vendor_id' => $vendor, 'service_id' => $ids[0], 'platform' => 'edd', 'status' => $i <= 3 ? 'pending' : 'completed', 'subtotal' => 10, 'total' => 10 ) );
+	$order_ids[] = (int) $GLOBALS['wpdb']->insert_id;
+}
+
 $p1 = $render( 1 );
 $p2 = $render( 2 );
 unset( $_GET['services_page'] );
@@ -56,6 +64,14 @@ $check( 'tile counts the 26 services, not the plain download', str_contains( $p1
 $check( 'page 1 lists 24 cards, not the empty message', 24 === substr_count( $p1, 'class="wpss-service-card"' ) && ! str_contains( $p1, 'not created any services' ) );
 $check( 'page 2 lists the other 2', 2 === substr_count( $p2, 'class="wpss-service-card"' ) && $p1 !== $p2 );
 
+$tiles = array();
+preg_match_all( '/<span class="stat-number">(\d+)<\/span>/', $p1, $tiles );
+$check( 'Total Orders tile counts all 22 EDD orders, not the 20 shown', '22' === ( $tiles[1][1] ?? '' ) );
+$check( 'Pending Orders tile counts all 3 pending', '3' === ( $tiles[1][2] ?? '' ) );
+
+foreach ( $order_ids as $oid ) {
+	$GLOBALS['wpdb']->delete( $orders_t, array( 'id' => $oid ) );
+}
 foreach ( $ids as $id ) {
 	wp_delete_post( $id, true );
 }

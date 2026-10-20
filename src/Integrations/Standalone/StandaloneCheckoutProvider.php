@@ -1194,7 +1194,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								$reviews_table     = $wpdb->prefix . 'wpss_reviews';
 								$vendor_orders     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 								$vendor_member_obj = get_userdata( $vendor_id_for_stats );
-								$vendor_joined     = $vendor_member_obj ? wpss_date_label( $vendor_member_obj->user_registered, '—', 'M Y' ) : '';
+								// The profile row's date, the one the vendor profile and card show.
+								$vendor_joined     = $vendor_member_obj ? wpss_date_label( ( new \WPSellServices\Services\VendorService() )->get_profile( (int) $vendor_id_for_stats )->created_at ?? $vendor_member_obj->user_registered, '—', 'M Y' ) : '';
 
 								// Get latest review for this vendor.
 								$latest_review = $wpdb->get_row( $wpdb->prepare( "SELECT r.review as content, r.rating, COALESCE(NULLIF(u.display_name, ''), r.reviewer_name) as reviewer_display_name FROM {$reviews_table} r LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID WHERE r.vendor_id = %d AND r.status = 'approved' ORDER BY r.created_at DESC LIMIT 1", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared

@@ -372,6 +372,18 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-edd-my-services-list.php"
    },
    {
+    "id": "pro-paypal-batch-failure",
+    "run": "${WP_CLI:-wp} eval-file tests/pro/test-paypal-batch-failure.php"
+   },
+   {
+    "id": "pro-razorpay-webhook-dedup-key",
+    "run": "${WP_CLI:-wp} eval-file tests/pro/test-razorpay-webhook-dedup-key.php"
+   },
+   {
+    "id": "vendor-profile-order-counts",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-profile-order-counts.php"
+   },
+   {
     "id": "manual-order-payment-status",
     "run": "${WP_CLI:-wp} eval-file tests/test-manual-order-payment-status.php"
    },

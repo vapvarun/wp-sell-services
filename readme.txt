@@ -276,6 +276,9 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Improve  - Payment, proposal, milestone and extension emails always send, and the email preferences screen says so.
 * Improve  - The vendor profile review list uses the same markup as the service page, and View all reviews loads the next pages from the server.
 * Improve  - Vendor and service ratings, the seller card, REST stats and seller levels all count the same reviews.
+* Fix      - Orders filters are usable on a phone, and the Withdrawals filter and Export button no longer run off the screen.
+* Fix      - Withdrawals has a Cancelled tab, so the tab counts add up.
+* Fix      - Member since and completed orders read the same everywhere; tips and extensions no longer count as orders.
 * Fix      - Updating no longer removes reviews that came from another marketplace; they are kept without an order.
 * Fix      - Registering with role vendor through the REST API now creates a vendor.
 * Fix      - Offline milestone and tip pages show bank instructions and the receipt upload once.

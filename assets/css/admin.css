@@ -3243,8 +3243,29 @@ h2.wpss-settings-subhead__title {
 		align-items: stretch;
 	}
 
-	.wpss-withdrawals-method-filter select {
-		flex: 1;
+	.wpss-withdrawals-method-filter {
+		flex-wrap: wrap;
+	}
+
+	.wpss-withdrawals-method-filter select,
+	.wpss-withdrawals-method-filter input[type="search"] {
+		flex: 1 1 100%;
+		max-width: 100%;
+	}
+
+	/* WordPress hides a list table's extra filters under 783px; the Orders filters are the point of that screen. */
+	.wpss-list-card__body .tablenav .alignleft.actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		float: none;
+		width: 100%;
+	}
+
+	.wpss-list-card__body .tablenav .alignleft.actions select {
+		flex: 1 1 45%;
+		max-width: 100%;
+		margin: 0;
 	}
 
 	.wpss-withdrawals-page .wpss-list-card__body {

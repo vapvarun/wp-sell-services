@@ -536,7 +536,7 @@ class SingleServiceView {
 
 					<div class="wpss-vendor-meta-item">
 						<span class="wpss-meta-label"><?php esc_html_e( 'Member since', 'wp-sell-services' ); ?></span>
-						<span class="wpss-meta-value"><?php echo esc_html( wpss_date_label( $vendor->user_registered, '—', 'M Y' ) ); ?></span>
+						<span class="wpss-meta-value"><?php echo esc_html( wpss_date_label( $profile->created_at ?? $vendor->user_registered, '—', 'M Y' ) ); ?></span>
 					</div>
 
 					<?php
