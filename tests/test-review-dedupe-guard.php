@@ -5,7 +5,7 @@
  * Run: wp eval-file tests/test-review-dedupe-guard.php
  *
  * Reviews with order_id 0 (admin-imported) must survive; a true duplicate on a
- * real order is removed with its full row in the audit log. The unique key is
+ * real order is removed with an identifiers-only audit row. The unique key is
  * dropped for the duration so duplicates can be seeded, then restored.
  *
  * @package WPSellServices
@@ -43,8 +43,9 @@ $left = static fn( int $id ): bool => (bool) $wpdb->get_var( $wpdb->prepare( "SE
 $check( 'imported reviews (order 0) both survive', $left( $o1 ) && $left( $o2 ) );
 $check( 'real duplicate is removed', $left( $k ) && ! $left( $d ) );
 
-$audit = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wpss_audit_log WHERE event_type = 'review.duplicate_removed' AND object_id = %d AND context LIKE %s", $d, '%QA real order dup%' ) ); // phpcs:ignore WordPress.DB
-$check( 'audit row carries the full removed review', 1 === (int) $audit );
+$audit = $wpdb->get_var( $wpdb->prepare( "SELECT context FROM {$wpdb->prefix}wpss_audit_log WHERE event_type = 'review.duplicate_removed' AND object_id = %d", $d ) ); // phpcs:ignore WordPress.DB
+$check( 'audit row names the kept review and the ratings', $audit && str_contains( (string) $audit, '"kept_id":' . $k ) && str_contains( (string) $audit, 'rating' ) );
+$check( 'audit row holds no review text', $audit && ! str_contains( (string) $audit, 'QA real order dup' ) );
 
 foreach ( $made as $id ) {
 	$wpdb->delete( $t, array( 'id' => $id ) );

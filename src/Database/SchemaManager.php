@@ -273,7 +273,8 @@ class SchemaManager {
 	 * different amount is a bookkeeping question, not a duplicate, and is
 	 * logged for a human instead. Reviews with order_id 0 belong to no order
 	 * (an admin-imported review), so they are never "duplicates" of each other
-	 * and are left alone; the audit row keeps the whole removed review.
+	 * and are left alone. The audit row keeps identifiers and ratings only: review
+	 * text is personal data the eraser would not reach in the log.
 	 * Idempotent: nothing to remove on a clean or
 	 * fresh install.
 	 *
@@ -308,12 +309,19 @@ class SchemaManager {
 
 		if ( $reviews === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $reviews ) ) ) {
 			$dupes = $this->wpdb->get_results(
-				"SELECT d.*, k.id AS kept_id
+				"SELECT d.id, d.order_id, d.review_type, d.reviewer_id, d.reviewee_id, d.service_id, d.customer_id, d.vendor_id, d.rating, d.status, d.created_at, k.id AS kept_id
 				FROM {$reviews} d
 				JOIN {$reviews} k ON k.order_id = d.order_id AND k.review_type = d.review_type AND k.id < d.id
 				WHERE d.order_id > 0"
 			);
 			$this->remove_duplicates( $reviews, 'review.duplicate_removed', 'review', (array) $dupes );
+
+			// Order-less reviews are never removed, but two of one type would still
+			// block the unique key. Say so instead of letting dbDelta fail silently.
+			$orphans = (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM (SELECT 1 FROM {$reviews} WHERE order_id = 0 GROUP BY review_type HAVING COUNT(*) > 1) x" );
+			if ( $orphans ) {
+				wpss_log( 'Schema 1.7.1: several order-less reviews share a type; left in place, the unique key (order_id, review_type) cannot be added until they get an order.', 'error' );
+			}
 		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 	}
