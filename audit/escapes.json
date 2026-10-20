@@ -690,6 +690,14 @@
    "check": "tests/test-extension-awaiting-view.php"
   },
   {
+   "card": "10417579719",
+   "title": "extra-work pending quote card sits inset in its section (buyer and vendor), not flush with the border",
+   "guard": "static:extension-pending-card-inset",
+   "added": "2026-10-20",
+   "fails_on": "c623c989 (inset class added to the tip and CTA sections only; the pending-quote sections stayed plain)",
+   "check": "tests/test-extension-pending-card-inset.php"
+  },
+  {
    "card": "ponytail-audit-free-2026-10-20",
    "title": "vendor and service ratings come from ReviewRepository::rating_stats() only, counting approved buyer reviews",
    "guard": "static:rating-single-source",

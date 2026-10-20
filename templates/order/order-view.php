@@ -1571,7 +1571,7 @@ do_action( 'wpss_before_order_view', $order );
 			: '';
 		$ext_currency = $order->currency ?? wpss_get_currency();
 		?>
-		<section class="wpss-order-section">
+		<section class="wpss-order-section wpss-order-section--extension-cta">
 			<div class="wpss-extension-pending-card">
 				<h3 class="wpss-extension-pending-card__title">
 					<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
@@ -1623,7 +1623,7 @@ do_action( 'wpss_before_order_view', $order );
 			</div>
 		</section>
 	<?php elseif ( $is_vendor && null !== $pending_extension ) : ?>
-		<section class="wpss-order-section">
+		<section class="wpss-order-section wpss-order-section--extension-cta">
 			<div class="wpss-extension-pending-card">
 				<h3 class="wpss-extension-pending-card__title">
 					<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
