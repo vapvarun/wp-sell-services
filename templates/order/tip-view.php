@@ -154,7 +154,6 @@ do_action( 'wpss_before_tip_view', $current_order );
 		</dl>
 
 		<?php if ( $is_buyer && $awaiting ) : ?>
-			<p class="wpss-notice wpss-notice--info"><?php echo esc_html( wpss_offline_payment_notice( $current_order ) ); ?></p>
 			<?php do_action( 'wpss_order_view_details', $current_order ); ?>
 		<?php endif; ?>
 

@@ -246,15 +246,12 @@ do_action( 'wpss_before_milestone_view', $current_order );
 			<?php
 			/*
 			 * Payment submitted, waiting on the owner to confirm it. The offline
-			 * instructions and the proof upload hang off wpss_order_view_details,
-			 * so fire it for THIS phase: the parent is already paid and shows
+			 * notice, instructions and the proof upload hang off
+			 * wpss_order_view_details, so fire it for THIS phase: the parent is already paid and shows
 			 * nothing for it. Paying another way stays reachable.
 			 */
 			?>
 			<?php if ( $is_buyer && $awaiting_confirmation ) : ?>
-				<p class="wpss-notice wpss-notice--info wpss-milestone-awaiting">
-					<?php echo esc_html( wpss_offline_payment_notice( $current_order ) ); ?>
-				</p>
 				<?php do_action( 'wpss_order_view_details', $current_order ); ?>
 				<?php if ( '' !== $pay_url ) : ?>
 					<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--ghost">
