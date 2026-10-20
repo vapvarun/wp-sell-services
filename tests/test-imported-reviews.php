@@ -32,6 +32,7 @@ $legacy = (int) $wpdb->insert_id;
 ( new ReflectionMethod( SchemaManager::class, 'dedupe_for_unique_keys' ) )->invoke( new SchemaManager() );
 $wpdb->query( "ALTER TABLE {$t} ADD UNIQUE KEY uniq_order_review (order_id,review_type)" ); // phpcs:ignore WordPress.DB
 
+$check( 'the schema version is bumped so existing sites run the nullable-order_id migration', version_compare( SchemaManager::DB_VERSION, '1.9.1', '>=' ) );
 $nullable = $wpdb->get_var( "SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$t}' AND COLUMN_NAME = 'order_id'" ); // phpcs:ignore WordPress.DB
 $check( 'order_id is nullable after the migration', 'YES' === $nullable );
 $check( 'an old order-0 review moves to NULL and survives', null === $wpdb->get_var( $wpdb->prepare( "SELECT order_id FROM {$t} WHERE id = %d", $legacy ) ) && $legacy ); // phpcs:ignore WordPress.DB

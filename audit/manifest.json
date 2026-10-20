@@ -161,6 +161,13 @@
     "endpoints_detail_at": "Counted by agent enumeration of register_rest_route( calls, not by write-manifest.mjs - the generator undercounts because controllers are registered through an array wrapper. 142 = 134 across 23 *Controller.php files + 7 generic routes in API.php + 1 in Frontend/Tour.php. RestController.php is the shared base class and registers none.",
     "recent_additions": [
       {
+        "route": "/wpss/v1/reviews/import",
+        "method": "POST",
+        "auth": "admin",
+        "since": "1.9.1",
+        "why": "Pro. Admin imports reviews for a vendor's service from rows or CSV text, with dry_run to preview. See reviews.imported. Registered by Pro's ReviewImportController through wpss_api_controllers."
+      },
+      {
         "route": "/wpss/v1/cart/checkout",
         "method": "POST",
         "auth": "logged in, own cart",
@@ -1024,9 +1031,14 @@
     "shared_partial": "templates/partials/review-body.php -- author/stars/date header + content + seller response, takes a Review MODEL",
     "shared_partial_consumers": [
       "templates/order/order-view.php (buyer sees 'Your Review', vendor sees 'Buyer Review')",
-      "templates/partials/service-reviews.php (public list; wraps raw rows with Review::from_db and keeps its own Helpful control)"
+      "templates/partials/service-reviews.php (public list; wraps raw rows with Review::from_db and keeps its own Helpful control)",
+      "templates/vendor/profile.php (vendor profile list, with the service line)",
+      "src/Frontend/AjaxHandlers.php::load_reviews (pages 2+ for a service or a vendor)"
     ],
-    "model_shape_note": "The reviews table columns and the model properties differ by name: review -> content, vendor_reply -> response, vendor_reply_at -> response_at, reviewee_id -> reviewed_id. There is NO title column. The public list used to read raw columns and used customer_id for the avatar while gating Helpful on reviewer_id - two names for one author on one screen. Everything now goes through Review::from_db()."
+    "model_shape_note": "The reviews table columns and the model properties differ by name: review -> content, vendor_reply -> response, vendor_reply_at -> response_at, reviewee_id -> reviewed_id. There is NO title column. The public list used to read raw columns and used customer_id for the avatar while gating Helpful on reviewer_id - two names for one author on one screen. Everything now goes through Review::from_db().",
+    "rating_source": "WPSellServices\\Database\\Repositories\\ReviewRepository::rating_stats( 'vendor_id'|'service_id', $id ) is the ONE query for an average and a count: approved + review_type customer_to_vendor. wpss_recount_service_rating(), wpss_rest_service_rating(), ReviewService::update_vendor_rating(), VendorProfileRepository::update_stats(), VendorsController stats, SellerLevelService::get_vendor_stats() and the SellerCard block all call it. Do not write another AVG(rating) query. Guard: tests/test-rating-single-source.php.",
+    "imported": "Admin-imported reviews (1.9.1, Pro screen Sell Services > Import Reviews, REST POST /wpss/v1/reviews/import, admin only, 500 rows max, dry_run). reviews.order_id is nullable and imported rows store NULL (Review::is_imported()); reviewer_id and customer_id are 0 and reviewer_name is stored. ONE create door: ReviewService::create_imported( vendor, service, data, dry_run ); duplicate = vendor + service + reviewer_name + text, checked only in ReviewRepository::imported_exists(). Fires no wpss_review_created, so no email. Guards: tests/test-imported-reviews.php, Pro tests/test-review-import-route.php.",
+    "load_more": "Every review list pages through the wpss_load_reviews AJAX action (service_id or vendor_id), which renders with templates/partials/review-body.php; assets/js/frontend.js has the one handler. The vendor profile (templates/vendor/profile.php) also renders page one through the partial, with $wpss_review_show_service = true for the service line. There is no JS review renderer. Guard: tests/test-load-reviews-vendor.php."
   },
   "vendor_identity": {
     "_note": "`_wpss_is_vendor` user meta is a LEGACY marker, not the answer to 'is this a vendor'. Vendors created by role assignment, by an admin, by the demo seeder, or by anything granting the wpss_vendor role do not carry it - on this sandbox that is EVERY vendor (all hold the role, none hold the meta). Reading the meta directly therefore answers 'not a vendor' for real sellers. The Become a Vendor page did exactly that and offered active sellers 'Register as Vendor' while their dashboard, services and earnings all worked (Basecamp 10208142467).",

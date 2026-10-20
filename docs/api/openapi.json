@@ -10075,6 +10075,65 @@
                 }
             }
         },
+        "/wpss/v1/reviews/import": {
+            "x-wpss-tier": "pro",
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "operationId": "post_wpss_v1_reviews_import",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "rows": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "Rows with vendor, service, reviewer_name, rating, content and date."
+                                    },
+                                    "csv": {
+                                        "type": "string",
+                                        "description": "CSV text with a header row, used instead of rows."
+                                    },
+                                    "dry_run": {
+                                        "type": "boolean",
+                                        "default": false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/wpss/v1/reviews/{id}": {
             "x-wpss-tier": "free",
             "get": {

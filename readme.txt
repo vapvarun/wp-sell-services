@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.9.0
+Stable tag: 1.9.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -266,6 +266,26 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.9.1 - October 2026 =
+
+Admins can import reviews for new vendors, and a set of payment, email and review fixes from the 1.9.0 reports.
+
+* New      - Admins can add one review or import a CSV for a vendor's service; imported reviews show an Imported review label, count in ratings and send no email (needs Pro).
+* Improve  - Custom-price manual orders read Custom order instead of a package name and price.
+* Improve  - Payment, proposal, milestone and extension emails always send, and the email preferences screen says so.
+* Improve  - The vendor profile review list uses the same markup as the service page, and View all reviews loads the next pages from the server.
+* Improve  - Vendor and service ratings, the seller card, REST stats and seller levels all count the same reviews.
+* Fix      - Updating no longer removes reviews that came from another marketplace; they are kept without an order.
+* Fix      - Registering with role vendor through the REST API now creates a vendor.
+* Fix      - Offline milestone and tip pages show bank instructions and the receipt upload once.
+* Fix      - Checkout no longer prints unfilled placeholders or every offline method's bank details.
+* Fix      - The admin order screen shows the contract total for milestone projects.
+* Fix      - An unpaid milestone, tip or extension no longer credits the seller's wallet when an admin marks the order completed.
+* Fix      - The Extra Work and tip cards have inset spacing on mobile.
+* Dev      - ReviewRepository::rating_stats() is the one rating query, and ReviewService::create_imported() the one door for imported reviews.
+* Dev      - Removed unused classes (FAQService, three repositories and the admin viewer data classes).
+* Compat   - Aligned with WP Sell Services Pro 1.9.1. Install both updates together.
 
 = 1.9.0 - October 2026 =
 
@@ -967,6 +987,9 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * WP 6.7+ compatible (lazy-loaded translations)
 
 == Upgrade Notice ==
+
+= 1.9.1 =
+Update Free and Pro together. The reviews table now allows reviews without an order, and Pro encrypts stored gateway and storage secrets on first load.
 
 = 1.9.0 =
 Update Free and Pro together. Refunds, negative balances, delivery files and dates now follow one standard on every checkout rail.

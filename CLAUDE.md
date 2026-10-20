@@ -312,6 +312,14 @@ Real cases found and fixed in 1.2.2:
    `npm run build:min` needs node_modules; otherwise:
    `npx terser assets/js/FILE.js -c -m -o assets/js/FILE.min.js`
 
+7. **One rating query, one review renderer.** An average and a count of reviews come only from
+   `ReviewRepository::rating_stats()` (approved, buyer-to-vendor); never write another `AVG(rating)`.
+   A review is drawn only by `templates/partials/review-body.php`, on page one and on every
+   load-more page (`wpss_load_reviews` renders server-side); never build review markup in JS or in
+   a second template. Imported reviews (no order) are created only by `ReviewService::create_imported()`.
+8. **A schema change bumps `SchemaManager::DB_VERSION`.** The upgrade runs only when the stored
+   version is older, so a column change under an unchanged version never reaches a site already on it.
+
 Standing audit: `audit/DUPLICATE-FLOWS-money.md` and `audit/DUPLICATE-FLOWS-ui.md`
 inventory known duplications. Re-run that sweep before any major release.
 
