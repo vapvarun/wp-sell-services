@@ -950,7 +950,7 @@ class MilestoneService {
 
 			// Refunded was paid and came back, so it is contracted but no longer paid.
 			if ( 'paid' === ( $phase['payment_status'] ?? '' ) && 'refunded' !== $status ) {
-				$totals['paid']       += $amount;
+				$totals['paid'] += $amount;
 				++$totals['paid_count'];
 				$totals['commission'] += (float) ( $phase['platform_fee'] ?? 0 );
 				$totals['earnings']   += (float) ( $phase['vendor_earnings'] ?? 0 );
