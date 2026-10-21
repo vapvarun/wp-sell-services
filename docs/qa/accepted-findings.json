@@ -251,17 +251,17 @@
     },
     {
       "id": "J16:s1-phase-tax",
-      "fixed_in": "pending-commit",
+      "fixed_in": "7daf1c5f",
       "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Owner decision 2026-10-21: VAT applies to milestone phases. tests/test-sub-order-tax.php: a 50 phase is 60 with a stored rate and amount, commission stays on the 50, inclusive and tax-off cases hold, the Free pay page shows the VAT line. Fails on the old code. Woo rail shows a separate VAT fee line (Pro), FluentCart a note in the line label."
     },
     {
       "id": "J16:s2-extension-tax",
-      "fixed_in": "pending-commit",
+      "fixed_in": "7daf1c5f",
       "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Owner decision 2026-10-21: VAT applies to extensions. tests/test-sub-order-tax.php: a 30 extension is 36 with the tax stored on the order. Fails on the old code."
     },
     {
       "id": "J16:s4-tip-tax",
-      "fixed_in": "pending-commit",
+      "fixed_in": "7daf1c5f",
       "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Owner decision 2026-10-21: tips are untaxed by default, with a Tax tips setting to turn it on. tests/test-sub-order-tax.php: a tip stays 12 by default and is 14.40 with Tax tips on; the setting saves and clears. Default case passes on the old code by design, the setting case fails on it."
     }
   ],
