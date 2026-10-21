@@ -2377,13 +2377,16 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
+		// Skipping happens once, while the order still waits on requirements.
+		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS !== $order->status ) {
+			wp_send_json_error( array( 'message' => __( 'This order is no longer waiting for requirements.', 'wp-sell-services' ) ) );
+		}
+
 		// Mark requirements as skipped (can be submitted later).
 		update_post_meta( $order_id, '_wpss_requirements_skipped', true );
 
 		// Advance order to in_progress so the vendor can start working.
-		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS === $order->status ) {
-			$order_service->start_work( $order_id );
-		}
+		$order_service->start_work( $order_id );
 
 		$redirect_url = wpss_get_page_url( 'orders' );
 

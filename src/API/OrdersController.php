@@ -1360,14 +1360,20 @@ class OrdersController extends RestController {
 			);
 		}
 
+		// Skipping happens once, while the order still waits on requirements.
+		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS !== $order->status ) {
+			return new WP_Error(
+				'wpss_requirements_not_pending',
+				__( 'This order is no longer waiting for requirements.', 'wp-sell-services' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		// Mark requirements as skipped (can be submitted later).
 		update_post_meta( $order_id, '_wpss_requirements_skipped', true );
 
 		// Advance order to in_progress so the vendor can start working.
-		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS === $order->status ) {
-			$order_service = new OrderService();
-			$order_service->start_work( $order_id );
-		}
+		( new OrderService() )->start_work( $order_id );
 
 		// Refresh order data.
 		$order = ServiceOrder::find( $order_id );
