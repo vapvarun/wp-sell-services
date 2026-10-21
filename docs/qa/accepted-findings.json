@@ -43,22 +43,12 @@
       "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
-      "id": "J11:registry-no-generic-bell",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
-    },
-    {
       "id": "J11:s5-account-page-notifications-tab",
       "card": "10427222944",
       "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J14:s1-sub-ratings-optional",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
-    },
-    {
-      "id": "J14:s5-no-empty-heading",
       "card": "10427222944",
       "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
@@ -76,16 +66,6 @@
       "id": "J15:s1-vendor-without-profile-row",
       "card": "10427222944",
       "reason": "Intentional behaviour: Scratch wpss_vendor user 'qa-smoke-noprofile' with no wpss_vendor_profiles row (deleted afterwards): /vendors/?vendor=qa-smoke-noprofile -> 200 rendering the 'Vendors' directory; /vendors/qa-smoke-nop"
-    },
-    {
-      "id": "J15:s2-portfolio-counter-after-delete",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
-    },
-    {
-      "id": "J15:s6-seller-levels-rest",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J16:s1-phase-tax",
@@ -263,6 +243,26 @@
       "id": "J16:s1-repeat-decline-message",
       "fixed_in": "6466a69e",
       "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-milestone-decline-messages.php: a cancelled phase reads already declined, a paid one still reads already paid. Fails on the old code."
+    },
+    {
+      "id": "J11:registry-no-generic-bell",
+      "fixed_in": "f1a3cd09",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-notification-types-registry.php now scans every type the services send and requires a registry row; extension_requested, extension_rejected and dispute_assigned were missing. Fails on the old code."
+    },
+    {
+      "id": "J14:s5-no-empty-heading",
+      "fixed_in": "f1a3cd09",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-service-reviews-empty-section.php: no Reviews section for a service without reviews, still rendered when it has one. Fails on the old code."
+    },
+    {
+      "id": "J15:s2-portfolio-counter-after-delete",
+      "fixed_in": "f1a3cd09",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. The dashboard reloads after a delete; author checked in the browser: 3 of 50 became 2 of 50. JS only, so no PHP test."
+    },
+    {
+      "id": "J15:s6-seller-levels-rest",
+      "fixed_in": "f1a3cd09",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-seller-levels-rest-earnings.php: /vendors/me/level reports the ledger total (42.5), not 0. Fails on the old code."
     }
   ],
   "debug_log_accepted": [],
