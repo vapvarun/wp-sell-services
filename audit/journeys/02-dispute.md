@@ -97,7 +97,7 @@ On a site with pre-1.6.0 disputes, after upgrade:
 Every dispute action has a REST twin, and the dashboard button and the API call must end in the same state, notification and audit row.
 
 - `POST /disputes/{id}/respond`: the other party answers; a third user gets 403; the opener is told.
-- `POST /disputes/{id}/cancel`: only the opener, only while open; the other party is told and Open Dispute is offered again.
+- `POST /disputes/{id}/cancel`: only the opener, only while open; the other party is told and the dispute closes. An order carries one dispute ever, so Open Dispute is not offered again and `POST /orders/{id}/dispute` answers 400 `A dispute already exists for this order.`
 - `POST /disputes/{id}/escalate`: moves an open dispute to admin review once; a second call is refused, not duplicated.
 - `POST /disputes/{id}/assign`: admin only; a buyer or vendor gets 403.
 - `POST /disputes/{id}/resolve`: admin only; the resolution type decides the refund and the order status exactly as the admin screen does, and resolving twice changes nothing (a refund is never paid twice).
