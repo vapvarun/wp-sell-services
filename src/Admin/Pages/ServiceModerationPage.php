@@ -1039,6 +1039,14 @@ class ServiceModerationPage {
 			return;
 		}
 
+		// The select was left as the page rendered it: no decision was made. Acting
+		// on it anyway re-applied a stale "pending" after the admin's Publish had
+		// already approved the service, and put it straight back in the queue.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+		if ( isset( $_POST['wpss_moderation_status_was'] ) && sanitize_text_field( wp_unslash( $_POST['wpss_moderation_status_was'] ) ) === $new_status ) {
+			return;
+		}
+
 		// A decision goes through the one moderation path, so the editor, Quick
 		// Edit and bulk edit record history, email the vendor and refuse to
 		// approve an incomplete service exactly like the queue does. This used
@@ -1154,6 +1162,7 @@ class ServiceModerationPage {
 
 		wp_nonce_field( 'wpss_moderation_metabox', 'wpss_moderation_nonce' );
 		?>
+		<input type="hidden" name="wpss_moderation_status_was" value="<?php echo esc_attr( $current_status ); ?>">
 		<div class="wpss-moderation-metabox">
 			<p>
 				<label for="wpss-moderation-decision"><strong><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></strong></label>

@@ -93,6 +93,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-account-standing.php"
    },
    {
+    "id": "admin-publish-approves",
+    "run": "${WP_CLI:-wp} eval-file tests/test-admin-publish-approves.php"
+   },
+   {
     "id": "ajax-standing-gate",
     "run": "${WP_CLI:-wp} eval-file tests/test-ajax-standing-gate.php"
    },
@@ -213,6 +217,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-order-product-columns.php"
    },
    {
+    "id": "package-revisions-unlimited-input",
+    "run": "${WP_CLI:-wp} eval-file tests/test-package-revisions-unlimited-input.php"
+   },
+   {
     "id": "portfolio-reorder-ownership",
     "run": "${WP_CLI:-wp} eval-file tests/test-portfolio-reorder-ownership.php"
    },
@@ -273,6 +281,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-seller-levels-rest-earnings.php"
    },
    {
+    "id": "service-limit-every-publish-door",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-limit-every-publish-door.php"
+   },
+   {
     "id": "service-moderation-admin-publish",
     "run": "${WP_CLI:-wp} eval-file tests/test-service-moderation-admin-publish.php"
    },
@@ -299,6 +311,10 @@
    {
     "id": "sub-order-tax",
     "run": "${WP_CLI:-wp} eval-file tests/test-sub-order-tax.php"
+   },
+   {
+    "id": "suspended-vendor-doors",
+    "run": "${WP_CLI:-wp} eval-file tests/test-suspended-vendor-doors.php"
    },
    {
     "id": "text-token-contrast",

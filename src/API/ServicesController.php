@@ -808,6 +808,15 @@ class ServicesController extends RestController {
 				);
 			}
 
+			// Publishing a draft counts against the vendor's service limit, like
+			// creating one does. The dashboard Publish toggle comes through here.
+			if ( 'publish' === $requested_status ) {
+				$limit_error = wpss_service_limit_error( $service_id, get_current_user_id() );
+				if ( '' !== $limit_error ) {
+					return new WP_Error( 'wpss_service_limit_reached', $limit_error, array( 'status' => 403 ) );
+				}
+			}
+
 			$update_data['post_status'] = $requested_status;
 		}
 

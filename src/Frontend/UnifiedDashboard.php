@@ -967,9 +967,10 @@ class UnifiedDashboard {
 		$vendor_service = $this->vendor_service;
 		$is_vendor      = $vendor_service->is_vendor( $user_id );
 
-		// Check access: vendor-only sections require vendor status.
-		$vendor_only_sections = self::VENDOR_SECTIONS;
-		if ( ! $is_vendor && in_array( $section, $vendor_only_sections, true ) ) {
+		// One gate, the same one the route and the menu use. This used to be a
+		// second, stricter copy that refused a suspended vendor on Sales Orders
+		// even though the menu offered it and the route let them in.
+		if ( in_array( $section, self::VENDOR_SECTIONS, true ) && ! $this->can_access_section( $section ) ) {
 			$this->render_section_fallback( $section );
 			return;
 		}

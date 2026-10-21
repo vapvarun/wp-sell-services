@@ -1845,36 +1845,12 @@ class ServiceWizard {
 		}
 		set_transient( $lock_key, true, 30 );
 
-		// Check if vendor can create/publish a new service.
-		// This applies to: new services (no service_id) or drafts being published for the first time.
-		// Uses the wpss_vendor_can_create_service filter so Pro subscription limits
-		// and the free max-services-per-vendor limit are enforced consistently.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			$is_new_to_count = false;
-			if ( ! $service_id ) {
-				$is_new_to_count = true;
-			} else {
-				$existing = get_post( $service_id );
-				if ( $existing && 'draft' === $existing->post_status ) {
-					$is_new_to_count = true;
-				}
-			}
-
-			if ( $is_new_to_count ) {
-				/** This filter is documented in src/API/ServicesController.php */
-				$can_create = apply_filters( 'wpss_vendor_can_create_service', true, $user_id );
-
-				if ( ! $can_create ) {
-					/** This filter is documented in src/API/ServicesController.php */
-					$error_message = apply_filters(
-						'wpss_service_limit_error_message',
-						__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
-					);
-
-					delete_transient( $lock_key );
-					wp_send_json_error( array( 'message' => wp_strip_all_tags( $error_message ) ) );
-				}
-			}
+		// A new service or a draft going live counts against the vendor's limit
+		// (Pro plan limits included): one answer for every door.
+		$limit_error = wpss_service_limit_error( (int) $service_id, (int) $user_id );
+		if ( '' !== $limit_error ) {
+			delete_transient( $lock_key );
+			wp_send_json_error( array( 'message' => $limit_error ) );
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string sanitized after decode.

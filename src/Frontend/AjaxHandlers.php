@@ -1901,6 +1901,12 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Vendor not found.', 'wp-sell-services' ) ) );
 		}
 
+		// A suspended vendor takes no new enquiries; paid orders already open
+		// keep their own conversation.
+		if ( 'suspended' === wpss_get_vendor_status( $vendor_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'This vendor is not taking new messages right now.', 'wp-sell-services' ) ) );
+		}
+
 		// Get service title for context.
 		$service_title = '';
 		if ( $service_id ) {

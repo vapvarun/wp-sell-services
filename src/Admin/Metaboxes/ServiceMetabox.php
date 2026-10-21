@@ -379,8 +379,9 @@ class ServiceMetabox {
 						<div class="wpss-input-with-suffix">
 							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][revisions]" aria-label="<?php esc_attr_e( 'Number of revisions', 'wp-sell-services' ); ?>"
 									value="<?php echo esc_attr( ! empty( $package['revisions'] ) ? $package['revisions'] : '' ); ?>"
-									min="0" max="20" placeholder="2">
-							<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
+									min="-1" max="20" placeholder="2"
+									title="<?php esc_attr_e( 'Use -1 for unlimited revisions.', 'wp-sell-services' ); ?>">
+							<span class="wpss-input-suffix"><?php esc_html_e( 'times (-1 = unlimited)', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
 				</div>

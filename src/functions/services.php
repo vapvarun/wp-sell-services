@@ -482,6 +482,47 @@ function wpss_get_service_publish_errors( int $service_id ): array {
 }
 
 /**
+ * Why a vendor may not make this service count against their limit, or ''.
+ *
+ * The one answer for every door that takes a service live: the wizard, REST
+ * and the dashboard Publish toggle (which is REST). A published or pending
+ * service already counts, so only a new service or a draft is held to the
+ * limit; the site owner is not bound by it. Pro's plan limits ride the same
+ * `wpss_vendor_can_create_service` filter.
+ *
+ * @since 1.9.1
+ *
+ * @param int $service_id Service post ID, or 0 for a service not yet created.
+ * @param int $user_id    The vendor.
+ * @return string User-facing sentence; empty when the service may count.
+ */
+function wpss_service_limit_error( int $service_id, int $user_id ): string {
+	if ( user_can( $user_id, 'manage_options' ) ) {
+		return '';
+	}
+
+	if ( $service_id ) {
+		$existing = get_post( $service_id );
+		if ( ! $existing || 'draft' !== $existing->post_status ) {
+			return '';
+		}
+	}
+
+	/** This filter is documented in src/API/ServicesController.php */
+	if ( apply_filters( 'wpss_vendor_can_create_service', true, $user_id ) ) {
+		return '';
+	}
+
+	/** This filter is documented in src/API/ServicesController.php */
+	$message = apply_filters(
+		'wpss_service_limit_error_message',
+		__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
+	);
+
+	return wp_strip_all_tags( (string) $message );
+}
+
+/**
  * Truncate a service's lists to wpss_get_service_limits().
  *
  * The one enforcer for every save path (wizard, REST, admin metabox,
