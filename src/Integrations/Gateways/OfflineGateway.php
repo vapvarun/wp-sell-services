@@ -79,7 +79,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 * @return string
 	 */
 	public function get_name(): string {
-		return ! empty( $this->settings['title'] ) ? $this->settings['title'] : __( 'Offline Payment', 'wp-sell-services' );
+		return ! empty( $this->settings['title'] ) ? $this->settings['title'] : __( 'Offline payment', 'wp-sell-services' );
 	}
 
 	/**
@@ -304,7 +304,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 				array(
 					'id'           => 'offline',
 					// A saved but empty title left the method nameless.
-					'label'        => '' !== (string) ( $settings['title'] ?? '' ) ? (string) $settings['title'] : __( 'Offline Payment', 'wp-sell-services' ),
+					'label'        => '' !== (string) ( $settings['title'] ?? '' ) ? (string) $settings['title'] : __( 'Offline payment', 'wp-sell-services' ),
 					'instructions' => $settings['instructions'] ?? '',
 					'enabled'      => true,
 				),
@@ -395,7 +395,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 				'type'        => 'text',
 				'label'       => __( 'Title', 'wp-sell-services' ),
 				'description' => __( 'Heading shown above the offline options at checkout.', 'wp-sell-services' ),
-				'default'     => __( 'Offline Payment', 'wp-sell-services' ),
+				'default'     => __( 'Offline payment', 'wp-sell-services' ),
 			),
 			'description'     => array(
 				'type'        => 'textarea',
@@ -539,7 +539,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		?>
 		<div class="wpss-offline-instructions" style="background: #fff3cd; border: 1px solid #ffc107; padding: 20px; border-radius: 4px; margin: 20px 0;">
 			<h3 style="margin-top: 0; color: #856404;">
-				<?php esc_html_e( 'Payment Instructions', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Payment instructions', 'wp-sell-services' ); ?>
 			</h3>
 			<div class="wpss-offline-instructions-content">
 				<?php echo wp_kses_post( wpautop( $instructions ) ); ?>
@@ -977,7 +977,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 					class="button button-primary wpss-mark-paid-btn"
 					data-order-id="<?php echo esc_attr( $order->id ); ?>"
 					data-nonce="<?php echo esc_attr( $nonce ); ?>">
-					<?php esc_html_e( 'Mark as Paid', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Mark as paid', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 		</div>
@@ -1015,11 +1015,11 @@ class OfflineGateway extends AbstractPaymentGateway {
 						location.reload();
 					} else {
 						wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
-						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as Paid', 'wp-sell-services' ) ); ?>');
+						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as paid', 'wp-sell-services' ) ); ?>');
 					}
 				}).fail(function() {
 					wpssAdminNotice('<?php echo esc_js( __( 'Request failed. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
-					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as Paid', 'wp-sell-services' ) ); ?>');
+					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as paid', 'wp-sell-services' ) ); ?>');
 				});
 				});
 			});
@@ -1324,7 +1324,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 							esc_html( $method['label'] )
 						);
 					} else {
-						esc_html_e( 'Payment Instructions', 'wp-sell-services' );
+						esc_html_e( 'Payment instructions', 'wp-sell-services' );
 					}
 					?>
 				</h2>
@@ -1717,7 +1717,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		</p>
 		<ul style="list-style: disc; margin-left: 20px;">
 			<li><code>{order_number}</code> - <?php esc_html_e( 'Order reference number', 'wp-sell-services' ); ?></li>
-			<li><code>{order_id}</code> - <?php esc_html_e( 'Order ID', 'wp-sell-services' ); ?></li>
+			<li><code>{order_id}</code> - <?php esc_html_e( 'Order ID.', 'wp-sell-services' ); ?></li>
 			<li><code>{total}</code> - <?php esc_html_e( 'Formatted order total with currency', 'wp-sell-services' ); ?></li>
 			<li><code>{currency}</code> - <?php esc_html_e( 'Currency code', 'wp-sell-services' ); ?></li>
 		</ul>
@@ -1894,7 +1894,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 */
 	public function get_settings_card(): ?array {
 		return array(
-			'title'        => __( 'Offline Payment', 'wp-sell-services' ),
+			'title'        => __( 'Offline payment', 'wp-sell-services' ),
 			'description'  => __( 'Accept bank transfer, cash, and other manual payments.', 'wp-sell-services' ),
 			'option_group' => 'wpss_offline_settings',
 			'order'        => 90,

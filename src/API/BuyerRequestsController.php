@@ -790,7 +790,7 @@ class BuyerRequestsController extends RestController {
 			);
 		}
 
-		return new WP_REST_Response( [ 'message' => __( 'Proposal rejected.', 'wp-sell-services' ) ] );
+		return new WP_REST_Response( [ 'message' => __( 'Proposal rejected', 'wp-sell-services' ) ] );
 	}
 
 	/**

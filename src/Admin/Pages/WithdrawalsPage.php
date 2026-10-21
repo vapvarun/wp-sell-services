@@ -187,7 +187,7 @@ class WithdrawalsPage {
 					'noteLabel'    => __( 'Admin Note (Optional)', 'wp-sell-services' ),
 					'titles'       => array(
 						'approve'  => __( 'Approve Withdrawal', 'wp-sell-services' ),
-						'complete' => __( 'Mark as Paid', 'wp-sell-services' ),
+						'complete' => __( 'Mark as paid', 'wp-sell-services' ),
 						'reject'   => __( 'Reject Withdrawal', 'wp-sell-services' ),
 						'fallback' => __( 'Process Withdrawal', 'wp-sell-services' ),
 					),

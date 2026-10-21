@@ -270,7 +270,7 @@ do_action( 'wpss_before_order_view', $order );
 
 			if ( in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) {
 				$actions['deliver'] = array(
-					'label' => 'revision_requested' === $order->status ? __( 'Deliver Revision', 'wp-sell-services' ) : __( 'Deliver Work', 'wp-sell-services' ),
+					'label' => 'revision_requested' === $order->status ? __( 'Deliver revision', 'wp-sell-services' ) : __( 'Deliver Work', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--success wpss-deliver-btn',
 					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
 				);
@@ -333,7 +333,7 @@ do_action( 'wpss_before_order_view', $order );
 			if ( 'pending_requirements' === $order->status ) {
 				$requirements_url        = wpss_get_order_requirements_url( $order_id );
 				$actions['requirements'] = array(
-					'label' => __( 'Submit Requirements', 'wp-sell-services' ),
+					'label' => __( 'Submit requirements', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--primary',
 					'attrs' => 'onclick="window.location.href=\'' . esc_url( $requirements_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
 				);
@@ -421,7 +421,7 @@ do_action( 'wpss_before_order_view', $order );
 
 		if ( $can_open_dispute && ( $is_customer || $is_vendor ) ) {
 			$actions['dispute'] = array(
-				'label' => __( 'Open Dispute', 'wp-sell-services' ),
+				'label' => __( 'Open dispute', 'wp-sell-services' ),
 				'class' => 'wpss-btn wpss-btn--danger-outline wpss-dispute-btn',
 				'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
 			);
@@ -628,7 +628,7 @@ do_action( 'wpss_before_order_view', $order );
 				$wpss_payment_ref = wpss_get_order_payment_reference( $order );
 				?>
 				<div class="wpss-order-detail-item">
-					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Number', 'wp-sell-services' ); ?></span>
+					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order number', 'wp-sell-services' ); ?></span>
 					<span class="wpss-order-detail-item__value wpss-order-detail-item__value--id">#<bdi><?php echo esc_html( $order->order_number ); ?></bdi></span>
 					<?php if ( $wpss_payment_ref ) : ?>
 						<span class="wpss-order-detail-item__sub">
@@ -662,7 +662,7 @@ do_action( 'wpss_before_order_view', $order );
 				?>
 				<?php if ( $order->delivery_deadline ) : ?>
 					<div class="wpss-order-detail-item">
-						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
+						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due date', 'wp-sell-services' ); ?></span>
 						<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_deadline_label( $order->delivery_deadline->getTimestamp() ) ); ?></span>
 					</div>
 				<?php endif; ?>
@@ -689,7 +689,7 @@ do_action( 'wpss_before_order_view', $order );
 					<span class="wpss-order-detail-item__label">
 						<?php
 						if ( $show_phase_total ) {
-							esc_html_e( 'Contract Total', 'wp-sell-services' );
+							esc_html_e( 'Contract total', 'wp-sell-services' );
 						} else {
 							esc_html_e( 'Total Amount', 'wp-sell-services' );
 						}
@@ -785,7 +785,7 @@ do_action( 'wpss_before_order_view', $order );
 					if ( abs( $detail_gross - $detail_net ) > 0.005 ) :
 						?>
 						<div class="wpss-order-detail-item">
-							<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Platform Fee', 'wp-sell-services' ); ?></span>
+							<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Platform fee', 'wp-sell-services' ); ?></span>
 							<span class="wpss-order-detail-item__value">−<?php echo esc_html( wpss_format_price( $detail_fee, $order->currency ) ); ?></span>
 						</div>
 						<div class="wpss-order-detail-item wpss-order-detail-item--highlight">
@@ -941,7 +941,7 @@ do_action( 'wpss_before_order_view', $order );
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
 					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Submit requirements', 'wp-sell-services' ); ?>
 				</h2>
 			</div>
 			<div class="wpss-order-section__body">
@@ -1473,7 +1473,7 @@ do_action( 'wpss_before_order_view', $order );
 						if (res && res.success) {
 							feedback.hidden = false;
 							feedback.className = 'wpss-modal__feedback wpss-modal__feedback--success';
-							feedback.textContent = (res.data && res.data.message) || '<?php echo esc_js( __( 'Sent.', 'wp-sell-services' ) ); ?>';
+							feedback.textContent = (res.data && res.data.message) || '<?php echo esc_js( __( 'Sent', 'wp-sell-services' ) ); ?>';
 							setTimeout(function () { window.location.reload(); }, 700);
 						} else {
 							feedback.hidden = false;
@@ -1849,7 +1849,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">
-			<h3 id="wpss-deliver-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Submit Delivery', 'wp-sell-services' ); ?></h3>
+			<h3 id="wpss-deliver-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Submit delivery', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
@@ -1917,7 +1917,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 				</button>
 				<button type="submit" class="wpss-btn wpss-btn--success">
 					<i data-lucide="check" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Submit Delivery', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Submit delivery', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 		</form>
@@ -2020,7 +2020,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">
-			<h3 id="wpss-dispute-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Open Dispute', 'wp-sell-services' ); ?></h3>
+			<h3 id="wpss-dispute-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Open dispute', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
@@ -2068,7 +2068,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
 				</button>
 				<button type="submit" class="wpss-btn wpss-btn--danger">
-					<?php esc_html_e( 'Open Dispute', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Open dispute', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 		</form>

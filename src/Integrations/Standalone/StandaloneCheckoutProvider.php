@@ -423,10 +423,10 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				<div class="wpss-cart-empty__icon">
 					<i data-lucide="shopping-cart" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
-				<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Your cart is empty', 'wp-sell-services' ); ?></h2>
+				<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Your cart is empty.', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-cart-empty__text"><?php esc_html_e( 'Choose a service and a package to check out.', 'wp-sell-services' ); ?></p>
 				<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ? wpss_get_page_url( 'services_page' ) : home_url( '/' ) ); ?>" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?>
 				</a>
 			</div>
 			<?php
@@ -654,7 +654,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$summary_lines = array();
 		if ( $is_pay_order ) {
 			$summary_lines[] = array(
-				'label'  => __( 'Order Total', 'wp-sell-services' ),
+				'label'  => __( 'Order total', 'wp-sell-services' ),
 				'amount' => $total,
 				'strong' => true,
 			);
@@ -1227,7 +1227,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 										<?php if ( $vendor_joined ) : ?>
 										<div class="wpss-co-seller-stat">
 											<span class="wpss-co-seller-stat__value"><?php echo esc_html( $vendor_joined ); ?></span>
-											<span class="wpss-co-seller-stat__label"><?php esc_html_e( 'Member Since', 'wp-sell-services' ); ?></span>
+											<span class="wpss-co-seller-stat__label"><?php esc_html_e( 'Member since', 'wp-sell-services' ); ?></span>
 										</div>
 										<?php endif; ?>
 									</div>
@@ -1834,7 +1834,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					'processing'    => __( 'Processing...', 'wp-sell-services' ),
 					'paymentFailed' => __( 'Payment failed. Please try again.', 'wp-sell-services' ),
 					'genericError'  => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'logIn'         => __( 'Log in', 'wp-sell-services' ),
+					'logIn'         => __( 'Log In', 'wp-sell-services' ),
 					'accountFailed' => __( 'We could not create your account. Please check your details.', 'wp-sell-services' ),
 				),
 			)

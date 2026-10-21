@@ -279,7 +279,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 				<div class="wpss-form-row">
 					<label class="wpss-toggle">
 						<input type="checkbox" name="is_featured" value="1" id="portfolio-featured">
-						<span class="wpss-toggle__label"><?php esc_html_e( 'Mark as Featured', 'wp-sell-services' ); ?></span>
+						<span class="wpss-toggle__label"><?php esc_html_e( 'Mark as featured', 'wp-sell-services' ); ?></span>
 					</label>
 				</div>
 				</div>

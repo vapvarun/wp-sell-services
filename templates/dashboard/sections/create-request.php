@@ -129,7 +129,7 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 					</div>
 				</div>
 				<div>
-					<label for="request_budget_max"><?php esc_html_e( 'Maximum Budget', 'wp-sell-services' ); ?></label>
+					<label for="request_budget_max"><?php esc_html_e( 'Maximum budget', 'wp-sell-services' ); ?></label>
 					<div class="wpss-input-group">
 						<span class="wpss-input-group__prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 						<input

@@ -182,7 +182,7 @@ class ServiceSearch extends AbstractBlock {
 							);
 							?>
 							<select name="category" class="wpss-category-select">
-								<option value=""><?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?></option>
+								<option value=""><?php esc_html_e( 'All categories', 'wp-sell-services' ); ?></option>
 								<?php if ( ! is_wp_error( $categories ) ) : ?>
 									<?php foreach ( $categories as $cat ) : ?>
 										<option value="<?php echo esc_attr( $cat->term_id ); ?>" <?php selected( $category, $cat->term_id ); ?>>

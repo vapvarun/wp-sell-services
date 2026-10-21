@@ -1594,7 +1594,7 @@ class VendorsPage {
 		if ( ! empty( $social_links ) ) :
 			?>
 			<div class="wpss-tab-section">
-				<h3><?php esc_html_e( 'Social Links', 'wp-sell-services' ); ?></h3>
+				<h3><?php esc_html_e( 'Social links', 'wp-sell-services' ); ?></h3>
 				<div class="wpss-social-links">
 					<?php foreach ( $social_links as $platform => $url ) : ?>
 						<?php if ( $url ) : ?>
@@ -1626,7 +1626,7 @@ class VendorsPage {
 						<?php if ( ! empty( $profile->is_available ) ) : ?>
 							<span style="color: #00a32a;">● <?php esc_html_e( 'Available', 'wp-sell-services' ); ?></span>
 						<?php else : ?>
-							<span style="color: #646970;">○ <?php esc_html_e( 'Not Available', 'wp-sell-services' ); ?></span>
+							<span style="color: #646970;">○ <?php esc_html_e( 'Not available', 'wp-sell-services' ); ?></span>
 						<?php endif; ?>
 					</span>
 				</div>
@@ -1829,7 +1829,7 @@ class VendorsPage {
 
 		// Get available statuses for filter.
 		$statuses = array(
-			''                     => __( 'All Statuses', 'wp-sell-services' ),
+			''                     => __( 'All statuses', 'wp-sell-services' ),
 			'pending_payment'      => __( 'Pending Payment', 'wp-sell-services' ),
 			'pending_requirements' => __( 'Pending Requirements', 'wp-sell-services' ),
 			'in_progress'          => __( 'In Progress', 'wp-sell-services' ),
@@ -2278,7 +2278,7 @@ class VendorsPage {
 		<div class="wpss-tab-section">
 			<h3><?php esc_html_e( 'Recent Reviews', 'wp-sell-services' ); ?></h3>
 			<?php if ( empty( $reviews ) ) : ?>
-				<p><?php esc_html_e( 'No reviews yet.', 'wp-sell-services' ); ?></p>
+				<p><?php esc_html_e( 'No reviews yet', 'wp-sell-services' ); ?></p>
 			<?php else : ?>
 				<div class="wpss-reviews-list">
 					<?php foreach ( $reviews as $review ) : ?>

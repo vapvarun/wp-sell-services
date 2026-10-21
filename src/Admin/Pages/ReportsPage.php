@@ -169,7 +169,7 @@ class ReportsPage {
 		$open = $this->count_by_status( 'open' );
 		// "Member Reports": the plugin's numbers live under Analytics, and a
 		// bare "Reports" sent owners to the wrong screen (Basecamp 10337159668).
-		$menu_title = __( 'Member Reports', 'wp-sell-services' );
+		$menu_title = __( 'Member reports', 'wp-sell-services' );
 
 		// The bubble is the whole point of putting this in the menu: an owner
 		// who has to open a screen to discover there is nothing to do will stop
@@ -180,7 +180,7 @@ class ReportsPage {
 
 		add_submenu_page(
 			'wp-sell-services',
-			__( 'Member Reports', 'wp-sell-services' ),
+			__( 'Member reports', 'wp-sell-services' ),
 			$menu_title,
 			'manage_options',
 			'wpss-reports',
@@ -264,7 +264,7 @@ class ReportsPage {
 		$total_pages = (int) ceil( $total / self::PER_PAGE );
 		?>
 		<div class="wrap wpss-listing-page wpss-reports-page">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Member Reports', 'wp-sell-services' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Member reports', 'wp-sell-services' ); ?></h1>
 
 			<p class="description">
 				<?php esc_html_e( 'What members have reported to you, newest first. Acting on a member here applies everywhere: on the website and in the app.', 'wp-sell-services' ); ?>

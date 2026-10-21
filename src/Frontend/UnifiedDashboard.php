@@ -217,7 +217,7 @@ class UnifiedDashboard {
 					'requestDeleted'         => __( 'Request deleted.', 'wp-sell-services' ),
 					'requestDeleteFailed'    => __( 'Failed to delete request.', 'wp-sell-services' ),
 					'deleteFailed'           => __( 'Delete failed.', 'wp-sell-services' ),
-					'saveFailed'             => __( 'Save failed.', 'wp-sell-services' ),
+					'saveFailed'             => __( 'Save failed', 'wp-sell-services' ),
 					'failed'                 => __( 'Failed.', 'wp-sell-services' ),
 					/* translators: %d: number of saved services */
 					'favoriteCountSingular'  => __( '%d saved service', 'wp-sell-services' ),
@@ -639,7 +639,7 @@ class UnifiedDashboard {
 			esc_html__( 'Access your dashboard', 'wp-sell-services' ),
 			esc_html__( 'Log in to view your orders, messages, and manage your services.', 'wp-sell-services' ),
 			esc_url( $login_url ),
-			esc_html__( 'Log in', 'wp-sell-services' ),
+			esc_html__( 'Log In', 'wp-sell-services' ),
 			$signup // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above.
 		);
 	}
@@ -768,7 +768,7 @@ class UnifiedDashboard {
 					<div class="wpss-dashboard__become-vendor">
 						<p><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></p>
 						<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--full" data-action="become-vendor">
-							<?php esc_html_e( 'Start Selling', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
 						</button>
 					</div>
 					<?php endif; ?>
@@ -1021,7 +1021,7 @@ class UnifiedDashboard {
 				<h3><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></h3>
 				<p><?php esc_html_e( 'Start selling your services on this marketplace. Click the button below to register as a vendor and begin offering your skills.', 'wp-sell-services' ); ?></p>
 				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor">
-					<?php esc_html_e( 'Start Selling', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 			<?php
@@ -1036,7 +1036,7 @@ class UnifiedDashboard {
 				<p><?php esc_html_e( 'This section is available to vendors. Become a vendor to access this feature and start selling your services.', 'wp-sell-services' ); ?></p>
 				<?php if ( $registration_is_open ) : ?>
 				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor">
-					<?php esc_html_e( 'Start Selling', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
 				</button>
 				<?php endif; ?>
 			</div>

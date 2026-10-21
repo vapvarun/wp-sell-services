@@ -1223,7 +1223,7 @@ class EmailService {
 		$template_vars = array(
 			'order'              => $order,
 			'recipient'          => $vendor,
-			'email_heading'      => __( 'Revision Requested', 'wp-sell-services' ),
+			'email_heading'      => __( 'Revision requested', 'wp-sell-services' ),
 			'revisions_used'     => $order->revisions_used ?? 0,
 			'revisions_included' => $order->revisions_included ?? 0,
 			'reply_to_email'     => $customer ? $customer->user_email : '',
@@ -1436,7 +1436,7 @@ class EmailService {
 				array(
 					'order'          => $order,
 					'recipient'      => $vendor,
-					'email_heading'  => __( 'Cancellation Requested', 'wp-sell-services' ),
+					'email_heading'  => __( 'Cancellation requested', 'wp-sell-services' ),
 					'buyer_name'     => $this->get_customer_name( $order->customer_id ),
 					'reason'         => $reason_label,
 					'note'           => $note,
@@ -1538,7 +1538,7 @@ class EmailService {
 
 		$template_vars = array(
 			'order'         => $order,
-			'email_heading' => __( 'Order Cancelled', 'wp-sell-services' ),
+			'email_heading' => __( 'Order cancelled', 'wp-sell-services' ),
 			'reason'        => '' !== $note ? trim( $label . ' - ' . $note, ' -' ) : $label,
 		);
 
@@ -1607,7 +1607,7 @@ class EmailService {
 
 		$base_vars = array(
 			'order'            => $order,
-			'email_heading'    => __( 'Dispute Opened', 'wp-sell-services' ),
+			'email_heading'    => __( 'Dispute opened', 'wp-sell-services' ),
 			'dispute_reason'   => $dispute_reason,
 			'opened_by_vendor' => $opened_by_vendor,
 			'opener_name'      => $opener_name,
@@ -1864,17 +1864,17 @@ class EmailService {
 
 		if ( 'rejected' === $status ) {
 			$type    = self::TYPE_WITHDRAWAL_REJECTED;
-			$heading = __( 'Withdrawal Rejected', 'wp-sell-services' );
+			$heading = __( 'Withdrawal rejected', 'wp-sell-services' );
 			/* translators: 1: platform name, 2: amount */
 			$subject = __( '[%1$s] Withdrawal Request for %2$s Rejected', 'wp-sell-services' );
 		} elseif ( 'completed' === $status ) {
 			$type    = self::TYPE_WITHDRAWAL_COMPLETED;
-			$heading = __( 'Withdrawal Paid', 'wp-sell-services' );
+			$heading = __( 'Withdrawal paid', 'wp-sell-services' );
 			/* translators: 1: platform name, 2: amount */
 			$subject = __( '[%1$s] Withdrawal of %2$s Paid', 'wp-sell-services' );
 		} else {
 			$type    = self::TYPE_WITHDRAWAL_APPROVED;
-			$heading = __( 'Withdrawal Approved', 'wp-sell-services' );
+			$heading = __( 'Withdrawal approved', 'wp-sell-services' );
 			/* translators: 1: platform name, 2: amount */
 			$subject = __( '[%1$s] Withdrawal of %2$s Approved', 'wp-sell-services' );
 		}
@@ -1926,7 +1926,7 @@ class EmailService {
 
 		$template_vars = array(
 			'recipient'      => $buyer,
-			'email_heading'  => __( 'New Proposal Received', 'wp-sell-services' ),
+			'email_heading'  => __( 'New proposal received', 'wp-sell-services' ),
 			'content'        => sprintf(
 				/* translators: 1: vendor name, 2: request title */
 				__( '%1$s has submitted a proposal for your request "%2$s". Review it and accept if it meets your needs.', 'wp-sell-services' ),
@@ -2030,7 +2030,7 @@ class EmailService {
 
 		$buyer = get_user_by( 'id', $request->author_id ?? 0 );
 
-		$request_title = $request->title ?? __( 'Buyer Request', 'wp-sell-services' );
+		$request_title = $request->title ?? __( 'Buyer request', 'wp-sell-services' );
 
 		$subject = sprintf(
 			/* translators: 1: platform name, 2: request title */

@@ -284,7 +284,7 @@ class API {
 					'permission_callback' => '__return_true',
 					'args'                => [
 						'search'   => [
-							'description' => __( 'Search tags.', 'wp-sell-services' ),
+							'description' => __( 'Search tags', 'wp-sell-services' ),
 							'type'        => 'string',
 						],
 						'per_page' => [

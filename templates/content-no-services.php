@@ -43,7 +43,7 @@ $message = apply_filters( 'wpss_no_services_message', $default_message );
 			<i data-lucide="text-align-left" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 		</span>
 
-		<h2><?php esc_html_e( 'No services found', 'wp-sell-services' ); ?></h2>
+		<h2><?php esc_html_e( 'No services found.', 'wp-sell-services' ); ?></h2>
 
 		<p><?php echo wp_kses_post( $message ); ?></p>
 

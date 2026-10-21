@@ -173,7 +173,7 @@ class EarningsController extends RestController {
 							'maximum' => 100,
 						),
 						'status'   => array(
-							'description' => __( 'Filter by status.', 'wp-sell-services' ),
+							'description' => __( 'Filter by status', 'wp-sell-services' ),
 							'type'        => 'string',
 							'enum'        => array_keys( \WPSellServices\Services\EarningsService::get_withdrawal_statuses() ),
 						),
@@ -417,7 +417,7 @@ class EarningsController extends RestController {
 		// extensions and milestones are all stored as sub-orders), mapped to the
 		// vendor-facing link label.
 		$reference_labels = array(
-			'order'     => __( 'View Order', 'wp-sell-services' ),
+			'order'     => __( 'View order', 'wp-sell-services' ),
 			'tip'       => __( 'View Tip', 'wp-sell-services' ),
 			'extension' => __( 'View Extension', 'wp-sell-services' ),
 			'milestone' => __( 'View Milestone', 'wp-sell-services' ),

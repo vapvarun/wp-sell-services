@@ -105,7 +105,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 
 			<div class="wpss-conversation-thread__messages" id="wpss-messages-container">
 				<?php if ( empty( $messages ) ) : ?>
-					<p class="wpss-text-muted"><?php esc_html_e( 'No messages yet.', 'wp-sell-services' ); ?></p>
+					<p class="wpss-text-muted"><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></p>
 				<?php else : ?>
 					<?php foreach ( $messages as $msg ) : ?>
 						<?php
@@ -154,7 +154,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 
 						if (!$textarea.val().trim()) return;
 
-						$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Sending...', 'wp-sell-services' ) ); ?>');
+						$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Sending…', 'wp-sell-services' ) ); ?>');
 
 						// REST: POST /conversations/{id}/messages (text-only here).
 						var convId = $form.find('[name="conversation_id"]').val();

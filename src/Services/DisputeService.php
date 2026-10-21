@@ -1315,7 +1315,7 @@ class DisputeService {
 	public static function get_statuses(): array {
 		return array(
 			self::STATUS_OPEN      => __( 'Open', 'wp-sell-services' ),
-			self::STATUS_PENDING   => __( 'Pending Review', 'wp-sell-services' ),
+			self::STATUS_PENDING   => __( 'Pending review', 'wp-sell-services' ),
 			self::STATUS_RESOLVED  => __( 'Resolved', 'wp-sell-services' ),
 			self::STATUS_ESCALATED => __( 'Escalated', 'wp-sell-services' ),
 			self::STATUS_CLOSED    => __( 'Closed', 'wp-sell-services' ),

@@ -69,7 +69,7 @@ do_action( 'wpss_before_requirements_form', $order );
 
 <div class="wpss-requirements-page">
 	<div class="wpss-requirements-page__header">
-		<h1 class="wpss-requirements-page__title"><?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?></h1>
+		<h1 class="wpss-requirements-page__title"><?php esc_html_e( 'Submit requirements', 'wp-sell-services' ); ?></h1>
 		<p class="wpss-requirements-page__intro">
 			<?php
 			printf(
@@ -115,7 +115,7 @@ do_action( 'wpss_before_requirements_form', $order );
 				</div>
 				<div class="wpss-order-card__body">
 					<dl class="wpss-order-card__list">
-						<dt><?php esc_html_e( 'Order Number', 'wp-sell-services' ); ?></dt>
+						<dt><?php esc_html_e( 'Order number', 'wp-sell-services' ); ?></dt>
 						<dd><?php echo esc_html( $order->order_number ); ?></dd>
 
 						<dt><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></dt>

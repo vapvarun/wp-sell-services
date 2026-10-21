@@ -129,7 +129,7 @@ do_action( 'wpss_email_content_before', 'order_in_progress', $order, $recipient 
 	 *
 	 * @param string $button_text Default button text.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'View Order', 'wp-sell-services' ), 'order_in_progress' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'View order', 'wp-sell-services' ), 'order_in_progress' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>

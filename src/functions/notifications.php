@@ -406,22 +406,22 @@ function wpss_add_notification( int $user_id, string $type, string $message, arr
 
 	// Generate title from type.
 	$type_titles = array(
-		'order_created'        => __( 'New Order', 'wp-sell-services' ),
-		'order_status'         => __( 'Order Update', 'wp-sell-services' ),
-		'new_message'          => __( 'New Message', 'wp-sell-services' ),
-		'delivery_submitted'   => __( 'Delivery Submitted', 'wp-sell-services' ),
-		'delivery_accepted'    => __( 'Delivery Accepted', 'wp-sell-services' ),
-		'revision_requested'   => __( 'Revision Requested', 'wp-sell-services' ),
+		'order_created'        => __( 'New order', 'wp-sell-services' ),
+		'order_status'         => __( 'Order update', 'wp-sell-services' ),
+		'new_message'          => __( 'New message', 'wp-sell-services' ),
+		'delivery_submitted'   => __( 'Delivery submitted', 'wp-sell-services' ),
+		'delivery_accepted'    => __( 'Delivery accepted', 'wp-sell-services' ),
+		'revision_requested'   => __( 'Revision requested', 'wp-sell-services' ),
 		'review_received'      => __( 'New Review', 'wp-sell-services' ),
-		'dispute_opened'       => __( 'Dispute Opened', 'wp-sell-services' ),
-		'dispute_resolved'     => __( 'Dispute Resolved', 'wp-sell-services' ),
-		'deadline_warning'     => __( 'Deadline Warning', 'wp-sell-services' ),
-		'service_approved'     => __( 'Service Approved', 'wp-sell-services' ),
+		'dispute_opened'       => __( 'Dispute opened', 'wp-sell-services' ),
+		'dispute_resolved'     => __( 'Dispute resolved', 'wp-sell-services' ),
+		'deadline_warning'     => __( 'Deadline warning', 'wp-sell-services' ),
+		'service_approved'     => __( 'Service approved', 'wp-sell-services' ),
 		'service_rejected'     => __( 'Service Requires Changes', 'wp-sell-services' ),
 		'withdrawal_pending'   => __( 'Withdrawal Request', 'wp-sell-services' ),
-		'withdrawal_approved'  => __( 'Withdrawal Approved', 'wp-sell-services' ),
-		'withdrawal_completed' => __( 'Withdrawal Paid', 'wp-sell-services' ),
-		'withdrawal_rejected'  => __( 'Withdrawal Rejected', 'wp-sell-services' ),
+		'withdrawal_approved'  => __( 'Withdrawal approved', 'wp-sell-services' ),
+		'withdrawal_completed' => __( 'Withdrawal paid', 'wp-sell-services' ),
+		'withdrawal_rejected'  => __( 'Withdrawal rejected', 'wp-sell-services' ),
 	);
 
 	$title = $type_titles[ $type ] ?? ucwords( str_replace( '_', ' ', $type ) );

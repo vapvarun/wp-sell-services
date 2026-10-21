@@ -339,7 +339,7 @@ do_action( 'wpss_before_requirements_form_component', $order_id, $order );
 
 	<div class="wpss-requirements-form__submit">
 		<button type="submit" class="wpss-requirements-form__submit-btn wpss-btn wpss-btn--primary wpss-btn--lg">
-			<span class="wpss-requirements-form__submit-text"><?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?></span>
+			<span class="wpss-requirements-form__submit-text"><?php esc_html_e( 'Submit requirements', 'wp-sell-services' ); ?></span>
 			<span class="wpss-requirements-form__submit-loading" style="display: none;">
 				<span class="wpss-requirements-form__spinner"></span>
 				<?php esc_html_e( 'Submitting...', 'wp-sell-services' ); ?>

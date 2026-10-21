@@ -57,10 +57,10 @@ do_action( 'wpss_service_orders_before', $user_id );
 				<div class="wpss-empty-state__icon">
 					<i data-lucide="file-text" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
-				<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No Orders Yet', 'wp-sell-services' ); ?></h3>
+				<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-empty-state__text"><?php esc_html_e( 'You haven\'t placed any service orders yet. Browse our marketplace to find services.', 'wp-sell-services' ); ?></p>
 				<a href="<?php echo esc_url( home_url( '/services/' ) ); ?>" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?>
 				</a>
 			</div>
 		</div>
@@ -151,7 +151,7 @@ do_action( 'wpss_service_orders_before', $user_id );
 									</a>
 									<?php if ( \WPSellServices\Models\ServiceOrder::STATUS_PENDING_REQUIREMENTS === $order->status ) : ?>
 										<a href="<?php echo esc_url( wpss_get_order_requirements_url( $order->id ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--primary">
-											<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
+											<?php esc_html_e( 'Submit requirements', 'wp-sell-services' ); ?>
 										</a>
 									<?php endif; ?>
 								</div>

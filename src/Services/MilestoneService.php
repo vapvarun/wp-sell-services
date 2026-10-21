@@ -582,7 +582,7 @@ class MilestoneService {
 
 		return array(
 			'success' => true,
-			'message' => __( 'Phase approved.', 'wp-sell-services' ),
+			'message' => __( 'Phase approved', 'wp-sell-services' ),
 		);
 	}
 

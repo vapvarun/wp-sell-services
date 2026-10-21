@@ -147,7 +147,7 @@ class BlocksManager {
 					'category'        => __( 'Category', 'wp-sell-services' ),
 					'orderBy'         => __( 'Order by', 'wp-sell-services' ),
 					'order'           => __( 'Order', 'wp-sell-services' ),
-					'allCategories'   => __( 'All Categories', 'wp-sell-services' ),
+					'allCategories'   => __( 'All categories', 'wp-sell-services' ),
 					'placeholder'     => __( 'Search services...', 'wp-sell-services' ),
 					'searchButton'    => __( 'Search', 'wp-sell-services' ),
 					'noServicesFound' => __( 'No services found.', 'wp-sell-services' ),

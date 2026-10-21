@@ -571,7 +571,7 @@ Review this service: %3$s',
 	 */
 	public static function get_statuses(): array {
 		return array(
-			self::STATUS_PENDING  => __( 'Pending Review', 'wp-sell-services' ),
+			self::STATUS_PENDING  => __( 'Pending review', 'wp-sell-services' ),
 			self::STATUS_APPROVED => __( 'Approved', 'wp-sell-services' ),
 			self::STATUS_REJECTED => __( 'Rejected', 'wp-sell-services' ),
 		);

@@ -141,8 +141,8 @@ class SingleServiceView {
 					'anonymous'          => __( 'Anonymous', 'wp-sell-services' ),
 					'day'                => __( 'Day', 'wp-sell-services' ),
 					'days'               => __( 'Days', 'wp-sell-services' ),
-					'sending'            => __( 'Sending...', 'wp-sell-services' ),
-					'sendMessage'        => __( 'Send Message', 'wp-sell-services' ),
+					'sending'            => __( 'Sending…', 'wp-sell-services' ),
+					'sendMessage'        => __( 'Send message', 'wp-sell-services' ),
 					'contactFailed'      => __( 'Failed to send message. Please try again.', 'wp-sell-services' ),
 					'comparePackages'    => __( 'Compare Packages', 'wp-sell-services' ),
 					'close'              => __( 'Close', 'wp-sell-services' ),
@@ -438,7 +438,7 @@ class SingleServiceView {
 		$completed_orders = (int) ( $profile->completed_orders ?? 0 );
 		?>
 		<div class="wpss-about-vendor">
-			<h2><?php esc_html_e( 'About The Seller', 'wp-sell-services' ); ?></h2>
+			<h2><?php esc_html_e( 'About the Seller', 'wp-sell-services' ); ?></h2>
 
 			<div class="wpss-vendor-profile">
 				<div class="wpss-vendor-header">
@@ -1095,7 +1095,7 @@ class SingleServiceView {
 
 							<div class="wpss-form-actions">
 								<button type="submit" class="wpss-btn wpss-btn--primary">
-									<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'Send message', 'wp-sell-services' ); ?>
 								</button>
 								<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">									
 									&times;

@@ -679,8 +679,8 @@ JS;
 		wp_send_json_success(
 			array(
 				'message' => Review::STATUS_APPROVED === $new_status
-					? __( 'Review approved.', 'wp-sell-services' )
-					: __( 'Review rejected.', 'wp-sell-services' ),
+					? __( 'Review approved', 'wp-sell-services' )
+					: __( 'Review rejected', 'wp-sell-services' ),
 				'status'  => $new_status,
 			)
 		);

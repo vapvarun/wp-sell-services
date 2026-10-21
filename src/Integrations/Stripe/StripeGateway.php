@@ -507,7 +507,7 @@ class StripeGateway extends AbstractPaymentGateway {
 		if ( isset( $response['error'] ) ) {
 			return array(
 				'success'           => false,
-				'error'             => $response['error']['message'] ?? __( 'Refund failed.', 'wp-sell-services' ),
+				'error'             => $response['error']['message'] ?? __( 'Refund failed', 'wp-sell-services' ),
 				'code'              => (string) ( $response['error']['code'] ?? '' ),
 				'transfer_reversed' => $expected_reversal ? false : null,
 			);

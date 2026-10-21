@@ -330,7 +330,7 @@ class ServiceMetabox {
 				<input type="hidden" name="wpss_packages[<?php echo esc_attr( $index ); ?>][id]" value="<?php echo esc_attr( (string) ( $package['id'] ?? '' ) ); ?>">
 				<div class="wpss-package-row">
 					<div class="wpss-package-field wpss-package-field-wide">
-						<label><?php esc_html_e( 'Package Name', 'wp-sell-services' ); ?></label>
+						<label><?php esc_html_e( 'Package name', 'wp-sell-services' ); ?></label>
 						<input type="text" name="wpss_packages[<?php echo esc_attr( $index ); ?>][name]" aria-label="<?php esc_attr_e( 'Package name', 'wp-sell-services' ); ?>"
 								value="<?php echo esc_attr( $package['name'] ?? '' ); ?>"
 								class="widefat wpss-package-name-input"
@@ -417,7 +417,7 @@ class ServiceMetabox {
 					<div class="wpss-package-field wpss-package-field-full">
 						<label>
 							<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
-							<?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Features included', 'wp-sell-services' ); ?>
 						</label>
 						<textarea name="wpss_packages[<?php echo esc_attr( $index ); ?>][features]" aria-label="<?php esc_attr_e( 'Features included', 'wp-sell-services' ); ?>"
 								rows="3" class="widefat"

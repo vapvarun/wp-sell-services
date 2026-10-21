@@ -120,10 +120,10 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 	 */
 	if ( ! empty( $is_customer ) ) {
 		$default_url  = function_exists( 'wpss_get_order_requirements_url' ) ? wpss_get_order_requirements_url( $order->id ) : wpss_get_order_url( $order->id );
-		$default_text = __( 'Submit Requirements', 'wp-sell-services' );
+		$default_text = __( 'Submit requirements', 'wp-sell-services' );
 	} else {
 		$default_url  = wpss_get_order_url( $order->id );
-		$default_text = __( 'View Order', 'wp-sell-services' );
+		$default_text = __( 'View order', 'wp-sell-services' );
 	}
 
 	/**

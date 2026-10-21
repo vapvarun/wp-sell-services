@@ -55,7 +55,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			$avatar_url = $avatar_id ? wp_get_attachment_image_url( $avatar_id, 'thumbnail' ) : get_avatar_url( $user_id, array( 'size' => 150 ) );
 			?>
 			<div class="wpss-form-row wpss-avatar-upload">
-				<label><?php esc_html_e( 'Profile Photo', 'wp-sell-services' ); ?></label>
+				<label><?php esc_html_e( 'Profile photo', 'wp-sell-services' ); ?></label>
 				<div class="wpss-avatar-upload__preview">
 					<img src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php esc_attr_e( 'Profile photo', 'wp-sell-services' ); ?>" class="wpss-avatar-upload__image" id="wpss-avatar-preview" data-gravatar="<?php echo esc_url( get_avatar_url( $user_id, array( 'size' => 150 ) ) ); ?>">
 					<input type="hidden" name="avatar_id" id="wpss-avatar-id" value="<?php echo esc_attr( $avatar_id ); ?>">
@@ -78,7 +78,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				$cover_url = $cover_id ? wp_get_attachment_image_url( (int) $cover_id, 'large' ) : '';
 				?>
 				<div class="wpss-form-row wpss-cover-upload">
-					<label><?php esc_html_e( 'Cover Image', 'wp-sell-services' ); ?></label>
+					<label><?php esc_html_e( 'Cover image', 'wp-sell-services' ); ?></label>
 					<div class="wpss-cover-upload__preview" style="position:relative;width:100%;max-width:600px;aspect-ratio:3/1;border: 2px dashed var(--wpss-border);border-radius:8px;overflow:hidden;background:var(--wpss-bg-subtle);">
 						<?php if ( $cover_url ) : ?>
 							<img src="<?php echo esc_url( $cover_url ); ?>" alt="<?php esc_attr_e( 'Cover image', 'wp-sell-services' ); ?>" id="wpss-cover-preview" style="width:100%;height:100%;object-fit:cover;">
@@ -105,7 +105,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			<?php endif; ?>
 
 			<div class="wpss-form-row">
-				<label for="display_name"><?php esc_html_e( 'Display Name', 'wp-sell-services' ); ?></label>
+				<label for="display_name"><?php esc_html_e( 'Display name', 'wp-sell-services' ); ?></label>
 				<input type="text" id="display_name" name="display_name" value="<?php echo esc_attr( $user->display_name ); ?>" class="wpss-input" required>
 			</div>
 

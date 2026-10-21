@@ -1689,7 +1689,7 @@ class Admin {
 				'wpss-admin-settings-emails',
 				'wpssSettingsEmails',
 				array(
-					'sending'   => __( 'Sending...', 'wp-sell-services' ),
+					'sending'   => __( 'Sending…', 'wp-sell-services' ),
 					'sendTest'  => __( 'Send Test Email', 'wp-sell-services' ),
 					'ajaxError' => __( 'Request failed. Please try again.', 'wp-sell-services' ),
 				)
@@ -1713,7 +1713,7 @@ class Admin {
 					'importing'     => __( 'Importing...', 'wp-sell-services' ),
 					'pleaseWait'    => __( 'Please wait, this may take a moment...', 'wp-sell-services' ),
 					'importSuccess' => __( 'Demo content imported successfully!', 'wp-sell-services' ),
-					'importFailed'  => __( 'Import failed.', 'wp-sell-services' ),
+					'importFailed'  => __( 'Import failed', 'wp-sell-services' ),
 					'importBtn'     => __( 'Import Demo Content', 'wp-sell-services' ),
 					'confirmDelete' => __( 'Delete all demo content? This will permanently remove demo services, vendors, and empty categories. A demo service that a buyer has ordered is kept, with its seller.', 'wp-sell-services' ),
 					'deleting'      => __( 'Deleting...', 'wp-sell-services' ),
@@ -1791,7 +1791,7 @@ class Admin {
 
 		add_submenu_page(
 			'wp-sell-services',
-			__( 'Service Tags', 'wp-sell-services' ),
+			__( 'Service tags', 'wp-sell-services' ),
 			__( 'Tags', 'wp-sell-services' ),
 			'manage_categories',
 			'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service'
@@ -2114,7 +2114,7 @@ class Admin {
 							</tbody>
 						</table>
 					<?php else : ?>
-						<p class="wpss-no-data"><?php esc_html_e( 'No orders yet.', 'wp-sell-services' ); ?></p>
+						<p class="wpss-no-data"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></p>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -2317,7 +2317,7 @@ class Admin {
 		$result = isset( $_GET['updated'] ) ? sanitize_key( wp_unslash( $_GET['updated'] ) ) : '';
 
 		$notices = array(
-			'1'         => array( 'notice-success', __( 'Order status updated.', 'wp-sell-services' ) ),
+			'1'         => array( 'notice-success', __( 'Order status updated', 'wp-sell-services' ) ),
 			'unchanged' => array( 'notice-info', __( 'The order already has that status. Nothing changed.', 'wp-sell-services' ) ),
 			'error'     => array( 'notice-error', __( 'The status could not be changed. The order may not be allowed to move to that status from where it is.', 'wp-sell-services' ) ),
 		);
@@ -2532,7 +2532,7 @@ class Admin {
 								</div>
 								<?php if ( $order->delivery_deadline ) : ?>
 									<div class="wpss-order-detail-item">
-										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
+										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due date', 'wp-sell-services' ); ?></span>
 										<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_deadline_label( $order->delivery_deadline->getTimestamp() ) ); ?></span>
 									</div>
 								<?php endif; ?>
@@ -2713,7 +2713,7 @@ class Admin {
 									<?php endforeach; ?>
 								</div>
 							<?php else : ?>
-								<p><?php esc_html_e( 'No messages yet.', 'wp-sell-services' ); ?></p>
+								<p><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></p>
 							<?php endif; ?>
 						</div>
 					</div>
@@ -3290,7 +3290,7 @@ class Admin {
 				?>
 			</h1>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-disputes' ) ); ?>" class="page-title-action">
-				<?php esc_html_e( 'Back to Disputes', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Back to disputes', 'wp-sell-services' ); ?>
 			</a>
 			<hr class="wp-header-end">
 
@@ -3373,7 +3373,7 @@ class Admin {
 										</span>
 									</div>
 									<div class="wpss-order-detail-item">
-										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Status', 'wp-sell-services' ); ?></span>
+										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order status', 'wp-sell-services' ); ?></span>
 										<span class="wpss-order-detail-item__value"><span class="<?php echo esc_attr( wpss_status_class( (string) $order->status ) ); ?>"><?php echo esc_html( wpss_get_order_status_label( (string) $order->status ) ); ?></span></span>
 									</div>
 									<?php

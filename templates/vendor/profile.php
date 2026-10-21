@@ -469,7 +469,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							</li>
 						<?php endif; ?>
 						<li>
-							<span class="wpss-stat-label"><?php esc_html_e( 'Active Services', 'wp-sell-services' ); ?></span>
+							<span class="wpss-stat-label"><?php esc_html_e( 'Active services', 'wp-sell-services' ); ?></span>
 							<span class="wpss-stat-value"><?php echo esc_html( $total_services ); ?></span>
 						</li>
 						<li>
@@ -677,7 +677,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 
 					<div class="wpss-form-actions">
 						<button type="submit" class="wpss-btn wpss-btn--primary">
-							<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Send message', 'wp-sell-services' ); ?>
 						</button>
 						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">							
 							&times;

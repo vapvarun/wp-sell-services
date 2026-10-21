@@ -278,7 +278,7 @@ class ServiceModerationPage {
 					'rejectPlaceholder' => __( 'The vendor sees this. Say what needs to change.', 'wp-sell-services' ),
 					'loading'           => __( 'Processing...', 'wp-sell-services' ),
 					'approved'          => __( 'Service approved!', 'wp-sell-services' ),
-					'rejected'          => __( 'Service rejected.', 'wp-sell-services' ),
+					'rejected'          => __( 'Service rejected', 'wp-sell-services' ),
 					'error'             => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'selectServices'    => __( 'Please select at least one service.', 'wp-sell-services' ),
 					'confirmBulk'       => __( 'Apply this action to selected services?', 'wp-sell-services' ),
@@ -669,7 +669,7 @@ class ServiceModerationPage {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Service approved.', 'wp-sell-services' ) ) );
+		wp_send_json_success( array( 'message' => __( 'Service approved', 'wp-sell-services' ) ) );
 	}
 
 	/**
@@ -697,7 +697,7 @@ class ServiceModerationPage {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Service rejected.', 'wp-sell-services' ) ) );
+		wp_send_json_success( array( 'message' => __( 'Service rejected', 'wp-sell-services' ) ) );
 	}
 
 	/**
@@ -1134,7 +1134,7 @@ class ServiceModerationPage {
 		$current_status = wpss_get_service_moderation_state( $post );
 
 		$statuses = array(
-			self::STATUS_PENDING  => __( 'Pending Review', 'wp-sell-services' ),
+			self::STATUS_PENDING  => __( 'Pending review', 'wp-sell-services' ),
 			self::STATUS_APPROVED => __( 'Approved', 'wp-sell-services' ),
 			self::STATUS_REJECTED => __( 'Rejected', 'wp-sell-services' ),
 		);

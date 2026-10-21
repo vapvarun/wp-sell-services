@@ -417,7 +417,7 @@ class AjaxHandlers {
 		if ( $result['success'] ) {
 			$message = 'in_progress' === $order->status && (int) $order->customer_id === $user_id
 				? __( 'Your cancellation request has been submitted. The vendor has 48 hours to respond.', 'wp-sell-services' )
-				: __( 'Order cancelled.', 'wp-sell-services' );
+				: __( 'Order cancelled', 'wp-sell-services' );
 			wp_send_json_success( array( 'message' => $message ) );
 		} else {
 			wp_send_json_error( $result );

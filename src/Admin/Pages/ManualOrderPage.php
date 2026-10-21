@@ -283,7 +283,7 @@ class ManualOrderPage {
 											</td>
 										</tr>
 										<tr class="wpss-pricing-total">
-											<td><?php esc_html_e( 'Order Total', 'wp-sell-services' ); ?></td>
+											<td><?php esc_html_e( 'Order total', 'wp-sell-services' ); ?></td>
 											<td id="wpss-summary-total"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
 										</tr>
 										<tr class="wpss-pricing-commission">
@@ -302,7 +302,7 @@ class ManualOrderPage {
 											<td></td>
 										</tr>
 										<tr class="wpss-pricing-commission">
-											<td><?php esc_html_e( 'Platform Fee', 'wp-sell-services' ); ?></td>
+											<td><?php esc_html_e( 'Platform fee', 'wp-sell-services' ); ?></td>
 											<td id="wpss-summary-platform-fee"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
 										</tr>
 										<tr class="wpss-pricing-commission">
@@ -342,7 +342,7 @@ class ManualOrderPage {
 								<div class="inside">
 
 									<div class="wpss-form-row">
-										<label for="wpss-status"><?php esc_html_e( 'Order Status', 'wp-sell-services' ); ?></label>
+										<label for="wpss-status"><?php esc_html_e( 'Order status', 'wp-sell-services' ); ?></label>
 										<select name="status" id="wpss-status">
 											<?php foreach ( $order_statuses as $value => $label ) : ?>
 												<option value="<?php echo esc_attr( $value ); ?>" <?php selected( 'pending_requirements', $value ); ?>>
@@ -438,10 +438,10 @@ class ManualOrderPage {
 					<p id="wpss-result-message"></p>
 					<div class="wpss-result-actions">
 						<a href="#" id="wpss-view-order-link" class="button button-primary" target="_blank">
-							<?php esc_html_e( 'View Order', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'View order', 'wp-sell-services' ); ?>
 						</a>
 						<a href="#" id="wpss-requirements-link" class="button" target="_blank" style="display: none;">
-							<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Submit requirements', 'wp-sell-services' ); ?>
 						</a>
 						<button type="button" class="button" id="wpss-create-another-btn">
 							<?php esc_html_e( 'Create Another Order', 'wp-sell-services' ); ?>

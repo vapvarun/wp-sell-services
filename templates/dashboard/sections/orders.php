@@ -161,7 +161,7 @@ $disputed_count  = (int) ( $stats['disputed_orders'] ?? 0 );
 		<?php if ( $awaiting_count > 0 ) : ?>
 			<div class="wpss-stat-card">
 				<span class="wpss-stat-card__value"><?php echo esc_html( $awaiting_count ); ?></span>
-				<span class="wpss-stat-card__label"><?php esc_html_e( 'Awaiting Payment', 'wp-sell-services' ); ?></span>
+				<span class="wpss-stat-card__label"><?php esc_html_e( 'Awaiting payment', 'wp-sell-services' ); ?></span>
 			</div>
 		<?php endif; ?>
 		<?php if ( $disputed_count > 0 ) : ?>
@@ -228,7 +228,7 @@ $disputed_count  = (int) ( $stats['disputed_orders'] ?? 0 );
 				<p><?php esc_html_e( 'Browse our marketplace to find the perfect service for your needs.', 'wp-sell-services' ); ?></p>
 			<?php endif; ?>
 			<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ); ?>" class="wpss-btn wpss-btn--primary">
-				<?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?>
 			</a>
 
 			<?php

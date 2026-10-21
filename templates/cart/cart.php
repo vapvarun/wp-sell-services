@@ -363,7 +363,7 @@ defined( 'ABSPATH' ) || exit;
 			<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Log in to use your cart', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-cart-empty__text"><?php esc_html_e( 'Your cart is saved to your account. You can also buy any service straight from its page.', 'wp-sell-services' ); ?></p>
 			<div class="wpss-cart-empty__actions">
-				<a href="<?php echo esc_url( wp_login_url( wpss_get_cart_url() ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Log in', 'wp-sell-services' ); ?></a>
+				<a href="<?php echo esc_url( wp_login_url( wpss_get_cart_url() ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Log In', 'wp-sell-services' ); ?></a>
 				<?php if ( get_option( 'users_can_register' ) ) : ?>
 					<a href="<?php echo esc_url( wp_registration_url() ); ?>" class="wpss-btn wpss-btn--outline"><?php esc_html_e( 'Create account', 'wp-sell-services' ); ?></a>
 				<?php endif; ?>
@@ -374,10 +374,10 @@ defined( 'ABSPATH' ) || exit;
 			<div class="wpss-cart-empty__icon">
 				<i data-lucide="shopping-cart" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 			</div>
-			<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Your cart is empty', 'wp-sell-services' ); ?></h2>
+			<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Your cart is empty.', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-cart-empty__text"><?php esc_html_e( 'Browse our services and find the perfect match for your needs.', 'wp-sell-services' ); ?></p>
 			<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ?: home_url( '/' ) ); ?>" class="wpss-btn wpss-btn--primary">
-				<?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?>
 			</a>
 		</div>
 	<?php else : ?>

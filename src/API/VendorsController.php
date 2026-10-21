@@ -1039,7 +1039,7 @@ class VendorsController extends RestController {
 					'readonly'    => true,
 				),
 				'display_name'  => array(
-					'description' => __( 'Display name.', 'wp-sell-services' ),
+					'description' => __( 'Display name', 'wp-sell-services' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
 				),

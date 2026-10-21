@@ -1377,7 +1377,7 @@ class BuyerRequestService {
 	 */
 	public static function get_budget_types(): array {
 		return array(
-			self::BUDGET_FIXED => __( 'Fixed Price', 'wp-sell-services' ),
+			self::BUDGET_FIXED => __( 'Fixed price', 'wp-sell-services' ),
 			self::BUDGET_RANGE => __( 'Price Range', 'wp-sell-services' ),
 		);
 	}

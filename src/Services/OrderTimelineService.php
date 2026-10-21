@@ -77,7 +77,7 @@ class OrderTimelineService {
 
 		$events = array();
 
-		$events[] = $this->event( 'order_placed', $this->datetime( $order->created_at ?? null ), $customer, __( 'Order placed.', 'wp-sell-services' ) );
+		$events[] = $this->event( 'order_placed', $this->datetime( $order->created_at ?? null ), $customer, __( 'Order placed', 'wp-sell-services' ) );
 
 		if ( ! empty( $order->paid_at ) ) {
 			$events[] = $this->event(
@@ -93,11 +93,11 @@ class OrderTimelineService {
 		}
 
 		if ( ! empty( $order->started_at ) ) {
-			$events[] = $this->event( 'work_started', $this->datetime( $order->started_at ), $vendor, __( 'Work started.', 'wp-sell-services' ) );
+			$events[] = $this->event( 'work_started', $this->datetime( $order->started_at ), $vendor, __( 'Work started', 'wp-sell-services' ) );
 		}
 
 		if ( ! empty( $order->completed_at ) ) {
-			$events[] = $this->event( 'order_completed', $this->datetime( $order->completed_at ), $customer, __( 'Order completed.', 'wp-sell-services' ) );
+			$events[] = $this->event( 'order_completed', $this->datetime( $order->completed_at ), $customer, __( 'Order completed', 'wp-sell-services' ) );
 		}
 
 		return $events;
@@ -125,7 +125,7 @@ class OrderTimelineService {
 		$events = array();
 
 		foreach ( $rows ?: array() as $row ) {
-			$events[] = $this->event( 'requirements_submitted', (string) $row->submitted_at, $customer, __( 'Requirements submitted.', 'wp-sell-services' ) );
+			$events[] = $this->event( 'requirements_submitted', (string) $row->submitted_at, $customer, __( 'Requirements submitted', 'wp-sell-services' ) );
 		}
 
 		return $events;
@@ -181,8 +181,8 @@ class OrderTimelineService {
 				(string) $row->responded_at,
 				$customer,
 				$accepted
-					? __( 'Delivery accepted.', 'wp-sell-services' )
-					: __( 'Revision requested.', 'wp-sell-services' )
+					? __( 'Delivery accepted', 'wp-sell-services' )
+					: __( 'Revision requested', 'wp-sell-services' )
 			);
 		}
 

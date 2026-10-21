@@ -338,7 +338,7 @@ class ExtensionRequestService {
 		$this->notification_service->send(
 			$request['requested_by'],
 			'extension_approved',
-			__( 'Extension Approved', 'wp-sell-services' ),
+			__( 'Extension approved', 'wp-sell-services' ),
 			sprintf(
 				/* translators: %d: number of days */
 				__( 'Your %d-day extension request has been approved.', 'wp-sell-services' ),

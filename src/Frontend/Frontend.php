@@ -277,7 +277,7 @@ class Frontend {
 					'uploadFile'                     => __( 'Upload File', 'wp-sell-services' ),
 					'confirmTitle'                   => __( 'Are you sure?', 'wp-sell-services' ),
 					'submitting'                     => __( 'Submitting...', 'wp-sell-services' ),
-					'saved'                          => __( 'Saved.', 'wp-sell-services' ),
+					'saved'                          => __( 'Saved', 'wp-sell-services' ),
 					'disputeEscalateConfirm'         => __( 'Ask a site administrator to review this dispute and decide it? You and the other party can keep adding messages while they look at it.', 'wp-sell-services' ),
 					'disputeEscalateBtn'             => __( 'Ask for a reviewer', 'wp-sell-services' ),
 					'disputeCancelConfirm'           => __( 'Withdraw this dispute? The order goes back to where it was, with no refund and no decision recorded. You can open a new dispute later if you need to.', 'wp-sell-services' ),
@@ -346,7 +346,7 @@ class Frontend {
 					// silently, so every string the favourites feature shows was
 					// untranslatable in every locale. Sending them is the fix; the
 					// fallbacks are removed in the same change.
-					'favoriteSaved'                  => __( 'Saved to favorites.', 'wp-sell-services' ),
+					'favoriteSaved'                  => __( 'Saved to favorites', 'wp-sell-services' ),
 					'favoriteRemoved'                => __( 'Removed from favorites.', 'wp-sell-services' ),
 					'favoriteFailed'                 => __( 'Could not update favorites. Please try again.', 'wp-sell-services' ),
 					'favoriteSaveLabel'              => __( 'Save to favorites', 'wp-sell-services' ),

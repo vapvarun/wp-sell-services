@@ -2382,7 +2382,7 @@ class OrdersController extends RestController {
 				$this->get_common_schema_properties(),
 				array(
 					'order_number' => array(
-						'description' => __( 'Order number.', 'wp-sell-services' ),
+						'description' => __( 'Order number', 'wp-sell-services' ),
 						'type'        => 'string',
 						'context'     => array( 'view', 'edit' ),
 						'readonly'    => true,
@@ -2406,12 +2406,12 @@ class OrdersController extends RestController {
 						'readonly'    => true,
 					),
 					'status'       => array(
-						'description' => __( 'Order status.', 'wp-sell-services' ),
+						'description' => __( 'Order status', 'wp-sell-services' ),
 						'type'        => 'string',
 						'context'     => array( 'view', 'edit' ),
 					),
 					'total'        => array(
-						'description' => __( 'Order total.', 'wp-sell-services' ),
+						'description' => __( 'Order total', 'wp-sell-services' ),
 						'type'        => 'number',
 						'context'     => array( 'view', 'edit' ),
 						'readonly'    => true,
@@ -2429,7 +2429,7 @@ class OrdersController extends RestController {
 						'readonly'    => true,
 					),
 					'due_date'     => array(
-						'description' => __( 'Due date.', 'wp-sell-services' ),
+						'description' => __( 'Due date', 'wp-sell-services' ),
 						'type'        => 'string',
 						'format'      => 'date-time',
 						'context'     => array( 'view', 'edit' ),

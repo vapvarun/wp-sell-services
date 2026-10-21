@@ -218,7 +218,7 @@ class Settings {
 			'money'      => __( 'MONEY', 'wp-sell-services' ),
 			'operations' => __( 'MARKETPLACE', 'wp-sell-services' ),
 			'pro'        => __( 'EXTENSIONS', 'wp-sell-services' ),
-			'system'     => __( 'SYSTEM', 'wp-sell-services' ),
+			'system'     => __( 'System', 'wp-sell-services' ),
 		);
 	}
 
@@ -1100,7 +1100,7 @@ class Settings {
 
 		add_settings_field(
 			'wpss_billing_fields',
-			__( 'Checkout Billing Fields', 'wp-sell-services' ),
+			__( 'Checkout billing fields', 'wp-sell-services' ),
 			array( $this, 'render_billing_fields_field' ),
 			'wpss_checkout',
 			'wpss_checkout_section'
@@ -1629,7 +1629,7 @@ class Settings {
 		if ( ! current_user_can( 'wpss_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
 			wp_die(
 				esc_html__( 'You do not have permission to manage these settings.', 'wp-sell-services' ),
-				esc_html__( 'Permission denied', 'wp-sell-services' ),
+				esc_html__( 'Permission denied.', 'wp-sell-services' ),
 				array( 'response' => 403 )
 			);
 		}
@@ -1686,7 +1686,7 @@ class Settings {
 				</span>
 				<div>
 					<strong><?php echo esc_html( wpss_get_platform_name() ); ?></strong>
-					<span><?php esc_html_e( 'SETTINGS', 'wp-sell-services' ); ?></span>
+					<span><?php esc_html_e( 'Settings', 'wp-sell-services' ); ?></span>
 				</div>
 			</div>
 
@@ -3214,7 +3214,7 @@ class Settings {
 		// Disputes: SLA timing + escalation contact.
 		add_settings_section(
 			'wpss_disputes_section',
-			__( 'Dispute Settings', 'wp-sell-services' ),
+			__( 'Dispute settings', 'wp-sell-services' ),
 			'__return_empty_string',
 			'wpss_orders'
 		);
@@ -4157,35 +4157,35 @@ class Settings {
 		return apply_filters(
 			'wpss_notification_types',
 			array(
-				'new_order'              => __( 'New Order', 'wp-sell-services' ),
-				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
-				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
-				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
-				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
-				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
-				'new_message'            => __( 'New Message', 'wp-sell-services' ),
+				'new_order'              => __( 'New order', 'wp-sell-services' ),
+				'order_completed'        => __( 'Order completed', 'wp-sell-services' ),
+				'order_cancelled'        => __( 'Order cancelled', 'wp-sell-services' ),
+				'cancellation_requested' => __( 'Cancellation requested', 'wp-sell-services' ),
+				'delivery_submitted'     => __( 'Delivery submitted', 'wp-sell-services' ),
+				'revision_requested'     => __( 'Revision requested', 'wp-sell-services' ),
+				'new_message'            => __( 'New message', 'wp-sell-services' ),
 				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
 				'new_review'             => __( 'New Review', 'wp-sell-services' ),
-				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
-				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
-				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
-				'withdrawal_completed'   => __( 'Withdrawal Paid', 'wp-sell-services' ),
-				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
-				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
-				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
-				'tip_received'           => __( 'Tip Received', 'wp-sell-services' ),
-				'milestone_proposed'     => __( 'Milestone Proposed', 'wp-sell-services' ),
-				'milestone_paid'         => __( 'Milestone Paid', 'wp-sell-services' ),
-				'milestone_submitted'    => __( 'Milestone Delivered', 'wp-sell-services' ),
-				'milestone_approved'     => __( 'Milestone Approved', 'wp-sell-services' ),
-				'extension_proposed'     => __( 'Extension Proposed', 'wp-sell-services' ),
-				'extension_approved'     => __( 'Extension Approved', 'wp-sell-services' ),
-				'extension_declined'     => __( 'Extension Declined', 'wp-sell-services' ),
+				'dispute_opened'         => __( 'Dispute opened', 'wp-sell-services' ),
+				'withdrawal_requested'   => __( 'Withdrawal requested', 'wp-sell-services' ),
+				'withdrawal_approved'    => __( 'Withdrawal approved', 'wp-sell-services' ),
+				'withdrawal_completed'   => __( 'Withdrawal paid', 'wp-sell-services' ),
+				'withdrawal_rejected'    => __( 'Withdrawal rejected', 'wp-sell-services' ),
+				'proposal_submitted'     => __( 'Proposal submitted', 'wp-sell-services' ),
+				'proposal_accepted'      => __( 'Proposal accepted', 'wp-sell-services' ),
+				'tip_received'           => __( 'Tip received', 'wp-sell-services' ),
+				'milestone_proposed'     => __( 'Milestone proposed', 'wp-sell-services' ),
+				'milestone_paid'         => __( 'Milestone paid', 'wp-sell-services' ),
+				'milestone_submitted'    => __( 'Milestone delivered', 'wp-sell-services' ),
+				'milestone_approved'     => __( 'Milestone approved', 'wp-sell-services' ),
+				'extension_proposed'     => __( 'Extension proposed', 'wp-sell-services' ),
+				'extension_approved'     => __( 'Extension approved', 'wp-sell-services' ),
+				'extension_declined'     => __( 'Extension declined', 'wp-sell-services' ),
 				'moderation'             => __( 'Service Moderation', 'wp-sell-services' ),
-				'review_reply'           => __( 'Review Reply', 'wp-sell-services' ),
-				'request_expired'        => __( 'Request Expired', 'wp-sell-services' ),
-				'dispute_escalated'      => __( 'Dispute Escalated', 'wp-sell-services' ),
-				'dispute_cancelled'      => __( 'Dispute Cancelled', 'wp-sell-services' ),
+				'review_reply'           => __( 'Review reply', 'wp-sell-services' ),
+				'request_expired'        => __( 'Request expired', 'wp-sell-services' ),
+				'dispute_escalated'      => __( 'Dispute escalated', 'wp-sell-services' ),
+				'dispute_cancelled'      => __( 'Dispute cancelled', 'wp-sell-services' ),
 				'tip_receipt'            => __( 'Tip Receipt', 'wp-sell-services' ),
 			)
 		);

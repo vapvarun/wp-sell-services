@@ -450,7 +450,7 @@ class ServiceWizard {
 
 			<div class="wpss-form-group">
 				<label for="service_title" class="wpss-form-label">
-					<?php esc_html_e( 'Service Title', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Service title.', 'wp-sell-services' ); ?>
 					<span class="wpss-required">*</span>
 				</label>
 				<input type="text"
@@ -690,7 +690,7 @@ class ServiceWizard {
 
 							<div class="wpss-form-group">
 								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-delivery">
-									<?php esc_html_e( 'Delivery Time', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'Delivery time', 'wp-sell-services' ); ?>
 									<span class="wpss-required">*</span>
 								</label>
 								<select id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-delivery" class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.delivery_time">
@@ -1071,7 +1071,7 @@ class ServiceWizard {
 										</select>
 									</div>
 									<div class="wpss-form-group">
-										<label class="wpss-form-label" :for="'wpss-extra-pricing-' + index"><?php esc_html_e( 'How it is priced', 'wp-sell-services' ); ?></label>
+										<label class="wpss-form-label" :for="'wpss-extra-pricing-' + index"><?php esc_html_e( 'How it is priced.', 'wp-sell-services' ); ?></label>
 										<select class="wpss-form-select" x-model="extra.price_type" :id="'wpss-extra-pricing-' + index" @change="if ( 'quantity_based' === extra.price_type ) { extra.field_type = 'quantity'; }">
 											<?php foreach ( wpss_get_addon_price_types() as $wpss_type => $wpss_type_label ) : ?>
 												<option value="<?php echo esc_attr( $wpss_type ); ?>"><?php echo esc_html( $wpss_type_label ); ?></option>
@@ -1107,7 +1107,7 @@ class ServiceWizard {
 										</div>
 									</div>
 									<div class="wpss-form-group">
-										<label class="wpss-form-label" :for="'wpss-extra-days-' + index"><?php esc_html_e( 'Extra Days', 'wp-sell-services' ); ?></label>
+										<label class="wpss-form-label" :for="'wpss-extra-days-' + index"><?php esc_html_e( 'Extra days', 'wp-sell-services' ); ?></label>
 										<input type="number"
 											class="wpss-form-input"
 											x-model="extra.delivery_days_extra"
@@ -1599,16 +1599,16 @@ class ServiceWizard {
 				'limits'         => $this->get_limits(),
 				'isPro'          => $this->is_pro_active(),
 				'strings'        => array(
-					'saving'                     => __( 'Saving...', 'wp-sell-services' ),
+					'saving'                     => __( 'Saving…', 'wp-sell-services' ),
 					'saved'                      => __( 'Draft saved!', 'wp-sell-services' ),
 					'publishing'                 => __( 'Publishing...', 'wp-sell-services' ),
 					'published'                  => __( 'Service published!', 'wp-sell-services' ),
 					'error'                      => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'unsavedChanges'             => __( 'You have unsaved changes. Are you sure you want to leave?', 'wp-sell-services' ),
 					'confirmDelete'              => __( 'Are you sure you want to remove this item?', 'wp-sell-services' ),
-					'validationTitle'            => __( 'Please enter a service title', 'wp-sell-services' ),
+					'validationTitle'            => __( 'Please enter a service title.', 'wp-sell-services' ),
 					'validationTitleMin'         => __( 'Please enter at least 10 characters for the service title.', 'wp-sell-services' ),
-					'validationCat'              => __( 'Please select a category', 'wp-sell-services' ),
+					'validationCat'              => __( 'Please select a category.', 'wp-sell-services' ),
 					'validationDesc'             => sprintf(
 						/* translators: %d: minimum number of characters. */
 						__( 'Please add a description (minimum %d characters)', 'wp-sell-services' ),
@@ -1623,7 +1623,7 @@ class ServiceWizard {
 						__( 'Basic package price must be at least %s.', 'wp-sell-services' ),
 						wpss_format_price( (float) apply_filters( 'wpss_min_service_price', 5 ) )
 					),
-					'validationImage'            => __( 'Please upload a main image', 'wp-sell-services' ),
+					'validationImage'            => __( 'Please upload a main image.', 'wp-sell-services' ),
 					/* translators: %s: package tier name (e.g. Basic). */
 					'validationPkgName'          => __( 'Package name is required for the %s package.', 'wp-sell-services' ),
 					/* translators: %s: package tier name (e.g. Standard). */

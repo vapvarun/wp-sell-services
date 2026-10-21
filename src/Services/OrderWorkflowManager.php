@@ -378,7 +378,7 @@ class OrderWorkflowManager {
 			$this->notification_service->create(
 				(int) $order->customer_id,
 				'order_auto_completed',
-				__( 'Order Auto-Completed', 'wp-sell-services' ),
+				__( 'Order auto-completed', 'wp-sell-services' ),
 				sprintf(
 					/* translators: %d: number of days */
 					__( 'Your order has been automatically completed after %d days. You can still leave a review.', 'wp-sell-services' ),
@@ -598,7 +598,7 @@ class OrderWorkflowManager {
 				$this->notification_service->create(
 					(int) $order->customer_id,
 					'requirements_timeout_cancelled',
-					__( 'Order Cancelled', 'wp-sell-services' ),
+					__( 'Order cancelled', 'wp-sell-services' ),
 					sprintf(
 						/* translators: %d: number of days */
 						__( 'Your order was cancelled because requirements were not submitted within %d days.', 'wp-sell-services' ),
@@ -610,7 +610,7 @@ class OrderWorkflowManager {
 				$this->notification_service->create(
 					(int) $order->vendor_id,
 					'requirements_timeout_cancelled',
-					__( 'Order Cancelled', 'wp-sell-services' ),
+					__( 'Order cancelled', 'wp-sell-services' ),
 					sprintf(
 						/* translators: %d: number of days */
 						__( 'An order was cancelled because the buyer did not submit requirements within %d days.', 'wp-sell-services' ),
@@ -1819,7 +1819,7 @@ class OrderWorkflowManager {
 			$this->notification_service->create(
 				(int) $order->customer_id,
 				'cancellation_auto_approved',
-				__( 'Cancellation Approved', 'wp-sell-services' ),
+				__( 'Cancellation approved', 'wp-sell-services' ),
 				__( 'Your cancellation request has been automatically approved. The vendor did not respond within 48 hours.', 'wp-sell-services' ),
 				[ 'order_id' => $order_id ]
 			);

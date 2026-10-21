@@ -407,6 +407,10 @@
    {
     "id": "smoke-1-9-1-contracts",
     "run": "${WP_CLI:-wp} eval-file tests/test-smoke-1-9-1-contracts.php"
+   },
+   {
+    "id": "string-variants",
+    "run": "${WP_CLI:-wp} eval-file tests/test-string-variants.php"
    }
   ]
  }

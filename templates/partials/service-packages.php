@@ -141,7 +141,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 							<span class="wpss-detail-icon wpss-icon-clock">
 								<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
 							</span>
-							<span class="wpss-detail-label"><?php esc_html_e( 'Delivery Time', 'wp-sell-services' ); ?></span>
+							<span class="wpss-detail-label"><?php esc_html_e( 'Delivery time', 'wp-sell-services' ); ?></span>
 							<span class="wpss-detail-value">
 								<?php
 								$days = (int) $delivery_days_value;
@@ -227,7 +227,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 						?>
 						<a href="<?php echo esc_url( $dashboard_edit_url ); ?>"
 							class="wpss-btn wpss-btn--secondary wpss-btn--block">
-							<?php esc_html_e( 'Edit Service', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Edit service', 'wp-sell-services' ); ?>
 						</a>
 					<?php else : ?>
 						<?php
