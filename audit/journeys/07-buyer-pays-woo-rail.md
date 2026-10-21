@@ -1,6 +1,6 @@
 # Journey 07 - Buyer pays on the WooCommerce rail
 
-**Roles:** guest, buyer, seller on a plan, admin
+**Roles:** guest, buyer, vendor on a plan, admin
 **Rail:** woo
 **Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
@@ -21,15 +21,15 @@ Logged out, open /product/service-order/ (the hidden carrier). Open /wp-sitemap-
 
 **Expect** a redirect to the home page, not a 404; the sitemap does not list the carrier; the shop still does not show it.
 
-### 4. A capped seller is told where to upgrade (card:10408190581)
-Seller on a plan with max services reached, creating a service.
+### 4. A capped vendor is told where to upgrade (card:10408190581)
+Vendor on a plan with max services reached, creating a service.
 
 **Expect** the message links to the dashboard Subscription page and the link opens it.
 
 ### 5. Plan "Max featured" does something (card:10408191922)
-Plan with Max featured 1: seller edits own service, ticks Featured on one, then tries a second.
+Plan with Max featured 1: vendor edits own service, ticks Featured on one, then tries a second.
 
-**Expect** the first saves, the second box is not offered (or is refused) at the limit, an already featured service can be unticked; a plan with 0 never shows the box. Subscribing the same seller twice (admin, webhook) prints no database error.
+**Expect** the first saves, the second box is not offered (or is refused) at the limit, an already featured service can be unticked; a plan with 0 never shows the box. Subscribing the same vendor twice (admin, webhook) prints no database error.
 
 ### 6. Requirements panel reads on a dark Woo theme (card:10407649116)
 Order-received and My Account > View order on a dark theme and on a light one, 1440 and 390.

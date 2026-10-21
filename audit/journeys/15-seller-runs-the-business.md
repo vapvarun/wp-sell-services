@@ -1,6 +1,6 @@
-# Journey 15 - Seller sets up a profile and portfolio, reads earnings and analytics
+# Journey 15 - Vendor sets up a profile and portfolio, reads earnings and analytics
 
-**Roles:** seller (`wpss_vendor`), admin
+**Roles:** vendor (`wpss_vendor`), admin
 **Rail:** standalone, woo
 **Status:** written 2026-10-18; walk pending (see .qa-results/walks.json)
 **Docs:** docs/website/vendor-system, docs/website/earnings-wallet, docs/website/analytics-reporting
@@ -24,16 +24,16 @@ Add, edit, feature and remove an item.
 **Expect** figures agree with Sales Orders for the same period; an empty period shows a designed empty state.
 
 ### 5. Vendor plans (Pro)
-**Expect** a seller at the plan limit sees the upgrade link and cannot publish past it; Max featured is honoured (carrier product on Woo).
+**Expect** a vendor at the plan limit sees the upgrade link and cannot publish past it; Max featured is honoured (carrier product on Woo).
 
 ### 6. Portfolio order, featured item, vacation and levels over REST
-- `POST /portfolio/reorder` saves the new order and the profile shows it; a seller cannot reorder another seller's items.
+- `POST /portfolio/reorder` saves the new order and the profile shows it; a vendor cannot reorder another vendor's items.
 - `POST /portfolio/{id}/featured` toggles an item as featured, up to the featured cap; going over the cap is refused with a message, not silently ignored.
 - `POST /vendors/me/vacation` turns vacation mode on or off for the caller only, and the services are hidden or restored as the screen does.
-- `GET /seller-levels/{level}` returns the level's requirements and the seller's progress toward it.
-- The account-page versions of the seller dashboard (`myaccount/vendor-dashboard`, `myaccount/vendor-services`, `myaccount/service-orders`) show the same figures as the dashboard.
+- `GET /seller-levels/{level}` returns the level's requirements and the vendor's progress toward it.
+- The account-page versions of the vendor dashboard (`myaccount/vendor-dashboard`, `myaccount/vendor-services`, `myaccount/service-orders`) show the same figures as the dashboard.
 
-**Expect** screen and API agree, and a visitor or another seller gets 403.
+**Expect** screen and API agree, and a visitor or another vendor gets 403.
 
 ### 7. Earnings page states (card:10416610833)
 Walk Earnings with a positive, zero and negative balance.

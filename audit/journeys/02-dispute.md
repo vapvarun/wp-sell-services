@@ -1,6 +1,6 @@
-# Journey 02 - Buyer and seller dispute an order, admin decides
+# Journey 02 - Buyer and vendor dispute an order, admin decides
 
-**Roles:** buyer (`subscriber`), seller (`wpss_vendor`), admin
+**Roles:** buyer (`subscriber`), vendor (`wpss_vendor`), admin
 **Rail:** standalone, woo
 **Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
@@ -16,7 +16,7 @@ never saw member evidence. Both halves looked correct in isolation.
 
 ## Preconditions
 
-- A completed or in-progress order with a buyer and a seller.
+- A completed or in-progress order with a buyer and a vendor.
 - Disputes enabled: `wpss_orders[allow_disputes]`.
 
 ## Steps
@@ -36,8 +36,8 @@ Dashboard → Disputes → the dispute.
   exactly **once**. Duplicates mean something is reading both the table and
   `get_evidence()` again.
 
-### 3. Seller replies
-As the seller, open the same dispute and post a reply through the on-page form.
+### 3. Vendor replies
+As the vendor, open the same dispute and post a reply through the on-page form.
 
 **Expect** the reply appears in both parties' threads and in Activity.
 
@@ -54,7 +54,7 @@ wp-admin → Disputes → the dispute.
 Admin seeing only the opening statement is the old split resurfacing.
 
 ### 6. Order links back to the dispute
-Open the order as buyer, then as seller.
+Open the order as buyer, then as vendor.
 
 **Expect**
 - A **View Dispute** action in the order header.
@@ -99,7 +99,7 @@ Every dispute action has a REST twin, and the dashboard button and the API call 
 - `POST /disputes/{id}/respond`: the other party answers; a third user gets 403; the opener is told.
 - `POST /disputes/{id}/cancel`: only the opener, only while open; the other party is told and Open Dispute is offered again.
 - `POST /disputes/{id}/escalate`: moves an open dispute to admin review once; a second call is refused, not duplicated.
-- `POST /disputes/{id}/assign`: admin only; a buyer or seller gets 403.
+- `POST /disputes/{id}/assign`: admin only; a buyer or vendor gets 403.
 - `POST /disputes/{id}/resolve`: admin only; the resolution type decides the refund and the order status exactly as the admin screen does, and resolving twice changes nothing (a refund is never paid twice).
 
-**Expect** each call returns the same refusal as the screen for the same user (a suspended seller included) and writes one audit-log row.
+**Expect** each call returns the same refusal as the screen for the same user (a suspended vendor included) and writes one audit-log row.

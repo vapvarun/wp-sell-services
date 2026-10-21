@@ -1,19 +1,19 @@
-# Journey 10 - Seller is paid out and told the truth at each step
+# Journey 10 - Vendor is paid out and told the truth at each step
 
-**Roles:** seller (`wpss_vendor`), admin
+**Roles:** vendor (`wpss_vendor`), admin
 **Rail:** standalone (manual payout)
 **Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
-Guards card 10402904790 (card:10402904790). Mark paid used to send the "Approved" email, so a seller who was just paid read "approved" and wrote in to ask where the money was.
+Guards card 10402904790 (card:10402904790). Mark paid used to send the "Approved" email, so a vendor who was just paid read "approved" and wrote in to ask where the money was.
 
 ## Preconditions
 
-- A seller with at least the minimum withdrawal in available balance and no open request.
+- A vendor with at least the minimum withdrawal in available balance and no open request.
 - Mailpit running (`wp eval 'echo ini_get("sendmail_path");'`).
 
 ## Steps
 
-### 1. Seller requests a payout
+### 1. Vendor requests a payout
 Dashboard > Earnings > Request Withdrawal.
 
 **Expect** one confirmation, the request listed as Pending, available balance reduced or held (never both unchanged and spendable), and an admin email.
@@ -21,15 +21,15 @@ Dashboard > Earnings > Request Withdrawal.
 ### 2. Admin approves
 Withdrawals > Approve.
 
-**Expect** the seller gets "Withdrawal of X Approved" and the body says approved, being processed. Row shows Approved.
+**Expect** the vendor gets "Withdrawal of X Approved" and the body says approved, being processed. Row shows Approved.
 
 ### 3. Admin marks paid
 Withdrawals > Mark paid, confirm.
 
 **Expect**
-- The seller gets "Withdrawal of X Paid" (card:10402904790, template `emails/withdrawal-completed`), not "Approved". Body status cell reads Paid.
+- The vendor gets "Withdrawal of X Paid" (card:10402904790, template `emails/withdrawal-completed`), not "Approved". Body status cell reads Paid.
 - Exactly one ledger debit; pressing Mark paid again changes nothing.
-- The seller's in-app notification and Earnings history read Paid.
+- The vendor's in-app notification and Earnings history read Paid.
 - Settings > Emails has a "Withdrawal Paid" switch; switching it off silences this email only.
 
 ### 4. Same at 390px
@@ -50,9 +50,9 @@ Settings > Payouts and Emails: type -5 into minimum withdrawal, clearance days a
 **Expect** (card:10403454753) each saves as 0, never 5.
 
 ### 7. The other two withdrawal emails
-- Approve: the seller gets `emails/withdrawal-approved`, saying approved and not yet paid.
-- Reject: the seller gets `emails/withdrawal-rejected` with the reason the admin typed, and the held amount is back in their available balance.
-- Automatic payout: the seller gets `emails/withdrawal-auto` on the scheduled date, naming the amount and the method.
+- Approve: the vendor gets `emails/withdrawal-approved`, saying approved and not yet paid.
+- Reject: the vendor gets `emails/withdrawal-rejected` with the reason the admin typed, and the held amount is back in their available balance.
+- Automatic payout: the vendor gets `emails/withdrawal-auto` on the scheduled date, naming the amount and the method.
 
 **Expect** each mail reads correctly in light and dark, in RTL, and the status cell matches the withdrawal's real status.
 

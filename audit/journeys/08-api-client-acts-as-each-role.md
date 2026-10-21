@@ -142,7 +142,7 @@ Bell > mark one, mark all (screen), then `POST /notifications/{id}/read` and `/r
 ### 4. Portfolio from the dashboard and the API (card:10403565741)
 Dashboard > Portfolio: add an item with tags "logo, branding", edit it, clear the tags. Then the same with `POST/PUT /portfolio` sending only `{tags}`.
 
-**Expect** tags are kept and shown on the card and in the edit form; a PUT with one field changes only that field; the item limit and featured limit apply on both; a second seller gets 403 on someone else's item. At 390px the modal fits without sideways scroll.
+**Expect** tags are kept and shown on the card and in the edit form; a PUT with one field changes only that field; the item limit and featured limit apply on both; a second vendor gets 403 on someone else's item. At 390px the modal fits without sideways scroll.
 
 ### 5. Pro: subscription plans and commission rules (cards 10408191220, 10407786815, 10407787331, 10407787480)
 `PUT` one field at a time to a plan and to a commission rule.
@@ -151,8 +151,8 @@ Dashboard > Portfolio: add an item with tags "logo, branding", edit it, clear th
 
 ### 6. Cart, order payment and proposals over REST
 - `DELETE /cart/{item_key}` removes one line; a key from another user's cart is a 404, not a removal.
-- `POST /payments/create-intent` registers only on the standalone rail; on Woo it does not exist. `POST /orders/{id}/pay` is the customer's own call to pay an existing order (milestone phases use it): another buyer gets 403, and a later phase cannot be paid before the earlier one is approved.
-- `POST /buyer-requests/{id}/proposals` creates a proposal for a seller; the request owner cannot propose on their own request. `.../proposals/{proposal_id}/accept` creates one order and rejects every other proposal's pending state; `.../reject` tells the seller; `POST /proposals/{id}/withdraw` is the seller's own and only while pending.
+- `POST /payments/create-intent` registers only on the standalone rail; on Woo it does not exist. `POST /orders/{id}/pay` is the buyer's own call to pay an existing order (milestone phases use it): another buyer gets 403, and a later phase cannot be paid before the earlier one is approved.
+- `POST /buyer-requests/{id}/proposals` creates a proposal for a vendor; the request owner cannot propose on their own request. `.../proposals/{proposal_id}/accept` creates one order and rejects every other proposal's pending state; `.../reject` tells the vendor; `POST /proposals/{id}/withdraw` is the vendor's own and only while pending.
 - `POST /realtime/auth` signs a private channel only for the caller's own user channel or an order they are part of; anything else is 403.
 - `POST /orders/{id}/requirements/skip` marks requirements skipped once; the order moves on and a second call is refused.
 - `POST /orders/{order_id}/review` creates one review per completed order; a second call is refused.

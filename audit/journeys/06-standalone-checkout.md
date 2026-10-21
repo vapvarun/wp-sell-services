@@ -104,12 +104,12 @@ Settings > Payment Gateways > Tax: enable, label VAT, 20%. Buy one service, then
 **Expect** (card:10403205865, card:10403205035)
 - Both summaries read "VAT (20%)" and the total equals the charge.
 - Clear the label and save: it stores and shows "Tax", never a bare "(20%)".
-- A site that lowers the rate per seller through `wpss_checkout_tax_rate` sees that rate (or the label alone when the cart mixes rates) in the summary, never the settings rate.
+- A site that lowers the rate per vendor through `wpss_checkout_tax_rate` sees that rate (or the label alone when the cart mixes rates) in the summary, never the settings rate.
 
 ### Sidebar cards never overlap (card:10411948180)
 At 1440x900 scroll the checkout from top to bottom in 100px steps.
 
-**Expect** the Order Summary, About the Seller and What happens next cards never intersect at any step, each is fully readable at some step, and at 390 the summary comes first and nothing overflows sideways (guard `tests/test-layout-surface-css.php`).
+**Expect** the Order Summary, About the Vendor and What happens next cards never intersect at any step, each is fully readable at some step, and at 390 the summary comes first and nothing overflows sideways (guard `tests/test-layout-surface-css.php`).
 
 ## Notes for whoever runs this
 

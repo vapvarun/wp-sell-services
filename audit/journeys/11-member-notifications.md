@@ -1,6 +1,6 @@
 # Journey 11 - Member finds, filters and reads notifications
 
-**Roles:** seller or buyer with 100+ notifications (seed one), admin
+**Roles:** vendor or buyer with 100+ notifications (seed one), admin
 **Rail:** standalone, woo
 **Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 

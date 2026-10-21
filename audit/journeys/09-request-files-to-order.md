@@ -1,6 +1,6 @@
 # Journey 09 - A buyer's request files follow into the order
 
-**Roles:** buyer (`subscriber`), second buyer, seller (`wpss_vendor`), admin
+**Roles:** buyer (`subscriber`), second buyer, vendor (`wpss_vendor`), admin
 **Rail:** standalone
 **Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
@@ -15,7 +15,7 @@ so only the empty branch of `templates/order/requirements.php` ever rendered.
 
 - At least one image or PDF the buyer can upload (an allowed type under
   Settings > Advanced).
-- A seller who has not yet proposed on the buyer's request.
+- A vendor who has not yet proposed on the buyer's request.
 
 ## Steps
 
@@ -24,12 +24,12 @@ Dashboard > Buyer Requests > new request, attach one file.
 
 **Expect** the request page lists the file, and it opens.
 
-### 2. Seller proposes, buyer accepts and pays
+### 2. Vendor proposes, buyer accepts and pays
 Proposal, accept from the request, pay at checkout.
 
 **Expect** an order with `platform = request`.
 
-### 3. Seller opens the order both ways
+### 3. Vendor opens the order both ways
 From Messages (the order's conversation card) and from Sales Orders > Deliver.
 
 **Expect**
@@ -43,7 +43,7 @@ From Messages (the order's conversation card) and from Sales Orders > Deliver.
 Buyer's order page, then the requirements form, with a description and a new
 file.
 
-**Expect** on the seller, buyer and admin order views:
+**Expect** on the vendor, buyer and admin order views:
 - BOTH files are listed, and both download.
 - The request's description and the proposal cover are still shown. Before
   1.8.0, submitting replaced the brief and lost them.
