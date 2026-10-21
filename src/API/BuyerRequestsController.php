@@ -389,18 +389,9 @@ class BuyerRequestsController extends RestController {
 			return $permission;
 		}
 
-		// Check if user is a vendor using the canonical helper.
-		if ( ! wpss_is_vendor() ) {
-			return new WP_Error(
-				'wpss_not_vendor',
-				__( 'You must be a vendor to submit proposals.', 'wp-sell-services' ),
-				array( 'status' => 403 )
-			);
-		}
-
 		// Same rule as POST /proposals — the two routes reach the same act, so
 		// gating only one of them would leave the other as the way around it.
-		return wpss_vendor_status_block() ?? true;
+		return wpss_proposal_vendor_block() ?? true;
 	}
 
 	/**

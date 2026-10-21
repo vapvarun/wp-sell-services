@@ -1466,9 +1466,9 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Add at least one milestone phase.', 'wp-sell-services' ) ) );
 		}
 
-		// Check if user is a vendor.
-		if ( ! wpss_is_vendor( $vendor_id ) ) {
-			wp_send_json_error( array( 'message' => __( 'You must be a vendor to submit proposals.', 'wp-sell-services' ) ) );
+		$block = wpss_proposal_vendor_block( $vendor_id );
+		if ( $block ) {
+			wp_send_json_error( array( 'message' => $block->get_error_message() ) );
 		}
 
 		$proposal_service = new ProposalService();

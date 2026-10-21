@@ -464,6 +464,28 @@ function wpss_vendor_status_block( int $user_id = 0 ) {
 }
 
 /**
+ * Why a user cannot submit a proposal, or null when they can.
+ *
+ * One gate for the form, POST /proposals and POST /requests/{id}/proposals. Asking
+ * wpss_is_vendor() first answered a suspended or pending vendor with "You must be
+ * a vendor", which is wrong for someone who is one; their standing says why.
+ *
+ * @since 1.9.1
+ *
+ * @param int $user_id User ID. Defaults to the current user.
+ * @return WP_Error|null
+ */
+function wpss_proposal_vendor_block( int $user_id = 0 ): ?WP_Error {
+	$block = wpss_vendor_status_block( $user_id );
+
+	if ( $block || wpss_is_vendor( $user_id ?: null ) ) {
+		return $block;
+	}
+
+	return new WP_Error( 'wpss_not_vendor', __( 'You must be a vendor to submit proposals.', 'wp-sell-services' ), array( 'status' => 403 ) );
+}
+
+/**
  * Get services for a vendor.
  *
  * @since 1.2.0
