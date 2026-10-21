@@ -341,7 +341,13 @@ class CheckoutIntentService {
 		$taxable = 'tip' !== $kind || ! empty( ( get_option( 'wpss_tax', array() ) )['tax_tips'] );
 		$line    = $taxable
 			? self::price_line( $service_id, $amount, 0.0, $vendor_id )
-			: array( 'tax' => 0.0, 'tax_rate' => 0.0, 'total' => $amount, 'tax_included' => false, 'tax_label' => '' );
+			: array(
+				'tax'          => 0.0,
+				'tax_rate'     => 0.0,
+				'total'        => $amount,
+				'tax_included' => false,
+				'tax_label'    => '',
+			);
 
 		return array(
 			'subtotal' => $amount,

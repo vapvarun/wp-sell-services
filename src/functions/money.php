@@ -278,8 +278,8 @@ function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 
  * @return array{amount: float, rate: float, label: string, included: bool}
  */
 function wpss_get_order_tax( object $order ): array {
-	$meta = $order->meta ?? array();
-	$meta = is_string( $meta ) ? (array) json_decode( $meta, true ) : (array) $meta;
+	$meta  = $order->meta ?? array();
+	$meta  = is_string( $meta ) ? (array) json_decode( $meta, true ) : (array) $meta;
 	$label = trim( (string) ( $meta['tax_label'] ?? '' ) );
 
 	return array(

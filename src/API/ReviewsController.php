@@ -67,19 +67,19 @@ class ReviewsController extends RestController {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'check_create_permissions' ),
 					'args'                => array(
-						'order_id' => array(
+						'order_id'             => array(
 							'description' => __( 'Order being reviewed.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
-						'rating'   => array(
+						'rating'               => array(
 							'description' => __( 'Rating (1-5).', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
 							'minimum'     => 1,
 							'maximum'     => 5,
 						),
-						'review'   => array(
+						'review'               => array(
 							'description' => __( 'Review text.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
@@ -90,13 +90,13 @@ class ReviewsController extends RestController {
 							'minimum'     => 1,
 							'maximum'     => 5,
 						),
-						'rating_quality' => array(
+						'rating_quality'       => array(
 							'description' => __( 'Optional Quality rating (1-5).', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'minimum'     => 1,
 							'maximum'     => 5,
 						),
-						'rating_value' => array(
+						'rating_value'         => array(
 							'description' => __( 'Optional Value rating (1-5).', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'minimum'     => 1,
@@ -150,19 +150,19 @@ class ReviewsController extends RestController {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'check_create_permissions' ),
 					'args'                => array(
-						'order_id' => array(
+						'order_id'             => array(
 							'description' => __( 'Order ID.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
-						'rating'   => array(
+						'rating'               => array(
 							'description' => __( 'Rating (1-5).', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
 							'minimum'     => 1,
 							'maximum'     => 5,
 						),
-						'review'   => array(
+						'review'               => array(
 							'description' => __( 'Review text.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
@@ -173,13 +173,13 @@ class ReviewsController extends RestController {
 							'minimum'     => 1,
 							'maximum'     => 5,
 						),
-						'rating_quality' => array(
+						'rating_quality'       => array(
 							'description' => __( 'Optional Quality rating (1-5).', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'minimum'     => 1,
 							'maximum'     => 5,
 						),
-						'rating_value' => array(
+						'rating_value'         => array(
 							'description' => __( 'Optional Value rating (1-5).', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'minimum'     => 1,
@@ -926,44 +926,44 @@ class ReviewsController extends RestController {
 		$service = get_post( (int) $review->service_id );
 
 		$data = array(
-			'id'                 => (int) $review->id,
-			'order_id'           => (int) $review->order_id,
-			'service_id'         => (int) $review->service_id,
-			'service_title'      => $service ? $service->post_title : '',
+			'id'                   => (int) $review->id,
+			'order_id'             => (int) $review->order_id,
+			'service_id'           => (int) $review->service_id,
+			'service_title'        => $service ? $service->post_title : '',
 			// Flat keys kept - the app reads them today, and removing a key is a
 			// contract change. `vendor_avatar` is NEW: the card called out that
 			// reviews were the one flat surface missing it, so the flat set is
 			// now symmetrical with the customer_* set beside it.
-			'vendor_id'          => (int) $review->vendor_id,
-			'vendor_name'        => wpss_get_member_display_name( (int) $review->vendor_id ),
-			'vendor_avatar'      => get_avatar_url( (int) $review->vendor_id, array( 'size' => 48 ) ),
-			'customer_id'        => (int) $review->customer_id,
-			'customer_name'      => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
-			'customer_avatar'    => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
+			'vendor_id'            => (int) $review->vendor_id,
+			'vendor_name'          => wpss_get_member_display_name( (int) $review->vendor_id ),
+			'vendor_avatar'        => get_avatar_url( (int) $review->vendor_id, array( 'size' => 48 ) ),
+			'customer_id'          => (int) $review->customer_id,
+			'customer_name'        => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
+			'customer_avatar'      => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
 			// The canonical actor objects, added alongside. A client can now
 			// read a person out of a review with the same code it uses on an
 			// order or a service. `customer` rather than `reviewer` because the
 			// flat keys beside it already say customer.
-			'vendor'             => wpss_rest_user( (int) $review->vendor_id ),
-			'customer'           => wpss_rest_user( (int) $review->customer_id ),
-			'rating'             => (int) $review->rating,
-			'review'             => $review->review,
+			'vendor'               => wpss_rest_user( (int) $review->vendor_id ),
+			'customer'             => wpss_rest_user( (int) $review->customer_id ),
+			'rating'               => (int) $review->rating,
+			'review'               => $review->review,
 			'rating_communication' => isset( $review->communication_rating ) ? (int) $review->communication_rating : null,
 			'rating_quality'       => isset( $review->quality_rating ) ? (int) $review->quality_rating : null,
 			'rating_value'         => isset( $review->delivery_rating ) ? (int) $review->delivery_rating : null,
-			'status'             => $review->status,
-			'vendor_reply'       => $review->vendor_reply ?? null,
+			'status'               => $review->status,
+			'vendor_reply'         => $review->vendor_reply ?? null,
 			// ISO-8601 through the shared formatter (Basecamp 10154919636).
-			'vendor_reply_at'    => $this->format_datetime( $review->vendor_reply_at ?? null ),
-			'created_at'         => $this->format_datetime( $review->created_at ?? null ),
-			'updated_at'         => $this->format_datetime( $review->updated_at ?? null ),
+			'vendor_reply_at'      => $this->format_datetime( $review->vendor_reply_at ?? null ),
+			'created_at'           => $this->format_datetime( $review->created_at ?? null ),
+			'updated_at'           => $this->format_datetime( $review->updated_at ?? null ),
 			// Additive presentation fields so REST consumers (single-service.js
 			// reviews block) can render with parity to the legacy server-rendered
 			// markup without reimplementing wpautop/time-ago client-side.
-			'created_human'      => $review->created_at ? wpss_time_ago( (string) $review->created_at ) : '',
-			'review_html'        => wp_kses_post( wpautop( (string) $review->review ) ),
-			'vendor_reply_html'  => ! empty( $review->vendor_reply ) ? wp_kses_post( wpautop( (string) $review->vendor_reply ) ) : '',
-			'vendor_reply_human' => ! empty( $review->vendor_reply_at ) ? wpss_time_ago( (string) $review->vendor_reply_at ) : '',
+			'created_human'        => $review->created_at ? wpss_time_ago( (string) $review->created_at ) : '',
+			'review_html'          => wp_kses_post( wpautop( (string) $review->review ) ),
+			'vendor_reply_html'    => ! empty( $review->vendor_reply ) ? wp_kses_post( wpautop( (string) $review->vendor_reply ) ) : '',
+			'vendor_reply_human'   => ! empty( $review->vendor_reply_at ) ? wpss_time_ago( (string) $review->vendor_reply_at ) : '',
 		);
 
 		/**

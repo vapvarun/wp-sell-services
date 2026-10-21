@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**551 hooks** across **772** firing sites.
+**551 hooks** across **771** firing sites.
 
 ## Actions (280)
 
@@ -218,7 +218,7 @@ guide; this is the complete index.
 | `wpss_rest_service_created` | 2 | `src/API/ServicesController.php` | Fires after a service is created via REST API. |
 | `wpss_rest_service_deleted` | 2 | `src/API/ServicesController.php` | Fires after a service is deleted via REST API. |
 | `wpss_rest_service_updated` | 2 | `src/API/ServicesController.php` | Fires after a service is updated via REST API. |
-| `wpss_review_created` | 2 | `src/API/ReviewsController.php` *(+1 more)* |  |
+| `wpss_review_created` | 2 | `src/Services/ReviewService.php` | Fires when review is created. |
 | `wpss_review_moderated` | 2 | `src/Services/ReviewService.php` | Fires after an admin moderates a review from the queue. |
 | `wpss_review_reply_created` | 1 | `src/API/ReviewsController.php` |  |
 | `wpss_revision_requested` | 2 | `src/Services/DeliveryService.php` | Fires when revision is requested. |
@@ -324,7 +324,7 @@ guide; this is the complete index.
 | `wpss_archive_service_columns` | 1 | `templates/archive-service.php` | Filter: wpss_archive_service_columns |
 | `wpss_attachment_display_name` | 1 | `src/functions/files.php` | Filter the display form of an attachment filename. |
 | `wpss_auth_login_challenge` | 3 | `src/API/AuthController.php` | Filter a successful password check before a token is issued. |
-| `wpss_auto_approve_reviews` | 1 | `src/API/ReviewsController.php` |  |
+| `wpss_auto_approve_reviews` | 1 | `src/Services/ReviewService.php` |  |
 | `wpss_auto_approve_vendors` | 1 | `src/Services/VendorService.php` | Filter whether new vendors are auto-approved. |
 | `wpss_batch_max_requests` | 1 | `src/API/API.php` | Dispatch the sub-requests of one (non-nested) batch. |
 | `wpss_billing_address` | 2 | `src/functions/billing.php` | Filter a user's billing address after it is read. |

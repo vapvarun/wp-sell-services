@@ -70,7 +70,12 @@ function wpss_vendor_display_timezone( $timezone, $user_id ) {
 	return in_array( $name, timezone_identifiers_list(), true ) ? new \DateTimeZone( $name ) : $timezone;
 }
 add_filter( 'wpss_display_timezone', 'wpss_vendor_display_timezone', 10, 2 );
-add_action( 'wpss_vendor_profile_updated', static fn( $user_id ) => wp_cache_delete( (int) $user_id, 'wpss_vendor_timezone' ) );
+add_action(
+	'wpss_vendor_profile_updated',
+	static function ( $user_id ): void {
+		wp_cache_delete( (int) $user_id, 'wpss_vendor_timezone' );
+	}
+);
 
 /**
  * A stored UTC time shown to a person, or a fallback when there is no time.

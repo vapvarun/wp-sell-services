@@ -594,8 +594,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 		if ( $is_pay_order ) {
 			// Pay-order flow: use the order total directly (tax already included).
-			$total        = (float) $pay_order->total;
-			$currency     = $pay_order->currency ?: wpss_get_currency();
+			$total    = (float) $pay_order->total;
+			$currency = $pay_order->currency ?: wpss_get_currency();
 			// The tax the order was priced with, so the page shows the VAT line the total already carries.
 			$pay_tax      = wpss_get_order_tax( $pay_order );
 			$tax_amount   = $pay_tax['amount'];
