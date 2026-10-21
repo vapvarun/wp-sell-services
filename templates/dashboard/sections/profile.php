@@ -187,6 +187,23 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				</div>
 
 				<div class="wpss-form-row">
+					<label for="timezone"><?php esc_html_e( 'Time zone', 'wp-sell-services' ); ?></label>
+					<?php $wpss_zone = (string) ( $vendor_profile->timezone ?? '' ); ?>
+					<select id="timezone" name="timezone" class="wpss-input" aria-describedby="timezone-help">
+						<option value="">
+							<?php
+							/* translators: %s: the site's time zone, e.g. Europe/Berlin. */
+							echo esc_html( sprintf( __( 'Site default (%s)', 'wp-sell-services' ), wp_timezone_string() ) );
+							?>
+						</option>
+						<?php foreach ( timezone_identifiers_list() as $wpss_tz ) : ?>
+							<option value="<?php echo esc_attr( $wpss_tz ); ?>" <?php selected( $wpss_zone, $wpss_tz ); ?>><?php echo esc_html( str_replace( '_', ' ', $wpss_tz ) ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<p id="timezone-help" class="wpss-form-hint"><?php esc_html_e( 'Deadlines, messages and emails show times in this zone.', 'wp-sell-services' ); ?></p>
+				</div>
+
+				<div class="wpss-form-row">
 					<label for="website"><?php esc_html_e( 'Website', 'wp-sell-services' ); ?></label>
 					<input type="url" id="website" name="website" value="<?php echo esc_url( $vendor_profile->website ?? '' ); ?>" class="wpss-input" placeholder="https://">
 				</div>

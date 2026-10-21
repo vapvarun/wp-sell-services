@@ -97,6 +97,7 @@ class VendorsController extends RestController {
 						array(
 							'country'              => array( 'type' => 'string' ),
 							'city'                 => array( 'type' => 'string' ),
+							'timezone'             => array( 'type' => 'string' ),
 							'website'              => array( 'type' => 'string' ),
 							'intro_video_url'      => array( 'type' => 'string' ),
 							'vacation_mode'        => array( 'type' => 'boolean' ),
@@ -500,7 +501,7 @@ class VendorsController extends RestController {
 		// vacation/cover entirely (KG-5 data-loss). Now one store: the
 		// wpss_vendor_profiles table.
 		$src = array();
-		foreach ( array( 'tagline', 'bio', 'country', 'city', 'website', 'intro_video_url', 'vacation_mode', 'vacation_message', 'vacation_return_date' ) as $key ) {
+		foreach ( array( 'tagline', 'bio', 'country', 'city', 'timezone', 'website', 'intro_video_url', 'vacation_mode', 'vacation_message', 'vacation_return_date' ) as $key ) {
 			if ( $request->has_param( $key ) ) {
 				$src[ $key ] = $request->get_param( $key );
 			}

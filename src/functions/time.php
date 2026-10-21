@@ -43,6 +43,36 @@ function wpss_display_timezone( int $user_id = 0 ): \DateTimeZone {
 }
 
 /**
+ * A vendor's own time zone, when they chose one on their profile.
+ *
+ * Hooked on wpss_display_timezone so every screen, email and edit field shows the vendor their
+ * local time without a second formatter. An empty or unknown value keeps the site's zone.
+ *
+ * @since 1.9.1
+ *
+ * @param \DateTimeZone $timezone The zone so far (the site's).
+ * @param int           $user_id  Who the time is shown to.
+ * @return \DateTimeZone
+ */
+function wpss_vendor_display_timezone( $timezone, $user_id ) {
+	$user_id = (int) $user_id;
+	if ( $user_id <= 0 ) {
+		return $timezone;
+	}
+
+	$name = wp_cache_get( $user_id, 'wpss_vendor_timezone' );
+	if ( false === $name ) {
+		$profile = ( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->get_by_user( $user_id );
+		$name    = (string) ( $profile->timezone ?? '' );
+		wp_cache_set( $user_id, $name, 'wpss_vendor_timezone' );
+	}
+
+	return in_array( $name, timezone_identifiers_list(), true ) ? new \DateTimeZone( $name ) : $timezone;
+}
+add_filter( 'wpss_display_timezone', 'wpss_vendor_display_timezone', 10, 2 );
+add_action( 'wpss_vendor_profile_updated', static fn( $user_id ) => wp_cache_delete( (int) $user_id, 'wpss_vendor_timezone' ) );
+
+/**
  * A stored UTC time shown to a person, or a fallback when there is no time.
  *
  * THE formatter for every time the plugin shows. A NULL, an empty string, the

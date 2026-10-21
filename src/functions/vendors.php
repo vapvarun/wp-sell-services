@@ -565,6 +565,11 @@ function wpss_build_vendor_profile_update( array $src, int $avatar_id, int $cove
 	if ( array_key_exists( 'website', $src ) ) {
 		$data['website'] = esc_url_raw( (string) $src['website'] );
 	}
+	if ( array_key_exists( 'timezone', $src ) ) {
+		// An IANA name or empty (the site's zone); anything else would make wp_date() throw.
+		$zone             = sanitize_text_field( (string) $src['timezone'] );
+		$data['timezone'] = in_array( $zone, timezone_identifiers_list(), true ) ? $zone : '';
+	}
 	if ( array_key_exists( 'intro_video_url', $src ) ) {
 		// Accept only YouTube/Vimeo origins - stored verbatim, rendered through
 		// the safe embed helper. Anything else clears the field so the UI falls
