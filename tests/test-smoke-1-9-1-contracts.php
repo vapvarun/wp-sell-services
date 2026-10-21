@@ -184,3 +184,7 @@ if ( $social_row ) {
 	wp_set_current_user( 0 );
 	wpss_t( '' !== $url && false !== strpos( $form, 'value="' . esc_url( $url ) . '"' ), 'the profile form prefills the saved social links' );
 }
+
+// A tip awaiting offline confirmation reads the same on the order page as on the tip page.
+$order_view = (string) file_get_contents( WPSS_PLUGIN_DIR . 'templates/order/order-view.php' );
+wpss_t( 1 === preg_match( '/wpss-tip-receipt__title">\s*<\?php.{0,200}wpss_order_awaits_payment_confirmation\(\s*\$tip_order_row/s', $order_view ), 'the order page tip receipt has an awaiting-confirmation state' );

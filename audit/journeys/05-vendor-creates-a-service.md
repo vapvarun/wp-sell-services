@@ -85,9 +85,7 @@ changed — the DOM looked right while the screen was wrong.
 ### 6. Publish, then check where it landed
 Publish the service. Visit `/services/` and open the category filter.
 
-**Expect** the child term appears **inside an `<optgroup>` labelled with its
-parent**, not flat between top-level categories. Selecting it filters to
-services in that child.
+**Expect** the child term appears **nested under its parent** in the sidebar category list (indented, smaller type, link inside `.wpss-subcategory-list`), not flat between top-level categories. In the Service Grid block filter and the request forms it sits inside an `<optgroup>` labelled with the parent. Selecting it filters to services in that child.
 
 ### 7. The administrator is not a subscriber
 Log in as the site administrator — one who already owns more services than any

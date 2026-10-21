@@ -202,5 +202,6 @@ Check each as the named role, on the branch commit. Old data: the dev DB was upg
 - **Helpful vote removed:** no Helpful button on any review list; `admin-ajax.php?action=wpss_mark_review_helpful` and `POST /reviews/{id}/helpful` answer "not found"; after upgrade the `wpss_cleanup_review_votes` job and `_wpss_vote_*` options are gone. The `helpful_count` column stays.
 - **Woo order line (Pro):** the order line is named after the service.
 
-Not browser-verified when written: the items above marked UI. Decisions left to the owner: unknown vendor slug showing the list instead of a 404, and a Woo My Account Notifications tab.
+Self-verified in the browser after the fixes (1440 and 390, dark mode on the vendor profile and notifications): cart tax line reads VAT (20%), vendor website link shows on the public profile, Contact Seller reports a skipped file ("File type could not be verified"), the three new notification titles render and join the Type filter once a user has one, journey 16 walked on Woo COD and Offline with the 1.9.1 fixes passing. Pro tip refund reversal, wrong-role REST 403s, the 48 hour phase cancel and the Woo-rail locked phase were not walked.
 
+Decisions made: an unknown vendor slug keeps showing the list (now noindex); no Woo My Account Notifications tab.

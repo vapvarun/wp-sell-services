@@ -26,6 +26,8 @@ None of those fail a unit test. All of them fail a journey.
 
 1. Log in as the stated role. Use `?autologin=<login>` on the local sandbox
    (see the mu-plugin in the root `CLAUDE.md`); never hand-fill login forms.
+   Autologin does nothing when a session already exists, so log out first
+   (the confirm link on `/wp-login.php?action=logout`) before switching role.
 2. Walk the steps **in order**, in the browser.
 3. Check each **Expect** line as you go, not at the end.
 4. Where a step says *computed style*, actually read it — themes override

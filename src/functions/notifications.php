@@ -636,7 +636,7 @@ function wpss_notification_types(): array {
 		'milestone_paid'               => array( __( 'Milestone paid', 'wp-sell-services' ), 'banknote' ),
 		'milestone_submitted'          => array( __( 'Milestone submitted', 'wp-sell-services' ), 'upload' ),
 		'milestone_approved'           => array( __( 'Milestone approved', 'wp-sell-services' ), 'check-circle' ),
-		'milestone_revision_requested' => array( __( 'Revision requested', 'wp-sell-services' ), 'rotate-ccw' ),
+		'milestone_revision_requested' => array( __( 'Phase revision requested', 'wp-sell-services' ), 'rotate-ccw' ),
 		'milestone_cancel_warning'     => array( __( 'Milestone cancellation', 'wp-sell-services' ), 'triangle-alert' ),
 		'extension_proposed'           => array( __( 'Extension proposed', 'wp-sell-services' ), 'clock' ),
 		'extension_approved'           => array( __( 'Extension approved', 'wp-sell-services' ), 'calendar' ),

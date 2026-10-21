@@ -1725,7 +1725,7 @@ do_action( 'wpss_before_order_view', $order );
 					<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					<div>
 						<h3 class="wpss-tip-receipt__title">
-							<?php echo esc_html( $is_paid ? __( 'Tip sent', 'wp-sell-services' ) : __( "Tip not sent yet — payment didn't complete", 'wp-sell-services' ) ); ?>
+							<?php echo esc_html( $is_paid ? __( 'Tip sent', 'wp-sell-services' ) : ( wpss_order_awaits_payment_confirmation( $tip_order_row ) ? __( 'Tip sent — payment awaiting confirmation', 'wp-sell-services' ) : __( "Tip not sent yet — payment didn't complete", 'wp-sell-services' ) ) ); ?>
 						</h3>
 						<p class="wpss-tip-receipt__amount">
 							<?php

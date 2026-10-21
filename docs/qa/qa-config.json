@@ -4,6 +4,7 @@
  "name": "WP Sell Services",
  "version_constant": "WPSS_VERSION",
  "main_file": "wp-sell-services.php",
+ "runbook_path": "audit/journeys/README.md",
  "autologin_param": "autologin",
  "rest_namespace": "wpss/v1",
  "front_routes": [
