@@ -162,3 +162,25 @@ if ( $ledger_user ) {
 // The review Helpful vote is gone, and the sweep for it.
 wpss_t( ! method_exists( \WPSellServices\Database\Repositories\ReviewRepository::class, 'toggle_helpful' ), 'the review Helpful vote writer is removed' );
 wpss_t( false === has_action( 'wp_ajax_wpss_mark_review_helpful' ) && ! isset( rest_get_server()->get_routes()['/wpss/v1/reviews/(?P<id>[\d]+)/helpful'] ), 'no Helpful AJAX action or REST route' );
+
+// The dashboard profile form prefills the saved social links (the column is JSON, not an array).
+$social_row = $wpdb->get_row( "SELECT * FROM {$wpdb->prefix}wpss_vendor_profiles WHERE social_links LIKE '%http%' LIMIT 1" );
+if ( $social_row ) {
+	$saved = (array) json_decode( (string) $social_row->social_links, true );
+	$url   = (string) reset( $saved );
+	wp_set_current_user( (int) $social_row->user_id );
+	$user_id        = (int) $social_row->user_id;
+	$is_vendor      = true;
+	// The page receives the raw row (social_links is a JSON string), so hand the template exactly that.
+	$vendor_service = new class( $social_row ) extends \WPSellServices\Services\VendorService {
+		public function __construct( private object $row ) {}
+		public function get_profile( int $user_id ): ?object {
+			return $this->row;
+		}
+	};
+	ob_start();
+	include WPSS_PLUGIN_DIR . 'templates/dashboard/sections/profile.php';
+	$form = (string) ob_get_clean();
+	wp_set_current_user( 0 );
+	wpss_t( '' !== $url && false !== strpos( $form, 'value="' . esc_url( $url ) . '"' ), 'the profile form prefills the saved social links' );
+}

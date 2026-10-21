@@ -203,11 +203,14 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					'dribbble'  => 'Dribbble',
 					'behance'   => 'Behance',
 				);
+				// The column holds JSON; the public profile decodes it the same way.
+				$wpss_saved = ! empty( $vendor_profile->social_links ) ? json_decode( (string) $vendor_profile->social_links, true ) : array();
+				$wpss_saved = is_array( $wpss_saved ) ? $wpss_saved : array();
 				foreach ( $wpss_social as $wpss_platform => $wpss_platform_label ) :
 					?>
 					<div class="wpss-form-row">
 						<label for="social_<?php echo esc_attr( $wpss_platform ); ?>"><?php echo esc_html( $wpss_platform_label ); ?></label>
-						<input type="url" id="social_<?php echo esc_attr( $wpss_platform ); ?>" name="social_links[<?php echo esc_attr( $wpss_platform ); ?>]" value="<?php echo esc_url( $vendor_profile->social_links[ $wpss_platform ] ?? '' ); ?>" class="wpss-input" placeholder="https://">
+						<input type="url" id="social_<?php echo esc_attr( $wpss_platform ); ?>" name="social_links[<?php echo esc_attr( $wpss_platform ); ?>]" value="<?php echo esc_url( $wpss_saved[ $wpss_platform ] ?? '' ); ?>" class="wpss-input" placeholder="https://">
 					</div>
 				<?php endforeach; ?>
 
