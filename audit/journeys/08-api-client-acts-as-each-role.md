@@ -37,7 +37,7 @@ A member with a known account password, and `curl` or equivalent. Do not use
 `POST /wpss/v1/auth/login` again, passing the **token** from step 1 as the
 `password`.
 
-**Expect** `401 wpss_token_cannot_mint`.
+**Expect** a `401` and no new token. On a stock site WordPress itself refuses a token used as a password, so the code is `invalid_credentials`; `wpss_token_cannot_mint` appears only when another plugin lets the token through the sign-in chain. The code must not tell the caller the token was valid.
 
 A `200` here means whoever steals one token has an unlimited supply and revoking
 the original changes nothing. This is the step that was reported passing and was

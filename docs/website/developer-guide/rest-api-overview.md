@@ -91,10 +91,12 @@ in a month. Both limits are filterable via `wpss_app_token_lifetime`.
 Treat `expires` as advisory and the 401 as authoritative: on
 `401 wpss_token_expired`, discard the token and sign in again.
 
-**A token cannot mint another token.** `POST /auth/login` refuses a request whose
-`password` is an app token rather than the account password, with
-`401 wpss_token_cannot_mint`. Without that, whoever stole one token had an
-unlimited supply and revoking the original changed nothing.
+**A token cannot mint another token.** `POST /auth/login` answers `401` and issues
+nothing when the `password` is an app token rather than the account password. On a
+stock site that is `invalid_credentials` (WordPress refuses the token first); the
+`wpss_token_cannot_mint` code is a second guard for sites where another plugin lets
+the token through. Without it, whoever stole one token had an unlimited supply and
+revoking the original changed nothing.
 
 **Signing in still works with a dead token attached.** WordPress answers 401 for
 the *whole request* when an application password fails, so a client that attaches
