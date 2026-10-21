@@ -21,7 +21,6 @@ Counts from the 2026-10-18 browser walk, Free and Pro active. Guards are scripts
 | License (Pro) | 12 | `test-license-gate-and-storage` | |
 | Member Reports | 13 | `test-report-link-contract` | |
 | Order Again (buyer repeats a completed order) | 01 | `test-order-again` | Not walked on EDD and FluentCart |
-| Helpful vote on reviews (toggle, own review refused) | 14 | `test-review-helpful-toggle` | |
 | Package tier description in the wizard | 05 | `test-wizard-package-description` | |
 | Refused publish notice; My Services status tiles | 05 | `test-publish-blocked-notice` | Tiles have no guard beyond the walk |
 | Negative balance: carry, explain, admin write-off | 10, 15 | `test-negative-balance-writeoff`, `test-negative-tile-contract` | Pro Stripe Connect payout not run against a negative vendor |

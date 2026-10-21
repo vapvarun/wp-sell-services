@@ -303,47 +303,6 @@
                     scrollTop: $reviews.offset().top - 100
                 }, 500);
             });
-
-            // Helpful button: REST POST /reviews/{id}/helpful toggles the vote.
-            $reviews.on('click', '.wpss-review-helpful-btn', function(e) {
-                e.preventDefault();
-
-                const $btn = $(this);
-                const reviewId = $btn.data('review');
-
-                // One request at a time, so a double click cannot flip it twice.
-                if ($btn.prop('disabled')) {
-                    return;
-                }
-                $btn.prop('disabled', true);
-
-                $.ajax({
-                    url: wpssService.apiUrl + '/reviews/' + reviewId + '/helpful',
-                    method: 'POST',
-                    beforeSend: function(xhr) {
-                        xhr.setRequestHeader('X-WP-Nonce', wpssService.restNonce);
-                    },
-                    success: function(response) {
-                        if (!response || typeof response.count === 'undefined') {
-                            return;
-                        }
-                        let $count = $btn.find('.wpss-helpful-count');
-                        if (response.count > 0) {
-                            if (!$count.length) {
-                                // Server omits the count span at zero; add it now.
-                                $count = $('<span class="wpss-helpful-count"></span>').appendTo($btn);
-                            }
-                            $count.text('(' + response.count + ')');
-                        } else {
-                            $count.remove();
-                        }
-                        $btn.toggleClass('marked', !!response.marked).attr('aria-pressed', response.marked ? 'true' : 'false');
-                    },
-                    complete: function() {
-                        $btn.prop('disabled', false);
-                    }
-                });
-            });
         },
 
         /**
@@ -732,12 +691,13 @@
                                 '<div class="wpss-success-message">' +
                                 '<span class="wpss-success-icon">&#10003;</span>' +
                                 '<p>' + response.data.message + '</p>' +
+                                (response.data.warnings ? '<p class="wpss-form-hint">' + self.escapeHtml(response.data.warnings.join(' ')) + '</p>' : '') +
                                 '</div>'
                             );
 
                             setTimeout(function() {
                                 self.closeModals();
-                            }, 2000);
+                            }, response.data.warnings ? 6000 : 2000);
                         } else {
                             self.showError(response.data.message);
                             $btn.prop('disabled', false).text(wpssService.i18n.sendMessage);

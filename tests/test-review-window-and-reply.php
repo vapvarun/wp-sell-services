@@ -190,7 +190,7 @@ remove_all_filters( 'wpss_review_window_days' );
 
 $controller_src = (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/API/ReviewsController.php' );
 $start          = strpos( $controller_src, 'public function create_reply(' );
-$end            = strpos( $controller_src, 'public function mark_helpful(' );
+$end            = false === $start ? false : strpos( $controller_src, 'public function ', $start + 10 );
 $create_reply   = false !== $start && false !== $end ? substr( $controller_src, $start, $end - $start ) : '';
 
 $check( 'create_reply body located in the controller', '' !== $create_reply );

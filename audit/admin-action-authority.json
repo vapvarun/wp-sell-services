@@ -64,14 +64,6 @@
       "anonymous": true,
       "reason": "Public catalogue pagination."
     },
-    "wp_ajax_nopriv_wpss_mark_review_helpful": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::mark_review_helpful",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": true,
-      "anonymous": true,
-      "reason": "A helpful vote from a signed-out reader. Writes a counter only, never member data, and is rate limited via the helpful_vote action."
-    },
     "wp_ajax_nopriv_wpss_public_signup": {
       "callback": "WPSellServices\\Frontend\\PublicSignup::ajax_signup",
       "nonce": true,
@@ -316,13 +308,6 @@
       "nonce": true,
       "capability": false,
       "rate_limited": false,
-      "anonymous": false
-    },
-    "wp_ajax_wpss_mark_review_helpful": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::mark_review_helpful",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": true,
       "anonymous": false
     },
     "wp_ajax_wpss_offline_process_payment": {

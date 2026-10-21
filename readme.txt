@@ -276,9 +276,16 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Improve  - Payment, proposal, milestone and extension emails always send, and the email preferences screen says so.
 * Improve  - The vendor profile review list uses the same markup as the service page, and View all reviews loads the next pages from the server.
 * Improve  - Vendor and service ratings, the seller card, REST stats and seller levels all count the same reviews.
+* Improve  - Removed the review Helpful vote: reviews and the seller rating already say how a seller did.
+* Improve  - Sellers are notified when a buyer requests a revision on a milestone phase, and buyers are told the outcome of a report they filed.
+* Improve  - Dispute response reminders show as Dispute response due in the notification center.
+* Improve  - The Earnings ledger follows the chosen period, and the cart tax line names the rate like checkout does.
+* Improve  - Vendor profiles show the website and edit the social links from the dashboard.
+* Improve  - Contact Seller says which attachments were skipped, and notification and ledger buttons are 44px tall on phones.
 * Fix      - A suspended vendor can no longer start new pre-sale conversations, and keeps Sales Orders to finish paid work.
 * Fix      - Order amount limits and other number settings can no longer be saved below their minimum.
 * Fix      - Submitting a milestone phase twice notifies the buyer once, and a paid extension returns a late order to In Progress.
+* Fix      - A review held for moderation notifies the seller only once it is approved.
 * Fix      - Sellers get one email per tip instead of two.
 * Fix      - Dispute escalation emails reach the site admin when no dispute email is set.
 * Fix      - Approving or rejecting a service twice no longer emails the seller twice.
@@ -295,6 +302,7 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - The admin order screen shows the contract total for milestone projects.
 * Fix      - An unpaid milestone, tip or extension no longer credits the seller's wallet when an admin marks the order completed.
 * Fix      - The Extra Work and tip cards have inset spacing on mobile.
+* Dev      - Updating removes the retired Helpful vote options and cleanup job; the helpful_count column is left in place.
 * Dev      - ReviewRepository::rating_stats() is the one rating query, and ReviewService::create_imported() the one door for imported reviews.
 * Dev      - Removed unused classes (FAQService, three repositories and the admin viewer data classes).
 * Compat   - Aligned with WP Sell Services Pro 1.9.1. Install both updates together.

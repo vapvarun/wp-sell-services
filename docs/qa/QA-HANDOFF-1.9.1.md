@@ -48,7 +48,7 @@ Steps:
 - **Who can use it:** only an admin. A vendor or buyer gets nothing (`POST /wpss/v1/reviews/import` answers 401 or 403; the menu item is absent). The menu item appears only with a valid license.
 - **Display:** imported reviews show an **Imported review** label, no Verified Purchase badge and on the service page, the vendor profile and the vendor dashboard Reviews list (its service link goes to the service, not an order). The vendor rating, service rating and seller level move; no email goes out (check Mailpit).
 - **Vendor profile** (`/vendors/?vendor=wpss_vendor_sofia`): reviews look like the service page (avatar, name, stars, date), with the service named on its own line under the header and no Helpful button.
-- **Load more:** with more than 10 reviews for one vendor, click View all reviews: reviews 11 and up appear with the label and service line, once only (no duplicate rows), and the button disappears at the end. Repeat on a service page with more than 10 reviews: one request, Helpful buttons present on the new rows, button disappears at the end.
+- **Load more:** with more than 10 reviews for one vendor, click View all reviews: reviews 11 and up appear with the label and service line, once only (no duplicate rows), and the button disappears at the end. Repeat on a service page with more than 10 reviews: one request, button disappears at the end.
 - **Old data:** a review that came from another marketplace (order 0 before the upgrade) is still there after the upgrade (see section 2).
 - **Ratings agree:** vendor rating on the profile, the seller card block, `GET /wpss/v1/vendors/{id}` stats and the vendor dashboard match for the same vendor.
 
@@ -139,7 +139,7 @@ Checked by the author: PHPStan, REST reachability (178 routes, none unguarded), 
 Not checked, so please cover them:
 
 - Dark mode and RTL on the Import Reviews screen and on review page 2.
-- Page 2 load-more at 390; a Helpful vote on a page-2 row.
+- Page 2 load-more at 390.
 - The EDD and FluentCart rails (not installed locally); the Woo duplicate-order lock under two truly simultaneous requests.
 - The standalone offline checkout and receipt upload, end to end.
 - The admin order summary at 390 and some custom-order emails.
@@ -185,3 +185,22 @@ Per card: PASS (move to Done), BOUNCE (back to Bugs with the failing step, role,
 - **Suspended vendor (Free):** Contact Seller and every new pre-sale thread are refused for a vendor suspended on the profile; the dashboard keeps Sales Orders only. Check: suspend a vendor, use Contact Seller on another seller's service, open the dashboard.
 - **Order amount limits (Free admin):** minimum and maximum order amount, and every other number setting, clamp to the field's own min and max on save. Negatives already saved are not repaired.
 - **Milestone and extension (Free):** a repeat submit on an already-submitted phase sends no mail or notification; a paid extension that moves the deadline into the future returns a late order to In Progress. Not checked live: the paid-extension path was only checked by test, not by a real payment.
+
+## Smoke triage fixes and Helpful removal (added after the combo smoke walk)
+
+Check each as the named role, on the branch commit. Old data: the dev DB was upgraded in place.
+
+- **Revision request:** buyer requests a revision on a milestone phase. Expected: the seller gets a bell notification "Revision requested" and one email (template `milestone-revision-requested.php`).
+- **Dispute reminder:** the notification reads "Dispute response due", not a raw type.
+- **Report outcome:** admin resolves a report from Reports. Expected: the reporter gets "Your report was reviewed" (REST `resolve_item` and the admin Resolve button share `ReportsController::resolve_report`).
+- **Held review:** a review held for moderation sends the seller nothing; approving it sends one notification and one email.
+- **Earnings ledger period (Pro):** change the period selector; the on-screen list and the CSV export use the same range (`from`/`to` on `wallet/transactions`).
+- **Contact Seller attachments:** attach a file the site refuses; the modal lists it as skipped and stays open 6 s.
+- **Vendor profile:** the website shows on the public profile; the dashboard profile edits LinkedIn, X, Facebook, Instagram, GitHub, YouTube, Dribbble, Behance.
+- **Cart:** the tax line reads "VAT (20%)" with one rate, like checkout.
+- **Phone (390):** notification mark-read and mark-all, and the ledger buttons and select, are 44px tall.
+- **Helpful vote removed:** no Helpful button on any review list; `admin-ajax.php?action=wpss_mark_review_helpful` and `POST /reviews/{id}/helpful` answer "not found"; after upgrade the `wpss_cleanup_review_votes` job and `_wpss_vote_*` options are gone. The `helpful_count` column stays.
+- **Woo order line (Pro):** the order line is named after the service.
+
+Not browser-verified when written: the items above marked UI. Decisions left to the owner: unknown vendor slug showing the list instead of a 404, and a Woo My Account Notifications tab.
+

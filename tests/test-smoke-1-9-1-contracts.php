@@ -93,3 +93,72 @@ if ( $svc_id ) {
 } else {
 	echo "  SKIP  no approved live service.\n";
 }
+
+// Standard-practice fixes from the smoke triage.
+$notes = $wpdb->prefix . 'wpss_notifications';
+$title = static function ( int $user, string $type ) use ( $wpdb, $notes ): string {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	return (string) $wpdb->get_var( $wpdb->prepare( "SELECT title FROM {$notes} WHERE user_id = %d AND type = %s ORDER BY id DESC LIMIT 1", $user, $type ) );
+};
+$qa_user = (int) $wpdb->get_var( "SELECT user_id FROM {$profiles} LIMIT 1" );
+$ns      = new \WPSellServices\Services\NotificationService();
+
+$ns->send( $qa_user, 'dispute_response_reminder', array( 'order_id' => 0 ) );
+wpss_t( 'Dispute response due' === $title( $qa_user, 'dispute_response_reminder' ), 'a dispute reminder reads as one, not as a generic notification' );
+
+$ns->send( $qa_user, 'milestone_revision_requested', array( 'order_id' => 0 ) );
+wpss_t( 'Revision requested' === $title( $qa_user, 'milestone_revision_requested' ), 'a milestone revision request notifies the seller' );
+wpss_t( false !== has_action( 'wpss_milestone_revision_requested' ), 'the revision request is wired to a listener' );
+
+$wpdb->insert(
+	$wpdb->prefix . 'wpss_reports',
+	array(
+		'target_type'      => 'user',
+		'target_id'        => $qa_user,
+		'reported_user_id' => $qa_user,
+		'reporter_id'      => $qa_user,
+		'reason'           => 'spam',
+		'details'          => 'QA-SMOKE',
+		'status'           => 'open',
+		'created_at'       => current_time( 'mysql', true ),
+	)
+);
+$report_id = (int) $wpdb->insert_id;
+\WPSellServices\API\ReportsController::resolve_report( $report_id, 'upheld' );
+wpss_t( 'Your report was reviewed' === $title( $qa_user, 'report_resolved' ), 'the reporter is told the report was reviewed' );
+$wpdb->delete( $wpdb->prefix . 'wpss_reports', array( 'id' => $report_id ), array( '%d' ) );
+
+// A held review tells the seller nothing; the live one does.
+$reviews = $wpdb->prefix . 'wpss_reviews';
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$review = $wpdb->get_row( "SELECT id, vendor_id, order_id FROM {$reviews} WHERE status = 'approved' AND order_id > 0 LIMIT 1" );
+if ( $review ) {
+	$count = static fn() => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notes} WHERE user_id = %d AND type = 'review_received'", $review->vendor_id ) );
+	$wpdb->update( $reviews, array( 'status' => 'pending' ), array( 'id' => $review->id ) );
+	$before = $count();
+	do_action( 'wpss_review_created', (int) $review->id, (int) $review->order_id );
+	wpss_t( $count() === $before, 'a review held for moderation does not notify the seller' );
+	$wpdb->update( $reviews, array( 'status' => 'approved' ), array( 'id' => $review->id ) );
+	do_action( 'wpss_review_moderated', (int) $review->id, 'approved' );
+	wpss_t( $count() === $before + 1, 'approving the held review notifies the seller once' );
+	$wpdb->delete( $notes, array( 'user_id' => $review->vendor_id, 'type' => 'review_received' ), array( '%d', '%s' ) );
+} else {
+	echo "  SKIP  no approved review.\n";
+}
+
+// The ledger list takes the period the export uses.
+$ledger_user = (int) $wpdb->get_var( "SELECT user_id FROM {$wpdb->prefix}wpss_wallet_transactions GROUP BY user_id ORDER BY COUNT(*) DESC LIMIT 1" );
+if ( $ledger_user ) {
+	wp_set_current_user( $ledger_user );
+	$ask  = static function ( array $params ): int {
+		$request = new WP_REST_Request( 'GET', '/wpss/v1/wallet/transactions' );
+		$request->set_query_params( $params );
+		return (int) ( rest_do_request( $request )->get_headers()['X-WP-Total'] ?? -1 );
+	};
+	wpss_t( $ask( array() ) > 0 && 0 === $ask( array( 'from' => '2999-01-01 00:00:00' ) ), 'the wallet ledger list honours the period window' );
+	wp_set_current_user( 0 );
+}
+
+// The review Helpful vote is gone, and the sweep for it.
+wpss_t( ! method_exists( \WPSellServices\Database\Repositories\ReviewRepository::class, 'toggle_helpful' ), 'the review Helpful vote writer is removed' );
+wpss_t( false === has_action( 'wp_ajax_wpss_mark_review_helpful' ) && ! isset( rest_get_server()->get_routes()['/wpss/v1/reviews/(?P<id>[\d]+)/helpful'] ), 'no Helpful AJAX action or REST route' );

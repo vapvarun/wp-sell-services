@@ -887,12 +887,13 @@
 							'<div class="wpss-success-message">' +
 							'<span class="wpss-success-icon">&#10003;</span>' +
 							'<p>' + WPSS.escapeHtml(response.data.message) + '</p>' +
+							(response.data.warnings ? '<p class="wpss-form-hint">' + WPSS.escapeHtml(response.data.warnings.join(' ')) + '</p>' : '') +
 							'</div>'
 						);
 
 						setTimeout(function() {
 							window.wpssModal.close($modal[0]);
-						}, 2000);
+						}, response.data.warnings ? 6000 : 2000);
 					} else {
 						WPSS.showNotification(response.data.message || wpssData.i18n?.error || 'Failed to send message.', 'error');
 						$btn.prop('disabled', false).text(btnText);

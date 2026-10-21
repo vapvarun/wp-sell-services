@@ -137,7 +137,6 @@ class SingleServiceView {
 					'total'              => __( 'Total', 'wp-sell-services' ),
 					'loading'            => __( 'Loading...', 'wp-sell-services' ),
 					'loadMoreReviews'    => __( 'Load More Reviews', 'wp-sell-services' ),
-					'helpful'            => __( 'Helpful', 'wp-sell-services' ),
 					'sellerResponse'     => __( 'Seller Response:', 'wp-sell-services' ),
 					'anonymous'          => __( 'Anonymous', 'wp-sell-services' ),
 					'day'                => __( 'Day', 'wp-sell-services' ),

@@ -1029,12 +1029,6 @@
       "object_id": false,
       "writes": true
     },
-    "POST /wpss/v1/reviews/(?P<id>[\\d]+)/helpful": {
-      "audience": "guarded",
-      "permission_callback": "WPSellServices\\API\\ReviewsController::check_permissions",
-      "object_id": true,
-      "writes": true
-    },
     "POST /wpss/v1/reviews/(?P<id>[\\d]+)/reply": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\ReviewsController::check_reply_permissions",

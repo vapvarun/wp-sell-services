@@ -60,6 +60,7 @@ class EmailService {
 	public const TYPE_MILESTONE_PAID         = 'milestone_paid';
 	public const TYPE_MILESTONE_SUBMITTED    = 'milestone_submitted';
 	public const TYPE_MILESTONE_APPROVED     = 'milestone_approved';
+	public const TYPE_MILESTONE_REVISION     = 'milestone_revision_requested';
 	public const TYPE_EXTENSION_PROPOSED     = 'extension_proposed';
 	public const TYPE_EXTENSION_APPROVED     = 'extension_approved';
 	public const TYPE_EXTENSION_DECLINED     = 'extension_declined';
@@ -943,6 +944,52 @@ class EmailService {
 				'phase_title'   => (string) ( $meta['title'] ?? '' ),
 				'net_amount'    => (float) ( $milestone->vendor_earnings ?? $milestone->total ),
 				'currency'      => $milestone->currency ?? wpss_get_currency(),
+			)
+		);
+	}
+
+	/**
+	 * Tell the seller the buyer sent a milestone phase back for changes.
+	 *
+	 * @param ServiceOrder $milestone Milestone sub-order row.
+	 * @param string       $reason    What the buyer wants changed.
+	 * @return bool
+	 */
+	public function send_milestone_revision_requested( ServiceOrder $milestone, string $reason ): bool {
+		$vendor = get_user_by( 'id', $milestone->vendor_id );
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		$buyer = get_user_by( 'id', $milestone->customer_id );
+		$meta  = $this->decode_order_meta( $milestone );
+
+		$subject = sprintf(
+			/* translators: 1: site name, 2: phase title */
+			__( '[%1$s] Revision requested: %2$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			(string) ( $meta['title'] ?? __( 'your phase', 'wp-sell-services' ) )
+		);
+
+		return $this->send(
+			$vendor->user_email,
+			$subject,
+			self::TYPE_MILESTONE_REVISION,
+			array(
+				'milestone'     => $milestone,
+				'recipient'     => $vendor,
+				'email_heading' => __( 'Revision requested', 'wp-sell-services' ),
+				'vendor_name'   => $vendor->display_name,
+				'buyer_name'    => $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' ),
+				'phase_title'   => (string) ( $meta['title'] ?? '' ),
+				'reason'        => $reason,
+				'order_url'     => add_query_arg(
+					array(
+						'section'  => 'sales',
+						'order_id' => (int) $milestone->id,
+					),
+					wpss_get_dashboard_url() ?: home_url( '/dashboard/' )
+				),
 			)
 		);
 	}
@@ -2323,6 +2370,7 @@ class EmailService {
 			self::TYPE_MILESTONE_PAID         => 'milestone-paid.php',
 			self::TYPE_MILESTONE_SUBMITTED    => 'milestone-submitted.php',
 			self::TYPE_MILESTONE_APPROVED     => 'milestone-approved.php',
+			self::TYPE_MILESTONE_REVISION     => 'milestone-revision-requested.php',
 			self::TYPE_EXTENSION_PROPOSED     => 'extension-proposed.php',
 			self::TYPE_EXTENSION_APPROVED     => 'extension-approved.php',
 			self::TYPE_EXTENSION_DECLINED     => 'extension-declined.php',
@@ -2436,6 +2484,7 @@ class EmailService {
 			self::TYPE_NEW_MESSAGE            => 'messages',
 			self::TYPE_ORDER_COMPLETED        => 'completion',
 			self::TYPE_REVISION_REQUESTED     => 'completion',
+			self::TYPE_MILESTONE_REVISION     => 'completion',
 			self::TYPE_ORDER_CANCELLED        => 'cancellation',
 			self::TYPE_CANCELLATION_REQUESTED => 'cancellation',
 			self::TYPE_DISPUTE_OPENED         => 'disputes',

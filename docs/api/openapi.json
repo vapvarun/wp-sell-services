@@ -10422,49 +10422,6 @@
                 }
             }
         },
-        "/wpss/v1/reviews/{id}/helpful": {
-            "x-wpss-tier": "free",
-            "post": {
-                "tags": [
-                    "Reviews"
-                ],
-                "operationId": "post_wpss_v1_reviews_id_helpful",
-                "security": [
-                    {
-                        "basicAuth": []
-                    },
-                    {
-                        "cookieAuth": [],
-                        "wpNonce": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "description": "Unique identifier for the review."
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "401": {
-                        "description": "Authentication required or invalid."
-                    },
-                    "403": {
-                        "description": "Not permitted."
-                    },
-                    "404": {
-                        "description": "Not found."
-                    }
-                }
-            }
-        },
         "/wpss/v1/reviews/{id}/reply": {
             "x-wpss-tier": "free",
             "post": {

@@ -33,10 +33,6 @@ delete_option( $name );
 $paypal = $read( 'src/Integrations/PayPal/PayPalGateway.php' );
 $check( 'PayPal order id must match the id shape', false !== strpos( $paypal, "preg_match( '/^[A-Za-z0-9_-]{5,64}$/', \$paypal_order_id )" ) );
 
-// 3. Only an approved review can be voted on.
-$source = $read( 'src/Database/Repositories/ReviewRepository.php' );
-$check( 'helpful vote looks up approved reviews only', false !== strpos( $source, "WHERE id = %d AND status = 'approved'" ) );
-
 // 4. The notification list page size is capped.
 $check( 'AJAX notification limit is capped at 50', false !== strpos( $read( 'src/Frontend/AjaxHandlers.php' ), "min( 50, max( 1, absint( \$_POST['limit'] ?? 10 ) ) )" ) );
 

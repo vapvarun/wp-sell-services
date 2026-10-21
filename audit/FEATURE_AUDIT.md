@@ -56,7 +56,6 @@
 - Extensions: request, decline
 - Tipping: send
 - Messaging: send-message, mark-read, load-conversation
-- Reviews: submit, mark-helpful (nopriv)
 - Disputes: open, respond
 - Wallet: cancel-withdrawal, withdraw-request
 - Portfolio: add, edit, delete, reorder
@@ -66,7 +65,7 @@
 **Security pattern (verified)**:
 - Nonce: `check_ajax_referer()` on all 67 logged-in handlers
 - Auth: 3 patterns — inline `current_user_can`, service-class delegation, `WHERE user_id=X` scoping
-- Rate limiting: `RateLimiter::check_and_track` on order_action, helpful_vote, delivery (8 sites)
+- Rate limiting: `RateLimiter::check_and_track` on order_action, delivery (8 sites)
 
 ## 3. REST endpoints (138 across 24 controllers in `src/API/`)
 

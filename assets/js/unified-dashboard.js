@@ -191,7 +191,7 @@
 			$.ajax({
 				url: wpssUnifiedDashboard.restUrl + restPath,
 				type: 'GET',
-				data: { page: page, per_page: perPage },
+				data: { page: page, per_page: perPage, from: $list.attr('data-from') || undefined, to: $list.attr('data-to') || undefined },
 				beforeSend: function (xhr) {
 					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 				}

@@ -1235,6 +1235,22 @@ class NotificationService {
 				}
 				break;
 
+			case 'dispute_response_reminder':
+				$title = __( 'Dispute response due', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: order number */
+					__( 'A dispute on Order #%s is waiting for your response.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
+				);
+				if ( ! empty( $data['response_deadline'] ) ) {
+					$message->paragraph(
+						/* translators: %s: deadline date */
+						__( 'Please respond by %s to avoid automatic escalation.', 'wp-sell-services' ),
+						NotificationMessage::strong( wpss_deadline_label( $data['response_deadline'], '—', $user_id ) )
+					);
+				}
+				break;
+
 			case 'dispute_response_received':
 				$title     = __( 'Dispute Response Received', 'wp-sell-services' );
 				$from_user = get_user_by( 'id', $data['from_user'] ?? 0 );
@@ -1322,6 +1338,24 @@ class NotificationService {
 				$message->line(
 					/* translators: %s: parent order number */
 					__( 'Your seller submitted a phase delivery on Order #%s. Review it and approve, or request a revision in chat.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
+				);
+				break;
+
+			case 'report_resolved':
+				$title = __( 'Your report was reviewed', 'wp-sell-services' );
+				$message->line(
+					'upheld' === ( $data['resolution'] ?? '' )
+						? __( 'Thanks for your report. We reviewed it and took action.', 'wp-sell-services' )
+						: __( 'Thanks for your report. We reviewed it and found nothing that breaks the rules.', 'wp-sell-services' )
+				);
+				break;
+
+			case 'milestone_revision_requested':
+				$title = __( 'Revision requested', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: parent order number */
+					__( 'The buyer asked for changes to a phase on Order #%s. Update the work and submit it again.', 'wp-sell-services' ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
@@ -2199,6 +2233,7 @@ class NotificationService {
 			self::TYPE_REVIEW_RECEIVED,
 			// Tips: EmailService::send_tip_received() is called with the row.
 			self::TYPE_TIP_RECEIVED,
+			'milestone_revision_requested',
 		);
 
 		return in_array( $type, $covered_types, true );

@@ -101,22 +101,6 @@
       "follow_up": "KG-1"
     },
     {
-      "name": "reviews - mark helpful (single service page)",
-      "ajax_actions": [
-        "wpss_mark_review_helpful"
-      ],
-      "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::mark_review_helpful",
-      "rest_twin": [
-        "POST /wpss/v1/reviews/{id}/helpful (ReviewsController CREATABLE helpful route)"
-      ],
-      "rest_controller": "WPSellServices\\API\\ReviewsController",
-      "js_call_site": "assets/js/single-service.js (helpful button)",
-      "migrated": true,
-      "migrated_in": "1.2.0",
-      "former_blocker": "Adjacent to reviews-load; deferred with it to keep the single-service reviews block migrated as one verified unit rather than half-converted. Response shape ({count}) is compatible, but it shares the reviews block and should be browser-verified together.",
-      "follow_up": "KG-2"
-    },
-    {
       "name": "services - load / pagination (services block)",
       "ajax_actions": [
         "wpss_load_services"

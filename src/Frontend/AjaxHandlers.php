@@ -137,18 +137,6 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_submit_review', array( $this, 'submit_review' ) );
 		add_action( 'wp_ajax_wpss_load_reviews', array( $this, 'load_reviews' ) );
 		add_action( 'wp_ajax_nopriv_wpss_load_reviews', array( $this, 'load_reviews' ) );
-		add_action( 'wp_ajax_wpss_mark_review_helpful', array( $this, 'mark_review_helpful' ) );
-		add_action( 'wp_ajax_nopriv_wpss_mark_review_helpful', array( $this, 'mark_review_helpful' ) );
-
-		// Daily Action Scheduler sweep of expired guest helpful-vote rows
-		// (kept here next to mark_review_helpful so the producer + consumer
-		// for the `_wpss_vote_*` option_name pattern live in the same file).
-		add_action(
-			'wpss_cleanup_review_votes',
-			static function (): void {
-				( new \WPSellServices\Database\Repositories\ReviewRepository() )->cleanup_expired_helpful_votes();
-			}
-		);
 
 		// Disputes.
 		add_action( 'wp_ajax_wpss_open_dispute', array( $this, 'open_dispute' ) );
@@ -1041,8 +1029,6 @@ class AjaxHandlers {
 		$has_more = $page * $per_page < $rating_count;
 
 		// Generate HTML for reviews.
-		$wpss_voted = $repo->helpful_voted_ids( wp_list_pluck( $reviews, 'id' ), get_current_user_id() );
-
 		ob_start();
 		foreach ( $reviews as $review ) {
 			?>
@@ -1054,19 +1040,6 @@ class AjaxHandlers {
 				require wpss_locate_template( 'partials/review-body.php' );
 				?>
 
-				<?php if ( $service_id ) : // The vendor profile list has no Helpful control, on page one or after. ?>
-					<div class="wpss-review-actions">
-						<?php
-						$wpss_helpful = array(
-							'review_id'     => (int) $review->id,
-							'helpful_count' => (int) $review->helpful_count,
-							'reviewer_id'   => (int) $review->reviewer_id,
-							'voted'         => in_array( (int) $review->id, $wpss_voted, true ),
-						);
-						require wpss_locate_template( 'partials/review-helpful.php' );
-						?>
-					</div>
-				<?php endif; ?>
 			</div>
 			<?php
 		}
@@ -1076,49 +1049,6 @@ class AjaxHandlers {
 			array(
 				'html'     => $html,
 				'has_more' => $has_more,
-			)
-		);
-	}
-
-	/**
-	 * Toggle a reader's "Helpful" vote on a review.
-	 *
-	 * Same writer as the REST route (ReviewRepository::toggle_helpful()), kept
-	 * for signed-out readers and older clients.
-	 *
-	 * @return void
-	 */
-	public function mark_review_helpful(): void {
-		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
-
-		// Rate limiting (uses IP for guests since nopriv allowed).
-		$current_user_id = get_current_user_id();
-		$rate_limit_user = $current_user_id > 0 ? $current_user_id : null;
-		if ( RateLimiter::check_and_track( 'helpful_vote', $rate_limit_user ) ) {
-			RateLimiter::send_error( 'helpful_vote' );
-		}
-
-		$review_id = absint( $_POST['review_id'] ?? 0 );
-
-		if ( ! $review_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid review.', 'wp-sell-services' ) ) );
-		}
-
-		$result = ( new \WPSellServices\Database\Repositories\ReviewRepository() )->toggle_helpful( $review_id, $current_user_id, wpss_client_ip() );
-
-		if ( 'not_found' === $result ) {
-			wp_send_json_error( array( 'message' => __( 'Review not found.', 'wp-sell-services' ) ) );
-		}
-
-		if ( 'own_review' === $result ) {
-			wp_send_json_error( array( 'message' => __( 'You cannot mark your own review as helpful.', 'wp-sell-services' ) ) );
-		}
-
-		wp_send_json_success(
-			array(
-				'count'   => $result['count'],
-				'marked'  => $result['marked'],
-				'message' => $result['marked'] ? __( 'Thanks for your feedback!', 'wp-sell-services' ) : __( 'Vote removed.', 'wp-sell-services' ),
 			)
 		);
 	}
@@ -1980,9 +1910,12 @@ class AjaxHandlers {
 		// Pre-sale: there is no order yet, so the shared helper keeps these in
 		// the media library (private) rather than the order store.
 		$attachments = array();
+		$skipped     = array();
 		if ( ! empty( $_FILES['attachments'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES group is validated/sanitized inside wpss_handle_message_attachments().
-			$attachments = array_slice( wpss_handle_message_attachments( (array) $_FILES['attachments'], 0, 'contact' )['attachments'], 0, 5 );
+			$uploaded    = wpss_handle_message_attachments( (array) $_FILES['attachments'], 0, 'contact' );
+			$attachments = array_slice( $uploaded['attachments'], 0, 5 );
+			$skipped     = $uploaded['skipped'];
 		}
 
 		// Get sender info.
@@ -2066,7 +1999,12 @@ class AjaxHandlers {
 		 */
 		do_action( 'wpss_vendor_contacted', $vendor_id, $user_id, $service_id, $message, $attachments );
 
-		wp_send_json_success( array( 'message' => __( 'Your message has been sent successfully!', 'wp-sell-services' ) ) );
+		$response = array( 'message' => __( 'Your message has been sent successfully!', 'wp-sell-services' ) );
+		if ( ! empty( $skipped ) ) {
+			$response['warnings'] = $skipped;
+		}
+
+		wp_send_json_success( $response );
 	}
 
 	/**

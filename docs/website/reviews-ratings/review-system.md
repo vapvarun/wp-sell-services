@@ -64,12 +64,6 @@ Vendors can respond to any review on their services:
 
 Replies are public and visible to everyone. Vendors get one reply per review. A professional, gracious reply -- whether the review is positive or negative -- shows future buyers that the vendor cares about their customers.
 
-## "Mark as Helpful" Feature
-
-![A review with the Helpful button under it](../images/review-helpful-marked.webp)
-
-Buyers browsing reviews can mark a review as helpful. The most helpful reviews surface higher in the list, making it easier for potential buyers to find the most useful feedback. Press the button again to take your vote back. You cannot vote on your own review.
-
 ## Review Moderation
 
 By default, reviews are published immediately after submission. If you want to review them before they go live, you can turn on moderation.

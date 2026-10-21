@@ -410,14 +410,6 @@
    "check": "tests/test-publish-blocked-notice.php"
   },
   {
-   "card": "10385175812",
-   "title": "Helpful is a toggle with one durable vote writer shared by REST and AJAX, and never on your own review",
-   "guard": "static:review-helpful-toggle",
-   "added": "2026-10-19",
-   "fails_on": "0efd1e4c^ (guard red on the pre-fix commit)",
-   "check": "tests/test-review-helpful-toggle.php"
-  },
-  {
    "card": "10244588840",
    "title": "every package tier carries its own description field",
    "guard": "static:wizard-package-description",
@@ -775,6 +767,14 @@
    "guard": "static:smoke-1-9-1-contracts",
    "added": "2026-10-21",
    "fails_on": "c21a7c05",
+   "check": "tests/test-smoke-1-9-1-contracts.php"
+  },
+  {
+   "card": "smoke-triage-2026-10-21",
+   "title": "a seller is told when a milestone phase is sent back; a held review tells nobody until approved; the reporter is told the outcome; dispute reminders read as reminders; the wallet list follows the period; the Helpful vote stays removed",
+   "guard": "static:smoke-1-9-1-contracts",
+   "added": "2026-10-21",
+   "fails_on": "f8fab03f",
    "check": "tests/test-smoke-1-9-1-contracts.php"
   }
  ]

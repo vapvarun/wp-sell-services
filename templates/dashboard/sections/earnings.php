@@ -458,8 +458,21 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 			?>
 		</div>
 
+		<?php
+		/**
+		 * Filter the ledger's time window, so the list follows the same period selector as the CSV export.
+		 *
+		 * @since 1.9.1
+		 *
+		 * @param array{0: ?string, 1: ?string} $range   UTC start and end (Y-m-d H:i:s), null for no limit.
+		 * @param int                           $user_id Current vendor user ID.
+		 */
+		$wpss_ledger_range = (array) apply_filters( 'wpss_earnings_ledger_range', array( null, null ), $user_id );
+		?>
 		<div id="wpss-wallet-transactions"
 			class="wpss-wallet__list"
+			data-from="<?php echo esc_attr( (string) ( $wpss_ledger_range[0] ?? '' ) ); ?>"
+			data-to="<?php echo esc_attr( (string) ( $wpss_ledger_range[1] ?? '' ) ); ?>"
 			data-rest-path="wallet/transactions"
 			data-per-page="10"
 			aria-live="polite"

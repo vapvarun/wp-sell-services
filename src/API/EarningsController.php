@@ -106,6 +106,16 @@ class EarningsController extends RestController {
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_key',
 						),
+						'from'     => array(
+							'description' => __( 'Only transactions at or after this UTC time (Y-m-d H:i:s).', 'wp-sell-services' ),
+							'type'        => 'string',
+							'pattern'     => '^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$',
+						),
+						'to'       => array(
+							'description' => __( 'Only transactions at or before this UTC time (Y-m-d H:i:s).', 'wp-sell-services' ),
+							'type'        => 'string',
+							'pattern'     => '^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$',
+						),
 					),
 				),
 			)
@@ -376,6 +386,14 @@ class EarningsController extends RestController {
 
 		if ( ! empty( $type ) ) {
 			$where .= $wpdb->prepare( ' AND type = %s', sanitize_key( $type ) );
+		}
+
+		if ( $request->get_param( 'from' ) ) {
+			$where .= $wpdb->prepare( ' AND created_at >= %s', (string) $request->get_param( 'from' ) );
+		}
+
+		if ( $request->get_param( 'to' ) ) {
+			$where .= $wpdb->prepare( ' AND created_at <= %s', (string) $request->get_param( 'to' ) );
 		}
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $txn_table from $wpdb->prefix; $where built from $wpdb->prepare fragments only; LIMIT/OFFSET prepared below.

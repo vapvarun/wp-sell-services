@@ -529,8 +529,6 @@ class ReportsPage {
 	 * @return void
 	 */
 	public function handle_resolve(): void {
-		global $wpdb;
-
 		$report_id = isset( $_POST['report_id'] ) ? absint( wp_unslash( $_POST['report_id'] ) ) : 0;
 
 		check_admin_referer( 'wpss_resolve_report_' . $report_id );
@@ -545,25 +543,7 @@ class ReportsPage {
 			$this->redirect_back( 'invalid' );
 		}
 
-		// Scoped to status = 'open', so two moderators working at once cannot
-		// both close the same row with the second silently overwriting the
-		// first one's decision.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$updated = $wpdb->update(
-			$wpdb->prefix . 'wpss_reports',
-			array(
-				'status'      => 'resolved',
-				'resolution'  => $resolution,
-				'resolved_by' => get_current_user_id(),
-				'resolved_at' => current_time( 'mysql', true ),
-			),
-			array(
-				'id'     => $report_id,
-				'status' => 'open',
-			),
-			array( '%s', '%s', '%d', '%s' ),
-			array( '%d', '%s' )
-		);
+		$updated = \WPSellServices\API\ReportsController::resolve_report( $report_id, $resolution );
 
 		$this->redirect_back( $updated ? 'resolved' : 'already' );
 	}

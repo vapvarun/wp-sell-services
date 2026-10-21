@@ -391,6 +391,7 @@ defined( 'ABSPATH' ) || exit;
 				$grand_total = 0.0;
 				$tax_label   = '';
 				$tax_incl    = false;
+				$tax_rates   = array();
 
 				foreach ( $cart_items as $item_key => $item ) :
 					$service_id = absint( $item['service_id'] ?? 0 );
@@ -434,7 +435,10 @@ defined( 'ABSPATH' ) || exit;
 						$tax_total   += (float) $line['tax'];
 						$grand_total += (float) $line['total'];
 						$tax_label    = (string) ( $line['tax_label'] ?? $tax_label );
-						$tax_incl     = ! empty( $line['tax_included'] );
+						if ( (float) $line['tax'] > 0 ) {
+							$tax_rates[] = (float) ( $line['tax_rate'] ?? 0 );
+						}
+						$tax_incl = ! empty( $line['tax_included'] );
 					}
 
 					$service_title = $service_id ? get_the_title( $service_id ) : __( 'Service', 'wp-sell-services' );
@@ -585,12 +589,19 @@ defined( 'ABSPATH' ) || exit;
 					<div class="wpss-cart-summary__line">
 						<span>
 							<?php
-							echo esc_html(
-								$tax_incl
-									/* translators: %s: tax label, e.g. VAT. */
-									? sprintf( __( '%s (included)', 'wp-sell-services' ), $tax_label ? $tax_label : __( 'Tax', 'wp-sell-services' ) )
-									: ( $tax_label ? $tax_label : __( 'Tax', 'wp-sell-services' ) )
-							);
+							// One rate across the cart reads "VAT (20%)", as checkout does; mixed rates name the tax only.
+							$cart_tax_name = $tax_label ? $tax_label : __( 'Tax', 'wp-sell-services' );
+							$cart_tax_rate = 1 === count( array_unique( $tax_rates ) ) && $tax_rates[0] > 0 ? $tax_rates[0] : null;
+							if ( null !== $cart_tax_rate ) {
+								$cart_tax_name = $tax_incl
+									/* translators: 1: tax label, e.g. VAT. 2: tax rate in percent. */
+									? sprintf( __( '%1$s (%2$s%%, included)', 'wp-sell-services' ), $cart_tax_name, $cart_tax_rate )
+									: sprintf( '%s (%s%%)', $cart_tax_name, $cart_tax_rate );
+							} elseif ( $tax_incl ) {
+								/* translators: %s: tax label, e.g. VAT. */
+								$cart_tax_name = sprintf( __( '%s (included)', 'wp-sell-services' ), $cart_tax_name );
+							}
+							echo esc_html( $cart_tax_name );
 							?>
 						</span>
 						<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $tax_total, 'cart-tax' ) ); ?></span>

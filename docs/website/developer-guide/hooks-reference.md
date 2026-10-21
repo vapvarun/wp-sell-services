@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**550 hooks** across **769** firing sites.
+**551 hooks** across **772** firing sites.
 
 ## Actions (280)
 
@@ -117,8 +117,8 @@ guide; this is the complete index.
 | `wpss_edd_service_meta_saved` | 1 | `src/Integrations/EDD/EDDProductProvider.php` **[PRO]** | Fires when service meta is saved for an EDD download. |
 | `wpss_edd_service_purchased` | 2 | `src/Integrations/EDD/EDDOrderProvider.php` **[PRO]** | Fires when a service is purchased via EDD. |
 | `wpss_edd_services_processed` | 2 | `src/Integrations/EDD/EDDOrderProvider.php` **[PRO]** | Fires after all service items in an EDD payment are processed. |
-| `wpss_email_content_after` | 3 | `templates/emails/cancellation-requested.php` *(+36 more)* | Fires after the email content for the cancellation requested email. |
-| `wpss_email_content_before` | 3 | `templates/emails/cancellation-requested.php` *(+36 more)* | Fires before the email content for the cancellation requested email. |
+| `wpss_email_content_after` | 3 | `templates/emails/cancellation-requested.php` *(+37 more)* | Fires after the email content for the cancellation requested email. |
+| `wpss_email_content_before` | 3 | `templates/emails/cancellation-requested.php` *(+37 more)* | Fires before the email content for the cancellation requested email. |
 | `wpss_email_footer` | 0 | `templates/emails/email-footer.php` | Fires before the email footer. |
 | `wpss_email_header` | 1 | `templates/emails/email-header.php` | Fires after the email header. |
 | `wpss_enqueue_dashboard_assets` | 0 | `src/Frontend/Shortcodes.php` |  |
@@ -297,7 +297,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (270)
+## Filters (271)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -372,6 +372,7 @@ guide; this is the complete index.
 | `wpss_display_timezone` | 2 | `src/functions/time.php` | The timezone times are shown in. Return a member's own timezone to show each member their local time; every screen, email and edit field follows. |
 | `wpss_dispute_reasons` | 2 | `src/functions/moderation.php` | Filter the reasons offered for opening a dispute. |
 | `wpss_docs_url` | 1 | `src/Admin/Pages/UpgradePage.php` | Filters the documentation URL shown on the upgrade screen. |
+| `wpss_earnings_ledger_range` | 2 | `templates/dashboard/sections/earnings.php` | Filter the ledger's time window, so the list follows the same period selector as the CSV export. |
 | `wpss_ecommerce_adapters` | 1 | `src/CLI/PreflightCommand.php` *(+1 more)* |  |
 | `wpss_ecommerce_platform_description` | 1 | `src/Admin/Settings.php` | Filter the platform field description. |
 | `wpss_ecommerce_platform_status` | 3 | `src/Admin/Settings.php` | Filter the status word shown beside one platform. |

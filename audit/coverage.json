@@ -197,9 +197,6 @@
             "wpss_mark_notification_read": [
                 "audit/render-coverage.json"
             ],
-            "wpss_mark_review_helpful": [
-                "audit/render-coverage.json"
-            ],
             "wpss_moderate_portfolio_item": [
                 "audit/render-coverage.json"
             ],
@@ -827,7 +824,6 @@
                 "audit/render-coverage.json"
             ],
             "wpss_locate_template": [
-                "tests/test-review-helpful-toggle.php",
                 "tests/test-template-contract.php",
                 "tests/test-template-override.php",
                 "audit/render-coverage.json"
@@ -1818,13 +1814,8 @@
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/reviews/(?P<id>[\\d]+)": [
-                "tests/test-review-helpful-toggle.php",
                 "tests/test-review-status-rest.php",
                 "audit/journeys/08-api-client-acts-as-each-role.md",
-                "audit/render-coverage.json"
-            ],
-            "/wpss/v1/reviews/(?P<id>[\\d]+)/helpful": [
-                "tests/test-review-helpful-toggle.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/reviews/(?P<id>[\\d]+)/reply": [
@@ -2344,9 +2335,6 @@
             ],
             "partials/review-body": [
                 "audit/render-coverage.json"
-            ],
-            "partials/review-helpful": [
-                "tests/test-review-helpful-toggle.php"
             ],
             "partials/service-faqs": [
                 "audit/journeys/14-member-reviews-favorites-messages.md"

@@ -191,6 +191,26 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					<input type="url" id="website" name="website" value="<?php echo esc_url( $vendor_profile->website ?? '' ); ?>" class="wpss-input" placeholder="https://">
 				</div>
 
+				<?php
+				// The profile page lists exactly these, so a seller can set every link a buyer sees.
+				$wpss_social = array(
+					'linkedin'  => 'LinkedIn',
+					'twitter'   => 'X (Twitter)',
+					'facebook'  => 'Facebook',
+					'instagram' => 'Instagram',
+					'github'    => 'GitHub',
+					'youtube'   => 'YouTube',
+					'dribbble'  => 'Dribbble',
+					'behance'   => 'Behance',
+				);
+				foreach ( $wpss_social as $wpss_platform => $wpss_platform_label ) :
+					?>
+					<div class="wpss-form-row">
+						<label for="social_<?php echo esc_attr( $wpss_platform ); ?>"><?php echo esc_html( $wpss_platform_label ); ?></label>
+						<input type="url" id="social_<?php echo esc_attr( $wpss_platform ); ?>" name="social_links[<?php echo esc_attr( $wpss_platform ); ?>]" value="<?php echo esc_url( $vendor_profile->social_links[ $wpss_platform ] ?? '' ); ?>" class="wpss-input" placeholder="https://">
+					</div>
+				<?php endforeach; ?>
+
 				<div class="wpss-form-row">
 					<label for="intro_video_url"><?php esc_html_e( 'Intro Video', 'wp-sell-services' ); ?></label>
 					<input type="url" id="intro_video_url" name="intro_video_url" value="<?php echo esc_url( $vendor_profile->intro_video_url ?? '' ); ?>" class="wpss-input" placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/...">

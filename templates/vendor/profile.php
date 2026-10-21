@@ -522,7 +522,12 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 					'behance'   => 'Behance',
 					'website'   => __( 'Website', 'wp-sell-services' ),
 				);
-				$social_links = array_filter( is_array( $social_links ) ? $social_links : array() );
+				$social_links = is_array( $social_links ) ? $social_links : array();
+				// The Website field on the dashboard form is a profile column, not a social link.
+				if ( ! empty( $profile->website ) && empty( $social_links['website'] ) ) {
+					$social_links['website'] = $profile->website;
+				}
+				$social_links = array_filter( $social_links );
 				?>
 				<?php if ( ! empty( $social_links ) ) : ?>
 					<div class="wpss-sidebar-card">

@@ -80,10 +80,6 @@ class RateLimiter {
 			'requests' => 50,
 			'window'   => 3600,
 		), // 50 uploads per hour.
-		'helpful_vote'         => array(
-			'requests' => 20,
-			'window'   => 60,
-		), // 20 votes per minute.
 		'live_search'          => array(
 			'requests' => 30,
 			'window'   => 60,

@@ -228,10 +228,6 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-rest-matrix.php"
    },
    {
-    "id": "review-helpful-toggle",
-    "run": "${WP_CLI:-wp} eval-file tests/test-review-helpful-toggle.php"
-   },
-   {
     "id": "review-status-rest",
     "run": "${WP_CLI:-wp} eval-file tests/test-review-status-rest.php"
    },
