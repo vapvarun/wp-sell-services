@@ -11,6 +11,7 @@
 require_once __DIR__ . '/exit-on-fail.php';
 require_once __DIR__ . '/fixtures.php';
 
+global $wpdb;
 $fails = 0;
 $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . "\n";
