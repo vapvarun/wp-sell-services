@@ -25,102 +25,251 @@
     "was not run, the entry must say exactly how the fix was verified instead, so a",
     "reader can weigh that evidence rather than assume a walk covered it."
   ],
-  "version": "1.8.0",
+  "version": "1.9.1",
   "accepted": [
     {
-      "id": "A3-preflight-debug-log",
-      "card": "10380882200",
-      "severity": "low",
-      "scheduled": "1.8.1",
-      "reason": "Environment, not code. wp wpss preflight counts every historical fatal in wss.local's debug.log (oldest 03-Sep), and the entries come from contract-test runs and ad-hoc eval. No fatal came from the browser flows of this walk."
+      "id": "J02:rest-cancel-only-opener-only-while-open",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
     },
     {
-      "id": "TEST-addon-pricing-contract-fatal",
-      "card": "10380882200",
-      "severity": "low",
-      "scheduled": "1.8.1",
-      "reason": "Test hygiene. The test assumes service moderation is off; on this site it is on, so its publish is forced to pending and the price lookup returns WP_Error. The add-on pricing code path is untouched in 1.8.0, and the other 94 Free contract scripts pass."
+      "id": "J03:A2-six-pages-slugs",
+      "card": "10427222944",
+      "reason": "Needs a fresh activation on a clean site; covered by the pristine install of the zips."
     },
     {
-      "id": "REST-float-noise",
-      "card": "10380882200",
-      "severity": "low",
-      "scheduled": "1.8.1",
-      "reason": "Pre-existing and environment-driven. EarningsController already rounds to 2 places, unchanged since v1.7.2. The trailing digits appear only because wss.local's php.ini sets serialize_precision=17 instead of PHP's default -1, verified with wp_json_encode(round(113.4,2)). The _minor integer beside the field is exact."
+      "id": "J04:s1-breadcrumb-home-vendors",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
     },
     {
-      "id": "TESTS-cleanup-sql-stale-columns",
-      "card": "10380882200",
-      "severity": "low",
-      "scheduled": "1.8.1",
-      "reason": "Test hygiene. Fixture teardown SQL names columns that no longer exist, so test rows are left behind on the dev site. It does not ship to customers and is not a plugin runtime path."
+      "id": "J04:p2-s8-empty-states",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
     },
     {
-      "id": "REQ-disallowed-file-silent-drop",
-      "card": "10380882200",
-      "severity": "low",
-      "scheduled": "1.8.1",
-      "reason": "Pre-existing since v1.7.2: RequirementsService::process_uploads() skips a file that wpss_check_upload() refuses, without telling the buyer. The file input's accept list stops this in normal use; the walk reached it only by forcing a .txt in with setInputFiles. The allowed files on the same submission save correctly."
+      "id": "J05:p2-s2-suspended-seller-nav",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J05:p2-s3-suspended-seller-starts-nothing",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J08:p1-s2-token-cannot-mint",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J08:p2-s6-requirements-skip-once",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J11:registry-no-generic-bell",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J11:s5-account-page-notifications-tab",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J14:s1-sub-ratings-optional",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J14:s5-no-empty-heading",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J14:s6-signed-out-asked-to-log-in",
+      "card": "10427222944",
+      "reason": "Intentional behaviour: The review Helpful vote was removed in 1.9.1: readme.txt:279 '* Improve - Removed the review Helpful vote: reviews and the vendor rating already say how a vendor did.' (commit 094611e1; readme.txt:306"
+    },
+    {
+      "id": "J15:s1-profile-timezone-and-links-fields",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J15:s1-vendor-without-profile-row",
+      "card": "10427222944",
+      "reason": "Intentional behaviour: Scratch wpss_vendor user 'qa-smoke-noprofile' with no wpss_vendor_profiles row (deleted afterwards): /vendors/?vendor=qa-smoke-noprofile -> 200 rendering the 'Vendors' directory; /vendors/qa-smoke-nop"
+    },
+    {
+      "id": "J15:s2-portfolio-counter-after-delete",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J15:s6-reorder-other-seller-response",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J15:s6-seller-levels-rest",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J16:s1-repeat-decline-message",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J16:s1-phase-tax",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J16:s2-extension-tax",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+    },
+    {
+      "id": "J16:s4-tip-tax",
+      "card": "10427222944",
+      "reason": "Known at release, fix in 1.9.2; grouped on the card."
     }
   ],
-  "debug_log_accepted": [
+  "resolved": [
     {
-      "match": "Unknown column",
-      "card": "10380882200",
-      "reason": "Log output of TESTS-cleanup-sql-stale-columns: the contract suite's teardown SQL, not plugin runtime."
+      "id": "J02:rest-escalate-admin-mail-recipient",
+      "fixed_in": "0d0012f7",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. wpss_dispute_admin_email option is '' (empty). Escalated dispute 485 via REST as buyer; captured mail via pre_wp_mail: '[Action Required] Dispute #485 has been escalated' to varun@wbcomdesigns.com (th"
     },
     {
-      "match": "Unsupported value type (object)",
-      "card": "10380882200",
-      "reason": "Nine wpdb::prepare notices that recur when the full contract suite runs (seen in both the combo and free walks). They did not appear when each script was run alone, and no browser flow emitted one in either walk. The caller is not yet identified; tracked on the card."
+      "id": "J06:s8-tax-cart-of-two-reads-rate",
+      "fixed_in": "094611e1",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As buyer Ben added two services (55 each) via POST /cart/add and opened /cart/ in the browser: summary reads '2 items $110.00 / VAT (20%) $22.00 / Total $132.00 / You will be charged $132.00 USD'. The"
     },
     {
-      "match": "Cannot use object of type WP_Error as array",
-      "card": "10380882200",
-      "reason": "Log output of TEST-addon-pricing-contract-fatal, raised inside the test script (eval line 64), not plugin code."
+      "id": "J07:woo-order-line-name",
+      "fixed_in": "6b48315",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Woo rail, Ben: new COD order 15145 /my-account/view-order/15145/ shows line 'I will write conversion-focused website copy x 1 $45.00' (service name) not 'Service Order'; item meta keeps _wpss_service_"
     },
     {
-      "match": "Storage provider \"does-not-exist\"",
-      "card": "10380882200",
-      "reason": "Environment: an earlier test left the wpss_active_storage_provider option set to a provider that does not exist. The plugin correctly logs the problem and falls back to local disk, and every upload in the walk succeeded."
+      "id": "J10:s4-390-layout",
+      "fixed_in": "094611e1 (44px notification and ledger buttons on phones); c21a7c05 for the admin filters",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As Maya at 390x844 on /dashboard/earnings/: scrollWidth 390 (no horizontal scroll), 'Export CSV' is now 268x44 (was 38px high), 'Request Withdrawal' 43.6px. (Withdrawal row 'Cancel' buttons measure 34"
     },
     {
-      "match": "No fatal, warning or deprecated from plugin code",
-      "card": "10380882200",
-      "reason": "Not a defect: this is the walker's note that the browser-flow window was clean. The money lines it mentions are deliberate refusal logging from contract-suite fixtures."
+      "id": "J11:s2-390-row-touch-targets",
+      "fixed_in": "094611e1",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As Maya at 390 on /dashboard/notifications/: per-row 'Mark as read' buttons are 44x44 (was 24x24), 'Mark all as read' is 135x44 (was 38px tall), Filter button 68x44, both selects 44px tall; scrollWidt"
     },
     {
-      "match": "woo-order-test",
-      "card": "10380882200",
-      "reason": "Third-party dev plugin (woo-order-test) PHP 8.2 dynamic-property deprecations, emitted on every boot. Not WPSS code."
+      "id": "J12:s2-negative-number-saves-as-zero",
+      "fixed_in": "f8fab03f",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As admin in the browser, POSTed every Settings tab form to options.php with every number field set to -7 (min attributes bypassed). After reload: tax_rate 0, commission_rate 0, tip_commission_rate 0, "
     },
     {
-      "match": "test-addon-pricing-contract",
-      "card": "10380882200",
-      "reason": "Log output of TEST-addon-pricing-contract-fatal, inside the test's own eval, not plugin runtime."
+      "id": "J12:page-template-on-theme-without-fullwidth",
+      "fixed_in": "none identified",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Activated Twenty Twenty-Five (restored Reign afterwards). /services/ archive now ends in the theme footer (logo, Blog/Events/About links, 'Twenty Twenty-Five / Designed with WordPress') at 1440 and 39"
     },
     {
-      "match": "Manual refund required",
-      "card": "10380882200",
-      "reason": "Deliberate refund-guard refusals driven by contract-suite fixtures (offline rail, already-settled charge, partial refund). The system is correctly refusing and announcing a skipped money step; none came from the browser flows."
+      "id": "J13:s2-review-moderation",
+      "fixed_in": "094611e1",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. moderate_reviews on; buyer Amelia POST /orders/3632/review -> 201 status pending; no mail and no notification for the vendor at submit; after ReviewService::moderate(approved) as admin the vendor got "
+    },
+    {
+      "id": "J13:s3-suspended-vendor-cannot-start-new-work",
+      "fixed_in": "f8fab03f",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Same as journey 05 p2-s3 contact path: suspended Maya AJAX wpss_contact_vendor refused with 'Your vendor account is suspended.', no conversation or notification created."
+    },
+    {
+      "id": "J13:s6-nothing-actionable-twice-moderation",
+      "fixed_in": "0d0012f7",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As admin POST /moderation/11461/reject twice then /approve twice (reason 'QA-SMOKE reject'): both replays still return 200 but only the first call sends a mail ('requires changes' once, 'has been appr"
+    },
+    {
+      "id": "J13:s6-resolve-tells-reporter",
+      "fixed_in": "094611e1",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Reporter Ben filed reports on services 11416 and 11421 (POST /reports 201). Admin POST /reports/{id}/resolve with dismissed -> 200 and upheld -> 200 each created one report_resolved notification 'Your"
+    },
+    {
+      "id": "J14:s4-attachment-type-limit-notice",
+      "fixed_in": "094611e1",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As buyer Ben in the browser, opened Contact Vendor on /service/...-spec-2/, attached audit-tool.exe + ok.pdf via the file input, sent: modal now shows 'Your message has been sent successfully!' plus '"
+    },
+    {
+      "id": "J14:s4-suspended-seller-cannot-start-presale-can-answer-order",
+      "fixed_in": "f8fab03f",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Suspended Maya: pre-sale thread reply POST /conversations/190/messages -> 403 'Your vendor account is suspended.' (message count unchanged 24); order thread reply POST /conversations/364/messages -> 2"
+    },
+    {
+      "id": "J15:s1-profile-website-shows-public",
+      "fixed_in": "094611e1",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As Maya saved Website https://qa-smoke-mayachen.example.test on Dashboard > Profile ('Profile updated successfully.'); the public /vendors/?vendor=wpss_vendor_maya now shows a visible 'Website' link ("
+    },
+    {
+      "id": "J15:s3-period-selector-matches-ledger",
+      "fixed_in": "6b48315 (Pro) / 094611e1",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As Maya, Earnings & Payouts with ledger_period=this_month lists 3 rows (Oct 21 tip, Oct 20 x2) and the Export CSV for the same period has 3 data rows with Total Credits 328.50 (no Apr/May rows). Scree"
+    },
+    {
+      "id": "J16:s1-repeat-submit-idempotent",
+      "fixed_in": "f8fab03f",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Built a milestone-contract request (QA-SMOKE request 15141, proposal 282, parent order 5065, phases 5066-5068), paid phase 1 (Woo pay order completed), then as vendor Sofia POST /milestones/5066/submi"
+    },
+    {
+      "id": "J16:s1-revision-notifies-seller",
+      "fixed_in": "094611e1",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As buyer Ella POST /milestones/5066/request-revision {reason} -> 200 'Sent back to the vendor with your notes.'; vendor Sofia received a mail '[wp-sell-services] Revision requested: QA-SMOKE phase one"
+    },
+    {
+      "id": "J16:s2-billing-address-persist",
+      "fixed_in": "697dc76b (older; no 1.9.1 change found)",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As Amelia on /service-checkout/pay/5072/ (extension quote, standalone) entered billing address 2 QA-SMOKE Road / Testtown / 54321 / GB with the Offline gateway and placed the order: wpss_get_billing_a"
+    },
+    {
+      "id": "J16:s3-late-returns-in-progress",
+      "fixed_in": "f8fab03f",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Set order 3632 to late with a past deadline, vendor quoted extension (5 days), paid it (Woo pay order completed): parent status returned to in_progress and delivery_deadline moved to 2026-10-25. Order"
+    },
+    {
+      "id": "J16:s4-tip-notifications-mail",
+      "fixed_in": "0d0012f7",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Buyer Ella tipped completed order 3888 (12.00) via POST /orders/3888/tip, paid the Woo pay order: seller Maya received exactly one tip mail ('[wp-sell-services] You received a tip from Ella Martinez')"
+    },
+    {
+      "id": "HARD:J05: vendor-profile suspend does not blo",
+      "fixed_in": "f8fab03f",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. With profile status=suspended, AJAX wpss_contact_vendor -> {success:false,'Your vendor account is suspended.'}; conversations/notifications counts unchanged (92/3365); REST pre-sale reply refused 403."
+    },
+    {
+      "id": "HARD:J05: is_suspended_vendor() always false ",
+      "fixed_in": "f8fab03f",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Suspended Maya dashboard now shows Selling > Sales Orders only (UnifiedDashboard.php:529 branch is reached). Caveat: the Sales Orders page itself then says 'Vendor Access Required' (see J05:p2-s2)."
+    },
+    {
+      "id": "HARD:J12: wpss_min_order_amount / wpss_max_or",
+      "fixed_in": "f8fab03f",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. POSTed wpss_general form with wpss_min_order_amount=-7 and wpss_max_order_amount=-7: both saved as '0' (no negative). Previously floatval saved negatives."
+    },
+    {
+      "id": "HARD:J16: MilestoneService::submit on pending",
+      "fixed_in": "f8fab03f",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Three submits of phase 5066: wpss_milestone_submitted effects (buyer mail + notification) fired once; repeats 200 with 0 mails/0 notifications."
+    },
+    {
+      "id": "HARD:J16: paid extension updates deadline onl",
+      "fixed_in": "f8fab03f",
+      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Late order 3632 with past deadline: after the paid extension it returned to in_progress with deadline moved to 2026-10-25."
     }
   ],
-  "resolved": [],
-  "coverage_verified_elsewhere": [
-    {
-      "mode": "free",
-      "section": "B_upgrade",
-      "verified_by": "A scripted upgrade cycle in the docker-smoke stack, not a browser walk. WordPress 6.9 + PHP 8.3, clean DB: install the PUBLISHED v1.7.1 free and pro ZIPs and activate; seed a vendor, a buyer, a published service at 120 and that buyer's one-item cart; deactivate both and wind wpss_db_version back to 1.6.0 so install() has a real migration to run; then overwrite both plugins with the built 1.7.2 ZIPs (wp plugin install --force, the path the updater takes), reactivate, and load the site. Result: free 1.7.2 / pro 1.7.2, both active, frontend 200, wpss_db_version 1.6.0 -> 1.7.3, 28 tables (no loss), the service count unchanged, the buyer's cart still 1 item at 120 and the service still published, and zero Fatal / Uncaught / textdomain lines in debug.log across the whole cycle.",
-      "evidence": "scratchpad/docker-upgrade-test.sh - rerunnable; prints each assertion and exits non-zero on any failure.",
-      "note": "The free walk could not run this section: its own prompt forbade deactivating or activating plugins, which an upgrade cycle requires, so all three of its checks recorded as skipped. That is a limit of how the walk was commissioned, not of the product - the right answer is to run the cycle somewhere it is allowed and say exactly what was run, which is what this entry is. It is weaker than a walk in one specific way: it asserts on data and logs, not on what a buyer or owner SEES after an upgrade."
-    }
-  ],
+  "debug_log_accepted": [],
+  "coverage_verified_elsewhere": [],
   "staleness": {
     "gate": "verify:smoke-gate",
-    "state": "The recorded COMBO walk (9b0909ec) is stale: ten rendered files changed after it ran. Both release builds were taken with --force.",
-    "why_not_a_re-walk": "Six of those ten files changed BECAUSE of what a walk found after 9b0909ec, and each change was verified against the behaviour it touches rather than by re-running a 40-minute walk that would itself be stale by the next fix. The evidence per fix is in `resolved` above, and each entry says in writing how it was verified and that it was not a walk.",
-    "what_was_walked_after_the_recorded_run": "A free-mode walk (f5e767cc, docs/qa/.last-smoke-pass-free.json) and a scoped combo-mode browser walk covering exactly the three surfaces the first six file changes render - the cart on both rails at 1280 and 390, Settings > Advanced, and a vendor editing their own service through the dashboard. That scoped walk is what found the checkout defect a direct probe of the cart reader had missed, which is the strongest argument in this file for why a browser walk is not interchangeable with a probe.",
-    "verified_on_the_built_artifacts": "Pristine install of both 1.7.2 ZIPs on clean WordPress + PHP 8.3: both active, frontend 200, 28 tables, zero fatals, production autoloader. Upgrade 1.7.1 -> 1.7.2 with wpss_db_version wound back to 1.6.0 so the migration ran: schema 1.6.0 -> 1.7.3, no table loss, an existing buyer's cart and service unchanged, zero fatals. Both re-run against the final ZIPs, not an earlier build.",
-    "not_covered": "No full combo walk describes the shipped tree. The surfaces changed after the scoped walk are src/Core/Plugin.php (an upgrade migration, covered by the upgrade cycle above) and the four cart/checkout files (covered by the probes in `resolved`). What none of this covers is the rest of the product as a whole at the shipped commit - a full combo walk is the first thing 1.7.3 should do, before any change."
+    "state": "The recorded combo walk (c21a7c05) predates about 148 rendered-file changes. The 47 checks that failed in it were re-run on 2026-10-21 at 1.9.1 HEAD: 25 fixed, 2 by design, 19 still failing, 1 untested.",
+    "not_covered": "No full combo walk describes the shipped tree. The 117 checks that passed in the recorded walk were not re-run, nor dark mode, RTL, the 1.9.0 to 1.9.1 upgrade path, or money rails."
   }
 }
