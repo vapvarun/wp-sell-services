@@ -91,9 +91,9 @@ class ReviewService {
 				'customer_id'          => $reviewer_id,
 				'vendor_id'            => $order->vendor_id,
 				'rating'               => $rating,
-				'communication_rating' => ! empty( $data['rating_communication'] ) ? (int) $data['rating_communication'] : null,
-				'quality_rating'       => ! empty( $data['rating_quality'] ) ? (int) $data['rating_quality'] : null,
-				'delivery_rating'      => ! empty( $data['rating_value'] ) ? (int) $data['rating_value'] : null,
+				'communication_rating' => self::sub_rating( $data['rating_communication'] ?? null ),
+				'quality_rating'       => self::sub_rating( $data['rating_quality'] ?? null ),
+				'delivery_rating'      => self::sub_rating( $data['rating_value'] ?? null ),
 				'review'               => wp_kses_post( $data['content'] ?? '' ),
 				'status'               => $this->requires_moderation() ? Review::STATUS_PENDING : Review::STATUS_APPROVED,
 				'created_at'           => current_time( 'mysql', true ),
@@ -497,7 +497,20 @@ class ReviewService {
 		// Stored in the wpss_vendor settings array beside the service
 		// moderation toggle - the old standalone wpss_moderate_reviews
 		// option never had a writer (Basecamp #9985174862).
-		return (bool) wpss_get_option( 'vendor', 'moderate_reviews' );
+		$moderate = (bool) wpss_get_option( 'vendor', 'moderate_reviews' );
+
+		// One rule for the website form and REST: the filter used to be read by REST only.
+		return ! apply_filters( 'wpss_auto_approve_reviews', ! $moderate );
+	}
+
+	/**
+	 * Optional Communication / Quality / Value rating: 1-5, or null when left blank.
+	 *
+	 * @param mixed $value Raw submitted value.
+	 */
+	public static function sub_rating( $value ): ?int {
+		$value = (int) $value;
+		return $value >= 1 && $value <= 5 ? $value : null;
 	}
 
 	/**

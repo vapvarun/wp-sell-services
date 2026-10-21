@@ -1262,6 +1262,52 @@ article.wpss-service-card:hover {
 	line-height: 1.6;
 }
 
+.wpss-review-subratings-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 1rem;
+	margin: 0 0 0.75rem;
+	padding: 0;
+	list-style: none;
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted);
+}
+
+.wpss-review-subratings-list strong {
+	color: var(--wpss-text);
+}
+
+.wpss-review-subratings {
+	border: 0;
+	padding: 0;
+	margin-inline: 0;
+}
+
+.wpss-review-subrating {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 0.5rem;
+}
+
+.wpss-review-subrating .wpss-select {
+	width: auto;
+	min-width: 9rem;
+}
+
+@media (max-width: 480px) {
+	.wpss-review-subrating {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 0.25rem;
+	}
+
+	.wpss-review-subrating .wpss-select {
+		width: 100%;
+	}
+}
+
 .wpss-review-reply {
 	margin-top: 15px;
 	padding: 15px;

@@ -84,6 +84,24 @@ class ReviewsController extends RestController {
 							'type'        => 'string',
 							'required'    => true,
 						),
+						'rating_communication' => array(
+							'description' => __( 'Optional Communication rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
+						),
+						'rating_quality' => array(
+							'description' => __( 'Optional Quality rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
+						),
+						'rating_value' => array(
+							'description' => __( 'Optional Value rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
+						),
 					),
 				),
 				'schema' => array( $this, 'get_public_item_schema' ),
@@ -148,6 +166,24 @@ class ReviewsController extends RestController {
 							'description' => __( 'Review text.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
+						),
+						'rating_communication' => array(
+							'description' => __( 'Optional Communication rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
+						),
+						'rating_quality' => array(
+							'description' => __( 'Optional Quality rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
+						),
+						'rating_value' => array(
+							'description' => __( 'Optional Value rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
 						),
 					),
 				),
@@ -401,33 +437,21 @@ class ReviewsController extends RestController {
 			);
 		}
 
-		// Auto-approve unless the site owner turned on review moderation
-		// (wpss_vendor['moderate_reviews']). Previously hard-defaulted to true,
-		// so REST-created reviews went live even with moderation enabled.
-		$moderate_reviews = (bool) wpss_get_option( 'vendor', 'moderate_reviews' );
-		$auto_approve     = apply_filters( 'wpss_auto_approve_reviews', ! $moderate_reviews );
-		$status           = $auto_approve ? 'approved' : 'pending';
-
-		// Create review.
-		$result = $wpdb->insert(
-			$reviews_table,
+		// The service is the one writer: moderation, rating caches, the
+		// one-review-per-order guard and the sub-ratings live there.
+		$created = $review_service->create(
+			$order_id,
+			$user_id,
 			array(
-				'order_id'    => $order_id,
-				'service_id'  => $order->service_id,
-				'reviewer_id' => $user_id,
-				'reviewee_id' => $order->vendor_id,
-				'vendor_id'   => $order->vendor_id,
-				'customer_id' => $user_id,
-				'review_type' => 'customer_to_vendor',
-				'rating'      => $rating,
-				'review'      => $review,
-				'status'      => $status,
-				'created_at'  => current_time( 'mysql', true ),
-			),
-			array( '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%d', '%s', '%s', '%s' )
+				'rating'               => $rating,
+				'content'              => $review,
+				'rating_communication' => (int) $request->get_param( 'rating_communication' ),
+				'rating_quality'       => (int) $request->get_param( 'rating_quality' ),
+				'rating_value'         => (int) $request->get_param( 'rating_value' ),
+			)
 		);
 
-		if ( ! $result ) {
+		if ( ! $created ) {
 			return new WP_Error(
 				'rest_review_failed',
 				__( 'Failed to create review.', 'wp-sell-services' ),
@@ -435,13 +459,7 @@ class ReviewsController extends RestController {
 			);
 		}
 
-		$review_id = (int) $wpdb->insert_id;
-
-		// Update service rating cache.
-		self::update_rating_cache( (int) $order->service_id, (int) $order->vendor_id );
-
-		// Trigger actions.
-		do_action( 'wpss_review_created', $review_id, $order_id );
+		$review_id = (int) $created->id;
 
 		$new_review = $this->get_review( $review_id );
 
@@ -930,6 +948,9 @@ class ReviewsController extends RestController {
 			'customer'           => wpss_rest_user( (int) $review->customer_id ),
 			'rating'             => (int) $review->rating,
 			'review'             => $review->review,
+			'rating_communication' => isset( $review->communication_rating ) ? (int) $review->communication_rating : null,
+			'rating_quality'       => isset( $review->quality_rating ) ? (int) $review->quality_rating : null,
+			'rating_value'         => isset( $review->delivery_rating ) ? (int) $review->delivery_rating : null,
 			'status'             => $review->status,
 			'vendor_reply'       => $review->vendor_reply ?? null,
 			// ISO-8601 through the shared formatter (Basecamp 10154919636).

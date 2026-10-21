@@ -976,8 +976,11 @@ class AjaxHandlers {
 			$order_id,
 			$user_id,
 			array(
-				'rating'  => $rating,
-				'content' => $comment,
+				'rating'               => $rating,
+				'content'              => $comment,
+				'rating_communication' => absint( $_POST['rating_communication'] ?? 0 ),
+				'rating_quality'       => absint( $_POST['rating_quality'] ?? 0 ),
+				'rating_value'         => absint( $_POST['rating_value'] ?? 0 ),
 			)
 		);
 

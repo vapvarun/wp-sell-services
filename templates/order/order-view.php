@@ -1953,6 +1953,28 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					</div>
 				</div>
 
+				<fieldset class="wpss-form-group wpss-review-subratings">
+					<legend class="wpss-label"><?php esc_html_e( 'Rate the details (optional)', 'wp-sell-services' ); ?></legend>
+					<?php
+					$wpss_sub_fields = array(
+						'rating_communication' => __( 'Communication', 'wp-sell-services' ),
+						'rating_quality'       => __( 'Quality', 'wp-sell-services' ),
+						'rating_value'         => __( 'Value', 'wp-sell-services' ),
+					);
+					foreach ( $wpss_sub_fields as $wpss_sub_name => $wpss_sub_label ) :
+						?>
+						<div class="wpss-review-subrating">
+							<label for="review-<?php echo esc_attr( $wpss_sub_name ); ?>"><?php echo esc_html( $wpss_sub_label ); ?></label>
+							<select name="<?php echo esc_attr( $wpss_sub_name ); ?>" id="review-<?php echo esc_attr( $wpss_sub_name ); ?>" class="wpss-select">
+								<option value=""><?php esc_html_e( 'Not rated', 'wp-sell-services' ); ?></option>
+								<?php for ( $i = 5; $i >= 1; $i-- ) : ?>
+									<option value="<?php echo esc_attr( $i ); ?>"><?php echo esc_html( sprintf( /* translators: %d: star count */ _n( '%d star', '%d stars', $i, 'wp-sell-services' ), $i ) ); ?></option>
+								<?php endfor; ?>
+							</select>
+						</div>
+					<?php endforeach; ?>
+				</fieldset>
+
 				<div class="wpss-form-group">
 					<label for="review-comment" class="wpss-label"><?php esc_html_e( 'Your Review', 'wp-sell-services' ); ?> <span class="wpss-required">*</span></label>
 					<textarea name="comment" id="review-comment" class="wpss-textarea" rows="4" required

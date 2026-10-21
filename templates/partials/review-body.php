@@ -61,6 +61,23 @@ if ( $wpss_review_service && 'publish' === $wpss_review_service->post_status ) :
 	<p class="wpss-review-service"><a href="<?php echo esc_url( get_permalink( $wpss_review_service ) ); ?>"><?php echo esc_html( $wpss_review_service->post_title ); ?></a></p>
 <?php endif; ?>
 
+<?php
+$wpss_review_subs = array_filter(
+	array(
+		__( 'Communication', 'wp-sell-services' ) => $wpss_review->rating_communication,
+		__( 'Quality', 'wp-sell-services' )       => $wpss_review->rating_quality,
+		__( 'Value', 'wp-sell-services' )         => $wpss_review->rating_value,
+	)
+);
+if ( $wpss_review_subs ) :
+	?>
+	<ul class="wpss-review-subratings-list">
+		<?php foreach ( $wpss_review_subs as $wpss_sub_label => $wpss_sub_value ) : ?>
+			<li><?php echo esc_html( $wpss_sub_label ); ?> <strong><?php echo esc_html( (string) $wpss_sub_value ); ?>/5</strong></li>
+		<?php endforeach; ?>
+	</ul>
+<?php endif; ?>
+
 <?php if ( '' !== $wpss_review->content ) : ?>
 	<div class="wpss-review-content">
 		<?php echo wp_kses_post( wpautop( $wpss_review->content ) ); ?>
