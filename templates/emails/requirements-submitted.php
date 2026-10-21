@@ -27,7 +27,7 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 $base_color    = $base_color ?? '#7f54b3';
 $vendor        = isset( $recipient ) ? $recipient : get_user_by( 'id', $order->vendor_id );
 $customer      = get_user_by( 'id', $order->customer_id );
-$customer_name = $customer ? $customer->display_name : __( 'The customer', 'wp-sell-services' );
+$customer_name = $customer ? $customer->display_name : __( 'The buyer', 'wp-sell-services' );
 
 /**
  * Fires before the email content for the requirements submitted email.
@@ -71,7 +71,7 @@ do_action( 'wpss_email_content_before', 'requirements_submitted', $order, $recip
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( get_the_title( $order->service_id ) ); ?></td>
 		</tr>
 		<tr>
-			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Customer', 'wp-sell-services' ); ?></th>
+			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Buyer', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px;"><?php echo esc_html( $customer_name ); ?></td>
 		</tr>
 	</tbody>

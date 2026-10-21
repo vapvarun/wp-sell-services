@@ -27,7 +27,7 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 $base_color    = $base_color ?? '#7f54b3';
 $vendor        = isset( $recipient ) ? $recipient : get_user_by( 'id', $order->vendor_id );
 $customer      = get_user_by( 'id', $order->customer_id );
-$customer_name = $customer ? $customer->display_name : __( 'The customer', 'wp-sell-services' );
+$customer_name = $customer ? $customer->display_name : __( 'The buyer', 'wp-sell-services' );
 
 /**
  * Fires before the email content for the revision requested email.
@@ -85,7 +85,7 @@ do_action( 'wpss_email_content_before', 'revision_requested', $order, $recipient
 </table>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php esc_html_e( 'Please review the feedback and submit a revised delivery to meet the customer\'s expectations.', 'wp-sell-services' ); ?>
+	<?php esc_html_e( 'Please review the feedback and submit a revised delivery to meet the buyer\'s expectations.', 'wp-sell-services' ); ?>
 </p>
 
 <p style="text-align: center; margin: 30px 0;">

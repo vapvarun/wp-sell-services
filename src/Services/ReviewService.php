@@ -658,7 +658,7 @@ class ReviewService {
 		if ( $order->customer_id !== $reviewer_id ) {
 			return array(
 				'can_review' => false,
-				'reason'     => __( 'Only the customer can review this order.', 'wp-sell-services' ),
+				'reason'     => __( 'Only the buyer can review this order.', 'wp-sell-services' ),
 			);
 		}
 

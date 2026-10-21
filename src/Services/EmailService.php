@@ -2418,7 +2418,7 @@ class EmailService {
 	 */
 	private function get_customer_name( int $customer_id ): string {
 		$customer = get_user_by( 'id', $customer_id );
-		return $customer ? $customer->display_name : __( 'Customer', 'wp-sell-services' );
+		return $customer ? $customer->display_name : __( 'Buyer', 'wp-sell-services' );
 	}
 
 	/**

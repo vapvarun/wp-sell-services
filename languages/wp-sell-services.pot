@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-21T08:10:09+00:00\n"
+"POT-Creation-Date: 2026-10-21T08:32:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -1512,8 +1512,19 @@ msgid "Parties Involved"
 msgstr ""
 
 #: src/Admin/Admin.php:3422
+#: src/Admin/Pages/ManualOrderPage.php:216
+#: src/Admin/Pages/VendorsPage.php:1859
 #: src/Admin/RequestListScreen.php:68
+#: src/Admin/Tables/OrdersListTable.php:53
 #: src/Privacy/PersonalData.php:513
+#: src/Services/EmailService.php:2421
+#: src/Services/NotificationService.php:382
+#: src/Services/NotificationService.php:504
+#: templates/emails/dispute-opened.php:98
+#: templates/emails/new-order.php:92
+#: templates/emails/order-completed.php:87
+#: templates/emails/order-in-progress.php:94
+#: templates/emails/requirements-submitted.php:74
 #: templates/order/conversation.php:159
 #: templates/order/order-view.php:880
 msgid "Buyer"
@@ -2665,12 +2676,8 @@ msgstr ""
 msgid "Select a service to see available addons."
 msgstr ""
 
-#: src/Admin/Pages/ManualOrderPage.php:216
-msgid "Customer (Buyer)"
-msgstr ""
-
 #: src/Admin/Pages/ManualOrderPage.php:225
-msgid "-- Select Customer --"
+msgid "-- Select buyer --"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:226
@@ -2907,7 +2914,7 @@ msgid "Create Another Order"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:533
-msgid "Service and Customer are required."
+msgid "Service and Buyer are required."
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:538
@@ -2935,7 +2942,7 @@ msgid "This service's author is not an active vendor. Choose an active vendor as
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:559
-msgid "Customer cannot be the same as the vendor."
+msgid "Buyer cannot be the same as the vendor."
 msgstr ""
 
 #. translators: %s: admin notes
@@ -3196,7 +3203,7 @@ msgid "Review Moderation"
 msgstr ""
 
 #: src/Admin/Pages/ReviewModerationPage.php:110
-msgid "When review moderation is enabled, customer reviews are held as pending until an admin approves them. Only approved reviews are shown on service and vendor pages and counted toward ratings. Use the status tabs to browse pending, approved, and rejected reviews."
+msgid "When review moderation is enabled, buyer reviews are held as pending until an admin approves them. Only approved reviews are shown on service and vendor pages and counted toward ratings. Use the status tabs to browse pending, approved, and rejected reviews."
 msgstr ""
 
 #: src/Admin/Pages/ReviewModerationPage.php:118
@@ -3288,7 +3295,7 @@ msgid "No reviews in this queue"
 msgstr ""
 
 #: src/Admin/Pages/ReviewModerationPage.php:355
-msgid "Customer reviews appear here after buyers rate completed orders. With moderation enabled, new reviews wait for your approval before going live."
+msgid "Buyer reviews appear here after buyers rate completed orders. With moderation enabled, new reviews wait for your approval before going live."
 msgstr ""
 
 #: src/Admin/Pages/ReviewModerationPage.php:362
@@ -4668,19 +4675,6 @@ msgstr ""
 msgid "No orders found."
 msgstr ""
 
-#: src/Admin/Pages/VendorsPage.php:1859
-#: src/Admin/Tables/OrdersListTable.php:53
-#: src/Services/EmailService.php:2421
-#: src/Services/NotificationService.php:382
-#: src/Services/NotificationService.php:504
-#: templates/emails/dispute-opened.php:98
-#: templates/emails/new-order.php:92
-#: templates/emails/order-completed.php:87
-#: templates/emails/order-in-progress.php:94
-#: templates/emails/requirements-submitted.php:74
-msgid "Customer"
-msgstr ""
-
 #: src/Admin/Pages/VendorsPage.php:1874
 msgid "Guest"
 msgstr ""
@@ -4904,7 +4898,7 @@ msgid "Enable vacation mode"
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:2532
-msgid "Vacation Message (shown to customers)"
+msgid "Vacation Message (shown to buyers)"
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:2538
@@ -6938,7 +6932,7 @@ msgid "View parent #%d"
 msgstr ""
 
 #: src/Admin/Tables/OrdersListTable.php:160
-msgid "Email customer"
+msgid "Email buyer"
 msgstr ""
 
 #. translators: %s: due date.
@@ -7008,7 +7002,7 @@ msgid "Show all orders"
 msgstr ""
 
 #: src/Admin/Tables/OrdersListTable.php:784
-msgid "When customers purchase services, their orders appear here with full lifecycle tracking."
+msgid "When buyers purchase services, their orders appear here with full lifecycle tracking."
 msgstr ""
 
 #: src/Admin/Tables/OrdersListTable.php:786
@@ -7872,7 +7866,7 @@ msgid "Delivery could not be submitted."
 msgstr ""
 
 #: src/API/OrdersController.php:1006
-msgid "Only the customer can mark orders as complete."
+msgid "Only the buyer can mark orders as complete."
 msgstr ""
 
 #: src/API/OrdersController.php:1008
@@ -7884,7 +7878,7 @@ msgid "Delivery could not be accepted."
 msgstr ""
 
 #: src/API/OrdersController.php:1038
-msgid "Only the customer can request a revision."
+msgid "Only the buyer can request a revision."
 msgstr ""
 
 #: src/API/OrdersController.php:1040
@@ -8021,7 +8015,7 @@ msgid "Only the vendor can perform this action."
 msgstr ""
 
 #: src/API/OrdersController.php:1937
-msgid "Only the customer can perform this action."
+msgid "Only the buyer can perform this action."
 msgstr ""
 
 #: src/API/OrdersController.php:2330
@@ -8058,7 +8052,7 @@ msgid "Vendor user ID."
 msgstr ""
 
 #: src/API/OrdersController.php:2403
-msgid "Customer user ID."
+msgid "Buyer user ID."
 msgstr ""
 
 #: src/API/OrdersController.php:2420
@@ -17126,6 +17120,7 @@ msgstr ""
 
 #: src/Services/EmailService.php:569
 #: src/Services/NotificationService.php:1031
+#: templates/emails/new-order.php:29
 msgid "A buyer"
 msgstr ""
 
@@ -17223,6 +17218,9 @@ msgstr ""
 #: src/Services/EmailService.php:1063
 #: src/Services/EmailService.php:1119
 #: templates/emails/cancellation-requested.php:32
+#: templates/emails/order-in-progress.php:33
+#: templates/emails/requirements-submitted.php:30
+#: templates/emails/revision-requested.php:30
 msgid "The buyer"
 msgstr ""
 
@@ -18137,7 +18135,7 @@ msgid "Review:"
 msgstr ""
 
 #: src/Services/NotificationService.php:971
-msgid "Thank you for providing excellent service! Reviews help build your reputation and attract more customers."
+msgid "Thank you for providing excellent service! Reviews help build your reputation and attract more buyers."
 msgstr ""
 
 #: src/Services/NotificationService.php:976
@@ -18494,7 +18492,7 @@ msgid "Receive and manage orders"
 msgstr ""
 
 #: src/Services/NotificationService.php:1593
-msgid "Communicate with customers"
+msgid "Communicate with buyers"
 msgstr ""
 
 #: src/Services/NotificationService.php:1594
@@ -19092,7 +19090,7 @@ msgid "Order must be completed before leaving a review."
 msgstr ""
 
 #: src/Services/ReviewService.php:661
-msgid "Only the customer can review this order."
+msgid "Only the buyer can review this order."
 msgstr ""
 
 #. translators: %d: number of days
@@ -20514,6 +20512,7 @@ msgid "the vendor"
 msgstr ""
 
 #: templates/emails/dispute-opened.php:65
+#: templates/emails/order-completed.php:33
 msgid "the buyer"
 msgstr ""
 
@@ -20830,10 +20829,6 @@ msgstr ""
 msgid "Reply to Message"
 msgstr ""
 
-#: templates/emails/new-order.php:29
-msgid "A customer"
-msgstr ""
-
 #: templates/emails/new-order.php:56
 msgid "Your order has been placed successfully! Here are the details."
 msgstr ""
@@ -20847,7 +20842,7 @@ msgid "Please submit your requirements so the vendor can start working on your o
 msgstr ""
 
 #: templates/emails/new-order.php:107
-msgid "The customer will submit their requirements shortly. You'll receive another notification when they do."
+msgid "The buyer will submit their requirements shortly. You'll receive another notification when they do."
 msgstr ""
 
 #: templates/emails/order-cancelled.php:52
@@ -20880,10 +20875,6 @@ msgstr ""
 msgid "If you have any questions or believe this was done in error, please contact our support team."
 msgstr ""
 
-#: templates/emails/order-completed.php:33
-msgid "the customer"
-msgstr ""
-
 #: templates/emails/order-completed.php:58
 msgid "Great news! Your service order has been completed."
 msgstr ""
@@ -20914,12 +20905,6 @@ msgstr ""
 msgid "Thank you for using our marketplace!"
 msgstr ""
 
-#: templates/emails/order-in-progress.php:33
-#: templates/emails/requirements-submitted.php:30
-#: templates/emails/revision-requested.php:30
-msgid "The customer"
-msgstr ""
-
 #. translators: %s: vendor name
 #: templates/emails/order-in-progress.php:61
 #, php-format
@@ -20929,7 +20914,7 @@ msgstr ""
 #. translators: 1: order number, 2: customer name
 #: templates/emails/order-in-progress.php:69
 #, php-format
-msgid "You've started working on Order #%1$s for %2$s. The customer has been notified."
+msgid "You've started working on Order #%1$s for %2$s. The buyer has been notified."
 msgstr ""
 
 #: templates/emails/order-in-progress.php:107
@@ -20937,7 +20922,7 @@ msgid "You can track your order status and communicate with the vendor through t
 msgstr ""
 
 #: templates/emails/order-in-progress.php:109
-msgid "You can manage this order and communicate with the customer through the order page."
+msgid "You can manage this order and communicate with the buyer through the order page."
 msgstr ""
 
 #: templates/emails/requirements-reminder.php:52
@@ -21009,7 +20994,7 @@ msgid "%s has requested a revision for their delivery."
 msgstr ""
 
 #: templates/emails/revision-requested.php:88
-msgid "Please review the feedback and submit a revised delivery to meet the customer's expectations."
+msgid "Please review the feedback and submit a revised delivery to meet the buyer's expectations."
 msgstr ""
 
 #: templates/emails/revision-requested.php:110

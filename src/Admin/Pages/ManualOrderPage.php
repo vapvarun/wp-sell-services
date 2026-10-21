@@ -213,7 +213,7 @@ class ManualOrderPage {
 									<!-- Customer -->
 									<div class="wpss-form-row">
 										<label for="wpss-customer-id">
-											<?php esc_html_e( 'Customer (Buyer)', 'wp-sell-services' ); ?>
+											<?php esc_html_e( 'Buyer', 'wp-sell-services' ); ?>
 											<span class="required">*</span>
 										</label>
 										<?php
@@ -222,7 +222,7 @@ class ManualOrderPage {
 												'type'     => 'user',
 												'name'     => 'customer_id',
 												'id'       => 'wpss-customer-id',
-												'placeholder' => __( '-- Select Customer --', 'wp-sell-services' ),
+												'placeholder' => __( '-- Select buyer --', 'wp-sell-services' ),
 												'search_label' => __( 'Search users by name or email', 'wp-sell-services' ),
 												'required' => true,
 											)
@@ -530,7 +530,7 @@ class ManualOrderPage {
 
 		// --- 2. Validate required ---
 		if ( ! $service_id || ! $customer_id ) {
-			wp_send_json_error( array( 'message' => __( 'Service and Customer are required.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Service and Buyer are required.', 'wp-sell-services' ) ) );
 		}
 
 		$service = get_post( $service_id );
@@ -556,7 +556,7 @@ class ManualOrderPage {
 		}
 
 		if ( $customer_id === $vendor_id ) {
-			wp_send_json_error( array( 'message' => __( 'Customer cannot be the same as the vendor.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Buyer cannot be the same as the vendor.', 'wp-sell-services' ) ) );
 		}
 
 		// --- 4-7. Package, price, add-ons, tax and commission ---

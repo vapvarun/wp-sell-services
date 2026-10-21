@@ -30,7 +30,7 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 $base_color    = $base_color ?? '#7f54b3';
 $is_customer   = $is_customer ?? true;
 $vendor_name   = $vendor_name ?? __( 'The vendor', 'wp-sell-services' );
-$customer_name = $customer_name ?? __( 'The customer', 'wp-sell-services' );
+$customer_name = $customer_name ?? __( 'The buyer', 'wp-sell-services' );
 
 /**
  * Fires before the email content for the order in progress email.
@@ -66,7 +66,7 @@ do_action( 'wpss_email_content_before', 'order_in_progress', $order, $recipient 
 		<?php
 		printf(
 			/* translators: 1: order number, 2: customer name */
-			esc_html__( 'You\'ve started working on Order #%1$s for %2$s. The customer has been notified.', 'wp-sell-services' ),
+			esc_html__( 'You\'ve started working on Order #%1$s for %2$s. The buyer has been notified.', 'wp-sell-services' ),
 			esc_html( $order->order_number ),
 			esc_html( $customer_name )
 		);
@@ -91,7 +91,7 @@ do_action( 'wpss_email_content_before', 'order_in_progress', $order, $recipient 
 		</tr>
 		<?php else : ?>
 		<tr>
-			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Customer', 'wp-sell-services' ); ?></th>
+			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Buyer', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $customer_name ); ?></td>
 		</tr>
 		<?php endif; ?>
@@ -106,7 +106,7 @@ do_action( 'wpss_email_content_before', 'order_in_progress', $order, $recipient 
 	<?php if ( $is_customer ) : ?>
 		<?php esc_html_e( 'You can track your order status and communicate with the vendor through the order page.', 'wp-sell-services' ); ?>
 	<?php else : ?>
-		<?php esc_html_e( 'You can manage this order and communicate with the customer through the order page.', 'wp-sell-services' ); ?>
+		<?php esc_html_e( 'You can manage this order and communicate with the buyer through the order page.', 'wp-sell-services' ); ?>
 	<?php endif; ?>
 </p>
 

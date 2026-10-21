@@ -1856,7 +1856,7 @@ class VendorsPage {
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></th>
-						<th><?php esc_html_e( 'Customer', 'wp-sell-services' ); ?></th>
+						<th><?php esc_html_e( 'Buyer', 'wp-sell-services' ); ?></th>
 						<th><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
 						<th><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></th>
 						<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
@@ -2529,7 +2529,7 @@ class VendorsPage {
 				</div>
 				<div class="wpss-vacation-message">
 					<label for="wpss-vacation-message">
-						<?php esc_html_e( 'Vacation Message (shown to customers)', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Vacation Message (shown to buyers)', 'wp-sell-services' ); ?>
 					</label>
 					<textarea id="wpss-vacation-message" rows="3"><?php echo esc_textarea( $profile->vacation_message ?? '' ); ?></textarea>
 				</div>

@@ -1003,7 +1003,7 @@ class OrdersController extends RestController {
 
 			case 'complete':
 				if ( ! $is_customer && ! $is_admin ) {
-					$error = __( 'Only the customer can mark orders as complete.', 'wp-sell-services' );
+					$error = __( 'Only the buyer can mark orders as complete.', 'wp-sell-services' );
 				} elseif ( ! in_array( $order->status, array( 'delivered', 'pending_approval' ), true ) ) {
 					$error = __( 'Order cannot be completed in current status.', 'wp-sell-services' );
 				} elseif ( ServiceOrder::STATUS_PENDING_APPROVAL === $order->status ) {
@@ -1035,7 +1035,7 @@ class OrdersController extends RestController {
 
 			case 'revision':
 				if ( ! $is_customer && ! $is_admin ) {
-					$error = __( 'Only the customer can request a revision.', 'wp-sell-services' );
+					$error = __( 'Only the buyer can request a revision.', 'wp-sell-services' );
 				} elseif ( ! in_array( $order->status, array( 'delivered', 'pending_approval' ), true ) ) {
 					$error = __( 'Cannot request revision in current status.', 'wp-sell-services' );
 				} elseif ( ! $order->can_request_revision() ) {
@@ -1934,7 +1934,7 @@ class OrdersController extends RestController {
 		if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
 			return new WP_Error(
 				'wpss_not_owner',
-				__( 'Only the customer can perform this action.', 'wp-sell-services' ),
+				__( 'Only the buyer can perform this action.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -2400,7 +2400,7 @@ class OrdersController extends RestController {
 						'readonly'    => true,
 					),
 					'customer_id'  => array(
-						'description' => __( 'Customer user ID.', 'wp-sell-services' ),
+						'description' => __( 'Buyer user ID.', 'wp-sell-services' ),
 						'type'        => 'integer',
 						'context'     => array( 'view', 'edit' ),
 						'readonly'    => true,

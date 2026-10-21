@@ -107,7 +107,7 @@ class ReviewModerationPage {
 			array(
 				'id'      => 'wpss-review-overview',
 				'title'   => __( 'Overview', 'wp-sell-services' ),
-				'content' => '<p>' . esc_html__( 'When review moderation is enabled, customer reviews are held as pending until an admin approves them. Only approved reviews are shown on service and vendor pages and counted toward ratings. Use the status tabs to browse pending, approved, and rejected reviews.', 'wp-sell-services' ) . '</p>',
+				'content' => '<p>' . esc_html__( 'When review moderation is enabled, buyer reviews are held as pending until an admin approves them. Only approved reviews are shown on service and vendor pages and counted toward ratings. Use the status tabs to browse pending, approved, and rejected reviews.', 'wp-sell-services' ) . '</p>',
 			)
 		);
 
@@ -352,7 +352,7 @@ JS;
 								<?php echo Icon::render( 'star' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns escaped markup. ?>
 							</div>
 							<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No reviews in this queue', 'wp-sell-services' ); ?></h2>
-							<p class="wpss-empty-state__body"><?php esc_html_e( 'Customer reviews appear here after buyers rate completed orders. With moderation enabled, new reviews wait for your approval before going live.', 'wp-sell-services' ); ?></p>
+							<p class="wpss-empty-state__body"><?php esc_html_e( 'Buyer reviews appear here after buyers rate completed orders. With moderation enabled, new reviews wait for your approval before going live.', 'wp-sell-services' ); ?></p>
 						</div>
 					<?php else : ?>
 						<table class="wp-list-table widefat fixed striped wpss-review-table wpss-stacked-table">

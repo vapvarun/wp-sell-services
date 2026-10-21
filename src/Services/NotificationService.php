@@ -379,7 +379,7 @@ class NotificationService {
 		$service      = get_post( $order->service_id );
 		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
-		$buyer_name   = $buyer ? $buyer->display_name : __( 'Customer', 'wp-sell-services' );
+		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
 		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
 		$order_number = (string) ( $order->order_number ?? '' );
@@ -501,7 +501,7 @@ class NotificationService {
 		$service      = get_post( $order->service_id );
 		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
-		$buyer_name   = $buyer ? $buyer->display_name : __( 'Customer', 'wp-sell-services' );
+		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
 		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
 		$order_number = (string) ( $order->order_number ?? '' );
@@ -968,7 +968,7 @@ class NotificationService {
 			);
 		}
 
-		$message->paragraph( __( 'Thank you for providing excellent service! Reviews help build your reputation and attract more customers.', 'wp-sell-services' ) );
+		$message->paragraph( __( 'Thank you for providing excellent service! Reviews help build your reputation and attract more buyers.', 'wp-sell-services' ) );
 
 		$this->create(
 			(int) $review->vendor_id,
@@ -1590,7 +1590,7 @@ class NotificationService {
 		$content .= '<ul>';
 		$content .= '<li>' . esc_html__( 'Create and publish services', 'wp-sell-services' ) . '</li>';
 		$content .= '<li>' . esc_html__( 'Receive and manage orders', 'wp-sell-services' ) . '</li>';
-		$content .= '<li>' . esc_html__( 'Communicate with customers', 'wp-sell-services' ) . '</li>';
+		$content .= '<li>' . esc_html__( 'Communicate with buyers', 'wp-sell-services' ) . '</li>';
 		$content .= '<li>' . esc_html__( 'Track your earnings', 'wp-sell-services' ) . '</li>';
 		$content .= '</ul>';
 		$content .= '<p>' . esc_html__( 'If you have any questions, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';

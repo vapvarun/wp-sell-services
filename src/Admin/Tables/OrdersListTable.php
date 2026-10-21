@@ -50,7 +50,7 @@ class OrdersListTable extends \WP_List_Table {
 			'cb'           => '<input type="checkbox" />',
 			'order_number' => __( 'Order', 'wp-sell-services' ),
 			'service'      => __( 'Service', 'wp-sell-services' ),
-			'customer'     => __( 'Customer', 'wp-sell-services' ),
+			'customer'     => __( 'Buyer', 'wp-sell-services' ),
 			'vendor'       => __( 'Vendor', 'wp-sell-services' ),
 			'total'        => __( 'Total', 'wp-sell-services' ),
 			'status'       => __( 'Status', 'wp-sell-services' ),
@@ -157,7 +157,7 @@ class OrdersListTable extends \WP_List_Table {
 			$actions['email_customer'] = sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( 'mailto:' . $customer->user_email ),
-				esc_html__( 'Email customer', 'wp-sell-services' )
+				esc_html__( 'Email buyer', 'wp-sell-services' )
 			);
 		}
 
@@ -781,7 +781,7 @@ class OrdersListTable extends \WP_List_Table {
 				?>
 			</div>
 			<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h2>
-			<p class="wpss-empty-state__body"><?php esc_html_e( 'When customers purchase services, their orders appear here with full lifecycle tracking.', 'wp-sell-services' ); ?></p>
+			<p class="wpss-empty-state__body"><?php esc_html_e( 'When buyers purchase services, their orders appear here with full lifecycle tracking.', 'wp-sell-services' ); ?></p>
 			<p class="wpss-empty-state__actions">
 				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wpss_service' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Manage Services', 'wp-sell-services' ); ?></a>
 				<a href="https://wbcomdesigns.com/docs/wp-sell-services/order-workflow-wpss" class="button button-link" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
