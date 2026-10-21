@@ -276,6 +276,9 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Improve  - Payment, proposal, milestone and extension emails always send, and the email preferences screen says so.
 * Improve  - The vendor profile review list uses the same markup as the service page, and View all reviews loads the next pages from the server.
 * Improve  - Vendor and service ratings, the seller card, REST stats and seller levels all count the same reviews.
+* Fix      - A suspended vendor can no longer start new pre-sale conversations, and keeps Sales Orders to finish paid work.
+* Fix      - Order amount limits and other number settings can no longer be saved below their minimum.
+* Fix      - Submitting a milestone phase twice notifies the buyer once, and a paid extension returns a late order to In Progress.
 * Fix      - Orders filters are usable on a phone, and the Withdrawals filter and Export button no longer run off the screen.
 * Fix      - Withdrawals has a Cancelled tab, so the tab counts add up.
 * Fix      - Member since and completed orders read the same everywhere; tips and extensions no longer count as orders.

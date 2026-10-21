@@ -752,6 +752,30 @@
    "added": "2026-10-20",
    "fails_on": "Pro fbbbdd5 (route did not exist)",
    "check": "wp-sell-services-pro/tests/test-review-import-route.php"
+  },
+  {
+   "card": "10425686711",
+   "title": "a vendor suspended on the profile row cannot start a pre-sale thread, and the dashboard keeps Sales Orders",
+   "guard": "static:smoke-1-9-1-contracts",
+   "added": "2026-10-21",
+   "fails_on": "c21a7c05 (standing_block ignored vendor suspend; is_suspended_vendor required an active vendor)",
+   "check": "tests/test-smoke-1-9-1-contracts.php"
+  },
+  {
+   "card": "10425686753",
+   "title": "minimum and maximum order amount cannot be saved negative",
+   "guard": "static:smoke-1-9-1-contracts",
+   "added": "2026-10-21",
+   "fails_on": "c21a7c05 (floatval only)",
+   "check": "tests/test-smoke-1-9-1-contracts.php"
+  },
+  {
+   "card": "10425686815",
+   "title": "a repeat milestone submit notifies once, and a paid extension returns a late order to In Progress",
+   "guard": "static:smoke-1-9-1-contracts",
+   "added": "2026-10-21",
+   "fails_on": "c21a7c05",
+   "check": "tests/test-smoke-1-9-1-contracts.php"
   }
  ]
 }

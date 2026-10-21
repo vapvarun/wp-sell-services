@@ -451,7 +451,7 @@ class UnifiedDashboard {
 	 * @return bool
 	 */
 	private function is_suspended_vendor( int $user_id ): bool {
-		return $this->vendor_service->is_vendor( $user_id ) && 'suspended' === $this->vendor_service->get_vendor_status( $user_id );
+		return 'suspended' === $this->vendor_service->get_vendor_status( $user_id );
 	}
 
 	/**

@@ -1,0 +1,119 @@
+{
+  "journey": "02",
+  "sha_free": "c21a7c05",
+  "sha_pro": "e4ac7141",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme",
+    "rail": "standalone",
+    "wp": "7.1.3"
+  },
+  "ran_at": "2026-10-21T00:10:00Z",
+  "checks": [
+    {
+      "id": "s1-buyer-opens-dispute",
+      "result": "pass",
+      "evidence": "Ella opened dispute 420 on in-progress order 3888 (reason communication); DB status=open, initiated_by 7848. Same via REST on order 3887 (Tomas) created dispute 421 status open."
+    },
+    {
+      "id": "s2-own-statement-visible",
+      "result": "pass",
+      "evidence": "Opening statement shown in Messages & evidence immediately, 'No messages yet' absent, timeline entry present; 1440 and 390 no horizontal scroll."
+    },
+    {
+      "id": "s3-seller-reply-both-threads",
+      "result": "pass",
+      "evidence": "Maya reply (msg 457) visible in Ella and Maya thread and in Activity timeline at 1440 and 390; each shows once in thread and once in timeline."
+    },
+    {
+      "id": "s4-evidence-renders-as-image",
+      "result": "pass",
+      "evidence": "Evidence stored in attachments; thread renders .wpss-evidence-image > img via admin-post wpss_order_file link in both parties' views and in admin; no raw text/URL; toast 'Evidence added successfully.'"
+    },
+    {
+      "id": "s5-admin-reads-whole-thread",
+      "result": "pass",
+      "evidence": "wp-admin Disputes #420: opening statement, Maya reply and evidence image all present; status select, admin notes, Update Dispute controls."
+    },
+    {
+      "id": "s6-order-links-to-dispute",
+      "result": "pass",
+      "evidence": "Seller and buyer order headers show <a href='/dashboard/disputes/?dispute=420'> View Dispute; 1px solid rgb(220,38,38) at rest, red fill with white text on hover."
+    },
+    {
+      "id": "s7-open-dispute-not-offered-twice",
+      "result": "pass",
+      "evidence": "Open Dispute control absent (0 visible) while dispute open and after resolution; View Dispute shown."
+    },
+    {
+      "id": "s8-admin-order-view",
+      "result": "pass",
+      "evidence": "Admin order 3888 screen has 'Open dispute' link to wpss-disputes view dispute_id=420."
+    },
+    {
+      "id": "s9-resolution-with-note",
+      "result": "pass",
+      "evidence": "Resolved 420 favor_vendor with note: members see status resolved / in favor of vendor, note once, no blank row; View Dispute persists on order; order status completed, no refund; Dispute Resolved mail to both."
+    },
+    {
+      "id": "upgrade-migrate-evidence-to-messages",
+      "result": "untested",
+      "evidence": "Upgrade simulation of legacy evidence column not run in this walk (see J03)."
+    },
+    {
+      "id": "rest-respond-third-user-403",
+      "result": "pass",
+      "evidence": "Dispute 421: third user respond and GET both 403 wpss_not_owner; other party respond 200 (msg 459); opener got 'Dispute Response Received' mail."
+    },
+    {
+      "id": "rest-cancel-only-opener-only-while-open",
+      "result": "fail",
+      "evidence": "Non-opener cancel refused (400 'not authorized'). But the opener cancelled dispute 421 while status was escalated (200, status closed); journey says only while open. Cancelling also re-sent 'Order Completed' mail to buyer and seller on an already completed order (duplicate completion email)."
+    },
+    {
+      "id": "rest-cancel-other-party-told-and-reopen",
+      "result": "pass",
+      "evidence": "Dispute Cancelled mail to Maya; dispute closed."
+    },
+    {
+      "id": "rest-escalate-once",
+      "result": "pass",
+      "evidence": "Escalate by non-party 403; first escalate 200 -> status escalated; second 400 'already escalated', status unchanged."
+    },
+    {
+      "id": "rest-escalate-admin-mail-recipient",
+      "result": "fail",
+      "evidence": "Escalation admin mail '[Action Required] Dispute #421 has been escalated' captured with an EMPTY recipient: option wpss_dispute_admin_email exists as '' so get_option default (admin_email) is never used in DisputeWorkflowManager::notify_admins_of_escalation; admin is never told."
+    },
+    {
+      "id": "rest-assign-admin-only",
+      "result": "pass",
+      "evidence": "Buyer and seller assign 403 wpss_not_admin; admin assign 200; dispute_assigned notification to admin 9552."
+    },
+    {
+      "id": "rest-resolve-admin-only-and-idempotent",
+      "result": "pass",
+      "evidence": "Seller resolve 403; admin resolve 200 status resolved; second resolve (full_refund 384) 400 'already resolved', status and order payment_status unchanged (paid)."
+    },
+    {
+      "id": "rest-one-audit-row-each",
+      "result": "pass",
+      "evidence": "wpss_audit_log dispute.transition rows: one per respond/escalate/cancel on 421, one for resolve on 420."
+    },
+    {
+      "id": "rest-resolve-refund-paths",
+      "result": "untested",
+      "evidence": "full_refund / partial_refund resolution on standalone not exercised to avoid altering order money; only favor_vendor run."
+    },
+    {
+      "id": "rest-suspended-seller-refusal",
+      "result": "untested",
+      "evidence": "Refusal for a suspended seller across the dispute doors not exercised (member standing suspend path already failing in J05)."
+    }
+  ],
+  "proposed_checks": [
+    "Escalation admin email goes to a real recipient when wpss_dispute_admin_email is blank",
+    "Cancelling a dispute never re-sends an order completion email"
+  ],
+  "verdict": "FAIL"
+}

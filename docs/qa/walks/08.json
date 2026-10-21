@@ -1,0 +1,144 @@
+{
+  "journey": "08",
+  "sha_free": "c21a7c05",
+  "sha_pro": "e4ac7141",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme",
+    "rail": "standalone",
+    "wp": "7.1.3"
+  },
+  "ran_at": "2026-10-21T03:30:00Z",
+  "checks": [
+    {
+      "id": "p1-s1-sign-in",
+      "result": "pass",
+      "evidence": "curl POST /auth/login wpss_buyer_ella with account password: 200, token, expires '2026-11-19T23:37:05+00:00' (ISO-8601, not null)."
+    },
+    {
+      "id": "p1-s2-token-cannot-mint",
+      "result": "fail",
+      "evidence": "Token passed as password, with and without the token in the Authorization header: 401, no new token (security intact) but the code is 'invalid_credentials', not the documented 'wpss_token_cannot_mint'."
+    },
+    {
+      "id": "p1-s3-token-works",
+      "result": "pass",
+      "evidence": "GET /me with Authorization: Basic <token>: 200 with the member payload."
+    },
+    {
+      "id": "p1-s4-sessions",
+      "result": "pass",
+      "evidence": "GET /auth/sessions lists uuid, device, created, last_used, expires, is_current (plus last_ip, expired); exactly one is_current true; /auth/devices is a separate route (push tokens) returning []."
+    },
+    {
+      "id": "p1-s5-revoke-one-device",
+      "result": "pass",
+      "evidence": "DELETE /auth/sessions/<other uuid> as Ella 200 {revoked:true}, uuid gone from list (4 left); replay 404 wpss_session_not_found; same uuid as Maya 404."
+    },
+    {
+      "id": "p1-s6-expiry-real",
+      "result": "pass",
+      "evidence": "Backdated the token's application password (created -100d, last used -95d): GET /me 401 wpss_token_expired."
+    },
+    {
+      "id": "p1-s7-expired-token-can-sign-in",
+      "result": "pass",
+      "evidence": "POST /auth/login with the expired token in the header and the correct password: 200 fresh token; with a wrong body password: 401 invalid_credentials."
+    },
+    {
+      "id": "p1-s8-carve-out-narrow",
+      "result": "pass",
+      "evidence": "With the expired token: /me, /orders, /notifications, /auth/sessions, /auth/logout, /auth/change-password each 401 wpss_token_expired; /auth/forgot-password 200. /auth/register not called."
+    },
+    {
+      "id": "p1-s9-handmade-app-password",
+      "result": "pass",
+      "evidence": "Application password named 'Zapier sync script' backdated one year: GET /me 200. Removed afterwards."
+    },
+    {
+      "id": "p1-s10-api-shapes",
+      "result": "pass",
+      "evidence": "wp wpss api:shapes: 'Audited 106 route(s) with a response body. Not audited: 11' and 'Success: Every audited payload uses ISO dates and the shared actor shape.'"
+    },
+    {
+      "id": "p1-fields-filter-http",
+      "result": "pass",
+      "evidence": "GET /reviews full 10,969 bytes vs ?_fields=id,rating,review,created_at 1,407 bytes (87% smaller) over HTTP."
+    },
+    {
+      "id": "p1-login-rate-limit",
+      "result": "pass",
+      "evidence": "After 5 sign-ins in 5 minutes from one IP the 6th returned 429 rate_limit_exceeded."
+    },
+    {
+      "id": "p2-s1-review-moderation-both-ways",
+      "result": "untested",
+      "evidence": "Not repeated here; review moderation screen vs PUT /reviews/{id} audit and star-average parity not walked (see J13 for screen side)."
+    },
+    {
+      "id": "p2-s2-notifications-read-both-ways",
+      "result": "pass",
+      "evidence": "Ella unread-count 122; POST /notifications/{id}/read -> 121; POST /notifications/read-all -> 0 with success."
+    },
+    {
+      "id": "p2-s3-audit-log-filter",
+      "result": "pass",
+      "evidence": "?object_type=order&object_id=3888 returned 4 rows, all (order, 3888); ?object_id=420 returned dispute 420 and ledger 420 rows (id shared across types, needs object_type); buyer gets 403."
+    },
+    {
+      "id": "p2-s4-portfolio-tags-api",
+      "result": "pass",
+      "evidence": "POST /portfolio tags 'logo, branding'; PUT {tags:'packaging'} changed only tags (title/description kept); PUT {tags:''} cleared tags; non-vendor PUT 403; item deleted afterwards. Dashboard modal tag edit and 390 fit covered in J15 (prefill showed tags)."
+    },
+    {
+      "id": "p2-s5-pro-plans-commission-rules",
+      "result": "untested",
+      "evidence": "No subscription plans or commission rules in the fixture; PUT-one-field behaviour not exercised."
+    },
+    {
+      "id": "p2-s6-cart-delete-foreign-key",
+      "result": "pass",
+      "evidence": "Another buyer DELETE /cart/<Ella's key> 404 not_found and Ella's cart still held it; Ella's own DELETE 200."
+    },
+    {
+      "id": "p2-s6-create-intent-woo",
+      "result": "untested",
+      "evidence": "Woo-rail absence of /payments/create-intent not checked (standalone route present)."
+    },
+    {
+      "id": "p2-s6-order-pay-guards",
+      "result": "pass",
+      "evidence": "Ben POST /orders/2301/pay 403 wpss_not_owner; owner on a completed order 409 wpss_order_not_payable. Milestone later-phase ordering not exercised."
+    },
+    {
+      "id": "p2-s6-proposals-guards",
+      "result": "pass",
+      "evidence": "Non-vendors 403 wpss_not_vendor; seller (Sofia) on her own request 400 wpss_proposal_own_request; another seller's withdraw 403; withdraw of an accepted proposal 400. Accept/reject notifications not exercised."
+    },
+    {
+      "id": "p2-s6-realtime-auth",
+      "result": "untested",
+      "evidence": "POST /realtime/auth returns 501 wpss_realtime_disabled on this site; channel ownership not verifiable."
+    },
+    {
+      "id": "p2-s6-requirements-skip-once",
+      "result": "fail",
+      "evidence": "POST /orders/2267/requirements/skip: first call 200 and order moved to in_progress; the second call also returned 200 (not refused) and wrote a second order.status_change pending_requirements->in_progress audit row; non-owner 403. Order and audit rows restored afterwards."
+    },
+    {
+      "id": "p2-s6-one-review-per-order",
+      "result": "pass",
+      "evidence": "Second POST /orders/2301/review 400 rest_already_reviewed; another buyer 403 wpss_not_owner."
+    },
+    {
+      "id": "p2-s6-conversation-read",
+      "result": "pass",
+      "evidence": "Non-participant POST /conversations/293/read 403; participant 200 'Messages marked as read.' Caller-only clearing of the other party's unread count not verified."
+    }
+  ],
+  "proposed_checks": [
+    "POST /auth/login with a token as password returns wpss_token_cannot_mint",
+    "requirements/skip refuses a second call"
+  ],
+  "verdict": "FAIL"
+}

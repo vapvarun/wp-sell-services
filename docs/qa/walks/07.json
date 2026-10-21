@@ -1,0 +1,68 @@
+{
+  "journey": "07",
+  "sha_free": "c21a7c05",
+  "sha_pro": "e4ac7141",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme",
+    "rail": "woo",
+    "wp": "7.1.3"
+  },
+  "ran_at": "2026-10-21T02:40:00Z",
+  "checks": [
+    {
+      "id": "s1-guest-add-to-cart-not-lost",
+      "result": "pass",
+      "evidence": "Woo rail (account-at-checkout off): guest picked Standard, Continue -> Order Options modal -> Continue to Checkout -> /login/?redirect_to=<service URL>; logging in as Ella through the form returned to the service page; choosing Standard again went to /checkout/ with 'Service ... Package: Standard 1 x $70.00' in the cart; never an empty checkout."
+    },
+    {
+      "id": "s1-standalone-selection-intact",
+      "result": "pass",
+      "evidence": "Covered in J06 (standalone checkout opens with the selection intact)."
+    },
+    {
+      "id": "s2-site-cart-link-only-where-meaningful",
+      "result": "pass",
+      "evidence": "Woo rail: Settings General/Checkout/Orders tabs have no 'Site cart link' control. Standalone: box present; ticking it points header cart at /cart/ (marketplace cart), unticked falls back to Woo cart (/cart-2/ on this site); setting restored."
+    },
+    {
+      "id": "s3-carrier-redirects-home",
+      "result": "pass",
+      "evidence": "Logged out GET /product/service-order/ -> 302 to http://wp-sell-services.local/ (carrier post 805); /wp-sitemap.xml has no product sitemap and /wp-sitemap-posts-product-1.xml is 404 so the carrier is not listed; /shop/ HTML has 0 mentions of service order."
+    },
+    {
+      "id": "s4-capped-seller-upgrade-link",
+      "result": "untested",
+      "evidence": "No Pro subscription plans exist (wpss_pro_subscription_plans empty); plan-cap message and Subscription link not exercised."
+    },
+    {
+      "id": "s5-plan-max-featured",
+      "result": "untested",
+      "evidence": "Needs a plan with Max featured and a subscribed seller; none in the fixture. Double-subscribe database error not exercised."
+    },
+    {
+      "id": "s6-requirements-panel-dark-light",
+      "result": "untested",
+      "evidence": "The only Woo orders (13047 Completed/in progress, 13048 pending) have no 'awaiting requirements' panel; creating a paid Woo order awaiting requirements was out of scope; dark/light 4.5:1 not measured."
+    },
+    {
+      "id": "woo-mini-cart-package-price",
+      "result": "pass",
+      "evidence": "Signed-in Ella with a Standard line: header mini cart reads 'Package: Standard 1 x $70.00' and Basic line '1 x $60.00' after reload on /services/, /dashboard/ at 1440 and /checkout/ at 390; no '1 x $0.00' anywhere in the page text."
+    },
+    {
+      "id": "woo-order-line-name",
+      "result": "fail",
+      "evidence": "Woo My Account view-order 13047 lists the line as generic 'Service Order x 1 $60.00' with no service title or package, while the cart/checkout show the real service names."
+    },
+    {
+      "id": "woo-settings-platform-select",
+      "result": "pass",
+      "evidence": "RETRACTED in J12 re-check: the earlier fail came from storing the non-canonical slug 'woo' during the walk. With the canonical 'woocommerce' the dropdown renders selected 'WooCommerce (Available)' and the adapter resolves to woocommerce (wpss()->get_integration_manager()->get_active_adapter()->get_id()). An unknown stored slug showing 'auto' is expected."
+    }
+  ],
+  "proposed_checks": [
+    "Woo order details name the service and package"
+  ],
+  "verdict": "FAIL"
+}

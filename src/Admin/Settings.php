@@ -3122,7 +3122,17 @@ class Settings {
 	 */
 	private function register_tuning_settings(): void {
 		$number = fn( string $option, string $group, string $section, string $label, array $args ) => array(
-			register_setting( $group, $option, array( 'sanitize_callback' => $args['float'] ?? false ? 'floatval' : 'absint' ) ),
+			register_setting(
+				$group,
+				$option,
+				array(
+					// Clamp to the field's own min/max: the HTML attributes are client-only.
+					'sanitize_callback' => static function ( $value ) use ( $args ) {
+						$value = ( $args['float'] ?? false ) ? (float) $value : absint( $value );
+						return max( $args['min'] ?? $value, min( $args['max'] ?? $value, $value ) );
+					},
+				)
+			),
 			add_settings_field(
 				$option,
 				$label,

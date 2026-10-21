@@ -1926,7 +1926,7 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You must be logged in to contact vendors.', 'wp-sell-services' ) ) );
 		}
 
-		$standing = wpss_account_status_block( $user_id );
+		$standing = ( new ConversationService() )->standing_block( 0, $user_id );
 		if ( $standing ) {
 			wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
 		}

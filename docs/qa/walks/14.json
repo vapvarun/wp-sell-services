@@ -1,0 +1,34 @@
+{
+  "journey": "14",
+  "sha_free": "c21a7c05",
+  "sha_pro": "e4ac7141",
+  "env": {"site": "http://wp-sell-services.local", "theme": "reign-theme", "rail": "standalone", "wp": "7.1.3"},
+  "ran_at": "2026-10-20T23:08:00Z",
+  "checks": [
+    {"id": "s1-review-required-fields", "result": "pass", "evidence": "Empty submit blocked: textarea and rating radios invalid, message 'Choose a star rating to leave your review.'"},
+    {"id": "s1-review-submits-and-shows-state", "result": "pass", "evidence": "Tomas, completed order 3887: 5 stars + review saved (id 565), notice 'This review is awaiting moderation and is not public yet.'; Write a Review button gone afterwards."},
+    {"id": "s1-sub-ratings-optional", "result": "fail", "evidence": "Review form offers only Overall rating and Your Review; no communication/quality/delivery sub-rating fields although the table has the columns."},
+    {"id": "s1-duplicate-refused", "result": "pass", "evidence": "POST /reviews again for order 3887 -> 400 rest_already_reviewed; 1 row in wpss_reviews."},
+    {"id": "s1-verified-purchase-badge-and-rating-updates", "result": "pass", "evidence": "After approval service 11411 review count 1 -> 2, average 5; approved reviews list on the service page. Verified Purchase badge text was not located in the DOM scan (untested separately)."},
+    {"id": "s2-seller-reply-shown-and-buyer-notified", "result": "pass", "evidence": "Maya > Reviews > Post Reply on Tomas's review: vendor_reply saved with time, reply text shown on the public service page, review_reply notification to buyer 9698. No success toast after posting."},
+    {"id": "s3-favourites-list-matches-hearts", "result": "pass", "evidence": "Ella's saved list shows exactly the 4 ids in _wpss_favorite_services; header '4 saved services'."},
+    {"id": "s3-remove-with-keyboard-and-390", "result": "pass", "evidence": "Focusing the 'Remove ... from favorites' button and pressing Enter removed the card and the meta id; 390px scrollWidth 390."},
+    {"id": "s3-deleted-service-disappears", "result": "pass", "evidence": "After deleting a favourited scratch service, a fresh navigation shows '3 saved services' and no dead card (a plain reload briefly showed it from cache)."},
+    {"id": "s4-presale-thread-both-parties", "result": "pass", "evidence": "Ella Contact Seller (UI modal) -> conversation 292 [7848,7832]; Diego sees '2 unread messages from Ella Martinez' at 1440 and 390; Ella sees the thread with 'You: ...'."},
+    {"id": "s4-unread-clears", "result": "pass", "evidence": "Diego opens the thread: read_by on both messages gains 7832 with a timestamp; badge gone."},
+    {"id": "s4-attachment-type-limit-notice", "result": "fail", "evidence": "Contact Seller with audit-tool.exe: AJAX 200 'Your message has been sent successfully!', message stored with attachments [] and no notice that the file was dropped (modal closes silently). Modal copy promises 'Max 5 files. Allowed: images, PDF, Word, ZIP'."},
+    {"id": "s4-attachment-size-limit", "result": "untested", "evidence": "Oversize attachment not tried."},
+    {"id": "s4-order-thread-both-parties", "result": "untested", "evidence": "Order 3887 is completed and shows no message box; the in-progress order thread is covered in journey 01."},
+    {"id": "s4-suspended-seller-cannot-start-presale-can-answer-order", "result": "fail", "evidence": "Vendor-suspended Maya could start a pre-sale thread (journey 05 p2-s3). Answering an order thread while suspended not tested."},
+    {"id": "s5-service-reviews-and-faqs-partials", "result": "pass", "evidence": "Approved reviews list on service page; held review text absent until approved."},
+    {"id": "s5-no-empty-heading", "result": "fail", "evidence": "qa-guest-return (no reviews, no FAQs): no FAQ heading, but a 'Reviews' heading with 'No reviews yet. Be the first to review this service!' is rendered."},
+    {"id": "s6-helpful-toggle", "result": "pass", "evidence": "Ella: 'Helpful' -> 'Helpful (1)' aria-pressed=true, persists after reload, press again -> 'Helpful' aria-pressed=false, persists. No 390 overflow."},
+    {"id": "s6-author-has-no-helpful-button", "result": "pass", "evidence": "Tomas sees helpful buttons only for review 229, not his own 565."},
+    {"id": "s6-signed-out-asked-to-log-in", "result": "fail", "evidence": "Signed-out visitor: .wpss-review-helpful containers render empty (no button, no login prompt)."}
+  ],
+  "proposed_checks": [
+    "Review form: sub-ratings should be offered or the journey text updated.",
+    "Contact Seller / message attachments: a refused file must produce a visible notice."
+  ],
+  "verdict": "FAIL"
+}

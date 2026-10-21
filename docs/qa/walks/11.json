@@ -1,0 +1,71 @@
+{
+  "journey": "11",
+  "sha_free": "c21a7c05",
+  "sha_pro": "e4ac7141",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme",
+    "rail": "standalone (woo for step 5 only, restored to standalone, rewrite rules flushed)",
+    "wp": "7.1.3"
+  },
+  "ran_at": "2026-10-21T04:30:00Z",
+  "checks": [
+    {
+      "id": "s1-badge-equals-unread-and-drops",
+      "result": "pass",
+      "evidence": "Sofia (7836) nav 'Notifications 310'. Unread only paged to the last page: page 16 of 16 with 9 rows after one was read (15x20+9 = 309 = badge). Clicking Mark as read on row 10998: badge 310 -> 309, row class lost --unread, reload still 309. Mark all as read: badge text 'Notifications' with no number, 0 unread rows, Mark all button gone after reload; Unread only then shows 'No notifications match this filter.'. Admin (user 1): badge 'Notifications 1', 1 unread row, 65 pages, 390 scrollWidth 390."
+    },
+    {
+      "id": "s1-realtime-raises-badge",
+      "result": "untested",
+      "evidence": "Real-time is disabled on this site (REST realtime returned 501 in J08); the 'new notification raises the badge without a reload' clause was not observable."
+    },
+    {
+      "id": "s2-filter-keeps-place",
+      "result": "pass",
+      "evidence": "Unread only + New message -> URL ?notifications_status=unread&notifications_type=new_message, 20 rows all 'New Message Received', 'Page 1 of 4' (DB: 64). Next -> &notifications_page=2, both dropdowns still 'Unread only'/'New message', 'Page 2 of 4', Previous/Next links carry both params. 'Clear filter' -> /dashboard/notifications/ with 'All notifications'/'All types', 'Page 1 of 16', mixed titles. Empty message 'No notifications match this filter.' seen with Unread only at 0 unread."
+    },
+    {
+      "id": "s2-390-controls-fit-and-44",
+      "result": "pass",
+      "evidence": "390px: both selects 160x44 and 237x44, Filter 68x44, rights at 179/204/281/112 px (< 390), documentElement.scrollWidth 390 = clientWidth 390."
+    },
+    {
+      "id": "s2-390-row-touch-targets",
+      "result": "fail",
+      "evidence": "At 390 the per-row 'mark as read' button is 24x24 and 'Mark all as read' is 38px tall, below the 40px/44px target used for the filter controls on the same screen. Screenshots 11-list-390.png, 11-filter-p2-390.png."
+    },
+    {
+      "id": "s3-same-second-rows-page-cleanly",
+      "result": "pass",
+      "evidence": "Seeded 60 unread order_late rows for Sofia with created_at 2026-10-20 12:00:00 (ids 11000-11059). Unread+order_late pages 1/2/3: 11059..11040, 11039..11020, 11019..11000, 20 rows each, 60 unique ids, no repeat, no skip, 'Page 3 of 3'."
+    },
+    {
+      "id": "s4-old-read-go-unread-stay",
+      "result": "pass",
+      "evidence": "Seeded read 100d (11060), unread 100d (11061), read 30d (11062), dispute read 200d (11063), dispute read 400d (11064), dispute unread 400d (11065). Ran Action Scheduler action 2650 (wpss_notification_cleanup, 'Executed 1 action'). Remaining ids: 11061, 11062, 11063, 11065; 11060 and 11064 gone. Sofia unread count 62 before and after (badge unchanged). Next daily action 2656 scheduled."
+    },
+    {
+      "id": "registry-no-generic-bell",
+      "result": "fail",
+      "evidence": "Type dropdown lists all 26 types Sofia has. dispute_response_reminder filter returns 3 rows, each rendered 'Notification / You have a new notification.' with the generic bell icon (DB title 'Notification', 24 such rows site-wide plus 2 dispute_assigned). NotificationService has no case for dispute_response_reminder or dispute_assigned (DisputeWorkflowManager sends both at lines 419 and 647), so members get a contentless row. order_late, order_started and requirements_timeout rows show real titles and distinct icons (triangle-alert, play). tests/test-notification-types-registry.php and tests/test-notification-center-retention.php both pass, so the guard does not cover this."
+    },
+    {
+      "id": "retention-badge-unchanged",
+      "result": "pass",
+      "evidence": "See s4: unread 62 before and after cleanup; unread rows older than 90 days and 365 days survived."
+    },
+    {
+      "id": "s5-account-page-notifications-tab",
+      "result": "fail",
+      "evidence": "Woo rail (wpss_general.ecommerce_platform='woo'), rewrite flushed, Sofia My Account nav: Dashboard, Orders, Downloads, Addresses, Account details, Vendor Dashboard, My Services, Log out. There is no Notifications tab. /my-account/notifications/ and /my-account/service-notifications/ return 404; /my-account/vendor-services/ returns 200. WCAccountProvider::render_notifications_endpoint() exists but is never hooked to an action, and 'notifications' is not in get_endpoint_slugs() (service-orders, vendor-dashboard, vendor-services). The 'type filter lists only the member's types / mark-read updates the bell' behaviour cannot be reached on Woo. EDD and FluentCart out of scope (beta)."
+    }
+  ],
+  "proposed_checks": [
+    "Add dispute_response_reminder and dispute_assigned to the registry test as 'must render a non-generic title'.",
+    "Row-level mark-as-read and Mark all must meet the 40px touch target at 390.",
+    "Woo My Account must expose a Notifications endpoint (menu item, query var, action hook).",
+    "Cleanup of 'Notification / You have a new notification.' seed rows (24) so the DB does not carry contentless rows."
+  ],
+  "verdict": "FAIL"
+}

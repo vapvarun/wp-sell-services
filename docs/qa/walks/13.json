@@ -1,0 +1,35 @@
+{
+  "journey": "13",
+  "sha_free": "c21a7c05",
+  "sha_pro": "e4ac7141",
+  "env": {"site": "http://wp-sell-services.local", "theme": "reign-theme", "rail": "standalone", "wp": "7.1.3"},
+  "ran_at": "2026-10-20T23:05:00Z",
+  "checks": [
+    {"id": "s1-service-moderation-pending-hidden", "result": "pass", "evidence": "Moderation on: Maya publishes a draft from My Services -> post_status pending, _wpss_moderation_status pending, public permalink 404; queue shows Pending (1)."},
+    {"id": "s1-queue-columns", "result": "pass", "evidence": "Queue row has thumbnail (1 img), title, vendor Maya Chen, category 'Graphics & Design, Logo Design', price $25.00, date, Approve/Reject at 1440 and 390 (scrollWidth = viewport)."},
+    {"id": "s1-approve-live-and-email", "result": "pass", "evidence": "Approve: publish + approved, service_approved notification; mail captured 'Your service ... has been approved' to the seller."},
+    {"id": "s1-reject-reason-and-draft", "result": "pass", "evidence": "UI Reject with reason: draft, mod rejected, reason stored, service_rejected notification, My Services shows REJECTED card with 'Reviewer feedback: Please add at least three portfolio samples...' and Resubmit link at 1440+390; buyer gets 404 on it; mail 'requires changes' carries the reason."},
+    {"id": "s2-review-moderation", "result": "fail", "evidence": "Held review (id 565) was hidden from the service page and not counted (cnt 1 -> 2 only after approval) - good. But the seller received a review_received notification (stars + text) at submit time, while still held, and no notification on approval (none after id 10950). Spec: seller is notified on approval."},
+    {"id": "s3-vendors-list-filters-and-stats", "result": "pass", "evidence": "All (9) | Active (8) | Pending (1) | Suspended (0) matched rows; Pending filter lists 1 row; Suspended filter lists 1 row; 390px no overflow."},
+    {"id": "s3-approve-pending-vendor", "result": "pass", "evidence": "Row action Approve -> confirm -> status active, vendor_approved notification, audit row vendor.approved actor 9552. Row actions appear on row hover only (WP pattern)."},
+    {"id": "s3-vendor-approval-email", "result": "untested", "evidence": "vendor_approved in-app notification seen; mail body not captured for this path."},
+    {"id": "s3-suspended-vendor-cannot-start-new-work", "result": "fail", "evidence": "See journey 05 p2-s3: wpss_vendor_profiles.status=suspended leaves wpss_contact_vendor AJAX open (conversation + notifications created)."},
+    {"id": "s4-reports-land-with-reporter-and-target", "result": "pass", "evidence": "Ella's 'Report this service' (service #11416) and 'Report this seller' (member #7832) both listed in Member Reports with reason, details, 'Filed by Ella Martinez'; 390px no overflow."},
+    {"id": "s4-uphold-dismiss-close-and-record", "result": "pass", "evidence": "Dismiss -> status resolved/resolution dismissed; Uphold -> resolved/upheld; resolved_by 9552 and resolved_at set; counts 0 Needs review / 2 Dealt with."},
+    {"id": "s4-suspend-member-every-door", "result": "pass", "evidence": "With wpss_account_status=suspended on Ella: contact seller AJAX -> 'Your account is suspended.'; POST /reports -> 403 wpss_account_suspended. Restored. (Suspend-member badge in the Reports UI not clicked; meta set directly.)"},
+    {"id": "s5-lists-page-and-filter", "result": "pass", "evidence": "Orders 71 items, Disputes 24, Withdrawals 12, Audit Log 3,071 events each render in <1.1 s at 1440 and 390 without overflow."},
+    {"id": "s5-audit-log-actor-time", "result": "pass", "evidence": "Audit rows exist for vendor.approved/vendor.suspended (actor 9552, role administrator, time) and service.approved/rejected. from_value is empty for service moderation rows."},
+    {"id": "s5-2000-rows-without-timeout", "result": "untested", "evidence": "Data volume is 3,071 audit rows; filter/sort combinations at that size not exhaustively exercised."},
+    {"id": "s6-reject-route-and-notice", "result": "pass", "evidence": "REST reject with reason: seller sees partials/service-rejection-notice on the dashboard card; service not public."},
+    {"id": "s6-nothing-actionable-twice-moderation", "result": "fail", "evidence": "POST /wpss/v1/moderation/11406/reject twice -> 200 both, two 'requires changes' mails and two notifications; approve twice -> 200 both, two 'approved' mails, two audit rows. ModerationService::approve/reject accept replays."},
+    {"id": "s6-reports-resolve-once", "result": "pass", "evidence": "Second POST /reports/{id}/resolve -> 409 wpss_report_already_resolved for both reports; resolver unchanged."},
+    {"id": "s6-resolve-tells-reporter", "result": "fail", "evidence": "No notification row for reporter 7848 after Uphold/Dismiss and ReportsController has no resolve notification (no wpss_report_resolved hook anywhere in src)."},
+    {"id": "s6-moderation-pending-admin-mail", "result": "untested", "evidence": "emails/moderation-pending to admin not captured."}
+  ],
+  "proposed_checks": [
+    "ModerationService approve/reject on an already-decided service must be refused (409) and send nothing.",
+    "Review held for moderation must not notify the seller until approved; approval must notify.",
+    "Report resolution should notify the reporter."
+  ],
+  "verdict": "FAIL"
+}

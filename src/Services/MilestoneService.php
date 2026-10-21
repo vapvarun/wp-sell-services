@@ -486,9 +486,16 @@ class MilestoneService {
 			);
 		}
 
+		// Already waiting on the buyer: a repeat submit changes nothing and re-sends nothing.
+		if ( ServiceOrder::STATUS_PENDING_APPROVAL === $sub->status ) {
+			return array(
+				'success' => true,
+				'message' => __( 'Phase delivery submitted. Buyer has been notified.', 'wp-sell-services' ),
+			);
+		}
+
 		$allowed_submit_from = array(
 			ServiceOrder::STATUS_IN_PROGRESS,
-			ServiceOrder::STATUS_PENDING_APPROVAL,
 			ServiceOrder::STATUS_REVISION_REQUESTED,
 		);
 		if ( ! in_array( $sub->status, $allowed_submit_from, true ) ) {

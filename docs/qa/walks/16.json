@@ -1,0 +1,156 @@
+{
+  "journey": "16",
+  "sha_free": "c21a7c05",
+  "sha_pro": "e4ac7141",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme",
+    "rail": "standalone",
+    "wp": "7.1.3"
+  },
+  "ran_at": "2026-10-21T05:15:00Z",
+  "checks": [
+    {
+      "id": "s1-contract-phases-server-total",
+      "result": "pass",
+      "evidence": "Sofia proposed 3 phases (120/80/150) on request 13600 sending price 999; server derived 350. Ella accepted: parent 3890 in_progress total 0, phases 3891-3893."
+    },
+    {
+      "id": "s1-phase-lock-step",
+      "result": "pass",
+      "evidence": "Pay phase 2 before phase 1 -> 409 wpss_milestone_locked; locked pay page shows locked text and no Pay button."
+    },
+    {
+      "id": "s1-phase-roles",
+      "result": "pass",
+      "evidence": "Vendor and Ben get 403 on pay/approve/decline; Maya 403 on submit."
+    },
+    {
+      "id": "s1-phase-flow",
+      "result": "pass",
+      "evidence": "ph1 paid via UI, submit, revision, resubmit, approve; ph2 unlocked, paid, approved; ph3 declined; parent auto-completed (3890 completed)."
+    },
+    {
+      "id": "s1-repeat-submit-idempotent",
+      "result": "fail",
+      "evidence": "Repeat submit on a submitted phase returns 200 and re-sends 'Milestone delivered' mail + notification: 3 calls = 3 emails and 3 notifications."
+    },
+    {
+      "id": "s1-revision-notifies-seller",
+      "result": "fail",
+      "evidence": "request-revision sends the seller no mail and no notification."
+    },
+    {
+      "id": "s1-repeat-decline-message",
+      "result": "fail",
+      "evidence": "Repeat decline of a cancelled phase answers 'already been paid' (misleading)."
+    },
+    {
+      "id": "s1-phase-tax",
+      "result": "fail",
+      "evidence": "Milestone phases are charged with no 20% VAT while request/fixed orders get it (possible money issue; needs product decision)."
+    },
+    {
+      "id": "s1-adhoc-abandon-cron",
+      "result": "pass",
+      "evidence": "Ad-hoc phase 3897 cancelled by wpss_cleanup_abandoned_milestones after 49h backdate; contract phases 3895/3896 untouched; parent cancel flow cancelled all unpaid phases."
+    },
+    {
+      "id": "s1-wrong-route-guards",
+      "result": "pass",
+      "evidence": "Milestone route on catalog order 400 'custom-project orders only'; extension route on request order 400 'fixed-price service orders'."
+    },
+    {
+      "id": "s2-extension-pay-once",
+      "result": "pass",
+      "evidence": "Order 3632 quote 25 for 3 days; one pay -> order 3898 completed, fee 2.5, vendor 22.5 credited once (wallet 'extension' row), deadline +3 days, seller mail 'Extra work paid'."
+    },
+    {
+      "id": "s2-extension-decline",
+      "result": "pass",
+      "evidence": "Ext 8 rejected, pay order cancelled, deadline unchanged, repeat decline 409, mails sent; wrong-role calls 403."
+    },
+    {
+      "id": "s2-extension-tax",
+      "result": "fail",
+      "evidence": "Extension charge has no VAT (same as phases)."
+    },
+    {
+      "id": "s2-billing-address-persist",
+      "result": "fail",
+      "evidence": "Billing address entered at extension checkout is not saved to the profile (empty prefill next time)."
+    },
+    {
+      "id": "s2-card-inset-buyer-light",
+      "result": "pass",
+      "evidence": "Pending extension card inset 27px at 1440/1024, 18px at 390, matching section padding."
+    },
+    {
+      "id": "s2-card-vendor-dark",
+      "result": "untested",
+      "evidence": "Vendor view and dark mode of the extension card not walked."
+    },
+    {
+      "id": "s2-awaiting-confirmation-heading",
+      "result": "untested",
+      "evidence": "Offline-payment 'awaiting confirmation' extra-work heading not walked."
+    },
+    {
+      "id": "s3-late-returns-in-progress",
+      "result": "fail",
+      "evidence": "Late order stays 'late' after paid extension even with deadline 3 days ahead; spec expects In Progress."
+    },
+    {
+      "id": "s4-tip-roles",
+      "result": "pass",
+      "evidence": "Sofia and Ben POST tip -> 403 'Only the buyer can send tips.'; tip on in-progress order 3632 -> 400 'only for completed orders'."
+    },
+    {
+      "id": "s4-tip-once",
+      "result": "pass",
+      "evidence": "Order 2301: first tip created tip order 3902 (12.00); second create -> 400 'already tipped'; double click on Pay sent one POST; one tip order, one wallet row."
+    },
+    {
+      "id": "s4-tip-commission",
+      "result": "pass",
+      "evidence": "Tip 12.00: platform_fee 3.00 (25% tip commission), vendor_earnings 9.00, wallet 'tip' row +9.00 once, balance 1002."
+    },
+    {
+      "id": "s4-tip-notifications-mail",
+      "result": "fail",
+      "evidence": "Buyer got one 'Tip sent' mail + notification, seller got a notification but TWO mails for one tip: '[wp-sell-services] You received a tip from Ella Martinez' and 'You received a tip!'."
+    },
+    {
+      "id": "s4-order-page-after-tip",
+      "result": "pass",
+      "evidence": "/dashboard/orders/2301/ 200 after payment; shows 'Tip sent | $12.00'; scrollWidth 1440/390; screenshots 16-tip-paid-*.png."
+    },
+    {
+      "id": "s4-pending-tip-state",
+      "result": "pass",
+      "evidence": "Pending tip page shows 'Tip not sent yet - payment didn't complete | $12.00'."
+    },
+    {
+      "id": "s4-refund-reverses-tip",
+      "result": "pass",
+      "evidence": "Admin Process Refund (custom confirm dialog) -> order 3902 refunded; wallet order_reversal -9.00, balance back to 993."
+    },
+    {
+      "id": "s4-tip-tax",
+      "result": "fail",
+      "evidence": "Tip total 12.00 with no VAT line (tax_enabled 20%)."
+    },
+    {
+      "id": "s5-woo-locked-phase-seam",
+      "result": "untested",
+      "evidence": "Woo rail locked/declined phase pay seam not walked."
+    }
+  ],
+  "proposed_checks": [
+    "Repeat submit/decline must be a no-op with no new mail.",
+    "Revision request must notify the seller.",
+    "Paid extension on a late order must return it to In Progress.",
+    "Decide and assert tax treatment for phases/extensions/tips."
+  ],
+  "verdict": "FAIL"
+}

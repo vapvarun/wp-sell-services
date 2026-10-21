@@ -1,0 +1,37 @@
+{
+  "journey": "05",
+  "sha_free": "c21a7c05",
+  "sha_pro": "e4ac7141",
+  "env": {"site": "http://wp-sell-services.local", "theme": "reign-theme", "rail": "standalone", "wp": "7.1.3"},
+  "ran_at": "2026-10-20T22:50:00Z",
+  "checks": [
+    {"id": "p1-s1-wizard-opens-for-vendor", "result": "pass", "evidence": "Maya /dashboard/create/ renders #wpss-service-wizard step basic; no service-limit text (1440+390)."},
+    {"id": "p1-s2-category-parents-only", "result": "pass", "evidence": "Category select has only top-level terms, zero '—' options; window.wpssCategories still has parent>0 entries."},
+    {"id": "p1-s3-subcategory-follows-parent", "result": "pass", "evidence": "Programming & Tech lists its children only; Business leaves Subcategory disabled/empty, no error."},
+    {"id": "p1-s4-review-checklist-live", "result": "pass", "evidence": "Title, category, description rows rendered svg check-circle-2 on Review."},
+    {"id": "p1-s5-review-price-image-rows", "result": "pass", "evidence": "Basic pricing and Main image rows render check-circle-2 (svg class read)."},
+    {"id": "p1-s5-clear-price-reverts-live", "result": "untested", "evidence": "Continue is blocked by validation with an empty price, so Review cannot be reached to watch the row revert; icon still check-circle-2 while hidden. Not conclusive."},
+    {"id": "p1-s6-publish-and-category-optgroup", "result": "pass", "evidence": "Published service persisted and appears under 'WordPress Development' nested beneath 'Programming & Tech' in /services/ filter. Filter is a nested list, not <optgroup> (spec text is stale); filter lists only child-category services."},
+    {"id": "p1-s7-admin-not-metered", "result": "pass", "evidence": "Admin renders wizard and POST /wpss/v1/services is not 403 wpss_service_limit_reached."},
+    {"id": "p1-s8-vendor-still-metered", "result": "pass", "evidence": "Maya over a temporary limit of 1: wizard refuses. Sofia (28 published, limit 20): /dashboard/create/ shows 'You have reached your service limit.' and POST /wpss/v1/services -> 403 wpss_service_limit_reached."},
+    {"id": "p2-s1-seller-cannot-hold-order", "result": "pass", "evidence": "No Hold button on Maya's order 3887; POST /orders/3887/hold -> 400 'Only an administrator can put an order on hold'; status stays in_progress."},
+    {"id": "p2-s2-suspended-seller-nav", "result": "fail", "evidence": "With wpss_vendor_profiles.status=suspended the dashboard still shows the full Selling nav (My Services, Proposals, Reviews, Earnings, Portfolio, Analytics) and no restricted Sales-Orders-only nav. UnifiedDashboard::is_suspended_vendor() always evaluates false (static read). Screenshot 05-suspended-dashboard-1440.png."},
+    {"id": "p2-s3-suspended-seller-starts-nothing", "result": "fail", "evidence": "Suspended Maya: POST /wpss/v1/buyer-requests/11507/proposals -> 403 'You must be a vendor to submit proposals.' (refused, but not the specified 'Your vendor account is suspended' wording). AJAX wpss_contact_vendor on Diego's service -> 200 success 'Your message has been sent successfully!'; created conversation 291, message 664, notifications contact_message + new_message to Diego (7832). The REST door and AJAX door disagree. wpss_account_status_block() reads member standing only, not the vendor profile status. Test rows were deleted afterwards."},
+    {"id": "p2-s4-no-plugin-menu-for-edit-posts-seller", "result": "pass", "evidence": "Sofia with contributor role: admin menu = Dashboard, Posts, Media, Comments, Services, Buyer Requests, Profile, Tools; no WP Sell Services top-level item; direct admin.php?page=wpss-orders -> 403. Role removed afterwards."},
+    {"id": "p2-s5-tier-description", "result": "pass", "evidence": "Service page shows saved tier description text 'Copyedit of one readme.txt up to 1,500 words' under its tier."},
+    {"id": "p2-s6-refused-publish-names-what-is-missing", "result": "untested", "evidence": "Incomplete draft published from My Services list stayed draft, but the only message seen after 2s was the page's static service-limit notice, not one naming what is missing; the editor path was not walked. Observation, not confirmed defect. Related: a complete draft (Sofia, 28 of 20) published successfully from the list while at the limit and the same limit notice stayed on screen."},
+    {"id": "p2-s7-my-services-tiles", "result": "pass", "evidence": "Tiles are links: 28 Active / 1 Drafts / 0 Pending Review (All 29) match DB counts; Drafts link lists only the draft; 390px scrollWidth 390 = innerWidth."},
+    {"id": "p2-refused-file-stops-delivery", "result": "pass", "evidence": "Delivering with brand-pack-installer.exe -> notice 'brand-pack-installer.exe: File type could not be verified.'; 0 rows in wpss_deliveries, order stays in_progress."},
+    {"id": "p2-refused-attachment-in-message-notice", "result": "untested", "evidence": "Message attachment refusal notice not exercised."},
+    {"id": "m1-quick-edit-never-changes-moderation", "result": "pass", "evidence": "Quick Edit on approved service: no moderation select; Status dropdown visible (Published/Pending Review/Draft); title saved; stays publish; column still Approved. Buyer Requests Quick Edit status dropdown not opened."},
+    {"id": "m2-admin-publish-is-approval", "result": "pass", "evidence": "Pending service 11406 Quick Edit > Published: post_status publish, _wpss_moderation_status approved, Pending (1) count gone, service_approved notification to vendor. Editor-button path not walked."},
+    {"id": "m3-skip-to-full-editor-saves-draft", "result": "pass", "evidence": "Wizard title filled, Skip to full editor -> post.php?post=13588 status draft in tabbed editor; absent from /services/. Scratch post deleted."}
+  ],
+  "proposed_checks": [
+    "Suspended vendor: wpss_contact_vendor AJAX must refuse and create nothing (REST and AJAX doors agree).",
+    "Dashboard publish of a draft by a vendor at their service limit must be refused (or documented as allowed).",
+    "A brand-new service with zero orders shows '1 order in queue' on its page; check the queue count logic.",
+    "Journey 05 step 6 text refers to an optgroup; the archive filter is a nested list."
+  ],
+  "verdict": "FAIL"
+}

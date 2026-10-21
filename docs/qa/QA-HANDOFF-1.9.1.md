@@ -179,3 +179,9 @@ Per card: PASS (move to Done), BOUNCE (back to Bugs with the failing step, role,
 - **Withdrawals tabs (Free admin):** a Cancelled tab, so the tab counts add up to All.
 - **Member since and orders completed (Free):** the service page seller card and the checkout seller card use the same join date as the vendor profile; the profile's completed-order count no longer counts tips and extensions (it said 4 while the sales list said 2). Existing profiles refresh the next time the vendor has an order or review event.
 - **Not fixed, queued for 1.9.2:** the audit lists (dead AJAX handlers, three My Services renderers, duplicate CSS, Razorpay secrets at rest, notification and form polish) are on the 1.9.2 cards in Ready For Development.
+
+## Found by the combo smoke walk, fixed
+
+- **Suspended vendor (Free):** Contact Seller and every new pre-sale thread are refused for a vendor suspended on the profile; the dashboard keeps Sales Orders only. Check: suspend a vendor, use Contact Seller on another seller's service, open the dashboard.
+- **Order amount limits (Free admin):** minimum and maximum order amount, and every other number setting, clamp to the field's own min and max on save. Negatives already saved are not repaired.
+- **Milestone and extension (Free):** a repeat submit on an already-submitted phase sends no mail or notification; a paid extension that moves the deadline into the future returns a late order to In Progress. Not checked live: the paid-extension path was only checked by test, not by a real payment.
