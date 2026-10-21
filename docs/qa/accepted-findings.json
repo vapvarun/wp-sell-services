@@ -33,34 +33,9 @@
       "reason": "Needs a fresh activation on a clean site; covered by the pristine install of the zips."
     },
     {
-      "id": "J04:s1-breadcrumb-home-vendors",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
-    },
-    {
-      "id": "J04:p2-s8-empty-states",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
-    },
-    {
-      "id": "J11:s5-account-page-notifications-tab",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
-    },
-    {
-      "id": "J14:s1-sub-ratings-optional",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
-    },
-    {
       "id": "J14:s6-signed-out-asked-to-log-in",
       "card": "10427222944",
       "reason": "Intentional behaviour: The review Helpful vote was removed in 1.9.1: readme.txt:279 '* Improve - Removed the review Helpful vote: reviews and the vendor rating already say how a vendor did.' (commit 094611e1; readme.txt:306"
-    },
-    {
-      "id": "J15:s1-profile-timezone-and-links-fields",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J15:s1-vendor-without-profile-row",
@@ -263,6 +238,31 @@
       "id": "J16:s4-tip-tax",
       "fixed_in": "7daf1c5f",
       "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Owner decision 2026-10-21: tips are untaxed by default, with a Tax tips setting to turn it on. tests/test-sub-order-tax.php: a tip stays 12 by default and is 14.40 with Tax tips on; the setting saves and clears. Default case passes on the old code by design, the setting case fails on it."
+    },
+    {
+      "id": "J04:s1-breadcrumb-home-vendors",
+      "fixed_in": "522b82b0",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Vendor directory and profile render Home > Vendors (> name) through the one wpss_render_breadcrumb() helper. tests/test-breadcrumb-helper.php fails on the old code."
+    },
+    {
+      "id": "J04:p2-s8-empty-states",
+      "fixed_in": "522b82b0",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Empty search state used a Lucide icon missing from the bundle (blank). tests/test-lucide-icons-exist.php scans every data-lucide name against the bundle and fails on the old code."
+    },
+    {
+      "id": "J11:s5-account-page-notifications-tab",
+      "fixed_in": "Pro 58f2814",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Pro wires the dead render_notifications_endpoint(): My Account gets a Service notifications tab. Pro tests/test-woo-account-notifications-tab.php, 4 checks fail on the old code."
+    },
+    {
+      "id": "J14:s1-sub-ratings-optional",
+      "fixed_in": "b45d1ba5",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Optional Communication / Quality / Value selects on the review form, forwarded by AJAX and REST, shown on review cards; REST now creates through ReviewService. tests/test-review-sub-ratings.php, 8 checks fail on the old code."
+    },
+    {
+      "id": "J15:s1-profile-timezone-and-links-fields",
+      "fixed_in": "db309d08",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Vendor profile has a Time zone field (form, REST, helper) and every time the vendor sees follows it. tests/test-vendor-timezone.php, 6 of 11 checks fail on the old code."
     }
   ],
   "debug_log_accepted": [],

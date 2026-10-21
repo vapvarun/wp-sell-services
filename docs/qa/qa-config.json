@@ -109,6 +109,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-auto-withdrawal-schedule.php"
    },
    {
+    "id": "breadcrumb-helper",
+    "run": "${WP_CLI:-wp} eval-file tests/test-breadcrumb-helper.php"
+   },
+   {
     "id": "check-skeleton",
     "run": "php bin/check-skeleton.php"
    },
@@ -155,6 +159,10 @@
    {
     "id": "layout-surface-css",
     "run": "${WP_CLI:-wp} eval-file tests/test-layout-surface-css.php"
+   },
+   {
+    "id": "lucide-icons-exist",
+    "run": "${WP_CLI:-wp} eval-file tests/test-lucide-icons-exist.php"
    },
    {
     "id": "milestone-decline-messages",
@@ -257,6 +265,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-review-status-rest.php"
    },
    {
+    "id": "review-sub-ratings",
+    "run": "${WP_CLI:-wp} eval-file tests/test-review-sub-ratings.php"
+   },
+   {
     "id": "seller-levels-rest-earnings",
     "run": "${WP_CLI:-wp} eval-file tests/test-seller-levels-rest-earnings.php"
    },
@@ -303,6 +315,10 @@
    {
     "id": "token-cannot-mint",
     "run": "${WP_CLI:-wp} eval-file tests/test-token-cannot-mint.php"
+   },
+   {
+    "id": "vendor-timezone",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-timezone.php"
    },
    {
     "id": "withdrawal-status-emails",
