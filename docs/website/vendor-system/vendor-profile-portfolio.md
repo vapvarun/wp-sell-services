@@ -16,7 +16,7 @@ Go to **Dashboard > Profile** to edit your information.
 - **Avatar** -- Your profile photo. Use a high-quality image (400x400px minimum).
 - **Cover Image** -- A banner image that appears at the top of your profile page.
 - **Country and City** -- Helps buyers find local vendors and understand your timezone.
-- **Timezone** -- Lets buyers know your working hours.
+- **Time zone** -- Choose your own, or keep *Site default*. Every date and time you see in your dashboard, orders and notifications is shown in it. Times are stored in UTC, so changing it never alters an order.
 - **Website** -- Link to your portfolio site or business website.
 - **Social Links** -- Add your LinkedIn, Twitter, GitHub, or other professional profiles.
 

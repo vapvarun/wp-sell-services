@@ -34,7 +34,9 @@ Buyers can also rate three specific areas:
 | **Quality** | The quality and attention to detail in the delivered work |
 | **Value** | Whether the service was worth the price paid |
 
-Sub-ratings are displayed for buyer information but do not change the overall rating calculation. Only the main star rating counts toward the vendor's average.
+On the review form each one is a dropdown (Not rated, then 5 to 1 stars); leave it on Not rated to skip it. The ones a buyer gave appear under the stars on the review card. Sub-ratings are displayed for buyer information but do not change the overall rating calculation. Only the main star rating counts toward the vendor's average.
+
+The REST API takes them as optional `rating_communication`, `rating_quality` and `rating_value` (1-5) on `POST /reviews` and returns them on every review. A value outside 1-5 is rejected.
 
 ### Written Review (Required)
 
