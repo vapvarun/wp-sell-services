@@ -629,17 +629,17 @@ class ServiceOrder {
 			self::STATUS_ACCEPTED               => __( 'Accepted', 'wp-sell-services' ),
 			self::STATUS_REJECTED               => __( 'Rejected', 'wp-sell-services' ),
 			self::STATUS_PENDING_REQUIREMENTS   => __( 'Waiting for Requirements', 'wp-sell-services' ),
-			self::STATUS_REQUIREMENTS_SUBMITTED => __( 'Requirements Submitted', 'wp-sell-services' ),
+			self::STATUS_REQUIREMENTS_SUBMITTED => __( 'Requirements submitted', 'wp-sell-services' ),
 			self::STATUS_IN_PROGRESS            => __( 'In Progress', 'wp-sell-services' ),
 			self::STATUS_DELIVERED              => __( 'Delivered', 'wp-sell-services' ),
 			self::STATUS_PENDING_APPROVAL       => __( 'Pending Approval', 'wp-sell-services' ),
-			self::STATUS_REVISION_REQUESTED     => __( 'Revision Requested', 'wp-sell-services' ),
+			self::STATUS_REVISION_REQUESTED     => __( 'Revision requested', 'wp-sell-services' ),
 			self::STATUS_COMPLETED              => __( 'Completed', 'wp-sell-services' ),
 			self::STATUS_CANCELLED              => __( 'Cancelled', 'wp-sell-services' ),
 			self::STATUS_DISPUTED               => __( 'Disputed', 'wp-sell-services' ),
 			self::STATUS_ON_HOLD                => __( 'On Hold', 'wp-sell-services' ),
 			self::STATUS_LATE                   => __( 'Late', 'wp-sell-services' ),
-			self::STATUS_CANCELLATION_REQUESTED => __( 'Cancellation Requested', 'wp-sell-services' ),
+			self::STATUS_CANCELLATION_REQUESTED => __( 'Cancellation requested', 'wp-sell-services' ),
 			self::STATUS_REFUNDED               => __( 'Refunded', 'wp-sell-services' ),
 			self::STATUS_PARTIALLY_REFUNDED     => __( 'Partially Refunded', 'wp-sell-services' ),
 		);
@@ -1090,7 +1090,7 @@ class ServiceOrder {
 		// in has_package() so callers can branch on it without string-matching
 		// this localised label.
 		if ( ! $this->has_package() ) {
-			return __( 'Custom', 'wp-sell-services' );
+			return __( 'Custom order', 'wp-sell-services' );
 		}
 
 		// get_package_snapshot() resolves the frozen snapshot first and falls

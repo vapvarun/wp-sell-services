@@ -188,7 +188,7 @@ do_action( 'wpss_before_service_card', $service_id );
 						// just sees the badge as a "ask more questions" hint.
 						?>
 						<span class="wpss-seller-badge wpss-seller-badge--new">
-							<?php esc_html_e( 'New seller', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'New vendor', 'wp-sell-services' ); ?>
 						</span>
 						<?php
 					}

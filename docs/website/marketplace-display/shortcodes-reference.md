@@ -21,7 +21,7 @@ already have most of these in place. See [Pages Setup](../platform-settings/page
 | `[wpss_vendors]` | Vendor directory grid |
 | `[wpss_top_vendors]` | Highest-rated vendors |
 | `[wpss_vendor_profile]` | One vendor's full profile |
-| `[wpss_seller_card]` | One seller's card (avatar, rating, stats) |
+| `[wpss_seller_card]` | One vendor's card (avatar, rating, stats) |
 | `[wpss_buyer_requests]` | Open buyer requests board |
 | `[wpss_post_request]` | Form to submit a buyer request |
 | `[wpss_dashboard]` | Unified buyer/vendor dashboard |
@@ -93,9 +93,9 @@ or above your services grid.
 ```
 
 
-### `[wpss_seller_card]` -- One seller's card
+### `[wpss_seller_card]` -- One vendor's card
 
-Renders a single seller card: avatar, name, rating, stats and a link through to
+Renders a single vendor card: avatar, name, rating, stats and a link through to
 their profile. It wraps the `wpss/seller-card` block rather than re-rendering the
 markup, so the block and the shortcode cannot drift apart.
 
@@ -112,7 +112,7 @@ specific.
 |-----------|---------|--------------|
 | `user_id` | `0` | Whose card to show. `0` uses the vendor being viewed. |
 | `layout` | `vertical` | `vertical` or `horizontal`. |
-| `show_bio` | `true` | Show the seller's short bio. |
+| `show_bio` | `true` | Show the vendor's short bio. |
 | `show_stats` | `true` | Show order and completion stats. |
 | `show_rating` | `true` | Show the star rating. |
 | `show_services` | `true` | Show a count of their live services. |

@@ -66,7 +66,7 @@ class ServiceCategoryTaxonomy {
 			'singular_name'              => _x( 'Service Category', 'taxonomy singular name', 'wp-sell-services' ),
 			'search_items'               => __( 'Search Categories', 'wp-sell-services' ),
 			'popular_items'              => __( 'Popular Categories', 'wp-sell-services' ),
-			'all_items'                  => __( 'All Categories', 'wp-sell-services' ),
+			'all_items'                  => __( 'All categories', 'wp-sell-services' ),
 			'parent_item'                => __( 'Parent Category', 'wp-sell-services' ),
 			'parent_item_colon'          => __( 'Parent Category:', 'wp-sell-services' ),
 			'edit_item'                  => __( 'Edit Category', 'wp-sell-services' ),
@@ -140,7 +140,7 @@ class ServiceCategoryTaxonomy {
 			<input type="hidden" name="wpss_category_image" id="wpss-category-image" value="">
 			<div id="wpss-category-image-preview"></div>
 			<button type="button" class="button wpss-upload-image" data-target="wpss-category-image"><?php esc_html_e( 'Upload Image', 'wp-sell-services' ); ?></button>
-			<button type="button" class="button wpss-remove-image" data-target="wpss-category-image" style="display:none;"><?php esc_html_e( 'Remove Image', 'wp-sell-services' ); ?></button>
+			<button type="button" class="button wpss-remove-image" data-target="wpss-category-image" style="display:none;"><?php esc_html_e( 'Remove image', 'wp-sell-services' ); ?></button>
 		</div>
 
 		<div class="form-field term-color-wrap">
@@ -192,7 +192,7 @@ class ServiceCategoryTaxonomy {
 					<?php endif; ?>
 				</div>
 				<button type="button" class="button wpss-upload-image" data-target="wpss-category-image"><?php esc_html_e( 'Upload Image', 'wp-sell-services' ); ?></button>
-				<button type="button" class="button wpss-remove-image" data-target="wpss-category-image" <?php echo $image_id ? '' : 'style="display:none;"'; ?>><?php esc_html_e( 'Remove Image', 'wp-sell-services' ); ?></button>
+				<button type="button" class="button wpss-remove-image" data-target="wpss-category-image" <?php echo $image_id ? '' : 'style="display:none;"'; ?>><?php esc_html_e( 'Remove image', 'wp-sell-services' ); ?></button>
 			</td>
 		</tr>
 

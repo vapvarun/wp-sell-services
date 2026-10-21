@@ -393,33 +393,57 @@ class ReportsController extends RestController {
 	}
 
 	/**
-	 * Close a report.
+	 * Close one open report and tell the reporter. The one writer: the REST route
+	 * and the admin queue both call it.
 	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
+	 * @param int    $report_id  Report ID.
+	 * @param string $resolution `upheld` or `dismissed`.
+	 * @return bool False when the report was not open.
 	 */
-	public function resolve_item( $request ) {
+	public static function resolve_report( int $report_id, string $resolution ): bool {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'wpss_reports';
-		$id    = (int) $request->get_param( 'id' );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$updated = $wpdb->update(
 			$table,
 			array(
 				'status'      => 'resolved',
-				'resolution'  => (string) $request->get_param( 'resolution' ),
+				'resolution'  => $resolution,
 				'resolved_by' => get_current_user_id(),
 				'resolved_at' => current_time( 'mysql', true ),
 			),
 			array(
-				'id'     => $id,
+				'id'     => $report_id,
 				'status' => 'open',
 			),
 			array( '%s', '%s', '%d', '%s' ),
 			array( '%d', '%s' )
 		);
+
+		if ( ! $updated ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$reporter_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT reporter_id FROM {$table} WHERE id = %d", $report_id ) );
+
+		if ( $reporter_id > 0 ) {
+			( new \WPSellServices\Services\NotificationService() )->send( $reporter_id, 'report_resolved', array( 'resolution' => $resolution ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Close a report.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function resolve_item( $request ) {
+		$updated = self::resolve_report( (int) $request->get_param( 'id' ), (string) $request->get_param( 'resolution' ) );
 
 		// Scoped to status = 'open' so two moderators working the queue at once
 		// cannot both "resolve" the same row and have the second silently

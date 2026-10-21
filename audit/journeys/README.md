@@ -26,6 +26,8 @@ None of those fail a unit test. All of them fail a journey.
 
 1. Log in as the stated role. Use `?autologin=<login>` on the local sandbox
    (see the mu-plugin in the root `CLAUDE.md`); never hand-fill login forms.
+   Autologin does nothing when a session already exists, so log out first
+   (the confirm link on `/wp-login.php?action=logout`) before switching role.
 2. Walk the steps **in order**, in the browser.
 3. Check each **Expect** line as you go, not at the end.
 4. Where a step says *computed style*, actually read it — themes override
@@ -50,7 +52,7 @@ not journeys.
 |---|---|---|
 | Visitor | (logged out) | public catalog, vendors, requests, sign-up |
 | Buyer | `subscriber` | holds no `wpss_*` capability |
-| Seller | `wpss_vendor` | an ACTIVE row in `wpss_vendor_profiles` is what makes a vendor |
+| Vendor | `wpss_vendor` | an ACTIVE row in `wpss_vendor_profiles` is what makes a vendor |
 | Admin | `administrator` | the site owner |
 
 Users and data are created by the walk (or `bin/qa-fixtures.sh` for users). Do not rely on any named account.
@@ -59,16 +61,16 @@ Users and data are created by the walk (or `bin/qa-fixtures.sh` for users). Do n
 
 | Journey | Role and flow | Rail |
 |---|---|---|
-| `01-buyer-hires-seller.md` | buyer posts a request, sellers propose, buyer accepts and pays | standalone |
-| `02-dispute.md` | buyer and seller dispute an order, admin decides | standalone, woo |
+| `01-buyer-hires-seller.md` | buyer posts a request, vendors propose, buyer accepts and pays | standalone |
+| `02-dispute.md` | buyer and vendor dispute an order, admin decides | standalone, woo |
 | `03-install-and-upgrade.md` | admin installs, upgrades from the previous release, first-run setup | standalone |
 | `04-visitor-browses-and-views-service.md` | visitor finds vendors and services, opens a service with a video | standalone, woo |
-| `05-vendor-creates-a-service.md` | seller creates and publishes a service; account standing limits new work | standalone, woo |
+| `05-vendor-creates-a-service.md` | vendor creates and publishes a service; account standing limits new work | standalone, woo |
 | `06-standalone-checkout.md` | buyer pays on the standalone rail | standalone |
 | `07-buyer-pays-woo-rail.md` | guest add-to-cart, carrier product, plan limits on the Woo rail | woo |
 | `08-api-client-acts-as-each-role.md` | app token session and API writes match the screens | standalone, woo |
 | `09-request-files-to-order.md` | request files follow into the order | standalone |
-| `10-vendor-withdrawal-payout.md` | seller requests a payout, admin approves and marks paid | standalone |
+| `10-vendor-withdrawal-payout.md` | vendor requests a payout, admin approves and marks paid | standalone |
 | `11-member-notifications.md` | member finds, filters and reads notifications | standalone, woo |
 | `12-admin-configures-the-plugin.md` | every admin screen and Settings tab | standalone, woo |
 | `13-admin-moderates-and-manages.md` | moderation, reviews, vendors, reports, orders, audit log | standalone, woo |
@@ -81,7 +83,7 @@ Walk dates and results are recorded in `.qa-results/walks.json`, not in these fi
 ## Not yet written
 
 Wallet providers (TeraWallet, myCred), Razorpay, Stripe Connect and PayPal payouts, EDD and FluentCart rails
-(beta), vendor subscription plan purchase, seller levels, the blocks and shortcodes, recurring services (switched off).
+(beta), vendor subscription plan purchase, vendor levels, the blocks and shortcodes, recurring services (switched off).
 
 ## Two things these journeys have taught, the hard way
 

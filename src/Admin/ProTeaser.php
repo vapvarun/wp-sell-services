@@ -235,7 +235,7 @@ class ProTeaser {
 				<?php esc_html_e( 'Unlock revenue charts, auto-payouts, wallet integrations, and detailed analytics with Pro.', 'wp-sell-services' ); ?>
 			</p>
 			<a href="<?php echo esc_url( $upgrade_url ); ?>" class="wpss-pro-teaser__cta">
-				<?php esc_html_e( 'Learn More', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?>
 			</a>
 		</div>
 		<?php
@@ -264,7 +264,7 @@ class ProTeaser {
 				<?php esc_html_e( 'Enable recurring billing for subscription-based services with Pro.', 'wp-sell-services' ); ?>
 			</p>
 			<a href="<?php echo esc_url( $upgrade_url ); ?>" class="wpss-pro-teaser__cta">
-				<?php esc_html_e( 'Learn More', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?>
 			</a>
 		</div>
 		<?php

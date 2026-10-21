@@ -15,7 +15,7 @@ Services > Settings > Pages**. You do not have to create any of them by hand.
 | **Dashboard** | `dashboard` | The unified account area for buyers and vendors | Yes |
 | **Become a Vendor** | `become-vendor` | The registration page for users who want to sell | Yes |
 | **Service Checkout** | `service-checkout` | The checkout page for standalone mode purchases | Yes |
-| **Vendors** | `vendors` | A directory of every approved seller, sorted by rating | No |
+| **Vendors** | `vendors` | A directory of every approved vendor, sorted by rating | No |
 | **Service Cart** | `service-cart` | Where buyers review selected services before checkout | No |
 | **Create Account** | `create-account` | The marketplace's own registration form. When mapped, every Register link on the site goes to it | No |
 | **Log In** | `login` | The marketplace's own sign-in form. When mapped, every Log in link on the site goes to it. Created on new installs only, see below | No |
@@ -112,9 +112,9 @@ This page handles the standalone checkout flow -- billing details, order review,
 2. Add the `[wpss_vendors]` shortcode (or the vendor directory block)
 3. Publish and assign it in **Settings > Pages**
 
-This is the public directory of approved sellers, sorted by rating. It gives
+This is the public directory of approved vendors, sorted by rating. It gives
 buyers a way in through the person rather than the service, which matters on a
-marketplace where people come back to a seller they already trust.
+marketplace where people come back to a vendor they already trust.
 
 ### Service Cart Page
 
@@ -136,7 +136,7 @@ six, using a block or shortcode on any page you like:
 | Page | What to Add |
 |------|------------|
 | **Featured Services** | A curated showcase of your best services |
-| **Top Vendors** | Your highest-rated sellers |
+| **Top Vendors** | Your highest-rated vendors |
 | **Buyer Requests** | The request board with a "Post a Request" form |
 
 See [Shortcodes Reference](../marketplace-display/shortcodes-reference.md) for

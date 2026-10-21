@@ -92,7 +92,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/browse-services',
 			array(
-				'label'               => __( 'Browse Services', 'wp-sell-services' ),
+				'label'               => __( 'Browse services', 'wp-sell-services' ),
 				'description'         => __( 'Search and browse services by category, price, rating, and delivery time.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(
@@ -263,7 +263,7 @@ class AbilitiesRegistrar {
 						'tags'        => array(
 							'type'        => 'array',
 							'items'       => array( 'type' => 'string' ),
-							'description' => __( 'Service tags.', 'wp-sell-services' ),
+							'description' => __( 'Service tags', 'wp-sell-services' ),
 						),
 					),
 					'additionalProperties' => false,
@@ -361,7 +361,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/send-message',
 			array(
-				'label'               => __( 'Send Message', 'wp-sell-services' ),
+				'label'               => __( 'Send message', 'wp-sell-services' ),
 				'description'         => __( 'Send a message in an order conversation.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(
@@ -535,7 +535,7 @@ class AbilitiesRegistrar {
 						),
 						'budget'      => array(
 							'type'        => 'number',
-							'description' => __( 'Maximum budget.', 'wp-sell-services' ),
+							'description' => __( 'Maximum budget', 'wp-sell-services' ),
 						),
 						'category'    => array(
 							'type'        => 'integer',
@@ -595,7 +595,7 @@ class AbilitiesRegistrar {
 						),
 						'price'         => array(
 							'type'        => 'number',
-							'description' => __( 'Proposed price.', 'wp-sell-services' ),
+							'description' => __( 'Proposed price', 'wp-sell-services' ),
 						),
 						'delivery_days' => array(
 							'type'        => 'integer',

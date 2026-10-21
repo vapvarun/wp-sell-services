@@ -141,13 +141,13 @@ do_action( 'wpss_before_service_packages', $service_id );
 							<span class="wpss-detail-icon wpss-icon-clock">
 								<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
 							</span>
-							<span class="wpss-detail-label"><?php esc_html_e( 'Delivery Time', 'wp-sell-services' ); ?></span>
+							<span class="wpss-detail-label"><?php esc_html_e( 'Delivery time', 'wp-sell-services' ); ?></span>
 							<span class="wpss-detail-value">
 								<?php
 								$days = (int) $delivery_days_value;
 								printf(
 									/* translators: %d: number of days */
-									esc_html( _n( '%d Day', '%d Days', $days, 'wp-sell-services' ) ),
+									esc_html( _n( '%d day', '%d days', $days, 'wp-sell-services' ) ),
 									absint( $days )
 								);
 								?>
@@ -227,7 +227,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 						?>
 						<a href="<?php echo esc_url( $dashboard_edit_url ); ?>"
 							class="wpss-btn wpss-btn--secondary wpss-btn--block">
-							<?php esc_html_e( 'Edit Service', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Edit service', 'wp-sell-services' ); ?>
 						</a>
 					<?php else : ?>
 						<?php
@@ -265,11 +265,11 @@ do_action( 'wpss_before_service_packages', $service_id );
 								if ( ! empty( $wpss_vacation['return_date_display'] ) ) {
 									printf(
 										/* translators: %s: formatted return date */
-										esc_html__( 'Seller is on vacation. Orders resume on %s.', 'wp-sell-services' ),
+										esc_html__( 'Vendor is on vacation. Orders resume on %s.', 'wp-sell-services' ),
 										esc_html( $wpss_vacation['return_date_display'] )
 									);
 								} else {
-									esc_html_e( 'Seller is on vacation and not accepting new orders right now.', 'wp-sell-services' );
+									esc_html_e( 'Vendor is on vacation and not accepting new orders right now.', 'wp-sell-services' );
 								}
 								?>
 							</p>
@@ -408,7 +408,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 			</button>
 			<div class="wpss-contact-seller">
 				<button type="button" class="wpss-contact-link" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
-					<?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Contact Vendor', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 		</div>

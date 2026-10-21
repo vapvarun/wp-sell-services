@@ -1,6 +1,6 @@
-# Journey 01 - Buyer hires a seller from a request
+# Journey 01 - Buyer hires a vendor from a request
 
-**Roles:** buyer (`subscriber`), two sellers (`wpss_vendor`), admin
+**Roles:** buyer (`subscriber`), two vendors (`wpss_vendor`), admin
 **Rail:** standalone
 **Status:** rewritten 2026-10-18; walk pending (see .qa-results/walks.json)
 
@@ -9,12 +9,12 @@ Guards cards 10208094430, 10208094503, 10208094640, 10208199238.
 ## Preconditions
 
 - Buyer request open (`status = open`), owned by the buyer.
-- Two sellers who have not yet proposed on it.
+- Two vendors who have not yet proposed on it.
 - `wpss_orders[allow_disputes]` irrelevant here.
 
 ## Steps
 
-### 1. Seller A submits a proposal
+### 1. Vendor A submits a proposal
 Post a proposal with a price and delivery days.
 
 **Expect**
@@ -27,7 +27,7 @@ Post a proposal with a price and delivery days.
 Dashboard → Notifications.
 
 **Expect**
-- A **"New proposal received"** row naming the seller and the bid price.
+- A **"New proposal received"** row naming the vendor and the bid price.
 - Icon is a **briefcase**, not a generic bell.
 - The literal text "You have a new notification" must **not** appear — that is
   `NotificationService::send()`'s `default:` branch and means the type has no
@@ -40,19 +40,19 @@ Click the notification title.
 - It is an `<a>`, not inert text (`action_url` populated).
 - Lands on the buyer request showing its proposals.
 
-### 4. Seller B also proposes
-Second seller submits on the same request.
+### 4. Vendor B also proposes
+Second vendor submits on the same request.
 
 **Expect** buyer sees a second "New proposal received".
 
-### 5. Buyer hires Seller A
+### 5. Buyer hires Vendor A
 Accept A's proposal.
 
 **Expect**
 - An order is created, `platform = 'request'`, `status = pending_payment`.
-- **Seller A** gets "Your proposal was accepted", naming the request and the
+- **Vendor A** gets "Your proposal was accepted", naming the request and the
   order number — *not* "Notification / You have a new notification".
-- **Seller B** gets "Proposal not selected", and B's proposal status is
+- **Vendor B** gets "Proposal not selected", and B's proposal status is
   `rejected`. Silence here is the old bug: `reject_other_proposals()` used to
   bulk-UPDATE and fire nothing.
 
@@ -85,7 +85,7 @@ Then confirm it is not a dead end: wp-admin → the order → the
 checkout failed to record the rail the order can never be confirmed by anyone.
 Mark as Paid → status `pending_requirements`, `payment_status = paid`.
 
-Seller earnings are NOT credited here. `CommissionService::record()` runs on
+Vendor earnings are NOT credited here. `CommissionService::record()` runs on
 transition to `completed` (escrow), so an empty `wpss_wallet_transactions` at
 this point is correct.
 
@@ -108,12 +108,12 @@ Open Deliver Work, Open Dispute and Quote Extra Work on an order, then the same 
 ## Regression checks
 
 - 390px on every screen above.
-- Seller proposing on their **own** request notifies nobody.
+- Vendor proposing on their **own** request notifies nobody.
 
 ### One completion email (combo-walk 1.9.0)
 Complete an order as the buyer (accept delivery) with Mailpit open.
 
-**Expect** exactly one "Completed" email to the buyer and one to the seller; no second plain copy titled "Order Completed". Guard: `static:notification-no-double-email`.
+**Expect** exactly one "Completed" email to the buyer and one to the vendor; no second plain copy titled "Order Completed". Guard: `static:notification-no-double-email`.
 
 ### Order again (card:9696986584)
 As the buyer, open a completed order that was bought from a package.

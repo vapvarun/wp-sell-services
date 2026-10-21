@@ -98,8 +98,8 @@ balance, and the REST API reports the balance state.
 
 ## Can buyers mark a review as helpful?
 
-**YES** since 1.9.0. The Helpful vote can be toggled off, is remembered, and
-is refused on your own review. Only approved reviews take votes.
+**NO.** Removed in 1.9.1. The reviews and the seller's rating say whether a seller is good; a vote on
+top of them adds a third party the buyer does not need.
 
 ## Can I take a commission?
 

@@ -48,7 +48,7 @@ Verified on a stock install:
 > activates**, appearing in the vendor directory and able to publish services,
 > regardless of your vendor-registration setting.
 >
-> On a blog with contributors who are not sellers, that is probably not what you
+> On a blog with contributors who are not vendors, that is probably not what you
 > want. Strip it after activation:
 >
 > ```php

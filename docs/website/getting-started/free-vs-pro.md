@@ -29,7 +29,7 @@ All of these are fully available in both versions -- nothing is held back:
 - Complete order workflow (10+ statuses) with messaging and file attachments
 - Delivery management with revisions and deadline extensions
 - 5-star reviews, dispute resolution, and buyer requests with proposals
-- Vendor and buyer dashboards, 4 seller levels (New Seller, Rising Seller, Top Rated, Pro Seller), portfolios, vacation mode
+- Vendor and buyer dashboards, 4 vendor levels (New Vendor, Rising Vendor, Top Rated, Pro Vendor), portfolios, vacation mode
 - In-app notifications and switchable email notification types
 - 6 page-building blocks, mobile-responsive templates, and theme customization
 
@@ -189,7 +189,7 @@ No. The free version includes its own checkout with Stripe, PayPal, and offline 
 Your **marketplace** keeps running -- services, orders, messaging, deliveries, disputes, reviews, commission, earnings, and withdrawals all live in the free plugin and are unaffected. But **Pro features stop loading** until you renew: Stripe Connect, wallets, tiered commission, vendor subscriptions, white label, cloud storage, analytics, display currency, and the raised service limits. No data is deleted, and reactivating restores everything as it was. See [License Activation](pro-license.md).
 
 **Is per-vendor commission a Pro feature?**
-No. Per-vendor commission rates are included in the free version. You can set different rates for individual vendors right out of the box. Pro adds *tiered* rules that resolve automatically by category, seller level, or sales volume.
+No. Per-vendor commission rates are included in the free version. You can set different rates for individual vendors right out of the box. Pro adds *tiered* rules that resolve automatically by category, vendor level, or sales volume.
 
 **Are automatic withdrawals a Pro feature?**
 No. Scheduled auto-withdrawals ship in the free plugin. Pro adds the bulk payment rails on top -- PayPal mass payouts and Stripe Connect.

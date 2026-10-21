@@ -20,11 +20,20 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 1.7.1
  *
+ * A settings screen that never echoes a secret submits '' to mean "keep it", so
+ * pass the stored value as $keep and the result is always safe to write back.
+ * A value already carrying the `enc:` prefix is not wrapped twice.
+ *
  * @param string $plain Value to protect.
+ * @param string $keep  Stored value returned when $plain is empty.
  * @return string Encrypted value, or the input unchanged when OpenSSL is unavailable.
  */
-function wpss_encrypt_secret( string $plain ): string {
-	if ( '' === $plain || ! function_exists( 'openssl_encrypt' ) ) {
+function wpss_encrypt_secret( string $plain, string $keep = '' ): string {
+	if ( '' === $plain ) {
+		return $keep;
+	}
+
+	if ( 0 === strpos( $plain, 'enc:' ) || ! function_exists( 'openssl_encrypt' ) ) {
 		return $plain;
 	}
 

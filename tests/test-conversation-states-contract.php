@@ -74,7 +74,7 @@ foreach ( $explained as $status ) {
 // The pre-payment case must name the step that unlocks it rather than only
 // saying it is shut.
 wpss_t(
-	false !== strpos( $tpl, 'You can message this seller once the order is paid.' ),
+	false !== strpos( $tpl, 'You can message this vendor once the order is paid.' ),
 	'the pre-payment reason says WHEN messaging opens, not just that it is closed'
 );
 

@@ -482,6 +482,11 @@ final class Plugin {
 				\WPSellServices\Database\UtcMigration::repair_request_deadlines();
 			}
 
+			// 1.9.1 removed the review Helpful vote: drop its daily sweep and the vote rows it left.
+			if ( $installed_version && version_compare( $installed_version, '1.9.1', '<' ) ) {
+				self::remove_helpful_votes();
+			}
+
 			// Note: the wallet-ledger reconciliation is NOT here. It runs off its
 			// own wpss_ledger_reconciled flag at the top of this method, so it
 			// cannot be missed by a release that forgets to bump the version.
@@ -1532,35 +1537,40 @@ final class Plugin {
 			3
 		);
 
-		// Review created notification + email.
+		// Tell the seller about a review once it is live. A review held for
+		// moderation tells nobody; approving it from the queue does.
+		$tell_vendor_of_review = function ( int $review_id ) use ( $notification_service, $email_service ): void {
+			global $wpdb;
+			$review = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->prepare(
+					"SELECT * FROM {$wpdb->prefix}wpss_reviews WHERE id = %d",
+					$review_id
+				)
+			);
+			if ( ! $review || \WPSellServices\Models\Review::STATUS_APPROVED !== $review->status ) {
+				return;
+			}
+
+			$notification_service->notify_review_received( $review_id, (int) $review->order_id );
+
+			$buyer_name = \WPSellServices\Models\Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null );
+
+			$email_service->send_review_received(
+				$review_id,
+				(int) $review->vendor_id,
+				(int) $review->rating,
+				(string) ( $review->review ?? '' ),
+				$buyer_name,
+				(int) $review->service_id
+			);
+		};
+		$this->loader->add_action( 'wpss_review_created', $tell_vendor_of_review, null, 10, 1 );
 		$this->loader->add_action(
-			'wpss_review_created',
-			function ( int $review_id, int $order_id ) use ( $notification_service, $email_service ): void {
-				$notification_service->notify_review_received( $review_id, $order_id );
-
-				// CB4 (plans/ORDER-FLOW-AUDIT.md): also email the vendor with
-				// the review excerpt + deep link. Pulls the saved review row
-				// to fetch rating + comment.
-				global $wpdb;
-				$review = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-					$wpdb->prepare(
-						"SELECT * FROM {$wpdb->prefix}wpss_reviews WHERE id = %d",
-						$review_id
-					)
-				);
-				if ( ! $review ) {
-					return;
+			'wpss_review_moderated',
+			function ( int $review_id, string $new_status ) use ( $tell_vendor_of_review ): void {
+				if ( \WPSellServices\Models\Review::STATUS_APPROVED === $new_status ) {
+					$tell_vendor_of_review( $review_id );
 				}
-				$buyer_name = \WPSellServices\Models\Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null );
-
-				$email_service->send_review_received(
-					$review_id,
-					(int) $review->vendor_id,
-					(int) $review->rating,
-					(string) ( $review->review ?? '' ),
-					$buyer_name,
-					(int) $review->service_id
-				);
 			},
 			null,
 			10,
@@ -1861,6 +1871,29 @@ final class Plugin {
 			4
 		);
 
+		// Milestone revision requested - buyer sent the phase back; the seller must act.
+		$this->loader->add_action(
+			'wpss_milestone_revision_requested',
+			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id, string $reason ) use ( $notification_service, $email_service ): void {
+				unset( $customer_id );
+				$notification_service->send(
+					$vendor_id,
+					'milestone_revision_requested',
+					array(
+						'order_id'     => $parent_order_id,
+						'milestone_id' => $milestone_id,
+					)
+				);
+				$milestone = wpss_get_order( $milestone_id );
+				if ( $milestone ) {
+					$email_service->send_milestone_revision_requested( $milestone, $reason );
+				}
+			},
+			null,
+			10,
+			5
+		);
+
 		// Milestone approved - buyer accepted the delivery; the phase has just
 		// been credited to the vendor. Notify them.
 		$this->loader->add_action(
@@ -2000,7 +2033,7 @@ final class Plugin {
 				// Warn both parties so nobody assumes the paid phase auto-refunded.
 				$body = sprintf(
 					/* translators: %d: count of paid phases */
-					esc_html__( 'Project cancelled while %d milestone was already paid. Money has moved to the seller wallet; open a dispute if the work cannot be accepted.', 'wp-sell-services' ),
+					esc_html__( 'Project cancelled while %d milestone was already paid. Money has moved to the vendor wallet; open a dispute if the work cannot be accepted.', 'wp-sell-services' ),
 					count( $open_paid )
 				);
 				$data = array( 'order_id' => $order_id );
@@ -2291,6 +2324,20 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Remove what the retired review Helpful vote left behind.
+	 *
+	 * @return void
+	 */
+	public static function remove_helpful_votes(): void {
+		global $wpdb;
+
+		\WPSellServices\Services\Scheduler::unschedule_all( 'wpss_cleanup_review_votes' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( '_wpss_vote_' ) . '%' ) );
+	}
+
 	/**
 	 * Return services that went live without approval to the moderation queue.
 	 *

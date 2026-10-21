@@ -12,7 +12,7 @@ No. WP Sell Services works completely standalone with its own built-in checkout,
 
 ### How do I change the commission rate?
 
-Go to **Sell Services > Settings > Commission & Tax** and set a platform-wide percentage (0-50%, default 10%). Per-vendor rates are also included free -- open a vendor under **Sell Services > Vendors** and give them their own rate, which overrides the global one. Pro adds **tiered** rules on top: rates that resolve automatically by category, seller level, or sales volume.
+Go to **Sell Services > Settings > Commission & Tax** and set a platform-wide percentage (0-50%, default 10%). Per-vendor rates are also included free -- open a vendor under **Sell Services > Vendors** and give them their own rate, which overrides the global one. Pro adds **tiered** rules on top: rates that resolve automatically by category, vendor level, or sales volume.
 
 ### Can vendors set their own prices?
 
@@ -112,7 +112,7 @@ Go to **Settings > Pages > Log In** and choose **None (use this site's own login
 
 ### A buyer cannot remove a file from their request
 
-A seller has already sent a proposal on it. Files attached before a proposal stay on the request so every seller and the admin can see the brief the proposals were priced against. The buyer can still add files.
+A vendor has already sent a proposal on it. Files attached before a proposal stay on the request so every vendor and the admin can see the brief the proposals were priced against. The buyer can still add files.
 
 ### A service is missing from a services grid
 

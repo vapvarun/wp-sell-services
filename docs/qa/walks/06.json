@@ -1,0 +1,29 @@
+{
+  "journey": "06",
+  "sha_free": "c21a7c05",
+  "sha_pro": "e4ac7141",
+  "env": { "site": "http://wp-sell-services.local", "theme": "reign-theme", "rail": "standalone (ecommerce_platform set to standalone for this walk, restored to auto)", "wp": "7.1.3" },
+  "ran_at": "2026-10-20T22:55:00Z",
+  "checks": [
+    { "id": "s1-page-contained", "result": "pass", "evidence": "/service-checkout/11411/?package=0 as Ella: [data-wpss-auto-container] max-width none, padding 0 (theme owns container); content 1140px in a 1440 viewport; scrollWidth 1440 === clientWidth 1440. Second theme (stock block theme) not walked: gate-parameters scope says Reign only" },
+    { "id": "s2-390-no-scroll-guarantees-wrap", "result": "pass", "evidence": "390: scrollWidth 390 === clientWidth 390; with checkout badges enabled .wpss-co-guarantees-bar children sit on 3 distinct rows (wrapped), container 360px" },
+    { "id": "s3-logged-out-can-reach-payment", "result": "pass", "evidence": "checkout_account_creation OFF (default): logged-out sees 'Sign in to continue / Log In / Register'. ON: logged-out sees billing form (first/last name, address, email, payment methods stripe/offline/test) and Pay button" },
+    { "id": "s4-account-created-and-signed-in-same-request", "result": "pass", "evidence": "Guest Tomas Brandt filled billing and chose Bank transfer, Place order -> landed on /dashboard/orders/3887/ signed in (body.logged-in, header 'Tomas Brandt'); DB: wpss_orders.customer_id=9698 (new subscriber tomas.brandt), no 'Security check failed'" },
+    { "id": "s5-offline-records-method", "result": "pass", "evidence": "wpss_orders#3887 payment_method='offline' (not NULL), status pending_payment; buyer order page shows 'Order placed and waiting for your payment' and 'How to pay by Bank transfer' + the IBAN text; admin order screen shows 'Awaiting Confirmation' with Mark as Paid button. NOTE: the proof-of-payment upload (input[type=file] accept image/*,.pdf, 'Receipt or screenshot') only renders once wpss_offline_receipt_settings[enabled] is on (default off on this site) - after enabling it showed at 1440 and 390" },
+    { "id": "s6-admin-confirms-vendor-credited-once", "result": "pass", "evidence": "Admin Mark as Paid via plugin confirm dialog (role=dialog, focus on Cancel) -> status in_progress, payment_status paid; replaying the same admin-ajax call returned {success:false,'Order is not awaiting payment.'}; wpss_wallet_transactions rows for order 3887 = 0 before and after (earnings credit happens on completion per journey 01 step 7). Doc conflict: journey 06 step 6 says 'vendor credited exactly once' on mark paid, journey 01 says NOT credited yet" },
+    { "id": "s7-mapped-page-route", "result": "pass", "evidence": "Cart -> Proceed to Checkout lands on /service-checkout/ (mapped page): H1 Checkout, content ~810px centred inside the Reign container, scrollWidth == viewport at 1440 and 390; empty mapped page shows 'Your cart is empty / Browse Services'" },
+    { "id": "s8-tax-single-item", "result": "pass", "evidence": "Tax on, label VAT, 20%: single-service checkout summary 'Basic $35.00 / VAT (20%) $7.00 / Total $42.00', button 'Pay $42.00'" },
+    { "id": "s8-tax-cart-of-two-reads-rate", "result": "fail", "evidence": "Cart of 2 services ($35 + $35) at /cart/: summary reads '2 items $70.00 / VAT $14.00 / Total $84.00' - the label has no '(20%)' although both lines carry the same 20% (journey: both summaries read 'VAT (20%)'; label-alone is only for mixed rates). Total 84.00 equals 'You will be charged $84.00'" },
+    { "id": "s8-blank-label-stores-tax", "result": "pass", "evidence": "Settings > Commission & Tax: label cleared, 'Save Tax Configuration' -> 'Settings saved.', wpss_tax.tax_label = 'Tax' in DB and field re-renders 'Tax'" },
+    { "id": "s8-per-seller-rate-filter", "result": "untested", "evidence": "wpss_checkout_tax_rate filter needs a code snippet on the site; no mu-plugin allowed in this verification-only run" },
+    { "id": "sidebar-cards-never-overlap", "result": "pass", "evidence": "1440x900 scrolled 0..1419 in 100px steps: Order Summary / About the Seller / What happens next bounding boxes never intersect (0 overlaps at every step); at 390 order is Service Details (y345) > Order Summary (y780) > What happens next (y1308) > Payment Method (y1709) > About the Seller (y2324), scrollWidth 390" },
+    { "id": "legal-links-no-empty-terms", "result": "pass", "evidence": "No Terms page mapped: checkout text has no 'Terms' link or empty link" },
+    { "id": "closed-order-not-already-paid", "result": "pass", "evidence": "?pay_order=2320 (cancelled) as owner Lucas Moore -> /service-checkout/pay/2320/ reads 'This order was cancelled and can no longer be paid. Back to order'; no 'already been paid' text. Refunded-order variant: no standalone refunded order on this site" },
+    { "id": "stripe-api-404-console", "result": "pass", "evidence": "Console shows 2 errors 'Failed to load resource 404 https://api.stripe.com/v1/consumers/sessions/lookup' on checkout - third-party Stripe.js test-mode traffic, origin 'for', not counted" }
+  ],
+  "proposed_checks": [
+    { "id": "cart-tax-label-shows-rate", "note": "Cart summary should read the same 'VAT (20%)' as the single-item checkout when every line has the same rate." },
+    { "id": "doc-j06-s6-vs-j01-s7", "note": "Journey 06 step 6 says vendor is credited on Mark paid; journey 01 step 7 says earnings are NOT credited until completion. Observed behaviour matches journey 01." }
+  ],
+  "verdict": "FAIL"
+}

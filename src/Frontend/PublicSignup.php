@@ -158,19 +158,15 @@ class PublicSignup {
 
 		$redirect_url = (string) ( wpss_get_page_url( 'dashboard' ) ?: home_url() );
 
-		// If the visitor came in to become a vendor, immediately promote them
-		// using the existing VendorService. The same registration mode rules
-		// apply — open mode = active vendor, approval mode = pending.
+		// create_account() already promoted a vendor intent through VendorService,
+		// honouring the open/approval/closed mode. If neither an active vendor
+		// nor a pending application resulted, say so instead of failing silently.
 		if ( 'vendor' === $intent ) {
 			$vendor_service = new VendorService();
-			$result         = $vendor_service->register( (int) $user_id );
 
-			if ( false === $result ) {
-				// User is created + signed in even if vendor promotion failed —
-				// they can retry from the logged-in dashboard. Surface a friendly
-				// notice but still redirect. `register()` returns bool (not
-				// WP_Error), so we send a generic message; specific failure
-				// reasons are logged inside VendorService::register().
+			if ( ! $vendor_service->is_vendor( (int) $user_id ) && ! $vendor_service->has_pending_application( (int) $user_id ) ) {
+				// register() returns bool (not WP_Error); the reason is logged
+				// inside VendorService::register().
 				wp_send_json_success(
 					array(
 						'redirect' => $redirect_url,
@@ -500,6 +496,12 @@ class PublicSignup {
 		 * @param int    $user_id  The newly-created user ID.
 		 * @param string $intent   Signup intent: 'buyer' or 'vendor'.
 		 */
+		// The one place a vendor intent is promoted, so the signup form, checkout
+		// and the REST register all follow the site's vendor registration mode.
+		if ( 'vendor' === $intent ) {
+			( new VendorService() )->register( $user_id );
+		}
+
 		do_action( 'wpss_public_signup_complete', $user_id, $intent );
 
 		return $user_id;

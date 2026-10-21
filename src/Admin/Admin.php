@@ -607,7 +607,7 @@ class Admin {
 		}
 		if ( ! empty( $review['unassigned'] ) ) {
 			/* translators: %d: number of refunds */
-			$deferred = $this->defer_notice( sprintf( _n( '%d refund waiting to be assigned to a gig', '%d refunds waiting to be assigned to a gig', count( $review['unassigned'] ), 'wp-sell-services' ), count( $review['unassigned'] ) ) ) || $deferred;
+			$deferred = $this->defer_notice( sprintf( _n( '%d refund waiting to be assigned to a service', '%d refunds waiting to be assigned to a service', count( $review['unassigned'] ), 'wp-sell-services' ), count( $review['unassigned'] ) ) ) || $deferred;
 		}
 		if ( $deferred ) {
 			return;
@@ -624,8 +624,8 @@ class Admin {
 
 			printf(
 				'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><ul style="list-style: disc; margin-inline-start: 1.5em;">%s</ul></div>',
-				esc_html( _n( 'A refund was made at the payment platform without saying which gig it was for.', 'Refunds were made at the payment platform without saying which gig they were for.', count( $items ), 'wp-sell-services' ) ),
-				esc_html__( 'The buyer has the money back. Open the gig it was for and assign the refund, so the right vendor is charged.', 'wp-sell-services' ),
+				esc_html( _n( 'A refund was made at the payment platform without saying which service it was for.', 'Refunds were made at the payment platform without saying which service they were for.', count( $items ), 'wp-sell-services' ) ),
+				esc_html__( 'The buyer has the money back. Open the service it was for and assign the refund, so the right vendor is charged.', 'wp-sell-services' ),
 				implode( '', $items ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each item escaped above.
 			);
 		}
@@ -656,7 +656,7 @@ class Admin {
 	}
 
 	/**
-	 * Admin assigned a refund the payment platform reported without a gig to this order.
+	 * Admin assigned a refund the payment platform reported without a service to this order.
 	 *
 	 * @since 1.9.0
 	 * @return void
@@ -964,8 +964,8 @@ class Admin {
 				sprintf(
 					/* translators: %s: number of sellers. */
 					_n(
-						'%s seller kept their selling access in this update.',
-						'%s sellers kept their selling access in this update.',
+						'%s vendor kept their selling access in this update.',
+						'%s vendors kept their selling access in this update.',
 						$count,
 						'wp-sell-services'
 					),
@@ -974,7 +974,7 @@ class Admin {
 			),
 			esc_html__( 'This update made an approved vendor profile the requirement for selling. These people were already selling before it - they have a service, an order or a proposal - so their access was preserved and nothing changed for their buyers. Nobody else was given access.', 'wp-sell-services' ),
 			esc_url( admin_url( 'admin.php?page=wpss-vendors&status=migrated' ) ),
-			esc_html__( 'Review these sellers', 'wp-sell-services' )
+			esc_html__( 'Review these vendors', 'wp-sell-services' )
 		);
 	}
 
@@ -1689,7 +1689,7 @@ class Admin {
 				'wpss-admin-settings-emails',
 				'wpssSettingsEmails',
 				array(
-					'sending'   => __( 'Sending...', 'wp-sell-services' ),
+					'sending'   => __( 'Sending…', 'wp-sell-services' ),
 					'sendTest'  => __( 'Send Test Email', 'wp-sell-services' ),
 					'ajaxError' => __( 'Request failed. Please try again.', 'wp-sell-services' ),
 				)
@@ -1713,9 +1713,9 @@ class Admin {
 					'importing'     => __( 'Importing...', 'wp-sell-services' ),
 					'pleaseWait'    => __( 'Please wait, this may take a moment...', 'wp-sell-services' ),
 					'importSuccess' => __( 'Demo content imported successfully!', 'wp-sell-services' ),
-					'importFailed'  => __( 'Import failed.', 'wp-sell-services' ),
+					'importFailed'  => __( 'Import failed', 'wp-sell-services' ),
 					'importBtn'     => __( 'Import Demo Content', 'wp-sell-services' ),
-					'confirmDelete' => __( 'Delete all demo content? This will permanently remove demo services, vendors, and empty categories. A demo service that a buyer has ordered is kept, with its seller.', 'wp-sell-services' ),
+					'confirmDelete' => __( 'Delete all demo content? This will permanently remove demo services, vendors, and empty categories. A demo service that a buyer has ordered is kept, with its vendor.', 'wp-sell-services' ),
 					'deleting'      => __( 'Deleting...', 'wp-sell-services' ),
 					'removing'      => __( 'Removing demo content...', 'wp-sell-services' ),
 					'deleteSuccess' => __( 'Demo content deleted successfully!', 'wp-sell-services' ),
@@ -1791,7 +1791,7 @@ class Admin {
 
 		add_submenu_page(
 			'wp-sell-services',
-			__( 'Service Tags', 'wp-sell-services' ),
+			__( 'Service tags', 'wp-sell-services' ),
 			__( 'Tags', 'wp-sell-services' ),
 			'manage_categories',
 			'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service'
@@ -2114,7 +2114,7 @@ class Admin {
 							</tbody>
 						</table>
 					<?php else : ?>
-						<p class="wpss-no-data"><?php esc_html_e( 'No orders yet.', 'wp-sell-services' ); ?></p>
+						<p class="wpss-no-data"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></p>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -2317,7 +2317,7 @@ class Admin {
 		$result = isset( $_GET['updated'] ) ? sanitize_key( wp_unslash( $_GET['updated'] ) ) : '';
 
 		$notices = array(
-			'1'         => array( 'notice-success', __( 'Order status updated.', 'wp-sell-services' ) ),
+			'1'         => array( 'notice-success', __( 'Order status updated', 'wp-sell-services' ) ),
 			'unchanged' => array( 'notice-info', __( 'The order already has that status. Nothing changed.', 'wp-sell-services' ) ),
 			'error'     => array( 'notice-error', __( 'The status could not be changed. The order may not be allowed to move to that status from where it is.', 'wp-sell-services' ) ),
 		);
@@ -2532,7 +2532,7 @@ class Admin {
 								</div>
 								<?php if ( $order->delivery_deadline ) : ?>
 									<div class="wpss-order-detail-item">
-										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
+										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due date', 'wp-sell-services' ); ?></span>
 										<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_deadline_label( $order->delivery_deadline->getTimestamp() ) ); ?></span>
 									</div>
 								<?php endif; ?>
@@ -2560,12 +2560,44 @@ class Admin {
 						<h2 class="hndle"><?php esc_html_e( 'Financial Summary', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<?php
-							// The same line items the buyer sees: package, add-ons, tax, total.
-							wpss_get_template_part( 'order/line-items', '', array( 'wpss_order' => $order ) );
+							// A milestone contract keeps its money on the phases and the parent
+							// carries 0, so its figures come from the phases (the buyer sees the same).
+							$wpss_contract = ( new \WPSellServices\Services\MilestoneService() )->get_contract_totals( $order_id );
+
+							if ( ! $wpss_contract['count'] ) {
+								// The same line items the buyer sees: package, add-ons, tax, total.
+								wpss_get_template_part( 'order/line-items', '', array( 'wpss_order' => $order ) );
+							}
 
 							$wpss_extras = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_paid_extras( $order_id );
 							?>
+							<?php if ( in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_MILESTONE, ServiceOrder::SUB_ORDER_TYPE_EXTENSION ), true ) && 'paid' !== ( $order->payment_status ?? '' ) && empty( $order->paid_at ) ) : ?>
+								<p class="description"><?php esc_html_e( 'Payment not received. Nothing is credited to the vendor until it is confirmed with Mark as Paid, whatever status this order is given.', 'wp-sell-services' ); ?></p>
+							<?php endif; ?>
 							<table class="wpss-admin-order__figures">
+								<?php if ( $wpss_contract['count'] ) : ?>
+									<tr>
+										<td><?php esc_html_e( 'Contract total', 'wp-sell-services' ); ?></td>
+										<td><?php echo esc_html( wpss_format_price( $wpss_contract['total'], $order->currency ) ); ?></td>
+									</tr>
+									<tr>
+										<td>
+											<?php
+											/* translators: 1: phases paid, 2: phases in the contract */
+											echo esc_html( sprintf( _n( 'Paid so far (%1$d of %2$d phase)', 'Paid so far (%1$d of %2$d phases)', $wpss_contract['count'], 'wp-sell-services' ), $wpss_contract['paid_count'], $wpss_contract['count'] ) );
+											?>
+										</td>
+										<td><?php echo esc_html( wpss_format_price( $wpss_contract['paid'], $order->currency ) ); ?></td>
+									</tr>
+									<tr>
+										<td><?php esc_html_e( 'Commission on paid phases', 'wp-sell-services' ); ?></td>
+										<td><?php echo esc_html( wpss_format_price( $wpss_contract['commission'], $order->currency ) ); ?></td>
+									</tr>
+									<tr>
+										<td><?php esc_html_e( 'Vendor earning on paid phases', 'wp-sell-services' ); ?></td>
+										<td><?php echo esc_html( wpss_format_price( $wpss_contract['earnings'], $order->currency ) ); ?></td>
+									</tr>
+								<?php endif; ?>
 								<?php foreach ( $wpss_extras as $wpss_extra ) : ?>
 									<tr>
 										<td>
@@ -2681,7 +2713,7 @@ class Admin {
 									<?php endforeach; ?>
 								</div>
 							<?php else : ?>
-								<p><?php esc_html_e( 'No messages yet.', 'wp-sell-services' ); ?></p>
+								<p><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></p>
 							<?php endif; ?>
 						</div>
 					</div>
@@ -2773,19 +2805,19 @@ class Admin {
 					<?php endif; ?>
 
 					<?php
-					// A refund the payment platform reported without naming the gig.
+					// A refund the payment platform reported without naming the service.
 					$wpss_unassigned = current_user_can( 'manage_options' ) ? PendingRefundService::get( $order_id ) : null;
 
 					if ( null !== $wpss_unassigned ) :
 						?>
 						<div class="postbox wpss-refund-unassigned">
-							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Refund waiting for a gig', 'wp-sell-services' ); ?></h2>
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Refund waiting for a service', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<p>
 									<?php
 									printf(
 										/* translators: 1: amount, 2: transaction id */
-										esc_html__( '%1$s was refunded at the payment platform (%2$s) without saying which gig it was for. If it was this one, assign it here. The vendor\'s earnings are reversed only for the gig you assign it to.', 'wp-sell-services' ),
+										esc_html__( '%1$s was refunded at the payment platform (%2$s) without saying which service it was for. If it was this one, assign it here. The vendor\'s earnings are reversed only for the gig you assign it to.', 'wp-sell-services' ),
 										'<strong>' . esc_html( wpss_format_price( (float) $wpss_unassigned['remaining'], (string) $wpss_unassigned['currency'] ) ) . '</strong>',
 										esc_html( (string) $wpss_unassigned['transaction_id'] )
 									);
@@ -2796,10 +2828,10 @@ class Admin {
 									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
 									<?php wp_nonce_field( 'wpss_assign_pending_refund_' . $order_id, 'wpss_assign_refund_nonce' ); ?>
 									<p>
-										<label for="wpss-assign-refund-<?php echo esc_attr( (string) $order_id ); ?>"><strong><?php esc_html_e( 'Amount for this gig', 'wp-sell-services' ); ?></strong></label><br>
+										<label for="wpss-assign-refund-<?php echo esc_attr( (string) $order_id ); ?>"><strong><?php esc_html_e( 'Amount for this service', 'wp-sell-services' ); ?></strong></label><br>
 										<input type="number" id="wpss-assign-refund-<?php echo esc_attr( (string) $order_id ); ?>" name="amount" min="0" step="0.01" max="<?php echo esc_attr( (string) $wpss_unassigned['remaining'] ); ?>" value="<?php echo esc_attr( (string) $wpss_unassigned['remaining'] ); ?>" style="width: 140px;">
 									</p>
-									<?php submit_button( __( 'Assign to this gig', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+									<?php submit_button( __( 'Assign to this service', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
 								</form>
 							</div>
 						</div>
@@ -3258,7 +3290,7 @@ class Admin {
 				?>
 			</h1>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-disputes' ) ); ?>" class="page-title-action">
-				<?php esc_html_e( 'Back to Disputes', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Back to disputes', 'wp-sell-services' ); ?>
 			</a>
 			<hr class="wp-header-end">
 
@@ -3341,7 +3373,7 @@ class Admin {
 										</span>
 									</div>
 									<div class="wpss-order-detail-item">
-										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Status', 'wp-sell-services' ); ?></span>
+										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order status', 'wp-sell-services' ); ?></span>
 										<span class="wpss-order-detail-item__value"><span class="<?php echo esc_attr( wpss_status_class( (string) $order->status ) ); ?>"><?php echo esc_html( wpss_get_order_status_label( (string) $order->status ) ); ?></span></span>
 									</div>
 									<?php
@@ -3754,7 +3786,7 @@ class Admin {
 		if ( $deleted['kept'] ) {
 			$message .= ' ' . sprintf(
 				/* translators: %d: number of demo services kept */
-				_n( '%d demo service was kept, with its seller, because a buyer has ordered it.', '%d demo services were kept, with their sellers, because buyers have ordered them.', $deleted['kept'], 'wp-sell-services' ),
+				_n( '%d demo service was kept, with its vendor, because a buyer has ordered it.', '%d demo services were kept, with their vendors, because buyers have ordered them.', $deleted['kept'], 'wp-sell-services' ),
 				$deleted['kept']
 			);
 		}

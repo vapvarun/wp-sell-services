@@ -55,7 +55,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			$avatar_url = $avatar_id ? wp_get_attachment_image_url( $avatar_id, 'thumbnail' ) : get_avatar_url( $user_id, array( 'size' => 150 ) );
 			?>
 			<div class="wpss-form-row wpss-avatar-upload">
-				<label><?php esc_html_e( 'Profile Photo', 'wp-sell-services' ); ?></label>
+				<label><?php esc_html_e( 'Profile photo', 'wp-sell-services' ); ?></label>
 				<div class="wpss-avatar-upload__preview">
 					<img src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php esc_attr_e( 'Profile photo', 'wp-sell-services' ); ?>" class="wpss-avatar-upload__image" id="wpss-avatar-preview" data-gravatar="<?php echo esc_url( get_avatar_url( $user_id, array( 'size' => 150 ) ) ); ?>">
 					<input type="hidden" name="avatar_id" id="wpss-avatar-id" value="<?php echo esc_attr( $avatar_id ); ?>">
@@ -78,7 +78,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				$cover_url = $cover_id ? wp_get_attachment_image_url( (int) $cover_id, 'large' ) : '';
 				?>
 				<div class="wpss-form-row wpss-cover-upload">
-					<label><?php esc_html_e( 'Cover Image', 'wp-sell-services' ); ?></label>
+					<label><?php esc_html_e( 'Cover image', 'wp-sell-services' ); ?></label>
 					<div class="wpss-cover-upload__preview" style="position:relative;width:100%;max-width:600px;aspect-ratio:3/1;border: 2px dashed var(--wpss-border);border-radius:8px;overflow:hidden;background:var(--wpss-bg-subtle);">
 						<?php if ( $cover_url ) : ?>
 							<img src="<?php echo esc_url( $cover_url ); ?>" alt="<?php esc_attr_e( 'Cover image', 'wp-sell-services' ); ?>" id="wpss-cover-preview" style="width:100%;height:100%;object-fit:cover;">
@@ -105,7 +105,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			<?php endif; ?>
 
 			<div class="wpss-form-row">
-				<label for="display_name"><?php esc_html_e( 'Display Name', 'wp-sell-services' ); ?></label>
+				<label for="display_name"><?php esc_html_e( 'Display name', 'wp-sell-services' ); ?></label>
 				<input type="text" id="display_name" name="display_name" value="<?php echo esc_attr( $user->display_name ); ?>" class="wpss-input" required>
 			</div>
 
@@ -145,7 +145,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 
 		<?php if ( $is_vendor && $vendor_profile ) : ?>
 			<div class="wpss-profile-form__section">
-				<h3><?php esc_html_e( 'Seller Profile', 'wp-sell-services' ); ?></h3>
+				<h3><?php esc_html_e( 'Vendor Profile', 'wp-sell-services' ); ?></h3>
 
 				<div class="wpss-form-row">
 					<label for="tagline"><?php esc_html_e( 'Tagline', 'wp-sell-services' ); ?></label>
@@ -190,6 +190,29 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					<label for="website"><?php esc_html_e( 'Website', 'wp-sell-services' ); ?></label>
 					<input type="url" id="website" name="website" value="<?php echo esc_url( $vendor_profile->website ?? '' ); ?>" class="wpss-input" placeholder="https://">
 				</div>
+
+				<?php
+				// The profile page lists exactly these, so a seller can set every link a buyer sees.
+				$wpss_social = array(
+					'linkedin'  => 'LinkedIn',
+					'twitter'   => 'X (Twitter)',
+					'facebook'  => 'Facebook',
+					'instagram' => 'Instagram',
+					'github'    => 'GitHub',
+					'youtube'   => 'YouTube',
+					'dribbble'  => 'Dribbble',
+					'behance'   => 'Behance',
+				);
+				// The column holds JSON; the public profile decodes it the same way.
+				$wpss_saved = ! empty( $vendor_profile->social_links ) ? json_decode( (string) $vendor_profile->social_links, true ) : array();
+				$wpss_saved = is_array( $wpss_saved ) ? $wpss_saved : array();
+				foreach ( $wpss_social as $wpss_platform => $wpss_platform_label ) :
+					?>
+					<div class="wpss-form-row">
+						<label for="social_<?php echo esc_attr( $wpss_platform ); ?>"><?php echo esc_html( $wpss_platform_label ); ?></label>
+						<input type="url" id="social_<?php echo esc_attr( $wpss_platform ); ?>" name="social_links[<?php echo esc_attr( $wpss_platform ); ?>]" value="<?php echo esc_url( $wpss_saved[ $wpss_platform ] ?? '' ); ?>" class="wpss-input" placeholder="https://">
+					</div>
+				<?php endforeach; ?>
 
 				<div class="wpss-form-row">
 					<label for="intro_video_url"><?php esc_html_e( 'Intro Video', 'wp-sell-services' ); ?></label>
@@ -246,6 +269,9 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			<h3><?php esc_html_e( 'Email preferences', 'wp-sell-services' ); ?></h3>
 			<p class="wpss-email-preferences__intro">
 				<?php esc_html_e( 'Choose which emails you want to receive. In-app notifications still appear regardless of these settings.', 'wp-sell-services' ); ?>
+			</p>
+			<p class="wpss-email-preferences__intro">
+				<?php esc_html_e( 'Emails about payments, proposals, milestones and extensions are always sent, because they carry an amount or a deadline.', 'wp-sell-services' ); ?>
 			</p>
 			<?php // Saved by Save Changes with the rest of the form (wpss_save_member_profile()). ?>
 			<input type="hidden" name="email_prefs_submitted" value="1">

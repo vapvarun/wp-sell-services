@@ -113,7 +113,7 @@ All email templates are theme-overridable at `yourtheme/wp-sell-services/emails/
 | `emails/new-message.php` | New order message |
 | `emails/dispute-opened.php` | Dispute opened |
 | `emails/dispute-escalated.php` | Dispute escalated to admin |
-| `emails/seller-level-promotion.php` | Vendor promoted to new seller level |
+| `emails/seller-level-promotion.php` | Vendor promoted to new vendor level |
 | `emails/moderation-pending.php` | Service submitted for moderation |
 | `emails/moderation-approved.php` | Service approved |
 | `emails/moderation-rejected.php` | Service rejected |

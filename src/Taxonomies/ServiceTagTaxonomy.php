@@ -51,7 +51,7 @@ class ServiceTagTaxonomy {
 		$labels = [
 			'name'                       => _x( 'Service Tags', 'taxonomy general name', 'wp-sell-services' ),
 			'singular_name'              => _x( 'Service Tag', 'taxonomy singular name', 'wp-sell-services' ),
-			'search_items'               => __( 'Search Tags', 'wp-sell-services' ),
+			'search_items'               => __( 'Search tags', 'wp-sell-services' ),
 			'popular_items'              => __( 'Popular Tags', 'wp-sell-services' ),
 			'all_items'                  => __( 'All Tags', 'wp-sell-services' ),
 			'parent_item'                => null,

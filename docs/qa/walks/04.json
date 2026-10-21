@@ -1,0 +1,30 @@
+{
+  "journey": "04",
+  "sha_free": "c21a7c05",
+  "sha_pro": "e4ac7141",
+  "env": { "site": "http://wp-sell-services.local", "theme": "reign-theme", "rail": "auto (resolves to woo; Woo active) - journey 04 is catalogue-only and rail-neutral", "wp": "7.1.3" },
+  "ran_at": "2026-10-20T22:35:00Z",
+  "checks": [
+    { "id": "s1-directory-renders", "result": "pass", "evidence": "/vendors/ logged out: 7 .wpss-vendor-card in .wpss-vendors-grid (Maya Chen, Aisha Khan, Diego Alvarez, Sofia Rossi, varundubey, Yuki Tanaka, Liam O'Connor); no raw [wpss_vendors] text; 4-col grid at 1440 (270px x4)" },
+    { "id": "s1-breadcrumb-home-vendors", "result": "fail", "evidence": "No breadcrumb element anywhere on /vendors/ (no element containing Home + Vendors in a breadcrumb container; page HTML has no wpss-breadcrumb; screenshot 04-vendors-1440.png shows H1 'Vendors' directly under header). Journey expects 'Home > Vendors'. Reign shows no breadcrumb on this page either." },
+    { "id": "s1-390-no-overflow", "result": "pass", "evidence": "390: scrollWidth 390 === innerWidth 390; grid collapses to one 360px column" },
+    { "id": "s2-vendor-link-goes-to-profile", "result": "pass", "evidence": "First card href /vendors/?vendor=wpss_vendor_maya; landed URL identical; H1 'Maya Chen Pro Seller', About + Services sections; 0 .wpss-vendors-grid .wpss-vendor-card on the page; 3 service links" },
+    { "id": "s3-vendor-with-no-services", "result": "pass", "evidence": "Seeded scratch vendor Priya Nair (no services) /vendors/?vendor=priya_nair_designs: profile renders, text contains \"hasn't published any services\" and \"No reviews yet\", no 'Vendor not found', 0 directory cards; 390 scrollWidth 390" },
+    { "id": "s4-invented-slug", "result": "pass", "evidence": "?vendor=does-not-exist-xyz: 7 directory cards, no 'not found/error/fatal/warning' text, at 1440 and 390" },
+    { "id": "s5-non-vendor-slug", "result": "pass", "evidence": "?vendor=wpss_buyer_ella (subscriber): 7 directory cards, no error text" },
+    { "id": "s6-other-entry-points", "result": "pass", "evidence": "Service page vendor link 'Maya Chen' -> /vendors/?vendor=wpss_vendor_maya renders profile (0 grid cards, H1 Maya Chen Pro Seller). Second entry (vendor card on directory) verified in s2. Archive cards carry no vendor link (0 a[href*=vendor=] on /services/) - not a defect, cards show no seller line" },
+    { "id": "s7-through-to-work", "result": "pass", "evidence": "From Maya's profile opened /service/i-will-design-a-modern-memorable-logo-for-your-brand/ ; H1 matches and vendor link text 'Maya Chen'" },
+    { "id": "p2-s1-image-first-video-hidden-no-youtube-request", "result": "pass", "evidence": "Scratch service 13578 (video + 3 images): main image visible; .wpss-gallery-video[hidden] with empty innerHTML; <template class=wpss-gallery-video-embed> present; network on load: only i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg poster, zero www.youtube.com embed/player requests" },
+    { "id": "p2-s2-strip-leads-with-video-provider-poster", "result": "pass", "evidence": "4 thumbs, first is button.wpss-gallery-thumb--video with .wpss-gallery-thumb__play badge, poster src https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg (provider frame, not the featured image); active thumb index 1 (first image)" },
+    { "id": "p2-s3-video-plays", "result": "pass", "evidence": "After clicking video thumb: .wpss-gallery-video not hidden, iframe src https://www.youtube.com/embed/aqz-KE-bpKQ?feature=oembed created; main image hidden (1440 and 390)" },
+    { "id": "p2-s4-survives-switching", "result": "pass", "evidence": "After clicking an image thumb: image visible, video hidden but iframe still in DOM (.wpss-gallery-video iframe present); video thumb clicked again -> video shown, image hidden, no reload (1440 and 390)" },
+    { "id": "p2-s5-nothing-written-by-looking", "result": "pass", "evidence": "After logged-out loads at 1440 and 390: metadata_exists(13578,'_wpss_video_url') = false; _wpss_gallery unchanged" },
+    { "id": "p2-s6-video-plus-one-image", "result": "pass", "evidence": "Scratch service 13579 (video + 1 image): 2 .wpss-gallery-thumb (1 video) at 1440 and 390" },
+    { "id": "p2-s7-390", "result": "pass", "evidence": "390: scrollWidth 390 === innerWidth on video service and one-image service; strip reachable" },
+    { "id": "p2-s8-empty-states", "result": "fail", "evidence": "/services/?s=zzqx-nothing renders .wpss-no-services 'No services found / No services match your search for \"zzqx-nothing\". Try different keywords or browse categories.' - copy and next step OK, heading OK. BUT the icon is <i data-lucide=\"text-align-left\"> which never becomes an <svg> (0 svg in block) and the browser console warns \"icon name was not found in the provided icons object\" (assets/js/vendor/lucide.min.js:7; template templates/content-no-services.php:43). The empty state shows a missing icon at 1440 and 390. /buyer-request/ list loaded (H1 'Buyer Requests'); its empty state not reachable on this dataset." }
+  ],
+  "proposed_checks": [
+    { "id": "icon-names-exist-in-bundle", "note": "Guard: every data-lucide name in templates/ must exist in assets/js/vendor/lucide.min.js (text-align-left does not)." }
+  ],
+  "verdict": "FAIL"
+}

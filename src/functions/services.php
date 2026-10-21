@@ -658,7 +658,7 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 	$seller = \WPSellServices\Models\VendorProfile::get_by_user_id( (int) $service->post_author );
 
 	if ( $seller && $seller->is_on_vacation() ) {
-		return __( 'This seller is away and not taking new orders right now.', 'wp-sell-services' );
+		return __( 'This vendor is away and not taking new orders right now.', 'wp-sell-services' );
 	}
 
 	/**
@@ -708,19 +708,10 @@ function wpss_get_service_rating( int $service_id ): array {
  * @return array{average: float, count: int} The stored rating.
  */
 function wpss_recount_service_rating( int $service_id ): array {
-	global $wpdb;
+	$stats = ( new \WPSellServices\Database\Repositories\ReviewRepository() )->rating_stats( 'service_id', $service_id );
+	$count = $stats['count'];
 
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$stats = $wpdb->get_row(
-		$wpdb->prepare(
-			"SELECT COUNT(*) AS count, AVG(rating) AS average FROM {$wpdb->prefix}wpss_reviews WHERE service_id = %d AND status = 'approved'",
-			$service_id
-		)
-	);
-
-	$count = (int) ( $stats->count ?? 0 );
-
-	update_post_meta( $service_id, '_wpss_rating_average', $count > 0 ? round( (float) $stats->average, 2 ) : 0 );
+	update_post_meta( $service_id, '_wpss_rating_average', $count > 0 ? round( $stats['average'], 2 ) : 0 );
 	update_post_meta( $service_id, '_wpss_rating_count', $count );
 	update_post_meta( $service_id, '_wpss_review_count', $count );
 

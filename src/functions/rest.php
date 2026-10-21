@@ -353,22 +353,11 @@ function wpss_rest_service_images( int $service_id ): array {
  * @return array{average: float, count: int}
  */
 function wpss_rest_service_rating( int $service_id ): array {
-	global $wpdb;
-
-	$table = $wpdb->prefix . 'wpss_reviews';
-
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$rating = $wpdb->get_row(
-		$wpdb->prepare(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table from $wpdb->prefix.
-			"SELECT AVG(rating) AS average, COUNT(*) AS count FROM {$table} WHERE service_id = %d AND status = 'approved'",
-			$service_id
-		)
-	);
+	$rating = ( new \WPSellServices\Database\Repositories\ReviewRepository() )->rating_stats( 'service_id', $service_id );
 
 	return array(
-		'average' => $rating ? round( (float) $rating->average, 2 ) : 0.0,
-		'count'   => $rating ? (int) $rating->count : 0,
+		'average' => round( $rating['average'], 2 ),
+		'count'   => $rating['count'],
 	);
 }
 

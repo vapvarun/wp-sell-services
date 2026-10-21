@@ -135,7 +135,6 @@ class SellerLevelService {
 
 		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
 		$orders_table   = $wpdb->prefix . 'wpss_orders';
-		$reviews_table  = $wpdb->prefix . 'wpss_reviews';
 
 		// Get vendor profile.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -168,16 +167,7 @@ class SellerLevelService {
 
 		// Get review stats.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$review_stats = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT
-					COUNT(*) as total_reviews,
-					COALESCE(AVG(rating), 0) as avg_rating
-				FROM {$reviews_table}
-				WHERE vendor_id = %d AND status = 'approved'",
-				$user_id
-			)
-		);
+		$review_stats = ( new \WPSellServices\Database\Repositories\ReviewRepository() )->rating_stats( 'vendor_id', (int) $user_id );
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		// Calculate days active.
@@ -194,8 +184,8 @@ class SellerLevelService {
 			'user_id'          => $user_id,
 			'total_orders'     => (int) $order_stats->total_orders,
 			'completed_orders' => (int) $order_stats->completed_orders,
-			'total_reviews'    => (int) $review_stats->total_reviews,
-			'avg_rating'       => (float) $review_stats->avg_rating,
+			'total_reviews'    => $review_stats['count'],
+			'avg_rating'       => $review_stats['average'],
 			'delivery_rate'    => (float) $delivery_rate,
 			'days_active'      => $days_active,
 		);
@@ -237,7 +227,7 @@ class SellerLevelService {
 	 */
 	public static function get_level_label( string $level ): string {
 		$labels = self::get_level_labels();
-		return $labels[ $level ] ?? __( 'New Seller', 'wp-sell-services' );
+		return $labels[ $level ] ?? __( 'New vendor', 'wp-sell-services' );
 	}
 
 	/**

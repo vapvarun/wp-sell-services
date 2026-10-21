@@ -579,7 +579,7 @@ do_action( 'wpss_before_single_request', $request_id );
 				<div class="wpss-modal__body">
 					<div class="wpss-form-group">
 						<label for="proposal-description" class="wpss-form-label">
-							<?php esc_html_e( 'Cover Letter', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Cover letter', 'wp-sell-services' ); ?>
 							<span class="wpss-required">*</span>
 						</label>
 						<textarea id="proposal-description" name="description" class="wpss-form-textarea" rows="6" required
@@ -625,7 +625,7 @@ do_action( 'wpss_before_single_request', $request_id );
 
 						<div class="wpss-form-group wpss-form-col-6">
 							<label for="proposal-delivery" class="wpss-form-label">
-								<?php esc_html_e( 'Delivery Time', 'wp-sell-services' ); ?>
+								<?php esc_html_e( 'Delivery time', 'wp-sell-services' ); ?>
 								<span class="wpss-required">*</span>
 							</label>
 							<div class="wpss-input-group">
@@ -677,7 +677,7 @@ do_action( 'wpss_before_single_request', $request_id );
 							<input type="text" class="wpss-form-input wpss-milestone-row__title" name="milestones[__INDEX__][title]" placeholder="<?php esc_attr_e( 'Phase title (e.g. Wireframes)', 'wp-sell-services' ); ?>">
 							<button type="button" class="wpss-milestone-row__remove" data-remove-milestone aria-label="<?php esc_attr_e( 'Remove phase', 'wp-sell-services' ); ?>">&times;</button>
 						</div>
-						<textarea class="wpss-form-textarea wpss-milestone-row__desc" rows="2" name="milestones[__INDEX__][description]" placeholder="<?php esc_attr_e( 'What the buyer is paying for in this phase', 'wp-sell-services' ); ?>"></textarea>
+						<textarea class="wpss-form-textarea wpss-milestone-row__desc" rows="2" name="milestones[__INDEX__][description]" placeholder="<?php esc_attr_e( 'What the buyer is paying for in this phase.', 'wp-sell-services' ); ?>"></textarea>
 						<div class="wpss-milestone-row__meta">
 							<label>
 								<span><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></span>

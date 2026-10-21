@@ -178,7 +178,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 						'currency_code' => strtoupper( $currency ),
 						'value'         => number_format( $amount, 2, '.', '' ),
 					),
-					'description' => $metadata['description'] ?? __( 'Service Purchase', 'wp-sell-services' ),
+					'description' => $metadata['description'] ?? __( 'Service purchase', 'wp-sell-services' ),
 					// custom_id is capped at 127 chars by PayPal; the description
 					// has its own field and would push a cart or add-on list over.
 					'custom_id'   => wp_json_encode( array_diff_key( $metadata, array( 'description' => 1 ) ) ),
@@ -341,7 +341,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 		if ( isset( $response['error'] ) ) {
 			return array(
 				'success' => false,
-				'error'   => $response['error']['message'] ?? __( 'Refund failed.', 'wp-sell-services' ),
+				'error'   => $response['error']['message'] ?? __( 'Refund failed', 'wp-sell-services' ),
 			);
 		}
 

@@ -233,8 +233,8 @@ class PersonalData {
 			'items_removed'  => true,
 			'items_retained' => true,
 			'messages'       => array(
-				__( 'Removed: the account, seller profile, portfolio, saved items, notifications, devices, app passwords and sessions, and abuse reports filed by or about this member. Listings were taken down.', 'wp-sell-services' ),
-				__( 'Kept and anonymised: orders, deliveries, requirement answers, messages, disputes, reviews, proposals, the earnings ledger and withdrawals. The member is shown on them as a deleted user, and their billing address, reviewer name, seller notes and payout details on those rows were blanked. They belong to the other party as well, and the marketplace owner needs them for accounting and tax records.', 'wp-sell-services' ),
+				__( 'Removed: the account, vendor profile, portfolio, saved items, notifications, devices, app passwords and sessions, and abuse reports filed by or about this member. Listings were taken down.', 'wp-sell-services' ),
+				__( 'Kept and anonymised: orders, deliveries, requirement answers, messages, disputes, reviews, proposals, the earnings ledger and withdrawals. The member is shown on them as a deleted user, and their billing address, reviewer name, vendor notes and payout details on those rows were blanked. They belong to the other party as well, and the marketplace owner needs them for accounting and tax records.', 'wp-sell-services' ),
 			),
 			'done'           => true,
 		);
@@ -741,7 +741,7 @@ class PersonalData {
 			'city'         => __( 'City', 'wp-sell-services' ),
 			'website'      => __( 'Website', 'wp-sell-services' ),
 			'social_links' => __( 'Social links', 'wp-sell-services' ),
-			'created_at'   => __( 'Seller since', 'wp-sell-services' ),
+			'created_at'   => __( 'Vendor since', 'wp-sell-services' ),
 		);
 
 		$data = array();
@@ -763,7 +763,7 @@ class PersonalData {
 
 		return array(
 			'group_id'    => 'wpss-vendor-profile',
-			'group_label' => __( 'Marketplace seller profile', 'wp-sell-services' ),
+			'group_label' => __( 'Marketplace vendor profile', 'wp-sell-services' ),
 			'item_id'     => 'wpss-vendor-profile-' . $user_id,
 			'data'        => $data,
 		);

@@ -105,7 +105,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 
 			<div class="wpss-conversation-thread__messages" id="wpss-messages-container">
 				<?php if ( empty( $messages ) ) : ?>
-					<p class="wpss-text-muted"><?php esc_html_e( 'No messages yet.', 'wp-sell-services' ); ?></p>
+					<p class="wpss-text-muted"><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></p>
 				<?php else : ?>
 					<?php foreach ( $messages as $msg ) : ?>
 						<?php
@@ -145,16 +145,6 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--sm"><?php esc_html_e( 'Send', 'wp-sell-services' ); ?></button>
 				</form>
 				<script>
-				function wpssShowNotice(msg, type) {
-					type = type || 'error';
-					var bgColor = type === 'success' ? '#d4edda' : '#f8d7da';
-					var borderColor = type === 'success' ? '#c3e6cb' : '#f5c6cb';
-					var textColor = type === 'success' ? '#155724' : '#721c24';
-					var $notice = jQuery('<div class="wpss-inline-notice" style="padding:12px 16px;margin:10px 0;border:1px solid ' + borderColor + ';border-radius:4px;background:' + bgColor + ';color:' + textColor + ';position:relative;">' + msg + '<span style="position:absolute;right:10px;top:8px;cursor:pointer;font-size:18px;line-height:1;">&times;</span></div>');
-					$notice.find('span').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-					jQuery('.wpss-conversation-thread, .wpss-dashboard').first().prepend($notice);
-					setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 8000);
-				}
 				jQuery(function($) {
 					$('#wpss-reply-form').on('submit', function(e) {
 						e.preventDefault();
@@ -164,7 +154,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 
 						if (!$textarea.val().trim()) return;
 
-						$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Sending...', 'wp-sell-services' ) ); ?>');
+						$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Sending…', 'wp-sell-services' ) ); ?>');
 
 						// REST: POST /conversations/{id}/messages (text-only here).
 						var convId = $form.find('[name="conversation_id"]').val();
@@ -196,7 +186,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 							error: function(xhr) {
 								var msg = (xhr.responseJSON && xhr.responseJSON.message)
 									|| '<?php echo esc_js( __( 'Failed to send message.', 'wp-sell-services' ) ); ?>';
-								wpssShowNotice(msg, 'error');
+								wpssToast(msg, 'error');
 							},
 							complete: function() {
 								$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Send', 'wp-sell-services' ) ); ?>');
@@ -269,7 +259,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				<i data-lucide="messages-square" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 			</div>
 			<h3><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></h3>
-			<p><?php esc_html_e( 'Your conversations with buyers and sellers will appear here.', 'wp-sell-services' ); ?></p>
+			<p><?php esc_html_e( 'Your conversations with buyers and vendors will appear here.', 'wp-sell-services' ); ?></p>
 		</div>
 	<?php else : ?>
 		<div class="wpss-conversations-list">

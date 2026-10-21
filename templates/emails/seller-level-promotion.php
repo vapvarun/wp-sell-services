@@ -86,7 +86,7 @@ do_action( 'wpss_email_content_before', 'seller_level_promotion', null, $recipie
 <ul style="margin: 0 0 20px 0; padding: 0 0 0 20px; color: #3c3c3c; line-height: 1.8;">
 	<?php if ( 'level_1' === $new_level || 'level_2' === $new_level || 'top_rated' === $new_level ) : ?>
 		<li><?php esc_html_e( 'Enhanced visibility in search results', 'wp-sell-services' ); ?></li>
-		<li><?php esc_html_e( 'Trusted seller badge on your profile', 'wp-sell-services' ); ?></li>
+		<li><?php esc_html_e( 'Trusted vendor badge on your profile', 'wp-sell-services' ); ?></li>
 	<?php endif; ?>
 	<?php if ( 'level_2' === $new_level || 'top_rated' === $new_level ) : ?>
 		<li><?php esc_html_e( 'Priority customer support', 'wp-sell-services' ); ?></li>

@@ -156,7 +156,7 @@ do_action( 'wpss_before_conversation', $order );
 			<div class="wpss-messaging__header-details">
 				<span class="wpss-messaging__header-name"><?php echo esc_html( $other_name ); ?></span>
 				<span class="wpss-messaging__header-status">
-					<?php echo $is_vendor ? esc_html__( 'Buyer', 'wp-sell-services' ) : esc_html__( 'Seller', 'wp-sell-services' ); ?>
+					<?php echo $is_vendor ? esc_html__( 'Buyer', 'wp-sell-services' ) : esc_html__( 'Vendor', 'wp-sell-services' ); ?>
 				</span>
 			</div>
 		</div>
@@ -376,7 +376,7 @@ do_action( 'wpss_before_conversation', $order );
 					// tests/test-conversation-states-contract.php strict, so a
 					// status added later cannot fall silently into the bare
 					// "not available for this order status" line.
-					esc_html_e( 'You can message this seller once the order is paid.', 'wp-sell-services' );
+					esc_html_e( 'You can message this vendor once the order is paid.', 'wp-sell-services' );
 				} elseif ( 'rejected' === $order->status ) {
 					esc_html_e( 'This order was declined, so messaging is closed.', 'wp-sell-services' );
 				} else {
@@ -402,16 +402,6 @@ do_action( 'wpss_after_conversation', $order );
 ?>
 
 <script>
-function wpssShowNotice(msg, type) {
-	type = type || 'error';
-	var bgColor = type === 'success' ? '#d4edda' : '#f8d7da';
-	var borderColor = type === 'success' ? '#c3e6cb' : '#f5c6cb';
-	var textColor = type === 'success' ? '#155724' : '#721c24';
-	var $notice = jQuery('<div class="wpss-inline-notice" style="padding:12px 16px;margin:10px 0;border:1px solid ' + borderColor + ';border-radius:4px;background:' + bgColor + ';color:' + textColor + ';position:relative;">' + msg + '<span style="position:absolute;right:10px;top:8px;cursor:pointer;font-size:18px;line-height:1;">&times;</span></div>');
-	$notice.find('span').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-	jQuery('.wpss-messaging, .wpss-order-view, .wpss-dashboard').first().prepend($notice);
-	setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 8000);
-}
 document.addEventListener('DOMContentLoaded', function() {
 (function($) {
 	'use strict';
@@ -543,7 +533,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 				// Files the site refused come back as warnings; say so instead of dropping them.
 				if (response.warnings && response.warnings.length) {
-					wpssShowNotice($('<div>').text(response.warnings.join(' | ')).html(), 'error');
+					wpssToast(response.warnings.join(' | '), 'error');
 				}
 
 				// Clear form.
@@ -555,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			error: function(xhr) {
 				var msg = (xhr.responseJSON && xhr.responseJSON.message)
 					|| '<?php esc_html_e( 'Failed to send message.', 'wp-sell-services' ); ?>';
-				wpssShowNotice(msg, 'error');
+				wpssToast(msg, 'error');
 			},
 			complete: function() {
 				$sendBtn.prop('disabled', false);

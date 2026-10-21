@@ -77,12 +77,12 @@ do_action( 'wpss_email_content_before', 'cancellation_requested', $order, $recip
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( get_the_title( $order->service_id ) ); ?></td>
 		</tr>
 		<tr>
-			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Order Total', 'wp-sell-services' ); ?></th>
+			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Order total', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></td>
 		</tr>
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; font-weight: 600; color: #f59e0b;"><?php esc_html_e( 'Cancellation Requested', 'wp-sell-services' ); ?></td>
+			<td style="padding: 12px; font-weight: 600; color: #f59e0b;"><?php esc_html_e( 'Cancellation requested', 'wp-sell-services' ); ?></td>
 		</tr>
 	</tbody>
 </table>

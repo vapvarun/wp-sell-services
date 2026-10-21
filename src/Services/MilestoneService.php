@@ -174,7 +174,7 @@ class MilestoneService {
 		}
 
 		if ( $vendor_id !== (int) $parent->vendor_id ) {
-			return $fail( __( 'Only the seller can propose milestones on this order.', 'wp-sell-services' ) );
+			return $fail( __( 'Only the vendor can propose milestones on this order.', 'wp-sell-services' ) );
 		}
 
 		// Milestones are the payment model for custom, buyer-posted projects
@@ -369,6 +369,12 @@ class MilestoneService {
 			return false;
 		}
 
+		// An admin may complete an unpaid phase (phases are optional), but money
+		// is never credited for payment that was not received.
+		if ( 'paid' !== ( $sub->payment_status ?? '' ) && empty( $sub->paid_at ) ) {
+			return false;
+		}
+
 		$txn_table = $wpdb->prefix . 'wpss_wallet_transactions';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -476,13 +482,20 @@ class MilestoneService {
 		if ( $vendor_id !== (int) $sub->vendor_id ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Only the seller can submit this phase.', 'wp-sell-services' ),
+				'message' => __( 'Only the vendor can submit this phase.', 'wp-sell-services' ),
+			);
+		}
+
+		// Already waiting on the buyer: a repeat submit changes nothing and re-sends nothing.
+		if ( ServiceOrder::STATUS_PENDING_APPROVAL === $sub->status ) {
+			return array(
+				'success' => true,
+				'message' => __( 'Phase delivery submitted. Buyer has been notified.', 'wp-sell-services' ),
 			);
 		}
 
 		$allowed_submit_from = array(
 			ServiceOrder::STATUS_IN_PROGRESS,
-			ServiceOrder::STATUS_PENDING_APPROVAL,
 			ServiceOrder::STATUS_REVISION_REQUESTED,
 		);
 		if ( ! in_array( $sub->status, $allowed_submit_from, true ) ) {
@@ -569,7 +582,7 @@ class MilestoneService {
 
 		return array(
 			'success' => true,
-			'message' => __( 'Phase approved.', 'wp-sell-services' ),
+			'message' => __( 'Phase approved', 'wp-sell-services' ),
 		);
 	}
 
@@ -688,7 +701,7 @@ class MilestoneService {
 
 		return array(
 			'success' => true,
-			'message' => __( 'Sent back to the seller with your notes.', 'wp-sell-services' ),
+			'message' => __( 'Sent back to the vendor with your notes.', 'wp-sell-services' ),
 		);
 	}
 
@@ -716,6 +729,13 @@ class MilestoneService {
 			return array(
 				'success' => false,
 				'message' => __( 'Only the buyer can decline this phase.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( ServiceOrder::STATUS_CANCELLED === $sub->status ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This phase has already been declined.', 'wp-sell-services' ),
 			);
 		}
 
@@ -769,7 +789,7 @@ class MilestoneService {
 		if ( $vendor_id !== (int) $sub->vendor_id ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Only the seller can cancel this phase.', 'wp-sell-services' ),
+				'message' => __( 'Only the vendor can cancel this phase.', 'wp-sell-services' ),
 			);
 		}
 
@@ -827,6 +847,10 @@ class MilestoneService {
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 		$threshold    = gmdate( 'Y-m-d H:i:s', time() - ( self::ABANDON_AFTER_HOURS * HOUR_IN_SECONDS ) );
 
+		// An offline payment (bank transfer) takes days, so it is never swept here:
+		// the owner's Auto-Cancel setting on the offline gateway governs it, and
+		// proof of payment already received exempts it (process_offline_auto_cancel).
+
 		// Contract milestones (predefined at proposal acceptance) are NOT
 		// auto-cancelled — long projects may legitimately sit between
 		// phases for weeks while the vendor produces deliverables. Only
@@ -849,6 +873,7 @@ class MilestoneService {
 				WHERE platform = %s
 				AND status = %s
 				AND created_at < %s
+				AND ( payment_method IS NULL OR payment_method <> 'offline' )
 				AND ( meta IS NULL OR meta NOT LIKE %s )",
 				self::ORDER_TYPE,
 				'pending_payment',
@@ -869,6 +894,7 @@ class MilestoneService {
 				WHERE platform = %s
 				AND status = %s
 				AND created_at < %s
+				AND ( payment_method IS NULL OR payment_method <> 'offline' )
 				AND ( meta IS NULL OR meta NOT LIKE %s )",
 				current_time( 'mysql', true ),
 				self::ORDER_TYPE,
@@ -884,6 +910,54 @@ class MilestoneService {
 		}
 
 		return $count;
+	}
+
+	/**
+	 * What a milestone contract was agreed at and what has actually been paid.
+	 *
+	 * The parent carries total = 0 (the money lives on the phases), so every
+	 * screen that shows the contract - the buyer's order page and the admin
+	 * Financial Summary - reads it from here. A phase withdrawn from the contract
+	 * (cancelled or declined) is left out; one is paid only when payment was
+	 * received, whatever status an admin has since given it.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param int $parent_order_id Parent service order ID.
+	 * @return array{total: float, paid: float, commission: float, earnings: float, count: int, paid_count: int}
+	 */
+	public function get_contract_totals( int $parent_order_id ): array {
+		$totals = array(
+			'total'      => 0.0,
+			'paid'       => 0.0,
+			'commission' => 0.0,
+			'earnings'   => 0.0,
+			'count'      => 0,
+			'paid_count' => 0,
+		);
+
+		foreach ( $this->get_for_parent( $parent_order_id ) as $phase ) {
+			$status = (string) ( $phase['status'] ?? '' );
+
+			if ( in_array( $status, array( 'cancelled', 'rejected' ), true ) ) {
+				continue;
+			}
+
+			$amount = (float) ( $phase['amount'] ?? 0 );
+
+			++$totals['count'];
+			$totals['total'] += $amount;
+
+			// Refunded was paid and came back, so it is contracted but no longer paid.
+			if ( 'paid' === ( $phase['payment_status'] ?? '' ) && 'refunded' !== $status ) {
+				$totals['paid'] += $amount;
+				++$totals['paid_count'];
+				$totals['commission'] += (float) ( $phase['platform_fee'] ?? 0 );
+				$totals['earnings']   += (float) ( $phase['vendor_earnings'] ?? 0 );
+			}
+		}
+
+		return $totals;
 	}
 
 	/**

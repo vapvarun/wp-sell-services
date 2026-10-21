@@ -99,7 +99,7 @@ class WithdrawalsPage {
 			array(
 				'id'      => 'wpss-overview',
 				'title'   => __( 'Overview', 'wp-sell-services' ),
-				'content' => '<p>' . esc_html__( 'Withdrawals are vendor payout requests submitted from their dashboard. Each request carries an amount, a payout method (PayPal, bank transfer, or custom), and a status — pending, approved, completed, or rejected. Use the filter bar to focus on one status at a time and reconcile against your external payout system.', 'wp-sell-services' ) . '</p>',
+				'content' => '<p>' . esc_html__( 'Withdrawals are vendor payout requests submitted from their dashboard. Each request carries an amount, a payout method (PayPal, bank transfer, or custom), and a status — pending, approved, completed, rejected, or cancelled by the vendor. Use the filter bar to focus on one status at a time and reconcile against your external payout system.', 'wp-sell-services' ) . '</p>',
 			)
 		);
 
@@ -187,7 +187,7 @@ class WithdrawalsPage {
 					'noteLabel'    => __( 'Admin Note (Optional)', 'wp-sell-services' ),
 					'titles'       => array(
 						'approve'  => __( 'Approve Withdrawal', 'wp-sell-services' ),
-						'complete' => __( 'Mark as Paid', 'wp-sell-services' ),
+						'complete' => __( 'Mark as paid', 'wp-sell-services' ),
 						'reject'   => __( 'Reject Withdrawal', 'wp-sell-services' ),
 						'fallback' => __( 'Process Withdrawal', 'wp-sell-services' ),
 					),
@@ -304,6 +304,7 @@ class WithdrawalsPage {
 				SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
 				SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
 				SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
+				SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
 				SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) as pending_amount,
 				SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END) as approved_amount,
 				SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END) as completed_amount
@@ -316,6 +317,7 @@ class WithdrawalsPage {
 			'approved'         => (int) ( $stats->approved ?? 0 ),
 			'completed'        => (int) ( $stats->completed ?? 0 ),
 			'rejected'         => (int) ( $stats->rejected ?? 0 ),
+			'cancelled'        => (int) ( $stats->cancelled ?? 0 ),
 			'pending_amount'   => (float) ( $stats->pending_amount ?? 0 ),
 			'approved_amount'  => (float) ( $stats->approved_amount ?? 0 ),
 			'completed_amount' => (float) ( $stats->completed_amount ?? 0 ),
@@ -420,6 +422,7 @@ class WithdrawalsPage {
 							'approved'  => array( __( 'Approved', 'wp-sell-services' ), $stats['approved'] ),
 							'completed' => array( __( 'Completed', 'wp-sell-services' ), $stats['completed'] ),
 							'rejected'  => array( __( 'Rejected', 'wp-sell-services' ), $stats['rejected'] ),
+							'cancelled' => array( __( 'Cancelled', 'wp-sell-services' ), $stats['cancelled'] ),
 						);
 						$last_key     = array_key_last( $status_links );
 						foreach ( $status_links as $status_key => $link ) :

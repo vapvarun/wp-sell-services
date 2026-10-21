@@ -46,7 +46,7 @@ class BuyerRequests extends AbstractBlock {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return __( 'Display buyer requests for sellers to browse and respond.', 'wp-sell-services' );
+		return __( 'Display buyer requests for vendors to browse and respond.', 'wp-sell-services' );
 	}
 
 	/**

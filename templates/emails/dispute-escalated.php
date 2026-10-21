@@ -52,7 +52,7 @@ do_action( 'wpss_email_content_before', 'dispute_escalated', $dispute_id, $recip
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( '#' . $dispute_id ); ?></td>
 		</tr>
 		<tr>
-			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php esc_html_e( 'Order ID', 'wp-sell-services' ); ?></th>
+			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php esc_html_e( 'Order ID.', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( '#' . $order_id ); ?></td>
 		</tr>
 		<tr>

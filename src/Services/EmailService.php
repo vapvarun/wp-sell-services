@@ -60,6 +60,7 @@ class EmailService {
 	public const TYPE_MILESTONE_PAID         = 'milestone_paid';
 	public const TYPE_MILESTONE_SUBMITTED    = 'milestone_submitted';
 	public const TYPE_MILESTONE_APPROVED     = 'milestone_approved';
+	public const TYPE_MILESTONE_REVISION     = 'milestone_revision_requested';
 	public const TYPE_EXTENSION_PROPOSED     = 'extension_proposed';
 	public const TYPE_EXTENSION_APPROVED     = 'extension_approved';
 	public const TYPE_EXTENSION_DECLINED     = 'extension_declined';
@@ -767,7 +768,7 @@ class EmailService {
 		}
 
 		$vendor       = get_user_by( 'id', $milestone->vendor_id );
-		$vendor_name  = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
+		$vendor_name  = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
 		$parent_id    = (int) ( $milestone->platform_order_id ?? 0 );
 		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
 		$meta         = $this->decode_order_meta( $milestone );
@@ -866,7 +867,7 @@ class EmailService {
 		}
 
 		$vendor      = get_user_by( 'id', $milestone->vendor_id );
-		$vendor_name = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
+		$vendor_name = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
 		$meta        = $this->decode_order_meta( $milestone );
 
 		$parent_id     = (int) ( $milestone->platform_order_id ?? 0 );
@@ -948,6 +949,52 @@ class EmailService {
 	}
 
 	/**
+	 * Tell the seller the buyer sent a milestone phase back for changes.
+	 *
+	 * @param ServiceOrder $milestone Milestone sub-order row.
+	 * @param string       $reason    What the buyer wants changed.
+	 * @return bool
+	 */
+	public function send_milestone_revision_requested( ServiceOrder $milestone, string $reason ): bool {
+		$vendor = get_user_by( 'id', $milestone->vendor_id );
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		$buyer = get_user_by( 'id', $milestone->customer_id );
+		$meta  = $this->decode_order_meta( $milestone );
+
+		$subject = sprintf(
+			/* translators: 1: site name, 2: phase title */
+			__( '[%1$s] Revision requested: %2$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			(string) ( $meta['title'] ?? __( 'your phase', 'wp-sell-services' ) )
+		);
+
+		return $this->send(
+			$vendor->user_email,
+			$subject,
+			self::TYPE_MILESTONE_REVISION,
+			array(
+				'milestone'     => $milestone,
+				'recipient'     => $vendor,
+				'email_heading' => __( 'Revision requested', 'wp-sell-services' ),
+				'vendor_name'   => $vendor->display_name,
+				'buyer_name'    => $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' ),
+				'phase_title'   => (string) ( $meta['title'] ?? '' ),
+				'reason'        => $reason,
+				'order_url'     => add_query_arg(
+					array(
+						'section'  => 'sales',
+						'order_id' => (int) $milestone->id,
+					),
+					wpss_get_dashboard_url() ?: home_url( '/dashboard/' )
+				),
+			)
+		);
+	}
+
+	/**
 	 * Send an extension-proposed email to the buyer.
 	 *
 	 * Vendor quoted extra work on a fixed-price order; buyer can Accept &
@@ -964,14 +1011,14 @@ class EmailService {
 		}
 
 		$vendor      = get_user_by( 'id', $extension->vendor_id );
-		$vendor_name = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
+		$vendor_name = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
 		$reason      = (string) ( $extension->vendor_notes ?? '' );
 
 		$pay_url = wpss_ensure_pay_order( (int) $extension->id );
 
 		$subject = sprintf(
 			/* translators: %s: site name */
-			__( '[%s] Quote for extra work from your seller', 'wp-sell-services' ),
+			__( '[%s] Quote for extra work from your vendor', 'wp-sell-services' ),
 			wpss_get_platform_name()
 		);
 
@@ -1176,7 +1223,7 @@ class EmailService {
 		$template_vars = array(
 			'order'              => $order,
 			'recipient'          => $vendor,
-			'email_heading'      => __( 'Revision Requested', 'wp-sell-services' ),
+			'email_heading'      => __( 'Revision requested', 'wp-sell-services' ),
 			'revisions_used'     => $order->revisions_used ?? 0,
 			'revisions_included' => $order->revisions_included ?? 0,
 			'reply_to_email'     => $customer ? $customer->user_email : '',
@@ -1389,7 +1436,7 @@ class EmailService {
 				array(
 					'order'          => $order,
 					'recipient'      => $vendor,
-					'email_heading'  => __( 'Cancellation Requested', 'wp-sell-services' ),
+					'email_heading'  => __( 'Cancellation requested', 'wp-sell-services' ),
 					'buyer_name'     => $this->get_customer_name( $order->customer_id ),
 					'reason'         => $reason_label,
 					'note'           => $note,
@@ -1491,7 +1538,7 @@ class EmailService {
 
 		$template_vars = array(
 			'order'         => $order,
-			'email_heading' => __( 'Order Cancelled', 'wp-sell-services' ),
+			'email_heading' => __( 'Order cancelled', 'wp-sell-services' ),
 			'reason'        => '' !== $note ? trim( $label . ' - ' . $note, ' -' ) : $label,
 		);
 
@@ -1560,7 +1607,7 @@ class EmailService {
 
 		$base_vars = array(
 			'order'            => $order,
-			'email_heading'    => __( 'Dispute Opened', 'wp-sell-services' ),
+			'email_heading'    => __( 'Dispute opened', 'wp-sell-services' ),
 			'dispute_reason'   => $dispute_reason,
 			'opened_by_vendor' => $opened_by_vendor,
 			'opener_name'      => $opener_name,
@@ -1817,17 +1864,17 @@ class EmailService {
 
 		if ( 'rejected' === $status ) {
 			$type    = self::TYPE_WITHDRAWAL_REJECTED;
-			$heading = __( 'Withdrawal Rejected', 'wp-sell-services' );
+			$heading = __( 'Withdrawal rejected', 'wp-sell-services' );
 			/* translators: 1: platform name, 2: amount */
 			$subject = __( '[%1$s] Withdrawal Request for %2$s Rejected', 'wp-sell-services' );
 		} elseif ( 'completed' === $status ) {
 			$type    = self::TYPE_WITHDRAWAL_COMPLETED;
-			$heading = __( 'Withdrawal Paid', 'wp-sell-services' );
+			$heading = __( 'Withdrawal paid', 'wp-sell-services' );
 			/* translators: 1: platform name, 2: amount */
 			$subject = __( '[%1$s] Withdrawal of %2$s Paid', 'wp-sell-services' );
 		} else {
 			$type    = self::TYPE_WITHDRAWAL_APPROVED;
-			$heading = __( 'Withdrawal Approved', 'wp-sell-services' );
+			$heading = __( 'Withdrawal approved', 'wp-sell-services' );
 			/* translators: 1: platform name, 2: amount */
 			$subject = __( '[%1$s] Withdrawal of %2$s Approved', 'wp-sell-services' );
 		}
@@ -1879,7 +1926,7 @@ class EmailService {
 
 		$template_vars = array(
 			'recipient'      => $buyer,
-			'email_heading'  => __( 'New Proposal Received', 'wp-sell-services' ),
+			'email_heading'  => __( 'New proposal received', 'wp-sell-services' ),
 			'content'        => sprintf(
 				/* translators: 1: vendor name, 2: request title */
 				__( '%1$s has submitted a proposal for your request "%2$s". Review it and accept if it meets your needs.', 'wp-sell-services' ),
@@ -1983,7 +2030,7 @@ class EmailService {
 
 		$buyer = get_user_by( 'id', $request->author_id ?? 0 );
 
-		$request_title = $request->title ?? __( 'Buyer Request', 'wp-sell-services' );
+		$request_title = $request->title ?? __( 'Buyer request', 'wp-sell-services' );
 
 		$subject = sprintf(
 			/* translators: 1: platform name, 2: request title */
@@ -2323,6 +2370,7 @@ class EmailService {
 			self::TYPE_MILESTONE_PAID         => 'milestone-paid.php',
 			self::TYPE_MILESTONE_SUBMITTED    => 'milestone-submitted.php',
 			self::TYPE_MILESTONE_APPROVED     => 'milestone-approved.php',
+			self::TYPE_MILESTONE_REVISION     => 'milestone-revision-requested.php',
 			self::TYPE_EXTENSION_PROPOSED     => 'extension-proposed.php',
 			self::TYPE_EXTENSION_APPROVED     => 'extension-approved.php',
 			self::TYPE_EXTENSION_DECLINED     => 'extension-declined.php',
@@ -2370,7 +2418,7 @@ class EmailService {
 	 */
 	private function get_customer_name( int $customer_id ): string {
 		$customer = get_user_by( 'id', $customer_id );
-		return $customer ? $customer->display_name : __( 'Customer', 'wp-sell-services' );
+		return $customer ? $customer->display_name : __( 'Buyer', 'wp-sell-services' );
 	}
 
 	/**
@@ -2436,6 +2484,7 @@ class EmailService {
 			self::TYPE_NEW_MESSAGE            => 'messages',
 			self::TYPE_ORDER_COMPLETED        => 'completion',
 			self::TYPE_REVISION_REQUESTED     => 'completion',
+			self::TYPE_MILESTONE_REVISION     => 'completion',
 			self::TYPE_ORDER_CANCELLED        => 'cancellation',
 			self::TYPE_CANCELLATION_REQUESTED => 'cancellation',
 			self::TYPE_DISPUTE_OPENED         => 'disputes',
@@ -2446,15 +2495,9 @@ class EmailService {
 			self::TYPE_WITHDRAWAL_APPROVED    => 'withdrawals',
 			self::TYPE_WITHDRAWAL_COMPLETED   => 'withdrawals',
 			self::TYPE_WITHDRAWAL_REJECTED    => 'withdrawals',
-			self::TYPE_PROPOSAL_SUBMITTED     => 'proposals',
-			self::TYPE_PROPOSAL_ACCEPTED      => 'proposals',
-			self::TYPE_MILESTONE_PROPOSED     => 'proposals',
-			self::TYPE_MILESTONE_PAID         => 'proposals',
-			self::TYPE_MILESTONE_SUBMITTED    => 'proposals',
-			self::TYPE_MILESTONE_APPROVED     => 'proposals',
-			self::TYPE_EXTENSION_PROPOSED     => 'proposals',
-			self::TYPE_EXTENSION_APPROVED     => 'proposals',
-			self::TYPE_EXTENSION_DECLINED     => 'proposals',
+			// Proposal, milestone and extension emails are deliberately absent:
+			// they carry a payment or a deadline, so they always send (the
+			// preferences screen says so).
 			// A receipt decision is news about the buyer's own order, so it
 			// belongs to the category they already control for order updates -
 			// not a new switch nobody knows to look for.

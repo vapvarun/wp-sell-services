@@ -53,7 +53,7 @@ do_action( 'wpss_email_content_before', 'extension_proposed', $extension, $recip
 	<tr>
 		<td style="padding: 16px 20px; background: #fffbeb; border-radius: 6px; border-left: 3px solid #f59e0b; font-size: 14px; color: #3c3c3c; line-height: 1.6;">
 			<?php if ( '' !== $reason ) : ?>
-				<div style="margin-bottom: 10px;"><strong><?php esc_html_e( 'What the seller will do:', 'wp-sell-services' ); ?></strong><br><?php echo esc_html( $reason ); ?></div>
+				<div style="margin-bottom: 10px;"><strong><?php esc_html_e( 'What the vendor will do:', 'wp-sell-services' ); ?></strong><br><?php echo esc_html( $reason ); ?></div>
 			<?php endif; ?>
 			<div style="margin-bottom: 6px;"><strong><?php esc_html_e( 'Extra amount:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( $format( $amount ) ); ?></div>
 			<?php if ( $extra_days > 0 ) : ?>
@@ -76,7 +76,7 @@ do_action( 'wpss_email_content_before', 'extension_proposed', $extension, $recip
 </p>
 
 <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
-	<?php esc_html_e( 'Not sure? Open the order and discuss in chat first — the seller can send a revised quote.', 'wp-sell-services' ); ?>
+	<?php esc_html_e( 'Not sure? Open the order and discuss in chat first — the vendor can send a revised quote.', 'wp-sell-services' ); ?>
 </p>
 
 <?php

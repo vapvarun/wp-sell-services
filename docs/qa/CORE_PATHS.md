@@ -33,16 +33,16 @@ Three evidence sources, none of them opinion:
 |---|---|---|---|---|---|---|
 | 1 | "Someone can browse what I sell and open a service" | visitor | `/services/`, `/service/<slug>/`, `/service-category/<slug>/` | The catalog is what a marketplace *is*. Activation inserts the services page; 2 cards this cycle (archive rate, showcase video) | | Free |
 | 2 | "A buyer can buy something and pay" | buyer | `/service-checkout/<id>/`, `/cart/` | The money path. Activation inserts cart + checkout pages; 2 cards this cycle | | Free |
-| 3 | "A seller can list a service and it goes live" | vendor | `/dashboard/create/` (wizard) **and** wp-admin service editor | Two authoring surfaces for one outcome — the most-reported area this cycle (3 cards), and the one where the two surfaces historically disagreed | | Free |
+| 3 | "A vendor can list a service and it goes live" | vendor | `/dashboard/create/` (wizard) **and** wp-admin service editor | Two authoring surfaces for one outcome — the most-reported area this cycle (3 cards), and the one where the two surfaces historically disagreed | | Free |
 | 4 | "I can approve who sells on my site" | site owner | Sell Services → Vendors | Gatekeeping. `wpss_vendor` is the only role activation adds; 2 cards this cycle (approve button, decision emails) | | Free |
 | 5 | "I can hold a service back before it goes live" | site owner | Sell Services → Moderation | `wpss_vendor[require_service_moderation]`; 1 card this cycle | | Free |
-| 6 | "A buyer tells the seller what they need, then the seller delivers" | buyer → vendor | `/dashboard/orders/<id>/` requirements form, order states | The fulfilment loop. Requirement types were a card this cycle | | Free |
+| 6 | "A buyer tells the vendor what they need, then the vendor delivers" | buyer → vendor | `/dashboard/orders/<id>/` requirements form, order states | The fulfilment loop. Requirement types were a card this cycle | | Free |
 | 7 | "Both sides can talk about an order" | buyer ↔ vendor | `/dashboard/messages/` | Every marketplace order needs a conversation | | Free |
 | 8 | "When it goes wrong, someone can raise a dispute and I can settle it" | buyer/vendor → owner | `/dashboard/disputes/`, Sell Services → Disputes | The path owners discover during their worst week; 1 card this cycle | | Free |
-| 9 | "A seller can see what they earned and take it out" | vendor | `/dashboard/earnings/`, Withdrawals | Money leaving the system; 1 card this cycle | | Free |
+| 9 | "A vendor can see what they earned and take it out" | vendor | `/dashboard/earnings/`, Withdrawals | Money leaving the system; 1 card this cycle | | Free |
 | 10 | "A buyer can ask for something nobody is selling yet" | buyer | `/buyer-request/`, `/dashboard/create-request/` | Activation inserts the page; 1 card this cycle | | Free |
-| 11 | "Someone can find a seller rather than a service" | visitor | `/vendors/`, vendor profile | Activation inserts the vendors page | | Free |
-| 12 | "I can become a seller on this site" | buyer → vendor | `/become-a-vendor/` | Activation inserts the page; the on-ramp for flow 3 | | Free |
+| 11 | "Someone can find a vendor rather than a service" | visitor | `/vendors/`, vendor profile | Activation inserts the vendors page | | Free |
+| 12 | "I can become a vendor on this site" | buyer → vendor | `/become-a-vendor/` | Activation inserts the page; the on-ramp for flow 3 | | Free |
 
 ## Edge (walk after core — welcome findings, never the starting point)
 

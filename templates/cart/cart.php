@@ -363,7 +363,7 @@ defined( 'ABSPATH' ) || exit;
 			<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Log in to use your cart', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-cart-empty__text"><?php esc_html_e( 'Your cart is saved to your account. You can also buy any service straight from its page.', 'wp-sell-services' ); ?></p>
 			<div class="wpss-cart-empty__actions">
-				<a href="<?php echo esc_url( wp_login_url( wpss_get_cart_url() ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Log in', 'wp-sell-services' ); ?></a>
+				<a href="<?php echo esc_url( wp_login_url( wpss_get_cart_url() ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Log In', 'wp-sell-services' ); ?></a>
 				<?php if ( get_option( 'users_can_register' ) ) : ?>
 					<a href="<?php echo esc_url( wp_registration_url() ); ?>" class="wpss-btn wpss-btn--outline"><?php esc_html_e( 'Create account', 'wp-sell-services' ); ?></a>
 				<?php endif; ?>
@@ -374,10 +374,10 @@ defined( 'ABSPATH' ) || exit;
 			<div class="wpss-cart-empty__icon">
 				<i data-lucide="shopping-cart" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 			</div>
-			<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Your cart is empty', 'wp-sell-services' ); ?></h2>
+			<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Your cart is empty.', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-cart-empty__text"><?php esc_html_e( 'Browse our services and find the perfect match for your needs.', 'wp-sell-services' ); ?></p>
 			<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ?: home_url( '/' ) ); ?>" class="wpss-btn wpss-btn--primary">
-				<?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?>
 			</a>
 		</div>
 	<?php else : ?>
@@ -391,6 +391,7 @@ defined( 'ABSPATH' ) || exit;
 				$grand_total = 0.0;
 				$tax_label   = '';
 				$tax_incl    = false;
+				$tax_rates   = array();
 
 				foreach ( $cart_items as $item_key => $item ) :
 					$service_id = absint( $item['service_id'] ?? 0 );
@@ -434,7 +435,10 @@ defined( 'ABSPATH' ) || exit;
 						$tax_total   += (float) $line['tax'];
 						$grand_total += (float) $line['total'];
 						$tax_label    = (string) ( $line['tax_label'] ?? $tax_label );
-						$tax_incl     = ! empty( $line['tax_included'] );
+						if ( (float) $line['tax'] > 0 ) {
+							$tax_rates[] = (float) ( $line['tax_rate'] ?? 0 );
+						}
+						$tax_incl = ! empty( $line['tax_included'] );
 					}
 
 					$service_title = $service_id ? get_the_title( $service_id ) : __( 'Service', 'wp-sell-services' );
@@ -585,12 +589,19 @@ defined( 'ABSPATH' ) || exit;
 					<div class="wpss-cart-summary__line">
 						<span>
 							<?php
-							echo esc_html(
-								$tax_incl
-									/* translators: %s: tax label, e.g. VAT. */
-									? sprintf( __( '%s (included)', 'wp-sell-services' ), $tax_label ? $tax_label : __( 'Tax', 'wp-sell-services' ) )
-									: ( $tax_label ? $tax_label : __( 'Tax', 'wp-sell-services' ) )
-							);
+							// One rate across the cart reads "VAT (20%)", as checkout does; mixed rates name the tax only.
+							$cart_tax_name = $tax_label ? $tax_label : __( 'Tax', 'wp-sell-services' );
+							$cart_tax_rate = 1 === count( array_unique( $tax_rates ) ) && $tax_rates[0] > 0 ? $tax_rates[0] : null;
+							if ( null !== $cart_tax_rate ) {
+								$cart_tax_name = $tax_incl
+									/* translators: 1: tax label, e.g. VAT. 2: tax rate in percent. */
+									? sprintf( __( '%1$s (%2$s%%, included)', 'wp-sell-services' ), $cart_tax_name, $cart_tax_rate )
+									: sprintf( '%s (%s%%)', $cart_tax_name, $cart_tax_rate );
+							} elseif ( $tax_incl ) {
+								/* translators: %s: tax label, e.g. VAT. */
+								$cart_tax_name = sprintf( __( '%s (included)', 'wp-sell-services' ), $cart_tax_name );
+							}
+							echo esc_html( $cart_tax_name );
 							?>
 						</span>
 						<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $tax_total, 'cart-tax' ) ); ?></span>
@@ -642,7 +653,7 @@ defined( 'ABSPATH' ) || exit;
 				<div class="wpss-cart-summary__cta">
 					<?php if ( 0 === $wpss_buyable ) : ?>
 						<p class="wpss-cart-summary__blocked" role="status">
-							<?php esc_html_e( 'Nothing in your cart is available to buy right now. Remove the unavailable items, or check back when the sellers are taking orders again.', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Nothing in your cart is available to buy right now. Remove the unavailable items, or check back when the vendors are taking orders again.', 'wp-sell-services' ); ?>
 						</p>
 					<?php else : ?>
 					<a href="<?php echo esc_url( wpss_get_checkout_base_url() ); ?>" class="wpss-btn wpss-btn--primary">

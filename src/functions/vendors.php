@@ -861,7 +861,7 @@ function wpss_get_vendor_pitch_stats(): array {
 	if ( $vendors >= 5 ) {
 		$stats[] = array(
 			'value' => number_format_i18n( $vendors ),
-			'label' => __( 'sellers already here', 'wp-sell-services' ),
+			'label' => __( 'vendors already here', 'wp-sell-services' ),
 		);
 	}
 
@@ -928,7 +928,7 @@ function wpss_render_vendor_vacation_notice( int $vendor_id ): void {
 	$message = trim( (string) $profile->vacation_message );
 
 	if ( '' === $message ) {
-		$message = __( 'This seller is currently on vacation.', 'wp-sell-services' );
+		$message = __( 'This vendor is currently on vacation.', 'wp-sell-services' );
 	}
 
 	$return_display = wpss_calendar_date_label( $profile->vacation_return_date ?? null, '' );

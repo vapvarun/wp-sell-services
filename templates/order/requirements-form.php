@@ -117,7 +117,7 @@ do_action( 'wpss_before_requirements_form_component', $order_id, $order );
 				placeholder="<?php esc_attr_e( 'Please describe your project in detail...', 'wp-sell-services' ); ?>"
 			><?php echo esc_textarea( (string) ( $submitted['description'] ?? '' ) ); ?></textarea>
 			<p class="wpss-requirements-form__hint">
-				<?php esc_html_e( 'Include as much detail as possible to help the seller understand your needs.', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Include as much detail as possible to help the vendor understand your needs.', 'wp-sell-services' ); ?>
 			</p>
 		</div>
 
@@ -339,7 +339,7 @@ do_action( 'wpss_before_requirements_form_component', $order_id, $order );
 
 	<div class="wpss-requirements-form__submit">
 		<button type="submit" class="wpss-requirements-form__submit-btn wpss-btn wpss-btn--primary wpss-btn--lg">
-			<span class="wpss-requirements-form__submit-text"><?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?></span>
+			<span class="wpss-requirements-form__submit-text"><?php esc_html_e( 'Submit requirements', 'wp-sell-services' ); ?></span>
 			<span class="wpss-requirements-form__submit-loading" style="display: none;">
 				<span class="wpss-requirements-form__spinner"></span>
 				<?php esc_html_e( 'Submitting...', 'wp-sell-services' ); ?>
@@ -348,8 +348,8 @@ do_action( 'wpss_before_requirements_form_component', $order_id, $order );
 		<p class="wpss-requirements-form__notice">
 			<?php
 			echo $late_submission
-				? esc_html__( 'The seller has already started; your answers will be sent to them right away.', 'wp-sell-services' )
-				: esc_html__( 'Once submitted, the seller will start working on your order.', 'wp-sell-services' );
+				? esc_html__( 'The vendor has already started; your answers will be sent to them right away.', 'wp-sell-services' )
+				: esc_html__( 'Once submitted, the vendor will start working on your order.', 'wp-sell-services' );
 			?>
 		</p>
 	</div>

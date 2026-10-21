@@ -68,7 +68,7 @@ do_action( 'wpss_email_content_before', 'milestone_proposed', $milestone, $recip
 </table>
 
 <p style="margin: 0 0 20px 0; font-size: 14px; color: #4b5563; line-height: 1.6;">
-	<?php esc_html_e( 'Once you pay, the seller starts this phase and submits the delivery for your approval. If the quote looks off, reply in chat on the order page to discuss first.', 'wp-sell-services' ); ?>
+	<?php esc_html_e( 'Once you pay, the vendor starts this phase and submits the delivery for your approval. If the quote looks off, reply in chat on the order page to discuss first.', 'wp-sell-services' ); ?>
 </p>
 
 <p style="margin: 0 0 24px 0; text-align: center;">

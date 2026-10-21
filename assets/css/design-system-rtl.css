@@ -1347,6 +1347,30 @@ body.wpss-modal-active { overflow: hidden; }
 }
 .wpss-stat-card--icon { flex-direction: row; align-items: flex-start; gap: var(--wpss-space-4); }
 
+/* My Services status tiles are the status filter: links that look like the tiles they were. */
+.wpss-stat-card--link {
+	color: inherit;
+	text-decoration: none;
+	min-height: 40px;
+}
+
+.wpss-stat-card--link:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
+}
+
+.wpss-stat-card--link[aria-current="true"] {
+	border-color: var(--wpss-primary);
+	background: var(--wpss-primary-light);
+}
+
+@media (hover: hover) {
+	.wpss-stat-card--link:hover {
+		border-color: var(--wpss-primary);
+	}
+}
+
+
 .wpss-stat-card__icon {
 	display: flex;
 	flex-shrink: 0;

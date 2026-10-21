@@ -48,13 +48,13 @@ $wpss_file_max       = (int) wpss_get_option( 'advanced', 'max_file_size' );
 		<?php endforeach; ?>
 	</ul>
 	<?php if ( $wpss_files_locked && $wpss_attachment_ids ) : ?>
-		<p class="wpss-form-hint"><?php esc_html_e( 'A seller has sent a proposal, so the files above stay on the request. You can still add more.', 'wp-sell-services' ); ?></p>
+		<p class="wpss-form-hint"><?php esc_html_e( 'A vendor has sent a proposal, so the files above stay on the request. You can still add more.', 'wp-sell-services' ); ?></p>
 	<?php endif; ?>
 	<p class="wpss-form-hint">
 		<?php
 		printf(
 			/* translators: %s: maximum file size */
-			esc_html__( 'A brief, mockups or reference images. Sellers see them on your request. Up to %s each.', 'wp-sell-services' ),
+			esc_html__( 'A brief, mockups or reference images. Vendors see them on your request. Up to %s each.', 'wp-sell-services' ),
 			esc_html( size_format( $wpss_file_max * MB_IN_BYTES ) )
 		);
 		?>
@@ -93,8 +93,6 @@ $wpss_file_max       = (int) wpss_get_option( 'advanced', 'max_file_size' );
 				var msg = (xhr.responseJSON && xhr.responseJSON.message) || '<?php echo esc_js( __( 'The file could not be uploaded.', 'wp-sell-services' ) ); ?>';
 				if (window.wpssToast) {
 					window.wpssToast(msg, 'error');
-				} else if (window.wpssShowNotice) {
-					window.wpssShowNotice(msg, 'error');
 				}
 			});
 		});

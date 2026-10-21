@@ -1,14 +1,14 @@
-# Buyer & Seller Dashboard Tour
+# Buyer & Vendor Dashboard Tour
 
-The `[wpss_dashboard]` shortcode - where buyers track orders and sellers manage services - ships with a role-aware onboarding tour. The first time a logged-in user opens the page they see a short Shepherd.js walkthrough that points out the sections they actually need.
+The `[wpss_dashboard]` shortcode - where buyers track orders and vendors manage services - ships with a role-aware onboarding tour. The first time a logged-in user opens the page they see a short Shepherd.js walkthrough that points out the sections they actually need.
 
-![The unified dashboard, seller view](../images/frontend-dashboard-vendor.webp)
+![The unified dashboard, vendor view](../images/frontend-dashboard-vendor.webp)
 
 ## Who Sees What
 
 The tour inspects the viewer's role and tailors the steps:
 
-**Active sellers** see a **9-step walkthrough**:
+**Active vendors** see a **9-step walkthrough**:
 
 1. Welcome
 2. Dashboard sidebar overview

@@ -30,13 +30,6 @@ use WPSellServices\Services\ReviewService;
 class ReviewsController extends RestController {
 
 	/**
-	 * Review IDs on the page being built that the viewer marked helpful (null outside a list).
-	 *
-	 * @var int[]|null
-	 */
-	private ?array $viewer_votes = null;
-
-	/**
 	 * Route base.
 	 *
 	 * @var string
@@ -181,26 +174,6 @@ class ReviewsController extends RestController {
 			)
 		);
 
-		// Mark review as helpful.
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/helpful',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'mark_helpful' ),
-					'permission_callback' => array( $this, 'check_permissions' ),
-					'args'                => array(
-						'id' => array(
-							'description' => __( 'Unique identifier for the review.', 'wp-sell-services' ),
-							'type'        => 'integer',
-							'required'    => true,
-						),
-					),
-				),
-			)
-		);
-
 		// Service reviews summary.
 		register_rest_route(
 			$this->namespace,
@@ -282,7 +255,7 @@ class ReviewsController extends RestController {
 		$orderby = $request->get_param( 'orderby' ) ?: 'created_at';
 		$order   = $request->get_param( 'order' ) ?: 'DESC';
 
-		$allowed_orderby = array( 'created_at', 'rating', 'helpful_count' );
+		$allowed_orderby = array( 'created_at', 'rating' );
 		$allowed_order   = self::sort_directions();
 
 		if ( ! in_array( $orderby, $allowed_orderby, true ) ) {
@@ -297,9 +270,6 @@ class ReviewsController extends RestController {
 		$args  = array_merge( $values, array( $pagination['per_page'], $pagination['offset'] ) );
 
 		$reviews = $wpdb->get_results( $wpdb->prepare( $query, ...$args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-
-		// One lookup for the page's votes, not one per review.
-		$this->viewer_votes = ( new ReviewRepository() )->helpful_voted_ids( wp_list_pluck( $reviews, 'id' ), get_current_user_id() );
 
 		$data = array();
 		foreach ( $reviews as $review ) {
@@ -649,38 +619,6 @@ class ReviewsController extends RestController {
 	}
 
 	/**
-	 * Toggle the reader's "Helpful" vote on a review.
-	 *
-	 * First call adds the vote, the next takes it back. All the work is in
-	 * ReviewRepository::toggle_helpful(), shared with the AJAX action.
-	 *
-	 * @since 1.1.0
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function mark_helpful( $request ) {
-		$result = ( new ReviewRepository() )->toggle_helpful( (int) $request->get_param( 'id' ), get_current_user_id(), wpss_client_ip() );
-
-		if ( 'not_found' === $result ) {
-			return new WP_Error( 'rest_review_not_found', __( 'Review not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-		}
-
-		if ( 'own_review' === $result ) {
-			return new WP_Error( 'rest_own_review', __( 'You cannot mark your own review as helpful.', 'wp-sell-services' ), array( 'status' => 403 ) );
-		}
-
-		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'count'   => $result['count'],
-				'marked'  => $result['marked'],
-				'message' => $result['marked'] ? __( 'Thanks for your feedback!', 'wp-sell-services' ) : __( 'Vote removed.', 'wp-sell-services' ),
-			)
-		);
-	}
-
-	/**
 	 * Get service reviews summary.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -993,9 +931,6 @@ class ReviewsController extends RestController {
 			'rating'             => (int) $review->rating,
 			'review'             => $review->review,
 			'status'             => $review->status,
-			'helpful_count'      => (int) ( $review->helpful_count ?? 0 ),
-			'viewer_can_vote'    => is_user_logged_in() && (int) ( $review->reviewer_id ?? 0 ) !== get_current_user_id(),
-			'viewer_marked'      => in_array( (int) $review->id, $this->viewer_votes ?? ( new ReviewRepository() )->helpful_voted_ids( array( (int) $review->id ), get_current_user_id() ), true ),
 			'vendor_reply'       => $review->vendor_reply ?? null,
 			// ISO-8601 through the shared formatter (Basecamp 10154919636).
 			'vendor_reply_at'    => $this->format_datetime( $review->vendor_reply_at ?? null ),
@@ -1062,7 +997,7 @@ class ReviewsController extends RestController {
 				'description' => __( 'Order by field.', 'wp-sell-services' ),
 				'type'        => 'string',
 				'default'     => 'created_at',
-				'enum'        => array( 'created_at', 'rating', 'helpful_count' ),
+				'enum'        => array( 'created_at', 'rating' ),
 			),
 			'order'      => array(
 				'description' => __( 'Order direction.', 'wp-sell-services' ),

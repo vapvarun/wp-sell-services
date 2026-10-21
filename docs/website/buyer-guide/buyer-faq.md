@@ -92,7 +92,7 @@ misunderstandings, and vendors usually prefer to fix the work.
 
 **How long do I have to leave a review?**
 Default **30 days** after completion. Reviews are public and shape the vendor's
-rating and [seller level](../vendor-system/seller-levels.md).
+rating and [vendor level](../vendor-system/seller-levels.md).
 
 **Can I edit or delete my review?**
 You can edit your own review. Vendors can reply publicly but cannot remove it.

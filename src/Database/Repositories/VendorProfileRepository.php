@@ -410,16 +410,14 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @return bool True on success.
 	 */
 	public function update_stats( int $user_id ): bool {
-		$orders_table  = $this->table_name( 'orders' );
-		$reviews_table = $this->table_name( 'reviews' );
+		$orders_table = $this->table_name( 'orders' );
 
-		// Order counts and the platform's cut come from orders; the vendor's
-		// money comes from the ledger (see ledger_totals()).
+		// The platform's cut comes from every completed order row, tips and extensions included. The order
+		// counts come from OrderRepository::get_vendor_stats(), the rule the sales list uses, so a tip or
+		// an extension payment is not counted as an order. The vendor's money comes from the ledger.
 		$order_stats = $this->wpdb->get_row(
 			$this->wpdb->prepare(
 				"SELECT
-					COUNT(*) as total_orders,
-					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
 					SUM(CASE WHEN status = 'completed' THEN COALESCE(platform_fee, 0) ELSE 0 END) as total_commission
 				FROM {$orders_table}
 				WHERE vendor_id = %d",
@@ -428,18 +426,10 @@ class VendorProfileRepository extends AbstractRepository {
 			ARRAY_A
 		);
 
+		$counts = ( new OrderRepository() )->get_vendor_stats( $user_id );
+
 		// Calculate review stats.
-		$review_stats = $this->wpdb->get_row(
-			$this->wpdb->prepare(
-				"SELECT
-					AVG(rating) as avg_rating,
-					COUNT(*) as total_reviews
-				FROM {$reviews_table}
-				WHERE vendor_id = %d AND status = 'approved' AND review_type = 'customer_to_vendor'",
-				$user_id
-			),
-			ARRAY_A
-		);
+		$review_stats = ( new ReviewRepository() )->rating_stats( 'vendor_id', $user_id );
 
 		// Calculate on-time delivery rate.
 		$delivery_stats = $this->wpdb->get_row(
@@ -462,11 +452,11 @@ class VendorProfileRepository extends AbstractRepository {
 		return $this->upsert(
 			$user_id,
 			$this->ledger_totals( $user_id ) + array(
-				'total_orders'          => (int) ( $order_stats['total_orders'] ?? 0 ),
-				'completed_orders'      => (int) ( $order_stats['completed_orders'] ?? 0 ),
+				'total_orders'          => $counts['total_orders'],
+				'completed_orders'      => $counts['completed_orders'],
 				'total_commission'      => (float) ( $order_stats['total_commission'] ?? 0 ),
-				'avg_rating'            => round( (float) ( $review_stats['avg_rating'] ?? 0 ), 2 ),
-				'total_reviews'         => (int) ( $review_stats['total_reviews'] ?? 0 ),
+				'avg_rating'            => round( $review_stats['average'], 2 ),
+				'total_reviews'         => $review_stats['count'],
 				'on_time_delivery_rate' => round( $on_time_rate, 2 ),
 			)
 		) !== false;

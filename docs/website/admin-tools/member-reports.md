@@ -1,13 +1,13 @@
 # Member Reports
 
-Members can report a service or a seller they think breaks your marketplace's rules. Every report lands in one queue in wp-admin, where you decide what to do about it.
+Members can report a service or a vendor they think breaks your marketplace's rules. Every report lands in one queue in wp-admin, where you decide what to do about it.
 
 ## How Members Report
 
 Two places on the website carry a Report link:
 
 - **Service page:** "Report this service", at the bottom of the sidebar.
-- **Vendor profile:** "Report this seller", at the bottom of the profile sidebar.
+- **Vendor profile:** "Report this vendor", at the bottom of the profile sidebar.
 
 Clicking it opens a short form. The member picks a reason and can add details:
 
@@ -19,7 +19,7 @@ Clicking it opens a short form. The member picks a reason and can add details:
 | Scam or fraud | Taking money with no intention to deliver |
 | Trying to take payment off the platform | Asking buyers to pay outside your checkout |
 | Misleading or inaccurate | A listing that does not match what is delivered |
-| Copyright or trademark violation | Using work or brands the seller does not own |
+| Copyright or trademark violation | Using work or brands the vendor does not own |
 | Adult or explicit content | Content your marketplace does not allow |
 | Something else | Anything not covered above |
 
@@ -27,7 +27,7 @@ A few rules keep the queue useful:
 
 - The member must be logged in. A visitor who clicks the link is sent to sign in and brought back.
 - Nobody sees a Report link on their own service or profile.
-- A member can report the same service or seller once. A second attempt tells them the team is already reviewing it.
+- A member can report the same service or vendor once. A second attempt tells them the team is already reviewing it.
 - The person who is reported is never told who sent the report.
 
 Reporting from reviews and messages is planned for a later release. The mobile app can already report all four through `POST wpss/v1/reports`.
@@ -67,12 +67,12 @@ Open the **Account** menu on a report to change the reported member's standing:
 
 Suspending and closing both ask you to confirm first. The confirmation opens with **Cancel** selected and the action button in red. Administrators cannot be suspended from this screen.
 
-Account standing applies to the person, not only to their selling: a suspended member is stopped as a buyer too. A suspended seller cannot list services, send proposals, start contact-seller threads or withdraw, but can still open Sales Orders, deliver and message inside orders a buyer already paid for. It is separate from vendor status (pending, active, rejected), which you manage under [Vendor Management](vendor-management.md).
+Account standing applies to the person, not only to their selling: a suspended member is stopped as a buyer too. A suspended vendor cannot list services, send proposals, start contact-seller threads or withdraw, but can still open Sales Orders, deliver and message inside orders a buyer already paid for. It is separate from vendor status (pending, active, rejected), which you manage under [Vendor Management](vendor-management.md).
 
 ## Tips
 
 - Read the details and open the reported service before deciding. One report is a lead, not a verdict.
-- Several reports against the same seller for the same reason are worth acting on quickly.
+- Several reports against the same vendor for the same reason are worth acting on quickly.
 - Use **Suspend member** while you investigate; it can be undone with **Restore member**.
 - To deal with a single bad listing rather than the person, use [Service Moderation](service-moderation.md).
 

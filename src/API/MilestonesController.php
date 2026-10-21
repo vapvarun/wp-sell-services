@@ -570,7 +570,7 @@ class MilestonesController extends RestController {
 		}
 
 		if ( (int) $order->vendor_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
-			return $this->error( 'wpss_forbidden', __( 'Only the seller can propose milestones on this order.', 'wp-sell-services' ), 403 );
+			return $this->error( 'wpss_forbidden', __( 'Only the vendor can propose milestones on this order.', 'wp-sell-services' ), 403 );
 		}
 
 		return true;

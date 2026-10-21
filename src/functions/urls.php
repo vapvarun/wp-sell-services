@@ -517,7 +517,7 @@ function wpss_get_page_definitions(): array {
 		// Register link on the site at it - ours and the theme's - because they
 		// all resolve through core's wp_registration_url().
 		'registration'  => array(
-			'title'     => __( 'Create Account', 'wp-sell-services' ),
+			'title'     => __( 'Create account', 'wp-sell-services' ),
 			'shortcode' => '[wpss_register]',
 			'slug'      => 'create-account',
 			'required'  => false,

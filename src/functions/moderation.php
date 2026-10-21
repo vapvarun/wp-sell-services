@@ -511,7 +511,7 @@ add_action(
 add_action(
 	'wpss_vendor_profile_sidebar',
 	static function ( $vendor_id ): void {
-		wpss_render_report_link( 'user', (int) $vendor_id, (int) $vendor_id, __( 'Report this seller', 'wp-sell-services' ) );
+		wpss_render_report_link( 'user', (int) $vendor_id, (int) $vendor_id, __( 'Report this vendor', 'wp-sell-services' ) );
 	},
 	90
 );

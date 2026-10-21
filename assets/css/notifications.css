@@ -43,4 +43,7 @@
 @media (max-width: 640px) {
 	.wpss-notif-filter select { flex: 1 1 100%; }
 	.wpss-notif-row { padding: 12px; }
+	/* Same 44px reach as the filter controls above the list. */
+	.wpss-notif-row__mark { width: 44px; height: 44px; }
+	.wpss-notif-mark-all { min-height: 44px; }
 }

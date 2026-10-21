@@ -112,6 +112,20 @@
 	overflow: hidden;
 }
 
+/* The tip and extra-work prompts are cards of their own: inset them from the
+   section edge the way the chat card is, instead of sitting flush against it. */
+.wpss-order-section--tip,
+.wpss-order-section--extension-cta {
+	padding: 1.5rem;
+}
+
+@media (max-width: 640px) {
+	.wpss-order-section--tip,
+	.wpss-order-section--extension-cta {
+		padding: 1rem;
+	}
+}
+
 .wpss-order-section__header {
 	padding: 1rem 1.5rem;
 	border-bottom: 1px solid var(--wpss-border, #e5e7eb);

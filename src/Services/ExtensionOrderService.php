@@ -445,6 +445,12 @@ class ExtensionOrderService {
 
 		$wpdb->query( 'COMMIT' );
 
+		// A late order whose paid extension moved the deadline into the future is
+		// back in progress, same as the unpaid approve path.
+		if ( $parent && $extra_days > 0 && 'late' === $parent->status && strtotime( $new_deadline . ' UTC' ) > time() ) {
+			( new OrderService() )->update_status( $parent_order_id, 'in_progress', __( 'Deadline extended', 'wp-sell-services' ) );
+		}
+
 		// Parity with regular-order commission so Pro wallet + analytics see
 		// extensions as first-class earnings events.
 		do_action(
@@ -604,7 +610,8 @@ class ExtensionOrderService {
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id FROM {$orders_table}
-				WHERE platform = %s AND status = %s AND created_at < %s",
+				WHERE platform = %s AND status = %s AND created_at < %s
+				AND ( payment_method IS NULL OR payment_method <> 'offline' )",
 				self::ORDER_TYPE,
 				'pending_payment',
 				$threshold

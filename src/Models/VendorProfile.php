@@ -436,10 +436,10 @@ class VendorProfile {
 	 */
 	public static function get_tiers(): array {
 		return array(
-			self::TIER_NEW       => __( 'New Seller', 'wp-sell-services' ),
-			self::TIER_RISING    => __( 'Rising Seller', 'wp-sell-services' ),
+			self::TIER_NEW       => __( 'New vendor', 'wp-sell-services' ),
+			self::TIER_RISING    => __( 'Rising Vendor', 'wp-sell-services' ),
 			self::TIER_TOP_RATED => __( 'Top Rated', 'wp-sell-services' ),
-			self::TIER_PRO       => __( 'Pro Seller', 'wp-sell-services' ),
+			self::TIER_PRO       => __( 'Pro Vendor', 'wp-sell-services' ),
 		);
 	}
 

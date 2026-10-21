@@ -165,7 +165,7 @@ class BuyerRequestMetabox {
 		$proposals        = $proposal_service->get_by_request( $post->ID );
 
 		if ( empty( $proposals ) ) {
-			echo '<p>' . esc_html__( 'No proposals yet.', 'wp-sell-services' ) . '</p>';
+			echo '<p>' . esc_html__( 'No proposals yet', 'wp-sell-services' ) . '</p>';
 			return;
 		}
 

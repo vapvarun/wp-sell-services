@@ -8,7 +8,7 @@ WP Sell Services emails buyers, vendors, and admins at every stage of an order. 
 
 ## Emails Vendors Receive
 
-These keep your sellers informed about their business activity.
+These keep your vendors informed about their business activity.
 
 | Email | When It Is Sent |
 |-------|----------------|
@@ -23,7 +23,7 @@ These keep your sellers informed about their business activity.
 | **Withdrawal Rejected** | The admin declines a payout withdrawal request |
 | **Proposal Accepted** | A buyer accepts the vendor's proposal on a request |
 | **Vendor Contact** | Someone sends a message through the vendor's contact form |
-| **Level Promotion** | The vendor reaches a new seller level |
+| **Level Promotion** | The vendor reaches a new vendor level |
 | **Moderation Approved** | A submitted service passes admin review and goes live |
 | **Moderation Rejected** | A submitted service is declined during admin review |
 | **Auto-Withdrawal Processed** | An automatic withdrawal runs and processes a payout for the vendor |
@@ -116,7 +116,7 @@ bold is the label you will see.
 A few are deliberately not switchable, because turning them off would leave
 someone waiting on information nobody else will give them:
 
-- **Seller level promotion** -- a vendor reaching a new level
+- **Vendor level promotion** -- a vendor reaching a new level
 - **Proposal rejected** -- so the vendor stops waiting
 - **Offline payment receipt** submitted, verified and rejected -- the buyer needs
   to know whether their proof was accepted

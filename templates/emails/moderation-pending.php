@@ -57,7 +57,7 @@ do_action( 'wpss_email_content_before', 'moderation_pending', $service_title, $r
 		</tr>
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; font-weight: 600; color: #856404;"><?php esc_html_e( 'Pending Review', 'wp-sell-services' ); ?></td>
+			<td style="padding: 12px; font-weight: 600; color: #856404;"><?php esc_html_e( 'Pending review', 'wp-sell-services' ); ?></td>
 		</tr>
 	</tbody>
 </table>

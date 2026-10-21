@@ -25,16 +25,16 @@ Each service also has its own individual rating, which appears on that service's
 
 Higher-rated vendors and services appear more prominently in marketplace search results. Ratings above 4.5 stars tend to get excellent placement, while ratings below 3.5 may be shown less frequently.
 
-### Seller Levels
+### Vendor Levels
 
-Ratings and review counts are key requirements for advancing through seller levels:
+Ratings and review counts are key requirements for advancing through vendor levels:
 
 | Level | Minimum Rating | Minimum Reviews |
 |-------|---------------|-----------------|
-| New Seller | None | None |
-| Rising Seller | 4.0 stars | 3 reviews |
+| New Vendor | None | None |
+| Rising Vendor | 4.0 stars | 3 reviews |
 | Top Rated | 4.7 stars | 10 reviews |
-| Pro Seller | Admin-granted | Admin-granted |
+| Pro Vendor | Admin-granted | Admin-granted |
 
 ### Buyer Confidence
 
@@ -111,5 +111,5 @@ As an admin, if you notice a vendor struggling, reach out to offer guidance. Som
 ## Related Documentation
 
 - [Review System](review-system.md)
-- [Seller Levels](../vendor-system/seller-levels.md)
+- [Vendor Levels](../vendor-system/seller-levels.md)
 - [Order Lifecycle](../order-management/order-lifecycle.md)

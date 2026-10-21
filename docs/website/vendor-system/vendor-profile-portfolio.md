@@ -96,7 +96,7 @@ Your verification tier is displayed as a badge on your profile and services:
 - **Verified** -- Your email or identity has been verified.
 - **Pro** -- Premium verification status.
 
-Higher verification tiers help build buyer confidence. See [Seller Levels](seller-levels.md) for details on how to advance.
+Higher verification tiers help build buyer confidence. See [Vendor Levels](seller-levels.md) for details on how to advance.
 
 ## Tips for a Strong Profile
 
@@ -109,6 +109,6 @@ Higher verification tiers help build buyer confidence. See [Seller Levels](selle
 
 ## Related Resources
 
-- [Seller Levels](seller-levels.md)
+- [Vendor Levels](seller-levels.md)
 - [Vacation Mode](vacation-mode.md)
 - [Vendor Dashboard](vendor-dashboard.md)

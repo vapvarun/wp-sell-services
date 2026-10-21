@@ -235,6 +235,13 @@ class CommissionService {
 			return ( new MilestoneService() )->credit_phase( $order_id );
 		}
 
+		// Tips and extensions are credited when their payment completes. An admin
+		// completing an unpaid one must not credit the wallet for money not received.
+		if ( in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_EXTENSION ), true )
+			&& 'paid' !== ( $order->payment_status ?? '' ) && empty( $order->paid_at ) ) {
+			return false;
+		}
+
 		// Skip if commission already recorded (check for existing wallet transaction).
 		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
 

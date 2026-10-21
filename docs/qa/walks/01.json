@@ -1,0 +1,31 @@
+{
+  "journey": "01",
+  "sha_free": "c21a7c05",
+  "sha_pro": "e4ac7141",
+  "env": {"site": "http://wp-sell-services.local", "theme": "reign-theme", "rail": "standalone", "wp": "7.1.3"},
+  "ran_at": "2026-10-20T23:20:00Z",
+  "checks": [
+    {"id": "s1-proposal-created-pending", "result": "pass", "evidence": "Maya POST /buyer-requests/13591/proposals -> 201 proposal 249; Sofia -> 201 proposal 250 (Ella's open request 'Shopify-to-WooCommerce product migration')."},
+    {"id": "s1-exactly-one-email", "result": "untested", "evidence": "No mail catcher on this site. Static: proposal_received / proposal_accepted / proposal_rejected are in NotificationService::is_email_service_handling() covered_types, so no duplicate plain mail."},
+    {"id": "s2-notification-row", "result": "pass", "evidence": "Ella's inbox: 'New proposal received' 'Maya Chen sent a proposal on your request ... Their price: $320.00' (and Sofia); briefcase icon; no 'You have a new notification' in these rows; 1440 and 390 no overflow. A first-visit 'Welcome to your dashboard' tour modal sits over the page until Skip."},
+    {"id": "s3-notification-deep-link", "result": "pass", "evidence": "Title is an <a> to /buyer-request/need-a-shopify-to-woocommerce-product-migration-about-300-products/; page lists both Maya Chen and Sofia Rossi proposals with Accept Proposal / Decline."},
+    {"id": "s4-second-proposal-second-notification", "result": "pass", "evidence": "Two proposal_received rows (ids 10956, 10957) for the buyer."},
+    {"id": "s5-hire-creates-order-and-notifies", "result": "pass", "evidence": "Accept (Maya): order 3888 platform=request status=pending_payment total 384.00 (320 + VAT); proposal 249 accepted, 250 rejected; Maya got proposal_accepted 'The buyer accepted your proposal on ...', Sofia got proposal_rejected 'The buyer went with another seller on ...'."},
+    {"id": "s6-order-detail-title", "result": "pass", "evidence": "Pay page and order page title the line with the request title 'Need a Shopify-to-WooCommerce product migration ...', not 'Service Checkout'."},
+    {"id": "s7-pay-offline-and-mark-paid", "result": "pass", "evidence": "Pay form posts service_id=0 (hidden input); Offline selected -> payment_method=offline, status pending_payment, buyer page shows 'How to pay by Bank transfer' instructions. wp-admin order shows 'Offline Payment - Awaiting Confirmation' + Mark as Paid -> status pending_requirements, payment_status paid."},
+    {"id": "s7-seller-earnings-not-credited-yet", "result": "pass", "evidence": "No wallet transaction for order 3888 after mark-paid (credited on completion)."},
+    {"id": "s8-admin-order-and-list-name-source", "result": "pass", "evidence": "Admin order view links 'Request: Need a Shopify-to-WooCommerce ...' to post 13591; Orders list row reads the same; no 'Deleted' rows in the list page."},
+    {"id": "s8-admin-recent-orders-widget", "result": "untested", "evidence": "No Recent Orders table found on wp-admin Dashboard (index.php); plugin dashboard Recent Orders not walked."},
+    {"id": "modals-above-theme-deliver-dispute", "result": "pass", "evidence": "Maya, in-progress order 3888, Reign at 1440 and 390: Deliver Work and Open Dispute modals are children of body; title, close and primary button all receive elementFromPoint; Esc closes."},
+    {"id": "modals-quote-extra-work", "result": "untested", "evidence": "'Send quote to buyer' control not exposed as an accessible button on the in-progress order page; modal not opened."},
+    {"id": "reg-seller-proposes-own-request-notifies-nobody", "result": "untested", "evidence": "Not exercised (a non-vendor owner is refused with 403 wpss_not_vendor, a different case)."},
+    {"id": "reg-one-completion-email", "result": "untested", "evidence": "Needs Mailpit; completion by acceptance walked in journey 14 (order 3887: delivery_accepted + order_completed_vendor notifications once each)."},
+    {"id": "reg-order-again", "result": "pass", "evidence": "Tomas on completed order 3887: Order again -> /service-checkout/11411/?package=0 with the same Basic package, $35.00 + VAT 20% $7.00 = $42.00. Request-bought order 3888 shows no Need-this-again section. The section's price-changed and removed-option paths not exercised."},
+    {"id": "reg-order-thread-attachment-notice", "result": "pass", "evidence": "Ella on in-progress order 3888 messages Maya with migration-notes.exe: notice 'migration-notes.exe: File type could not be verified.'; text message stored (id 668) with attachments []."}
+  ],
+  "proposed_checks": [
+    "Dashboard welcome tour modal should not cover a deep-linked destination (notifications) on first visit.",
+    "Order page for request orders shows '2 of 2 revisions left' under Requirements even though the proposal sets none."
+  ],
+  "verdict": "UNTESTED"
+}

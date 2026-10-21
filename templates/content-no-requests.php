@@ -33,7 +33,7 @@ $message = apply_filters( 'wpss_no_requests_message', $default_message );
 	</div>
 
 	<h3 class="wpss-no-results-title">
-		<?php esc_html_e( 'No buyer requests found', 'wp-sell-services' ); ?>
+		<?php esc_html_e( 'No buyer requests found.', 'wp-sell-services' ); ?>
 	</h3>
 
 	<p class="wpss-no-results-message">

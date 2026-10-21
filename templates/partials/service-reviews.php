@@ -123,33 +123,14 @@ do_action( 'wpss_before_service_reviews', $service_id );
 
 	<?php if ( ! empty( $reviews ) ) : ?>
 		<div class="wpss-reviews-list">
-			<?php
-			// One lookup for every vote on this page.
-			$wpss_voted = ( new \WPSellServices\Database\Repositories\ReviewRepository() )->helpful_voted_ids( wp_list_pluck( $reviews, 'id' ), get_current_user_id() );
-			?>
 			<?php foreach ( $reviews as $review ) : ?>
 				<?php
 				// Through the model, so this surface and the order page agree on
-				// what a review IS. This block used to read the raw columns
-				// directly and used $review->customer_id for the avatar while
-				// gating "Helpful" on $review->reviewer_id - two names for the
-				// review's author on one screen.
+				// what a review IS.
 				$wpss_review = \WPSellServices\Models\Review::from_db( $review );
 				?>
 				<div class="wpss-review">
 					<?php require wpss_locate_template( 'partials/review-body.php' ); ?>
-
-					<div class="wpss-review-helpful">
-						<?php
-						$wpss_helpful = array(
-							'review_id'     => (int) $review->id,
-							'helpful_count' => (int) ( $review->helpful_count ?? 0 ),
-							'reviewer_id'   => (int) ( $review->reviewer_id ?? 0 ),
-							'voted'         => in_array( (int) $review->id, $wpss_voted, true ),
-						);
-						require wpss_locate_template( 'partials/review-helpful.php' );
-						?>
-					</div>
 				</div>
 
 				<?php

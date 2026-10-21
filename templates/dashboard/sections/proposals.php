@@ -149,7 +149,7 @@ if ( $request_ids ) {
 							</button>
 						<?php endif; ?>
 						<?php if ( ! empty( $proposal->order_id ) ) : ?>
-							<?php $order_label = __( 'View Order', 'wp-sell-services' ); ?>
+							<?php $order_label = __( 'View order', 'wp-sell-services' ); ?>
 							<a href="<?php echo esc_url( wpss_get_order_url( (int) $proposal->order_id, 'sales' ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-btn--action" aria-label="<?php echo esc_attr( $order_label ); ?>" title="<?php echo esc_attr( $order_label ); ?>">
 								<i data-lucide="banknote" class="wpss-icon" aria-hidden="true"></i>
 								<span class="wpss-btn__label"><?php echo esc_html( $order_label ); ?></span>

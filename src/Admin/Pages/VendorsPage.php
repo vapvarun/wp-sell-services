@@ -246,7 +246,7 @@ class VendorsPage {
 					'errorResettingCommissionRate'       => __( 'Error resetting commission rate.', 'wp-sell-services' ),
 					'errorUpdatingVacationMode'          => __( 'Error updating vacation mode.', 'wp-sell-services' ),
 					'errorUpdatingAvailability'          => __( 'Error updating availability.', 'wp-sell-services' ),
-					'errorUpdatingSellerLevel'           => __( 'Error updating seller level.', 'wp-sell-services' ),
+					'errorUpdatingSellerLevel'           => __( 'Error updating vendor level.', 'wp-sell-services' ),
 					'errorModeratingPortfolioItem'       => __( 'Error moderating portfolio item.', 'wp-sell-services' ),
 					'permanentlyRemoveThisPortfolioItem' => __( 'Permanently remove this portfolio item? This cannot be undone.', 'wp-sell-services' ),
 					'loading'                            => __( 'Loading...', 'wp-sell-services' ),
@@ -863,12 +863,12 @@ class VendorsPage {
 					<?php
 					printf(
 						/* translators: %s: number of users */
-						esc_html( _n( '%s user has the Vendor role but no seller profile or activity.', '%s users have the Vendor role but no seller profile or activity.', $n, 'wp-sell-services' ) ),
+						esc_html( _n( '%s user has the Vendor role but no vendor profile or activity.', '%s users have the Vendor role but no vendor profile or activity.', $n, 'wp-sell-services' ) ),
 						esc_html( number_format_i18n( $n ) )
 					);
 					?>
 				</strong>
-				<?php esc_html_e( 'Selling needs an approved seller profile, so the role gives them nothing. Nothing was changed; removing it is your call, and you can undo it.', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Selling needs an approved vendor profile, so the role gives them nothing. Nothing was changed; removing it is your call, and you can undo it.', 'wp-sell-services' ); ?>
 			</p>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wpss-role-cleanup-form"
 				data-confirm="<?php echo esc_attr( sprintf( /* translators: %s: number of users */ _n( 'Remove the Vendor role from %s user? Each change is logged and can be undone.', 'Remove the Vendor role from %s users? Each change is logged and can be undone.', $n, 'wp-sell-services' ), number_format_i18n( $n ) ) ); ?>">
@@ -1594,7 +1594,7 @@ class VendorsPage {
 		if ( ! empty( $social_links ) ) :
 			?>
 			<div class="wpss-tab-section">
-				<h3><?php esc_html_e( 'Social Links', 'wp-sell-services' ); ?></h3>
+				<h3><?php esc_html_e( 'Social links', 'wp-sell-services' ); ?></h3>
 				<div class="wpss-social-links">
 					<?php foreach ( $social_links as $platform => $url ) : ?>
 						<?php if ( $url ) : ?>
@@ -1626,7 +1626,7 @@ class VendorsPage {
 						<?php if ( ! empty( $profile->is_available ) ) : ?>
 							<span style="color: #00a32a;">● <?php esc_html_e( 'Available', 'wp-sell-services' ); ?></span>
 						<?php else : ?>
-							<span style="color: #646970;">○ <?php esc_html_e( 'Not Available', 'wp-sell-services' ); ?></span>
+							<span style="color: #646970;">○ <?php esc_html_e( 'Not available', 'wp-sell-services' ); ?></span>
 						<?php endif; ?>
 					</span>
 				</div>
@@ -1829,7 +1829,7 @@ class VendorsPage {
 
 		// Get available statuses for filter.
 		$statuses = array(
-			''                     => __( 'All Statuses', 'wp-sell-services' ),
+			''                     => __( 'All statuses', 'wp-sell-services' ),
 			'pending_payment'      => __( 'Pending Payment', 'wp-sell-services' ),
 			'pending_requirements' => __( 'Pending Requirements', 'wp-sell-services' ),
 			'in_progress'          => __( 'In Progress', 'wp-sell-services' ),
@@ -1856,7 +1856,7 @@ class VendorsPage {
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></th>
-						<th><?php esc_html_e( 'Customer', 'wp-sell-services' ); ?></th>
+						<th><?php esc_html_e( 'Buyer', 'wp-sell-services' ); ?></th>
 						<th><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
 						<th><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></th>
 						<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
@@ -2278,7 +2278,7 @@ class VendorsPage {
 		<div class="wpss-tab-section">
 			<h3><?php esc_html_e( 'Recent Reviews', 'wp-sell-services' ); ?></h3>
 			<?php if ( empty( $reviews ) ) : ?>
-				<p><?php esc_html_e( 'No reviews yet.', 'wp-sell-services' ); ?></p>
+				<p><?php esc_html_e( 'No reviews yet', 'wp-sell-services' ); ?></p>
 			<?php else : ?>
 				<div class="wpss-reviews-list">
 					<?php foreach ( $reviews as $review ) : ?>
@@ -2529,7 +2529,7 @@ class VendorsPage {
 				</div>
 				<div class="wpss-vacation-message">
 					<label for="wpss-vacation-message">
-						<?php esc_html_e( 'Vacation Message (shown to customers)', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Vacation Message (shown to buyers)', 'wp-sell-services' ); ?>
 					</label>
 					<textarea id="wpss-vacation-message" rows="3"><?php echo esc_textarea( $profile->vacation_message ?? '' ); ?></textarea>
 				</div>
@@ -2550,20 +2550,20 @@ class VendorsPage {
 		$admin_set     = $this->seller_level_service->is_admin_set( $vendor_id );
 		?>
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Seller Level (Admin Override)', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Vendor Level (Admin Override)', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-settings-section">
 				<p class="description">
 					<?php
 					printf(
 						/* translators: %s: auto-calculated seller level label */
-						esc_html__( 'Levels normally update automatically from vendor performance (the calculated level is %s). Use the override below to grant or revoke a level manually, including the admin-only Pro Seller tier.', 'wp-sell-services' ),
+						esc_html__( 'Levels normally update automatically from vendor performance (the calculated level is %s). Use the override below to grant or revoke a level manually, including the admin-only Pro Vendor tier.', 'wp-sell-services' ),
 						'<strong>' . esc_html( $level_labels[ $auto_level ] ?? ucfirst( $auto_level ) ) . '</strong>'
 					);
 					?>
 				</p>
 				<div class="form-row wpss-form-row--inline">
 					<label for="wpss-level-select-detail" class="screen-reader-text">
-						<?php esc_html_e( 'Seller Level', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Vendor Level', 'wp-sell-services' ); ?>
 					</label>
 					<select id="wpss-level-select-detail" data-vendor-id="<?php echo esc_attr( (string) $vendor_id ); ?>">
 						<option value="" <?php selected( ! $admin_set ); ?>>
@@ -2713,7 +2713,7 @@ class VendorsPage {
 		// '' hands the level back to the calculation (clears the override).
 		$allowed_levels = array_keys( VendorProfile::get_tiers() );
 		if ( '' !== $level && ! in_array( $level, $allowed_levels, true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid seller level.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid vendor level.', 'wp-sell-services' ) ) );
 		}
 
 		$level = $this->seller_level_service->set_admin_level( $vendor_id, $level );
@@ -2722,7 +2722,7 @@ class VendorsPage {
 			array(
 				'message' => sprintf(
 					/* translators: %s: seller level label */
-					__( 'Seller level set to %s.', 'wp-sell-services' ),
+					__( 'Vendor level set to %s.', 'wp-sell-services' ),
 					SellerLevelService::get_level_label( $level )
 				),
 				'level'   => $level,

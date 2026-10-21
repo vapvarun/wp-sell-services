@@ -420,7 +420,7 @@ final class Tour {
 			array(
 				'id'       => 'vendors-menu',
 				'title'    => __( 'Vendors', 'wp-sell-services' ),
-				'text'     => __( '<i data-lucide="users"></i> All vendor accounts appear here. The <code>/become-a-vendor/</code> page handles self-registration for new sellers.', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="users"></i> All vendor accounts appear here. The <code>/become-a-vendor/</code> page handles self-registration for new vendors.', 'wp-sell-services' ),
 				'attachTo' => array(
 					'element' => '#adminmenu a[href="admin.php?page=wpss-vendors"]',
 					'on'      => 'right',
@@ -584,7 +584,7 @@ final class Tour {
 			$steps[] = array(
 				'id'       => 'become-vendor',
 				'title'    => __( 'Want to sell too?', 'wp-sell-services' ),
-				'text'     => __( '<i data-lucide="rocket"></i> Flip this switch to open a seller profile. You can list services, receive orders, and build up earnings without leaving this dashboard.', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="rocket"></i> Flip this switch to open a vendor profile. You can list services, receive orders, and build up earnings without leaving this dashboard.', 'wp-sell-services' ),
 				'attachTo' => array(
 					'element' => '.wpss-dashboard__become-vendor',
 					'on'      => 'right',

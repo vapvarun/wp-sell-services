@@ -1246,6 +1246,17 @@ article.wpss-service-card:hover {
 	color: var(--wpss-text-light);
 }
 
+/* Marks a review an admin brought in rather than one written for an order. */
+.wpss-review-imported {
+	display: inline-block;
+	margin: 2px 0 6px;
+	padding: 1px 8px;
+	border: 1px solid var(--wpss-border);
+	border-radius: 999px;
+	font-size: 12px;
+	color: var(--wpss-text-light);
+}
+
 .wpss-review-content {
 	color: var(--wpss-text);
 	line-height: 1.6;
@@ -4387,4 +4398,14 @@ a.wpss-order-filter.is-active:focus {
 	.wpss-standalone-page {
 		padding-block: var(--wpss-space-5, 1.25rem) var(--wpss-space-8, 2rem);
 	}
+}
+
+.wpss-review-service {
+	margin: 0 0 var(--wpss-space-2, 0.5rem);
+	font-size: 0.875rem;
+}
+
+/* The service a review is about is a caption, quieter than the review text under it. */
+.wpss-review-service a {
+	color: var(--wpss-text-light);
 }

@@ -13,6 +13,7 @@ namespace WPSellServices\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Database\Repositories\ReviewRepository;
 use WPSellServices\Models\Review;
 use WPSellServices\Models\ServiceOrder;
 
@@ -124,6 +125,75 @@ class ReviewService {
 		 * @param int $order_id  Order ID.
 		 */
 		do_action( 'wpss_review_created', $review_id, $order_id );
+
+		return $this->get( $review_id );
+	}
+
+	/**
+	 * Add a review an admin brings in for a vendor: no order behind it.
+	 *
+	 * The one door for imported reviews (admin form, CSV and REST all call it).
+	 * It skips what create() enforces for a real purchase - completed order,
+	 * buyer identity, review window - because there is no order, and it does not
+	 * fire wpss_review_created, so nobody is emailed about a review that was
+	 * typed in by the site owner. order_id stays NULL, which the unique key
+	 * allows many times; the ratings are recounted exactly as create() does.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param int                  $vendor_id  Vendor user ID.
+	 * @param int                  $service_id Service the review is about; must be the vendor's.
+	 * @param array<string, mixed> $data       reviewer_name, rating (1-5), content, date (optional, any strtotime format).
+	 * @param bool                 $dry_run    Run every check and save nothing.
+	 * @return Review|true|\WP_Error The review, true for a dry run that would succeed, or why not.
+	 */
+	public function create_imported( int $vendor_id, int $service_id, array $data, bool $dry_run = false ) {
+		$service = get_post( $service_id );
+
+		if ( ! $service || 'wpss_service' !== $service->post_type || (int) $service->post_author !== $vendor_id || ! wpss_is_vendor( $vendor_id ) ) {
+			return new \WP_Error( 'wpss_import_review_service', __( 'Pick a service that belongs to this vendor.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		$name   = sanitize_text_field( (string) ( $data['reviewer_name'] ?? '' ) );
+		$rating = (int) ( $data['rating'] ?? 0 );
+
+		if ( '' === $name || $rating < 1 || $rating > 5 ) {
+			return new \WP_Error( 'wpss_import_review_data', __( 'A reviewer name and a rating from 1 to 5 are required.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		$when    = ! empty( $data['date'] ) ? strtotime( (string) $data['date'] ) : false;
+		$content = wp_kses_post( (string) ( $data['content'] ?? '' ) );
+		$repo    = new ReviewRepository();
+
+		if ( $repo->imported_exists( $vendor_id, $service_id, $name, $content ) ) {
+			return new \WP_Error( 'wpss_import_review_duplicate', __( 'This review is already imported for this service.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
+		if ( $dry_run ) {
+			return true;
+		}
+
+		$review_id = $repo->insert(
+			array(
+				'service_id'    => $service_id,
+				'reviewer_id'   => 0,
+				'reviewer_name' => $name,
+				'reviewee_id'   => $vendor_id,
+				'customer_id'   => 0,
+				'vendor_id'     => $vendor_id,
+				'rating'        => $rating,
+				'review'        => $content,
+				'status'        => Review::STATUS_APPROVED,
+				'created_at'    => gmdate( 'Y-m-d H:i:s', $when && $when <= time() ? $when : time() ),
+			)
+		);
+
+		if ( ! $review_id ) {
+			return new \WP_Error( 'wpss_import_review_failed', __( 'The review could not be saved.', 'wp-sell-services' ), array( 'status' => 500 ) );
+		}
+
+		$this->update_service_rating( $service_id );
+		$this->update_vendor_rating( $vendor_id );
 
 		return $this->get( $review_id );
 	}
@@ -403,31 +473,19 @@ class ReviewService {
 	 */
 	private function update_vendor_rating( int $vendor_id ): void {
 		global $wpdb;
-		$reviews_table = $wpdb->prefix . 'wpss_reviews';
+
 		$vendors_table = $wpdb->prefix . 'wpss_vendor_profiles';
+		$stats         = ( new ReviewRepository() )->rating_stats( 'vendor_id', $vendor_id );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$stats = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT AVG(rating) as avg_rating, COUNT(*) as review_count
-				FROM {$reviews_table}
-				WHERE vendor_id = %d AND status = %s",
-				$vendor_id,
-				Review::STATUS_APPROVED
-			)
+		$wpdb->update(
+			$vendors_table,
+			array(
+				'avg_rating'    => round( $stats['average'], 2 ),
+				'total_reviews' => $stats['count'],
+			),
+			array( 'user_id' => $vendor_id )
 		);
-
-		if ( $stats ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$vendors_table,
-				array(
-					'avg_rating'    => round( (float) $stats->avg_rating, 2 ),
-					'total_reviews' => (int) $stats->review_count,
-				),
-				array( 'user_id' => $vendor_id )
-			);
-		}
 	}
 
 	/**
@@ -600,7 +658,7 @@ class ReviewService {
 		if ( $order->customer_id !== $reviewer_id ) {
 			return array(
 				'can_review' => false,
-				'reason'     => __( 'Only the customer can review this order.', 'wp-sell-services' ),
+				'reason'     => __( 'Only the buyer can review this order.', 'wp-sell-services' ),
 			);
 		}
 

@@ -53,7 +53,7 @@ foreach ( wpss_get_sub_order_platforms() as $platform ) {
 
 	$url = wpss_get_order_requirements_url( $id );
 	wpss_t( '' !== $url, sprintf( '%s order resolves a redirect', $platform ) );
-	wpss_t( false === strpos( $url, '/requirements' ), sprintf( '%s order is NOT sent to a requirements step', $platform ) );
+	wpss_t( false === strpos( $url, 'requirements' ), sprintf( '%s order is NOT sent to a requirements step', $platform ) );
 	wpss_t( false !== strpos( $url, (string) $id ), sprintf( '%s order is sent to its own order page', $platform ) );
 }
 
@@ -67,7 +67,7 @@ $catalog = (int) $wpdb->get_var(
 
 if ( $catalog ) {
 	$url = wpss_get_order_requirements_url( $catalog );
-	wpss_t( false !== strpos( $url, '/requirements' ), sprintf( 'a catalog order (#%d) still goes to requirements', $catalog ) );
+	wpss_t( false !== strpos( $url, 'requirements' ), sprintf( 'a catalog order (#%d) still goes to requirements', $catalog ) );
 }
 
 // One helper, so a gateway cannot grow its own redirect.

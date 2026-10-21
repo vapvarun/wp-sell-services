@@ -3,7 +3,7 @@
 Change how service cards, vendor profiles, dashboards, and order screens look --
 through your theme, without touching plugin files.
 
-The plugin ships **107 templates**: 68 frontend templates plus 39 email
+The plugin ships **107 templates**: 67 frontend templates plus 40 email
 templates. Any of them can be overridden, and most of them also expose hooks so
 you can add markup without overriding at all.
 
@@ -142,7 +142,7 @@ overriding.
 
 ### Emails
 
-39 templates under `emails/`. They override the same way, but see
+40 templates under `emails/`. They override the same way, but see
 [Email Customization](../developer-guide/email-customization.md) first -- most
 changes are better made through the email filters than by copying a template.
 

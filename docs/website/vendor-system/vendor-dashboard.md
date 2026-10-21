@@ -68,7 +68,7 @@ The dashboard uses a sidebar with grouped navigation:
 - **Selling** section: My Services, Sales Orders, Earnings, Portfolio
 - **Account** section: Messages, Profile
 
-Your profile avatar and name appear at the top of the sidebar, along with a "Seller" badge if you are a vendor. Click any section to switch views -- the active section is highlighted.
+Your profile avatar and name appear at the top of the sidebar, along with a "Vendor" badge if you are a vendor. Click any section to switch views -- the active section is highlighted.
 
 ## Start Selling Button
 
@@ -91,6 +91,6 @@ The dashboard is fully responsive:
 ## Related Resources
 
 - [Vendor Profile & Portfolio](vendor-profile-portfolio.md)
-- [Seller Levels](seller-levels.md)
+- [Vendor Levels](seller-levels.md)
 - [Order Lifecycle](../order-management/order-lifecycle.md)
 - [Earnings & Withdrawals](../earnings-wallet/earnings-dashboard.md)

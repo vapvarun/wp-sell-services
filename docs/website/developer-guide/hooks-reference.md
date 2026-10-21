@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**550 hooks** across **761** firing sites.
+**551 hooks** across **772** firing sites.
 
 ## Actions (280)
 
@@ -117,8 +117,8 @@ guide; this is the complete index.
 | `wpss_edd_service_meta_saved` | 1 | `src/Integrations/EDD/EDDProductProvider.php` **[PRO]** | Fires when service meta is saved for an EDD download. |
 | `wpss_edd_service_purchased` | 2 | `src/Integrations/EDD/EDDOrderProvider.php` **[PRO]** | Fires when a service is purchased via EDD. |
 | `wpss_edd_services_processed` | 2 | `src/Integrations/EDD/EDDOrderProvider.php` **[PRO]** | Fires after all service items in an EDD payment are processed. |
-| `wpss_email_content_after` | 3 | `templates/emails/cancellation-requested.php` *(+36 more)* | Fires after the email content for the cancellation requested email. |
-| `wpss_email_content_before` | 3 | `templates/emails/cancellation-requested.php` *(+36 more)* | Fires before the email content for the cancellation requested email. |
+| `wpss_email_content_after` | 3 | `templates/emails/cancellation-requested.php` *(+37 more)* | Fires after the email content for the cancellation requested email. |
+| `wpss_email_content_before` | 3 | `templates/emails/cancellation-requested.php` *(+37 more)* | Fires before the email content for the cancellation requested email. |
 | `wpss_email_footer` | 0 | `templates/emails/email-footer.php` | Fires before the email footer. |
 | `wpss_email_header` | 1 | `templates/emails/email-header.php` | Fires after the email header. |
 | `wpss_enqueue_dashboard_assets` | 0 | `src/Frontend/Shortcodes.php` |  |
@@ -166,7 +166,7 @@ guide; this is the complete index.
 | `wpss_order_status_in_progress` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php` |  |
 | `wpss_order_status_pending_requirements` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php` |  |
 | `wpss_order_view_actions` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_actions |
-| `wpss_order_view_details` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_details |
+| `wpss_order_view_details` | 1 | `templates/order/extension-view.php` *(+3 more)* |  |
 | `wpss_order_view_header` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_header |
 | `wpss_order_view_sidebar` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_sidebar |
 | `wpss_orders_filters` | 1 | `templates/dashboard/sections/orders.php` | Fires in the orders filter area. |
@@ -203,7 +203,7 @@ guide; this is the complete index.
 | `wpss_recurring_renewal_order_created` | 3 | `src/RecurringServices/RecurringOrderFactory.php` **[PRO]** | Fires after a recurring renewal order is created. |
 | `wpss_recurring_subscription_cancelled` | 2 | `src/RecurringServices/RecurringWebhookHandler.php` **[PRO]** | Fires after a recurring subscription is cancelled via Stripe webhook. |
 | `wpss_register_tipping_settings` | 0 | `src/Admin/Settings.php` | Register fields that belong directly above the tip commission rate. |
-| `wpss_render_secret_field` | 1 | `src/Admin/Settings.php` *(+3 more)* |  |
+| `wpss_render_secret_field` | 1 | `src/Admin/Settings.php` *(+7 more)* |  |
 | `wpss_report_filed` | 4 | `src/API/ReportsController.php` | Fires when a member files a report. |
 | `wpss_request_archive_header` | 0 | `templates/archive-request.php` | Hook: wpss_request_archive_header |
 | `wpss_request_archive_sidebar` | 0 | `templates/archive-request.php` | Hook: wpss_request_archive_sidebar |
@@ -214,7 +214,7 @@ guide; this is the complete index.
 | `wpss_requirements_form_fields` | 1 | `templates/order/requirements-form.php` | Fires after the configured requirement fields, before the notes field. |
 | `wpss_requirements_submitted` | 3 | `src/Services/RequirementsService.php` | Fires after requirements are submitted. |
 | `wpss_requirements_timeout` | 2 | `src/Services/OrderWorkflowManager.php` | Fires when a requirements timeout action is taken. |
-| `wpss_rest_offline_order_created` | 3 | `src/Integrations/Gateways/AbstractPaymentGateway.php` | Fires when an offline order is created via REST API. |
+| `wpss_rest_offline_order_created` | 3 | `src/Integrations/Gateways/AbstractPaymentGateway.php` *(+1 more)* | Fires when an offline order is created via REST API. |
 | `wpss_rest_service_created` | 2 | `src/API/ServicesController.php` | Fires after a service is created via REST API. |
 | `wpss_rest_service_deleted` | 2 | `src/API/ServicesController.php` | Fires after a service is deleted via REST API. |
 | `wpss_rest_service_updated` | 2 | `src/API/ServicesController.php` | Fires after a service is updated via REST API. |
@@ -297,7 +297,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (270)
+## Filters (271)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -372,6 +372,7 @@ guide; this is the complete index.
 | `wpss_display_timezone` | 2 | `src/functions/time.php` | The timezone times are shown in. Return a member's own timezone to show each member their local time; every screen, email and edit field follows. |
 | `wpss_dispute_reasons` | 2 | `src/functions/moderation.php` | Filter the reasons offered for opening a dispute. |
 | `wpss_docs_url` | 1 | `src/Admin/Pages/UpgradePage.php` | Filters the documentation URL shown on the upgrade screen. |
+| `wpss_earnings_ledger_range` | 2 | `templates/dashboard/sections/earnings.php` | Filter the ledger's time window, so the list follows the same period selector as the CSV export. |
 | `wpss_ecommerce_adapters` | 1 | `src/CLI/PreflightCommand.php` *(+1 more)* |  |
 | `wpss_ecommerce_platform_description` | 1 | `src/Admin/Settings.php` | Filter the platform field description. |
 | `wpss_ecommerce_platform_status` | 3 | `src/Admin/Settings.php` | Filter the status word shown beside one platform. |

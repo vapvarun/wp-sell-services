@@ -112,18 +112,12 @@ $services = get_posts(
 $total_services = wpss_count_vendor_services( (int) $vendor_id );
 
 // Get reviews.
-global $wpdb;
-$reviews = $wpdb->get_results(
-	$wpdb->prepare(
-		// Show the first 10 to match the load-more JS, which requests page 2 at
-		// per_page 10 (offset 10). Rendering only 5 here meant "View all reviews"
-		// jumped straight to offset 10 and permanently skipped reviews #6-10.
-		"SELECT * FROM {$wpdb->prefix}wpss_reviews
-		WHERE vendor_id = %d AND status = 'approved'
-		ORDER BY created_at DESC
-		LIMIT 10",
-		$vendor_id
-	)
+// Show the first 10 to match the load-more JS, which requests page 2 at
+// per_page 10 (offset 10). Rendering only 5 here meant "View all reviews"
+// jumped straight to offset 10 and permanently skipped reviews #6-10.
+$reviews = array_map(
+	array( \WPSellServices\Models\Review::class, 'from_db' ),
+	( new \WPSellServices\Database\Repositories\ReviewRepository() )->get_by_vendor( (int) $vendor_id, array( 'limit' => 10 ) )
 );
 
 wpss_get_header();
@@ -421,42 +415,12 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 
 					<?php if ( ! empty( $reviews ) ) : ?>
 						<div class="wpss-reviews-list">
-							<?php foreach ( $reviews as $review ) : ?>
-								<?php $reviewer_name = wpss_get_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ); ?>
+							<?php foreach ( $reviews as $wpss_review ) : ?>
 								<div class="wpss-review">
-									<div class="wpss-review-header">
-										<img src="<?php echo esc_url( get_avatar_url( $review->customer_id, [ 'size' => 48 ] ) ); ?>"
-											 alt="<?php echo esc_attr( $reviewer_name ); ?>"
-											 class="wpss-review-avatar">
-										<div class="wpss-review-meta">
-											<strong class="wpss-review-author">
-												<?php echo esc_html( $reviewer_name ); ?>
-											</strong>
-											<span class="wpss-review-date">
-												<?php echo esc_html( wpss_time_ago( $review->created_at ) ); ?>
-												<?php
-												// Which service the review is about: a seller with several
-												// services is judged service by service.
-												$wpss_rev_service = ! empty( $review->service_id ) ? get_post( (int) $review->service_id ) : null;
-												if ( $wpss_rev_service && 'publish' === $wpss_rev_service->post_status ) :
-													?>
-													&middot; <a href="<?php echo esc_url( get_permalink( $wpss_rev_service ) ); ?>"><?php echo esc_html( $wpss_rev_service->post_title ); ?></a>
-												<?php endif; ?>
-											</span>
-										</div>
-										<div class="wpss-review-rating">
-											<?php echo wpss_star_rating( (float) $review->rating ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper. ?>
-										</div>
-									</div>
-									<div class="wpss-review-content">
-										<?php echo wp_kses_post( wpautop( $review->review ) ); ?>
-									</div>
-									<?php if ( $review->vendor_reply ) : ?>
-										<div class="wpss-review-reply">
-											<strong><?php esc_html_e( 'Seller Response:', 'wp-sell-services' ); ?></strong>
-											<?php echo wp_kses_post( wpautop( $review->vendor_reply ) ); ?>
-										</div>
-									<?php endif; ?>
+									<?php
+									$wpss_review_show_service = true;
+									require wpss_locate_template( 'partials/review-body.php' );
+									?>
 								</div>
 							<?php endforeach; ?>
 						</div>
@@ -505,7 +469,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							</li>
 						<?php endif; ?>
 						<li>
-							<span class="wpss-stat-label"><?php esc_html_e( 'Active Services', 'wp-sell-services' ); ?></span>
+							<span class="wpss-stat-label"><?php esc_html_e( 'Active services', 'wp-sell-services' ); ?></span>
 							<span class="wpss-stat-value"><?php echo esc_html( $total_services ); ?></span>
 						</li>
 						<li>
@@ -558,7 +522,12 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 					'behance'   => 'Behance',
 					'website'   => __( 'Website', 'wp-sell-services' ),
 				);
-				$social_links = array_filter( is_array( $social_links ) ? $social_links : array() );
+				$social_links = is_array( $social_links ) ? $social_links : array();
+				// The Website field on the dashboard form is a profile column, not a social link.
+				if ( ! empty( $profile->website ) && empty( $social_links['website'] ) ) {
+					$social_links['website'] = $profile->website;
+				}
+				$social_links = array_filter( $social_links );
 				?>
 				<?php if ( ! empty( $social_links ) ) : ?>
 					<div class="wpss-sidebar-card">
@@ -653,7 +622,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 		<div class="wpss-modal__backdrop"></div>
 		<div class="wpss-modal__dialog">
 			<div class="wpss-modal__header">
-				<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
+				<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact Vendor', 'wp-sell-services' ); ?></h3>
 				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 			</div>
 
@@ -687,7 +656,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 						<textarea id="wpss-contact-message"
 									name="message"
 									rows="5"
-									placeholder="<?php esc_attr_e( 'Tell the seller what you need...', 'wp-sell-services' ); ?>"
+									placeholder="<?php esc_attr_e( 'Tell the vendor what you need...', 'wp-sell-services' ); ?>"
 									required></textarea>
 						<p class="wpss-field-hint">
 							<?php esc_html_e( 'Be specific about your requirements for better assistance.', 'wp-sell-services' ); ?>
@@ -708,7 +677,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 
 					<div class="wpss-form-actions">
 						<button type="submit" class="wpss-btn wpss-btn--primary">
-							<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Send message', 'wp-sell-services' ); ?>
 						</button>
 						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">							
 							&times;

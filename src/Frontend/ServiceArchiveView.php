@@ -159,7 +159,7 @@ class ServiceArchiveView {
 					<input type="hidden" name="category" value="<?php echo esc_attr( (string) $current_category ); ?>">
 				<?php endif; ?>
 				<input type="search" name="search" class="wpss-search-input" value="<?php echo esc_attr( $current_search ); ?>"
-					placeholder="<?php esc_attr_e( 'Search services...', 'wp-sell-services' ); ?>" aria-label="<?php esc_attr_e( 'Search services', 'wp-sell-services' ); ?>">
+					placeholder="<?php esc_attr_e( 'Search services...', 'wp-sell-services' ); ?>" aria-label="<?php esc_attr_e( 'Search Services', 'wp-sell-services' ); ?>">
 			</form>
 
 			<div class="wpss-filters-bar-controls">
@@ -421,7 +421,7 @@ class ServiceArchiveView {
 
 				<!-- Seller Rating -->
 				<div class="wpss-filter-section">
-					<h4><?php esc_html_e( 'Seller Rating', 'wp-sell-services' ); ?></h4>
+					<h4><?php esc_html_e( 'Vendor Rating', 'wp-sell-services' ); ?></h4>
 					<div class="wpss-rating-options">
 						<?php for ( $i = 4; $i >= 1; $i-- ) : ?>
 							<label class="wpss-rating-option">
@@ -439,7 +439,7 @@ class ServiceArchiveView {
 
 				<!-- Delivery Time -->
 				<div class="wpss-filter-section">
-					<h4><?php esc_html_e( 'Delivery Time', 'wp-sell-services' ); ?></h4>
+					<h4><?php esc_html_e( 'Delivery time', 'wp-sell-services' ); ?></h4>
 					<div class="wpss-delivery-options">
 						<label class="wpss-checkbox-option">
 							<input type="radio" name="delivery" value="1" <?php checked( $delivery_time, '1' ); ?>>

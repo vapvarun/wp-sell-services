@@ -1,6 +1,6 @@
 # Posting a Buyer Request
 
-Buyer requests let you describe exactly what you need and have vendors come to you with offers. Think of it like posting a job listing -- you set the brief, and qualified sellers pitch their services.
+Buyer requests let you describe exactly what you need and have vendors come to you with offers. Think of it like posting a job listing -- you set the brief, and qualified vendors pitch their services.
 
 ---
 
@@ -60,7 +60,7 @@ List specific skills or technologies the project requires (e.g., "WordPress", "L
 
 Upload reference files, mockups, design briefs, or any documents that help explain what you need.
 
-Each file uploads as soon as you pick it. Request files are visible to sellers browsing your request, so do not attach anything private.
+Each file uploads as soon as you pick it. Request files are visible to vendors browsing your request, so do not attach anything private.
 
 ![Public buyer requests listing](../images/frontend-buyer-requests-listing.webp)
 
@@ -109,7 +109,7 @@ You can only accept one proposal per request. If you need multiple vendors, post
 
 You can edit your request (title, description, budget, attachments) at any time while it is still open and no proposal has been accepted.
 
-Attachments follow one extra rule. Until a seller sends a proposal you can add and remove files freely, and a file you remove is deleted. Once a seller has sent a proposal, the files already on the request stay: sellers priced their proposals against them. You can still add more files.
+Attachments follow one extra rule. Until a vendor sends a proposal you can add and remove files freely, and a file you remove is deleted. Once a vendor has sent a proposal, the files already on the request stay: vendors priced their proposals against them. You can still add more files.
 
 ### Closing
 

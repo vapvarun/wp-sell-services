@@ -84,7 +84,7 @@ Availability: `is_available`, `vacation_mode`, `vacation_message`,
 **Denormalised counters** - `total_orders`, `completed_orders`,
 `total_earnings`, `net_earnings`, `total_commission`, `avg_rating`,
 `total_reviews`, `response_time_hours`, `on_time_delivery_rate`. These are
-maintained by the plugin and drive [seller levels](../vendor-system/seller-levels.md).
+maintained by the plugin and drive [vendor levels](../vendor-system/seller-levels.md).
 Treat them as read-only; writing them directly puts them out of step with the
 rows they summarise.
 

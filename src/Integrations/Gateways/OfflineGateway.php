@@ -79,7 +79,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 * @return string
 	 */
 	public function get_name(): string {
-		return ! empty( $this->settings['title'] ) ? $this->settings['title'] : __( 'Offline Payment', 'wp-sell-services' );
+		return ! empty( $this->settings['title'] ) ? $this->settings['title'] : __( 'Offline payment', 'wp-sell-services' );
 	}
 
 	/**
@@ -304,7 +304,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 				array(
 					'id'           => 'offline',
 					// A saved but empty title left the method nameless.
-					'label'        => '' !== (string) ( $settings['title'] ?? '' ) ? (string) $settings['title'] : __( 'Offline Payment', 'wp-sell-services' ),
+					'label'        => '' !== (string) ( $settings['title'] ?? '' ) ? (string) $settings['title'] : __( 'Offline payment', 'wp-sell-services' ),
 					'instructions' => $settings['instructions'] ?? '',
 					'enabled'      => true,
 				),
@@ -395,7 +395,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 				'type'        => 'text',
 				'label'       => __( 'Title', 'wp-sell-services' ),
 				'description' => __( 'Heading shown above the offline options at checkout.', 'wp-sell-services' ),
-				'default'     => __( 'Offline Payment', 'wp-sell-services' ),
+				'default'     => __( 'Offline payment', 'wp-sell-services' ),
 			),
 			'description'     => array(
 				'type'        => 'textarea',
@@ -406,7 +406,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			'auto_hold_hours' => array(
 				'type'        => 'number',
 				'label'       => __( 'Auto-Cancel (Hours)', 'wp-sell-services' ),
-				'description' => __( 'Automatically cancel unpaid orders after this many hours. Set to 0 to disable.', 'wp-sell-services' ),
+				'description' => __( 'Automatically cancel unpaid orders after this many hours. Bank transfers take days, so 72 or more is sensible. An order whose proof of payment has been sent is never cancelled. Set to 0 to disable.', 'wp-sell-services' ),
 				'default'     => '0',
 				'min'         => '0',
 				'max'         => '720',
@@ -447,15 +447,20 @@ class OfflineGateway extends AbstractPaymentGateway {
 			 * A site that configured nothing gets one SYNTHESISED method from
 			 * the legacy fallback, and has nothing to show beyond the generic
 			 * description above. A site that deliberately named a single method
-			 * has a label and instructions the buyer needs: "Bank Transfer -
-			 * send to ACC 123" is the whole point of enabling it. Hiding that
-			 * behind a count is why an owner configured a manual method, saw it
-			 * enabled in the backend, and had customers tell them it was not
-			 * there.
+			 * has a label the buyer needs to see: hiding it behind a count is why
+			 * an owner configured a manual method, saw it enabled in the backend,
+			 * and had customers tell them it was not there.
 			 *
 			 * So: the radio group still appears only for a real choice, and a
-			 * lone CONFIGURED method renders its name and instructions instead
-			 * of disappearing into a hidden field.
+			 * lone CONFIGURED method renders its name instead of disappearing into
+			 * a hidden field.
+			 *
+			 * The account details are NOT printed here (WooCommerce's bank
+			 * transfer pattern): they carry {total} and {order_number}, which only
+			 * exist after the order, so they showed as raw placeholders, and every
+			 * method's details sat open before the buyer chose one.
+			 * render_buyer_instructions() shows the chosen method's details on
+			 * the order page, and in the email, once the order is placed.
 			 */
 			$configured = ! empty( get_option( self::OPTION_NAME, array() )['methods'] );
 
@@ -476,11 +481,6 @@ class OfflineGateway extends AbstractPaymentGateway {
 							>
 							<span>
 								<strong><?php echo esc_html( $offline_method['label'] ); ?></strong>
-								<?php if ( '' !== $offline_method['instructions'] ) : ?>
-									<span style="display:block;color:#555;font-size:.9em;">
-										<?php echo esc_html( wp_strip_all_tags( $offline_method['instructions'] ) ); ?>
-									</span>
-								<?php endif; ?>
 							</span>
 						</label>
 					<?php endforeach; ?>
@@ -488,11 +488,6 @@ class OfflineGateway extends AbstractPaymentGateway {
 			<?php elseif ( $configured && $offline_methods ) : ?>
 				<div class="wpss-offline-methods wpss-offline-methods--single" style="margin:0 0 16px;">
 					<strong><?php echo esc_html( $offline_methods[0]['label'] ); ?></strong>
-					<?php if ( '' !== $offline_methods[0]['instructions'] ) : ?>
-						<span style="display:block;color:#555;font-size:.9em;margin-top:4px;">
-							<?php echo esc_html( wp_strip_all_tags( $offline_methods[0]['instructions'] ) ); ?>
-						</span>
-					<?php endif; ?>
 				</div>
 				<input type="hidden" name="offline_method" value="<?php echo esc_attr( $offline_methods[0]['id'] ); ?>">
 			<?php else : ?>
@@ -544,7 +539,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		?>
 		<div class="wpss-offline-instructions" style="background: #fff3cd; border: 1px solid #ffc107; padding: 20px; border-radius: 4px; margin: 20px 0;">
 			<h3 style="margin-top: 0; color: #856404;">
-				<?php esc_html_e( 'Payment Instructions', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Payment instructions', 'wp-sell-services' ); ?>
 			</h3>
 			<div class="wpss-offline-instructions-content">
 				<?php echo wp_kses_post( wpautop( $instructions ) ); ?>
@@ -982,7 +977,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 					class="button button-primary wpss-mark-paid-btn"
 					data-order-id="<?php echo esc_attr( $order->id ); ?>"
 					data-nonce="<?php echo esc_attr( $nonce ); ?>">
-					<?php esc_html_e( 'Mark as Paid', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Mark as paid', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 		</div>
@@ -1020,11 +1015,11 @@ class OfflineGateway extends AbstractPaymentGateway {
 						location.reload();
 					} else {
 						wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
-						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as Paid', 'wp-sell-services' ) ); ?>');
+						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as paid', 'wp-sell-services' ) ); ?>');
 					}
 				}).fail(function() {
 					wpssAdminNotice('<?php echo esc_js( __( 'Request failed. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
-					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as Paid', 'wp-sell-services' ) ); ?>');
+					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as paid', 'wp-sell-services' ) ); ?>');
 				});
 				});
 			});
@@ -1329,7 +1324,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 							esc_html( $method['label'] )
 						);
 					} else {
-						esc_html_e( 'Payment Instructions', 'wp-sell-services' );
+						esc_html_e( 'Payment instructions', 'wp-sell-services' );
 					}
 					?>
 				</h2>
@@ -1722,7 +1717,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		</p>
 		<ul style="list-style: disc; margin-left: 20px;">
 			<li><code>{order_number}</code> - <?php esc_html_e( 'Order reference number', 'wp-sell-services' ); ?></li>
-			<li><code>{order_id}</code> - <?php esc_html_e( 'Order ID', 'wp-sell-services' ); ?></li>
+			<li><code>{order_id}</code> - <?php esc_html_e( 'Order ID.', 'wp-sell-services' ); ?></li>
 			<li><code>{total}</code> - <?php esc_html_e( 'Formatted order total with currency', 'wp-sell-services' ); ?></li>
 			<li><code>{currency}</code> - <?php esc_html_e( 'Currency code', 'wp-sell-services' ); ?></li>
 		</ul>
@@ -1899,7 +1894,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 */
 	public function get_settings_card(): ?array {
 		return array(
-			'title'        => __( 'Offline Payment', 'wp-sell-services' ),
+			'title'        => __( 'Offline payment', 'wp-sell-services' ),
 			'description'  => __( 'Accept bank transfer, cash, and other manual payments.', 'wp-sell-services' ),
 			'option_group' => 'wpss_offline_settings',
 			'order'        => 90,

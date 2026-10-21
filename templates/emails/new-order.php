@@ -26,7 +26,7 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 
 $base_color    = $base_color ?? '#7f54b3';
 $customer      = get_user_by( 'id', $order->customer_id );
-$customer_name = $customer ? $customer->display_name : __( 'A customer', 'wp-sell-services' );
+$customer_name = $customer ? $customer->display_name : __( 'A buyer', 'wp-sell-services' );
 $recipient     = ( $recipient ?? null ) ?: get_user_by( 'id', $order->vendor_id );
 $vendor        = $recipient;
 
@@ -89,7 +89,7 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 				<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
 				<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $vendor_name ?? ( $vendor ? $vendor->display_name : '' ) ); ?></td>
 			<?php else : ?>
-				<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Customer', 'wp-sell-services' ); ?></th>
+				<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Buyer', 'wp-sell-services' ); ?></th>
 				<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $customer_name ); ?></td>
 			<?php endif; ?>
 		</tr>
@@ -104,7 +104,7 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 	<?php if ( ! empty( $is_customer ) ) : ?>
 		<?php esc_html_e( 'Please submit your requirements so the vendor can start working on your order. Click the button below to get started.', 'wp-sell-services' ); ?>
 	<?php else : ?>
-		<?php esc_html_e( 'The customer will submit their requirements shortly. You\'ll receive another notification when they do.', 'wp-sell-services' ); ?>
+		<?php esc_html_e( 'The buyer will submit their requirements shortly. You\'ll receive another notification when they do.', 'wp-sell-services' ); ?>
 	<?php endif; ?>
 </p>
 
@@ -120,10 +120,10 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 	 */
 	if ( ! empty( $is_customer ) ) {
 		$default_url  = function_exists( 'wpss_get_order_requirements_url' ) ? wpss_get_order_requirements_url( $order->id ) : wpss_get_order_url( $order->id );
-		$default_text = __( 'Submit Requirements', 'wp-sell-services' );
+		$default_text = __( 'Submit requirements', 'wp-sell-services' );
 	} else {
 		$default_url  = wpss_get_order_url( $order->id );
-		$default_text = __( 'View Order', 'wp-sell-services' );
+		$default_text = __( 'View order', 'wp-sell-services' );
 	}
 
 	/**

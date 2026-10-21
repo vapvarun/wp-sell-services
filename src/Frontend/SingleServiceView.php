@@ -137,13 +137,12 @@ class SingleServiceView {
 					'total'              => __( 'Total', 'wp-sell-services' ),
 					'loading'            => __( 'Loading...', 'wp-sell-services' ),
 					'loadMoreReviews'    => __( 'Load More Reviews', 'wp-sell-services' ),
-					'helpful'            => __( 'Helpful', 'wp-sell-services' ),
-					'sellerResponse'     => __( 'Seller Response:', 'wp-sell-services' ),
+					'sellerResponse'     => __( 'Vendor Response:', 'wp-sell-services' ),
 					'anonymous'          => __( 'Anonymous', 'wp-sell-services' ),
 					'day'                => __( 'Day', 'wp-sell-services' ),
 					'days'               => __( 'Days', 'wp-sell-services' ),
-					'sending'            => __( 'Sending...', 'wp-sell-services' ),
-					'sendMessage'        => __( 'Send Message', 'wp-sell-services' ),
+					'sending'            => __( 'Sending…', 'wp-sell-services' ),
+					'sendMessage'        => __( 'Send message', 'wp-sell-services' ),
 					'contactFailed'      => __( 'Failed to send message. Please try again.', 'wp-sell-services' ),
 					'comparePackages'    => __( 'Compare Packages', 'wp-sell-services' ),
 					'close'              => __( 'Close', 'wp-sell-services' ),
@@ -397,7 +396,7 @@ class SingleServiceView {
 		<div class="wpss-service-requirements">
 			<h3><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></h3>
 			<p class="wpss-requirements-intro">
-				<?php esc_html_e( 'To get started, the seller needs:', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'To get started, the vendor needs:', 'wp-sell-services' ); ?>
 			</p>
 			<div class="wpss-requirements-content">
 				<?php
@@ -439,7 +438,7 @@ class SingleServiceView {
 		$completed_orders = (int) ( $profile->completed_orders ?? 0 );
 		?>
 		<div class="wpss-about-vendor">
-			<h2><?php esc_html_e( 'About The Seller', 'wp-sell-services' ); ?></h2>
+			<h2><?php esc_html_e( 'About the Vendor', 'wp-sell-services' ); ?></h2>
 
 			<div class="wpss-vendor-profile">
 				<div class="wpss-vendor-header">
@@ -471,11 +470,11 @@ class SingleServiceView {
 								// service's rating and contradict the service-scoped
 								// "No reviews yet" in the Reviews section below.
 								?>
-								<span class="wpss-quick-stat" title="<?php esc_attr_e( 'Overall seller rating across all their services', 'wp-sell-services' ); ?>">
+								<span class="wpss-quick-stat" title="<?php esc_attr_e( 'Overall vendor rating across all their services', 'wp-sell-services' ); ?>">
 									<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 									<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
 									(<?php echo esc_html( $rating_count ); ?>)
-									<span class="wpss-quick-stat__note"><?php esc_html_e( 'seller rating', 'wp-sell-services' ); ?></span>
+									<span class="wpss-quick-stat__note"><?php esc_html_e( 'vendor rating', 'wp-sell-services' ); ?></span>
 								</span>
 							<?php endif; ?>
 
@@ -536,7 +535,7 @@ class SingleServiceView {
 
 					<div class="wpss-vendor-meta-item">
 						<span class="wpss-meta-label"><?php esc_html_e( 'Member since', 'wp-sell-services' ); ?></span>
-						<span class="wpss-meta-value"><?php echo esc_html( wpss_date_label( $vendor->user_registered, '—', 'M Y' ) ); ?></span>
+						<span class="wpss-meta-value"><?php echo esc_html( wpss_date_label( $profile->created_at ?? $vendor->user_registered, '—', 'M Y' ) ); ?></span>
 					</div>
 
 					<?php
@@ -641,7 +640,7 @@ class SingleServiceView {
 
 		$message = trim( $profile->vacation_message );
 		if ( '' === $message ) {
-			$message = __( 'This seller is currently on vacation.', 'wp-sell-services' );
+			$message = __( 'This vendor is currently on vacation.', 'wp-sell-services' );
 		}
 
 		$return_date         = $profile->vacation_return_date ?? null;
@@ -929,7 +928,7 @@ class SingleServiceView {
 												<?php endforeach; ?>
 											</select>
 										<?php elseif ( 'text' === $field_type ) : ?>
-											<textarea id="<?php echo esc_attr( $input_id ); ?>" class="wpss-extra-text" rows="2" maxlength="1000" placeholder="<?php esc_attr_e( 'Tell the seller what you need', 'wp-sell-services' ); ?>"></textarea>
+											<textarea id="<?php echo esc_attr( $input_id ); ?>" class="wpss-extra-text" rows="2" maxlength="1000" placeholder="<?php esc_attr_e( 'Tell the vendor what you need', 'wp-sell-services' ); ?>"></textarea>
 										<?php endif; ?>
 									</div>
 								<?php endforeach; ?>
@@ -1021,7 +1020,7 @@ class SingleServiceView {
 			<div class="wpss-modal__backdrop"></div>
 			<div class="wpss-modal__dialog">
 				<div class="wpss-modal__header">
-					<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
+					<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact Vendor', 'wp-sell-services' ); ?></h3>
 					<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 				</div>
 
@@ -1056,7 +1055,7 @@ class SingleServiceView {
 								printf(
 									wp_kses(
 										/* translators: 1: login URL, 2: register URL */
-										__( 'Please <a href="%1$s">log in</a> or <a href="%2$s">register</a> to contact this seller.', 'wp-sell-services' ),
+										__( 'Please <a href="%1$s">log in</a> or <a href="%2$s">register</a> to contact this vendor.', 'wp-sell-services' ),
 										array( 'a' => array( 'href' => array() ) )
 									),
 									esc_url( wp_login_url( get_permalink() ) ),
@@ -1075,7 +1074,7 @@ class SingleServiceView {
 								<textarea id="wpss-contact-message"
 											name="message"
 											rows="5"
-											placeholder="<?php esc_attr_e( 'Tell the seller what you need...', 'wp-sell-services' ); ?>"
+											placeholder="<?php esc_attr_e( 'Tell the vendor what you need...', 'wp-sell-services' ); ?>"
 											required></textarea>
 								<p class="wpss-field-hint">
 									<?php esc_html_e( 'Be specific about your requirements for better assistance.', 'wp-sell-services' ); ?>
@@ -1096,7 +1095,7 @@ class SingleServiceView {
 
 							<div class="wpss-form-actions">
 								<button type="submit" class="wpss-btn wpss-btn--primary">
-									<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'Send message', 'wp-sell-services' ); ?>
 								</button>
 								<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">									
 									&times;

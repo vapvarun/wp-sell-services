@@ -57,7 +57,7 @@ Use a plain subscriber's nicename.
 cannot render an empty vendor profile.
 
 ### 6. Other entry points
-Vendor names link from service pages, seller cards and order screens.
+Vendor names link from service pages, vendor cards and order screens.
 
 **Expect** all of them land on the profile. They share
 `wpss_get_vendor_url()`, so they break together and fix together — worth
@@ -73,7 +73,7 @@ From the profile, open one of their services.
 
 ## Why this one matters
 
-A seller's intro video was, in three separate ways, worse than not having one:
+A vendor's intro video was, in three separate ways, worse than not having one:
 
 - It **took over the main gallery area**, so a buyer landed on an embed instead
   of the work being sold.

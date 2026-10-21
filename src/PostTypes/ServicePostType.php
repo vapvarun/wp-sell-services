@@ -279,7 +279,7 @@ class ServicePostType {
 			'add_new'               => __( 'Add New', 'wp-sell-services' ),
 			'add_new_item'          => __( 'Add New Service', 'wp-sell-services' ),
 			'new_item'              => __( 'New Service', 'wp-sell-services' ),
-			'edit_item'             => __( 'Edit Service', 'wp-sell-services' ),
+			'edit_item'             => __( 'Edit service', 'wp-sell-services' ),
 			'view_item'             => __( 'View Service', 'wp-sell-services' ),
 			'all_items'             => __( 'All Services', 'wp-sell-services' ),
 			'search_items'          => __( 'Search Services', 'wp-sell-services' ),
@@ -367,7 +367,7 @@ class ServicePostType {
 		$labels = [
 			'name'                       => _x( 'Service Tags', 'Taxonomy general name', 'wp-sell-services' ),
 			'singular_name'              => _x( 'Service Tag', 'Taxonomy singular name', 'wp-sell-services' ),
-			'search_items'               => __( 'Search Tags', 'wp-sell-services' ),
+			'search_items'               => __( 'Search tags', 'wp-sell-services' ),
 			'popular_items'              => __( 'Popular Tags', 'wp-sell-services' ),
 			'all_items'                  => __( 'All Tags', 'wp-sell-services' ),
 			'edit_item'                  => __( 'Edit Tag', 'wp-sell-services' ),

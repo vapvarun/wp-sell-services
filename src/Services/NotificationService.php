@@ -379,7 +379,7 @@ class NotificationService {
 		$service      = get_post( $order->service_id );
 		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
-		$buyer_name   = $buyer ? $buyer->display_name : __( 'Customer', 'wp-sell-services' );
+		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
 		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
 		$order_number = (string) ( $order->order_number ?? '' );
@@ -434,7 +434,7 @@ class NotificationService {
 			)
 			->line(
 				/* translators: %s: seller name */
-				__( 'Seller: %s', 'wp-sell-services' ),
+				__( 'Vendor: %s', 'wp-sell-services' ),
 				$vendor_name
 			)
 			->line(
@@ -450,7 +450,7 @@ class NotificationService {
 			->block()
 			->field(
 				__( 'Next Step:', 'wp-sell-services' ),
-				__( 'Please submit your requirements so the seller can start working on your order.', 'wp-sell-services' )
+				__( 'Please submit your requirements so the vendor can start working on your order.', 'wp-sell-services' )
 			);
 
 		$this->create(
@@ -501,7 +501,7 @@ class NotificationService {
 		$service      = get_post( $order->service_id );
 		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
-		$buyer_name   = $buyer ? $buyer->display_name : __( 'Customer', 'wp-sell-services' );
+		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
 		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
 		$order_number = (string) ( $order->order_number ?? '' );
@@ -516,7 +516,7 @@ class NotificationService {
 				$this->create(
 					$order->vendor_id,
 					'order_started',
-					__( 'Order Ready to Start', 'wp-sell-services' ),
+					__( 'Order ready to start', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							/* translators: 1: buyer name, 2: order number */
@@ -582,7 +582,7 @@ class NotificationService {
 				$this->create(
 					$order->customer_id,
 					self::TYPE_DELIVERY_ACCEPTED,
-					__( 'Order Completed', 'wp-sell-services' ),
+					__( 'Order completed', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							/* translators: %s: order number */
@@ -591,7 +591,7 @@ class NotificationService {
 						)
 						->block()
 						->field( __( 'Service:', 'wp-sell-services' ), $service_name )
-						->field( __( 'Seller:', 'wp-sell-services' ), $vendor_name )
+						->field( __( 'Vendor:', 'wp-sell-services' ), $vendor_name )
 						->paragraph( __( 'Thank you for your business. If you\'re satisfied with the service, please consider leaving a review to help other buyers.', 'wp-sell-services' ) ),
 					array(
 						'order_id'     => $order_id,
@@ -624,7 +624,7 @@ class NotificationService {
 				$this->create(
 					$order->vendor_id,
 					self::TYPE_REVISION_REQUESTED,
-					__( 'Revision Requested', 'wp-sell-services' ),
+					__( 'Revision requested', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							/* translators: 1: buyer name, 2: order number */
@@ -652,7 +652,7 @@ class NotificationService {
 				$this->create(
 					$order->vendor_id,
 					'cancellation_requested',
-					__( 'Cancellation Requested', 'wp-sell-services' ),
+					__( 'Cancellation requested', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							/* translators: 1: buyer name, 2: order number */
@@ -695,7 +695,7 @@ class NotificationService {
 				$this->create(
 					$order->customer_id,
 					'order_cancelled',
-					__( 'Order Cancelled', 'wp-sell-services' ),
+					__( 'Order cancelled', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							/* translators: %s: order number */
@@ -713,7 +713,7 @@ class NotificationService {
 				$this->create(
 					$order->vendor_id,
 					'order_cancelled',
-					__( 'Order Cancelled', 'wp-sell-services' ),
+					__( 'Order cancelled', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							/* translators: 1: order number, 2: buyer name */
@@ -750,7 +750,7 @@ class NotificationService {
 				$this->create(
 					$order->customer_id,
 					self::TYPE_ORDER_STATUS,
-					__( 'Order Refunded', 'wp-sell-services' ),
+					__( 'Order refunded', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							/* translators: 1: order number, 2: amount */
@@ -771,7 +771,7 @@ class NotificationService {
 				$this->create(
 					$order->vendor_id,
 					self::TYPE_ORDER_STATUS,
-					__( 'Order Refunded', 'wp-sell-services' ),
+					__( 'Order refunded', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							/* translators: 1: order number, 2: buyer name, 3: amount */
@@ -799,7 +799,7 @@ class NotificationService {
 					$this->create(
 						$user_id,
 						self::TYPE_ORDER_STATUS,
-						__( 'Order Status Updated', 'wp-sell-services' ),
+						__( 'Order status updated', 'wp-sell-services' ),
 						NotificationMessage::make()
 							->line(
 								/* translators: 1: order number, 2: status label */
@@ -968,7 +968,7 @@ class NotificationService {
 			);
 		}
 
-		$message->paragraph( __( 'Thank you for providing excellent service! Reviews help build your reputation and attract more customers.', 'wp-sell-services' ) );
+		$message->paragraph( __( 'Thank you for providing excellent service! Reviews help build your reputation and attract more buyers.', 'wp-sell-services' ) );
 
 		$this->create(
 			(int) $review->vendor_id,
@@ -1075,7 +1075,7 @@ class NotificationService {
 				/* translators: 1: amount, 2: vendor name, 3: order number */
 				__( 'Your tip of %1$s to %2$s on Order #%3$s has been paid.', 'wp-sell-services' ),
 				NotificationMessage::strong( $gross_amount ),
-				NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'your seller', 'wp-sell-services' ) ),
+				NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'your vendor', 'wp-sell-services' ) ),
 				$this->order_ref( $parent_order_id )
 			),
 			array(
@@ -1122,7 +1122,7 @@ class NotificationService {
 			'full_refund'      => __( 'resolved with a full refund', 'wp-sell-services' ),
 			'partial_refund'   => __( 'resolved with a partial refund', 'wp-sell-services' ),
 			'favor_buyer'      => __( 'resolved in favor of the buyer', 'wp-sell-services' ),
-			'favor_vendor'     => __( 'resolved in favor of the seller', 'wp-sell-services' ),
+			'favor_vendor'     => __( 'resolved in favor of the vendor', 'wp-sell-services' ),
 			'mutual_agreement' => __( 'resolved by mutual agreement', 'wp-sell-services' ),
 		);
 		$resolution_label  = $resolution_labels[ $resolution ] ?? __( 'resolved', 'wp-sell-services' );
@@ -1148,7 +1148,7 @@ class NotificationService {
 		$this->create(
 			$order->customer_id,
 			self::TYPE_DISPUTE_RESOLVED,
-			__( 'Dispute Resolved', 'wp-sell-services' ),
+			__( 'Dispute resolved', 'wp-sell-services' ),
 			$customer_message,
 			array(
 				'dispute_id'    => $dispute_id,
@@ -1185,7 +1185,7 @@ class NotificationService {
 		$this->create(
 			$order->vendor_id,
 			self::TYPE_DISPUTE_RESOLVED,
-			__( 'Dispute Resolved', 'wp-sell-services' ),
+			__( 'Dispute resolved', 'wp-sell-services' ),
 			$vendor_message,
 			array(
 				'dispute_id'    => $dispute_id,
@@ -1213,7 +1213,7 @@ class NotificationService {
 
 		switch ( $type ) {
 			case 'dispute_opened':
-				$title       = __( 'Dispute Opened', 'wp-sell-services' );
+				$title       = __( 'Dispute opened', 'wp-sell-services' );
 				$opener      = get_user_by( 'id', $data['opened_by'] ?? 0 );
 				$opener_name = $opener ? $opener->display_name : __( 'The other party', 'wp-sell-services' );
 				$message->line(
@@ -1231,6 +1231,22 @@ class NotificationService {
 						/* translators: %s: deadline date */
 						__( 'Please respond by %s to avoid automatic escalation.', 'wp-sell-services' ),
 						NotificationMessage::strong( $deadline )
+					);
+				}
+				break;
+
+			case 'dispute_response_reminder':
+				$title = __( 'Dispute response due', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: order number */
+					__( 'A dispute on Order #%s is waiting for your response.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
+				);
+				if ( ! empty( $data['response_deadline'] ) ) {
+					$message->paragraph(
+						/* translators: %s: deadline date */
+						__( 'Please respond by %s to avoid automatic escalation.', 'wp-sell-services' ),
+						NotificationMessage::strong( wpss_deadline_label( $data['response_deadline'], '—', $user_id ) )
 					);
 				}
 				break;
@@ -1274,14 +1290,14 @@ class NotificationService {
 					__( 'The delivery deadline for Order #%s is approaching.', 'wp-sell-services' ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
-				$message->paragraph( __( 'Please ensure you deliver the order on time to maintain your seller rating.', 'wp-sell-services' ) );
+				$message->paragraph( __( 'Please ensure you deliver the order on time to maintain your vendor rating.', 'wp-sell-services' ) );
 				break;
 
 			case 'extension_requested':
 				$title = __( 'Quote for extra work', 'wp-sell-services' );
 				$message->line(
 					/* translators: %s: parent order number */
-					__( 'Your seller sent a quote for additional work on Order #%s. Open the order to review — Accept & Pay to expand the scope, or Decline to keep things as-is.', 'wp-sell-services' ),
+					__( 'Your vendor sent a quote for additional work on Order #%s. Open the order to review — Accept & Pay to expand the scope, or Decline to keep things as-is.', 'wp-sell-services' ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
@@ -1301,7 +1317,7 @@ class NotificationService {
 				$title = __( 'Milestone proposed', 'wp-sell-services' );
 				$message->line(
 					/* translators: 1: phase name and amount, 2: parent order number */
-					__( 'Your seller proposed %1$s on Order #%2$s. Open the order to review and Accept & Pay.', 'wp-sell-services' ),
+					__( 'Your vendor proposed %1$s on Order #%2$s. Open the order to review and Accept & Pay.', 'wp-sell-services' ),
 					$this->milestone_label( $data['milestone_id'] ?? 0 ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
@@ -1321,7 +1337,25 @@ class NotificationService {
 				$title = __( 'Milestone delivered', 'wp-sell-services' );
 				$message->line(
 					/* translators: %s: parent order number */
-					__( 'Your seller submitted a phase delivery on Order #%s. Review it and approve, or request a revision in chat.', 'wp-sell-services' ),
+					__( 'Your vendor submitted a phase delivery on Order #%s. Review it and approve, or request a revision in chat.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
+				);
+				break;
+
+			case 'report_resolved':
+				$title = __( 'Your report was reviewed', 'wp-sell-services' );
+				$message->line(
+					'upheld' === ( $data['resolution'] ?? '' )
+						? __( 'Thanks for your report. We reviewed it and took action.', 'wp-sell-services' )
+						: __( 'Thanks for your report. We reviewed it and found nothing that breaks the rules.', 'wp-sell-services' )
+				);
+				break;
+
+			case 'milestone_revision_requested':
+				$title = __( 'Revision requested', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: parent order number */
+					__( 'The buyer asked for changes to a phase on Order #%s. Update the work and submit it again.', 'wp-sell-services' ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
@@ -1365,7 +1399,7 @@ class NotificationService {
 				$message->line(
 					/* translators: 1: vendor name, 2: request title */
 					__( '%1$s sent a proposal on your request "%2$s".', 'wp-sell-services' ),
-					NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'A seller', 'wp-sell-services' ) ),
+					NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'A vendor', 'wp-sell-services' ) ),
 					(string) ( $data['request_title'] ?? '' )
 				);
 				if ( ! empty( $data['bid_amount'] ) ) {
@@ -1396,7 +1430,7 @@ class NotificationService {
 				$reason = trim( (string) ( $data['reason'] ?? '' ) );
 				$message->line(
 					/* translators: %s: request title */
-					__( 'The buyer went with another seller on "%s".', 'wp-sell-services' ),
+					__( 'The buyer went with another vendor on "%s".', 'wp-sell-services' ),
 					(string) ( $data['request_title'] ?? '' )
 				);
 				if ( '' !== $reason ) {
@@ -1429,7 +1463,7 @@ class NotificationService {
 				break;
 
 			case 'dispute_escalated':
-				$title = __( 'Dispute Escalated', 'wp-sell-services' );
+				$title = __( 'Dispute escalated', 'wp-sell-services' );
 				$message->line(
 					/* translators: %s: order number */
 					__( 'The dispute for Order #%s has been escalated to the marketplace team for a decision.', 'wp-sell-services' ),
@@ -1442,7 +1476,7 @@ class NotificationService {
 				break;
 
 			case 'dispute_cancelled':
-				$title = __( 'Dispute Cancelled', 'wp-sell-services' );
+				$title = __( 'Dispute cancelled', 'wp-sell-services' );
 				$message->line(
 					/* translators: %s: order number */
 					__( 'The dispute for Order #%s has been withdrawn and the order is back to where it was.', 'wp-sell-services' ),
@@ -1454,7 +1488,7 @@ class NotificationService {
 				break;
 
 			case 'withdrawal_requested':
-				$title = __( 'Withdrawal Requested', 'wp-sell-services' );
+				$title = __( 'Withdrawal requested', 'wp-sell-services' );
 				$message->line(
 					/* translators: %s: amount */
 					__( 'Your withdrawal request for %s has been received and is waiting for review.', 'wp-sell-services' ),
@@ -1556,7 +1590,7 @@ class NotificationService {
 		$content .= '<ul>';
 		$content .= '<li>' . esc_html__( 'Create and publish services', 'wp-sell-services' ) . '</li>';
 		$content .= '<li>' . esc_html__( 'Receive and manage orders', 'wp-sell-services' ) . '</li>';
-		$content .= '<li>' . esc_html__( 'Communicate with customers', 'wp-sell-services' ) . '</li>';
+		$content .= '<li>' . esc_html__( 'Communicate with buyers', 'wp-sell-services' ) . '</li>';
 		$content .= '<li>' . esc_html__( 'Track your earnings', 'wp-sell-services' ) . '</li>';
 		$content .= '</ul>';
 		$content .= '<p>' . esc_html__( 'If you have any questions, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';
@@ -1654,7 +1688,7 @@ class NotificationService {
 
 		$content  = '<p>' . esc_html__( 'A new vendor has registered on your marketplace.', 'wp-sell-services' ) . '</p>';
 		$content .= '<table style="border-collapse: collapse; width: 100%; margin: 20px 0;">';
-		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Display Name', 'wp-sell-services' ) . '</strong></td>';
+		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Display name', 'wp-sell-services' ) . '</strong></td>';
 		$content .= '<td style="padding: 8px; border: 1px solid #ddd;">' . esc_html( $display_name ) . '</td></tr>';
 		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Username', 'wp-sell-services' ) . '</strong></td>';
 		$content .= '<td style="padding: 8px; border: 1px solid #ddd;">' . esc_html( $user->user_login ) . '</td></tr>';
@@ -2197,6 +2231,9 @@ class NotificationService {
 			// Reviews: Plugin.php calls EmailService::send_review_received()
 			// on wpss_review_created; the row must not mail a second time.
 			self::TYPE_REVIEW_RECEIVED,
+			// Tips: EmailService::send_tip_received() is called with the row.
+			self::TYPE_TIP_RECEIVED,
+			'milestone_revision_requested',
 		);
 
 		return in_array( $type, $covered_types, true );

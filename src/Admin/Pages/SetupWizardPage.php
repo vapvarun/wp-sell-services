@@ -163,7 +163,7 @@ class SetupWizardPage {
 					'importing'    => __( 'Importing...', 'wp-sell-services' ),
 					'demoImported' => __( 'Demo Imported!', 'wp-sell-services' ),
 					'demoAlready'  => __( 'Already imported', 'wp-sell-services' ),
-					'importFailed' => __( 'Import Failed', 'wp-sell-services' ),
+					'importFailed' => __( 'Import failed', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -650,7 +650,7 @@ class SetupWizardPage {
 				</div>
 
 				<div class="wpss-wizard-field">
-					<label for="wpss-wiz-max-services"><?php esc_html_e( 'Max Services Per Vendor', 'wp-sell-services' ); ?></label>
+					<label for="wpss-wiz-max-services"><?php esc_html_e( 'Max Services per Vendor', 'wp-sell-services' ); ?></label>
 					<input type="number" id="wpss-wiz-max-services" value="<?php echo esc_attr( $max_services ); ?>" min="1" max="999">
 				</div>
 

@@ -194,7 +194,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			?>
 			<div class="wpss-checkout-return wpss-checkout-return--paid">
 				<h2><?php esc_html_e( 'Payment received', 'wp-sell-services' ); ?></h2>
-				<p><?php esc_html_e( 'Thank you. Your payment is confirmed and your order is on its way to the seller.', 'wp-sell-services' ); ?></p>
+				<p><?php esc_html_e( 'Thank you. Your payment is confirmed and your order is on its way to the vendor.', 'wp-sell-services' ); ?></p>
 				<p><a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( $order_url ); ?>"><?php esc_html_e( 'View your order', 'wp-sell-services' ); ?></a></p>
 			</div>
 			<?php
@@ -423,10 +423,10 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				<div class="wpss-cart-empty__icon">
 					<i data-lucide="shopping-cart" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
-				<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Your cart is empty', 'wp-sell-services' ); ?></h2>
+				<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Your cart is empty.', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-cart-empty__text"><?php esc_html_e( 'Choose a service and a package to check out.', 'wp-sell-services' ); ?></p>
 				<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ? wpss_get_page_url( 'services_page' ) : home_url( '/' ) ); ?>" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?>
 				</a>
 			</div>
 			<?php
@@ -654,7 +654,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$summary_lines = array();
 		if ( $is_pay_order ) {
 			$summary_lines[] = array(
-				'label'  => __( 'Order Total', 'wp-sell-services' ),
+				'label'  => __( 'Order total', 'wp-sell-services' ),
 				'amount' => $total,
 				'strong' => true,
 			);
@@ -1148,7 +1148,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							if ( ! is_user_logged_in() && wpss_checkout_creates_accounts() ) :
 								?>
 								<div class="wpss-notice wpss-notice--info wpss-co-account-note">
-									<?php esc_html_e( 'We will create your account from the name and email below, so you can send the seller your requirements and follow your order. You will get an email to choose a password.', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'We will create your account from the name and email below, so you can send the vendor your requirements and follow your order. You will get an email to choose a password.', 'wp-sell-services' ); ?>
 								</div>
 								<?php
 							endif;
@@ -1194,14 +1194,15 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								$reviews_table     = $wpdb->prefix . 'wpss_reviews';
 								$vendor_orders     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 								$vendor_member_obj = get_userdata( $vendor_id_for_stats );
-								$vendor_joined     = $vendor_member_obj ? wpss_date_label( $vendor_member_obj->user_registered, '—', 'M Y' ) : '';
+								// The profile row's date, the one the vendor profile and card show.
+								$vendor_joined = $vendor_member_obj ? wpss_date_label( ( new \WPSellServices\Services\VendorService() )->get_profile( (int) $vendor_id_for_stats )->created_at ?? $vendor_member_obj->user_registered, '—', 'M Y' ) : '';
 
 								// Get latest review for this vendor.
 								$latest_review = $wpdb->get_row( $wpdb->prepare( "SELECT r.review as content, r.rating, COALESCE(NULLIF(u.display_name, ''), r.reviewer_name) as reviewer_display_name FROM {$reviews_table} r LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID WHERE r.vendor_id = %d AND r.status = 'approved' ORDER BY r.created_at DESC LIMIT 1", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 								?>
 							<div class="wpss-card" style="margin-top: var(--wpss-space-4);">
 								<div class="wpss-card__header">
-									<h3 class="wpss-card__title"><?php esc_html_e( 'About the Seller', 'wp-sell-services' ); ?></h3>
+									<h3 class="wpss-card__title"><?php esc_html_e( 'About the Vendor', 'wp-sell-services' ); ?></h3>
 								</div>
 								<div class="wpss-card__body">
 									<div class="wpss-co-seller-stats">
@@ -1218,7 +1219,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 											<span class="wpss-co-seller-stat__label">
 												<?php
 												/* translators: %d: number of reviews */
-												printf( esc_html( _n( '%d Review', '%d Reviews', $review_count, 'wp-sell-services' ) ), absint( $review_count ) );
+												printf( esc_html( _n( '%d review', '%d reviews', $review_count, 'wp-sell-services' ) ), absint( $review_count ) );
 												?>
 											</span>
 										</div>
@@ -1226,7 +1227,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 										<?php if ( $vendor_joined ) : ?>
 										<div class="wpss-co-seller-stat">
 											<span class="wpss-co-seller-stat__value"><?php echo esc_html( $vendor_joined ); ?></span>
-											<span class="wpss-co-seller-stat__label"><?php esc_html_e( 'Member Since', 'wp-sell-services' ); ?></span>
+											<span class="wpss-co-seller-stat__label"><?php esc_html_e( 'Member since', 'wp-sell-services' ); ?></span>
 										</div>
 										<?php endif; ?>
 									</div>
@@ -1273,16 +1274,16 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 											<?php
 											switch ( (string) ( $pay_order->platform ?? '' ) ) {
 												case \WPSellServices\Services\TippingService::ORDER_TYPE:
-													esc_html_e( 'Seller credited', 'wp-sell-services' );
+													esc_html_e( 'Vendor credited', 'wp-sell-services' );
 													break;
 												case \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE:
 													esc_html_e( 'Work continues on extended scope', 'wp-sell-services' );
 													break;
 												case \WPSellServices\Services\MilestoneService::ORDER_TYPE:
-													esc_html_e( 'Seller works on this phase', 'wp-sell-services' );
+													esc_html_e( 'Vendor works on this phase', 'wp-sell-services' );
 													break;
 												default:
-													esc_html_e( 'Seller credited', 'wp-sell-services' );
+													esc_html_e( 'Vendor credited', 'wp-sell-services' );
 													break;
 											}
 											?>
@@ -1301,7 +1302,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									</div>
 									<div class="wpss-co-step">
 										<span class="wpss-co-step__dot">3</span>
-										<span class="wpss-co-step__label"><?php esc_html_e( 'Seller Works', 'wp-sell-services' ); ?></span>
+										<span class="wpss-co-step__label"><?php esc_html_e( 'Vendor Works', 'wp-sell-services' ); ?></span>
 									</div>
 									<div class="wpss-co-step">
 										<span class="wpss-co-step__dot">4</span>
@@ -1833,7 +1834,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					'processing'    => __( 'Processing...', 'wp-sell-services' ),
 					'paymentFailed' => __( 'Payment failed. Please try again.', 'wp-sell-services' ),
 					'genericError'  => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'logIn'         => __( 'Log in', 'wp-sell-services' ),
+					'logIn'         => __( 'Log In', 'wp-sell-services' ),
 					'accountFailed' => __( 'We could not create your account. Please check your details.', 'wp-sell-services' ),
 				),
 			)

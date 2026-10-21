@@ -129,7 +129,7 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 					</div>
 				</div>
 				<div>
-					<label for="request_budget_max"><?php esc_html_e( 'Maximum Budget', 'wp-sell-services' ); ?></label>
+					<label for="request_budget_max"><?php esc_html_e( 'Maximum budget', 'wp-sell-services' ); ?></label>
 					<div class="wpss-input-group">
 						<span class="wpss-input-group__prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 						<input
@@ -179,7 +179,7 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 				<?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?>
 			</button>
 			<p class="wpss-form-hint wpss-form-hint--center">
-				<?php esc_html_e( 'Your request will be visible to all sellers who can then send you proposals.', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Your request will be visible to all vendors who can then send you proposals.', 'wp-sell-services' ); ?>
 			</p>
 		</div>
 	</form>
@@ -187,16 +187,6 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 
 
 <script>
-function wpssShowNotice(msg, type) {
-	type = type || 'error';
-	var bgColor = type === 'success' ? '#d4edda' : '#f8d7da';
-	var borderColor = type === 'success' ? '#c3e6cb' : '#f5c6cb';
-	var textColor = type === 'success' ? '#155724' : '#721c24';
-	var $notice = jQuery('<div class="wpss-inline-notice" style="padding:12px 16px;margin:10px 0;border:1px solid ' + borderColor + ';border-radius:4px;background:' + bgColor + ';color:' + textColor + ';position:relative;">' + msg + '<span style="position:absolute;right:10px;top:8px;cursor:pointer;font-size:18px;line-height:1;">&times;</span></div>');
-	$notice.find('span').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-	jQuery('#wpss-post-request-form, .wpss-dashboard').first().before($notice);
-	setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 8000);
-}
 (function($) {
 	'use strict';
 
@@ -208,7 +198,7 @@ function wpssShowNotice(msg, type) {
 		var originalHtml = $button.html();
 
 		if ($form.find('.wpss-request-files__item--uploading').length) {
-			wpssShowNotice('<?php echo esc_js( __( 'Wait for the attachments to finish uploading.', 'wp-sell-services' ) ); ?>', 'error');
+			wpssToast('<?php echo esc_js( __( 'Wait for the attachments to finish uploading.', 'wp-sell-services' ) ); ?>', 'error');
 			return;
 		}
 
@@ -217,7 +207,7 @@ function wpssShowNotice(msg, type) {
 		var maxBudget = parseFloat($('#request_budget_max').val()) || 0;
 
 		if (maxBudget > 0 && minBudget > maxBudget) {
-			wpssShowNotice('<?php echo esc_js( __( 'Minimum budget cannot be greater than maximum budget.', 'wp-sell-services' ) ); ?>', 'error');
+			wpssToast('<?php echo esc_js( __( 'Minimum budget cannot be greater than maximum budget.', 'wp-sell-services' ) ); ?>', 'error');
 			return;
 		}
 
@@ -238,21 +228,21 @@ function wpssShowNotice(msg, type) {
 								'<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>' +
 							'</div>' +
 							'<h3><?php echo esc_js( __( 'Request Posted!', 'wp-sell-services' ) ); ?></h3>' +
-							'<p><?php echo esc_js( __( 'Your request is now live. Sellers will be able to send you proposals.', 'wp-sell-services' ) ); ?></p>' +
+							'<p><?php echo esc_js( __( 'Your request is now live. Vendors will be able to send you proposals.', 'wp-sell-services' ) ); ?></p>' +
 							'<a href="' + (response.data.redirect || '<?php echo esc_url( wpss_get_dashboard_url( 'requests' ) ); ?>') + '" class="wpss-btn wpss-btn--primary">' +
 								'<?php echo esc_js( __( 'View My Requests', 'wp-sell-services' ) ); ?>' +
 							'</a>' +
 						'</div>'
 					);
 				} else {
-					wpssShowNotice(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
+					wpssToast(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
 					$button
 						.prop('disabled', false)
 						.html(originalHtml);
 				}
 			},
 			error: function() {
-				wpssShowNotice('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
+				wpssToast('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
 				$button
 					.prop('disabled', false)
 					.html(originalHtml);

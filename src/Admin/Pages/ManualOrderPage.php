@@ -213,7 +213,7 @@ class ManualOrderPage {
 									<!-- Customer -->
 									<div class="wpss-form-row">
 										<label for="wpss-customer-id">
-											<?php esc_html_e( 'Customer (Buyer)', 'wp-sell-services' ); ?>
+											<?php esc_html_e( 'Buyer', 'wp-sell-services' ); ?>
 											<span class="required">*</span>
 										</label>
 										<?php
@@ -222,7 +222,7 @@ class ManualOrderPage {
 												'type'     => 'user',
 												'name'     => 'customer_id',
 												'id'       => 'wpss-customer-id',
-												'placeholder' => __( '-- Select Customer --', 'wp-sell-services' ),
+												'placeholder' => __( '-- Select buyer --', 'wp-sell-services' ),
 												'search_label' => __( 'Search users by name or email', 'wp-sell-services' ),
 												'required' => true,
 											)
@@ -240,7 +240,7 @@ class ManualOrderPage {
 												'name' => 'vendor_id',
 												'id'   => 'wpss-vendor-id',
 												'placeholder' => __( '-- Use Service Author --', 'wp-sell-services' ),
-												'search_label' => __( 'Search sellers by name or email', 'wp-sell-services' ),
+												'search_label' => __( 'Search vendors by name or email', 'wp-sell-services' ),
 											)
 										);
 										?>
@@ -283,7 +283,7 @@ class ManualOrderPage {
 											</td>
 										</tr>
 										<tr class="wpss-pricing-total">
-											<td><?php esc_html_e( 'Order Total', 'wp-sell-services' ); ?></td>
+											<td><?php esc_html_e( 'Order total', 'wp-sell-services' ); ?></td>
 											<td id="wpss-summary-total"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
 										</tr>
 										<tr class="wpss-pricing-commission">
@@ -302,7 +302,7 @@ class ManualOrderPage {
 											<td></td>
 										</tr>
 										<tr class="wpss-pricing-commission">
-											<td><?php esc_html_e( 'Platform Fee', 'wp-sell-services' ); ?></td>
+											<td><?php esc_html_e( 'Platform fee', 'wp-sell-services' ); ?></td>
 											<td id="wpss-summary-platform-fee"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
 										</tr>
 										<tr class="wpss-pricing-commission">
@@ -328,8 +328,7 @@ class ManualOrderPage {
 									<?php endif; ?>
 
 									<!-- Hidden calculated fields -->
-									<?php // The package price is the base; everything else is priced by the server (price_manual_order()). ?>
-									<input type="hidden" name="subtotal" id="wpss-calculated-subtotal" value="0">
+									<?php // Nothing is posted as a price: the server prices the package, add-ons and tax (price_manual_order()). ?>
 								</div>
 							</div>
 						</div>
@@ -343,7 +342,7 @@ class ManualOrderPage {
 								<div class="inside">
 
 									<div class="wpss-form-row">
-										<label for="wpss-status"><?php esc_html_e( 'Order Status', 'wp-sell-services' ); ?></label>
+										<label for="wpss-status"><?php esc_html_e( 'Order status', 'wp-sell-services' ); ?></label>
 										<select name="status" id="wpss-status">
 											<?php foreach ( $order_statuses as $value => $label ) : ?>
 												<option value="<?php echo esc_attr( $value ); ?>" <?php selected( 'pending_requirements', $value ); ?>>
@@ -363,6 +362,7 @@ class ManualOrderPage {
 											<option value="failed"><?php esc_html_e( 'Failed', 'wp-sell-services' ); ?></option>
 											<option value="refunded"><?php esc_html_e( 'Refunded', 'wp-sell-services' ); ?></option>
 										</select>
+										<p class="description"><?php esc_html_e( 'An order set to Pending Payment is saved as unpaid, whatever this says.', 'wp-sell-services' ); ?></p>
 									</div>
 
 									<div class="wpss-form-row">
@@ -438,10 +438,10 @@ class ManualOrderPage {
 					<p id="wpss-result-message"></p>
 					<div class="wpss-result-actions">
 						<a href="#" id="wpss-view-order-link" class="button button-primary" target="_blank">
-							<?php esc_html_e( 'View Order', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'View order', 'wp-sell-services' ); ?>
 						</a>
 						<a href="#" id="wpss-requirements-link" class="button" target="_blank" style="display: none;">
-							<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Submit requirements', 'wp-sell-services' ); ?>
 						</a>
 						<button type="button" class="button" id="wpss-create-another-btn">
 							<?php esc_html_e( 'Create Another Order', 'wp-sell-services' ); ?>
@@ -508,6 +508,10 @@ class ManualOrderPage {
 		$vendor_id_input = absint( $_POST['vendor_id'] ?? 0 );
 		$status          = sanitize_key( $_POST['status'] ?? 'pending_requirements' );
 		$payment_status  = sanitize_key( $_POST['payment_status'] ?? 'paid' );
+		// An order waiting for payment is not paid: the default Paid beside Pending Payment gave a Pay button on a paid order.
+		if ( 'pending_payment' === $status && 'paid' === $payment_status ) {
+			$payment_status = 'pending';
+		}
 		$payment_method  = sanitize_key( $_POST['payment_method'] ?? 'manual' );
 		$transaction_id  = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
 		$delivery_days   = absint( $_POST['delivery_days'] ?? 7 );
@@ -526,7 +530,7 @@ class ManualOrderPage {
 
 		// --- 2. Validate required ---
 		if ( ! $service_id || ! $customer_id ) {
-			wp_send_json_error( array( 'message' => __( 'Service and Customer are required.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Service and Buyer are required.', 'wp-sell-services' ) ) );
 		}
 
 		$service = get_post( $service_id );
@@ -541,18 +545,18 @@ class ManualOrderPage {
 		// --- 3. Determine vendor ---
 		// The override picker offers sellers only; the server holds the same line.
 		if ( $vendor_id_input && ! wpss_is_vendor( $vendor_id_input ) ) {
-			wp_send_json_error( array( 'message' => __( 'The vendor override must be an active seller.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'The vendor override must be an active vendor.', 'wp-sell-services' ) ) );
 		}
 		$vendor_id = $vendor_id_input ? $vendor_id_input : (int) $service->post_author;
 
 		// Every order needs a seller who can deliver it and be paid: a blank
 		// override falls back to the author, who must be an active seller too.
 		if ( ! $vendor_id_input && ! wpss_is_vendor( $vendor_id ) ) {
-			wp_send_json_error( array( 'message' => __( 'This service\'s author is not an active seller. Choose an active seller as the vendor.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'This service\'s author is not an active vendor. Choose an active vendor as the vendor.', 'wp-sell-services' ) ) );
 		}
 
 		if ( $customer_id === $vendor_id ) {
-			wp_send_json_error( array( 'message' => __( 'Customer cannot be the same as the vendor.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Buyer cannot be the same as the vendor.', 'wp-sell-services' ) ) );
 		}
 
 		// --- 4-7. Package, price, add-ons, tax and commission ---
@@ -785,8 +789,19 @@ class ManualOrderPage {
 		$package_id = $resolved ? (int) $resolved['index'] : null;
 		$package    = $resolved ? $resolved['package'] : array();
 
+		// A price the admin typed (or an exact total) is a custom order: it is no
+		// longer the package's price, so the order must not carry the package.
+		$custom = $subtotal_input > 0 || $total_override > 0;
+
+		if ( $custom ) {
+			$package_id = null;
+			$package    = array();
+		}
+
 		if ( $subtotal_input > 0 ) {
 			$subtotal = $subtotal_input;
+		} elseif ( $total_override > 0 ) {
+			$subtotal = $total_override;
 		} elseif ( $package ) {
 			$subtotal = (float) ( $package['price'] ?? 0 );
 		} else {
@@ -800,7 +815,13 @@ class ManualOrderPage {
 		}
 
 		$addons_total = (float) $priced_addons['addons_total'];
-		$line         = CheckoutIntentService::price_line( $service_id, $subtotal, $addons_total, $vendor_id );
+
+		// An exact total already includes the add-ons, so the subtotal is the rest.
+		if ( $total_override > 0 && $subtotal_input <= 0 ) {
+			$subtotal = max( 0.0, $total_override - $addons_total );
+		}
+
+		$line = CheckoutIntentService::price_line( $service_id, $subtotal, $addons_total, $vendor_id );
 
 		if ( $total_override > 0 ) {
 			$line = array(

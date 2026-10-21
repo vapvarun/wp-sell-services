@@ -965,48 +965,6 @@
 	color: var(--wpss-text-muted);
 }
 
-.wpss-review-helpful {
-	margin-top: 0.75rem;
-	font-size: 0.75rem;
-	color: var(--wpss-text-muted);
-}
-
-/* "Helpful" vote button. Token-based so it flips in dark mode (was an inline
-   style hardcoding #666 text + #ddd border, unreadable on dark surfaces, and
-   divergent between the server-rendered and AJAX-rendered review cards). */
-.wpss-review-helpful-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	padding: 4px 10px;
-	font-size: 13px;
-	color: var(--wpss-text-muted);
-	background: none;
-	border: 1px solid var(--wpss-border);
-	border-radius: 4px;
-	cursor: pointer;
-	transition: color 0.15s ease, border-color 0.15s ease;
-}
-
-.wpss-review-helpful-btn:hover {
-	color: var(--wpss-primary-accent);
-	border-color: var(--wpss-primary-accent);
-}
-
-.wpss-review-helpful-btn.marked {
-	color: var(--wpss-primary-accent);
-	border-color: var(--wpss-primary-accent);
-}
-
-.wpss-review-helpful-btn:disabled {
-	opacity: 0.6;
-	cursor: progress;
-}
-
-.wpss-helpful-note {
-	font-size: 13px;
-}
-
 .wpss-no-reviews {
 	display: block !important;
 	visibility: visible !important;

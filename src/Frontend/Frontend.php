@@ -71,7 +71,7 @@ class Frontend {
 	public function enqueue_scripts(): void {
 		// Register Alpine.js (loaded in footer).
 		wp_register_script(
-			'alpinejs',
+			'wpss-alpine',
 			\WPSS_PLUGIN_URL . 'assets/js/vendor/alpine.min.js',
 			array(),
 			'3.13.3',
@@ -113,7 +113,7 @@ class Frontend {
 		wp_register_script(
 			'wpss-frontend',
 			\WPSS_PLUGIN_URL . 'assets/js/frontend.js',
-			array( 'jquery', 'alpinejs', 'wpss-icons', 'wpss-ux-primitives', ScriptRegistry::HANDLE_UI ),
+			array( 'jquery', 'wpss-alpine', 'wpss-icons', 'wpss-ux-primitives', ScriptRegistry::HANDLE_UI ),
 			\WPSS_VERSION,
 			true
 		);
@@ -270,14 +270,14 @@ class Frontend {
 					'confirmAcceptFixedProposal'     => __( 'Accept this fixed-price proposal ({total})?', 'wp-sell-services' ),
 					/* translators: {phases} is the number of milestone phases, {total} the formatted price; both are filled by the script. */
 					'confirmAcceptMilestoneProposal' => __( 'Accept this {phases}-phase milestone plan ({total} total)?', 'wp-sell-services' ),
-					'milestoneLockstepNote'          => __( 'You pay each phase as the seller finishes the one before it. No parent payment — every phase is its own payment.', 'wp-sell-services' ),
+					'milestoneLockstepNote'          => __( 'You pay each phase as the vendor finishes the one before it. No parent payment — every phase is its own payment.', 'wp-sell-services' ),
 					'milestonePhaseRequired'         => __( 'Add at least one milestone phase.', 'wp-sell-services' ),
 					'milestonePhaseInvalid'          => __( 'Each phase needs a title and an amount greater than zero.', 'wp-sell-services' ),
 					'sendMessage'                    => __( 'Send', 'wp-sell-services' ),
 					'uploadFile'                     => __( 'Upload File', 'wp-sell-services' ),
 					'confirmTitle'                   => __( 'Are you sure?', 'wp-sell-services' ),
 					'submitting'                     => __( 'Submitting...', 'wp-sell-services' ),
-					'saved'                          => __( 'Saved.', 'wp-sell-services' ),
+					'saved'                          => __( 'Saved', 'wp-sell-services' ),
 					'disputeEscalateConfirm'         => __( 'Ask a site administrator to review this dispute and decide it? You and the other party can keep adding messages while they look at it.', 'wp-sell-services' ),
 					'disputeEscalateBtn'             => __( 'Ask for a reviewer', 'wp-sell-services' ),
 					'disputeCancelConfirm'           => __( 'Withdraw this dispute? The order goes back to where it was, with no refund and no decision recorded. You can open a new dispute later if you need to.', 'wp-sell-services' ),
@@ -319,7 +319,7 @@ class Frontend {
 					'revisionSubmitted'              => __( 'Revision requested successfully!', 'wp-sell-services' ),
 					'revisionFailed'                 => __( 'Failed to request revision.', 'wp-sell-services' ),
 					'vendorRegistered'               => __( 'Application submitted successfully!', 'wp-sell-services' ),
-					'sellerResponse'                 => __( 'Seller Response:', 'wp-sell-services' ),
+					'sellerResponse'                 => __( 'Vendor Response:', 'wp-sell-services' ),
 					'justNow'                        => __( 'Just now', 'wp-sell-services' ),
 					'confirm'                        => __( 'Confirm', 'wp-sell-services' ),
 					'cancel'                         => __( 'Cancel', 'wp-sell-services' ),
@@ -346,7 +346,7 @@ class Frontend {
 					// silently, so every string the favourites feature shows was
 					// untranslatable in every locale. Sending them is the fix; the
 					// fallbacks are removed in the same change.
-					'favoriteSaved'                  => __( 'Saved to favorites.', 'wp-sell-services' ),
+					'favoriteSaved'                  => __( 'Saved to favorites', 'wp-sell-services' ),
 					'favoriteRemoved'                => __( 'Removed from favorites.', 'wp-sell-services' ),
 					'favoriteFailed'                 => __( 'Could not update favorites. Please try again.', 'wp-sell-services' ),
 					'favoriteSaveLabel'              => __( 'Save to favorites', 'wp-sell-services' ),
@@ -370,7 +370,7 @@ class Frontend {
 	 */
 	public function add_defer_attribute( string $tag, string $handle ): string {
 		// Only defer Alpine - other scripts should run immediately to register functions.
-		if ( 'alpinejs' === $handle && strpos( $tag, 'defer' ) === false ) {
+		if ( 'wpss-alpine' === $handle && strpos( $tag, 'defer' ) === false ) {
 			$tag = str_replace( ' src', ' defer src', $tag );
 		}
 

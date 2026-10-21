@@ -157,11 +157,11 @@ When the vendor submits a phase you get two actions on it: **Approve
 delivery** and **Request changes**.
 
 Approve it and the next phase unlocks. Choose **Request changes** and you
-are asked what needs changing; the phase goes back to the seller marked
-**Sent back to your seller**, your notes appear on the phase, and the same
+are asked what needs changing; the phase goes back to the vendor marked
+**Sent back to your vendor**, your notes appear on the phase, and the same
 notes are posted into the order conversation labelled with the phase name.
 A phase has no conversation of its own, which is why they land on the
-parent contract's thread - where the seller is already reading.
+parent contract's thread - where the vendor is already reading.
 
 Only you can send a phase back, and only while it is awaiting your
 approval. An approved phase is final; if something is wrong after that,

@@ -35,7 +35,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.9.0';
+	const DB_VERSION = '1.9.1';
 
 	/**
 	 * Option name for storing DB version.
@@ -271,7 +271,12 @@ class SchemaManager {
 	 * removed row written to the audit log. Ledger rows are removed only when
 	 * they are exact copies (same user, amount, key); a same-key row with a
 	 * different amount is a bookkeeping question, not a duplicate, and is
-	 * logged for a human instead. Idempotent: nothing to remove on a clean or
+	 * logged for a human instead. Reviews with no order (admin-imported) store
+	 * order_id NULL, which never joins to another review, so they are never
+	 * "duplicates"; order 0 from earlier imports is moved to NULL first. The
+	 * audit row keeps identifiers and ratings only: review text is personal
+	 * data the eraser would not reach in the log.
+	 * Idempotent: nothing to remove on a clean or
 	 * fresh install.
 	 *
 	 * @since 1.7.1
@@ -304,8 +309,16 @@ class SchemaManager {
 		}
 
 		if ( $reviews === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $reviews ) ) ) {
+			// A review with no order (admin-imported) stores NULL, which the unique
+			// key allows many times; order 0, which earlier imports used, would
+			// collide. Make the column nullable and move those rows first.
+			if ( 'NO' === $this->wpdb->get_var( "SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$reviews}' AND COLUMN_NAME = 'order_id'" ) ) {
+				$this->wpdb->query( "ALTER TABLE {$reviews} MODIFY order_id bigint(20) unsigned DEFAULT NULL" );
+			}
+			$this->wpdb->query( "UPDATE {$reviews} SET order_id = NULL WHERE order_id = 0" );
+
 			$dupes = $this->wpdb->get_results(
-				"SELECT d.id, d.order_id, d.review_type, d.rating, d.reviewer_id, k.id AS kept_id
+				"SELECT d.id, d.order_id, d.review_type, d.reviewer_id, d.reviewee_id, d.service_id, d.customer_id, d.vendor_id, d.rating, d.status, d.created_at, k.id AS kept_id
 				FROM {$reviews} d
 				JOIN {$reviews} k ON k.order_id = d.order_id AND k.review_type = d.review_type AND k.id < d.id"
 			);
@@ -1469,7 +1482,7 @@ class SchemaManager {
 
 		return "CREATE TABLE {$table} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			order_id bigint(20) unsigned NOT NULL,
+			order_id bigint(20) unsigned DEFAULT NULL,
 			reviewer_id bigint(20) unsigned NOT NULL,
 			reviewer_name varchar(255) DEFAULT NULL,
 			reviewee_id bigint(20) unsigned NOT NULL,

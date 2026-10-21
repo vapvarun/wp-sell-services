@@ -28,11 +28,11 @@ Use the sort dropdown to reorder results:
 | **Price (low to high)** | Finding affordable options |
 | **Price (high to low)** | Finding premium services |
 | **Top Rated** | Finding proven vendors |
-| **Most Popular** | Finding best sellers |
+| **Most Popular** | Finding best vendors |
 
 ### Browse Vendor Profiles
 
-Click on any vendor name or avatar to see their full profile, including their bio, portfolio, ratings, seller level, and all their services.
+Click on any vendor name or avatar to see their full profile, including their bio, portfolio, ratings, vendor level, and all their services.
 
 ---
 
@@ -73,7 +73,7 @@ Scroll down to see ratings and reviews from previous buyers. Each review include
 
 ### Vendor Info
 
-A sidebar card shows the vendor's profile summary -- their avatar, rating, response time, seller level, and total completed orders.
+A sidebar card shows the vendor's profile summary -- their avatar, rating, response time, vendor level, and total completed orders.
 
 ---
 
@@ -103,11 +103,11 @@ The cart page shows everything you are about to purchase:
 
 You can remove items from your cart or go back to add more services before proceeding.
 
-If a seller pauses or removes a service while it is in your cart, the cart shows it with a short note ("This service is not currently available"). It is not counted in the total or in the cart number at the top of the page, and you are not charged for it. A paused service becomes available again if the seller brings it back.
+If a vendor pauses or removes a service while it is in your cart, the cart shows it with a short note ("This service is not currently available"). It is not counted in the total or in the cart number at the top of the page, and you are not charged for it. A paused service becomes available again if the vendor brings it back.
 
-### Reporting a Service or a Seller
+### Reporting a Service or a Vendor
 
-If a listing looks like spam, a scam, or breaks the marketplace's rules, use the **Report this service** link at the bottom of the service page's sidebar, or **Report this seller** on the seller's profile. Choose a reason, add details if you can, and send. The marketplace team reviews every report, and the seller is not told who sent it. You need to be logged in, and you can report each service or seller once.
+If a listing looks like spam, a scam, or breaks the marketplace's rules, use the **Report this service** link at the bottom of the service page's sidebar, or **Report this vendor** on the vendor's profile. Choose a reason, add details if you can, and send. The marketplace team reviews every report, and the vendor is not told who sent it. You need to be logged in, and you can report each service or vendor once.
 
 ---
 

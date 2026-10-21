@@ -36,7 +36,7 @@ $chip_url = static function ( string $group ) use ( $status_param, $page_param )
 };
 ?>
 <div class="wpss-order-filters-bar">
-	<nav class="wpss-order-filters" aria-label="<?php esc_attr_e( 'Filter orders by status', 'wp-sell-services' ); ?>">
+	<nav class="wpss-order-filters" aria-label="<?php esc_attr_e( 'Filter orders by status.', 'wp-sell-services' ); ?>">
 		<?php
 		// A chip with nothing in it is not rendered - someone who has never had
 		// a dispute should not be shown a "Needs attention 0" tab. `all` always renders.

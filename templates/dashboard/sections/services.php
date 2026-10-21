@@ -67,7 +67,7 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 		array( '', __( 'All', 'wp-sell-services' ), $published_count + $draft_count + $pending_count + $rejected_count ),
 		array( 'publish', __( 'Active', 'wp-sell-services' ), $published_count ),
 		array( 'draft', __( 'Drafts', 'wp-sell-services' ), $draft_count ),
-		array( 'pending', __( 'Pending Review', 'wp-sell-services' ), $pending_count ),
+		array( 'pending', __( 'Pending review', 'wp-sell-services' ), $pending_count ),
 	);
 	if ( $rejected_count > 0 ) {
 		$wpss_tiles[] = array( 'rejected', __( 'Rejected', 'wp-sell-services' ), $rejected_count );

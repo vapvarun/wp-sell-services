@@ -156,6 +156,11 @@ class ModerationService {
 			return new \WP_Error( 'wpss_service_not_found', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
+		// Already live and approved: a repeat approve changes nothing and tells nobody.
+		if ( self::STATUS_APPROVED === get_post_meta( $service_id, self::META_MODERATION_STATUS, true ) && 'publish' === $post->post_status ) {
+			return true;
+		}
+
 		$missing = wpss_get_service_publish_errors( $service_id );
 
 		if ( $missing ) {
@@ -217,6 +222,13 @@ class ModerationService {
 		}
 
 		$reason = sanitize_textarea_field( $reason );
+
+		// Already rejected for the same reason: nothing to change, nobody to tell again.
+		if ( self::STATUS_REJECTED === get_post_meta( $service_id, self::META_MODERATION_STATUS, true )
+			&& 'publish' !== $post->post_status
+			&& (string) get_post_meta( $service_id, self::META_REJECTION_REASON, true ) === $reason ) {
+			return true;
+		}
 
 		update_post_meta( $service_id, self::META_MODERATION_STATUS, self::STATUS_REJECTED );
 
@@ -364,7 +376,7 @@ Great news! Your service "%2$s" has been approved and is now live on the marketp
 
 View your service: %3$s
 
-Thank you for being a valued seller on our platform.',
+Thank you for being a valued vendor on our platform.',
 				'wp-sell-services'
 			),
 			$vendor->display_name,
@@ -559,7 +571,7 @@ Review this service: %3$s',
 	 */
 	public static function get_statuses(): array {
 		return array(
-			self::STATUS_PENDING  => __( 'Pending Review', 'wp-sell-services' ),
+			self::STATUS_PENDING  => __( 'Pending review', 'wp-sell-services' ),
 			self::STATUS_APPROVED => __( 'Approved', 'wp-sell-services' ),
 			self::STATUS_REJECTED => __( 'Rejected', 'wp-sell-services' ),
 		);

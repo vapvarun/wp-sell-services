@@ -253,6 +253,12 @@ class ConversationService {
 
 		$block = wpss_account_status_block( $user_id );
 
+		// A vendor suspended on the profile row has a healthy member standing, so
+		// the check above passes; they may still finish paid work but start nothing new.
+		if ( ! $block && 'suspended' === wpss_get_vendor_status( $user_id ) ) {
+			$block = wpss_vendor_status_block( $user_id );
+		}
+
 		return $block instanceof \WP_Error ? $block : null;
 	}
 

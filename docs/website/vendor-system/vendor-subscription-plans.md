@@ -94,7 +94,7 @@ Plans work alongside commission rather than replacing it. Common models:
 
 - **Lower commission on higher plans** -- set a commission override per plan.
 - **Free listings, commission only** on the entry plan, flat fee on premium plans.
-- **Volume tiers** -- pair with [Tiered Commission Rules](../earnings-wallet/tiered-commission.md) for rates that also respond to category and seller level.
+- **Volume tiers** -- pair with [Tiered Commission Rules](../earnings-wallet/tiered-commission.md) for rates that also respond to category and vendor level.
 
 When a plan carries a commission override, it is applied to that vendor's sales
 in place of the otherwise-resolved rate.
@@ -104,4 +104,4 @@ in place of the otherwise-resolved rate.
 - [Becoming a Vendor](becoming-a-vendor.md)
 - [Vendor Settings](vendor-settings.md)
 - [Tiered Commission Rules](../earnings-wallet/tiered-commission.md)
-- [Seller Levels](seller-levels.md)
+- [Vendor Levels](seller-levels.md)

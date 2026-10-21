@@ -228,6 +228,13 @@ jobs:
         working-directory: ${{ env.PLUGIN_DIR }}
         run: vendor/bin/phpunit --testsuite rest --no-coverage
 
+      # The scripts assert against a realistic marketplace (vendors with
+      # services, orders, reviews), the same shape as a dev site, not an empty
+      # install. The plugin's own seeder builds it.
+      - name: Seed the demo marketplace
+        working-directory: ${{ env.PLUGIN_DIR }}
+        run: wp wpss demo marketplace --no-images --force --yes
+
       # Every script exits non-zero on a failed assertion. Run them all before
       # failing so one red script does not hide the others.
       - name: Contract scripts (wp eval-file)

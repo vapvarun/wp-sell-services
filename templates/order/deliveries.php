@@ -43,11 +43,11 @@ $wpss_viewer     = $wpss_viewer ?? 'buyer';
 					<?php
 					if ( 'pending_approval' !== $wpss_order->status ) {
 						// Admin only: the section always shows there, so "none yet" is said.
-						$wpss_empty_text = __( 'The seller has not submitted a delivery for this order.', 'wp-sell-services' );
+						$wpss_empty_text = __( 'The vendor has not submitted a delivery for this order.', 'wp-sell-services' );
 					} elseif ( 'buyer' === $wpss_viewer ) {
-						$wpss_empty_text = __( 'This order is marked for your approval, but the seller has not attached a delivery. Message them below, or open a dispute if the work does not arrive.', 'wp-sell-services' );
+						$wpss_empty_text = __( 'This order is marked for your approval, but the vendor has not attached a delivery. Message them below, or open a dispute if the work does not arrive.', 'wp-sell-services' );
 					} elseif ( 'admin' === $wpss_viewer ) {
-						$wpss_empty_text = __( 'This order is waiting for approval with no delivery attached, so the buyer cannot accept it. Move it back to In Progress so the seller can deliver.', 'wp-sell-services' );
+						$wpss_empty_text = __( 'This order is waiting for approval with no delivery attached, so the buyer cannot accept it. Move it back to In Progress so the vendor can deliver.', 'wp-sell-services' );
 					} else {
 						$wpss_empty_text = __( 'This order is waiting for approval with no delivery attached, so the buyer cannot accept it. Ask the site admin to move it back to In Progress so you can deliver.', 'wp-sell-services' );
 					}

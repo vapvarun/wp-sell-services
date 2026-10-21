@@ -95,7 +95,7 @@ else :
 		</tr>
 		<?php if ( ! empty( $is_admin ) ) : ?>
 		<tr>
-			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php esc_html_e( 'Customer', 'wp-sell-services' ); ?></th>
+			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php esc_html_e( 'Buyer', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;">
 				<?php
 				$customer = get_user_by( 'id', $order->customer_id );

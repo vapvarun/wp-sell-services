@@ -201,8 +201,8 @@ class UnifiedDashboard {
 					'activate'               => __( 'Activate', 'wp-sell-services' ),
 					// Shown after a successful profile save.
 					'profileSaved'           => __( 'Profile updated successfully.', 'wp-sell-services' ),
-					'closeRequestConfirm'    => __( 'Close this request? It will no longer be visible to sellers.', 'wp-sell-services' ),
-					'reopenRequestConfirm'   => __( 'Reopen this request? It will be visible to sellers again.', 'wp-sell-services' ),
+					'closeRequestConfirm'    => __( 'Close this request? It will no longer be visible to vendors.', 'wp-sell-services' ),
+					'reopenRequestConfirm'   => __( 'Reopen this request? It will be visible to vendors again.', 'wp-sell-services' ),
 					'deleteRequestConfirm'   => __( 'Delete this request permanently? This cannot be undone.', 'wp-sell-services' ),
 					'deletePortfolioConfirm' => __( 'Are you sure you want to delete this portfolio item?', 'wp-sell-services' ),
 					'deleteConfirmBtn'       => __( 'Delete', 'wp-sell-services' ),
@@ -217,8 +217,8 @@ class UnifiedDashboard {
 					'requestDeleted'         => __( 'Request deleted.', 'wp-sell-services' ),
 					'requestDeleteFailed'    => __( 'Failed to delete request.', 'wp-sell-services' ),
 					'deleteFailed'           => __( 'Delete failed.', 'wp-sell-services' ),
-					'saveFailed'             => __( 'Save failed.', 'wp-sell-services' ),
-					'failed'                 => __( 'Failed.', 'wp-sell-services' ),
+					'saveFailed'             => __( 'Save failed', 'wp-sell-services' ),
+					'failed'                 => __( 'Failed', 'wp-sell-services' ),
 					/* translators: %d: number of saved services */
 					'favoriteCountSingular'  => __( '%d saved service', 'wp-sell-services' ),
 					/* translators: %d: number of saved services. */
@@ -227,7 +227,7 @@ class UnifiedDashboard {
 					'chooseProfilePhoto'     => __( 'Choose Profile Photo', 'wp-sell-services' ),
 					'useAsProfilePhoto'      => __( 'Use as Profile Photo', 'wp-sell-services' ),
 					'selectCoverImage'       => __( 'Select Cover Image', 'wp-sell-services' ),
-					'setCoverImage'          => __( 'Set Cover Image', 'wp-sell-services' ),
+					'setCoverImage'          => __( 'Set cover image', 'wp-sell-services' ),
 					'addPortfolioItem'       => __( 'Add Portfolio Item', 'wp-sell-services' ),
 					'editPortfolioItem'      => __( 'Edit Portfolio Item', 'wp-sell-services' ),
 					'selectPortfolioImages'  => __( 'Select Portfolio Images', 'wp-sell-services' ),
@@ -236,7 +236,7 @@ class UnifiedDashboard {
 					'remove'                 => __( 'Remove', 'wp-sell-services' ),
 					'reviewReplySent'        => __( 'Your reply has been posted.', 'wp-sell-services' ),
 					'reviewReplyFailed'      => __( 'Could not post your reply. Please try again.', 'wp-sell-services' ),
-					'sellerResponse'         => __( 'Seller Response:', 'wp-sell-services' ),
+					'sellerResponse'         => __( 'Vendor Response:', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -451,7 +451,7 @@ class UnifiedDashboard {
 	 * @return bool
 	 */
 	private function is_suspended_vendor( int $user_id ): bool {
-		return $this->vendor_service->is_vendor( $user_id ) && 'suspended' === $this->vendor_service->get_vendor_status( $user_id );
+		return 'suspended' === $this->vendor_service->get_vendor_status( $user_id );
 	}
 
 	/**
@@ -639,7 +639,7 @@ class UnifiedDashboard {
 			esc_html__( 'Access your dashboard', 'wp-sell-services' ),
 			esc_html__( 'Log in to view your orders, messages, and manage your services.', 'wp-sell-services' ),
 			esc_url( $login_url ),
-			esc_html__( 'Log in', 'wp-sell-services' ),
+			esc_html__( 'Log In', 'wp-sell-services' ),
 			$signup // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above.
 		);
 	}
@@ -690,7 +690,7 @@ class UnifiedDashboard {
 					<div class="wpss-dashboard__user-info">
 						<span class="wpss-dashboard__user-name"><?php echo esc_html( $user->display_name ); ?></span>
 						<?php if ( $is_active ) : ?>
-							<span class="wpss-dashboard__user-badge"><?php esc_html_e( 'Seller', 'wp-sell-services' ); ?></span>
+							<span class="wpss-dashboard__user-badge"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></span>
 						<?php elseif ( $is_pending ) : ?>
 							<span class="wpss-dashboard__user-badge wpss-dashboard__user-badge--pending"><?php esc_html_e( 'Pending Approval', 'wp-sell-services' ); ?></span>
 						<?php endif; ?>
@@ -768,7 +768,7 @@ class UnifiedDashboard {
 					<div class="wpss-dashboard__become-vendor">
 						<p><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></p>
 						<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--full" data-action="become-vendor">
-							<?php esc_html_e( 'Start Selling', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
 						</button>
 					</div>
 					<?php endif; ?>
@@ -1021,7 +1021,7 @@ class UnifiedDashboard {
 				<h3><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></h3>
 				<p><?php esc_html_e( 'Start selling your services on this marketplace. Click the button below to register as a vendor and begin offering your skills.', 'wp-sell-services' ); ?></p>
 				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor">
-					<?php esc_html_e( 'Start Selling', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 			<?php
@@ -1036,7 +1036,7 @@ class UnifiedDashboard {
 				<p><?php esc_html_e( 'This section is available to vendors. Become a vendor to access this feature and start selling your services.', 'wp-sell-services' ); ?></p>
 				<?php if ( $registration_is_open ) : ?>
 				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor">
-					<?php esc_html_e( 'Start Selling', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
 				</button>
 				<?php endif; ?>
 			</div>
@@ -1173,7 +1173,7 @@ class UnifiedDashboard {
 		$user_id = get_current_user_id();
 
 		if ( $this->vendor_service->is_vendor( $user_id ) ) {
-			wp_send_json_error( array( 'message' => __( 'You are already a seller.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'You are already a vendor.', 'wp-sell-services' ) ) );
 		}
 
 		// Check for existing pending application.

@@ -30,7 +30,7 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 $base_color    = $base_color ?? '#7f54b3';
 $is_customer   = $is_customer ?? true;
 $vendor_name   = $vendor_name ?? __( 'the vendor', 'wp-sell-services' );
-$customer_name = $customer_name ?? __( 'the customer', 'wp-sell-services' );
+$customer_name = $customer_name ?? __( 'the buyer', 'wp-sell-services' );
 
 /**
  * Fires before the email content for the order completed email.
@@ -84,7 +84,7 @@ do_action( 'wpss_email_content_before', 'order_completed', $order, $recipient );
 		</tr>
 		<?php else : ?>
 		<tr>
-			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Customer', 'wp-sell-services' ); ?></th>
+			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Buyer', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $customer_name ); ?></td>
 		</tr>
 		<?php endif; ?>
@@ -142,7 +142,7 @@ do_action( 'wpss_email_content_before', 'order_completed', $order, $recipient );
 	 */
 	$default_button_text = $is_customer
 		? __( 'View Order & Leave Review', 'wp-sell-services' )
-		: __( 'View Order', 'wp-sell-services' );
+		: __( 'View order', 'wp-sell-services' );
 	$button_text         = apply_filters( 'wpss_email_button_text', $default_button_text, 'order_completed' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">

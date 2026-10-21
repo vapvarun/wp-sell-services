@@ -210,7 +210,7 @@ if ( ! $has_migration ) {
 	ob_start();
 	( new \WPSellServices\Admin\Admin() )->migrated_sellers_notice();
 	$notice = (string) ob_get_clean();
-	$check( 'the notice names the right count', false !== strpos( $notice, number_format_i18n( $migrated ) . ' sellers kept their selling access' ) );
+	$check( 'the notice names the right count', false !== strpos( $notice, number_format_i18n( $migrated ) . ' vendors kept their selling access' ) );
 	$check( '  and links to the migrated vendors list', false !== strpos( $notice, 'page=wpss-vendors&#038;status=migrated' ) || false !== strpos( $notice, 'page=wpss-vendors&status=migrated' ) );
 	$check( '  and can be dismissed', false !== strpos( $notice, 'data-notice="sellers"' ) );
 

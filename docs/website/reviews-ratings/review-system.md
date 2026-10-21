@@ -64,12 +64,6 @@ Vendors can respond to any review on their services:
 
 Replies are public and visible to everyone. Vendors get one reply per review. A professional, gracious reply -- whether the review is positive or negative -- shows future buyers that the vendor cares about their customers.
 
-## "Mark as Helpful" Feature
-
-![A review with the Helpful button under it](../images/review-helpful-marked.webp)
-
-Buyers browsing reviews can mark a review as helpful. The most helpful reviews surface higher in the list, making it easier for potential buyers to find the most useful feedback. Press the button again to take your vote back. You cannot vote on your own review.
-
 ## Review Moderation
 
 By default, reviews are published immediately after submission. If you want to review them before they go live, you can turn on moderation.
@@ -86,6 +80,22 @@ Go to **Settings > Vendor Settings** and enable **Review Moderation**. Once enab
 ### When to Use Moderation
 
 Moderation is useful for new marketplaces where you want to ensure review quality, or if you have had problems with spam or abusive reviews. For established marketplaces with a trusted user base, auto-approval keeps the feedback loop fast.
+
+## Importing Reviews **[PRO]**
+
+When you launch a marketplace with vendors you added yourself, their profiles start empty. Admins can give them a head start with reviews gathered elsewhere. Vendors cannot add reviews for themselves.
+
+Go to **Sell Services > Import Reviews**. You can:
+
+- **Add one review** -- pick the vendor, pick one of their services, enter the reviewer name, a 1-5 star rating, the review text and an optional date.
+- **Import a CSV** -- download the template, fill it in (up to 500 rows per file), choose **Check file** to preview every row, then **Import**. The preview saves nothing and tells you which rows are ready, which are already imported and which need fixing.
+
+Imported reviews:
+
+- Count toward the service rating, the vendor rating and vendor levels, like any approved review.
+- Show an **Imported review** label so visitors are not misled into reading them as verified purchases.
+- Are not tied to an order, so there is no Verified Purchase badge and no email goes to the vendor.
+- Are skipped when the same vendor, service, reviewer name and review text already exist, so running the same file twice adds nothing.
 
 ## How Ratings Are Calculated
 
@@ -104,9 +114,9 @@ Ratings update automatically whenever a review is added, edited, or its status c
 
 Reviews can be sorted by most recent, highest rated, lowest rated, or most helpful.
 
-## Review Impact on Sellers
+## Review Impact on Vendors
 
-Good reviews directly boost a vendor's visibility in search results and contribute to advancing through seller levels. Vendors need minimum ratings and review counts to reach Rising Seller (4.0 stars, 3 reviews) and Top Rated (4.7 stars, 10 reviews).
+Good reviews directly boost a vendor's visibility in search results and contribute to advancing through vendor levels. Vendors need minimum ratings and review counts to reach Rising Vendor (4.0 stars, 3 reviews) and Top Rated (4.7 stars, 10 reviews).
 
 Consistently low ratings can reduce a vendor's search visibility and may trigger an admin review of their account.
 
@@ -130,5 +140,5 @@ Consistently low ratings can reduce a vendor's search visibility and may trigger
 ## Related Documentation
 
 - [Reputation & Moderation](reputation-moderation.md)
-- [Seller Levels](../vendor-system/seller-levels.md)
+- [Vendor Levels](../vendor-system/seller-levels.md)
 - [Order Lifecycle](../order-management/order-lifecycle.md)
