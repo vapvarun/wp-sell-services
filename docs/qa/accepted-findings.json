@@ -246,8 +246,8 @@
     },
     {
       "id": "J11:registry-no-generic-bell",
-      "fixed_in": "f1a3cd09",
-      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-notification-types-registry.php now scans every type the services send and requires a registry row; extension_requested, extension_rejected and dispute_assigned were missing. Fails on the old code."
+      "fixed_in": "4ec35443",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-notification-types-registry.php scans every type the services send and requires a registry row and a message case: extension_requested, extension_rejected and dispute_assigned had no row, and dispute_assigned had no message. Fails on the old code. Rows already stored with order_id 0 by the old reminder code keep a blank order number; new reminders carry the order."
     },
     {
       "id": "J14:s5-no-empty-heading",
@@ -261,8 +261,8 @@
     },
     {
       "id": "J15:s6-seller-levels-rest",
-      "fixed_in": "f1a3cd09",
-      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-seller-levels-rest-earnings.php: /vendors/me/level reports the ledger total (42.5), not 0. Fails on the old code."
+      "fixed_in": "4ec35443",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-seller-levels-rest-earnings.php: total_earnings is the ledger total (42.5, was 0) and a pro-tier vendor has no next level (was rising, a lower tier). Both fail on the old code."
     }
   ],
   "debug_log_accepted": [],
