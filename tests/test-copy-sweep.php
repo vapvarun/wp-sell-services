@@ -37,7 +37,7 @@ if ( function_exists( 'wpss_star_rating' ) ) {
 }
 
 // --- status label ---------------------------------------------------------------
-$check( 'status helper labels revision_requested', 'Revision Requested' === wpss_get_order_status_label( 'revision_requested' ) );
+$check( 'status helper labels revision_requested', 'Revision requested' === wpss_get_order_status_label( 'revision_requested' ) );
 $order_view = (string) file_get_contents( WPSS_PLUGIN_DIR . 'templates/order/order-view.php' );
 $check( 'deliveries list uses the status helper, not ucfirst()', ! str_contains( $order_view, 'ucfirst( $delivery->status )' ) );
 $check( 'delivery modal reads the max_file_size setting', ! str_contains( $order_view, '50MB' ) && str_contains( $order_view, "wpss_get_option( 'advanced', 'max_file_size' )" ) );

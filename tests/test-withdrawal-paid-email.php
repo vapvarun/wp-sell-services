@@ -75,7 +75,7 @@ try {
 	$check( 'marking paid succeeds (' . wp_json_encode( $paid ) . ')', ! empty( $paid['success'] ) );
 	$check( '  and sends exactly one more email', count( $mails ) === $before + 1 );
 	$check( '  whose subject says Paid, not Approved', false !== strpos( $paid_mail['subject'], 'Paid' ) && false === strpos( $paid_mail['subject'], 'Approved' ) );
-	$check( '  and whose body is the paid heading', false !== strpos( $paid_mail['message'], 'Withdrawal Paid' ) && $paid_mail['message'] !== $approve_mail['message'] );
+	$check( '  and whose body is the paid heading', false !== strpos( $paid_mail['message'], 'Withdrawal paid' ) && $paid_mail['message'] !== $approve_mail['message'] );
 	$check( 'the paid email has its own template and type', is_file( WPSS_PLUGIN_DIR . 'templates/emails/withdrawal-completed.php' ) && 'withdrawal_completed' === EmailService::TYPE_WITHDRAWAL_COMPLETED );
 
 	$note = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wpss_notifications WHERE user_id = %d AND type = %s", $vendor->ID, 'withdrawal_completed' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
