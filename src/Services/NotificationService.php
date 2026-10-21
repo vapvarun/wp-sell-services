@@ -1481,6 +1481,15 @@ class NotificationService {
 				$message->paragraph( __( 'A member of the team will review the case and both parties will be told the outcome.', 'wp-sell-services' ) );
 				break;
 
+			case 'dispute_assigned':
+				$title = __( 'Dispute assigned', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: order number */
+					__( 'You have been assigned the dispute for Order #%s.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
+				);
+				break;
+
 			case 'dispute_cancelled':
 				$title = __( 'Dispute cancelled', 'wp-sell-services' );
 				$message->line(

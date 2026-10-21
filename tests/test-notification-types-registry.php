@@ -35,6 +35,11 @@ foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( dirname
 $unregistered = array_diff( array_unique( $sent ), array_keys( $registry ) );
 $check( 'every type sent by the services has a registry row (' . implode( ',', $unregistered ) . ')', ! $unregistered );
 
+// And each has its own message case, so none of them reads the generic "You have a new notification".
+$svc_src   = file_get_contents( dirname( __DIR__ ) . '/src/Services/NotificationService.php' );
+$no_message = array_filter( array_unique( $sent ), static fn( $type ) => false === strpos( $svc_src, "case '{$type}':" ) );
+$check( 'every type sent by the services has a message case (' . implode( ',', $no_message ) . ')', ! $no_message );
+
 // A member's dropdown is their own types, and each filters to exactly its rows. Seed a member with a
 // spread of types, including ones that used to have no filter option.
 $f     = wpss_test_fixtures();

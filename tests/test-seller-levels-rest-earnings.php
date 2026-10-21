@@ -32,6 +32,12 @@ if ( null === $got ) {
 $check( 'REST answers 200 for an active vendor', 200 === $res->get_status() );
 $check( 'total_earnings is the ledger total (42.5), got ' . var_export( $got, true ), null !== $got && abs( (float) $got - 42.5 ) < 0.001 );
 
+// A manually assigned tier outside the progression (pro) has no next level; a new vendor's next is rising.
+$check( 'new vendor: next level is rising', 'rising' === ( $data['next_level']['key'] ?? '' ) );
+$wpdb->update( $wpdb->prefix . 'wpss_vendor_profiles', array( 'verification_tier' => 'pro' ), array( 'user_id' => $uid ) );
+$data = rest_do_request( new WP_REST_Request( 'GET', '/wpss/v1/vendors/me/level' ) )->get_data();
+$check( 'pro vendor: no next level (was rising, a lower tier)', array_key_exists( 'next_level', $data ) && null === $data['next_level'] );
+
 $wpdb->delete( $wpdb->prefix . 'wpss_wallet_transactions', array( 'user_id' => $uid ) );
 $wpdb->delete( $wpdb->prefix . 'wpss_vendor_profiles', array( 'user_id' => $uid ) );
 require_once ABSPATH . 'wp-admin/includes/user.php';
