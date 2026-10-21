@@ -653,7 +653,7 @@ defined( 'ABSPATH' ) || exit;
 				<div class="wpss-cart-summary__cta">
 					<?php if ( 0 === $wpss_buyable ) : ?>
 						<p class="wpss-cart-summary__blocked" role="status">
-							<?php esc_html_e( 'Nothing in your cart is available to buy right now. Remove the unavailable items, or check back when the sellers are taking orders again.', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Nothing in your cart is available to buy right now. Remove the unavailable items, or check back when the vendors are taking orders again.', 'wp-sell-services' ); ?>
 						</p>
 					<?php else : ?>
 					<a href="<?php echo esc_url( wpss_get_checkout_base_url() ); ?>" class="wpss-btn wpss-btn--primary">

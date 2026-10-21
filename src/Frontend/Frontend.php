@@ -270,7 +270,7 @@ class Frontend {
 					'confirmAcceptFixedProposal'     => __( 'Accept this fixed-price proposal ({total})?', 'wp-sell-services' ),
 					/* translators: {phases} is the number of milestone phases, {total} the formatted price; both are filled by the script. */
 					'confirmAcceptMilestoneProposal' => __( 'Accept this {phases}-phase milestone plan ({total} total)?', 'wp-sell-services' ),
-					'milestoneLockstepNote'          => __( 'You pay each phase as the seller finishes the one before it. No parent payment — every phase is its own payment.', 'wp-sell-services' ),
+					'milestoneLockstepNote'          => __( 'You pay each phase as the vendor finishes the one before it. No parent payment — every phase is its own payment.', 'wp-sell-services' ),
 					'milestonePhaseRequired'         => __( 'Add at least one milestone phase.', 'wp-sell-services' ),
 					'milestonePhaseInvalid'          => __( 'Each phase needs a title and an amount greater than zero.', 'wp-sell-services' ),
 					'sendMessage'                    => __( 'Send', 'wp-sell-services' ),
@@ -319,7 +319,7 @@ class Frontend {
 					'revisionSubmitted'              => __( 'Revision requested successfully!', 'wp-sell-services' ),
 					'revisionFailed'                 => __( 'Failed to request revision.', 'wp-sell-services' ),
 					'vendorRegistered'               => __( 'Application submitted successfully!', 'wp-sell-services' ),
-					'sellerResponse'                 => __( 'Seller Response:', 'wp-sell-services' ),
+					'sellerResponse'                 => __( 'Vendor Response:', 'wp-sell-services' ),
 					'justNow'                        => __( 'Just now', 'wp-sell-services' ),
 					'confirm'                        => __( 'Confirm', 'wp-sell-services' ),
 					'cancel'                         => __( 'Cancel', 'wp-sell-services' ),

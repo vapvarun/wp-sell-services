@@ -42,7 +42,7 @@ fill in anyway, and their account is created from those when they pay. They are
 signed in immediately afterwards.
 
 **There is no guest order.** After paying, a buyer has to submit requirements,
-message the seller, review the delivery, possibly request a revision or open a
+message the vendor, review the delivery, possibly request a revision or open a
 dispute -- every one of those needs an identity. An order with no owner could not
 be fulfilled, and could be read by any logged-out visitor. So the account is
 created rather than skipped.

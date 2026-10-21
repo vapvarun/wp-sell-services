@@ -421,7 +421,7 @@ class ServiceArchiveView {
 
 				<!-- Seller Rating -->
 				<div class="wpss-filter-section">
-					<h4><?php esc_html_e( 'Seller Rating', 'wp-sell-services' ); ?></h4>
+					<h4><?php esc_html_e( 'Vendor Rating', 'wp-sell-services' ); ?></h4>
 					<div class="wpss-rating-options">
 						<?php for ( $i = 4; $i >= 1; $i-- ) : ?>
 							<label class="wpss-rating-option">

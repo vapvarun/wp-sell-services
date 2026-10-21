@@ -10,7 +10,7 @@ Before committing to a purchase:
 
 - **Read reviews** -- Look for patterns in feedback, not just the overall rating. Multiple reviewers mentioning the same strength (or weakness) is a strong signal.
 - **Check their portfolio** -- Does their previous work match the style and quality you want?
-- **Look at their seller level** -- Rising Seller and Top Rated vendors have a proven track record of quality and reliability.
+- **Look at their vendor level** -- Rising Vendor and Top Rated vendors have a proven track record of quality and reliability.
 - **Note their response time** -- Vendors who respond quickly during the inquiry phase will likely communicate well during your order.
 
 ### Ask Questions First

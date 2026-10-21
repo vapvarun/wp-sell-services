@@ -92,7 +92,7 @@ The dashboard sidebar groups sections logically:
 | **Selling** (vendors only) | My Services, Sales Orders, Earnings, Portfolio |
 | **Account** | Messages, Profile |
 
-Your avatar and name appear at the top of the sidebar. If you are a vendor, a "Seller" badge appears next to your name along with your seller level.
+Your avatar and name appear at the top of the sidebar. If you are a vendor, a "Vendor" badge appears next to your name along with your vendor level.
 
 ---
 

@@ -145,7 +145,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 
 		<?php if ( $is_vendor && $vendor_profile ) : ?>
 			<div class="wpss-profile-form__section">
-				<h3><?php esc_html_e( 'Seller Profile', 'wp-sell-services' ); ?></h3>
+				<h3><?php esc_html_e( 'Vendor Profile', 'wp-sell-services' ); ?></h3>
 
 				<div class="wpss-form-row">
 					<label for="tagline"><?php esc_html_e( 'Tagline', 'wp-sell-services' ); ?></label>

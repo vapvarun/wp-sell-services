@@ -70,7 +70,7 @@ if ( $wpss_review_service && 'publish' === $wpss_review_service->post_status ) :
 <?php if ( '' !== $wpss_review->response ) : ?>
 	<div class="wpss-review-reply">
 		<div class="wpss-reply-header">
-			<strong><?php esc_html_e( 'Seller Response:', 'wp-sell-services' ); ?></strong>
+			<strong><?php esc_html_e( 'Vendor Response:', 'wp-sell-services' ); ?></strong>
 			<?php if ( $wpss_review->response_at ) : ?>
 				<span class="wpss-reply-date">
 					<?php echo esc_html( wpss_time_ago( $wpss_review->response_at->format( 'Y-m-d H:i:s' ) ) ); ?>

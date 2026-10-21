@@ -259,7 +259,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				<i data-lucide="messages-square" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 			</div>
 			<h3><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></h3>
-			<p><?php esc_html_e( 'Your conversations with buyers and sellers will appear here.', 'wp-sell-services' ); ?></p>
+			<p><?php esc_html_e( 'Your conversations with buyers and vendors will appear here.', 'wp-sell-services' ); ?></p>
 		</div>
 	<?php else : ?>
 		<div class="wpss-conversations-list">

@@ -75,7 +75,7 @@ class AuditLogService {
 			'vendor.rejected'                => __( 'Vendor rejected', 'wp-sell-services' ),
 			'vendor.suspended'               => __( 'Vendor suspended', 'wp-sell-services' ),
 			'vendor.pending'                 => __( 'Vendor set to pending', 'wp-sell-services' ),
-			'vendor.migrated'                => __( 'Seller access kept in the update', 'wp-sell-services' ),
+			'vendor.migrated'                => __( 'Vendor access kept in the update', 'wp-sell-services' ),
 			'vendor.role_removed'            => __( 'Vendor role removed', 'wp-sell-services' ),
 			'vendor.role_restored'           => __( 'Vendor role restored', 'wp-sell-services' ),
 			'commission.rate_changed'        => __( 'Commission rate changed', 'wp-sell-services' ),

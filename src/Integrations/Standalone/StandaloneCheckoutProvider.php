@@ -194,7 +194,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			?>
 			<div class="wpss-checkout-return wpss-checkout-return--paid">
 				<h2><?php esc_html_e( 'Payment received', 'wp-sell-services' ); ?></h2>
-				<p><?php esc_html_e( 'Thank you. Your payment is confirmed and your order is on its way to the seller.', 'wp-sell-services' ); ?></p>
+				<p><?php esc_html_e( 'Thank you. Your payment is confirmed and your order is on its way to the vendor.', 'wp-sell-services' ); ?></p>
 				<p><a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( $order_url ); ?>"><?php esc_html_e( 'View your order', 'wp-sell-services' ); ?></a></p>
 			</div>
 			<?php
@@ -1148,7 +1148,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							if ( ! is_user_logged_in() && wpss_checkout_creates_accounts() ) :
 								?>
 								<div class="wpss-notice wpss-notice--info wpss-co-account-note">
-									<?php esc_html_e( 'We will create your account from the name and email below, so you can send the seller your requirements and follow your order. You will get an email to choose a password.', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'We will create your account from the name and email below, so you can send the vendor your requirements and follow your order. You will get an email to choose a password.', 'wp-sell-services' ); ?>
 								</div>
 								<?php
 							endif;
@@ -1202,7 +1202,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								?>
 							<div class="wpss-card" style="margin-top: var(--wpss-space-4);">
 								<div class="wpss-card__header">
-									<h3 class="wpss-card__title"><?php esc_html_e( 'About the Seller', 'wp-sell-services' ); ?></h3>
+									<h3 class="wpss-card__title"><?php esc_html_e( 'About the Vendor', 'wp-sell-services' ); ?></h3>
 								</div>
 								<div class="wpss-card__body">
 									<div class="wpss-co-seller-stats">
@@ -1219,7 +1219,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 											<span class="wpss-co-seller-stat__label">
 												<?php
 												/* translators: %d: number of reviews */
-												printf( esc_html( _n( '%d Review', '%d Reviews', $review_count, 'wp-sell-services' ) ), absint( $review_count ) );
+												printf( esc_html( _n( '%d review', '%d reviews', $review_count, 'wp-sell-services' ) ), absint( $review_count ) );
 												?>
 											</span>
 										</div>
@@ -1274,16 +1274,16 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 											<?php
 											switch ( (string) ( $pay_order->platform ?? '' ) ) {
 												case \WPSellServices\Services\TippingService::ORDER_TYPE:
-													esc_html_e( 'Seller credited', 'wp-sell-services' );
+													esc_html_e( 'Vendor credited', 'wp-sell-services' );
 													break;
 												case \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE:
 													esc_html_e( 'Work continues on extended scope', 'wp-sell-services' );
 													break;
 												case \WPSellServices\Services\MilestoneService::ORDER_TYPE:
-													esc_html_e( 'Seller works on this phase', 'wp-sell-services' );
+													esc_html_e( 'Vendor works on this phase', 'wp-sell-services' );
 													break;
 												default:
-													esc_html_e( 'Seller credited', 'wp-sell-services' );
+													esc_html_e( 'Vendor credited', 'wp-sell-services' );
 													break;
 											}
 											?>
@@ -1302,7 +1302,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									</div>
 									<div class="wpss-co-step">
 										<span class="wpss-co-step__dot">3</span>
-										<span class="wpss-co-step__label"><?php esc_html_e( 'Seller Works', 'wp-sell-services' ); ?></span>
+										<span class="wpss-co-step__label"><?php esc_html_e( 'Vendor Works', 'wp-sell-services' ); ?></span>
 									</div>
 									<div class="wpss-co-step">
 										<span class="wpss-co-step__dot">4</span>

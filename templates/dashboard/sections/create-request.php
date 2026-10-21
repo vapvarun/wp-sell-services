@@ -179,7 +179,7 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 				<?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?>
 			</button>
 			<p class="wpss-form-hint wpss-form-hint--center">
-				<?php esc_html_e( 'Your request will be visible to all sellers who can then send you proposals.', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Your request will be visible to all vendors who can then send you proposals.', 'wp-sell-services' ); ?>
 			</p>
 		</div>
 	</form>
@@ -228,7 +228,7 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 								'<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>' +
 							'</div>' +
 							'<h3><?php echo esc_js( __( 'Request Posted!', 'wp-sell-services' ) ); ?></h3>' +
-							'<p><?php echo esc_js( __( 'Your request is now live. Sellers will be able to send you proposals.', 'wp-sell-services' ) ); ?></p>' +
+							'<p><?php echo esc_js( __( 'Your request is now live. Vendors will be able to send you proposals.', 'wp-sell-services' ) ); ?></p>' +
 							'<a href="' + (response.data.redirect || '<?php echo esc_url( wpss_get_dashboard_url( 'requests' ) ); ?>') + '" class="wpss-btn wpss-btn--primary">' +
 								'<?php echo esc_js( __( 'View My Requests', 'wp-sell-services' ) ); ?>' +
 							'</a>' +

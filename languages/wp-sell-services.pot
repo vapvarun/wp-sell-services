@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-21T07:50:34+00:00\n"
+"POT-Creation-Date: 2026-10-21T08:10:09+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -105,19 +105,19 @@ msgstr ""
 #. translators: %d: number of refunds
 #: src/Admin/Admin.php:610
 #, php-format
-msgid "%d refund waiting to be assigned to a gig"
-msgid_plural "%d refunds waiting to be assigned to a gig"
+msgid "%d refund waiting to be assigned to a service"
+msgid_plural "%d refunds waiting to be assigned to a service"
 msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/Admin.php:627
-msgid "A refund was made at the payment platform without saying which gig it was for."
-msgid_plural "Refunds were made at the payment platform without saying which gig they were for."
+msgid "A refund was made at the payment platform without saying which service it was for."
+msgid_plural "Refunds were made at the payment platform without saying which service they were for."
 msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/Admin.php:628
-msgid "The buyer has the money back. Open the gig it was for and assign the refund, so the right vendor is charged."
+msgid "The buyer has the money back. Open the service it was for and assign the refund, so the right vendor is charged."
 msgstr ""
 
 #: src/Admin/Admin.php:642
@@ -239,8 +239,8 @@ msgstr ""
 #. translators: %s: number of sellers.
 #: src/Admin/Admin.php:966
 #, php-format
-msgid "%s seller kept their selling access in this update."
-msgid_plural "%s sellers kept their selling access in this update."
+msgid "%s vendor kept their selling access in this update."
+msgid_plural "%s vendors kept their selling access in this update."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -249,7 +249,7 @@ msgid "This update made an approved vendor profile the requirement for selling. 
 msgstr ""
 
 #: src/Admin/Admin.php:977
-msgid "Review these sellers"
+msgid "Review these vendors"
 msgstr ""
 
 #. translators: %s: page title
@@ -466,7 +466,7 @@ msgid "Import Demo Content"
 msgstr ""
 
 #: src/Admin/Admin.php:1718
-msgid "Delete all demo content? This will permanently remove demo services, vendors, and empty categories. A demo service that a buyer has ordered is kept, with its seller."
+msgid "Delete all demo content? This will permanently remove demo services, vendors, and empty categories. A demo service that a buyer has ordered is kept, with its vendor."
 msgstr ""
 
 #: src/Admin/Admin.php:1719
@@ -1160,6 +1160,7 @@ msgid "Unknown"
 msgstr ""
 
 #: src/Admin/Admin.php:2739
+#: src/Services/NotificationService.php:594
 msgid "Vendor:"
 msgstr ""
 
@@ -1215,21 +1216,21 @@ msgid "This order was paid through %s. Refund it there; the refund is recorded h
 msgstr ""
 
 #: src/Admin/Admin.php:2814
-msgid "Refund waiting for a gig"
+msgid "Refund waiting for a service"
 msgstr ""
 
 #. translators: 1: amount, 2: transaction id
 #: src/Admin/Admin.php:2820
 #, php-format
-msgid "%1$s was refunded at the payment platform (%2$s) without saying which gig it was for. If it was this one, assign it here. The vendor's earnings are reversed only for the gig you assign it to."
+msgid "%1$s was refunded at the payment platform (%2$s) without saying which service it was for. If it was this one, assign it here. The vendor's earnings are reversed only for the gig you assign it to."
 msgstr ""
 
 #: src/Admin/Admin.php:2831
-msgid "Amount for this gig"
+msgid "Amount for this service"
 msgstr ""
 
 #: src/Admin/Admin.php:2834
-msgid "Assign to this gig"
+msgid "Assign to this service"
 msgstr ""
 
 #: src/Admin/Admin.php:2847
@@ -1528,6 +1529,8 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:542
 #: src/Admin/ServiceListScreen.php:241
 #: src/Admin/Tables/OrdersListTable.php:54
+#: src/Blocks/BlocksManager.php:139
+#: src/Frontend/UnifiedDashboard.php:693
 #: src/Privacy/PersonalData.php:514
 #: src/Services/EmailService.php:2432
 #: src/Services/NotificationService.php:384
@@ -1540,6 +1543,10 @@ msgstr ""
 #: templates/emails/requirements-reminder.php:77
 #: templates/emails/withdrawal-auto.php:39
 #: templates/emails/withdrawal-requested.php:39
+#: templates/order/conversation.php:159
+#: templates/order/extension-view.php:152
+#: templates/order/milestone-view.php:175
+#: templates/order/order-view.php:880
 msgid "Vendor"
 msgstr ""
 
@@ -1649,8 +1656,8 @@ msgstr ""
 #. translators: %d: number of demo services kept
 #: src/Admin/Admin.php:3789
 #, php-format
-msgid "%d demo service was kept, with its seller, because a buyer has ordered it."
-msgid_plural "%d demo services were kept, with their sellers, because buyers have ordered them."
+msgid "%d demo service was kept, with its vendor, because a buyer has ordered it."
+msgid_plural "%d demo services were kept, with their vendors, because buyers have ordered them."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -1750,6 +1757,7 @@ msgstr ""
 #: templates/content-request-card.php:246
 #: templates/order/order-view.php:1593
 #: templates/order/order-view.php:1639
+#: templates/partials/service-packages.php:150
 #: templates/single-request.php:398
 #: templates/single-request.php:467
 #, php-format
@@ -2678,7 +2686,7 @@ msgid "-- Use Service Author --"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:243
-msgid "Search sellers by name or email"
+msgid "Search vendors by name or email"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:247
@@ -2789,6 +2797,7 @@ msgid "Paid"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:362
+#: src/Frontend/UnifiedDashboard.php:221
 msgid "Failed"
 msgstr ""
 
@@ -2918,11 +2927,11 @@ msgid "That currency is not offered on this site."
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:548
-msgid "The vendor override must be an active seller."
+msgid "The vendor override must be an active vendor."
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:555
-msgid "This service's author is not an active seller. Choose an active seller as the vendor."
+msgid "This service's author is not an active vendor. Choose an active vendor as the vendor."
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:559
@@ -3805,6 +3814,7 @@ msgstr ""
 #: src/Admin/Settings.php:91
 #: src/Admin/Settings.php:990
 #: src/Admin/Settings.php:2583
+#: assets/js/blocks.js:490
 msgid "Vendor Settings"
 msgstr ""
 
@@ -4025,7 +4035,7 @@ msgid "PayPal mass payouts"
 msgstr ""
 
 #: src/Admin/Pages/UpgradePage.php:246
-msgid "Tiered commission rules (category, volume, seller level)"
+msgid "Tiered commission rules (category, volume, vendor level)"
 msgstr ""
 
 #: src/Admin/Pages/UpgradePage.php:251
@@ -4190,7 +4200,7 @@ msgid "Error updating availability."
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:249
-msgid "Error updating seller level."
+msgid "Error updating vendor level."
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:250
@@ -4330,13 +4340,13 @@ msgstr ""
 #. translators: %s: number of users
 #: src/Admin/Pages/VendorsPage.php:866
 #, php-format
-msgid "%s user has the Vendor role but no seller profile or activity."
-msgid_plural "%s users have the Vendor role but no seller profile or activity."
+msgid "%s user has the Vendor role but no vendor profile or activity."
+msgid_plural "%s users have the Vendor role but no vendor profile or activity."
 msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/Pages/VendorsPage.php:871
-msgid "Selling needs an approved seller profile, so the role gives them nothing. Nothing was changed; removing it is your call, and you can undo it."
+msgid "Selling needs an approved vendor profile, so the role gives them nothing. Nothing was changed; removing it is your call, and you can undo it."
 msgstr ""
 
 #. translators: %s: number of users
@@ -4903,17 +4913,17 @@ msgid "Back on (optional)"
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:2553
-msgid "Seller Level (Admin Override)"
+msgid "Vendor Level (Admin Override)"
 msgstr ""
 
 #. translators: %s: auto-calculated seller level label
 #: src/Admin/Pages/VendorsPage.php:2559
 #, php-format
-msgid "Levels normally update automatically from vendor performance (the calculated level is %s). Use the override below to grant or revoke a level manually, including the admin-only Pro Seller tier."
+msgid "Levels normally update automatically from vendor performance (the calculated level is %s). Use the override below to grant or revoke a level manually, including the admin-only Pro Vendor tier."
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:2566
-msgid "Seller Level"
+msgid "Vendor Level"
 msgstr ""
 
 #. translators: %s: calculated seller level label
@@ -4975,13 +4985,13 @@ msgid "Vendor is now unavailable."
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:2716
-msgid "Invalid seller level."
+msgid "Invalid vendor level."
 msgstr ""
 
 #. translators: %s: seller level label
 #: src/Admin/Pages/VendorsPage.php:2725
 #, php-format
-msgid "Seller level set to %s."
+msgid "Vendor level set to %s."
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:2762
@@ -5511,7 +5521,7 @@ msgid "Account at checkout"
 msgstr ""
 
 #: src/Admin/Settings.php:669
-msgid "Let a logged-out buyer complete checkout. Their account is created from the billing name and email they enter, and they are signed in before the order is placed, so they can submit requirements and message the seller straight away. Off by default: it changes who can transact on your site."
+msgid "Let a logged-out buyer complete checkout. Their account is created from the billing name and email they enter, and they are signed in before the order is placed, so they can submit requirements and message the vendor straight away. Off by default: it changes who can transact on your site."
 msgstr ""
 
 #: src/Admin/Settings.php:675
@@ -5818,11 +5828,11 @@ msgid "Emails to buyers"
 msgstr ""
 
 #: src/Admin/Settings.php:1293
-msgid "Emails to sellers"
+msgid "Emails to vendors"
 msgstr ""
 
 #: src/Admin/Settings.php:1294
-msgid "Emails to buyer and seller"
+msgid "Emails to buyer and vendor"
 msgstr ""
 
 #: src/Admin/Settings.php:1295
@@ -6489,23 +6499,23 @@ msgid "When a page is chosen, every Log in link on the site (the theme and other
 msgstr ""
 
 #: src/Admin/Settings.php:4102
-msgid "When the seller delivers work to review."
+msgid "When the vendor delivers work to review."
 msgstr ""
 
 #: src/Admin/Settings.php:4103
-msgid "When a seller sends a proposal for the buyer's request."
+msgid "When a vendor sends a proposal for the buyer's request."
 msgstr ""
 
 #: src/Admin/Settings.php:4104
-msgid "When the seller proposes a milestone to pay for."
+msgid "When the vendor proposes a milestone to pay for."
 msgstr ""
 
 #: src/Admin/Settings.php:4105
-msgid "When the seller delivers a milestone for approval."
+msgid "When the vendor delivers a milestone for approval."
 msgstr ""
 
 #: src/Admin/Settings.php:4106
-msgid "When the seller asks for more time or money."
+msgid "When the vendor asks for more time or money."
 msgstr ""
 
 #: src/Admin/Settings.php:4107
@@ -6517,7 +6527,7 @@ msgid "When the buyer's request closes without a hire."
 msgstr ""
 
 #: src/Admin/Settings.php:4109
-msgid "When the seller replies to the buyer's review."
+msgid "When the vendor replies to the buyer's review."
 msgstr ""
 
 #: src/Admin/Settings.php:4110
@@ -6525,31 +6535,31 @@ msgid "When the buyer asks for changes to a delivery."
 msgstr ""
 
 #: src/Admin/Settings.php:4111
-msgid "When a buyer reviews the seller."
+msgid "When a buyer reviews the vendor."
 msgstr ""
 
 #: src/Admin/Settings.php:4112
-msgid "When someone messages the seller from their profile."
+msgid "When someone messages the vendor from their profile."
 msgstr ""
 
 #: src/Admin/Settings.php:4113
-msgid "When you approve the seller's withdrawal."
+msgid "When you approve the vendor's withdrawal."
 msgstr ""
 
 #: src/Admin/Settings.php:4114
-msgid "When you mark the seller's withdrawal as paid."
+msgid "When you mark the vendor's withdrawal as paid."
 msgstr ""
 
 #: src/Admin/Settings.php:4115
-msgid "When you reject the seller's withdrawal."
+msgid "When you reject the vendor's withdrawal."
 msgstr ""
 
 #: src/Admin/Settings.php:4116
-msgid "When the buyer hires the seller from a proposal."
+msgid "When the buyer hires the vendor from a proposal."
 msgstr ""
 
 #: src/Admin/Settings.php:4117
-msgid "To the seller, when a buyer tips them."
+msgid "To the vendor, when a buyer tips them."
 msgstr ""
 
 #: src/Admin/Settings.php:4118
@@ -6569,11 +6579,11 @@ msgid "When the buyer declines an extension."
 msgstr ""
 
 #: src/Admin/Settings.php:4122
-msgid "When you approve or reject the seller's service."
+msgid "When you approve or reject the vendor's service."
 msgstr ""
 
 #: src/Admin/Settings.php:4123
-msgid "A confirmation to the buyer and a new-order alert to the seller."
+msgid "A confirmation to the buyer and a new-order alert to the vendor."
 msgstr ""
 
 #: src/Admin/Settings.php:4124
@@ -6601,7 +6611,7 @@ msgid "When a dispute is withdrawn or closed."
 msgstr ""
 
 #: src/Admin/Settings.php:4130
-msgid "When a seller asks to withdraw."
+msgid "When a vendor asks to withdraw."
 msgstr ""
 
 #: src/Admin/Settings.php:4131
@@ -7604,7 +7614,8 @@ msgid "Reason shown to the buyer."
 msgstr ""
 
 #: src/API/ExtensionRequestsController.php:313
-msgid "Only the seller can request an extension on this order."
+#: src/Services/ExtensionOrderService.php:161
+msgid "Only the vendor can request an extension on this order."
 msgstr ""
 
 #: src/API/ExtensionRequestsController.php:341
@@ -7715,7 +7726,7 @@ msgstr ""
 
 #: src/API/MilestonesController.php:573
 #: src/Services/MilestoneService.php:177
-msgid "Only the seller can propose milestones on this order."
+msgid "Only the vendor can propose milestones on this order."
 msgstr ""
 
 #: src/API/MilestonesController.php:648
@@ -8699,15 +8710,6 @@ msgstr ""
 msgid "Confirm"
 msgstr ""
 
-#: src/Blocks/BlocksManager.php:139
-#: src/Frontend/UnifiedDashboard.php:693
-#: templates/order/conversation.php:159
-#: templates/order/extension-view.php:152
-#: templates/order/milestone-view.php:175
-#: templates/order/order-view.php:880
-msgid "Seller"
-msgstr ""
-
 #: src/Blocks/BlocksManager.php:140
 msgid "Requests"
 msgstr ""
@@ -8763,7 +8765,7 @@ msgstr ""
 
 #: src/Blocks/BuyerRequests.php:49
 #: assets/js/blocks.js:559
-msgid "Display buyer requests for sellers to browse and respond."
+msgid "Display buyer requests for vendors to browse and respond."
 msgstr ""
 
 #: src/Blocks/BuyerRequests.php:220
@@ -8798,12 +8800,12 @@ msgstr ""
 #: src/Blocks/SellerCard.php:40
 #: assets/js/blocks.js:465
 #: assets/js/blocks.js:542
-msgid "Seller Card"
+msgid "Vendor Card"
 msgstr ""
 
 #: src/Blocks/SellerCard.php:49
 #: assets/js/blocks.js:466
-msgid "Display a seller profile card with stats."
+msgid "Display a vendor profile card with stats."
 msgstr ""
 
 #: src/Blocks/SellerCard.php:161
@@ -9299,7 +9301,7 @@ msgstr ""
 #. translators: %d: count of paid phases
 #: src/Core/Plugin.php:2036
 #, php-format
-msgid "Project cancelled while %d milestone was already paid. Money has moved to the seller wallet; open a dispute if the work cannot be accepted."
+msgid "Project cancelled while %d milestone was already paid. Money has moved to the vendor wallet; open a dispute if the work cannot be accepted."
 msgstr ""
 
 #: src/Core/Plugin.php:2041
@@ -9902,7 +9904,7 @@ msgid "Accept this {phases}-phase milestone plan ({total} total)?"
 msgstr ""
 
 #: src/Frontend/Frontend.php:273
-msgid "You pay each phase as the seller finishes the one before it. No parent payment — every phase is its own payment."
+msgid "You pay each phase as the vendor finishes the one before it. No parent payment — every phase is its own payment."
 msgstr ""
 
 #: src/Frontend/Frontend.php:275
@@ -10078,7 +10080,7 @@ msgstr ""
 #: src/Frontend/SingleServiceView.php:140
 #: src/Frontend/UnifiedDashboard.php:239
 #: templates/partials/review-body.php:73
-msgid "Seller Response:"
+msgid "Vendor Response:"
 msgstr ""
 
 #: src/Frontend/Frontend.php:323
@@ -10418,7 +10420,7 @@ msgid "Price Range"
 msgstr ""
 
 #: src/Frontend/ServiceArchiveView.php:424
-msgid "Seller Rating"
+msgid "Vendor Rating"
 msgstr ""
 
 #. translators: %d: minimum star rating
@@ -11203,7 +11205,7 @@ msgstr ""
 #. translators: %s: platform name
 #: src/Frontend/Shortcodes.php:397
 #, php-format
-msgid "Find sellers on %s"
+msgid "Find vendors on %s"
 msgstr ""
 
 #. translators: %s: number of vendors
@@ -11306,7 +11308,7 @@ msgid "Create your account"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1031
-msgid "Buy services, message sellers, and follow your orders."
+msgid "Buy services, message vendors, and follow your orders."
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1103
@@ -11314,7 +11316,7 @@ msgid "Registration is closed"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1132
-msgid "Create your seller account"
+msgid "Create your vendor account"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1133
@@ -11376,7 +11378,7 @@ msgid "List a service, set your own prices and delivery times, and get paid once
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1324
-msgid "Create your seller profile"
+msgid "Create your vendor profile"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1325
@@ -11497,20 +11499,20 @@ msgid "About This Service"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:399
-msgid "To get started, the seller needs:"
+msgid "To get started, the vendor needs:"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:441
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1205
-msgid "About the Seller"
+msgid "About the Vendor"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:473
-msgid "Overall seller rating across all their services"
+msgid "Overall vendor rating across all their services"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:477
-msgid "seller rating"
+msgid "vendor rating"
 msgstr ""
 
 #. translators: %d: number of completed orders
@@ -11565,7 +11567,7 @@ msgstr ""
 
 #: src/Frontend/SingleServiceView.php:643
 #: src/functions/vendors.php:931
-msgid "This seller is currently on vacation."
+msgid "This vendor is currently on vacation."
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:799
@@ -11607,7 +11609,7 @@ msgid "How many: %s"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:931
-msgid "Tell the seller what you need"
+msgid "Tell the vendor what you need"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:957
@@ -11628,7 +11630,7 @@ msgstr ""
 
 #: src/Frontend/SingleServiceView.php:1023
 #: templates/partials/service-packages.php:411
-msgid "Contact Seller"
+msgid "Contact Vendor"
 msgstr ""
 
 #. translators: %s: response time
@@ -11640,7 +11642,7 @@ msgstr ""
 #. translators: 1: login URL, 2: register URL
 #: src/Frontend/SingleServiceView.php:1058
 #, php-format
-msgid "Please <a href=\"%1$s\">log in</a> or <a href=\"%2$s\">register</a> to contact this seller."
+msgid "Please <a href=\"%1$s\">log in</a> or <a href=\"%2$s\">register</a> to contact this vendor."
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:1073
@@ -11648,7 +11650,7 @@ msgid "Your Message"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:1077
-msgid "Tell the seller what you need..."
+msgid "Tell the vendor what you need..."
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:1080
@@ -11697,7 +11699,7 @@ msgid "<i data-lucide=\"package\"></i> This is where vendor services live — br
 msgstr ""
 
 #: src/Frontend/Tour.php:423
-msgid "<i data-lucide=\"users\"></i> All vendor accounts appear here. The <code>/become-a-vendor/</code> page handles self-registration for new sellers."
+msgid "<i data-lucide=\"users\"></i> All vendor accounts appear here. The <code>/become-a-vendor/</code> page handles self-registration for new vendors."
 msgstr ""
 
 #: src/Frontend/Tour.php:433
@@ -11761,7 +11763,7 @@ msgid "Want to sell too?"
 msgstr ""
 
 #: src/Frontend/Tour.php:587
-msgid "<i data-lucide=\"rocket\"></i> Flip this switch to open a seller profile. You can list services, receive orders, and build up earnings without leaving this dashboard."
+msgid "<i data-lucide=\"rocket\"></i> Flip this switch to open a vendor profile. You can list services, receive orders, and build up earnings without leaving this dashboard."
 msgstr ""
 
 #: src/Frontend/Tour.php:599
@@ -11811,11 +11813,11 @@ msgid "Publish"
 msgstr ""
 
 #: src/Frontend/UnifiedDashboard.php:204
-msgid "Close this request? It will no longer be visible to sellers."
+msgid "Close this request? It will no longer be visible to vendors."
 msgstr ""
 
 #: src/Frontend/UnifiedDashboard.php:205
-msgid "Reopen this request? It will be visible to sellers again."
+msgid "Reopen this request? It will be visible to vendors again."
 msgstr ""
 
 #: src/Frontend/UnifiedDashboard.php:206
@@ -11856,10 +11858,6 @@ msgstr ""
 msgid "Delete failed."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:221
-msgid "Failed."
-msgstr ""
-
 #. translators: %d: number of saved services
 #: src/Frontend/UnifiedDashboard.php:223
 #: templates/dashboard/sections/favorites.php:82
@@ -11892,7 +11890,7 @@ msgid "Select Cover Image"
 msgstr ""
 
 #: src/Frontend/UnifiedDashboard.php:230
-msgid "Set Cover Image"
+msgid "Set cover image"
 msgstr ""
 
 #: src/Frontend/UnifiedDashboard.php:231
@@ -12022,7 +12020,7 @@ msgid "Please log in first."
 msgstr ""
 
 #: src/Frontend/UnifiedDashboard.php:1176
-msgid "You are already a seller."
+msgid "You are already a vendor."
 msgstr ""
 
 #: src/Frontend/UnifiedDashboard.php:1181
@@ -13215,7 +13213,7 @@ msgid "Report this service"
 msgstr ""
 
 #: src/functions/moderation.php:514
-msgid "Report this seller"
+msgid "Report this vendor"
 msgstr ""
 
 #: src/functions/money.php:502
@@ -14334,7 +14332,7 @@ msgid "Direct communication"
 msgstr ""
 
 #: src/functions/payments.php:200
-msgid "Message your seller on the order"
+msgid "Message your vendor on the order"
 msgstr ""
 
 #. translators: %d: number of days.
@@ -14514,7 +14512,7 @@ msgid "This service is not taking new orders right now."
 msgstr ""
 
 #: src/functions/services.php:661
-msgid "This seller is away and not taking new orders right now."
+msgid "This vendor is away and not taking new orders right now."
 msgstr ""
 
 #. translators: %s: rating out of five, e.g. 4.5
@@ -14567,7 +14565,7 @@ msgid "Your vendor account is not active."
 msgstr ""
 
 #: src/functions/vendors.php:864
-msgid "sellers already here"
+msgid "vendors already here"
 msgstr ""
 
 #: src/functions/vendors.php:873
@@ -15256,7 +15254,7 @@ msgid "Payment received"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:197
-msgid "Thank you. Your payment is confirmed and your order is on its way to the seller."
+msgid "Thank you. Your payment is confirmed and your order is on its way to the vendor."
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:198
@@ -15368,7 +15366,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1151
-msgid "We will create your account from the name and email below, so you can send the seller your requirements and follow your order. You will get an email to choose a password."
+msgid "We will create your account from the name and email below, so you can send the vendor your requirements and follow your order. You will get an email to choose a password."
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1180
@@ -15388,9 +15386,10 @@ msgstr ""
 
 #. translators: %d: number of reviews
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1222
+#: templates/partials/service-reviews.php:99
 #, php-format
-msgid "%d Review"
-msgid_plural "%d Reviews"
+msgid "%d review"
+msgid_plural "%d reviews"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -15410,7 +15409,7 @@ msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1277
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1286
-msgid "Seller credited"
+msgid "Vendor credited"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1280
@@ -15418,11 +15417,11 @@ msgid "Work continues on extended scope"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1283
-msgid "Seller works on this phase"
+msgid "Vendor works on this phase"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1305
-msgid "Seller Works"
+msgid "Vendor Works"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1313
@@ -15871,11 +15870,11 @@ msgstr ""
 #: src/Models/VendorProfile.php:439
 #: src/Services/SellerLevelService.php:230
 #: templates/content-service-card.php:191
-msgid "New seller"
+msgid "New vendor"
 msgstr ""
 
 #: src/Models/VendorProfile.php:440
-msgid "Rising Seller"
+msgid "Rising Vendor"
 msgstr ""
 
 #: src/Models/VendorProfile.php:441
@@ -15883,7 +15882,7 @@ msgid "Top Rated"
 msgstr ""
 
 #: src/Models/VendorProfile.php:442
-msgid "Pro Seller"
+msgid "Pro Vendor"
 msgstr ""
 
 #: src/Models/VendorProfile.php:526
@@ -16302,11 +16301,11 @@ msgid "Marketplace activity"
 msgstr ""
 
 #: src/Privacy/PersonalData.php:236
-msgid "Removed: the account, seller profile, portfolio, saved items, notifications, devices, app passwords and sessions, and abuse reports filed by or about this member. Listings were taken down."
+msgid "Removed: the account, vendor profile, portfolio, saved items, notifications, devices, app passwords and sessions, and abuse reports filed by or about this member. Listings were taken down."
 msgstr ""
 
 #: src/Privacy/PersonalData.php:237
-msgid "Kept and anonymised: orders, deliveries, requirement answers, messages, disputes, reviews, proposals, the earnings ledger and withdrawals. The member is shown on them as a deleted user, and their billing address, reviewer name, seller notes and payout details on those rows were blanked. They belong to the other party as well, and the marketplace owner needs them for accounting and tax records."
+msgid "Kept and anonymised: orders, deliveries, requirement answers, messages, disputes, reviews, proposals, the earnings ledger and withdrawals. The member is shown on them as a deleted user, and their billing address, reviewer name, vendor notes and payout details on those rows were blanked. They belong to the other party as well, and the marketplace owner needs them for accounting and tax records."
 msgstr ""
 
 #: src/Privacy/PersonalData.php:265
@@ -16420,11 +16419,11 @@ msgid "Marketplace earnings ledger"
 msgstr ""
 
 #: src/Privacy/PersonalData.php:744
-msgid "Seller since"
+msgid "Vendor since"
 msgstr ""
 
 #: src/Privacy/PersonalData.php:766
-msgid "Marketplace seller profile"
+msgid "Marketplace vendor profile"
 msgstr ""
 
 #. translators: 1: service title, 2: price
@@ -16590,7 +16589,7 @@ msgid "Vendor set to pending"
 msgstr ""
 
 #: src/Services/AuditLogService.php:78
-msgid "Seller access kept in the update"
+msgid "Vendor access kept in the update"
 msgstr ""
 
 #: src/Services/AuditLogService.php:79
@@ -17204,7 +17203,8 @@ msgstr ""
 #: src/Services/EmailService.php:771
 #: src/Services/EmailService.php:870
 #: src/Services/EmailService.php:1014
-msgid "Your seller"
+#: templates/order/order-requirements.php:143
+msgid "Your vendor"
 msgstr ""
 
 #. translators: 1: site name, 2: phase title
@@ -17260,7 +17260,7 @@ msgstr ""
 #. translators: %s: site name
 #: src/Services/EmailService.php:1021
 #, php-format
-msgid "[%s] Quote for extra work from your seller"
+msgid "[%s] Quote for extra work from your vendor"
 msgstr ""
 
 #: src/Services/EmailService.php:1032
@@ -17539,10 +17539,6 @@ msgstr ""
 msgid "Please provide a detailed reason the buyer can understand."
 msgstr ""
 
-#: src/Services/ExtensionOrderService.php:161
-msgid "Only the vendor can request an extension on this order."
-msgstr ""
-
 #: src/Services/ExtensionOrderService.php:170
 msgid "Extensions are for fixed-price service orders. For custom-project orders, propose a phase instead."
 msgstr ""
@@ -17718,7 +17714,7 @@ msgid "Phase not found."
 msgstr ""
 
 #: src/Services/MilestoneService.php:485
-msgid "Only the seller can submit this phase."
+msgid "Only the vendor can submit this phase."
 msgstr ""
 
 #: src/Services/MilestoneService.php:493
@@ -17763,7 +17759,7 @@ msgid "Changes requested on %1$s: %2$s"
 msgstr ""
 
 #: src/Services/MilestoneService.php:704
-msgid "Sent back to the seller with your notes."
+msgid "Sent back to the vendor with your notes."
 msgstr ""
 
 #: src/Services/MilestoneService.php:731
@@ -17783,7 +17779,7 @@ msgid "Phase declined."
 msgstr ""
 
 #: src/Services/MilestoneService.php:792
-msgid "Only the seller can cancel this phase."
+msgid "Only the vendor can cancel this phase."
 msgstr ""
 
 #: src/Services/MilestoneService.php:799
@@ -17820,7 +17816,7 @@ msgid ""
 "\n"
 "View your service: %3$s\n"
 "\n"
-"Thank you for being a valued seller on our platform."
+"Thank you for being a valued vendor on our platform."
 msgstr ""
 
 #. translators: %s: Service title
@@ -17926,7 +17922,7 @@ msgstr ""
 #. translators: %s: seller name
 #: src/Services/NotificationService.php:437
 #, php-format
-msgid "Seller: %s"
+msgid "Vendor: %s"
 msgstr ""
 
 #: src/Services/NotificationService.php:452
@@ -17934,7 +17930,7 @@ msgid "Next Step:"
 msgstr ""
 
 #: src/Services/NotificationService.php:453
-msgid "Please submit your requirements so the seller can start working on your order."
+msgid "Please submit your requirements so the vendor can start working on your order."
 msgstr ""
 
 #: src/Services/NotificationService.php:459
@@ -17999,10 +17995,6 @@ msgstr ""
 #: src/Services/NotificationService.php:589
 #, php-format
 msgid "Order #%s has been completed successfully!"
-msgstr ""
-
-#: src/Services/NotificationService.php:594
-msgid "Seller:"
 msgstr ""
 
 #: src/Services/NotificationService.php:595
@@ -18165,7 +18157,7 @@ msgid "Your tip of %1$s to %2$s on Order #%3$s has been paid."
 msgstr ""
 
 #: src/Services/NotificationService.php:1078
-msgid "your seller"
+msgid "your vendor"
 msgstr ""
 
 #: src/Services/NotificationService.php:1122
@@ -18181,7 +18173,7 @@ msgid "resolved in favor of the buyer"
 msgstr ""
 
 #: src/Services/NotificationService.php:1125
-msgid "resolved in favor of the seller"
+msgid "resolved in favor of the vendor"
 msgstr ""
 
 #: src/Services/NotificationService.php:1126
@@ -18280,13 +18272,13 @@ msgid "The delivery deadline for Order #%s is approaching."
 msgstr ""
 
 #: src/Services/NotificationService.php:1293
-msgid "Please ensure you deliver the order on time to maintain your seller rating."
+msgid "Please ensure you deliver the order on time to maintain your vendor rating."
 msgstr ""
 
 #. translators: %s: parent order number
 #: src/Services/NotificationService.php:1300
 #, php-format
-msgid "Your seller sent a quote for additional work on Order #%s. Open the order to review — Accept & Pay to expand the scope, or Decline to keep things as-is."
+msgid "Your vendor sent a quote for additional work on Order #%s. Open the order to review — Accept & Pay to expand the scope, or Decline to keep things as-is."
 msgstr ""
 
 #. translators: 1: net amount, 2: extra days, 3: parent order ID
@@ -18298,7 +18290,7 @@ msgstr ""
 #. translators: 1: phase name and amount, 2: parent order number
 #: src/Services/NotificationService.php:1320
 #, php-format
-msgid "Your seller proposed %1$s on Order #%2$s. Open the order to review and Accept & Pay."
+msgid "Your vendor proposed %1$s on Order #%2$s. Open the order to review and Accept & Pay."
 msgstr ""
 
 #: src/Services/NotificationService.php:1327
@@ -18314,7 +18306,7 @@ msgstr ""
 #. translators: %s: parent order number
 #: src/Services/NotificationService.php:1340
 #, php-format
-msgid "Your seller submitted a phase delivery on Order #%s. Review it and approve, or request a revision in chat."
+msgid "Your vendor submitted a phase delivery on Order #%s. Review it and approve, or request a revision in chat."
 msgstr ""
 
 #: src/Services/NotificationService.php:1346
@@ -18360,7 +18352,7 @@ msgid "%1$s sent a proposal on your request \"%2$s\"."
 msgstr ""
 
 #: src/Services/NotificationService.php:1402
-msgid "A seller"
+msgid "A vendor"
 msgstr ""
 
 #: src/Services/NotificationService.php:1407
@@ -18394,7 +18386,7 @@ msgstr ""
 #. translators: %s: request title
 #: src/Services/NotificationService.php:1433
 #, php-format
-msgid "The buyer went with another seller on \"%s\"."
+msgid "The buyer went with another vendor on \"%s\"."
 msgstr ""
 
 #: src/Services/NotificationService.php:1437
@@ -19363,7 +19355,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: templates/cart/cart.php:656
-msgid "Nothing in your cart is available to buy right now. Remove the unavailable items, or check back when the sellers are taking orders again."
+msgid "Nothing in your cart is available to buy right now. Remove the unavailable items, or check back when the vendors are taking orders again."
 msgstr ""
 
 #: templates/cart/cart.php:660
@@ -19621,7 +19613,7 @@ msgid "Separate multiple skills with commas."
 msgstr ""
 
 #: templates/dashboard/sections/create-request.php:182
-msgid "Your request will be visible to all sellers who can then send you proposals."
+msgid "Your request will be visible to all vendors who can then send you proposals."
 msgstr ""
 
 #: templates/dashboard/sections/create-request.php:201
@@ -19642,7 +19634,7 @@ msgid "Request Posted!"
 msgstr ""
 
 #: templates/dashboard/sections/create-request.php:231
-msgid "Your request is now live. Sellers will be able to send you proposals."
+msgid "Your request is now live. Vendors will be able to send you proposals."
 msgstr ""
 
 #: templates/dashboard/sections/create-request.php:233
@@ -19944,7 +19936,7 @@ msgid "Open the latest unread thread"
 msgstr ""
 
 #: templates/dashboard/sections/messages.php:262
-msgid "Your conversations with buyers and sellers will appear here."
+msgid "Your conversations with buyers and vendors will appear here."
 msgstr ""
 
 #. translators: 1: number of unread messages, 2: other participant's name
@@ -20086,7 +20078,7 @@ msgid "Used on your invoices and filled in for you at checkout, so you only have
 msgstr ""
 
 #: templates/dashboard/sections/profile.php:148
-msgid "Seller Profile"
+msgid "Vendor Profile"
 msgstr ""
 
 #: templates/dashboard/sections/profile.php:152
@@ -20202,7 +20194,7 @@ msgid "No requests yet"
 msgstr ""
 
 #: templates/dashboard/sections/requests.php:72
-msgid "Can't find the right service? Post a request and let sellers come to you."
+msgid "Can't find the right service? Post a request and let vendors come to you."
 msgstr ""
 
 #. translators: %s: budget amount or range
@@ -20654,7 +20646,7 @@ msgid "%s sent a quote for some extra work on this order. Review the details and
 msgstr ""
 
 #: templates/emails/extension-proposed.php:56
-msgid "What the seller will do:"
+msgid "What the vendor will do:"
 msgstr ""
 
 #: templates/emails/extension-proposed.php:58
@@ -20668,7 +20660,7 @@ msgid "Accept &amp; Pay %s"
 msgstr ""
 
 #: templates/emails/extension-proposed.php:79
-msgid "Not sure? Open the order and discuss in chat first — the seller can send a revised quote."
+msgid "Not sure? Open the order and discuss in chat first — the vendor can send a revised quote."
 msgstr ""
 
 #. translators: 1: buyer, 2: phase title
@@ -20721,7 +20713,7 @@ msgid "Amount:"
 msgstr ""
 
 #: templates/emails/milestone-proposed.php:71
-msgid "Once you pay, the seller starts this phase and submits the delivery for your approval. If the quote looks off, reply in chat on the order page to discuss first."
+msgid "Once you pay, the vendor starts this phase and submits the delivery for your approval. If the quote looks off, reply in chat on the order page to discuss first."
 msgstr ""
 
 #. translators: %s: amount
@@ -20751,7 +20743,7 @@ msgid "%1$s has submitted the delivery for %2$s. Review the work and approve, or
 msgstr ""
 
 #: templates/emails/milestone-submitted.php:48
-msgid "Delivery note from the seller:"
+msgid "Delivery note from the vendor:"
 msgstr ""
 
 #: templates/emails/milestone-submitted.php:57
@@ -20760,7 +20752,7 @@ msgid "Review & approve"
 msgstr ""
 
 #: templates/emails/milestone-submitted.php:62
-msgid "If something is not right, head to the order page and use the conversation thread to ask for changes — the seller can resubmit when ready."
+msgid "If something is not right, head to the order page and use the conversation thread to ask for changes — the vendor can resubmit when ready."
 msgstr ""
 
 #: templates/emails/moderation-approved.php:45
@@ -20770,7 +20762,7 @@ msgstr ""
 
 #: templates/emails/moderation-approved.php:63
 #: templates/emails/moderation-response.php:90
-msgid "Buyers can now find and order your service. Thank you for being a valued seller on our platform."
+msgid "Buyers can now find and order your service. Thank you for being a valued vendor on our platform."
 msgstr ""
 
 #: templates/emails/moderation-approved.php:85
@@ -21051,7 +21043,7 @@ msgid "Enhanced visibility in search results"
 msgstr ""
 
 #: templates/emails/seller-level-promotion.php:89
-msgid "Trusted seller badge on your profile"
+msgid "Trusted vendor badge on your profile"
 msgstr ""
 
 #: templates/emails/seller-level-promotion.php:92
@@ -21115,7 +21107,7 @@ msgid "Open your wallet"
 msgstr ""
 
 #: templates/emails/vendor-approved.php:48
-msgid "Congratulations! Your vendor application has been approved. You are now a seller on our marketplace."
+msgid "Congratulations! Your vendor application has been approved. You are now a vendor on our marketplace."
 msgstr ""
 
 #: templates/emails/vendor-approved.php:66
@@ -21373,7 +21365,7 @@ msgid "This order has been partially refunded."
 msgstr ""
 
 #: templates/order/conversation.php:379
-msgid "You can message this seller once the order is paid."
+msgid "You can message this vendor once the order is paid."
 msgstr ""
 
 #: templates/order/conversation.php:381
@@ -21398,15 +21390,15 @@ msgid "Nothing delivered yet"
 msgstr ""
 
 #: templates/order/deliveries.php:46
-msgid "The seller has not submitted a delivery for this order."
+msgid "The vendor has not submitted a delivery for this order."
 msgstr ""
 
 #: templates/order/deliveries.php:48
-msgid "This order is marked for your approval, but the seller has not attached a delivery. Message them below, or open a dispute if the work does not arrive."
+msgid "This order is marked for your approval, but the vendor has not attached a delivery. Message them below, or open a dispute if the work does not arrive."
 msgstr ""
 
 #: templates/order/deliveries.php:50
-msgid "This order is waiting for approval with no delivery attached, so the buyer cannot accept it. Move it back to In Progress so the seller can deliver."
+msgid "This order is waiting for approval with no delivery attached, so the buyer cannot accept it. Move it back to In Progress so the vendor can deliver."
 msgstr ""
 
 #: templates/order/deliveries.php:52
@@ -21428,7 +21420,7 @@ msgid "Payment submitted — awaiting your confirmation"
 msgstr ""
 
 #: templates/order/extension-view.php:115
-msgid "Quote from seller"
+msgid "Quote from vendor"
 msgstr ""
 
 #: templates/order/extension-view.php:117
@@ -21503,7 +21495,7 @@ msgid "Proposal sent — awaiting buyer payment"
 msgstr ""
 
 #: templates/order/milestone-view.php:136
-msgid "Phase cancelled by seller — you can propose a revised phase any time"
+msgid "Phase cancelled by vendor — you can propose a revised phase any time"
 msgstr ""
 
 #: templates/order/milestone-view.php:142
@@ -21511,19 +21503,19 @@ msgid "Delivery ready for your review"
 msgstr ""
 
 #: templates/order/milestone-view.php:144
-msgid "Sent back to your seller"
+msgid "Sent back to your vendor"
 msgstr ""
 
 #: templates/order/milestone-view.php:146
-msgid "Paid — seller working"
+msgid "Paid — vendor working"
 msgstr ""
 
 #: templates/order/milestone-view.php:148
-msgid "New phase from your seller"
+msgid "New phase from your vendor"
 msgstr ""
 
 #: templates/order/milestone-view.php:150
-msgid "Phase cancelled — your seller can send a revised one"
+msgid "Phase cancelled — your vendor can send a revised one"
 msgstr ""
 
 #: templates/order/milestone-view.php:153
@@ -21587,7 +21579,7 @@ msgid "e.g. 3 concept directions + source files, delivered in Figma + PDF export
 msgstr ""
 
 #: templates/order/milestone-view.php:347
-msgid "Tell the seller what needs changing. The phase goes back to them and your notes are posted in the order conversation."
+msgid "Tell the vendor what needs changing. The phase goes back to them and your notes are posted in the order conversation."
 msgstr ""
 
 #: templates/order/milestone-view.php:350
@@ -21599,7 +21591,7 @@ msgid "e.g. The second concept is close - can the logo sit left of the wordmark 
 msgstr ""
 
 #: templates/order/milestone-view.php:356
-msgid "Send back to seller"
+msgid "Send back to vendor"
 msgstr ""
 
 #: templates/order/milestone-view.php:405
@@ -21608,7 +21600,7 @@ msgstr ""
 
 #: templates/order/milestone-view.php:418
 #: templates/order/order-view.php:1502
-msgid "Decline this phase? Your seller can propose a revised one."
+msgid "Decline this phase? Your vendor can propose a revised one."
 msgstr ""
 
 #: templates/order/milestone-view.php:431
@@ -21626,16 +21618,12 @@ msgstr ""
 msgid "Expected Delivery"
 msgstr ""
 
-#: templates/order/order-requirements.php:143
-msgid "Your Seller"
-msgstr ""
-
 #: templates/order/order-requirements.php:173
 msgid "Need Help?"
 msgstr ""
 
 #: templates/order/order-requirements.php:176
-msgid "Be as detailed as possible so the seller can deliver exactly what you need."
+msgid "Be as detailed as possible so the vendor can deliver exactly what you need."
 msgstr ""
 
 #: templates/order/order-requirements.php:178
@@ -21774,11 +21762,11 @@ msgid "Your Earnings"
 msgstr ""
 
 #: templates/order/order-view.php:951
-msgid "Work has already started, but you can still submit requirements to help the seller complete your order."
+msgid "Work has already started, but you can still submit requirements to help the vendor complete your order."
 msgstr ""
 
 #: templates/order/order-view.php:956
-msgid "Please provide the following information so the seller can start working on your order."
+msgid "Please provide the following information so the vendor can start working on your order."
 msgstr ""
 
 #. translators: 1: days, 2: hours
@@ -21866,7 +21854,7 @@ msgid "This is a custom project — break it into paid phases so the buyer can a
 msgstr ""
 
 #: templates/order/order-view.php:1261
-msgid "Your seller will propose the first phase. You pay each phase up front; they deliver and you approve."
+msgid "Your vendor will propose the first phase. You pay each phase up front; they deliver and you approve."
 msgstr ""
 
 #: templates/order/order-view.php:1286
@@ -21899,7 +21887,7 @@ msgid "Paid · ready for delivery"
 msgstr ""
 
 #: templates/order/order-view.php:1298
-msgid "Paid · seller working"
+msgid "Paid · vendor working"
 msgstr ""
 
 #: templates/order/order-view.php:1301
@@ -21985,7 +21973,7 @@ msgid "Cancel this phase proposal?"
 msgstr ""
 
 #: templates/order/order-view.php:1581
-msgid "Your seller sent a quote for additional work on this order. Review the details — pay to approve and they will continue with the expanded scope, or decline and discuss first in chat."
+msgid "Your vendor sent a quote for additional work on this order. Review the details — pay to approve and they will continue with the expanded scope, or decline and discuss first in chat."
 msgstr ""
 
 #: templates/order/order-view.php:1630
@@ -22124,7 +22112,7 @@ msgid "Submit Review"
 msgstr ""
 
 #: templates/order/order-view.php:1994
-msgid "Please describe the changes you need. The seller will review your request and update the delivery."
+msgid "Please describe the changes you need. The vendor will review your request and update the delivery."
 msgstr ""
 
 #: templates/order/order-view.php:1998
@@ -22144,7 +22132,7 @@ msgid "Opening a dispute will pause this order until resolved. Please try to res
 msgstr ""
 
 #: templates/order/order-view.php:2042
-msgid "Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the seller first."
+msgid "Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the vendor first."
 msgstr ""
 
 #: templates/order/order-view.php:2049
@@ -22271,7 +22259,7 @@ msgid "Please describe your project in detail..."
 msgstr ""
 
 #: templates/order/requirements-form.php:120
-msgid "Include as much detail as possible to help the seller understand your needs."
+msgid "Include as much detail as possible to help the vendor understand your needs."
 msgstr ""
 
 #: templates/order/requirements-form.php:126
@@ -22314,11 +22302,11 @@ msgid "Any additional information or special requests..."
 msgstr ""
 
 #: templates/order/requirements-form.php:351
-msgid "The seller has already started; your answers will be sent to them right away."
+msgid "The vendor has already started; your answers will be sent to them right away."
 msgstr ""
 
 #: templates/order/requirements-form.php:352
-msgid "Once submitted, the seller will start working on your order."
+msgid "Once submitted, the vendor will start working on your order."
 msgstr ""
 
 #: templates/order/requirements.php:47
@@ -22540,13 +22528,13 @@ msgid "Send report"
 msgstr ""
 
 #: templates/partials/request-attachments.php:51
-msgid "A seller has sent a proposal, so the files above stay on the request. You can still add more."
+msgid "A vendor has sent a proposal, so the files above stay on the request. You can still add more."
 msgstr ""
 
 #. translators: %s: maximum file size
 #: templates/partials/request-attachments.php:57
 #, php-format
-msgid "A brief, mockups or reference images. Sellers see them on your request. Up to %s each."
+msgid "A brief, mockups or reference images. Vendors see them on your request. Up to %s each."
 msgstr ""
 
 #: templates/partials/request-attachments.php:74
@@ -22583,22 +22571,14 @@ msgstr ""
 msgid "Packages"
 msgstr ""
 
-#. translators: %d: number of days
-#: templates/partials/service-packages.php:150
-#, php-format
-msgid "%d Day"
-msgid_plural "%d Days"
-msgstr[0] ""
-msgstr[1] ""
-
 #. translators: %s: formatted return date
 #: templates/partials/service-packages.php:268
 #, php-format
-msgid "Seller is on vacation. Orders resume on %s."
+msgid "Vendor is on vacation. Orders resume on %s."
 msgstr ""
 
 #: templates/partials/service-packages.php:272
-msgid "Seller is on vacation and not accepting new orders right now."
+msgid "Vendor is on vacation and not accepting new orders right now."
 msgstr ""
 
 #: templates/partials/service-packages.php:293
@@ -22644,14 +22624,6 @@ msgstr ""
 #: templates/partials/service-rejection-notice.php:52
 msgid "Address the feedback, then publish again to send it back for review."
 msgstr ""
-
-#. translators: %d: number of reviews
-#: templates/partials/service-reviews.php:99
-#, php-format
-msgid "%d review"
-msgid_plural "%d reviews"
-msgstr[0] ""
-msgstr[1] ""
 
 #: templates/partials/service-reviews.php:162
 msgid "No reviews yet. Be the first to review this service!"
@@ -22932,7 +22904,7 @@ msgid "Display Settings"
 msgstr ""
 
 #: assets/js/blocks.js:143
-msgid "Show seller"
+msgid "Show vendor"
 msgstr ""
 
 #: assets/js/blocks.js:156
@@ -23079,15 +23051,7 @@ msgid "No featured services found. Mark some services as featured."
 msgstr ""
 
 #: assets/js/blocks.js:469
-msgid "seller"
-msgstr ""
-
-#: assets/js/blocks.js:469
 msgid "profile"
-msgstr ""
-
-#: assets/js/blocks.js:490
-msgid "Seller Settings"
 msgstr ""
 
 #: assets/js/blocks.js:492
@@ -23123,7 +23087,7 @@ msgid "Show buttons"
 msgstr ""
 
 #: assets/js/blocks.js:543
-msgid "Enter a user ID to display their seller card."
+msgid "Enter a user ID to display their vendor card."
 msgstr ""
 
 #: assets/js/blocks.js:562

@@ -40,7 +40,7 @@ even if you rename or remove that method.
 
 Tips and milestone phases paid offline work the same way: the phase or tip
 page shows your instructions, and a payment waiting for you to confirm reads
-"payment awaiting confirmation". Nothing is credited to the seller until you
+"payment awaiting confirmation". Nothing is credited to the vendor until you
 mark it paid, whatever status the order is given, and these payments are never
 cancelled automatically as abandoned.
 

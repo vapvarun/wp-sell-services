@@ -88,12 +88,12 @@ From **Sell Services > Vendors**, you can manage all vendors on your marketplace
 
 **For a brand-new marketplace:** Start with "Requires Approval" and "Require Service Moderation" both enabled. This lets you control quality as you build your initial vendor base. Once you have a solid group of trusted vendors, you can relax these settings.
 
-**For a growing marketplace:** Switch to "Open" registration and disable service moderation to reduce friction. Use seller levels to naturally incentivize quality.
+**For a growing marketplace:** Switch to "Open" registration and disable service moderation to reduce friction. Use vendor levels to naturally incentivize quality.
 
-**For a premium marketplace:** Keep approval required but disable service moderation for Top Rated and Pro Seller vendors (the seller level system handles quality control at that point).
+**For a premium marketplace:** Keep approval required but disable service moderation for Top Rated and Pro Vendor vendors (the vendor level system handles quality control at that point).
 
 ## Related Documentation
 
 - [Becoming a Vendor](becoming-a-vendor.md)
 - [Vendor Dashboard](vendor-dashboard.md)
-- [Seller Levels](seller-levels.md)
+- [Vendor Levels](seller-levels.md)

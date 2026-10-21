@@ -136,7 +136,7 @@ class BlocksManager {
 					'search'          => __( 'Search', 'wp-sell-services' ),
 					'categories'      => __( 'Categories', 'wp-sell-services' ),
 					'featured'        => __( 'Featured', 'wp-sell-services' ),
-					'seller'          => __( 'Seller', 'wp-sell-services' ),
+					'seller'          => __( 'Vendor', 'wp-sell-services' ),
 					'requests'        => __( 'Requests', 'wp-sell-services' ),
 					'columns'         => __( 'Columns', 'wp-sell-services' ),
 					'perPage'         => __( 'Services per page', 'wp-sell-services' ),

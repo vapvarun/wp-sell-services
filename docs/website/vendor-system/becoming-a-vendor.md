@@ -8,7 +8,7 @@ You control how vendors join your marketplace from **Settings > Vendor Settings*
 
 ### Open Registration
 
-Anyone can sign up and start selling immediately. Their account is activated right away and they can create their first service within minutes. This is the best option for growing marketplaces where you want to attract as many sellers as possible.
+Anyone can sign up and start selling immediately. Their account is activated right away and they can create their first service within minutes. This is the best option for growing marketplaces where you want to attract as many vendors as possible.
 
 ### Requires Approval
 
@@ -25,8 +25,8 @@ The registration form is hidden from the public. Only you (the admin) can create
 ## The Registration Form
 
 When registration is open or requires approval, your "Become a Vendor" page
-opens with what your marketplace offers -- how many sellers and services you
-already have, and how much of each order a seller keeps -- followed by how
+opens with what your marketplace offers -- how many vendors and services you
+already have, and how much of each order a vendor keeps -- followed by how
 selling works, with the sign-up card beside it.
 
 A visitor who is not signed in creates their account there and then. The form
@@ -45,7 +45,7 @@ If a user is already signed in with a buyer account, the card offers a single
 creating a second account.
 
 The figures in the header come from your own site, and any that would not
-flatter it are left out -- a new marketplace does not advertise "0 sellers".
+flatter it are left out -- a new marketplace does not advertise "0 vendors".
 Filter them with `wpss_vendor_pitch_stats`, and the "How it works" steps with
 `wpss_vendor_pitch_steps`.
 
@@ -88,10 +88,10 @@ If your marketplace requires approval, here are tips for applicants:
 1. [Set up your vendor profile](vendor-profile-portfolio.md) -- Add your photo, bio, and portfolio.
 2. [Explore the vendor dashboard](vendor-dashboard.md) -- Learn where everything is.
 3. [Create your first service](../service-creation/service-wizard.md) -- Start selling.
-4. [Learn about seller levels](seller-levels.md) -- Understand how to advance.
+4. [Learn about vendor levels](seller-levels.md) -- Understand how to advance.
 
 ## Related Documentation
 
 - [Vendor Dashboard](vendor-dashboard.md)
 - [Vendor Settings (Admin)](vendor-settings.md)
-- [Seller Levels](seller-levels.md)
+- [Vendor Levels](seller-levels.md)

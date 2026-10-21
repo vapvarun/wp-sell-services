@@ -45,7 +45,7 @@ do_action( 'wpss_email_content_before', 'milestone_submitted', $milestone, $reci
 
 <?php if ( '' !== $submit_note ) : ?>
 	<p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">
-		<strong><?php esc_html_e( 'Delivery note from the seller:', 'wp-sell-services' ); ?></strong>
+		<strong><?php esc_html_e( 'Delivery note from the vendor:', 'wp-sell-services' ); ?></strong>
 	</p>
 	<blockquote style="margin: 0 0 24px 0; padding: 12px 16px; border-left: 3px solid #d1d5db; color: #3c3c3c; font-style: italic; white-space: pre-wrap;">
 		<?php echo esc_html( $submit_note ); ?>
@@ -59,7 +59,7 @@ do_action( 'wpss_email_content_before', 'milestone_submitted', $milestone, $reci
 </p>
 
 <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
-	<?php esc_html_e( 'If something is not right, head to the order page and use the conversation thread to ask for changes — the seller can resubmit when ready.', 'wp-sell-services' ); ?>
+	<?php esc_html_e( 'If something is not right, head to the order page and use the conversation thread to ask for changes — the vendor can resubmit when ready.', 'wp-sell-services' ); ?>
 </p>
 
 <?php

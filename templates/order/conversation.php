@@ -156,7 +156,7 @@ do_action( 'wpss_before_conversation', $order );
 			<div class="wpss-messaging__header-details">
 				<span class="wpss-messaging__header-name"><?php echo esc_html( $other_name ); ?></span>
 				<span class="wpss-messaging__header-status">
-					<?php echo $is_vendor ? esc_html__( 'Buyer', 'wp-sell-services' ) : esc_html__( 'Seller', 'wp-sell-services' ); ?>
+					<?php echo $is_vendor ? esc_html__( 'Buyer', 'wp-sell-services' ) : esc_html__( 'Vendor', 'wp-sell-services' ); ?>
 				</span>
 			</div>
 		</div>
@@ -376,7 +376,7 @@ do_action( 'wpss_before_conversation', $order );
 					// tests/test-conversation-states-contract.php strict, so a
 					// status added later cannot fall silently into the bare
 					// "not available for this order status" line.
-					esc_html_e( 'You can message this seller once the order is paid.', 'wp-sell-services' );
+					esc_html_e( 'You can message this vendor once the order is paid.', 'wp-sell-services' );
 				} elseif ( 'rejected' === $order->status ) {
 					esc_html_e( 'This order was declined, so messaging is closed.', 'wp-sell-services' );
 				} else {

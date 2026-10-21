@@ -37,7 +37,7 @@ class SellerCard extends AbstractBlock {
 	 * @return string
 	 */
 	public function get_title(): string {
-		return __( 'Seller Card', 'wp-sell-services' );
+		return __( 'Vendor Card', 'wp-sell-services' );
 	}
 
 	/**
@@ -46,7 +46,7 @@ class SellerCard extends AbstractBlock {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return __( 'Display a seller profile card with stats.', 'wp-sell-services' );
+		return __( 'Display a vendor profile card with stats.', 'wp-sell-services' );
 	}
 
 	/**

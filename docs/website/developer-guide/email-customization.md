@@ -45,7 +45,7 @@ Child theme overrides take priority over parent theme, which takes priority over
 | `new-message.php` | New message in order conversation |
 | `dispute-opened.php` | Dispute opened |
 | `dispute-escalated.php` | Dispute escalated to admin |
-| `seller-level-promotion.php` | Vendor reached new seller level |
+| `seller-level-promotion.php` | Vendor reached new vendor level |
 | `moderation-pending.php` | Service submitted for review |
 | `moderation-approved.php` | Service approved by admin |
 | `moderation-rejected.php` | Service rejected by admin |

@@ -318,7 +318,7 @@ are not three copies of the same list - they answer different questions.
 Service Orders is the doorway between them.
 
 Anything that progresses the job - submitting requirements, replying to the
-seller, approving a delivery, paying a milestone phase - happens in the
+vendor, approving a delivery, paying a milestone phase - happens in the
 **Dashboard**, never on the WooCommerce orders screen. A phase or tip will not
 appear there as something to act on.
 
@@ -332,7 +332,7 @@ appear there as something to act on.
 Vendors never interact with WooCommerce directly. Their entire experience
 happens through the marketplace dashboard.
 
-**Sellers: WooCommerce → My Account → Orders will look empty to you, and that is
+**Vendors: WooCommerce → My Account → Orders will look empty to you, and that is
 correct.** That screen lists orders *you placed as a customer*. Your sales are
 in **Dashboard → Sales Orders**. Seeing "No orders" there is not a sign anything
 is broken.

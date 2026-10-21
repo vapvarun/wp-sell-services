@@ -376,7 +376,7 @@ Great news! Your service "%2$s" has been approved and is now live on the marketp
 
 View your service: %3$s
 
-Thank you for being a valued seller on our platform.',
+Thank you for being a valued vendor on our platform.',
 				'wp-sell-services'
 			),
 			$vendor->display_name,

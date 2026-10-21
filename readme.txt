@@ -42,7 +42,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 **Vendor System**
 
 * Vendor registration and approval workflow
-* Seller level progression (New Seller, Rising Seller, Top Rated, Pro Seller)
+* Vendor level progression (New Vendor, Rising Vendor, Top Rated, Pro Vendor)
 * Unified vendor dashboard with earnings overview
 * Portfolio showcase for work samples
 * Vacation mode for pausing new orders
@@ -105,7 +105,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 **Developer Ready**
 
-* 6 Gutenberg blocks (Service Grid, Search, Categories, Featured Services, Seller Card, Buyer Requests)
+* 6 Gutenberg blocks (Service Grid, Search, Categories, Featured Services, Vendor Card, Buyer Requests)
 * 19 shortcodes for flexible page building
 * 21 REST API controllers with 125+ endpoints and full CRUD operations
 * 100% REST coverage for all user-facing features - fully mobile-app ready
@@ -248,9 +248,9 @@ The plugin provides 21 REST API controllers under `/wp-json/wpss/v1/` covering a
 
 Yes. Email templates are located in `templates/emails/` and can be overridden in your theme. The plugin includes 26 email notification types for different order events, and administrators can customize subject lines and content.
 
-= What seller levels are included? =
+= What vendor levels are included? =
 
-Three auto-calculated levels plus one admin-granted: New Seller (default), Rising Seller (5+ orders, 4.0+ rating), Top Rated (25+ orders, 4.7+ rating), and Pro Seller (admin-granted). Levels automatically update based on vendor performance metrics.
+Three auto-calculated levels plus one admin-granted: New Vendor (default), Rising Vendor (5+ orders, 4.0+ rating), Top Rated (25+ orders, 4.7+ rating), and Pro Vendor (admin-granted). Levels automatically update based on vendor performance metrics.
 
 == Screenshots ==
 
@@ -275,21 +275,21 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Improve  - Custom-price manual orders read Custom order instead of a package name and price.
 * Improve  - Payment, proposal, milestone and extension emails always send, and the email preferences screen says so.
 * Improve  - The vendor profile review list uses the same markup as the service page, and View all reviews loads the next pages from the server.
-* Improve  - Vendor and service ratings, the seller card, REST stats and seller levels all count the same reviews.
-* Improve  - Removed the review Helpful vote: reviews and the seller rating already say how a seller did.
-* Improve  - Sellers are notified when a buyer requests a revision on a milestone phase, and buyers are told the outcome of a report they filed.
+* Improve  - Vendor and service ratings, the vendor card, REST stats and vendor levels all count the same reviews.
+* Improve  - Removed the review Helpful vote: reviews and the vendor rating already say how a vendor did.
+* Improve  - Vendors are notified when a buyer requests a revision on a milestone phase, and buyers are told the outcome of a report they filed.
 * Improve  - Dispute response reminders show as Dispute response due in the notification center.
 * Improve  - The Earnings ledger follows the chosen period, and the cart tax line names the rate like checkout does.
 * Improve  - Vendor profiles show the website and edit the social links from the dashboard.
-* Improve  - Contact Seller says which attachments were skipped, and notification and ledger buttons are 44px tall on phones.
+* Improve  - Contact Vendor says which attachments were skipped, and notification and ledger buttons are 44px tall on phones.
 * Fix      - A suspended vendor can no longer start new pre-sale conversations, and keeps Sales Orders to finish paid work.
 * Fix      - Order amount limits and other number settings can no longer be saved below their minimum.
 * Fix      - Submitting a milestone phase twice notifies the buyer once, and a paid extension returns a late order to In Progress.
-* Fix      - A review held for moderation notifies the seller only once it is approved.
+* Fix      - A review held for moderation notifies the vendor only once it is approved.
 * Fix      - A stale vendor link shows the vendor list and is kept out of search indexes.
-* Fix      - Sellers get one email per tip instead of two.
+* Fix      - Vendors get one email per tip instead of two.
 * Fix      - Dispute escalation emails reach the site admin when no dispute email is set.
-* Fix      - Approving or rejecting a service twice no longer emails the seller twice.
+* Fix      - Approving or rejecting a service twice no longer emails the vendor twice.
 * Fix      - Orders filters are usable on a phone, and the Withdrawals filter and Export button no longer run off the screen.
 * Fix      - Withdrawals has a Cancelled tab, so the tab counts add up.
 * Fix      - Member since and completed orders read the same everywhere; tips and extensions no longer count as orders.
@@ -301,7 +301,7 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - The admin contract summary says how many phases are paid (1 of 2) instead of how many the contract has.
 * Fix      - Checkout no longer prints unfilled placeholders or every offline method's bank details.
 * Fix      - The admin order screen shows the contract total for milestone projects.
-* Fix      - An unpaid milestone, tip or extension no longer credits the seller's wallet when an admin marks the order completed.
+* Fix      - An unpaid milestone, tip or extension no longer credits the vendor's wallet when an admin marks the order completed.
 * Fix      - The Extra Work and tip cards have inset spacing on mobile.
 * Dev      - Updating removes the retired Helpful vote options and cleanup job; the helpful_count column is left in place.
 * Dev      - ReviewRepository::rating_stats() is the one rating query, and ReviewService::create_imported() the one door for imported reviews.
@@ -335,7 +335,7 @@ Refunds and payments follow the rail that collected the money, negative balances
 * Fix      - The order page no longer fatals after a tip.
 * Fix      - The buyer no longer gets two Order Completed emails.
 * Fix      - Auto-withdrawal keeps to its 1st, 15th or Monday schedule, and negative balances no longer flip to positive.
-* Fix      - Hold and resume are admin only, and a suspended seller can finish paid work but start nothing new.
+* Fix      - Hold and resume are admin only, and a suspended vendor can finish paid work but start nothing new.
 * Fix      - A Stripe charge that cannot be settled is refunded, and a rail refund already recorded adds nothing twice.
 * Fix      - A service blocked from publishing no longer shows the notice to people who cannot edit it.
 * Fix      - Admin publish approves a service and Quick Edit stops rewriting moderation.
@@ -350,12 +350,12 @@ Refunds and payments follow the rail that collected the money, negative balances
 
 Payments, refunds and dates made consistent across every checkout path, a rebuilt admin and member dashboard for phones and tablets, and member reporting from the website.
 
-* New      - Members can report a service or a seller from the service page and the vendor profile, and each report reaches the Member Reports screen.
+* New      - Members can report a service or a vendor from the service page and the vendor profile, and each report reaches the Member Reports screen.
 * New      - Express delivery per package: a vendor can offer a faster turnaround at its own price and delivery time.
 * New      - A Log In page with the marketplace's own sign-in form, which every Log in link on the site follows once it is selected under Settings > Pages.
 * New      - Vendors can cancel a withdrawal request while it is still pending.
-* New      - Buyers can add and remove attachments when editing a request, and sellers see them in the app.
-* New      - Pending proposals can be withdrawn by the seller who sent them.
+* New      - Buyers can add and remove attachments when editing a request, and vendors see them in the app.
+* New      - Pending proposals can be withdrawn by the vendor who sent them.
 * New      - The command wp wpss repair:stripe-tax corrects Stripe orders whose tax was counted twice, with a dry run by default.
 * New      - The command wp wpss utc-migrate previews and runs the one-time conversion of stored dates to UTC.
 * Improve  - Every stored date is now UTC, and dates written by earlier versions are converted once in the background after updating.
@@ -384,7 +384,7 @@ Payments, refunds and dates made consistent across every checkout path, a rebuil
 * Fix      - Revenue has one definition on every screen: paid orders minus refunds.
 * Fix      - A paused or unpublished service cannot be ordered through any route, and is left out of the cart total and the cart count.
 * Fix      - Services from a vendor on vacation are left out of the services shortcode, blocks, Related services and live search, as they are in the catalog and search.
-* Fix      - A service whose seller is on vacation can no longer be paid for from a cart, a saved checkout link or the app.
+* Fix      - A service whose vendor is on vacation can no longer be paid for from a cart, a saved checkout link or the app.
 * Fix      - A buyer request that has a proposal can be closed but no longer deleted, and deleting a request from the dashboard moves it to the trash.
 * Fix      - Files a buyer attached to a buyer request now show on the order and download, and the requirements API returns them.
 * Fix      - Submitting requirements on an order made from a buyer request keeps the request's description and files on the order.
@@ -396,7 +396,7 @@ Payments, refunds and dates made consistent across every checkout path, a rebuil
 * Fix      - Closing vendor registration applies to logged-out visitors and to every sign-up path.
 * Fix      - Guest checkout works with every gateway after the account step.
 * Fix      - PayPal tells the buyer what happened when a capture is refused, and returns them to their order.
-* Fix      - A file removed from a buyer request is deleted, and files stay on the request once a seller has sent a proposal.
+* Fix      - A file removed from a buyer request is deleted, and files stay on the request once a vendor has sent a proposal.
 * Fix      - Deleting demo content no longer removes the site's own empty service categories.
 * Fix      - Updating the plugin no longer creates a Log In page or changes how an existing site signs in.
 * Fix      - A long transaction ID wraps inside its box on the order summary.
@@ -425,7 +425,7 @@ Fixes from a QA audit of the vendor and buyer dashboards, plus checkout, cart an
 * Improve  - Remove buttons on wizard extras, FAQs, requirements, deliverables and gallery images are visible and named for screen readers.
 * Improve  - The link from Review Moderation opens Settings at the section holding the setting.
 * Fix      - A service that is paused or deleted while it sits in a cart stays on the cart screen with a plain reason, is left out of the total, and stops checkout until the buyer removes it. It used to disappear and the total simply shrank, with nothing to explain where the item went.
-* Fix      - Checkout refuses to take payment while anything in the cart is no longer for sale, and names what it is. A cart holding one available service and one the seller had paused was charging for both.
+* Fix      - Checkout refuses to take payment while anything in the cart is no longer for sale, and names what it is. A cart holding one available service and one the vendor had paused was charging for both.
 * Fix      - A service that is already live but does not meet the publishing checklist can be edited again through the API. Every edit was being refused, including the one that would have filled in what was missing, while the same edit through the editor or WP-CLI was accepted.
 * Fix      - Settings tells the site owner the setup wizard has been completed, instead of reporting a completion date of January 1, 1970 on sites upgraded from a version that recorded it differently.
 * Fix      - A vendor and the reviewer can open a service that is waiting for approval. Holding it back correctly hid it from the public and hid it from them too, so the reviewer could not see what they were being asked to approve.
@@ -471,7 +471,7 @@ Fixes from a QA audit of the vendor and buyer dashboards, plus checkout, cart an
 * New      - Notifications for review replies, expired requests, dispute escalation and cancellation, withdrawal progress, service moderation decisions and tip receipts, each with an admin toggle.
 * New      - Setting to allow vendor-initiated refunds, off by default.
 * New      - Vendors opening a dispute now choose from reasons that describe their side: buyer unresponsive, payment or chargeback issue, abusive behaviour, requirements changed after acceptance, or work outside the agreed service.
-* Improve  - Upgrading preserves access for people who were already selling, including author-role sellers, and tells the owner who was migrated.
+* Improve  - Upgrading preserves access for people who were already selling, including author-role vendors, and tells the owner who was migrated.
 * Improve  - The audit log now records withdrawals, dispute outcomes, vendor status changes, commission changes, moderation decisions, payments and every ledger entry; retention defaults to one year.
 * Improve  - Dispute pages show the outcome, refund amount and admin note to both parties; the link after posting a request opens the request list.
 * Improve  - The dashboard menu collapses on small screens so content comes first, and the vendor sales list can be filtered by status and searched.
@@ -485,7 +485,7 @@ Fixes from a QA audit of the vendor and buyer dashboards, plus checkout, cart an
 * Improve  - Adding a package, add-on, requirement or FAQ in the service editor opens it ready to fill in, and each row's remove button is visible.
 * Improve  - Tipping is now part of Pro. Without Pro, buyers see no tip option and tip records are hidden; a tip a buyer already paid for is still credited to the vendor and still appears in their wallet history.
 * Improve  - Dispute emails name whoever actually opened the dispute, and the copy to the admin says which side they were on.
-* Improve  - The Open Dispute notice speaks to whoever is reading it, so a vendor is no longer told to settle with the seller.
+* Improve  - The Open Dispute notice speaks to whoever is reading it, so a vendor is no longer told to settle with the vendor.
 * Improve  - Analytics stays in Settings once Pro is active and points to the Analytics screen, instead of disappearing the moment Pro is installed.
 * Improve  - A vendor on a paid subscription plan can create up to that plan's service limit rather than the site-wide default.
 * Fix      - Refunds made in the PayPal or Razorpay dashboard now update the order and reverse the vendor credit.
@@ -511,8 +511,8 @@ Fixes from a QA audit of the vendor and buyer dashboards, plus checkout, cart an
 * Fix      - Dispute numbers are generated, the vendor profile page carries the vendor's name in its title, and several PHP notices on email and admin pages are gone.
 * Fix      - Order requirements use one schema on every surface, so requirement forms show the vendor's questions and REST submissions validate correctly.
 * Fix      - The review window filter is honoured by the API as well as the website, and review replies go through one writer.
-* Fix      - Vendor detection now requires an approved seller profile; the author role no longer receives seller capabilities.
-* Fix      - Vendor statistics refresh for every approved seller, and marketplace search returns only active vendors.
+* Fix      - Vendor detection now requires an approved vendor profile; the author role no longer receives vendor capabilities.
+* Fix      - Vendor statistics refresh for every approved vendor, and marketplace search returns only active vendors.
 * Fix      - A repeated payment webhook no longer resets a paid order or resends its notifications.
 * Fix      - Tax is charged on multi-item cart checkout and on PayPal checkout, matching the single-service total.
 * Fix      - The notification list runs one query instead of two identical ones.
@@ -523,7 +523,7 @@ Fixes from a QA audit of the vendor and buyer dashboards, plus checkout, cart an
 * Fix      - The cart page follows the theme's dark mode. Every colour on it referenced a token that did not exist, so it was locked to light.
 * Fix      - The become a vendor card and the standalone account panel no longer stay white when the theme goes dark, which had made their headings unreadable.
 * Fix      - Outline buttons take their colours from the design system again, so they follow the theme instead of a fixed grey.
-* Fix      - The Contact Seller button no longer keeps the browser's default grey, which left it unreadable when the theme is dark.
+* Fix      - The Contact Vendor button no longer keeps the browser's default grey, which left it unreadable when the theme is dark.
 * Fix      - The Featured badge on portfolio items uses dark text on amber so the label is legible.
 * Fix      - A rejected service stays in the Rejected tab of Moderation with its reason, and the Total Services count no longer drops when one is rejected.
 * Fix      - Services created in the admin now follow the same rules as the vendor wizard: a category, a main image, a delivery time and the minimum price are required before one can go live.
@@ -535,7 +535,7 @@ Fixes from a QA audit of the vendor and buyer dashboards, plus checkout, cart an
 * Fix      - The services archive at /service/ shows the same number of services per page as the mapped services page, and the count above the grid matches what is listed.
 * Fix      - Date fields follow the site's light or dark mode instead of the visitor's operating system.
 * Fix      - The View action in My Services is styled as a button alongside Edit and Pause.
-* Fix      - The floating cart button no longer sits on top of the package card or the seller details while a buyer is choosing or paying.
+* Fix      - The floating cart button no longer sits on top of the package card or the vendor details while a buyer is choosing or paying.
 * Fix      - Buttons in older templates keep their own colours instead of taking the theme's link colour, which left some labels unreadable against their own background.
 * Fix      - The Earnings and Payouts tiles sit in even rows, so Total Withdrawn is no longer stranded on a line of its own.
 * Fix      - A showcase video fills the service gallery instead of half of it.
@@ -569,7 +569,7 @@ Fixes from a QA audit of the vendor and buyer dashboards, plus checkout, cart an
 
 Tax shown at checkout is now actually charged, order files are served through a permission check instead of an unlisted URL, and a partial refund no longer returns the whole order total. Several screens that contradicted themselves now say one thing.
 
-* New      - A submitted milestone phase can be sent back for changes, with your notes reaching the seller and the order conversation.
+* New      - A submitted milestone phase can be sent back for changes, with your notes reaching the vendor and the order conversation.
 * New      - A completed milestone contract opens with a Project complete summary: phases approved, total paid, and the date it finished.
 * New      - Offline payments can have several named methods, each with its own instructions and its own on/off switch, edited from Settings > Payment Gateways.
 * New      - The method a buyer chose is recorded on the order, so renaming or removing a method later never changes what a past order says.
@@ -581,9 +581,9 @@ Tax shown at checkout is now actually charged, order files are served through a 
 * New      - Message emails can be held for a few minutes and re-checked before sending, so a reply read on site does not also arrive by email.
 * New      - Pretty URLs for viewing an order and for paying one.
 * Improve  - The Become a Vendor page leads with what the marketplace offers, how selling works, and the sign-up form, instead of a narrow card in an empty page.
-* Improve  - The buyer's brief reads the same way for the buyer, the seller and the site owner.
+* Improve  - The buyer's brief reads the same way for the buyer, the vendor and the site owner.
 * Improve  - Buyer-facing prices carry what a display-currency switcher needs, so a converted hint can appear on request budgets, proposals, cart lines and the order confirmation rather than only on service cards.
-* Improve  - Order files are stored outside the web root and served through a link that checks the caller is the buyer, the seller or an admin.
+* Improve  - Order files are stored outside the web root and served through a link that checks the caller is the buyer, the vendor or an admin.
 * Improve  - Order files are protected on IIS as well as Apache.
 * Improve  - Files uploaded before this release move into the protected store the first time someone opens them, so existing links keep working and stop being public as they are used.
 * Improve  - Checkout prefills a signed-in buyer's name and email from their account instead of asking for what the site already knows.
@@ -596,7 +596,7 @@ Tax shown at checkout is now actually charged, order files are served through a 
 * Fix      - Tax shown at checkout was never charged: the buyer approved one total and was billed the package price without it.
 * Fix      - The order then applied that tax a second time, and commission was taken on the tax as well as on the price.
 * Fix      - A milestone contract showed a total of 0.00 on the order summary and on the service line even after every phase was paid.
-* Fix      - The buyer's brief was not shown when the service had no requirement questions, leaving the seller nothing to work from.
+* Fix      - The buyer's brief was not shown when the service had no requirement questions, leaving the vendor nothing to work from.
 * Fix      - Paying a tip, a paid extension or a milestone phase sent the buyer to a requirements step that does not apply to those orders.
 * Fix      - My Orders counted different orders in its summary cards than in its filter chips, so the two disagreed.
 * Fix      - Orders with no platform recorded were left out of a buyer's order counts entirely.
@@ -627,7 +627,7 @@ Security fixes for the mobile sign-in, a marketplace that credits vendors on eve
 * New      - The plugin does not email someone about a message while they are actively using the site. Off by default, and the window is filterable with wpss_presence_window.
 * New      - Owners choose which billing fields checkout collects. Name and email are always collected; address fields suit physical goods and can be switched off for digital services.
 * New      - [wpss_my_orders] is paginated. A buyer with more than one page of orders can now reach the rest of them.
-* New      - [wpss_seller_card] renders a single seller card, so classic-editor and page-builder sites can place one without the block.
+* New      - [wpss_seller_card] renders a single vendor card, so classic-editor and page-builder sites can place one without the block.
 * New      - Buyer request blocks accept budget bounds, matching what the shortcode always supported.
 * New      - Catalog prices carry their base amount in the markup, so a display-currency add-on can show an approximate price in the shopper's own currency without changing what is charged.
 * New      - The order modal total now carries the same information, so the estimate follows the price as extras and quantity change.
@@ -660,7 +660,7 @@ Security fixes for the mobile sign-in, a marketplace that credits vendors on eve
 * Fix      - The admin order detail screen fataled for every order.
 * Fix      - Cancelling a dispute returned an error and left the order stuck as disputed. The cancel now completes or rolls back as one unit.
 * Fix      - [wpss_vendors], [wpss_top_vendors], [wpss_vendor_profile] and the vendor sections of [wpss_account] fataled instead of rendering.
-* Fix      - The buyer requests block listed expired requests that the shortcode correctly hid, so sellers could pitch for closed work.
+* Fix      - The buyer requests block listed expired requests that the shortcode correctly hid, so vendors could pitch for closed work.
 * Fix      - columns="" was ignored by the services and categories grids, which always rendered a single stacked column.
 * Fix      - Category cards and the search form rendered differently depending on whether the block or the shortcode was used.
 * Fix      - A dispute opened automatically for a late order stored a translated label where a reason code belongs, which left non-English sites with an untranslatable reason.
@@ -832,7 +832,7 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * Fix      - Order conversation messages can be sent with only an image attached and no text.
 * Fix      - Saving settings now shows a confirmation message instead of completing silently.
 * Fix      - Service add-ons created from the admin service editor or WP-CLI now appear in the cart and checkout, not just the order modal.
-* Fix      - Vendor vacation mode is now honored on the single service page - a notice banner shows the seller's message and return date and the order button is disabled, so buyers cannot purchase while the seller is away. Vendors and admins can set an optional return date.
+* Fix      - Vendor vacation mode is now honored on the single service page - a notice banner shows the vendor's message and return date and the order button is disabled, so buyers cannot purchase while the vendor is away. Vendors and admins can set an optional return date.
 * Dev      - REST status parameter on service update (publish or draft), owner-gated.
 * Dev      - Service wizard extension hooks (wpss_wizard_service_data, wpss_wizard_pricing_after, wpss_wizard_sanitize_service_data, wpss_wizard_save_service_meta) let extensions inject fields into the frontend Create Service flow. New filters wpss_use_fullwidth_template, wpss_fullwidth_page_keys, wpss_dashboard_default_section, and wpss_realtime_settings.
 * New      - Review moderation can now be switched on under Settings - Vendor; new reviews hold for approval and the API reports the same state.
@@ -840,9 +840,9 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * New      - Order amount limits, price decimal places, deadline-extension cap, buyer-request expiry, portfolio caps, and audit-log retention all have settings fields instead of fixed defaults.
 * New      - Order Confirmation and Terms pages can be mapped under Settings - Pages.
 * New      - Wallet provider selection under Settings - Payouts; the free plugin and Pro now resolve the same configured provider.
-* Improve  - Vendor profile data (tagline, rating, review count, country, social links) now reads from the canonical vendor profile store everywhere: SEO schema, the vendors API, the Seller Card block, and proposal lists.
+* Improve  - Vendor profile data (tagline, rating, review count, country, social links) now reads from the canonical vendor profile store everywhere: SEO schema, the vendors API, the Vendor Card block, and proposal lists.
 * Improve  - Single service pages show the vendor's real last delivery date.
-* Fix      - Vendor SEO schema now includes the seller's title and aggregate rating; previously both were always empty.
+* Fix      - Vendor SEO schema now includes the vendor's title and aggregate rating; previously both were always empty.
 * Fix      - Vacation mode and other profile changes persist reliably; failed saves now report an error instead of false success, and missing database columns self-heal on update.
 * Fix      - Per-member email notification preferences are honored when sending; muted categories no longer email.
 * Fix      - Admin service editor shows recurring billing fields and saves them with the same keys as the frontend wizard.
@@ -874,7 +874,7 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 **First-Time Guide (Admin + Frontend)**
 
 * New: An 8-step admin walkthrough auto-opens on the WP Sell Services dashboard the first time an administrator lands there, covering the dashboard cards, services, vendors, orders, and settings.
-* New: A role-aware frontend walkthrough on the `[wpss_dashboard]` shortcode. Active sellers get a 9-step tour covering Orders, Requests, Services, Sales, Earnings, and Messages. Buyers-only see a shorter flow with a "Want to sell too?" prompt highlighting the Start Selling button.
+* New: A role-aware frontend walkthrough on the `[wpss_dashboard]` shortcode. Active vendors get a 9-step tour covering Orders, Requests, Services, Sales, Earnings, and Messages. Buyers-only see a shorter flow with a "Want to sell too?" prompt highlighting the Start Selling button.
 * New: A "Replay tour" button on both the admin and frontend dashboard headers so anyone can re-run the walkthrough on demand. Once finished or skipped, the tour never auto-opens again for that user.
 * For developers: New `wpss_tour_steps` filter and `POST /wpss/v1/tour/complete` REST endpoint let Pro (and other extensions) append custom steps and integrate with the completion flag.
 
@@ -969,7 +969,7 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 **Vendor System**
 
 * Vendor registration with open, approval, or closed modes
-* Seller level progression with automatic and admin-granted tiers
+* Vendor level progression with automatic and admin-granted tiers
 * Unified vendor dashboard with earnings, orders, and analytics
 * Portfolio showcase, vacation mode, and profile customization
 * Commission tracking and withdrawal requests with admin approval

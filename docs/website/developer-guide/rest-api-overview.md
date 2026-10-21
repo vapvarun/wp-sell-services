@@ -6,7 +6,7 @@ WP Sell Services provides a comprehensive REST API for building custom integrati
 
 **Base URL**: `/wp-json/wpss/v1/`
 
-**Controllers**: 21 specialized controllers handling services, orders, vendors, reviews, conversations, disputes, buyer requests, proposals, notifications, portfolio, earnings, extension requests, milestones, tipping, seller levels, moderation, favorites, media, cart, authentication, and realtime channel authorization.
+**Controllers**: 21 specialized controllers handling services, orders, vendors, reviews, conversations, disputes, buyer requests, proposals, notifications, portfolio, earnings, extension requests, milestones, tipping, vendor levels, moderation, favorites, media, cart, authentication, and realtime channel authorization.
 
 **Authentication Methods**:
 - Cookie authentication (browser-based)

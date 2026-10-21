@@ -666,7 +666,7 @@ class Settings {
 			array(
 				'option_name' => 'wpss_general',
 				'field'       => 'checkout_account_creation',
-				'label'       => __( 'Let a logged-out buyer complete checkout. Their account is created from the billing name and email they enter, and they are signed in before the order is placed, so they can submit requirements and message the seller straight away. Off by default: it changes who can transact on your site.', 'wp-sell-services' ),
+				'label'       => __( 'Let a logged-out buyer complete checkout. Their account is created from the billing name and email they enter, and they are signed in before the order is placed, so they can submit requirements and message the vendor straight away. Off by default: it changes who can transact on your site.', 'wp-sell-services' ),
 			)
 		);
 
@@ -1290,8 +1290,8 @@ class Settings {
 		// under "More emails".
 		$email_groups = array(
 			'buyer'  => __( 'Emails to buyers', 'wp-sell-services' ),
-			'vendor' => __( 'Emails to sellers', 'wp-sell-services' ),
-			'both'   => __( 'Emails to buyer and seller', 'wp-sell-services' ),
+			'vendor' => __( 'Emails to vendors', 'wp-sell-services' ),
+			'both'   => __( 'Emails to buyer and vendor', 'wp-sell-services' ),
 			'admin'  => __( 'Emails to you', 'wp-sell-services' ),
 			'other'  => __( 'More emails', 'wp-sell-services' ),
 		);
@@ -4099,35 +4099,35 @@ class Settings {
 	 */
 	private function get_notification_recipients(): array {
 		return array(
-			'delivery_submitted'     => array( 'buyer', __( 'When the seller delivers work to review.', 'wp-sell-services' ) ),
-			'proposal_submitted'     => array( 'buyer', __( 'When a seller sends a proposal for the buyer\'s request.', 'wp-sell-services' ) ),
-			'milestone_proposed'     => array( 'buyer', __( 'When the seller proposes a milestone to pay for.', 'wp-sell-services' ) ),
-			'milestone_submitted'    => array( 'buyer', __( 'When the seller delivers a milestone for approval.', 'wp-sell-services' ) ),
-			'extension_proposed'     => array( 'buyer', __( 'When the seller asks for more time or money.', 'wp-sell-services' ) ),
+			'delivery_submitted'     => array( 'buyer', __( 'When the vendor delivers work to review.', 'wp-sell-services' ) ),
+			'proposal_submitted'     => array( 'buyer', __( 'When a vendor sends a proposal for the buyer\'s request.', 'wp-sell-services' ) ),
+			'milestone_proposed'     => array( 'buyer', __( 'When the vendor proposes a milestone to pay for.', 'wp-sell-services' ) ),
+			'milestone_submitted'    => array( 'buyer', __( 'When the vendor delivers a milestone for approval.', 'wp-sell-services' ) ),
+			'extension_proposed'     => array( 'buyer', __( 'When the vendor asks for more time or money.', 'wp-sell-services' ) ),
 			'tip_receipt'            => array( 'buyer', __( 'A receipt to the buyer for a tip they paid.', 'wp-sell-services' ) ),
 			'request_expired'        => array( 'buyer', __( 'When the buyer\'s request closes without a hire.', 'wp-sell-services' ) ),
-			'review_reply'           => array( 'buyer', __( 'When the seller replies to the buyer\'s review.', 'wp-sell-services' ) ),
+			'review_reply'           => array( 'buyer', __( 'When the vendor replies to the buyer\'s review.', 'wp-sell-services' ) ),
 			'revision_requested'     => array( 'vendor', __( 'When the buyer asks for changes to a delivery.', 'wp-sell-services' ) ),
-			'new_review'             => array( 'vendor', __( 'When a buyer reviews the seller.', 'wp-sell-services' ) ),
-			'vendor_contact'         => array( 'vendor', __( 'When someone messages the seller from their profile.', 'wp-sell-services' ) ),
-			'withdrawal_approved'    => array( 'vendor', __( 'When you approve the seller\'s withdrawal.', 'wp-sell-services' ) ),
-			'withdrawal_completed'   => array( 'vendor', __( 'When you mark the seller\'s withdrawal as paid.', 'wp-sell-services' ) ),
-			'withdrawal_rejected'    => array( 'vendor', __( 'When you reject the seller\'s withdrawal.', 'wp-sell-services' ) ),
-			'proposal_accepted'      => array( 'vendor', __( 'When the buyer hires the seller from a proposal.', 'wp-sell-services' ) ),
-			'tip_received'           => array( 'vendor', __( 'To the seller, when a buyer tips them.', 'wp-sell-services' ) ),
+			'new_review'             => array( 'vendor', __( 'When a buyer reviews the vendor.', 'wp-sell-services' ) ),
+			'vendor_contact'         => array( 'vendor', __( 'When someone messages the vendor from their profile.', 'wp-sell-services' ) ),
+			'withdrawal_approved'    => array( 'vendor', __( 'When you approve the vendor\'s withdrawal.', 'wp-sell-services' ) ),
+			'withdrawal_completed'   => array( 'vendor', __( 'When you mark the vendor\'s withdrawal as paid.', 'wp-sell-services' ) ),
+			'withdrawal_rejected'    => array( 'vendor', __( 'When you reject the vendor\'s withdrawal.', 'wp-sell-services' ) ),
+			'proposal_accepted'      => array( 'vendor', __( 'When the buyer hires the vendor from a proposal.', 'wp-sell-services' ) ),
+			'tip_received'           => array( 'vendor', __( 'To the vendor, when a buyer tips them.', 'wp-sell-services' ) ),
 			'milestone_paid'         => array( 'vendor', __( 'When the buyer pays for a milestone.', 'wp-sell-services' ) ),
 			'milestone_approved'     => array( 'vendor', __( 'When the buyer approves a milestone.', 'wp-sell-services' ) ),
 			'extension_approved'     => array( 'vendor', __( 'When the buyer accepts an extension.', 'wp-sell-services' ) ),
 			'extension_declined'     => array( 'vendor', __( 'When the buyer declines an extension.', 'wp-sell-services' ) ),
-			'moderation'             => array( 'vendor', __( 'When you approve or reject the seller\'s service.', 'wp-sell-services' ) ),
-			'new_order'              => array( 'both', __( 'A confirmation to the buyer and a new-order alert to the seller.', 'wp-sell-services' ) ),
+			'moderation'             => array( 'vendor', __( 'When you approve or reject the vendor\'s service.', 'wp-sell-services' ) ),
+			'new_order'              => array( 'both', __( 'A confirmation to the buyer and a new-order alert to the vendor.', 'wp-sell-services' ) ),
 			'order_completed'        => array( 'both', __( 'When an order is completed.', 'wp-sell-services' ) ),
 			'order_cancelled'        => array( 'both', __( 'When an order is cancelled.', 'wp-sell-services' ) ),
 			'cancellation_requested' => array( 'both', __( 'To the other party, when one side asks to cancel.', 'wp-sell-services' ) ),
 			'new_message'            => array( 'both', __( 'To the other party, when a message arrives on an order.', 'wp-sell-services' ) ),
 			'dispute_opened'         => array( 'both', __( 'When a dispute is opened on an order (you are told too).', 'wp-sell-services' ) ),
 			'dispute_cancelled'      => array( 'both', __( 'When a dispute is withdrawn or closed.', 'wp-sell-services' ) ),
-			'withdrawal_requested'   => array( 'admin', __( 'When a seller asks to withdraw.', 'wp-sell-services' ) ),
+			'withdrawal_requested'   => array( 'admin', __( 'When a vendor asks to withdraw.', 'wp-sell-services' ) ),
 			'dispute_escalated'      => array( 'admin', __( 'When a dispute is escalated for your decision.', 'wp-sell-services' ) ),
 		);
 	}

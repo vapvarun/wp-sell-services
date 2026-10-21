@@ -658,7 +658,7 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 	$seller = \WPSellServices\Models\VendorProfile::get_by_user_id( (int) $service->post_author );
 
 	if ( $seller && $seller->is_on_vacation() ) {
-		return __( 'This seller is away and not taking new orders right now.', 'wp-sell-services' );
+		return __( 'This vendor is away and not taking new orders right now.', 'wp-sell-services' );
 	}
 
 	/**

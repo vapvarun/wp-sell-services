@@ -140,7 +140,7 @@
 							onChange: (value) => setAttributes({ showPrice: value })
 						}),
 						el(ToggleControl, {
-							label: __('Show seller', 'wp-sell-services'),
+							label: __('Show vendor', 'wp-sell-services'),
 							checked: attributes.showSeller,
 							onChange: (value) => setAttributes({ showSeller: value })
 						})
@@ -462,11 +462,11 @@
 	 * Seller Card Block
 	 */
 	registerBlockType('wpss/seller-card', {
-		title: __('Seller Card', 'wp-sell-services'),
-		description: __('Display a seller profile card with stats.', 'wp-sell-services'),
+		title: __('Vendor Card', 'wp-sell-services'),
+		description: __('Display a vendor profile card with stats.', 'wp-sell-services'),
 		icon: 'businessman',
 		category: 'wp-sell-services',
-		keywords: [__('seller', 'wp-sell-services'), __('vendor', 'wp-sell-services'), __('profile', 'wp-sell-services')],
+		keywords: [__('vendor', 'wp-sell-services'), __('vendor', 'wp-sell-services'), __('profile', 'wp-sell-services')],
 		supports: {
 			anchor: true
 		},
@@ -487,7 +487,7 @@
 
 			return el(Fragment, {},
 				el(InspectorControls, {},
-					el(PanelBody, { title: __('Seller Settings', 'wp-sell-services'), initialOpen: true },
+					el(PanelBody, { title: __('Vendor Settings', 'wp-sell-services'), initialOpen: true },
 						el(TextControl, {
 							label: __('User ID', 'wp-sell-services'),
 							help: __('Leave empty to show current user.', 'wp-sell-services'),
@@ -539,8 +539,8 @@
 						attributes: attributes,
 						EmptyResponsePlaceholder: () => el(Placeholder, {
 							icon: 'businessman',
-							label: __('Seller Card', 'wp-sell-services'),
-							instructions: __('Enter a user ID to display their seller card.', 'wp-sell-services')
+							label: __('Vendor Card', 'wp-sell-services'),
+							instructions: __('Enter a user ID to display their vendor card.', 'wp-sell-services')
 						})
 					})
 				)
@@ -556,7 +556,7 @@
 	 */
 	registerBlockType('wpss/buyer-requests', {
 		title: __('Buyer Requests', 'wp-sell-services'),
-		description: __('Display buyer requests for sellers to browse and respond.', 'wp-sell-services'),
+		description: __('Display buyer requests for vendors to browse and respond.', 'wp-sell-services'),
 		icon: 'megaphone',
 		category: 'wp-sell-services',
 		keywords: [__('requests', 'wp-sell-services'), __('jobs', 'wp-sell-services'), __('projects', 'wp-sell-services')],

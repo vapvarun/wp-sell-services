@@ -66,7 +66,7 @@ Each service tracks how many times it has been viewed and how many orders it has
 
 ## Response Rate
 
-The response rate shows what percentage of buyer messages the vendor has responded to. A high response rate builds trust and can influence the vendor's seller level ranking.
+The response rate shows what percentage of buyer messages the vendor has responded to. A high response rate builds trust and can influence the vendor's vendor level ranking.
 
 ---
 

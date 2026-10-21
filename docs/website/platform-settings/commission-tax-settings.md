@@ -62,7 +62,7 @@ cut of it tends to read badly to both.
 ## Commission Rules **[PRO]**
 
 Pro adds a rules engine above the flat rate. Define rules that match on
-**service category**, **seller level** or **sales volume**, each with its own
+**service category**, **vendor level** or **sales volume**, each with its own
 rate and priority.
 
 Rules are evaluated in **priority order and the first match wins** -- they do

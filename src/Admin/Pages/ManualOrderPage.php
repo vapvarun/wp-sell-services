@@ -240,7 +240,7 @@ class ManualOrderPage {
 												'name' => 'vendor_id',
 												'id'   => 'wpss-vendor-id',
 												'placeholder' => __( '-- Use Service Author --', 'wp-sell-services' ),
-												'search_label' => __( 'Search sellers by name or email', 'wp-sell-services' ),
+												'search_label' => __( 'Search vendors by name or email', 'wp-sell-services' ),
 											)
 										);
 										?>
@@ -545,14 +545,14 @@ class ManualOrderPage {
 		// --- 3. Determine vendor ---
 		// The override picker offers sellers only; the server holds the same line.
 		if ( $vendor_id_input && ! wpss_is_vendor( $vendor_id_input ) ) {
-			wp_send_json_error( array( 'message' => __( 'The vendor override must be an active seller.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'The vendor override must be an active vendor.', 'wp-sell-services' ) ) );
 		}
 		$vendor_id = $vendor_id_input ? $vendor_id_input : (int) $service->post_author;
 
 		// Every order needs a seller who can deliver it and be paid: a blank
 		// override falls back to the author, who must be an active seller too.
 		if ( ! $vendor_id_input && ! wpss_is_vendor( $vendor_id ) ) {
-			wp_send_json_error( array( 'message' => __( 'This service\'s author is not an active seller. Choose an active seller as the vendor.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'This service\'s author is not an active vendor. Choose an active vendor as the vendor.', 'wp-sell-services' ) ) );
 		}
 
 		if ( $customer_id === $vendor_id ) {

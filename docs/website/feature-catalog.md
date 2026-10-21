@@ -19,7 +19,7 @@ Legend: **Yes** ships and is exercised · **Partial** ships with a stated limit 
 | Feature | Free | Pro |
 |---|---|---|
 | Service listings with packages and add-ons | Yes | Yes |
-| Vendor profiles, portfolios, seller levels | Yes | Yes |
+| Vendor profiles, portfolios, vendor levels | Yes | Yes |
 | Buyer requests and vendor proposals | Yes | Yes |
 | Order lifecycle with requirements, delivery, revisions | Yes | Yes |
 | Order messaging | Yes | Yes |

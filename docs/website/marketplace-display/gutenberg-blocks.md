@@ -19,7 +19,7 @@ Display a grid of services with visual controls for layout, filtering, and sorti
 - Grid columns (2 to 5, default 3)
 - Filter by category, or show featured only
 - Sort by date, title, menu order, or random
-- Show or hide pagination, rating, price, and seller
+- Show or hide pagination, rating, price, and vendor
 
 Services from a vendor who is on vacation are left out of the grid, the same as in the catalog and search.
 
@@ -76,7 +76,7 @@ Featured services are shown best rated first. A featured service with no rating 
 
 ---
 
-### Seller Card
+### Vendor Card
 
 Display a vendor's profile information -- name, avatar, rating, and bio.
 

@@ -174,7 +174,7 @@ class MilestoneService {
 		}
 
 		if ( $vendor_id !== (int) $parent->vendor_id ) {
-			return $fail( __( 'Only the seller can propose milestones on this order.', 'wp-sell-services' ) );
+			return $fail( __( 'Only the vendor can propose milestones on this order.', 'wp-sell-services' ) );
 		}
 
 		// Milestones are the payment model for custom, buyer-posted projects
@@ -482,7 +482,7 @@ class MilestoneService {
 		if ( $vendor_id !== (int) $sub->vendor_id ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Only the seller can submit this phase.', 'wp-sell-services' ),
+				'message' => __( 'Only the vendor can submit this phase.', 'wp-sell-services' ),
 			);
 		}
 
@@ -701,7 +701,7 @@ class MilestoneService {
 
 		return array(
 			'success' => true,
-			'message' => __( 'Sent back to the seller with your notes.', 'wp-sell-services' ),
+			'message' => __( 'Sent back to the vendor with your notes.', 'wp-sell-services' ),
 		);
 	}
 
@@ -789,7 +789,7 @@ class MilestoneService {
 		if ( $vendor_id !== (int) $sub->vendor_id ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Only the seller can cancel this phase.', 'wp-sell-services' ),
+				'message' => __( 'Only the vendor can cancel this phase.', 'wp-sell-services' ),
 			);
 		}
 

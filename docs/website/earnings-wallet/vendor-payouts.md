@@ -46,7 +46,7 @@ number is persisted, an order settled at 10% stays settled at 10% forever.
 
 See [Commission System](commission-system.md) for how the rate is chosen, and
 [Tiered Commission Rules](tiered-commission.md) **[PRO]** for rules that resolve
-by category, seller level, or volume.
+by category, vendor level, or volume.
 
 ## Stripe Connect **[PRO]**
 

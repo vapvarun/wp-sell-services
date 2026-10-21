@@ -227,7 +227,7 @@ class SellerLevelService {
 	 */
 	public static function get_level_label( string $level ): string {
 		$labels = self::get_level_labels();
-		return $labels[ $level ] ?? __( 'New seller', 'wp-sell-services' );
+		return $labels[ $level ] ?? __( 'New vendor', 'wp-sell-services' );
 	}
 
 	/**

@@ -52,9 +52,9 @@ Each site now acts only on payments it started itself. See
 PayPal receipts now show an invoice number beginning `WPSS-`. A PayPal payment
 left unfinished at the moment you update is not charged; the buyer pays again.
 
-## Members can report a service or a seller
+## Members can report a service or a vendor
 
-A **Report this service** link on the service page and **Report this seller** on
+A **Report this service** link on the service page and **Report this vendor** on
 the vendor profile open a short form. Every report lands on **Sell Services >
 Member Reports**, where you close it and, if needed, suspend or close the
 member's account. See [Member Reports](../admin-tools/member-reports.md).
@@ -89,9 +89,9 @@ Choose **None (use this site's own login)** to switch it off. See
 - A paused or deleted service in a buyer's cart is marked as unavailable and left out of the total.
 - The reason and details entered when cancelling an order are shown to the buyer, the vendor and you, and are included in the Order Cancelled email.
 - On a block theme the member dashboard takes the theme's wide width.
-- Buyers can add and remove files when editing a request. Once a seller has sent a proposal, the files already attached stay, and the request can be closed but not deleted.
-- Vendors can cancel a pending withdrawal request, and sellers can withdraw a pending proposal.
-- Deleting demo content removes the demo vendors too, and never removes your own categories. A demo service that a buyer has ordered is kept, with its seller, so the order is not lost.
+- Buyers can add and remove files when editing a request. Once a vendor has sent a proposal, the files already attached stay, and the request can be closed but not deleted.
+- Vendors can cancel a pending withdrawal request, and vendors can withdraw a pending proposal.
+- Deleting demo content removes the demo vendors too, and never removes your own categories. A demo service that a buyer has ordered is kept, with its vendor, so the order is not lost.
 - Commission is taken on the price without tax, in tax-inclusive mode too.
 - If you charge tax and take payments through Stripe, some earlier orders may have recorded the tax twice when Stripe's webhook arrived before the buyer's browser. `wp wpss repair:stripe-tax` lists them, and corrects them with `--apply`.
 

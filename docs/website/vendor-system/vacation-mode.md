@@ -1,6 +1,6 @@
 # Vacation Mode
 
-Need a break? Vacation mode lets you temporarily stop accepting new orders while keeping your profile, services, and seller level intact.
+Need a break? Vacation mode lets you temporarily stop accepting new orders while keeping your profile, services, and vendor level intact.
 
 ![Vacation Mode Toggle](../images/vendor-vacation-mode.webp)
 
@@ -23,7 +23,7 @@ That is it. Your services are now paused.
 
 **For your services:**
 - They stay published. Anyone with a direct link, and anyone visiting your profile, can still open them and see the vacation notice.
-- They are **left out of listings while you are away**: the services catalog, search results, Related services on other sellers' pages, the services and featured-services grids placed on other pages, and the mobile app. They come back the moment vacation ends.
+- They are **left out of listings while you are away**: the services catalog, search results, Related services on other vendors' pages, the services and featured-services grids placed on other pages, and the mobile app. They come back the moment vacation ends.
 - They stay in buyers' favorites lists.
 
 Vacation ends when you switch it off, or automatically once your return date has passed.
@@ -53,7 +53,7 @@ Your services become available instantly. Order buttons reappear and your vacati
 
 ## Impact on Your Account
 
-**Seller level:** Vacation mode does not directly affect your seller level. Your ratings, review history, and statistics all remain the same. However, extended inactivity may indirectly impact your level if you stop completing orders and responding to messages.
+**Vendor level:** Vacation mode does not directly affect your vendor level. Your ratings, review history, and statistics all remain the same. However, extended inactivity may indirectly impact your level if you stop completing orders and responding to messages.
 
 **Search visibility:** Your services stay in search results during vacation, though some marketplace searches may filter out vendors on vacation. Your SEO position is maintained.
 
@@ -91,4 +91,4 @@ If you do not want to pause everything:
 
 - [Vendor Profile & Portfolio](vendor-profile-portfolio.md)
 - [Vendor Dashboard](vendor-dashboard.md)
-- [Seller Levels](seller-levels.md)
+- [Vendor Levels](seller-levels.md)

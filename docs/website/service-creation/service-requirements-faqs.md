@@ -54,7 +54,7 @@ When a requirement uses the file upload type, the accepted formats and size are 
 Add the formats your vendors need before launch; a buyer cannot upload a ZIP or a PSD on the default list.
 
 Uploaded files are stored **outside the public web root** and served through a
-permission-checked link, so only the buyer, the seller and an administrator can
+permission-checked link, so only the buyer, the vendor and an administrator can
 open one. Someone who is handed the link but is not on the order gets nothing.
 
 Files uploaded before version 1.7.0 were stored in the media library instead.

@@ -45,7 +45,7 @@ do_action( 'wpss_email_content_before', 'vendor_approved', $recipient ?? null );
 
 <div style="background: #d4edda; padding: 16px; border-radius: 4px; margin: 0 0 20px 0;">
 	<p style="margin: 0; font-size: 16px; color: #155724; line-height: 1.6;">
-		<?php esc_html_e( 'Congratulations! Your vendor application has been approved. You are now a seller on our marketplace.', 'wp-sell-services' ); ?>
+		<?php esc_html_e( 'Congratulations! Your vendor application has been approved. You are now a vendor on our marketplace.', 'wp-sell-services' ); ?>
 	</p>
 </div>
 

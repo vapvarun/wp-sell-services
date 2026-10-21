@@ -197,7 +197,7 @@ function wpss_get_checkout_badge_defaults(): array {
 		'communication' => array(
 			'label' => __( 'Communication', 'wp-sell-services' ),
 			'title' => __( 'Direct communication', 'wp-sell-services' ),
-			'note'  => __( 'Message your seller on the order', 'wp-sell-services' ),
+			'note'  => __( 'Message your vendor on the order', 'wp-sell-services' ),
 		),
 		'revisions'     => array(
 			'label' => __( 'Revisions', 'wp-sell-services' ),

@@ -252,7 +252,7 @@ The terminal actions are **approve** and **decline** (not "reject") -- the same
 vocabulary as the milestone hooks.
 
 `request-revision` is the buyer's third option on a submitted phase: it takes a
-`reason`, returns the phase to `revision_requested` so the seller can resubmit,
+`reason`, returns the phase to `revision_requested` so the vendor can resubmit,
 and posts the reason into the parent contract's conversation. A phase has no
 conversation of its own. Only the buyer may call it, and only while the phase
 is `pending_approval`.
@@ -282,7 +282,7 @@ is `pending_approval`.
 | POST | `/vendors/register` |
 | POST | `/vendors/(?P<id>[\d]+)/balance/write-off` |
 
-### Seller levels
+### Vendor levels
 
 | Method | Route |
 |--------|-------|

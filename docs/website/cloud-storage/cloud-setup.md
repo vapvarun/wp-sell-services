@@ -101,7 +101,7 @@ You will need:
 requirement file uploads to the provider you selected, and the local copy is
 removed afterwards so you are not paying for the bucket and the disk both.
 
-Buyers and sellers never get a bucket URL. They download through a
+Buyers and vendors never get a bucket URL. They download through a
 permission-checked link on the order, which hands out a short-lived signed URL
 after confirming they are a party to that order.
 

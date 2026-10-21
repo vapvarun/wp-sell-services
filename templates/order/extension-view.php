@@ -112,7 +112,7 @@ do_action( 'wpss_before_extension_view', $current_order );
 				if ( $is_paid ) {
 					esc_html_e( 'Extra work paid', 'wp-sell-services' );
 				} elseif ( $is_pending ) {
-					esc_html_e( 'Quote from seller', 'wp-sell-services' );
+					esc_html_e( 'Quote from vendor', 'wp-sell-services' );
 				} elseif ( $awaiting_confirmation ) {
 					esc_html_e( 'Payment submitted — awaiting confirmation', 'wp-sell-services' );
 				} else {
@@ -149,7 +149,7 @@ do_action( 'wpss_before_extension_view', $current_order );
 		<dl class="wpss-tip-view__meta">
 			<?php if ( $counterparty ) : ?>
 				<div>
-					<dt><?php echo esc_html( $is_vendor ? __( 'From', 'wp-sell-services' ) : __( 'Seller', 'wp-sell-services' ) ); ?></dt>
+					<dt><?php echo esc_html( $is_vendor ? __( 'From', 'wp-sell-services' ) : __( 'Vendor', 'wp-sell-services' ) ); ?></dt>
 					<dd><?php echo esc_html( $counterparty->display_name ); ?></dd>
 				</div>
 			<?php endif; ?>

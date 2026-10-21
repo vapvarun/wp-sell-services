@@ -60,7 +60,7 @@ do_action( 'wpss_email_content_before', 'moderation_approved', $service_title, $
 </table>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php esc_html_e( 'Buyers can now find and order your service. Thank you for being a valued seller on our platform.', 'wp-sell-services' ); ?>
+	<?php esc_html_e( 'Buyers can now find and order your service. Thank you for being a valued vendor on our platform.', 'wp-sell-services' ); ?>
 </p>
 
 <p style="text-align: center; margin: 30px 0;">

@@ -92,7 +92,7 @@ Go to **Sell Services > Import Reviews**. You can:
 
 Imported reviews:
 
-- Count toward the service rating, the vendor rating and seller levels, like any approved review.
+- Count toward the service rating, the vendor rating and vendor levels, like any approved review.
 - Show an **Imported review** label so visitors are not misled into reading them as verified purchases.
 - Are not tied to an order, so there is no Verified Purchase badge and no email goes to the vendor.
 - Are skipped when the same vendor, service, reviewer name and review text already exist, so running the same file twice adds nothing.
@@ -114,9 +114,9 @@ Ratings update automatically whenever a review is added, edited, or its status c
 
 Reviews can be sorted by most recent, highest rated, lowest rated, or most helpful.
 
-## Review Impact on Sellers
+## Review Impact on Vendors
 
-Good reviews directly boost a vendor's visibility in search results and contribute to advancing through seller levels. Vendors need minimum ratings and review counts to reach Rising Seller (4.0 stars, 3 reviews) and Top Rated (4.7 stars, 10 reviews).
+Good reviews directly boost a vendor's visibility in search results and contribute to advancing through vendor levels. Vendors need minimum ratings and review counts to reach Rising Vendor (4.0 stars, 3 reviews) and Top Rated (4.7 stars, 10 reviews).
 
 Consistently low ratings can reduce a vendor's search visibility and may trigger an admin review of their account.
 
@@ -140,5 +140,5 @@ Consistently low ratings can reduce a vendor's search visibility and may trigger
 ## Related Documentation
 
 - [Reputation & Moderation](reputation-moderation.md)
-- [Seller Levels](../vendor-system/seller-levels.md)
+- [Vendor Levels](../vendor-system/seller-levels.md)
 - [Order Lifecycle](../order-management/order-lifecycle.md)

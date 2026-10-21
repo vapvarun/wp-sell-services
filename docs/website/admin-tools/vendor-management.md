@@ -30,7 +30,7 @@ The main table shows every vendor with these details:
 - **Orders** -- total orders completed
 - **Earnings** -- lifetime earnings on the platform
 - **Rating** -- average customer rating
-- **Level** -- seller level badge (based on activity and performance)
+- **Level** -- vendor level badge (based on activity and performance)
 - **Status** -- active, pending, or suspended
 - **Joined** -- registration date
 
@@ -96,7 +96,7 @@ Vendors can have one of three verification tiers:
 | **Verified** | Identity or business verified by admin |
 | **Pro** | Top-tier vendors with proven track records |
 
-These tiers appear as badges on vendor profiles, helping buyers identify trusted sellers.
+These tiers appear as badges on vendor profiles, helping buyers identify trusted vendors.
 
 ## Vendor Detail View
 

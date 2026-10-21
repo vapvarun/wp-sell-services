@@ -243,7 +243,7 @@ class UpgradePage {
 					'pro'     => true,
 				),
 				array(
-					'feature' => __( 'Tiered commission rules (category, volume, seller level)', 'wp-sell-services' ),
+					'feature' => __( 'Tiered commission rules (category, volume, vendor level)', 'wp-sell-services' ),
 					'free'    => false,
 					'pro'     => true,
 				),

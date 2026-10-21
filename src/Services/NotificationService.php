@@ -434,7 +434,7 @@ class NotificationService {
 			)
 			->line(
 				/* translators: %s: seller name */
-				__( 'Seller: %s', 'wp-sell-services' ),
+				__( 'Vendor: %s', 'wp-sell-services' ),
 				$vendor_name
 			)
 			->line(
@@ -450,7 +450,7 @@ class NotificationService {
 			->block()
 			->field(
 				__( 'Next Step:', 'wp-sell-services' ),
-				__( 'Please submit your requirements so the seller can start working on your order.', 'wp-sell-services' )
+				__( 'Please submit your requirements so the vendor can start working on your order.', 'wp-sell-services' )
 			);
 
 		$this->create(
@@ -591,7 +591,7 @@ class NotificationService {
 						)
 						->block()
 						->field( __( 'Service:', 'wp-sell-services' ), $service_name )
-						->field( __( 'Seller:', 'wp-sell-services' ), $vendor_name )
+						->field( __( 'Vendor:', 'wp-sell-services' ), $vendor_name )
 						->paragraph( __( 'Thank you for your business. If you\'re satisfied with the service, please consider leaving a review to help other buyers.', 'wp-sell-services' ) ),
 					array(
 						'order_id'     => $order_id,
@@ -1075,7 +1075,7 @@ class NotificationService {
 				/* translators: 1: amount, 2: vendor name, 3: order number */
 				__( 'Your tip of %1$s to %2$s on Order #%3$s has been paid.', 'wp-sell-services' ),
 				NotificationMessage::strong( $gross_amount ),
-				NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'your seller', 'wp-sell-services' ) ),
+				NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'your vendor', 'wp-sell-services' ) ),
 				$this->order_ref( $parent_order_id )
 			),
 			array(
@@ -1122,7 +1122,7 @@ class NotificationService {
 			'full_refund'      => __( 'resolved with a full refund', 'wp-sell-services' ),
 			'partial_refund'   => __( 'resolved with a partial refund', 'wp-sell-services' ),
 			'favor_buyer'      => __( 'resolved in favor of the buyer', 'wp-sell-services' ),
-			'favor_vendor'     => __( 'resolved in favor of the seller', 'wp-sell-services' ),
+			'favor_vendor'     => __( 'resolved in favor of the vendor', 'wp-sell-services' ),
 			'mutual_agreement' => __( 'resolved by mutual agreement', 'wp-sell-services' ),
 		);
 		$resolution_label  = $resolution_labels[ $resolution ] ?? __( 'resolved', 'wp-sell-services' );
@@ -1290,14 +1290,14 @@ class NotificationService {
 					__( 'The delivery deadline for Order #%s is approaching.', 'wp-sell-services' ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
-				$message->paragraph( __( 'Please ensure you deliver the order on time to maintain your seller rating.', 'wp-sell-services' ) );
+				$message->paragraph( __( 'Please ensure you deliver the order on time to maintain your vendor rating.', 'wp-sell-services' ) );
 				break;
 
 			case 'extension_requested':
 				$title = __( 'Quote for extra work', 'wp-sell-services' );
 				$message->line(
 					/* translators: %s: parent order number */
-					__( 'Your seller sent a quote for additional work on Order #%s. Open the order to review — Accept & Pay to expand the scope, or Decline to keep things as-is.', 'wp-sell-services' ),
+					__( 'Your vendor sent a quote for additional work on Order #%s. Open the order to review — Accept & Pay to expand the scope, or Decline to keep things as-is.', 'wp-sell-services' ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
@@ -1317,7 +1317,7 @@ class NotificationService {
 				$title = __( 'Milestone proposed', 'wp-sell-services' );
 				$message->line(
 					/* translators: 1: phase name and amount, 2: parent order number */
-					__( 'Your seller proposed %1$s on Order #%2$s. Open the order to review and Accept & Pay.', 'wp-sell-services' ),
+					__( 'Your vendor proposed %1$s on Order #%2$s. Open the order to review and Accept & Pay.', 'wp-sell-services' ),
 					$this->milestone_label( $data['milestone_id'] ?? 0 ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
@@ -1337,7 +1337,7 @@ class NotificationService {
 				$title = __( 'Milestone delivered', 'wp-sell-services' );
 				$message->line(
 					/* translators: %s: parent order number */
-					__( 'Your seller submitted a phase delivery on Order #%s. Review it and approve, or request a revision in chat.', 'wp-sell-services' ),
+					__( 'Your vendor submitted a phase delivery on Order #%s. Review it and approve, or request a revision in chat.', 'wp-sell-services' ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
@@ -1399,7 +1399,7 @@ class NotificationService {
 				$message->line(
 					/* translators: 1: vendor name, 2: request title */
 					__( '%1$s sent a proposal on your request "%2$s".', 'wp-sell-services' ),
-					NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'A seller', 'wp-sell-services' ) ),
+					NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'A vendor', 'wp-sell-services' ) ),
 					(string) ( $data['request_title'] ?? '' )
 				);
 				if ( ! empty( $data['bid_amount'] ) ) {
@@ -1430,7 +1430,7 @@ class NotificationService {
 				$reason = trim( (string) ( $data['reason'] ?? '' ) );
 				$message->line(
 					/* translators: %s: request title */
-					__( 'The buyer went with another seller on "%s".', 'wp-sell-services' ),
+					__( 'The buyer went with another vendor on "%s".', 'wp-sell-services' ),
 					(string) ( $data['request_title'] ?? '' )
 				);
 				if ( '' !== $reason ) {

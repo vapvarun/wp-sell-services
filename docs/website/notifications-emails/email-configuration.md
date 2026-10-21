@@ -38,7 +38,7 @@ They carry an amount or a deadline, so there is no switch for them, and the
 Email Preferences screen says so.
 
 That matters more than it sounds. Before 1.6.0 every member was offered the
-seller list, so a buyer who unticked things they did not recognise could
+vendor list, so a buyer who unticked things they did not recognise could
 accidentally mute notifications about their own orders.
 
 **Two things a member cannot turn off**, by design:

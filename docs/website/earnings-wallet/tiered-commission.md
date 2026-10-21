@@ -1,7 +1,7 @@
 # Tiered Commission Rules [PRO]
 
 Replace a single flat commission rate with **rules** that resolve automatically:
-by service category, by seller level, or by sales volume. The right rate is
+by service category, by vendor level, or by sales volume. The right rate is
 picked at checkout without you touching anything.
 
 Free already gives you a global rate and per-vendor overrides. Tiered rules are
@@ -15,7 +15,7 @@ specific vendor you hand-picked.
 | Type | Matches on | Typical use |
 |------|-----------|-------------|
 | **Category** | The service's category | Design pays 15%, Writing pays 20% |
-| **Seller level** | The vendor's level (New, Rising, Top Rated) | Reward Top Rated sellers with 10% instead of 20% |
+| **Vendor level** | The vendor's level (New, Rising, Top Rated) | Reward Top Rated vendors with 10% instead of 20% |
 | **Volume** | The vendor's lifetime completed sales | Vendors over $10k in lifetime sales drop to 12% |
 
 Every rule needs its condition: a category rule needs at least one category, a
@@ -40,7 +40,7 @@ consulted, and rates are never averaged or stacked.
 The default priority is 10, so give your most specific rules a lower number.
 
 ```
-priority 5   Seller level = Top Rated       ->  10%
+priority 5   Vendor level = Top Rated       ->  10%
 priority 10  Category = Design              ->  15%
 priority 20  Volume over $10,000 lifetime  ->  12%
 ```
@@ -78,7 +78,7 @@ rate rather than today's.
 
 ## Worked examples
 
-- Top Rated sellers pay 10 percent instead of 20.
+- Top Rated vendors pay 10 percent instead of 20.
 - The Design category pays 15 percent.
 - Vendors with over $10k in lifetime completed sales drop to 12 percent. The total is every completed order, not a monthly figure, so a vendor who passes the threshold stays on the lower rate.
 - A specific enterprise vendor pays a flat 5 percent -- use a **per-vendor rate** (free), not a tiered rule. Tiered rules are for classes of sale, not individuals.
@@ -96,4 +96,4 @@ See [Pro Extension Points](../developer-guide/pro-extension-points.md).
 
 - [Commission System](commission-system.md) -- global and per-vendor rates (free)
 - [Paying Your Vendors](vendor-payouts.md)
-- [Seller Levels](../vendor-system/seller-levels.md)
+- [Vendor Levels](../vendor-system/seller-levels.md)

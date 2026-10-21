@@ -68,7 +68,7 @@ The vendor can always offer additional revisions as a goodwill gesture, even aft
 ## Delivery File Access
 
 Delivery files are stored **outside the public web root** and served through a
-permission-checked download link. Only the buyer, the seller and an
+permission-checked download link. Only the buyer, the vendor and an
 administrator can fetch one - anyone else gets a "file not found", including
 someone holding the exact link.
 

@@ -622,7 +622,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 		<div class="wpss-modal__backdrop"></div>
 		<div class="wpss-modal__dialog">
 			<div class="wpss-modal__header">
-				<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
+				<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact Vendor', 'wp-sell-services' ); ?></h3>
 				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 			</div>
 
@@ -656,7 +656,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 						<textarea id="wpss-contact-message"
 									name="message"
 									rows="5"
-									placeholder="<?php esc_attr_e( 'Tell the seller what you need...', 'wp-sell-services' ); ?>"
+									placeholder="<?php esc_attr_e( 'Tell the vendor what you need...', 'wp-sell-services' ); ?>"
 									required></textarea>
 						<p class="wpss-field-hint">
 							<?php esc_html_e( 'Be specific about your requirements for better assistance.', 'wp-sell-services' ); ?>

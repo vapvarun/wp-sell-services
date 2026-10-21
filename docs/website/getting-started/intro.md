@@ -27,7 +27,7 @@ Here are some real-world examples of what people are building:
 | **Buyer requests** | Buyers post what they need, vendors submit proposals -- like a job board |
 | **Mobile-ready design** | Responsive templates that look great on phones, tablets, and desktops |
 | **Vendor dashboard** | Vendors manage everything -- services, orders, earnings, messages -- from the frontend |
-| **4 seller levels** | New Seller, Rising Seller, Top Rated, and Pro Seller -- vendors level up based on performance |
+| **4 vendor levels** | New Vendor, Rising Vendor, Top Rated, and Pro Vendor -- vendors level up based on performance |
 
 ## Feature Overview: Free vs Pro
 
@@ -36,7 +36,7 @@ Here are some real-world examples of what people are building:
 | Service listings and categories | Included | Included |
 | Order management and messaging | Included | Included |
 | Reviews, disputes, and buyer requests | Included | Included |
-| Vendor dashboard and seller levels | Included | Included |
+| Vendor dashboard and vendor levels | Included | Included |
 | Built-in checkout (Stripe, PayPal, Offline) | Included | Included |
 | Commission system with per-vendor rates | Included | Included |
 | Gallery images per service | Up to 4 | Unlimited **[PRO]** |
@@ -74,7 +74,7 @@ The classic marketplace flow. Vendors list services, buyers browse and purchase.
 The reverse marketplace flow. Buyers describe what they need, vendors compete with proposals.
 
 1. **Buyer posts a request** -- They describe their project, set a budget range, pick a category, and upload reference files
-2. **Vendors submit proposals** -- Qualified sellers see the request and pitch their services with a price, timeline, and cover letter
+2. **Vendors submit proposals** -- Qualified vendors see the request and pitch their services with a price, timeline, and cover letter
 3. **Buyer compares and accepts** -- They review all proposals side by side, check vendor ratings and portfolios, and accept the best fit
 4. **Order is created and payment collected** -- Accepting a proposal creates an order automatically, the buyer pays at checkout, and work begins
 5. **Same order workflow from here** -- Requirements, messaging, delivery, revisions, and reviews all work identically to Mode 1

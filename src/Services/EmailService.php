@@ -768,7 +768,7 @@ class EmailService {
 		}
 
 		$vendor       = get_user_by( 'id', $milestone->vendor_id );
-		$vendor_name  = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
+		$vendor_name  = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
 		$parent_id    = (int) ( $milestone->platform_order_id ?? 0 );
 		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
 		$meta         = $this->decode_order_meta( $milestone );
@@ -867,7 +867,7 @@ class EmailService {
 		}
 
 		$vendor      = get_user_by( 'id', $milestone->vendor_id );
-		$vendor_name = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
+		$vendor_name = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
 		$meta        = $this->decode_order_meta( $milestone );
 
 		$parent_id     = (int) ( $milestone->platform_order_id ?? 0 );
@@ -1011,14 +1011,14 @@ class EmailService {
 		}
 
 		$vendor      = get_user_by( 'id', $extension->vendor_id );
-		$vendor_name = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
+		$vendor_name = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
 		$reason      = (string) ( $extension->vendor_notes ?? '' );
 
 		$pay_url = wpss_ensure_pay_order( (int) $extension->id );
 
 		$subject = sprintf(
 			/* translators: %s: site name */
-			__( '[%s] Quote for extra work from your seller', 'wp-sell-services' ),
+			__( '[%s] Quote for extra work from your vendor', 'wp-sell-services' ),
 			wpss_get_platform_name()
 		);
 

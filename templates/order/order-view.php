@@ -877,7 +877,7 @@ do_action( 'wpss_before_order_view', $order );
 						class="wpss-party-info__avatar">
 					<div class="wpss-party-info__details">
 						<span class="wpss-party-info__role">
-							<?php echo $is_vendor ? esc_html__( 'Buyer', 'wp-sell-services' ) : esc_html__( 'Seller', 'wp-sell-services' ); ?>
+							<?php echo $is_vendor ? esc_html__( 'Buyer', 'wp-sell-services' ) : esc_html__( 'Vendor', 'wp-sell-services' ); ?>
 						</span>
 						<strong class="wpss-party-info__name"><?php echo esc_html( $other_party_name ); ?></strong>
 						<?php if ( ! $is_vendor && $other_party ) : ?>
@@ -948,12 +948,12 @@ do_action( 'wpss_before_order_view', $order );
 				<?php if ( $show_late_requirements_form ) : ?>
 					<div class="wpss-alert wpss-alert--warning" style="margin-bottom: 1.5rem;">
 						<i data-lucide="triangle-alert" class="wpss-icon" aria-hidden="true"></i>
-						<p><?php esc_html_e( 'Work has already started, but you can still submit requirements to help the seller complete your order.', 'wp-sell-services' ); ?></p>
+						<p><?php esc_html_e( 'Work has already started, but you can still submit requirements to help the vendor complete your order.', 'wp-sell-services' ); ?></p>
 					</div>
 				<?php else : ?>
 					<div class="wpss-alert wpss-alert--info" style="margin-bottom: 1.5rem;">
 						<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
-						<p><?php esc_html_e( 'Please provide the following information so the seller can start working on your order.', 'wp-sell-services' ); ?></p>
+						<p><?php esc_html_e( 'Please provide the following information so the vendor can start working on your order.', 'wp-sell-services' ); ?></p>
 					</div>
 				<?php endif; ?>
 
@@ -1258,7 +1258,7 @@ do_action( 'wpss_before_order_view', $order );
 						if ( $is_vendor ) {
 							esc_html_e( 'This is a custom project — break it into paid phases so the buyer can approve each stage as you deliver.', 'wp-sell-services' );
 						} else {
-							esc_html_e( 'Your seller will propose the first phase. You pay each phase up front; they deliver and you approve.', 'wp-sell-services' );
+							esc_html_e( 'Your vendor will propose the first phase. You pay each phase up front; they deliver and you approve.', 'wp-sell-services' );
 						}
 						?>
 					</p>
@@ -1295,7 +1295,7 @@ do_action( 'wpss_before_order_view', $order );
 									}
 									break;
 								case 'in_progress':
-									$ms_state_label = $is_vendor ? __( 'Paid · ready for delivery', 'wp-sell-services' ) : __( 'Paid · seller working', 'wp-sell-services' );
+									$ms_state_label = $is_vendor ? __( 'Paid · ready for delivery', 'wp-sell-services' ) : __( 'Paid · vendor working', 'wp-sell-services' );
 									break;
 								case 'pending_approval':
 									$ms_state_label = $is_customer ? __( 'Delivered · awaiting your approval', 'wp-sell-services' ) : __( 'Submitted · awaiting buyer', 'wp-sell-services' );
@@ -1499,7 +1499,7 @@ do_action( 'wpss_before_order_view', $order );
 			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_milestone_action' ) ); ?>';
 			document.querySelectorAll('.wpss-milestone-decline-btn').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
+					( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Decline this phase? Your vendor can propose a revised one.', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Decline this phase? Your vendor can propose a revised one.', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
 						if (!ok) return;
 					btn.disabled = true;
 					var data = new FormData();
@@ -1578,7 +1578,7 @@ do_action( 'wpss_before_order_view', $order );
 					<?php esc_html_e( 'Quote for extra work', 'wp-sell-services' ); ?>
 				</h3>
 				<p class="wpss-extension-pending-card__body">
-					<?php esc_html_e( 'Your seller sent a quote for additional work on this order. Review the details — pay to approve and they will continue with the expanded scope, or decline and discuss first in chat.', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Your vendor sent a quote for additional work on this order. Review the details — pay to approve and they will continue with the expanded scope, or decline and discuss first in chat.', 'wp-sell-services' ); ?>
 				</p>
 				<div class="wpss-extension-pending-card__meta">
 					<div>
@@ -1991,7 +1991,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 			<div class="wpss-modal__body">
 				<div class="wpss-alert wpss-alert--info">
 					<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
-					<p><?php esc_html_e( 'Please describe the changes you need. The seller will review your request and update the delivery.', 'wp-sell-services' ); ?></p>
+					<p><?php esc_html_e( 'Please describe the changes you need. The vendor will review your request and update the delivery.', 'wp-sell-services' ); ?></p>
 				</div>
 
 				<div class="wpss-form-group">
@@ -2039,7 +2039,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 						if ( $is_vendor ) {
 							esc_html_e( 'Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the buyer first.', 'wp-sell-services' );
 						} else {
-							esc_html_e( 'Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the seller first.', 'wp-sell-services' );
+							esc_html_e( 'Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the vendor first.', 'wp-sell-services' );
 						}
 						?>
 					</p>

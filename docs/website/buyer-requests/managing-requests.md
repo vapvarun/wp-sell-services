@@ -81,13 +81,13 @@ You can edit your request at any time while it is still open and no proposal has
 **What you cannot change:**
 - Requests that already have an accepted proposal
 - Expired requests
-- Files already attached, once a seller has sent a proposal (see below)
+- Files already attached, once a vendor has sent a proposal (see below)
 
 ### Attachments After a Proposal
 
-Before any seller has sent a proposal, you can add and remove attachments freely. Removing a file deletes it, and its link stops working.
+Before any vendor has sent a proposal, you can add and remove attachments freely. Removing a file deletes it, and its link stops working.
 
-After the first proposal arrives, the **Remove** button disappears from the files already on the request and a note explains why: sellers priced their proposals against that brief. You can still add new files. Check a file before attaching it at this stage, because it cannot be taken off afterwards.
+After the first proposal arrives, the **Remove** button disappears from the files already on the request and a note explains why: vendors priced their proposals against that brief. You can still add new files. Check a file before attaching it at this stage, because it cannot be taken off afterwards.
 
 ---
 
@@ -104,7 +104,7 @@ Closing does not affect any orders that were already created from accepted propo
 
 ### Deleting a Request
 
-**Delete** is offered on a request only while no seller has sent a proposal. It moves the request to the trash. Once a proposal exists, the request can be closed but not deleted, because the proposal and the files attached to the request belong to that seller's work too.
+**Delete** is offered on a request only while no vendor has sent a proposal. It moves the request to the trash. Once a proposal exists, the request can be closed but not deleted, because the proposal and the files attached to the request belong to that vendor's work too.
 
 ---
 

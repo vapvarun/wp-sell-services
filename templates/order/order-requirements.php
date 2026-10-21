@@ -140,7 +140,7 @@ do_action( 'wpss_before_requirements_form', $order );
 			<?php if ( $vendor ) : ?>
 				<div class="wpss-order-card">
 					<div class="wpss-order-card__header">
-						<h4 class="wpss-order-card__title"><?php esc_html_e( 'Your Seller', 'wp-sell-services' ); ?></h4>
+						<h4 class="wpss-order-card__title"><?php esc_html_e( 'Your vendor', 'wp-sell-services' ); ?></h4>
 					</div>
 					<div class="wpss-order-card__body">
 						<div class="wpss-order-card__user">
@@ -173,7 +173,7 @@ do_action( 'wpss_before_requirements_form', $order );
 					<h4 class="wpss-order-card__title"><?php esc_html_e( 'Need Help?', 'wp-sell-services' ); ?></h4>
 				</div>
 				<div class="wpss-order-card__body">
-					<p><?php esc_html_e( 'Be as detailed as possible so the seller can deliver exactly what you need.', 'wp-sell-services' ); ?></p>
+					<p><?php esc_html_e( 'Be as detailed as possible so the vendor can deliver exactly what you need.', 'wp-sell-services' ); ?></p>
 					<ul>
 						<li><?php esc_html_e( 'Include all relevant information', 'wp-sell-services' ); ?></li>
 						<li><?php esc_html_e( 'Attach reference files if helpful', 'wp-sell-services' ); ?></li>

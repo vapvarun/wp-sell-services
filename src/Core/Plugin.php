@@ -2033,7 +2033,7 @@ final class Plugin {
 				// Warn both parties so nobody assumes the paid phase auto-refunded.
 				$body = sprintf(
 					/* translators: %d: count of paid phases */
-					esc_html__( 'Project cancelled while %d milestone was already paid. Money has moved to the seller wallet; open a dispute if the work cannot be accepted.', 'wp-sell-services' ),
+					esc_html__( 'Project cancelled while %d milestone was already paid. Money has moved to the vendor wallet; open a dispute if the work cannot be accepted.', 'wp-sell-services' ),
 					count( $open_paid )
 				);
 				$data = array( 'order_id' => $order_id );

@@ -394,7 +394,7 @@ class Shortcodes {
 					'title'    => (string) get_post_field( 'post_title', (int) wpss_get_page_id( 'vendors_page' ) ),
 					'subtitle' => sprintf(
 						/* translators: %s: platform name */
-						__( 'Find sellers on %s', 'wp-sell-services' ),
+						__( 'Find vendors on %s', 'wp-sell-services' ),
 						wpss_get_platform_name()
 					),
 				)
@@ -1028,7 +1028,7 @@ class Shortcodes {
 		<div class="wpss-vr">
 			<div class="wpss-vr__card wpss-signup-card">
 				<h2 class="wpss-vr__card-title"><?php esc_html_e( 'Create your account', 'wp-sell-services' ); ?></h2>
-				<p class="wpss-vr__card-sub"><?php esc_html_e( 'Buy services, message sellers, and follow your orders.', 'wp-sell-services' ); ?></p>
+				<p class="wpss-vr__card-sub"><?php esc_html_e( 'Buy services, message vendors, and follow your orders.', 'wp-sell-services' ); ?></p>
 				<?php ( new \WPSellServices\Frontend\PublicSignup() )->render_form( 'buyer' ); ?>
 			</div>
 		</div>
@@ -1129,7 +1129,7 @@ class Shortcodes {
 
 					<aside class="wpss-vr__action">
 						<div class="wpss-vr__card">
-							<h2 class="wpss-vr__card-title"><?php esc_html_e( 'Create your seller account', 'wp-sell-services' ); ?></h2>
+							<h2 class="wpss-vr__card-title"><?php esc_html_e( 'Create your vendor account', 'wp-sell-services' ); ?></h2>
 							<p class="wpss-vr__card-sub"><?php esc_html_e( 'Takes a minute. No card, no listing fee.', 'wp-sell-services' ); ?></p>
 							<?php
 							// B1 (baseline-2026-04-25.md): inline signup form replaces
@@ -1321,7 +1321,7 @@ class Shortcodes {
 	private function render_vendor_pitch_steps(): void {
 		$steps = array(
 			array(
-				'title' => __( 'Create your seller profile', 'wp-sell-services' ),
+				'title' => __( 'Create your vendor profile', 'wp-sell-services' ),
 				'text'  => __( 'Say who you are and what you do. It is what buyers read before they order.', 'wp-sell-services' ),
 			),
 			array(
