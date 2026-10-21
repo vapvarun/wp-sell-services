@@ -476,6 +476,12 @@ class NotificationService {
 	 * @return void
 	 */
 	public function notify_order_status( int $order_id, string $new_status, string $old_status ): void {
+		// A dispute closed without a ruling puts the order back where it was; the dispute
+		// notice already tells both sides, so a status notice would repeat an old event.
+		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) ) {
+			return;
+		}
+
 		$order = wpss_get_order( $order_id );
 
 		if ( ! $order ) {

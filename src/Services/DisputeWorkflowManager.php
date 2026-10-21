@@ -468,6 +468,14 @@ class DisputeWorkflowManager {
 			);
 		}
 
+		// Once escalated the dispute is the admin's to close; the opener can no longer withdraw it.
+		if ( DisputeService::STATUS_ESCALATED === $dispute->status && ! current_user_can( 'manage_options' ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This dispute has been escalated to the site team, so only they can close it.', 'wp-sell-services' ),
+			);
+		}
+
 		global $wpdb;
 
 		$meta                 = $dispute->meta;
