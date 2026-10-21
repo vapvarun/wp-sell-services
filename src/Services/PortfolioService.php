@@ -363,10 +363,19 @@ class PortfolioService {
 	 *
 	 * @param int   $vendor_id Vendor user ID.
 	 * @param array $order     Array of item IDs in order.
-	 * @return bool True on success.
+	 * @return bool True on success; false, with nothing changed, when any id is not this vendor's.
 	 */
 	public function reorder( int $vendor_id, array $order ): bool {
 		global $wpdb;
+
+		$ids = array_values( array_unique( array_map( 'intval', $order ) ) );
+		if ( $ids ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+			$owned = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$this->table} WHERE vendor_id = %d AND id IN (" . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( $vendor_id ), $ids ) ) );
+			if ( $owned !== count( $ids ) ) {
+				return false;
+			}
+		}
 
 		foreach ( $order as $position => $item_id ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
