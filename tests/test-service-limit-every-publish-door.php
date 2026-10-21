@@ -100,6 +100,13 @@ $check( 'helper holds a not-yet-created service at the limit', '' !== $limit( 0,
 $live_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'wpss_service' AND post_status = 'publish' AND post_author = %d LIMIT 1", $vendor_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $check( 'helper does not hold a service that is already live', '' === $limit( $live_id, $vendor_id ) );
 
+// Only publish/pending are already counted; a trashed or paused service taking a live slot is a new slot.
+$wpdb->update( $wpdb->posts, array( 'post_status' => 'trash' ), array( 'ID' => $draft_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+clean_post_cache( $draft_id );
+$check( 'helper holds a trashed service at the limit', '' !== $limit( $draft_id, $vendor_id ) );
+$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $draft_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+clean_post_cache( $draft_id );
+
 update_option( 'wpss_vendor', array_merge( $opts, array( 'max_services_per_vendor' => 500 ) ) );
 $check( 'with room under the limit the helper lets a draft through', '' === $limit( $draft_id, $vendor_id ) );
 

@@ -503,7 +503,8 @@ function wpss_service_limit_error( int $service_id, int $user_id ): string {
 
 	if ( $service_id ) {
 		$existing = get_post( $service_id );
-		if ( ! $existing || 'draft' !== $existing->post_status ) {
+		// Already counted toward the limit (the same statuses the count uses), so no new slot is taken.
+		if ( ! $existing || in_array( $existing->post_status, array( 'publish', 'pending' ), true ) ) {
 			return '';
 		}
 	}
