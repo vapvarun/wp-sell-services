@@ -188,3 +188,12 @@ if ( $social_row ) {
 // A tip awaiting offline confirmation reads the same on the order page as on the tip page.
 $order_view = (string) file_get_contents( WPSS_PLUGIN_DIR . 'templates/order/order-view.php' );
 wpss_t( 1 === preg_match( '/wpss-tip-receipt__title">\s*<\?php.{0,200}wpss_order_awaits_payment_confirmation\(\s*\$tip_order_row/s', $order_view ), 'the order page tip receipt has an awaiting-confirmation state' );
+
+// Conflict and duplication guards: no generic script handle, one shared toast instead of per-template notice copies.
+$frontend_src = (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/Frontend/Frontend.php' ) . (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/Frontend/ServiceWizard.php' );
+wpss_t( false === strpos( $frontend_src, "'alpinejs'" ), 'the bundled Alpine uses a prefixed handle, not the generic alpinejs' );
+$inline_notice = 0;
+foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( WPSS_PLUGIN_DIR . 'templates', FilesystemIterator::SKIP_DOTS ) ) as $tpl ) {
+	$inline_notice += substr_count( (string) file_get_contents( $tpl->getPathname() ), 'wpssShowNotice' );
+}
+wpss_t( 0 === $inline_notice, 'templates use the shared wpssToast, not their own wpssShowNotice' );

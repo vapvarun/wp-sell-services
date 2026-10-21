@@ -71,7 +71,7 @@ class Frontend {
 	public function enqueue_scripts(): void {
 		// Register Alpine.js (loaded in footer).
 		wp_register_script(
-			'alpinejs',
+			'wpss-alpine',
 			\WPSS_PLUGIN_URL . 'assets/js/vendor/alpine.min.js',
 			array(),
 			'3.13.3',
@@ -113,7 +113,7 @@ class Frontend {
 		wp_register_script(
 			'wpss-frontend',
 			\WPSS_PLUGIN_URL . 'assets/js/frontend.js',
-			array( 'jquery', 'alpinejs', 'wpss-icons', 'wpss-ux-primitives', ScriptRegistry::HANDLE_UI ),
+			array( 'jquery', 'wpss-alpine', 'wpss-icons', 'wpss-ux-primitives', ScriptRegistry::HANDLE_UI ),
 			\WPSS_VERSION,
 			true
 		);
@@ -370,7 +370,7 @@ class Frontend {
 	 */
 	public function add_defer_attribute( string $tag, string $handle ): string {
 		// Only defer Alpine - other scripts should run immediately to register functions.
-		if ( 'alpinejs' === $handle && strpos( $tag, 'defer' ) === false ) {
+		if ( 'wpss-alpine' === $handle && strpos( $tag, 'defer' ) === false ) {
 			$tag = str_replace( ' src', ' defer src', $tag );
 		}
 

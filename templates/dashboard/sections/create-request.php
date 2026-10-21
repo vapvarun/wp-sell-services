@@ -187,16 +187,6 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 
 
 <script>
-function wpssShowNotice(msg, type) {
-	type = type || 'error';
-	var bgColor = type === 'success' ? '#d4edda' : '#f8d7da';
-	var borderColor = type === 'success' ? '#c3e6cb' : '#f5c6cb';
-	var textColor = type === 'success' ? '#155724' : '#721c24';
-	var $notice = jQuery('<div class="wpss-inline-notice" style="padding:12px 16px;margin:10px 0;border:1px solid ' + borderColor + ';border-radius:4px;background:' + bgColor + ';color:' + textColor + ';position:relative;">' + msg + '<span style="position:absolute;right:10px;top:8px;cursor:pointer;font-size:18px;line-height:1;">&times;</span></div>');
-	$notice.find('span').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-	jQuery('#wpss-post-request-form, .wpss-dashboard').first().before($notice);
-	setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 8000);
-}
 (function($) {
 	'use strict';
 
@@ -208,7 +198,7 @@ function wpssShowNotice(msg, type) {
 		var originalHtml = $button.html();
 
 		if ($form.find('.wpss-request-files__item--uploading').length) {
-			wpssShowNotice('<?php echo esc_js( __( 'Wait for the attachments to finish uploading.', 'wp-sell-services' ) ); ?>', 'error');
+			wpssToast('<?php echo esc_js( __( 'Wait for the attachments to finish uploading.', 'wp-sell-services' ) ); ?>', 'error');
 			return;
 		}
 
@@ -217,7 +207,7 @@ function wpssShowNotice(msg, type) {
 		var maxBudget = parseFloat($('#request_budget_max').val()) || 0;
 
 		if (maxBudget > 0 && minBudget > maxBudget) {
-			wpssShowNotice('<?php echo esc_js( __( 'Minimum budget cannot be greater than maximum budget.', 'wp-sell-services' ) ); ?>', 'error');
+			wpssToast('<?php echo esc_js( __( 'Minimum budget cannot be greater than maximum budget.', 'wp-sell-services' ) ); ?>', 'error');
 			return;
 		}
 
@@ -245,14 +235,14 @@ function wpssShowNotice(msg, type) {
 						'</div>'
 					);
 				} else {
-					wpssShowNotice(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
+					wpssToast(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
 					$button
 						.prop('disabled', false)
 						.html(originalHtml);
 				}
 			},
 			error: function() {
-				wpssShowNotice('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
+				wpssToast('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
 				$button
 					.prop('disabled', false)
 					.html(originalHtml);

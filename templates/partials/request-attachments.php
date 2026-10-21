@@ -93,8 +93,6 @@ $wpss_file_max       = (int) wpss_get_option( 'advanced', 'max_file_size' );
 				var msg = (xhr.responseJSON && xhr.responseJSON.message) || '<?php echo esc_js( __( 'The file could not be uploaded.', 'wp-sell-services' ) ); ?>';
 				if (window.wpssToast) {
 					window.wpssToast(msg, 'error');
-				} else if (window.wpssShowNotice) {
-					window.wpssShowNotice(msg, 'error');
 				}
 			});
 		});
