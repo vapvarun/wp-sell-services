@@ -28,11 +28,6 @@
   "version": "1.9.1",
   "accepted": [
     {
-      "id": "J02:rest-cancel-only-opener-only-while-open",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
       "id": "J03:A2-six-pages-slugs",
       "card": "10427222944",
       "reason": "Needs a fresh activation on a clean site; covered by the pristine install of the zips."
@@ -40,52 +35,32 @@
     {
       "id": "J04:s1-breadcrumb-home-vendors",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J04:p2-s8-empty-states",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J05:p2-s2-suspended-seller-nav",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J05:p2-s3-suspended-seller-starts-nothing",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J08:p1-s2-token-cannot-mint",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J08:p2-s6-requirements-skip-once",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J11:registry-no-generic-bell",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J11:s5-account-page-notifications-tab",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J14:s1-sub-ratings-optional",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J14:s5-no-empty-heading",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J14:s6-signed-out-asked-to-log-in",
@@ -95,7 +70,7 @@
     {
       "id": "J15:s1-profile-timezone-and-links-fields",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J15:s1-vendor-without-profile-row",
@@ -105,37 +80,27 @@
     {
       "id": "J15:s2-portfolio-counter-after-delete",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J15:s6-reorder-other-seller-response",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J15:s6-seller-levels-rest",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J16:s1-repeat-decline-message",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J16:s1-phase-tax",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J16:s2-extension-tax",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     },
     {
       "id": "J16:s4-tip-tax",
       "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
+      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     }
   ],
   "resolved": [
@@ -263,6 +228,41 @@
       "id": "HARD:J16: paid extension updates deadline onl",
       "fixed_in": "f8fab03f",
       "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Late order 3632 with past deadline: after the paid extension it returned to in_progress with deadline moved to 2026-10-25."
+    },
+    {
+      "id": "J02:rest-cancel-only-opener-only-while-open",
+      "fixed_in": "74f5dcf3",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-dispute-cancel-after-escalation.php: opener refused after escalation, admin can still close, no repeat Order completed notice. Fails on the old code."
+    },
+    {
+      "id": "J05:p2-s2-suspended-seller-nav",
+      "fixed_in": "0d0012f7",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Re-checked live on 2026-10-21 after the release: a suspended vendor gets Buying, Selling > Sales Orders only, and Account; can_access is false for services, earnings and portfolio. The recorded finding was stale. Browser check of the rendered Sales Orders page still needed."
+    },
+    {
+      "id": "J05:p2-s3-suspended-seller-starts-nothing",
+      "fixed_in": "5471e65e",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-proposal-gate-vendor-standing.php: both proposal REST routes answer wpss_vendor_suspended for a suspended vendor. Fails on the old code."
+    },
+    {
+      "id": "J08:p1-s2-token-cannot-mint",
+      "fixed_in": "6466a69e",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-token-cannot-mint.php: a token used as the password gets 401 and no token is minted. Code stays invalid_credentials on a stock site; the journey and docs now say so, because a distinct code would confirm a guessed token is valid."
+    },
+    {
+      "id": "J08:p2-s6-requirements-skip-once",
+      "fixed_in": "1cb77466",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-requirements-skip-once.php: the second skip is refused (409) and writes nothing. Fails on the old code."
+    },
+    {
+      "id": "J15:s6-reorder-other-seller-response",
+      "fixed_in": "a18f903c",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-portfolio-reorder-ownership.php: a request naming another vendor's item is refused and nothing moves. Fails on the old code."
+    },
+    {
+      "id": "J16:s1-repeat-decline-message",
+      "fixed_in": "6466a69e",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-milestone-decline-messages.php: a cancelled phase reads already declined, a paid one still reads already paid. Fails on the old code."
     }
   ],
   "debug_log_accepted": [],
