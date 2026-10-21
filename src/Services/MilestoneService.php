@@ -732,6 +732,13 @@ class MilestoneService {
 			);
 		}
 
+		if ( ServiceOrder::STATUS_CANCELLED === $sub->status ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This phase has already been declined.', 'wp-sell-services' ),
+			);
+		}
+
 		if ( 'pending_payment' !== $sub->status ) {
 			return array(
 				'success' => false,

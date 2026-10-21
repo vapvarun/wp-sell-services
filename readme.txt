@@ -279,6 +279,9 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - A suspended vendor can no longer start new pre-sale conversations, and keeps Sales Orders to finish paid work.
 * Fix      - Order amount limits and other number settings can no longer be saved below their minimum.
 * Fix      - Submitting a milestone phase twice notifies the buyer once, and a paid extension returns a late order to In Progress.
+* Fix      - Sellers get one email per tip instead of two.
+* Fix      - Dispute escalation emails reach the site admin when no dispute email is set.
+* Fix      - Approving or rejecting a service twice no longer emails the seller twice.
 * Fix      - Orders filters are usable on a phone, and the Withdrawals filter and Export button no longer run off the screen.
 * Fix      - Withdrawals has a Cancelled tab, so the tab counts add up.
 * Fix      - Member since and completed orders read the same everywhere; tips and extensions no longer count as orders.

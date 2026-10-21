@@ -71,3 +71,25 @@ if ( $phase ) {
 // 10425686815: the paid-extension path returns a late order to In Progress.
 $src = (string) file_get_contents( dirname( __DIR__ ) . '/src/Services/ExtensionOrderService.php' );
 wpss_t( false !== strpos( $src, "'late' === \$parent->status" ), 'paid extension moves a late order back to in progress' );
+
+// Triage of the other smoke failures.
+$method = new ReflectionMethod( \WPSellServices\Services\NotificationService::class, 'is_email_service_handling' );
+$method->setAccessible( true );
+wpss_t( true === $method->invoke( new \WPSellServices\Services\NotificationService(), 'tip_received' ), 'a tip sends the seller one email, not two' );
+
+update_option( 'wpss_dispute_admin_email', '' );
+$dsrc = (string) file_get_contents( dirname( __DIR__ ) . '/src/Services/DisputeWorkflowManager.php' );
+wpss_t( false !== strpos( $dsrc, "get_option( 'wpss_dispute_admin_email' ) ?: get_option( 'admin_email' )" ), 'a blank dispute admin email falls back to the site admin email' );
+delete_option( 'wpss_dispute_admin_email' );
+
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$svc_id = (int) $wpdb->get_var( "SELECT p.ID FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = '_wpss_moderation_status' AND m.meta_value = 'approved' WHERE p.post_type = 'wpss_service' AND p.post_status = 'publish' LIMIT 1" );
+if ( $svc_id ) {
+	$mod   = new \WPSellServices\Services\ModerationService();
+	$count = did_action( 'wpss_service_approved' );
+	$mod->approve( $svc_id );
+	$mod->approve( $svc_id );
+	wpss_t( did_action( 'wpss_service_approved' ) === $count, 'approving an approved, live service twice announces nothing' );
+} else {
+	echo "  SKIP  no approved live service.\n";
+}

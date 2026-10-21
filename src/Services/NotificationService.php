@@ -2197,6 +2197,8 @@ class NotificationService {
 			// Reviews: Plugin.php calls EmailService::send_review_received()
 			// on wpss_review_created; the row must not mail a second time.
 			self::TYPE_REVIEW_RECEIVED,
+			// Tips: EmailService::send_tip_received() is called with the row.
+			self::TYPE_TIP_RECEIVED,
 		);
 
 		return in_array( $type, $covered_types, true );

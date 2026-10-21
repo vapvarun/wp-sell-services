@@ -873,7 +873,7 @@ class DisputeWorkflowManager {
 	 * @return void
 	 */
 	private function notify_admins_of_escalation( int $dispute_id, object $dispute, string $reason ): void {
-		$admin_email = get_option( 'wpss_dispute_admin_email', get_option( 'admin_email' ) );
+		$admin_email = get_option( 'wpss_dispute_admin_email' ) ?: get_option( 'admin_email' );
 
 		$subject = sprintf(
 			/* translators: %d: dispute ID */
