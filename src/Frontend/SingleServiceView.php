@@ -214,63 +214,33 @@ class SingleServiceView {
 	public function render_breadcrumb( Service $service ): void {
 		$service_id = $service->id;
 		$categories = get_the_terms( $service_id, 'wpss_service_category' );
-		?>
-		<nav class="wpss-breadcrumb" aria-label="<?php esc_attr_e( 'Breadcrumb', 'wp-sell-services' ); ?>">
-			<ol class="wpss-breadcrumb-list">
-				<li class="wpss-breadcrumb-item">
-					<a href="<?php echo esc_url( home_url() ); ?>">
-						<?php esc_html_e( 'Home', 'wp-sell-services' ); ?>
-					</a>
-				</li>
-				<li class="wpss-breadcrumb-item">
-					<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_service' ) ); ?>">
-						<?php esc_html_e( 'Services', 'wp-sell-services' ); ?>
-					</a>
-				</li>
-				<?php if ( $categories && ! is_wp_error( $categories ) ) : ?>
-					<?php
-					$category = $categories[0];
-					$parent   = $category->parent;
+		$crumbs     = array( array( __( 'Services', 'wp-sell-services' ), (string) get_post_type_archive_link( 'wpss_service' ) ) );
 
-					// Build parent hierarchy.
-					$parents = array();
-					while ( $parent > 0 ) {
-						$parent_term = get_term( $parent, 'wpss_service_category' );
-						if ( $parent_term && ! is_wp_error( $parent_term ) ) {
-							$parents[] = $parent_term;
-							$parent    = $parent_term->parent;
-						} else {
-							break;
-						}
-					}
+		if ( $categories && ! is_wp_error( $categories ) ) {
+			$category = $categories[0];
+			$parent   = $category->parent;
 
-					// Display parents first.
-					foreach ( array_reverse( $parents ) as $parent_term ) :
-						?>
-						<li class="wpss-breadcrumb-item">
-							<a href="<?php echo esc_url( get_term_link( $parent_term ) ); ?>">
-								<?php echo esc_html( $parent_term->name ); ?>
-							</a>
-						</li>
-						<?php
-					endforeach;
-					?>
-					<li class="wpss-breadcrumb-item">
-						<a href="<?php echo esc_url( get_term_link( $category ) ); ?>">
-							<?php echo esc_html( $category->name ); ?>
-						</a>
-					</li>
-				<?php endif; ?>
-				<li class="wpss-breadcrumb-item wpss-breadcrumb-current" aria-current="page">
-					<?php
-					// Raw title: `the_title` is blanked for the queried object on
-					// shell surfaces, which left this crumb visibly empty.
-					echo esc_html( (string) get_post_field( 'post_title', $service_id ) );
-					?>
-				</li>
-			</ol>
-		</nav>
-		<?php
+			// Parent hierarchy, nearest last.
+			$parents = array();
+			while ( $parent > 0 ) {
+				$parent_term = get_term( $parent, 'wpss_service_category' );
+				if ( ! $parent_term || is_wp_error( $parent_term ) ) {
+					break;
+				}
+				$parents[] = $parent_term;
+				$parent    = $parent_term->parent;
+			}
+
+			foreach ( array_reverse( $parents ) as $parent_term ) {
+				$crumbs[] = array( $parent_term->name, (string) get_term_link( $parent_term ) );
+			}
+			$crumbs[] = array( $category->name, (string) get_term_link( $category ) );
+		}
+
+		// Raw title: `the_title` is blanked for the queried object on shell surfaces, which left this crumb visibly empty.
+		$crumbs[] = array( (string) get_post_field( 'post_title', $service_id ), '' );
+
+		wpss_render_breadcrumb( $crumbs );
 	}
 
 	/**

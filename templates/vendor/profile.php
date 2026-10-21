@@ -133,6 +133,13 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 <div class="wpss-vendor-profile">
 	<div class="wpss-container">
 		<?php
+		// Home > Vendors > this vendor; with no directory page the Vendors crumb is dropped.
+		$vendors_page = function_exists( 'wpss_get_vendors_page_id' ) ? wpss_get_vendors_page_id() : 0;
+		$crumbs       = $vendors_page ? array( array( (string) get_post_field( 'post_title', $vendors_page ), (string) get_permalink( $vendors_page ) ) ) : array();
+		$crumbs[]     = array( $vendor->display_name, '' );
+		wpss_render_breadcrumb( $crumbs );
+		?>
+		<?php
 		/*
 		 * Availability first, before anything the buyer might act on.
 		 *

@@ -344,11 +344,40 @@ function wpss_get_template( string $template_name, array $args = array(), string
 }
 
 /**
+ * The one breadcrumb markup: Home first, the last crumb is the current page.
+ *
+ * The service page, the request page and the vendor directory each carried their own copy of this
+ * nav. Pass the crumbs after Home as label => URL pairs in order; give the last one an empty URL.
+ *
+ * @since 1.9.1
+ *
+ * @param array<int, array{0: string, 1: string}> $crumbs Crumbs after Home, each [ label, url ].
+ * @return void
+ */
+function wpss_render_breadcrumb( array $crumbs ): void {
+	array_unshift( $crumbs, array( __( 'Home', 'wp-sell-services' ), home_url( '/' ) ) );
+	$last = count( $crumbs ) - 1;
+	?>
+	<nav class="wpss-breadcrumb" aria-label="<?php esc_attr_e( 'Breadcrumb', 'wp-sell-services' ); ?>">
+		<ol class="wpss-breadcrumb-list">
+			<?php foreach ( $crumbs as $i => $crumb ) : ?>
+				<?php if ( $i === $last && '' === (string) $crumb[1] ) : ?>
+					<li class="wpss-breadcrumb-item wpss-breadcrumb-current" aria-current="page"><?php echo esc_html( (string) $crumb[0] ); ?></li>
+				<?php else : ?>
+					<li class="wpss-breadcrumb-item"><a href="<?php echo esc_url( (string) $crumb[1] ); ?>"><?php echo esc_html( (string) $crumb[0] ); ?></a></li>
+				<?php endif; ?>
+			<?php endforeach; ?>
+		</ol>
+	</nav>
+	<?php
+}
+
+/**
  * Breadcrumb on a buyer request: Home > Buyer Requests > the request.
  *
  * The template documented this as hooked at wpss_single_request_header 5,
  * but no such function existed, so a request page had no way back to the
- * list (Basecamp 10337197376). Same markup as the service breadcrumb.
+ * list (Basecamp 10337197376).
  *
  * @since 1.8.0
  *
@@ -356,15 +385,12 @@ function wpss_get_template( string $template_name, array $args = array(), string
  * @return void
  */
 function wpss_request_breadcrumb( int $request_id ): void {
-	?>
-	<nav class="wpss-breadcrumb" aria-label="<?php esc_attr_e( 'Breadcrumb', 'wp-sell-services' ); ?>">
-		<ol class="wpss-breadcrumb-list">
-			<li class="wpss-breadcrumb-item"><a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'wp-sell-services' ); ?></a></li>
-			<li class="wpss-breadcrumb-item"><a href="<?php echo esc_url( (string) get_post_type_archive_link( 'wpss_request' ) ); ?>"><?php esc_html_e( 'Buyer Requests', 'wp-sell-services' ); ?></a></li>
-			<li class="wpss-breadcrumb-item wpss-breadcrumb-current" aria-current="page"><?php echo esc_html( (string) get_post_field( 'post_title', $request_id ) ); ?></li>
-		</ol>
-	</nav>
-	<?php
+	wpss_render_breadcrumb(
+		array(
+			array( __( 'Buyer Requests', 'wp-sell-services' ), (string) get_post_type_archive_link( 'wpss_request' ) ),
+			array( (string) get_post_field( 'post_title', $request_id ), '' ),
+		)
+	);
 }
 add_action( 'wpss_single_request_header', 'wpss_request_breadcrumb', 5 );
 

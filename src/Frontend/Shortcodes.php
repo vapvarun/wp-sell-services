@@ -389,6 +389,7 @@ class Shortcodes {
 		static $wpss_vendors_header = false;
 		if ( ! $wpss_vendors_header && $toolbar && wpss_is_page( 'vendors_page' ) ) {
 			$wpss_vendors_header = true;
+			wpss_render_breadcrumb( array( array( (string) get_post_field( 'post_title', (int) wpss_get_page_id( 'vendors_page' ) ), '' ) ) );
 			ShellHeader::render(
 				array(
 					'title'    => (string) get_post_field( 'post_title', (int) wpss_get_page_id( 'vendors_page' ) ),
