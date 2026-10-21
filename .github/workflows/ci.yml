@@ -233,7 +233,7 @@ jobs:
       # install. The plugin's own seeder builds it.
       - name: Seed the demo marketplace
         working-directory: ${{ env.PLUGIN_DIR }}
-        run: wp wpss demo marketplace --no-images --orders=20
+        run: wp wpss demo marketplace --no-images --force
 
       # Every script exits non-zero on a failed assertion. Run them all before
       # failing so one red script does not hide the others.
