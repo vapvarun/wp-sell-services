@@ -60,3 +60,8 @@ As buyer and vendor, open a catalog order with a pending extra-work quote at 144
 As the buyer, submit an offline payment on an extra-work quote and open the extension sub-order while it still awaits confirmation.
 
 **Expect** the heading is waiting / quote sent, never "Quote declined", and bank instructions or a single waiting notice are visible.
+
+### Tax on phases, extensions and tips (owner decision 2026-10-21)
+With tax enabled at 20% (exclusive), propose a 50 phase and a 30 extension, and tip 12 on a completed order, then open each pay page as the buyer on the Woo rail, the standalone rail and the FluentCart rail, at 1440 and 390.
+
+**Expect** the phase pays 60 (a 50 line and a "VAT (20%)" 10 line), the extension pays 36, and the tip pays 12 with no VAT line. Switch on **Tax tips** and a new tip pays 14.40. With prices-include-tax the buyer still pays 50 and the page says the VAT is included. The vendor's earnings and the platform fee are taken on the pre-tax amount in every case. Guard: `tests/test-sub-order-tax.php`.

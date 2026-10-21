@@ -267,6 +267,30 @@ function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 
 }
 
 /**
+ * The tax an order was priced with, as stored in its meta at creation.
+ *
+ * One reader for the pay page and every store rail's pay-order, so none of them re-parses the meta
+ * or re-derives a rate. `amount` is 0 when the order carries no tax.
+ *
+ * @since 1.9.1
+ *
+ * @param object $order Order row (JSON meta string) or ServiceOrder (decoded meta array).
+ * @return array{amount: float, rate: float, label: string, included: bool}
+ */
+function wpss_get_order_tax( object $order ): array {
+	$meta = $order->meta ?? array();
+	$meta = is_string( $meta ) ? (array) json_decode( $meta, true ) : (array) $meta;
+	$label = trim( (string) ( $meta['tax_label'] ?? '' ) );
+
+	return array(
+		'amount'   => (float) ( $meta['tax_amount'] ?? 0 ),
+		'rate'     => (float) ( $meta['tax_rate'] ?? 0 ),
+		'label'    => '' !== $label ? $label : __( 'Tax', 'wp-sell-services' ),
+		'included' => ! empty( $meta['tax_included'] ),
+	);
+}
+
+/**
  * Get the list of three-decimal currency codes (ISO 4217).
  *
  * These are charged in thousandths, not hundredths — a 10.000 BHD charge is

@@ -321,6 +321,43 @@ class CheckoutIntentService {
 	}
 
 	/**
+	 * Price a phase, an extension or a tip the way the order it hangs off is priced.
+	 *
+	 * Phases and extensions carry the site's tax like any other part of the service. A tip is taxed
+	 * only when the owner turns on "Tax tips" (off by default: it is often treated as a gift). The row
+	 * keeps the quoted amount as `subtotal` and the taxed `total` (what the buyer pays on every rail),
+	 * with the rate, amount and tax_included flag in `meta`; wpss_order_commission_base() takes the tax
+	 * out of an inclusive subtotal, so commission is never taken on tax in either mode.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param string $kind       'milestone', 'extension' or 'tip'.
+	 * @param float  $amount     Amount the vendor quoted or the buyer tipped.
+	 * @param int    $service_id Parent order's service ID (0 for a custom request).
+	 * @param int    $vendor_id  Parent order's vendor.
+	 * @return array{subtotal:float,total:float,tax_meta:array<string,mixed>}
+	 */
+	public static function price_sub_order( string $kind, float $amount, int $service_id, int $vendor_id ): array {
+		$taxable = 'tip' !== $kind || ! empty( ( get_option( 'wpss_tax', array() ) )['tax_tips'] );
+		$line    = $taxable
+			? self::price_line( $service_id, $amount, 0.0, $vendor_id )
+			: array( 'tax' => 0.0, 'tax_rate' => 0.0, 'total' => $amount, 'tax_included' => false, 'tax_label' => '' );
+
+		return array(
+			'subtotal' => $amount,
+			'total'    => (float) $line['total'],
+			'tax_meta' => $line['tax'] > 0
+				? array(
+					'tax_rate'     => (float) $line['tax_rate'],
+					'tax_amount'   => round( (float) $line['tax'], 2 ),
+					'tax_included' => (bool) $line['tax_included'],
+					'tax_label'    => (string) $line['tax_label'],
+				)
+				: array(),
+		);
+	}
+
+	/**
 	 * Resolve a single service + package (+ add-ons) intent.
 	 *
 	 * @since 1.3.0

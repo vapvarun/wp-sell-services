@@ -594,12 +594,15 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 		if ( $is_pay_order ) {
 			// Pay-order flow: use the order total directly (tax already included).
-			$total      = (float) $pay_order->total;
-			$currency   = $pay_order->currency ?: wpss_get_currency();
-			$tax_amount = 0;
-			$tax_rate   = 0;
-			$tax_label  = '';
-			$price      = $total;
+			$total        = (float) $pay_order->total;
+			$currency     = $pay_order->currency ?: wpss_get_currency();
+			// The tax the order was priced with, so the page shows the VAT line the total already carries.
+			$pay_tax      = wpss_get_order_tax( $pay_order );
+			$tax_amount   = $pay_tax['amount'];
+			$tax_rate     = $pay_tax['rate'];
+			$tax_label    = $pay_tax['label'];
+			$tax_included = $pay_tax['included'];
+			$price        = $total;
 
 			$selected_package = null;
 			$vendor           = get_user_by( 'id', $pay_order->vendor_id );
@@ -653,6 +656,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		// Summary lines for templates/checkout/summary.php.
 		$summary_lines = array();
 		if ( $is_pay_order ) {
+			if ( $tax_amount > 0 ) {
+				$summary_lines[] = array(
+					'label'  => __( 'Subtotal', 'wp-sell-services' ),
+					'amount' => $tax_included ? $total : $total - $tax_amount,
+				);
+				$summary_lines[] = $this->tax_summary_line( $tax_label, $tax_rate, $tax_amount, $tax_included );
+			}
 			$summary_lines[] = array(
 				'label'  => __( 'Order total', 'wp-sell-services' ),
 				'amount' => $total,

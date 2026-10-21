@@ -208,6 +208,8 @@ class MilestoneService {
 			$due_date = gmdate( 'Y-m-d H:i:s', time() + ( $days_to_deliver * DAY_IN_SECONDS ) );
 		}
 
+		$priced = \WPSellServices\Checkout\CheckoutIntentService::price_sub_order( 'milestone', $amount, (int) $parent->service_id, (int) $parent->vendor_id );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$inserted = $wpdb->insert(
 			$orders_table,
@@ -218,22 +220,25 @@ class MilestoneService {
 				'service_id'        => (int) $parent->service_id,
 				'platform'          => self::ORDER_TYPE,
 				'platform_order_id' => $parent_order_id,
-				'subtotal'          => $amount,
-				'total'             => $amount,
+				'subtotal'          => $priced['subtotal'],
+				'total'             => $priced['total'],
 				'currency'          => $currency,
 				'status'            => 'pending_payment',
 				'payment_status'    => 'pending',
 				'delivery_deadline' => $due_date,
 				'vendor_notes'      => $description,
 				'meta'              => wp_json_encode(
-					array(
-						'milestone'             => true,
-						'parent_order_id'       => $parent_order_id,
-						'title'                 => $title,
-						'description'           => $description,
-						'deliverables'          => $deliverables,
-						'sort_order'            => $sort_order,
-						'is_contract_milestone' => $is_contract,
+					array_merge(
+						$priced['tax_meta'],
+						array(
+							'milestone'             => true,
+							'parent_order_id'       => $parent_order_id,
+							'title'                 => $title,
+							'description'           => $description,
+							'deliverables'          => $deliverables,
+							'sort_order'            => $sort_order,
+							'is_contract_milestone' => $is_contract,
+						)
 					)
 				),
 				'created_at'        => current_time( 'mysql', true ),

@@ -194,6 +194,8 @@ class ExtensionOrderService {
 		$order_number     = 'EXT-' . strtoupper( wp_generate_password( 8, false, false ) );
 		$currency         = $parent->currency ?? 'USD';
 
+		$priced = \WPSellServices\Checkout\CheckoutIntentService::price_sub_order( 'extension', $amount, (int) $parent->service_id, (int) $parent->vendor_id );
+
 		$wpdb->query( 'START TRANSACTION' );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -206,18 +208,21 @@ class ExtensionOrderService {
 				'service_id'        => (int) $parent->service_id,
 				'platform'          => self::ORDER_TYPE,
 				'platform_order_id' => $parent_order_id,
-				'subtotal'          => $amount,
-				'total'             => $amount,
+				'subtotal'          => $priced['subtotal'],
+				'total'             => $priced['total'],
 				'currency'          => $currency,
 				'status'            => 'pending_payment',
 				'payment_status'    => 'pending',
 				'vendor_notes'      => $reason,
 				'meta'              => wp_json_encode(
-					array(
-						'extension'       => true,
-						'parent_order_id' => $parent_order_id,
-						'extra_days'      => $extra_days,
-						'reason'          => $reason,
+					array_merge(
+						$priced['tax_meta'],
+						array(
+							'extension'       => true,
+							'parent_order_id' => $parent_order_id,
+							'extra_days'      => $extra_days,
+							'reason'          => $reason,
+						)
 					)
 				),
 				'created_at'        => current_time( 'mysql', true ),

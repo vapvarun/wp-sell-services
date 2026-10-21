@@ -66,21 +66,6 @@
       "id": "J15:s1-vendor-without-profile-row",
       "card": "10427222944",
       "reason": "Intentional behaviour: Scratch wpss_vendor user 'qa-smoke-noprofile' with no wpss_vendor_profiles row (deleted afterwards): /vendors/?vendor=qa-smoke-noprofile -> 200 rendering the 'Vendors' directory; /vendors/qa-smoke-nop"
-    },
-    {
-      "id": "J16:s1-phase-tax",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
-    },
-    {
-      "id": "J16:s2-extension-tax",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
-    },
-    {
-      "id": "J16:s4-tip-tax",
-      "card": "10427222944",
-      "reason": "Known at release, fix in the 1.9.1 re-cut; grouped on the card."
     }
   ],
   "resolved": [
@@ -263,6 +248,21 @@
       "id": "J15:s6-seller-levels-rest",
       "fixed_in": "4ec35443",
       "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. tests/test-seller-levels-rest-earnings.php: total_earnings is the ledger total (42.5, was 0) and a pro-tier vendor has no next level (was rising, a lower tier). Both fail on the old code."
+    },
+    {
+      "id": "J16:s1-phase-tax",
+      "fixed_in": "pending-commit",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Owner decision 2026-10-21: VAT applies to milestone phases. tests/test-sub-order-tax.php: a 50 phase is 60 with a stored rate and amount, commission stays on the 50, inclusive and tax-off cases hold, the Free pay page shows the VAT line. Fails on the old code. Woo rail shows a separate VAT fee line (Pro), FluentCart a note in the line label."
+    },
+    {
+      "id": "J16:s2-extension-tax",
+      "fixed_in": "pending-commit",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Owner decision 2026-10-21: VAT applies to extensions. tests/test-sub-order-tax.php: a 30 extension is 36 with the tax stored on the order. Fails on the old code."
+    },
+    {
+      "id": "J16:s4-tip-tax",
+      "fixed_in": "pending-commit",
+      "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Owner decision 2026-10-21: tips are untaxed by default, with a Tax tips setting to turn it on. tests/test-sub-order-tax.php: a tip stays 12 by default and is 14.40 with Tax tips on; the setting saves and clears. Default case passes on the old code by design, the setting case fails on it."
     }
   ],
   "debug_log_accepted": [],

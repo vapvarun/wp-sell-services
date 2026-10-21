@@ -499,6 +499,11 @@
       "extension_points": "wpss_commission_fee (amount) / wpss_commission_rate (percent) / wpss_commission_base_amount (base)",
       "base": "The base is the price WITHOUT tax. New orders: wpss_calculate_tax()['net'] (StandaloneOrderProvider, CheckoutIntentService::price_line()['net'] for proposals). Stored orders: wpss_order_commission_base( $order ), which takes meta.tax_amount off subtotal + addons_total when meta.tax_included is set (1.8.0+; older orders keep the pre-1.8.0 reading)."
     },
+    "tax": {
+      "authority": "wpss_calculate_tax() priced through CheckoutIntentService::price_line(); phases, extensions and tips through CheckoutIntentService::price_sub_order()",
+      "rule": "Never compute tax inline. A phase and an extension carry the site tax like the order they hang off; a tip only when wpss_tax[tax_tips] is on (off by default, owner decision 2026-10-21). The order row keeps the quote as subtotal and the taxed total, with tax_rate, tax_amount, tax_included and tax_label in meta.",
+      "readers": "wpss_get_order_tax( $order ) reads that meta for the Free pay page, the Woo pay-order (own VAT fee line, Pro) and the FluentCart pay-order (label note, Pro); wpss_order_commission_base() takes it out for commission."
+    },
     "wallet_balance": {
       "authority": "wpss_get_ledger_balance( int $user_id, bool $lock = false ) — src/functions.php:128",
       "rule": "SUM over {prefix}wpss_wallet_transactions, 'pending' rows excluded. Never SUM the table inline; pass $lock = true inside a credit/debit transaction to take FOR UPDATE. Replaced the stale vendor_profiles balance column (free) and three divergent SUM copies (Pro) in 1.2.2.",

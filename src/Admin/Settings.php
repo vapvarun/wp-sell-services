@@ -978,6 +978,21 @@ class Settings {
 			)
 		);
 
+		add_settings_field(
+			'tax_tips',
+			__( 'Tax Tips', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_tax',
+			'wpss_tax_section',
+			array(
+				'option_name' => 'wpss_tax',
+				'field'       => 'tax_tips',
+				'label'       => __( 'Charge tax on tips', 'wp-sell-services' ),
+				'default'     => false,
+				'description' => __( 'Milestone phases and extensions are taxed like the order they belong to. Tips are not taxed unless you turn this on; many tax authorities treat a tip as a gift, so check with your accountant.', 'wp-sell-services' ),
+			)
+		);
+
 		// Vendor settings.
 		register_setting(
 			'wpss_vendor',
@@ -3833,6 +3848,7 @@ class Settings {
 		}
 		$sanitized['tax_rate']     = min( 50, max( 0, (float) ( $input['tax_rate'] ?? 0 ) ) );
 		$sanitized['tax_included'] = ! empty( $input['tax_included'] );
+		$sanitized['tax_tips']     = ! empty( $input['tax_tips'] );
 
 		return $sanitized;
 	}

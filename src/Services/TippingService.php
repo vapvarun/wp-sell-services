@@ -234,6 +234,8 @@ class TippingService {
 		$currency     = $parent->currency ?? 'USD';
 		$tip_message  = sanitize_textarea_field( $message );
 
+		$priced = \WPSellServices\Checkout\CheckoutIntentService::price_sub_order( 'tip', $amount, (int) $parent->service_id, (int) $parent->vendor_id );
+
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$inserted = $wpdb->insert(
 			$orders_table,
@@ -244,17 +246,20 @@ class TippingService {
 				'service_id'        => (int) $parent->service_id,
 				'platform'          => self::ORDER_TYPE, // 'tip' — routes checkout like 'request' does.
 				'platform_order_id' => $parent_order_id,
-				'subtotal'          => $amount,
-				'total'             => $amount,
+				'subtotal'          => $priced['subtotal'],
+				'total'             => $priced['total'],
 				'currency'          => $currency,
 				'status'            => 'pending_payment',
 				'payment_status'    => 'pending',
 				'vendor_notes'      => $tip_message,
 				'meta'              => wp_json_encode(
-					array(
-						'tip'             => true,
-						'parent_order_id' => $parent_order_id,
-						'buyer_note'      => $tip_message,
+					array_merge(
+						$priced['tax_meta'],
+						array(
+							'tip'             => true,
+							'parent_order_id' => $parent_order_id,
+							'buyer_note'      => $tip_message,
+						)
 					)
 				),
 				'created_at'        => current_time( 'mysql', true ),

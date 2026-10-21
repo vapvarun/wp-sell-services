@@ -121,12 +121,20 @@
     "run": "php bin/check-ux-conformance.php"
    },
    {
+    "id": "csv-export-no-deprecation",
+    "run": "${WP_CLI:-wp} eval-file tests/test-csv-export-no-deprecation.php"
+   },
+   {
     "id": "dark-mode-and-icon-hooks",
     "run": "${WP_CLI:-wp} eval-file tests/test-dark-mode-and-icon-hooks.php"
    },
    {
     "id": "design-token-integrity",
     "run": "${WP_CLI:-wp} eval-file tests/test-design-token-integrity.php"
+   },
+   {
+    "id": "dispute-cancel-after-escalation",
+    "run": "${WP_CLI:-wp} eval-file tests/test-dispute-cancel-after-escalation.php"
    },
    {
     "id": "docs-audit",
@@ -147,6 +155,10 @@
    {
     "id": "layout-surface-css",
     "run": "${WP_CLI:-wp} eval-file tests/test-layout-surface-css.php"
+   },
+   {
+    "id": "milestone-decline-messages",
+    "run": "${WP_CLI:-wp} eval-file tests/test-milestone-decline-messages.php"
    },
    {
     "id": "multi-checkout-tax-label",
@@ -193,6 +205,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-order-product-columns.php"
    },
    {
+    "id": "portfolio-reorder-ownership",
+    "run": "${WP_CLI:-wp} eval-file tests/test-portfolio-reorder-ownership.php"
+   },
+   {
     "id": "portfolio-rest-service",
     "run": "${WP_CLI:-wp} eval-file tests/test-portfolio-rest-service.php"
    },
@@ -217,12 +233,20 @@
     "run": "${WP_CLI:-wp} eval-file tests/pro/test-woo-cart-session-price.php"
    },
    {
+    "id": "proposal-gate-vendor-standing",
+    "run": "${WP_CLI:-wp} eval-file tests/test-proposal-gate-vendor-standing.php"
+   },
+   {
     "id": "publish-blocked-notice",
     "run": "${WP_CLI:-wp} eval-file tests/test-publish-blocked-notice.php"
    },
    {
     "id": "integration-seam-contract",
     "run": "${WP_CLI:-wp} eval-file tests/test-integration-seam-contract.php"
+   },
+   {
+    "id": "requirements-skip-once",
+    "run": "${WP_CLI:-wp} eval-file tests/test-requirements-skip-once.php"
    },
    {
     "id": "rest-matrix",
@@ -233,8 +257,16 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-review-status-rest.php"
    },
    {
+    "id": "seller-levels-rest-earnings",
+    "run": "${WP_CLI:-wp} eval-file tests/test-seller-levels-rest-earnings.php"
+   },
+   {
     "id": "service-moderation-admin-publish",
     "run": "${WP_CLI:-wp} eval-file tests/test-service-moderation-admin-publish.php"
+   },
+   {
+    "id": "service-reviews-empty-section",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-reviews-empty-section.php"
    },
    {
     "id": "settings-heading-outline",
@@ -253,6 +285,10 @@
     "run": "node tests/smoke-gate-surfaces.test.cjs"
    },
    {
+    "id": "sub-order-tax",
+    "run": "${WP_CLI:-wp} eval-file tests/test-sub-order-tax.php"
+   },
+   {
     "id": "text-token-contrast",
     "run": "${WP_CLI:-wp} eval-file tests/test-text-token-contrast.php"
    },
@@ -263,6 +299,10 @@
    {
     "id": "time-sweep",
     "run": "${WP_CLI:-wp} eval-file tests/test-time-sweep.php"
+   },
+   {
+    "id": "token-cannot-mint",
+    "run": "${WP_CLI:-wp} eval-file tests/test-token-cannot-mint.php"
    },
    {
     "id": "withdrawal-status-emails",
