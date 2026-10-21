@@ -272,16 +272,29 @@ Three auto-calculated levels plus one admin-granted: New Vendor (default), Risin
 Admins can import reviews for new vendors, and a set of payment, email and review fixes from the 1.9.0 reports.
 
 * New      - Admins can add one review or import a CSV for a vendor's service; imported reviews show an Imported review label, count in ratings and send no email (needs Pro).
+* New      - Buyers can add optional Communication, Quality and Value ratings to a review; they show on the review card and are accepted by the REST API. The overall rating is unchanged.
+* New      - Vendors can set their own time zone in the profile, and the dates they see follow it.
+* New      - A Tax tips setting under Commission and Tax; tips are untaxed unless it is on.
 * Improve  - Custom-price manual orders read Custom order instead of a package name and price.
 * Improve  - Payment, proposal, milestone and extension emails always send, and the email preferences screen says so.
 * Improve  - The vendor profile review list uses the same markup as the service page, and View all reviews loads the next pages from the server.
 * Improve  - Vendor and service ratings, the vendor card, REST stats and vendor levels all count the same reviews.
+* Improve  - Milestone phases and paid extensions carry VAT like the order they belong to, and every pay page shows the VAT line.
+* Improve  - The vendor directory and vendor profiles show a Home and Vendors breadcrumb.
 * Improve  - Removed the review Helpful vote: reviews and the vendor rating already say how a vendor did.
 * Improve  - Vendors are notified when a buyer requests a revision on a milestone phase, and buyers are told the outcome of a report they filed.
 * Improve  - Dispute response reminders show as Dispute response due in the notification center.
 * Improve  - The Earnings ledger follows the chosen period, and the cart tax line names the rate like checkout does.
 * Improve  - Vendor profiles show the website and edit the social links from the dashboard.
 * Improve  - Contact Vendor says which attachments were skipped, and notification and ledger buttons are 44px tall on phones.
+* Fix      - CSV exports no longer log a PHP 8.4 deprecation.
+* Fix      - Portfolio reordering refuses another vendor's items.
+* Fix      - A dispute opener can no longer cancel after escalation, and repeat notices are not sent.
+* Fix      - A suspended or restricted vendor's proposal gets the standing message, and requirements can be skipped once.
+* Fix      - Declining a milestone phase reads as declined, and extension and dispute assignment notifications have rows and messages.
+* Fix      - Seller levels in REST report total earnings from the ledger and no next level for a manually set tier.
+* Fix      - The portfolio counter updates after a delete, and a service with no reviews shows no empty Reviews section.
+* Fix      - The empty service search state shows its icon.
 * Fix      - A suspended vendor can no longer start new pre-sale conversations, and keeps Sales Orders to finish paid work.
 * Fix      - Order amount limits and other number settings can no longer be saved below their minimum.
 * Fix      - Submitting a milestone phase twice notifies the buyer once, and a paid extension returns a late order to In Progress.
