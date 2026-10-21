@@ -965,19 +965,6 @@
 	color: var(--wpss-text-muted);
 }
 
-.wpss-no-reviews {
-	display: block !important;
-	visibility: visible !important;
-	text-align: center;
-	padding: 2rem;
-	color: var(--wpss-text-muted);
-}
-
-.wpss-no-reviews p {
-	margin: 0 !important;
-	padding: 0 !important;
-}
-
 .wpss-reviews-pagination {
 	margin-top: 1.5rem;
 	text-align: center;

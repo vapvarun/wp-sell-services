@@ -222,7 +222,8 @@ class SellerLevelsController extends RestController {
 
 		return array(
 			'completed_orders' => (int) $stats->completed_orders,
-			'total_earnings'   => 0,
+			// The ledger total: the same figure as the dashboard Sales tile and the Earnings page.
+			'total_earnings'   => wpss_get_ledger_total_earned( $vendor_id ),
 			'avg_rating'       => round( (float) $stats->avg_rating, 2 ),
 			'total_reviews'    => (int) $stats->total_reviews,
 			'delivery_rate'    => round( (float) $stats->delivery_rate, 1 ),

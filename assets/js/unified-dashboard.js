@@ -1029,8 +1029,9 @@
 							xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 						},
 						success: function () {
+							// The "n of max" counter, the Add button at the cap and the empty state all follow the count.
 							$btn.closest('.wpss-portfolio__item').fadeOut(300, function () {
-								$(this).remove();
+								window.location.reload();
 							});
 						},
 						error: function (xhr) {
