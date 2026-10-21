@@ -286,6 +286,7 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - Order amount limits and other number settings can no longer be saved below their minimum.
 * Fix      - Submitting a milestone phase twice notifies the buyer once, and a paid extension returns a late order to In Progress.
 * Fix      - A review held for moderation notifies the seller only once it is approved.
+* Fix      - A stale vendor link shows the vendor list and is kept out of search indexes.
 * Fix      - Sellers get one email per tip instead of two.
 * Fix      - Dispute escalation emails reach the site admin when no dispute email is set.
 * Fix      - Approving or rejecting a service twice no longer emails the seller twice.

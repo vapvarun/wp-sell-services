@@ -221,6 +221,10 @@ class TemplateLoader {
 			}
 			// An unknown slug on the directory page falls through to the
 			// directory: a stale link should show the list, not an error page.
+			// Keep the junk URL out of search indexes.
+			if ( ! $user && $from_directory ) {
+				add_filter( 'wp_robots', 'wp_robots_no_robots' );
+			}
 		}
 
 		// Mapped services page — use the archive template.
