@@ -398,8 +398,9 @@
  "debug_log_accepted": [],
  "coverage_verified_elsewhere": [],
  "staleness": {
-  "gate": "verify:smoke-gate",
-  "state": "The recorded combo walk (c21a7c05) predates about 148 rendered-file changes. The 47 checks that failed in it were re-run on 2026-10-21 at 1.9.1 HEAD: 25 fixed, 2 by design, 19 still failing, 1 untested.",
-  "not_covered": "No full combo walk describes the shipped tree. The 117 checks that passed in the recorded walk were not re-run, nor dark mode, RTL, the 1.9.0 to 1.9.1 upgrade path, or money rails."
+  "gate": "verify:smoke-gate (not run for the final cut)",
+  "state": "The recorded walks (Free 222d3797, combo c21a7c05) predate about 185 Free and 30 Pro rendered-file changes made in the 1.9.1 re-cut. On 2026-10-22 the owner chose to cut the retag without a new full journey walk, relying on the 2026-10-21 walk.",
+  "verified_instead": "Every re-cut change has a guard that fails on the old code (all guards green at the cut), phpcs, phpstan, docs-audit and i18n are clean, and each changed surface was opened in a real browser as the role that uses it, at 1280 and 390 where the change is visual. A banned buyer's cart and order modal, vendor dashboard sections, the buyer request page, the services archive, the Woo cart and every admin screen were walked on 2026-10-22.",
+  "not_covered": "No full combo walk describes the shipped tree. The 117 checks that passed in the recorded walk were not re-run, nor Free-only mode, dark mode, RTL, the theme matrix, the 1.9.0 to 1.9.1 upgrade path, money rails, or the EDD and FluentCart rail changes (code and unit verified only)."
  }
 }

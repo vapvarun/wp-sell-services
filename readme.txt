@@ -290,6 +290,12 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Improve  - Reviews written for an order show a Verified Purchase badge, and the owner is emailed when a service enters the review queue from the dashboard wizard or the REST API.
 * Improve  - Orders keep the tax label they were priced with, so renaming the Tax label later does not change past orders.
 * Improve  - Resolving a member report, assigning a dispute and changing a member's standing are recorded in the Audit Log.
+* Improve  - The service order window shows the VAT line and now shows a refusal, such as a closed account, instead of failing silently.
+* Improve  - A banned or suspended member can no longer buy, start a request, send a tip or post a review, and is told why; a banned or suspended seller's services are hidden and cannot be bought.
+* Improve  - Accepting a proposal checks both the buyer's and the seller's standing, and any edit to a live service through the REST API goes back to the review queue.
+* Improve  - Orders from WooCommerce, EDD and FluentCart start with the package's revisions and deadline, and FluentCart orders are announced to the vendor.
+* Improve  - The order REST payload shows the tax inside the total, and Audit Log events carry plain labels.
+* Improve  - A new dispute deadline earns the next response reminder.
 * Fix      - CSV exports no longer log a PHP 8.4 deprecation.
 * Fix      - Portfolio reordering refuses another vendor's items.
 * Fix      - A dispute opener can no longer cancel after escalation, and repeat notices are not sent.
@@ -325,10 +331,17 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - Request orders show the request title on the requirements page and in order emails instead of the page the buyer was on.
 * Fix      - The service gallery thumbnail strip no longer widens the page on phones, and the Quick Edit refresh in the service list no longer logs a PHP warning.
 * Fix      - The withdrawal confirmation stays on screen before the page refreshes.
+* Fix      - Select boxes no longer clip their text.
+* Fix      - An admin can open a seller's service in the editor from the dashboard, and the editor opens when gallery or package data is stored in an older format.
+* Fix      - A failed delete from the dashboard says so instead of reporting success.
+* Fix      - Repeating a decision that was already made, such as approving a withdrawal or setting the same status, sends no second email and writes no second Audit Log row.
+* Fix      - A payment that cannot be settled now says so, and a second payment arriving at the same moment is handled quietly.
 * Dev      - Updating removes the retired Helpful vote options and cleanup job; the helpful_count column is left in place.
 * Dev      - ReviewRepository::rating_stats() is the one rating query, and ReviewService::create_imported() the one door for imported reviews.
 * Dev      - Removed unused classes (FAQService, three repositories and the admin viewer data classes).
 * Compat   - Aligned with WP Sell Services Pro 1.9.1. Install both updates together.
+* Dev      - Removed the unused service and bulk AJAX handlers and ServiceManager::delete; wpss_user_can_edit_service() is the one rule for who may edit a service.
+* Dev      - Test scripts clean up the rows they create on any exit, and only those rows.
 
 = 1.9.0 - October 2026 =
 
