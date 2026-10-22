@@ -893,6 +893,17 @@ class BuyerRequestService {
 			);
 		}
 
+		// Both sides must be in good standing: an accepted proposal is a new
+		// purchase and new work, whichever door (AJAX, REST, CLI) it came through.
+		$standing = wpss_account_status_block( (int) $request->author_id ) ?? wpss_vendor_status_block( (int) $proposal->vendor_id );
+
+		if ( $standing ) {
+			return array(
+				'success' => false,
+				'message' => $standing->get_error_message(),
+			);
+		}
+
 		global $wpdb;
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 

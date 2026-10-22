@@ -89,6 +89,10 @@
  "checks": {
   "static": [
    {
+    "id": "accepting-a-proposal-checks-both-standings",
+    "run": "${WP_CLI:-wp} eval-file tests/test-accepting-a-proposal-checks-both-standings.php"
+   },
+   {
     "id": "account-standing",
     "run": "${WP_CLI:-wp} eval-file tests/test-account-standing.php"
    },

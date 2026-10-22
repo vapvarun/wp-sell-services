@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-22T05:16:16+00:00\n"
+"POT-Creation-Date: 2026-10-22T05:19:40+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -1182,7 +1182,7 @@ msgstr ""
 #: src/functions/order-status.php:71
 #: src/functions/order-status.php:153
 #: src/Models/ServiceOrder.php:638
-#: src/Services/BuyerRequestService.php:1374
+#: src/Services/BuyerRequestService.php:1385
 #: src/Services/EarningsService.php:1438
 #: templates/emails/order-cancelled.php:67
 #: templates/order/order-view.php:1307
@@ -9636,7 +9636,7 @@ msgid "Proposal accepted! Redirecting to payment…"
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:1572
-#: src/Services/BuyerRequestService.php:1038
+#: src/Services/BuyerRequestService.php:1049
 msgid "Failed to create order. Please try again."
 msgstr ""
 
@@ -10461,7 +10461,7 @@ msgid "Service navigation"
 msgstr ""
 
 #: src/Frontend/ServiceArchiveView.php:412
-#: src/Services/BuyerRequestService.php:1386
+#: src/Services/BuyerRequestService.php:1397
 msgid "Price Range"
 msgstr ""
 
@@ -15847,20 +15847,20 @@ msgstr ""
 
 #: src/Models/BuyerRequest.php:275
 #: src/Models/Dispute.php:240
-#: src/Services/BuyerRequestService.php:1370
+#: src/Services/BuyerRequestService.php:1381
 #: src/Services/DisputeService.php:1347
 msgid "Open"
 msgstr ""
 
 #: src/Models/BuyerRequest.php:277
-#: src/Services/BuyerRequestService.php:1372
+#: src/Services/BuyerRequestService.php:1383
 msgid "Hired"
 msgstr ""
 
 #: src/Models/BuyerRequest.php:278
 #: src/Models/ExtensionRequest.php:245
 #: src/Models/ExtensionRequest.php:285
-#: src/Services/BuyerRequestService.php:1373
+#: src/Services/BuyerRequestService.php:1384
 #: templates/content-request-card.php:87
 msgid "Expired"
 msgstr ""
@@ -16701,33 +16701,33 @@ msgid "Proposal does not belong to this request."
 msgstr ""
 
 #: src/Services/BuyerRequestService.php:892
-#: src/Services/BuyerRequestService.php:971
+#: src/Services/BuyerRequestService.php:982
 msgid "This proposal has already been processed."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1054
+#: src/Services/BuyerRequestService.php:1065
 msgid "This phased proposal has no phases defined."
 msgstr ""
 
 #. translators: 1: phase title, 2: error message
-#: src/Services/BuyerRequestService.php:1085
+#: src/Services/BuyerRequestService.php:1096
 #, php-format
 msgid "Could not create phase \"%1$s\": %2$s"
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1155
+#: src/Services/BuyerRequestService.php:1166
 msgid "Order requirements could not be saved. Please contact support."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1192
+#: src/Services/BuyerRequestService.php:1203
 msgid "Order created successfully. Proceed to payment."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1371
+#: src/Services/BuyerRequestService.php:1382
 msgid "In Review"
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1385
+#: src/Services/BuyerRequestService.php:1396
 #: templates/single-request.php:375
 #: templates/single-request.php:594
 msgid "Fixed price"
