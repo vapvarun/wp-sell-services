@@ -171,7 +171,6 @@ class ServiceWizard {
 		add_action( 'wp_ajax_wpss_wizard_save_draft', array( $this, 'ajax_save_draft' ) );
 		add_action( 'wp_ajax_wpss_wizard_publish', array( $this, 'ajax_publish_service' ) );
 		add_action( 'wp_ajax_wpss_wizard_upload_gallery', array( $this, 'ajax_upload_gallery' ) );
-		add_action( 'wp_ajax_wpss_wizard_remove_gallery', array( $this, 'ajax_remove_gallery' ) );
 	}
 
 	/**
@@ -245,7 +244,7 @@ class ServiceWizard {
 				return '<div class="wpss-notice wpss-notice-error">' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</div>';
 			}
 
-			if ( (int) $service->post_author !== $user_id && ! current_user_can( 'manage_options' ) ) {
+			if ( ! $this->can_edit_service( $service, $user_id ) ) {
 				return '<div class="wpss-notice wpss-notice-error">' . esc_html__( 'You do not have permission to edit this service.', 'wp-sell-services' ) . '</div>';
 			}
 		}
@@ -1727,11 +1726,15 @@ class ServiceWizard {
 		}
 
 		// Verify ownership if editing.
+		$author_id = $user_id;
 		if ( $service_id ) {
 			$service = get_post( $service_id );
-			if ( ! $service || $user_id !== (int) $service->post_author ) {
+			if ( ! $this->can_edit_service( $service, $user_id ) ) {
 				wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this service.', 'wp-sell-services' ) ) );
 			}
+
+			// An admin editing a seller's service does not take it over.
+			$author_id = (int) $service->post_author;
 
 			// Saving a draft would take a live listing offline (Basecamp
 			// 10342028458); a live or pending service is saved by Update Service,
@@ -1754,8 +1757,9 @@ class ServiceWizard {
 		);
 
 		if ( $service_id ) {
-			$post_data['ID'] = $service_id;
-			$result          = wp_update_post( $post_data, true );
+			$post_data['ID']          = $service_id;
+			$post_data['post_author'] = $author_id;
+			$result                   = wp_update_post( $post_data, true );
 		} else {
 			$result = wp_insert_post( $post_data, true );
 		}
@@ -1893,12 +1897,13 @@ class ServiceWizard {
 
 		if ( $service_id ) {
 			$service = get_post( $service_id );
-			if ( ! $service || (int) $service->post_author !== $user_id ) {
+			if ( ! $this->can_edit_service( $service, $user_id ) ) {
 				delete_transient( $lock_key );
 				wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this service.', 'wp-sell-services' ) ) );
 			}
-			$post_data['ID'] = $service_id;
-			$result          = wp_update_post( $post_data, true );
+			$post_data['ID']          = $service_id;
+			$post_data['post_author'] = (int) $service->post_author; // An admin editing a seller's service does not take it over.
+			$result                   = wp_update_post( $post_data, true );
 		} else {
 			$result = wp_insert_post( $post_data, true );
 		}
@@ -1980,6 +1985,23 @@ class ServiceWizard {
 	}
 
 	/**
+	 * Whether a member may edit a service in the wizard: its author, or an admin.
+	 *
+	 * One rule for the page and both save handlers, so an admin who can open a
+	 * seller's service can also save it.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param \WP_Post|null $service Service post.
+	 * @param int           $user_id Member ID.
+	 * @return bool
+	 */
+	private function can_edit_service( ?\WP_Post $service, int $user_id ): bool {
+		return $service && 'wpss_service' === $service->post_type
+			&& ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
+	}
+
+	/**
 	 * AJAX: Upload gallery image.
 	 *
 	 * @return void
@@ -1989,6 +2011,12 @@ class ServiceWizard {
 
 		if ( ! is_user_logged_in() || empty( $_FILES['file'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		// Only a seller in good standing (or an admin) uploads here, as for every wizard save.
+		$standing = wpss_vendor_status_block();
+		if ( $standing || ! ( wpss_is_vendor( get_current_user_id() ) || current_user_can( 'manage_options' ) ) ) {
+			wp_send_json_error( array( 'message' => $standing ? $standing->get_error_message() : __( 'Only sellers can upload service images.', 'wp-sell-services' ) ) );
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
@@ -2064,29 +2092,6 @@ class ServiceWizard {
 				'url' => wp_get_attachment_image_url( $attachment_id, 'medium' ),
 			)
 		);
-	}
-
-	/**
-	 * AJAX: Remove gallery image.
-	 *
-	 * @return void
-	 */
-	public function ajax_remove_gallery(): void {
-		check_ajax_referer( 'wpss_service_wizard', 'nonce' );
-
-		$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
-
-		if ( ! $attachment_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid attachment.', 'wp-sell-services' ) ) );
-		}
-
-		// Only allow deleting own attachments.
-		$attachment = get_post( $attachment_id );
-		if ( ! $attachment || get_current_user_id() !== (int) $attachment->post_author ) {
-			wp_send_json_error( array( 'message' => __( 'You cannot delete this attachment.', 'wp-sell-services' ) ) );
-		}
-
-		wp_send_json_success();
 	}
 
 	/**

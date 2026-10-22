@@ -408,7 +408,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `src/Frontend/ServiceWizard.php:1942` |
+| `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `src/Frontend/ServiceWizard.php:1947` |
 | `wpss_wizard_pricing_after` | `WP_Post\|null $service` | `ServiceWizard.php` |
 | `wpss_wizard_save_service_meta` | `int $service_id, array $data` | `ServiceWizard.php` |
 

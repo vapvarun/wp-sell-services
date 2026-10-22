@@ -445,6 +445,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-withdrawal-status-emails.php"
    },
    {
+    "id": "wizard-owner-or-admin-and-upload-gate",
+    "run": "${WP_CLI:-wp} eval-file tests/test-wizard-owner-or-admin-and-upload-gate.php"
+   },
+   {
     "id": "wizard-package-description",
     "run": "${WP_CLI:-wp} eval-file tests/test-wizard-package-description.php"
    },

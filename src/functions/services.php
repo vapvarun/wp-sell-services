@@ -504,7 +504,7 @@ function wpss_service_limit_error( int $service_id, int $user_id ): string {
 	if ( $service_id ) {
 		$existing = get_post( $service_id );
 		// Already counted toward the limit (the same statuses the count uses), so no new slot is taken.
-		if ( ! $existing || in_array( $existing->post_status, array( 'publish', 'pending' ), true ) ) {
+		if ( ! $existing || in_array( $existing->post_status, wpss_get_limit_counted_statuses(), true ) ) {
 			return '';
 		}
 	}
@@ -854,14 +854,10 @@ function wpss_service_publish_refusal( int $service_id, int $user_id = 0 ): stri
 		return '';
 	}
 
-	if ( ! user_can( $user_id, 'manage_options' ) && ! apply_filters( 'wpss_vendor_can_create_service', true, $user_id ) ) {
-		/** This filter is documented in src/Frontend/ServiceWizard.php */
-		return wp_strip_all_tags(
-			(string) apply_filters(
-				'wpss_service_limit_error_message',
-				__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
-			)
-		);
+	// The one limit rule: a service already counted (published, pending, scheduled) takes no new slot.
+	$limit = wpss_service_limit_error( $service_id, $user_id );
+	if ( '' !== $limit ) {
+		return $limit;
 	}
 
 	$errors = wpss_validate_service_publishable(

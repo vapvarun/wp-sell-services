@@ -591,13 +591,6 @@
       "rate_limited": false,
       "anonymous": false
     },
-    "wp_ajax_wpss_wizard_remove_gallery": {
-      "callback": "WPSellServices\\Frontend\\ServiceWizard::ajax_remove_gallery",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": false,
-      "anonymous": false
-    },
     "wp_ajax_wpss_wizard_save_draft": {
       "callback": "WPSellServices\\Frontend\\ServiceWizard::ajax_save_draft",
       "nonce": true,

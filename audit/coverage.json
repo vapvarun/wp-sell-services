@@ -360,9 +360,6 @@
             "wpss_wizard_publish": [
                 "audit/render-coverage.json"
             ],
-            "wpss_wizard_remove_gallery": [
-                "audit/render-coverage.json"
-            ],
             "wpss_wizard_save_draft": [
                 "audit/render-coverage.json"
             ],
