@@ -429,6 +429,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-suspended-vendor-doors.php"
    },
    {
+    "id": "test-leftovers-are-swept",
+    "run": "${WP_CLI:-wp} eval-file tests/test-test-leftovers-are-swept.php"
+   },
+   {
     "id": "text-token-contrast",
     "run": "${WP_CLI:-wp} eval-file tests/test-text-token-contrast.php"
    },
@@ -459,6 +463,10 @@
    {
     "id": "withdrawal-status-emails",
     "run": "${WP_CLI:-wp} eval-file tests/test-withdrawal-status-emails.php"
+   },
+   {
+    "id": "wizard-opens-with-odd-meta",
+    "run": "${WP_CLI:-wp} eval-file tests/test-wizard-opens-with-odd-meta.php"
    },
    {
     "id": "wizard-owner-or-admin-and-upload-gate",

@@ -572,9 +572,6 @@ class DisputeWorkflowManager {
 	public function check_response_deadlines(): void {
 		global $wpdb;
 
-		$response_days = (int) get_option( 'wpss_dispute_response_days', 3 );
-		$deadline      = gmdate( 'Y-m-d H:i:s', strtotime( "-{$response_days} days" ) );
-
 		// Find disputes awaiting response past deadline.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$disputes = $wpdb->get_results(
@@ -920,14 +917,6 @@ class DisputeWorkflowManager {
 			/* translators: %d: dispute ID */
 			__( '[Action Required] Dispute #%d has been escalated', 'wp-sell-services' ),
 			$dispute_id
-		);
-
-		$message = sprintf(
-			/* translators: 1: dispute ID, 2: order ID, 3: reason */
-			__( "Dispute #%1\$d for Order #%2\$d has been escalated.\n\nReason: %3\$s\n\nPlease review and resolve this dispute.", 'wp-sell-services' ),
-			$dispute_id,
-			$dispute->order_id,
-			$reason
 		);
 
 		( new EmailService() )->send(

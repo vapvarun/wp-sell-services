@@ -2935,13 +2935,18 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
 		$user_id = get_current_user_id();
-		if ( ! $user_id || ! wpss_is_vendor( $user_id ) ) {
+		if ( ! $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
+		// Standing first: it names the real reason; is_vendor only says no.
 		$standing = wpss_vendor_status_block( $user_id );
 		if ( $standing ) {
 			wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
+		}
+
+		if ( ! wpss_is_vendor( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
 		$data = array(
@@ -2986,13 +2991,18 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
 		$user_id = get_current_user_id();
-		if ( ! $user_id || ! wpss_is_vendor( $user_id ) ) {
+		if ( ! $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
+		// Standing first: it names the real reason; is_vendor only says no.
 		$standing = wpss_vendor_status_block( $user_id );
 		if ( $standing ) {
 			wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
+		}
+
+		if ( ! wpss_is_vendor( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.

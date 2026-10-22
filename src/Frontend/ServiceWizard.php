@@ -1395,9 +1395,10 @@ class ServiceWizard {
 		}
 
 		$packages = get_post_meta( $service_id, '_wpss_packages', true );
-		$packages = ! empty( $packages ) ? $packages : array();
+		// Meta written by an import or an older release can be a string or a bare ID.
+		$packages = is_array( $packages ) ? $packages : array();
 		$gallery  = get_post_meta( $service_id, '_wpss_gallery', true );
-		$gallery  = ! empty( $gallery ) ? $gallery : array();
+		$gallery  = ! empty( $gallery ) ? (array) $gallery : array();
 		// The Alpine model edits options as one comma-separated string.
 		$requirements = array_map(
 			static fn( array $req ) => array_merge( $req, array( 'options' => implode( ', ', $req['options'] ) ) ),
@@ -1405,7 +1406,7 @@ class ServiceWizard {
 		);
 		$extras       = wpss_get_service_extras( $service_id );
 		$faqs         = get_post_meta( $service_id, '_wpss_faqs', true );
-		$faqs         = ! empty( $faqs ) ? $faqs : array();
+		$faqs         = is_array( $faqs ) ? $faqs : array();
 		$categories   = wp_get_post_terms( $service_id, 'wpss_service_category', array( 'fields' => 'ids' ) );
 		$categories   = is_wp_error( $categories ) ? array() : $categories;
 		$tags         = wp_get_post_terms( $service_id, 'wpss_service_tag', array( 'fields' => 'names' ) );

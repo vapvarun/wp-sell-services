@@ -895,12 +895,21 @@ class BuyerRequestService {
 
 		// Both sides must be in good standing: an accepted proposal is a new
 		// purchase and new work, whichever door (AJAX, REST, CLI) it came through.
-		$standing = wpss_account_status_block( (int) $request->author_id ) ?? wpss_vendor_status_block( (int) $proposal->vendor_id );
+		$standing = wpss_account_status_block( (int) $request->author_id );
 
 		if ( $standing ) {
 			return array(
 				'success' => false,
 				'message' => $standing->get_error_message(),
+			);
+		}
+
+		// The vendor's own wording says "Your vendor account", which the buyer who
+		// clicked Accept must not be told about themselves.
+		if ( wpss_vendor_status_block( (int) $proposal->vendor_id ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This seller cannot take new work right now, so the proposal cannot be accepted.', 'wp-sell-services' ),
 			);
 		}
 

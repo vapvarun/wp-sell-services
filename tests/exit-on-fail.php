@@ -53,6 +53,8 @@ register_shutdown_function(
 	static function () {
 		register_shutdown_function(
 			static function () {
+				wpss_test_sweep_created_rows();
+
 				if ( ! empty( $GLOBALS['wpss_test_saw_failure'] ) ) {
 					exit( 1 );
 				}
@@ -60,6 +62,58 @@ register_shutdown_function(
 		);
 	}
 );
+
+// Most scripts clean up only if they reach their last line, so a crash or a
+// FAIL-then-return left users, services and their orders on the site for the
+// next script to trip over. Remember every user and post the script creates and
+// remove what it left, once everything else has had its turn.
+$GLOBALS['wpss_test_created'] = array( 'users' => array(), 'posts' => array() );
+
+if ( function_exists( 'add_action' ) ) {
+	add_action(
+		'user_register',
+		static function ( $user_id ) {
+			$GLOBALS['wpss_test_created']['users'][] = (int) $user_id;
+		}
+	);
+	add_action(
+		'wp_insert_post',
+		static function ( $post_id, $post ) {
+			if ( ! in_array( $post->post_type, array( 'revision', 'nav_menu_item' ), true ) ) {
+				$GLOBALS['wpss_test_created']['posts'][] = (int) $post_id;
+			}
+		},
+		10,
+		2
+	);
+}
+
+if ( ! function_exists( 'wpss_test_sweep_created_rows' ) ) {
+	/**
+	 * Delete the users and posts this script made and did not remove itself.
+	 */
+	function wpss_test_sweep_created_rows(): void {
+		if ( ! function_exists( 'wp_delete_post' ) || ! function_exists( 'get_userdata' ) ) {
+			return;
+		}
+
+		// An admin may force-delete a service that has orders; nobody else may.
+		wp_set_current_user( 1 );
+
+		foreach ( array_unique( $GLOBALS['wpss_test_created']['posts'] ) as $post_id ) {
+			if ( get_post( $post_id ) ) {
+				wp_delete_post( $post_id, true );
+			}
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		foreach ( array_unique( $GLOBALS['wpss_test_created']['users'] ) as $user_id ) {
+			if ( 1 !== $user_id && get_userdata( $user_id ) ) {
+				wp_delete_user( $user_id );
+			}
+		}
+	}
+}
 
 if ( ! function_exists( 'wpss_test_activate_vendor' ) ) {
 	/**

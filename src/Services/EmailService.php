@@ -150,34 +150,6 @@ class EmailService {
 	}
 
 	/**
-	 * Initialize email hooks.
-	 *
-	 * @return void
-	 */
-	public function init(): void {
-		// Hook into order status changes.
-		add_action( 'wpss_order_status_changed', array( $this, 'handle_status_change' ), 20, 3 );
-		add_action( 'wpss_order_cancelled', array( $this, 'handle_order_cancelled' ), 20, 1 );
-
-		// Hook into specific events.
-		add_action( 'wpss_requirements_submitted', array( $this, 'send_requirements_submitted' ), 20, 3 );
-		add_action( 'wpss_delivery_submitted', array( $this, 'send_delivery_ready' ), 20, 2 );
-		add_action( 'wpss_new_order_message', array( $this, 'send_new_message' ), 20, 3 );
-
-		// New email types.
-		add_action( 'wpss_send_requirements_reminder_email', array( $this, 'send_requirements_reminder' ), 10, 3 );
-		add_action( 'wpss_vendor_level_promoted', array( $this, 'send_level_promotion' ), 10, 3 );
-
-		// Withdrawal processed (approved/rejected).
-		add_action( 'wpss_withdrawal_processed', array( $this, 'send_withdrawal_status' ), 10, 3 );
-
-		// Proposal notifications.
-		add_action( 'wpss_proposal_submitted', array( $this, 'send_proposal_submitted' ), 10, 4 );
-		add_action( 'wpss_proposal_accepted', array( $this, 'send_proposal_accepted' ), 10, 3 );
-		add_action( 'wpss_proposal_rejected', array( $this, 'send_proposal_rejected' ), 10, 3 );
-	}
-
-	/**
 	 * Get email settings.
 	 *
 	 * @return array

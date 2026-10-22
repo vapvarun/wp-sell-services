@@ -74,11 +74,13 @@ $service = new BuyerRequestService();
 update_user_meta( $buyer, 'wpss_account_status', 'banned' );
 $res = $service->convert_to_order( $request_id, $proposal );
 $check( 'a banned buyer cannot accept', empty( $res['success'] ), wp_json_encode( $res ) );
+$check( 'a banned buyer is told about their own account', false !== stripos( (string) ( $res['message'] ?? '' ), 'your account' ), (string) ( $res['message'] ?? '' ) );
 delete_user_meta( $buyer, 'wpss_account_status' );
 
 update_user_meta( $seller, 'wpss_account_status', 'suspended' );
 $res = $service->convert_to_order( $request_id, $proposal );
 $check( 'a proposal from a since-suspended seller cannot be accepted', empty( $res['success'] ), wp_json_encode( $res ) );
+$check( 'the buyer is told about the seller, not about their own account', false === stripos( (string) ( $res['message'] ?? '' ), 'your vendor account' ) && false !== stripos( (string) ( $res['message'] ?? '' ), 'seller' ), (string) ( $res['message'] ?? '' ) );
 delete_user_meta( $seller, 'wpss_account_status' );
 
 $orders_made = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$orders} WHERE id > %d AND customer_id = %d", $mark, $buyer ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
