@@ -1129,6 +1129,10 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Dispute not found.', 'wp-sell-services' ) ) );
 		}
 
+		if ( ! DisputeService::accepts_input( $dispute ) ) {
+			wp_send_json_error( array( 'message' => __( 'This dispute is no longer accepting evidence.', 'wp-sell-services' ) ) );
+		}
+
 		// Verify user can add evidence (is part of the order).
 		$order_repo = new \WPSellServices\Database\Repositories\OrderRepository();
 		$order      = $order_repo->find( (int) $dispute->order_id );
@@ -1822,7 +1826,7 @@ class AjaxHandlers {
 				'post_status'           => 'publish',
 				's'                     => $query,
 				'posts_per_page'        => 5,
-				'author__not_in'        => wpss_get_vacation_vendor_ids(),
+				'author__not_in'        => wpss_get_unlisted_seller_ids(),
 				// Effective state: a live service with no moderation meta is approved.
 				'wpss_moderation_state' => 'approved',
 			)

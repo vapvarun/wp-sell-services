@@ -389,9 +389,14 @@ class TippingService {
 		$tip_rate_override = apply_filters( 'wpss_tip_commission_rate', $tip_rate_override, $tip_order, $commission_rate );
 
 		if ( null !== $tip_rate_override && is_numeric( $tip_rate_override ) ) {
+			// Tax is the platform's pass-through to the tax authority, never
+			// earnings: the cut is taken on the same net base the default path uses.
+			$base            = wpss_order_commission_base( $tip_order );
+			$base            = $base > 0 ? $base : $amount;
+			$decimals        = wpss_get_currency_decimals( (string) ( $tip_order->currency ?? '' ) );
 			$commission_rate = min( 100.0, max( 0.0, (float) $tip_rate_override ) );
-			$platform_fee    = round( $amount * ( $commission_rate / 100 ), 2 );
-			$vendor_earnings = round( $amount - $platform_fee, 2 );
+			$platform_fee    = round( $base * ( $commission_rate / 100 ), $decimals );
+			$vendor_earnings = round( $base - $platform_fee, $decimals );
 		}
 
 		if ( $vendor_earnings <= 0 ) {

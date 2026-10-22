@@ -1065,6 +1065,17 @@ class EarningsService {
 			);
 		}
 
+		// Same decision again (double click, two admins, bulk replay): nothing
+		// to change, so no second mail, notification or audit row.
+		if ( $withdrawal->status === $status ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => true,
+				'message' => __( 'This withdrawal already has that status.', 'wp-sell-services' ),
+				'code'    => 'unchanged',
+			);
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$table,

@@ -1434,20 +1434,19 @@ class Admin {
 
 			$result = $dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id(), $refund_amount );
 			$error  = $result ? '' : $dispute_service->last_error();
+		} elseif ( DisputeService::STATUS_ESCALATED === $status ) {
+			// Escalating tells both parties and the other admins and records the
+			// reason, so every door goes through the one workflow method.
+			$escalated = ( new \WPSellServices\Services\DisputeWorkflowManager() )->escalate( $dispute_id, $notes, get_current_user_id() );
+			$result    = ! empty( $escalated['success'] );
+			$error     = $result ? '' : (string) $escalated['message'];
 		} elseif ( DisputeService::STATUS_CLOSED === $status ) {
 			$closed = ( new \WPSellServices\Services\DisputeWorkflowManager() )->cancel( $dispute_id, get_current_user_id(), $notes );
 			$result = ! empty( $closed['success'] );
 			$error  = $result ? '' : (string) $closed['message'];
 		} else {
-			$fields = $resolution ? array( 'resolution' => $resolution ) : array();
-			$result = $dispute_service->transition(
-				$dispute_id,
-				$status,
-				array(
-					'note'   => $notes,
-					'fields' => $fields,
-				)
-			);
+			// A resolution type belongs to a resolved dispute only; resolve() writes it.
+			$result = $dispute_service->transition( $dispute_id, $status, array( 'note' => $notes ) );
 			$error  = $result ? '' : $dispute_service->last_error();
 		}
 
@@ -2281,10 +2280,16 @@ class Admin {
 		$updated         = 0;
 
 		foreach ( $dispute_ids as $dispute_id ) {
-			// Close restores the order, so it goes through the workflow.
-			$ok = DisputeService::STATUS_CLOSED === $new_status
-				? ! empty( ( new \WPSellServices\Services\DisputeWorkflowManager() )->cancel( $dispute_id, get_current_user_id() )['success'] )
-				: $dispute_service->transition( $dispute_id, $new_status );
+			// Closing restores the order and escalating notifies everyone, so both
+			// go through the workflow; only the plain review state is a transition.
+			$workflow = new \WPSellServices\Services\DisputeWorkflowManager();
+			if ( DisputeService::STATUS_CLOSED === $new_status ) {
+				$ok = ! empty( $workflow->cancel( $dispute_id, get_current_user_id() )['success'] );
+			} elseif ( DisputeService::STATUS_ESCALATED === $new_status ) {
+				$ok = ! empty( $workflow->escalate( $dispute_id, '', get_current_user_id() )['success'] );
+			} else {
+				$ok = $dispute_service->transition( $dispute_id, $new_status );
+			}
 
 			if ( $ok ) {
 				++$updated;

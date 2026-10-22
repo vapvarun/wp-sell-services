@@ -361,7 +361,7 @@ class ServicesController extends RestController {
 		}
 
 		// Same catalog rule as the storefront: vendors on vacation are not listed.
-		$vacation_vendors = wpss_get_vacation_vendor_ids();
+		$vacation_vendors = wpss_get_unlisted_seller_ids();
 		if ( ! empty( $vacation_vendors ) ) {
 			$args['author__not_in'] = $vacation_vendors;
 		}
@@ -958,6 +958,12 @@ class ServicesController extends RestController {
 		$force = (bool) $request->get_param( 'force' );
 
 		if ( $force ) {
+			$refusal = wpss_service_delete_refusal( $service_id );
+
+			if ( '' !== $refusal ) {
+				return new WP_Error( 'wpss_service_has_orders', $refusal, array( 'status' => 409 ) );
+			}
+
 			$result = wp_delete_post( $service_id, true );
 		} else {
 			$result = wp_trash_post( $service_id );
@@ -1591,10 +1597,14 @@ class ServicesController extends RestController {
 			}
 		}
 
-		// Save gallery (array of media IDs).
-		if ( $request->has_param( 'gallery' ) ) {
-			$gallery_ids = array_map( 'absint', (array) $capped['meta']['gallery'] );
-			update_post_meta( $service_id, '_wpss_gallery', $gallery_ids );
+		// Save gallery (array of media IDs) and the main image, through the one
+		// writer the wizard uses: ownership-checked, structured, thumbnail set.
+		if ( $request->has_param( 'gallery' ) || $request->has_param( 'thumbnail_id' ) ) {
+			wpss_save_service_gallery(
+				$service_id,
+				$request->has_param( 'gallery' ) ? (array) $capped['meta']['gallery'] : (array) wpss_get_gallery_ids( get_post_meta( $service_id, '_wpss_gallery', true ) ),
+				absint( $request->get_param( 'thumbnail_id' ) )
+			);
 		}
 
 		// Add-ons and requirements replace the stored list wholesale; both

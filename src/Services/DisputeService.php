@@ -465,6 +465,22 @@ class DisputeService {
 	}
 
 	/**
+	 * Whether a dispute still takes messages and evidence.
+	 *
+	 * The one answer for "can anyone still add to this dispute": a resolved or
+	 * closed dispute is final, and every door that stores a file or a message
+	 * asks here before it stores anything.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param object $dispute Dispute row or model.
+	 * @return bool
+	 */
+	public static function accepts_input( object $dispute ): bool {
+		return ! in_array( (string) $dispute->status, array( self::STATUS_RESOLVED, self::STATUS_CLOSED ), true );
+	}
+
+	/**
 	 * Add evidence to a dispute.
 	 *
 	 * Evidence is stored in the dispute's evidence JSON column.
@@ -482,7 +498,7 @@ class DisputeService {
 
 		$dispute = $this->get( $dispute_id );
 
-		if ( ! $dispute || $dispute->status === self::STATUS_CLOSED ) {
+		if ( ! $dispute || ! self::accepts_input( $dispute ) ) {
 			return false;
 		}
 
@@ -822,10 +838,24 @@ class DisputeService {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update( $this->table, $data, array( 'id' => $dispute_id ) );
+		$result = $wpdb->update(
+			$this->table,
+			$data,
+			array(
+				'id'     => $dispute_id,
+				'status' => $from,
+			)
+		);
 
 		if ( false === $result ) {
 			$this->last_error = __( 'Failed to update dispute.', 'wp-sell-services' );
+			return false;
+		}
+
+		// Another admin moved it between our read and this write: refuse rather
+		// than audit, mail and fire hooks a second time for the same decision.
+		if ( ! $no_op && 0 === $result ) {
+			$this->last_error = __( 'This dispute was just changed by someone else. Reload and try again.', 'wp-sell-services' );
 			return false;
 		}
 

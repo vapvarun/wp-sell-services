@@ -41,7 +41,7 @@ $disputes = $wpdb->prefix . 'wpss_disputes';
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $audit_before = (int) $wpdb->get_var( "SELECT COALESCE(MAX(id),0) FROM {$audit}" );
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$dispute = $wpdb->get_row( "SELECT id, meta FROM {$disputes} ORDER BY id DESC LIMIT 1" );
+$dispute = $wpdb->get_row( "SELECT id, meta FROM {$disputes} WHERE status = 'escalated' ORDER BY id DESC LIMIT 1" );
 $report_id = 0;
 
 $restore = static function () use ( $wpdb, $audit, $audit_before, $reports, &$report_id, $disputes, $dispute ) {
@@ -78,6 +78,11 @@ $n = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$audit} WHERE 
 $check( 'resolving a report writes one audit row', 1 === $n, (string) $n );
 
 if ( $dispute ) {
+	// An open dispute nobody holds yet, so the assignment is a real change.
+	$unassigned                = json_decode( (string) $dispute->meta, true ) ?: array();
+	$unassigned['assigned_to'] = 0;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	$wpdb->update( $disputes, array( 'meta' => wp_json_encode( $unassigned ) ), array( 'id' => $dispute->id ) );
 	( new DisputeWorkflowManager() )->assign_to_admin( (int) $dispute->id, 1 );
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$n = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$audit} WHERE id > %d AND event_type = 'dispute.assign' AND object_id = %d", $audit_before, $dispute->id ) );
@@ -91,7 +96,6 @@ $qa_user = wp_insert_user( array( 'user_login' => 'qa-audit-standing', 'user_pas
 if ( ! is_wp_error( $qa_user ) ) {
 	$method = method_exists( \WPSellServices\Admin\Pages\ReportsPage::class, 'set_account_status' ) ? new ReflectionMethod( \WPSellServices\Admin\Pages\ReportsPage::class, 'set_account_status' ) : null;
 	if ( $method ) {
-		$method->setAccessible( true );
 		$method->invoke( null, (int) $qa_user, 'suspended' );
 	}
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery

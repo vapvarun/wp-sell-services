@@ -9,14 +9,14 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-22T03:54:06+00:00\n"
+"POT-Creation-Date: 2026-10-22T04:42:13+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
 
 #. Plugin Name of the plugin
 #: wp-sell-services.php
-#: src/Admin/Admin.php:1762
+#: src/Admin/Admin.php:1761
 #: src/Admin/Pages/SetupWizardPage.php:480
 #: src/Blocks/BlocksManager.php:134
 #: src/Blocks/BlocksManager.php:222
@@ -69,7 +69,7 @@ msgstr[1] ""
 #: src/Admin/Admin.php:546
 #: src/Admin/Admin.php:596
 #: src/Admin/Pages/AuditLogPage.php:426
-#: src/Checkout/CheckoutIntentService.php:110
+#: src/Checkout/CheckoutIntentService.php:117
 #, php-format
 msgid "Order #%d"
 msgstr ""
@@ -145,8 +145,8 @@ msgstr ""
 #: src/Admin/Admin.php:1316
 #: src/Admin/Admin.php:1358
 #: src/Admin/Admin.php:1411
-#: src/Admin/Admin.php:3553
-#: src/Admin/Admin.php:3772
+#: src/Admin/Admin.php:3558
+#: src/Admin/Admin.php:3777
 #: src/Admin/OrderScreen.php:152
 #: src/Admin/OrderScreen.php:238
 #: src/Admin/Pages/ManualOrderPage.php:466
@@ -176,17 +176,17 @@ msgstr ""
 #: src/Admin/Settings.php:313
 #: src/Admin/Settings.php:407
 #: src/Admin/Settings.php:1647
-#: src/Frontend/AjaxHandlers.php:1301
-#: src/Frontend/AjaxHandlers.php:1382
-#: src/Frontend/AjaxHandlers.php:1418
-#: src/Frontend/AjaxHandlers.php:1715
-#: src/Frontend/AjaxHandlers.php:2355
-#: src/Frontend/AjaxHandlers.php:2386
-#: src/Frontend/AjaxHandlers.php:2485
-#: src/Frontend/AjaxHandlers.php:2597
-#: src/Frontend/AjaxHandlers.php:3070
-#: src/Frontend/AjaxHandlers.php:3121
-#: src/Frontend/AjaxHandlers.php:3195
+#: src/Frontend/AjaxHandlers.php:1305
+#: src/Frontend/AjaxHandlers.php:1386
+#: src/Frontend/AjaxHandlers.php:1422
+#: src/Frontend/AjaxHandlers.php:1719
+#: src/Frontend/AjaxHandlers.php:2359
+#: src/Frontend/AjaxHandlers.php:2390
+#: src/Frontend/AjaxHandlers.php:2489
+#: src/Frontend/AjaxHandlers.php:2601
+#: src/Frontend/AjaxHandlers.php:3074
+#: src/Frontend/AjaxHandlers.php:3125
+#: src/Frontend/AjaxHandlers.php:3199
 #: src/Integrations/Gateways/OfflineGateway.php:874
 msgid "Permission denied."
 msgstr ""
@@ -197,7 +197,7 @@ msgstr ""
 #: src/Admin/Admin.php:1350
 #: src/Admin/Admin.php:1407
 #: src/Frontend/AjaxHandlers.php:531
-#: src/Frontend/AjaxHandlers.php:2552
+#: src/Frontend/AjaxHandlers.php:2556
 #: src/Integrations/Gateways/OfflineGateway.php:571
 #: src/Integrations/Gateways/TestGateway.php:246
 #: src/Integrations/PayPal/PayPalGateway.php:800
@@ -322,17 +322,17 @@ msgstr ""
 #: src/Admin/OrderScreen.php:245
 #: src/Admin/Pages/VendorsPage.php:2758
 #: src/Frontend/AjaxHandlers.php:1017
-#: src/Frontend/AjaxHandlers.php:1295
-#: src/Frontend/AjaxHandlers.php:1376
-#: src/Frontend/AjaxHandlers.php:1412
-#: src/Frontend/AjaxHandlers.php:1645
-#: src/Frontend/AjaxHandlers.php:1670
-#: src/Frontend/AjaxHandlers.php:1709
-#: src/Frontend/AjaxHandlers.php:2349
-#: src/Frontend/AjaxHandlers.php:2379
-#: src/Frontend/AjaxHandlers.php:2479
-#: src/Frontend/AjaxHandlers.php:2560
-#: src/Frontend/AjaxHandlers.php:2749
+#: src/Frontend/AjaxHandlers.php:1299
+#: src/Frontend/AjaxHandlers.php:1380
+#: src/Frontend/AjaxHandlers.php:1416
+#: src/Frontend/AjaxHandlers.php:1649
+#: src/Frontend/AjaxHandlers.php:1674
+#: src/Frontend/AjaxHandlers.php:1713
+#: src/Frontend/AjaxHandlers.php:2353
+#: src/Frontend/AjaxHandlers.php:2383
+#: src/Frontend/AjaxHandlers.php:2483
+#: src/Frontend/AjaxHandlers.php:2564
+#: src/Frontend/AjaxHandlers.php:2753
 #: src/Frontend/ServiceWizard.php:1999
 #: src/Integrations/PayPal/PayPalGateway.php:859
 msgid "Invalid request."
@@ -340,66 +340,66 @@ msgstr ""
 
 #: src/Admin/Admin.php:1370
 #: src/Admin/Pages/VendorsPage.php:1319
-#: src/Frontend/AjaxHandlers.php:1387
+#: src/Frontend/AjaxHandlers.php:1391
 #: src/Services/EarningsService.php:1025
 msgid "Invalid status."
 msgstr ""
 
-#: src/Admin/Admin.php:1566
+#: src/Admin/Admin.php:1565
 #: src/Admin/Pages/SetupWizardPage.php:319
 #: assets/js/admin-settings-nav.js:87
 msgid "Settings saved."
 msgstr ""
 
-#: src/Admin/Admin.php:1589
+#: src/Admin/Admin.php:1588
 msgid "Select Image"
 msgstr ""
 
-#: src/Admin/Admin.php:1590
+#: src/Admin/Admin.php:1589
 msgid "Select Images"
 msgstr ""
 
-#: src/Admin/Admin.php:1591
+#: src/Admin/Admin.php:1590
 msgid "Use Image"
 msgstr ""
 
-#: src/Admin/Admin.php:1592
+#: src/Admin/Admin.php:1591
 #: src/Frontend/Frontend.php:278
 msgid "Are you sure?"
 msgstr ""
 
-#: src/Admin/Admin.php:1667
+#: src/Admin/Admin.php:1666
 msgid "Page title not defined."
 msgstr ""
 
-#: src/Admin/Admin.php:1668
+#: src/Admin/Admin.php:1667
 msgid "Create a new page titled"
 msgstr ""
 
-#: src/Admin/Admin.php:1669
+#: src/Admin/Admin.php:1668
 #: src/Admin/Pages/SetupWizardPage.php:158
 msgid "Creating..."
 msgstr ""
 
-#: src/Admin/Admin.php:1670
+#: src/Admin/Admin.php:1669
 msgid "Existing Page Linked!"
 msgstr ""
 
-#: src/Admin/Admin.php:1671
+#: src/Admin/Admin.php:1670
 msgid "Page Created!"
 msgstr ""
 
-#: src/Admin/Admin.php:1672
+#: src/Admin/Admin.php:1671
 #: src/Admin/Settings.php:3624
 msgid "Create Page"
 msgstr ""
 
-#: src/Admin/Admin.php:1673
+#: src/Admin/Admin.php:1672
 msgid "Failed to create page."
 msgstr ""
 
-#: src/Admin/Admin.php:1674
-#: src/Admin/Admin.php:1724
+#: src/Admin/Admin.php:1673
+#: src/Admin/Admin.php:1723
 #: src/Admin/OrderScreen.php:135
 #: src/Admin/Pages/ManualOrderPage.php:128
 #: src/Admin/Pages/ReviewModerationPage.php:158
@@ -420,89 +420,89 @@ msgstr ""
 msgid "An error occurred. Please try again."
 msgstr ""
 
-#: src/Admin/Admin.php:1692
+#: src/Admin/Admin.php:1691
 #: src/Frontend/SingleServiceView.php:144
 #: templates/dashboard/sections/messages.php:157
 #: templates/partials/dispute-thread.php:70
 msgid "Sending…"
 msgstr ""
 
-#: src/Admin/Admin.php:1693
+#: src/Admin/Admin.php:1692
 #: src/Admin/Settings.php:2679
 msgid "Send Test Email"
 msgstr ""
 
-#: src/Admin/Admin.php:1694
+#: src/Admin/Admin.php:1693
 #: src/Integrations/Gateways/OfflineGateway.php:1021
 msgid "Request failed. Please try again."
 msgstr ""
 
-#: src/Admin/Admin.php:1712
+#: src/Admin/Admin.php:1711
 msgid "Import demo content? This will create sample services, vendors, and categories."
 msgstr ""
 
-#: src/Admin/Admin.php:1713
+#: src/Admin/Admin.php:1712
 #: src/Admin/Pages/SetupWizardPage.php:163
 msgid "Importing..."
 msgstr ""
 
-#: src/Admin/Admin.php:1714
+#: src/Admin/Admin.php:1713
 msgid "Please wait, this may take a moment..."
 msgstr ""
 
-#: src/Admin/Admin.php:1715
+#: src/Admin/Admin.php:1714
 msgid "Demo content imported successfully!"
 msgstr ""
 
-#: src/Admin/Admin.php:1716
+#: src/Admin/Admin.php:1715
 #: src/Admin/Pages/SetupWizardPage.php:166
 msgid "Import failed"
 msgstr ""
 
-#: src/Admin/Admin.php:1717
+#: src/Admin/Admin.php:1716
 #: src/Admin/Pages/SetupWizardPage.php:696
 #: src/Admin/Settings.php:2713
 msgid "Import Demo Content"
 msgstr ""
 
-#: src/Admin/Admin.php:1718
+#: src/Admin/Admin.php:1717
 msgid "Delete all demo content? This will permanently remove demo services, vendors, and empty categories. A demo service that a buyer has ordered is kept, with its vendor."
 msgstr ""
 
-#: src/Admin/Admin.php:1719
+#: src/Admin/Admin.php:1718
 msgid "Deleting..."
 msgstr ""
 
-#: src/Admin/Admin.php:1720
+#: src/Admin/Admin.php:1719
 msgid "Removing demo content..."
 msgstr ""
 
-#: src/Admin/Admin.php:1721
+#: src/Admin/Admin.php:1720
 msgid "Demo content deleted successfully!"
 msgstr ""
 
-#: src/Admin/Admin.php:1722
+#: src/Admin/Admin.php:1721
 msgid "Deletion failed."
 msgstr ""
 
-#: src/Admin/Admin.php:1723
+#: src/Admin/Admin.php:1722
 #: src/Admin/Settings.php:2706
 msgid "Delete Demo Content"
 msgstr ""
 
-#: src/Admin/Admin.php:1748
+#: src/Admin/Admin.php:1747
 msgid "Sell Services"
 msgstr ""
 
+#: src/Admin/Admin.php:1772
 #: src/Admin/Admin.php:1773
-#: src/Admin/Admin.php:1774
 #: src/Frontend/UnifiedDashboard.php:931
 #: src/functions/urls.php:481
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:193
 msgid "Dashboard"
 msgstr ""
 
-#: src/Admin/Admin.php:1786
+#: src/Admin/Admin.php:1785
 #: src/Admin/Pages/SetupWizardPage.php:584
 #: src/Blocks/ServiceCategories.php:40
 #: assets/js/blocks.js:241
@@ -510,27 +510,27 @@ msgstr ""
 msgid "Service Categories"
 msgstr ""
 
-#: src/Admin/Admin.php:1787
+#: src/Admin/Admin.php:1786
 #: src/Blocks/BlocksManager.php:137
 #: src/Taxonomies/ServiceCategoryTaxonomy.php:85
 msgid "Categories"
 msgstr ""
 
-#: src/Admin/Admin.php:1794
+#: src/Admin/Admin.php:1793
 #: src/Core/AbilitiesRegistrar.php:266
 msgid "Service tags"
 msgstr ""
 
-#: src/Admin/Admin.php:1795
+#: src/Admin/Admin.php:1794
 #: src/Frontend/ServiceWizard.php:530
 #: src/Taxonomies/ServiceTagTaxonomy.php:72
 #: templates/dashboard/sections/portfolio.php:260
 msgid "Tags"
 msgstr ""
 
+#: src/Admin/Admin.php:1804
 #: src/Admin/Admin.php:1805
-#: src/Admin/Admin.php:1806
-#: src/Admin/Admin.php:2154
+#: src/Admin/Admin.php:2153
 #: src/Admin/Metaboxes/ServiceMetabox.php:540
 #: src/Admin/Metaboxes/ServiceMetabox.php:1421
 #: src/Admin/Metaboxes/ServiceMetabox.php:1488
@@ -546,9 +546,9 @@ msgstr ""
 msgid "Orders"
 msgstr ""
 
+#: src/Admin/Admin.php:1817
 #: src/Admin/Admin.php:1818
-#: src/Admin/Admin.php:1819
-#: src/Admin/Admin.php:3036
+#: src/Admin/Admin.php:3041
 #: src/Admin/Pages/AuditLogPage.php:377
 #: src/Frontend/MenuVisibility.php:88
 #: src/Frontend/UnifiedDashboard.php:586
@@ -557,8 +557,8 @@ msgstr ""
 msgid "Disputes"
 msgstr ""
 
+#: src/Admin/Admin.php:1830
 #: src/Admin/Admin.php:1831
-#: src/Admin/Admin.php:1832
 #: src/Admin/Pages/AuditLogPage.php:385
 #: src/Admin/Pages/VendorsPage.php:1273
 #: src/Admin/Settings.php:1704
@@ -567,59 +567,59 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: src/Admin/Admin.php:1918
+#: src/Admin/Admin.php:1917
 #: src/Admin/Pages/AuditLogPage.php:155
 #: src/Admin/Pages/NotificationsPage.php:135
 #: src/Admin/Pages/ReviewModerationPage.php:235
 msgid "You do not have permission to access this page."
 msgstr ""
 
-#: src/Admin/Admin.php:1953
+#: src/Admin/Admin.php:1952
 msgid "Vendors awaiting approval"
 msgstr ""
 
-#: src/Admin/Admin.php:1959
+#: src/Admin/Admin.php:1958
 msgid "Services awaiting moderation"
 msgstr ""
 
-#: src/Admin/Admin.php:1965
+#: src/Admin/Admin.php:1964
 #: src/Admin/Pages/ReportsPage.php:165
 #: src/Admin/Pages/ReportsPage.php:176
 #: src/Admin/Pages/ReportsPage.php:260
 msgid "Member reports"
 msgstr ""
 
-#: src/Admin/Admin.php:1973
+#: src/Admin/Admin.php:1972
 msgid "Disputes waiting on you"
 msgstr ""
 
-#: src/Admin/Admin.php:1979
+#: src/Admin/Admin.php:1978
 msgid "Withdrawals to approve"
 msgstr ""
 
-#: src/Admin/Admin.php:1987
+#: src/Admin/Admin.php:1986
 msgid "WP Sell Services Dashboard"
 msgstr ""
 
-#: src/Admin/Admin.php:1989
+#: src/Admin/Admin.php:1988
 msgid "Replay guide"
 msgstr ""
 
-#: src/Admin/Admin.php:1996
+#: src/Admin/Admin.php:1995
 msgid "Action items"
 msgstr ""
 
-#: src/Admin/Admin.php:2010
+#: src/Admin/Admin.php:2009
 msgid "Marketplace health"
 msgstr ""
 
-#: src/Admin/Admin.php:2016
+#: src/Admin/Admin.php:2015
 #: templates/dashboard/sections/orders.php:146
 #: templates/dashboard/sections/sales.php:167
 msgid "Total Orders"
 msgstr ""
 
-#: src/Admin/Admin.php:2024
+#: src/Admin/Admin.php:2023
 #: src/Admin/Pages/ManualOrderPage.php:936
 #: src/Admin/Pages/VendorsPage.php:1835
 #: src/functions/order-status.php:64
@@ -628,8 +628,8 @@ msgstr ""
 msgid "In Progress"
 msgstr ""
 
-#: src/Admin/Admin.php:2032
-#: src/Admin/Admin.php:2774
+#: src/Admin/Admin.php:2031
+#: src/Admin/Admin.php:2779
 #: src/Admin/Pages/ManualOrderPage.php:938
 #: src/Admin/Pages/VendorsPage.php:1837
 #: src/Admin/Pages/WithdrawalsPage.php:405
@@ -647,29 +647,29 @@ msgstr ""
 msgid "Completed"
 msgstr ""
 
-#: src/Admin/Admin.php:2040
+#: src/Admin/Admin.php:2039
 msgid "Revenue, all time (paid, net of refunds)"
 msgstr ""
 
 #. translators: %s: platform commission earned on that revenue.
-#: src/Admin/Admin.php:2044
+#: src/Admin/Admin.php:2043
 #, php-format
 msgid "Your commission: %s"
 msgstr ""
 
-#: src/Admin/Admin.php:2054
+#: src/Admin/Admin.php:2053
 msgid "Content Overview"
 msgstr ""
 
-#: src/Admin/Admin.php:2059
+#: src/Admin/Admin.php:2058
 msgid "Published Services"
 msgstr ""
 
-#: src/Admin/Admin.php:2065
+#: src/Admin/Admin.php:2064
 msgid "Draft Services"
 msgstr ""
 
-#: src/Admin/Admin.php:2071
+#: src/Admin/Admin.php:2070
 #: src/Blocks/BuyerRequests.php:40
 #: src/Frontend/BuyerRequestArchiveView.php:193
 #: src/Frontend/MenuVisibility.php:80
@@ -682,17 +682,17 @@ msgstr ""
 msgid "Buyer Requests"
 msgstr ""
 
-#: src/Admin/Admin.php:2081
+#: src/Admin/Admin.php:2080
 msgid "Recent Orders"
 msgstr ""
 
-#: src/Admin/Admin.php:2082
+#: src/Admin/Admin.php:2081
 msgid "View all orders"
 msgstr ""
 
-#: src/Admin/Admin.php:2088
-#: src/Admin/Admin.php:2099
-#: src/Admin/Admin.php:3370
+#: src/Admin/Admin.php:2087
+#: src/Admin/Admin.php:2098
+#: src/Admin/Admin.php:3375
 #: src/Admin/Pages/VendorsPage.php:1858
 #: src/Admin/Tables/OrdersListTable.php:51
 #: src/Blocks/BlocksManager.php:149
@@ -710,9 +710,9 @@ msgstr ""
 msgid "Order"
 msgstr ""
 
-#: src/Admin/Admin.php:2089
-#: src/Admin/Admin.php:2104
-#: src/Admin/Admin.php:2513
+#: src/Admin/Admin.php:2088
+#: src/Admin/Admin.php:2103
+#: src/Admin/Admin.php:2518
 #: src/Admin/Pages/ManualOrderPage.php:178
 #: src/Admin/Pages/ReviewModerationPage.php:364
 #: src/Admin/Pages/ReviewModerationPage.php:477
@@ -748,8 +748,8 @@ msgstr ""
 msgid "Service"
 msgstr ""
 
-#: src/Admin/Admin.php:2090
-#: src/Admin/Admin.php:2105
+#: src/Admin/Admin.php:2089
+#: src/Admin/Admin.php:2104
 #: src/Admin/Pages/VendorsPage.php:1861
 #: src/Admin/Tables/OrdersListTable.php:55
 #: src/Frontend/SingleServiceView.php:137
@@ -765,10 +765,10 @@ msgstr ""
 msgid "Total"
 msgstr ""
 
-#: src/Admin/Admin.php:2091
-#: src/Admin/Admin.php:2106
-#: src/Admin/Admin.php:2505
-#: src/Admin/Admin.php:3313
+#: src/Admin/Admin.php:2090
+#: src/Admin/Admin.php:2105
+#: src/Admin/Admin.php:2510
+#: src/Admin/Admin.php:3318
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:91
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:179
 #: src/Admin/Pages/ReviewModerationPage.php:366
@@ -826,8 +826,8 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: src/Admin/Admin.php:2092
-#: src/Admin/Admin.php:2111
+#: src/Admin/Admin.php:2091
+#: src/Admin/Admin.php:2110
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:180
 #: src/Admin/Pages/VendorsPage.php:1863
 #: src/Admin/Pages/VendorsPage.php:2175
@@ -846,7 +846,7 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: src/Admin/Admin.php:2117
+#: src/Admin/Admin.php:2116
 #: src/Admin/Tables/OrdersListTable.php:783
 #: src/Frontend/Shortcodes.php:842
 #: templates/dashboard/sections/orders.php:227
@@ -854,7 +854,7 @@ msgstr ""
 msgid "No orders yet"
 msgstr ""
 
-#: src/Admin/Admin.php:2157
+#: src/Admin/Admin.php:2156
 #: src/Admin/Pages/ManualOrderPage.php:55
 #: src/Admin/Pages/ManualOrderPage.php:56
 #: src/Admin/Pages/ManualOrderPage.php:73
@@ -863,19 +863,19 @@ msgstr ""
 msgid "Create Order"
 msgstr ""
 
-#: src/Admin/Admin.php:2168
+#: src/Admin/Admin.php:2167
 msgid "Search Orders"
 msgstr ""
 
-#: src/Admin/Admin.php:2204
-#: src/Admin/Admin.php:2263
+#: src/Admin/Admin.php:2203
+#: src/Admin/Admin.php:2262
 #: src/Frontend/AjaxHandlers.php:452
 #: src/Frontend/AjaxHandlers.php:495
 msgid "You do not have permission to perform this action."
 msgstr ""
 
 #. translators: %d: number of orders updated
-#: src/Admin/Admin.php:2238
+#: src/Admin/Admin.php:2237
 #, php-format
 msgid "%d order updated."
 msgid_plural "%d orders updated."
@@ -883,27 +883,27 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of disputes updated
-#: src/Admin/Admin.php:2301
+#: src/Admin/Admin.php:2306
 #, php-format
 msgid "%d dispute updated."
 msgid_plural "%d disputes updated."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/Admin.php:2320
+#: src/Admin/Admin.php:2325
 #: src/Services/NotificationService.php:808
 msgid "Order status updated"
 msgstr ""
 
-#: src/Admin/Admin.php:2321
+#: src/Admin/Admin.php:2326
 msgid "The order already has that status. Nothing changed."
 msgstr ""
 
-#: src/Admin/Admin.php:2322
+#: src/Admin/Admin.php:2327
 msgid "The status could not be changed. The order may not be allowed to move to that status from where it is."
 msgstr ""
 
-#: src/Admin/Admin.php:2355
+#: src/Admin/Admin.php:2360
 #: src/Admin/OrderScreen.php:172
 #: src/Admin/OrderScreen.php:251
 #: src/API/ConversationsController.php:434
@@ -925,8 +925,8 @@ msgstr ""
 #: src/API/TippingController.php:338
 #: src/Frontend/AjaxHandlers.php:656
 #: src/Frontend/AjaxHandlers.php:818
-#: src/Frontend/AjaxHandlers.php:1137
-#: src/Frontend/AjaxHandlers.php:2567
+#: src/Frontend/AjaxHandlers.php:1141
+#: src/Frontend/AjaxHandlers.php:2571
 #: src/Frontend/Shortcodes.php:874
 #: src/Frontend/Shortcodes.php:887
 #: src/Integrations/Gateways/OfflineGateway.php:890
@@ -949,7 +949,7 @@ msgstr ""
 msgid "Order not found."
 msgstr ""
 
-#: src/Admin/Admin.php:2361
+#: src/Admin/Admin.php:2366
 #: src/Frontend/Shortcodes.php:894
 #: src/Frontend/TemplateLoader.php:431
 msgid "You do not have permission to view this order."
@@ -957,7 +957,7 @@ msgstr ""
 
 #. translators: %s: order number
 #. translators: %s: order number.
-#: src/Admin/Admin.php:2405
+#: src/Admin/Admin.php:2410
 #: templates/dashboard/sections/messages.php:350
 #: templates/emails/cancellation-requested.php:70
 #: templates/emails/delivery-ready.php:64
@@ -975,42 +975,42 @@ msgstr ""
 msgid "Order #%s"
 msgstr ""
 
-#: src/Admin/Admin.php:2411
+#: src/Admin/Admin.php:2416
 #: templates/order/order-view.php:130
 msgid "Back to Orders"
 msgstr ""
 
 #. translators: %s: dispute status label, e.g. Open or Escalated
-#: src/Admin/Admin.php:2457
+#: src/Admin/Admin.php:2462
 #, php-format
 msgid "Active dispute on this order (%s)"
 msgstr ""
 
 #. translators: %s: dispute status label, e.g. Resolved or Closed
-#: src/Admin/Admin.php:2463
+#: src/Admin/Admin.php:2468
 #, php-format
 msgid "Dispute history on this order (%s)"
 msgstr ""
 
-#: src/Admin/Admin.php:2475
+#: src/Admin/Admin.php:2480
 #: templates/order/order-view.php:424
 #: templates/order/order-view.php:2045
 #: templates/order/order-view.php:2093
 msgid "Open dispute"
 msgstr ""
 
-#: src/Admin/Admin.php:2480
+#: src/Admin/Admin.php:2485
 msgid "This order is marked completed while the dispute is still unresolved. Resolve the dispute before treating the order as settled."
 msgstr ""
 
-#: src/Admin/Admin.php:2501
+#: src/Admin/Admin.php:2506
 #: src/Admin/Pages/ManualOrderPage.php:172
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1082
 #: templates/order/order-requirements.php:116
 msgid "Order Details"
 msgstr ""
 
-#: src/Admin/Admin.php:2525
+#: src/Admin/Admin.php:2530
 #: src/Admin/Pages/ManualOrderPage.php:197
 #: src/Models/ServiceOrder.php:1116
 #: templates/emails/new-order.php:72
@@ -1018,96 +1018,96 @@ msgstr ""
 msgid "Package"
 msgstr ""
 
-#: src/Admin/Admin.php:2530
+#: src/Admin/Admin.php:2535
 #: src/Admin/Pages/SetupWizardPage.php:160
 #: src/Admin/Pages/SetupWizardPage.php:543
 #: src/Admin/Pages/VendorsPage.php:1710
 msgid "Created"
 msgstr ""
 
-#: src/Admin/Admin.php:2535
+#: src/Admin/Admin.php:2540
 #: src/API/OrdersController.php:2438
 #: templates/order/order-view.php:665
 msgid "Due date"
 msgstr ""
 
-#: src/Admin/Admin.php:2548
+#: src/Admin/Admin.php:2553
 msgid "WooCommerce Order"
 msgstr ""
 
-#: src/Admin/Admin.php:2560
+#: src/Admin/Admin.php:2565
 msgid "Financial Summary"
 msgstr ""
 
-#: src/Admin/Admin.php:2575
+#: src/Admin/Admin.php:2580
 msgid "Payment not received. Nothing is credited to the vendor until it is confirmed with Mark as Paid, whatever status this order is given."
 msgstr ""
 
-#: src/Admin/Admin.php:2580
+#: src/Admin/Admin.php:2585
 #: templates/order/order-view.php:692
 msgid "Contract total"
 msgstr ""
 
 #. translators: 1: phases paid, 2: phases in the contract
-#: src/Admin/Admin.php:2587
+#: src/Admin/Admin.php:2592
 #, php-format
 msgid "Paid so far (%1$d of %2$d phase)"
 msgid_plural "Paid so far (%1$d of %2$d phases)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/Admin.php:2593
+#: src/Admin/Admin.php:2598
 msgid "Commission on paid phases"
 msgstr ""
 
-#: src/Admin/Admin.php:2597
+#: src/Admin/Admin.php:2602
 msgid "Vendor earning on paid phases"
 msgstr ""
 
 #. translators: %s: sub-order number
-#: src/Admin/Admin.php:2609
+#: src/Admin/Admin.php:2614
 #, php-format
 msgid "Tip #%s"
 msgstr ""
 
 #. translators: %s: sub-order number
-#: src/Admin/Admin.php:2611
+#: src/Admin/Admin.php:2616
 #, php-format
 msgid "Extension #%s"
 msgstr ""
 
-#: src/Admin/Admin.php:2624
+#: src/Admin/Admin.php:2629
 msgid "Vendor Earning"
 msgstr ""
 
-#: src/Admin/Admin.php:2630
+#: src/Admin/Admin.php:2635
 msgid "Commission"
 msgstr ""
 
-#: src/Admin/Admin.php:2668
+#: src/Admin/Admin.php:2673
 #: templates/dashboard/sections/disputes.php:195
 msgid "Activity"
 msgstr ""
 
-#: src/Admin/Admin.php:2675
-#: src/Admin/Admin.php:2697
+#: src/Admin/Admin.php:2680
+#: src/Admin/Admin.php:2702
 #: src/Admin/Pages/AuditLogPage.php:349
 #: src/Admin/Settings.php:99
 #: src/Admin/Settings.php:221
 #: src/API/ConversationsController.php:690
 #: src/Models/Message.php:146
 #: src/Models/Message.php:170
-#: src/Services/DisputeWorkflowManager.php:1212
+#: src/Services/DisputeWorkflowManager.php:1226
 #: templates/dashboard/sections/disputes.php:199
 #: templates/partials/dispute-evidence-item.php:28
 msgid "System"
 msgstr ""
 
-#: src/Admin/Admin.php:2681
+#: src/Admin/Admin.php:2686
 msgid "Nothing recorded on this order yet."
 msgstr ""
 
-#: src/Admin/Admin.php:2688
+#: src/Admin/Admin.php:2693
 #: src/Frontend/MenuVisibility.php:86
 #: src/Frontend/Tour.php:598
 #: src/Frontend/UnifiedDashboard.php:578
@@ -1116,34 +1116,34 @@ msgstr ""
 msgid "Messages"
 msgstr ""
 
-#: src/Admin/Admin.php:2697
-#: src/functions/vendors.php:643
+#: src/Admin/Admin.php:2702
+#: src/functions/vendors.php:653
 msgid "Deleted user"
 msgstr ""
 
-#: src/Admin/Admin.php:2709
+#: src/Admin/Admin.php:2714
 msgid "Has attachments"
 msgstr ""
 
-#: src/Admin/Admin.php:2716
+#: src/Admin/Admin.php:2721
 #: templates/dashboard/sections/messages.php:108
 #: templates/dashboard/sections/messages.php:261
 #: templates/order/conversation.php:190
 msgid "No messages yet"
 msgstr ""
 
-#: src/Admin/Admin.php:2725
+#: src/Admin/Admin.php:2730
 msgid "Parties"
 msgstr ""
 
-#: src/Admin/Admin.php:2728
+#: src/Admin/Admin.php:2733
 msgid "Buyer:"
 msgstr ""
 
 #. translators: %s: seller name
-#: src/Admin/Admin.php:2735
-#: src/Admin/Admin.php:2746
-#: src/Admin/Admin.php:3449
+#: src/Admin/Admin.php:2740
+#: src/Admin/Admin.php:2751
+#: src/Admin/Admin.php:3454
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:193
 #: src/Admin/Pages/ServiceModerationPage.php:566
 #: src/Admin/Pages/WithdrawalsPage.php:599
@@ -1159,123 +1159,123 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: src/Admin/Admin.php:2739
+#: src/Admin/Admin.php:2744
 #: src/Services/NotificationService.php:600
 msgid "Vendor:"
 msgstr ""
 
-#: src/Admin/Admin.php:2755
+#: src/Admin/Admin.php:2760
 msgid "Update Order"
 msgstr ""
 
-#: src/Admin/Admin.php:2763
+#: src/Admin/Admin.php:2768
 msgid "Status:"
 msgstr ""
 
-#: src/Admin/Admin.php:2774
+#: src/Admin/Admin.php:2779
 msgid "credits the vendor's earnings to their wallet."
 msgstr ""
 
-#: src/Admin/Admin.php:2775
+#: src/Admin/Admin.php:2780
 #: src/Admin/Pages/VendorsPage.php:1838
 #: src/Admin/Pages/WithdrawalsPage.php:425
 #: src/functions/order-status.php:71
 #: src/functions/order-status.php:153
 #: src/Models/ServiceOrder.php:638
 #: src/Services/BuyerRequestService.php:1367
-#: src/Services/EarningsService.php:1427
+#: src/Services/EarningsService.php:1438
 #: templates/emails/order-cancelled.php:67
 #: templates/order/order-view.php:1307
 #: templates/order/timeline.php:85
 msgid "Cancelled"
 msgstr ""
 
-#: src/Admin/Admin.php:2775
+#: src/Admin/Admin.php:2780
 msgid "refunds the buyer through the payment gateway (or lists it for a manual refund) and takes back any vendor earnings."
 msgstr ""
 
-#: src/Admin/Admin.php:2776
+#: src/Admin/Admin.php:2781
 msgid "Any other status moves no money."
 msgstr ""
 
-#: src/Admin/Admin.php:2779
+#: src/Admin/Admin.php:2784
 msgid "Update Status"
 msgstr ""
 
-#: src/Admin/Admin.php:2792
+#: src/Admin/Admin.php:2797
 #: src/Admin/OrderScreen.php:134
 msgid "Refund"
 msgstr ""
 
 #. translators: %s: platform name, for example WooCommerce.
-#: src/Admin/Admin.php:2798
+#: src/Admin/Admin.php:2803
 #: src/Services/OrderService.php:445
 #: src/Services/OrderWorkflowManager.php:1526
 #, php-format
 msgid "This order was paid through %s. Refund it there; the refund is recorded here when it is made."
 msgstr ""
 
-#: src/Admin/Admin.php:2814
+#: src/Admin/Admin.php:2819
 msgid "Refund waiting for a service"
 msgstr ""
 
 #. translators: 1: amount, 2: transaction id
-#: src/Admin/Admin.php:2820
+#: src/Admin/Admin.php:2825
 #, php-format
 msgid "%1$s was refunded at the payment platform (%2$s) without saying which service it was for. If it was this one, assign it here. The vendor's earnings are reversed only for the gig you assign it to."
 msgstr ""
 
-#: src/Admin/Admin.php:2831
+#: src/Admin/Admin.php:2836
 msgid "Amount for this service"
 msgstr ""
 
-#: src/Admin/Admin.php:2834
+#: src/Admin/Admin.php:2839
 msgid "Assign to this service"
 msgstr ""
 
-#: src/Admin/Admin.php:2847
+#: src/Admin/Admin.php:2852
 msgid "Admin Actions"
 msgstr ""
 
-#: src/Admin/Admin.php:2851
+#: src/Admin/Admin.php:2856
 msgid "Refund amount"
 msgstr ""
 
 #. translators: %s: amount still refundable
-#: src/Admin/Admin.php:2856
+#: src/Admin/Admin.php:2861
 #, php-format
 msgid "Full: %s"
 msgstr ""
 
-#: src/Admin/Admin.php:2862
+#: src/Admin/Admin.php:2867
 msgid "Process Refund"
 msgstr ""
 
-#: src/Admin/Admin.php:2865
+#: src/Admin/Admin.php:2870
 msgid "Leave the amount blank for a full refund. A smaller amount issues a partial refund and claws back the vendor's proportional share. The gateway payment is refunded where supported."
 msgstr ""
 
-#: src/Admin/Admin.php:2881
+#: src/Admin/Admin.php:2886
 msgid "Manual refund pending"
 msgstr ""
 
 #. translators: 1: amount, 2: payment method
-#: src/Admin/Admin.php:2887
+#: src/Admin/Admin.php:2892
 #, php-format
 msgid "Send %1$s to the buyer manually. This order was paid via %2$s, which cannot refund automatically. The buyer has not been refunded yet."
 msgstr ""
 
-#: src/Admin/Admin.php:2889
-#: src/Admin/Admin.php:2920
+#: src/Admin/Admin.php:2894
+#: src/Admin/Admin.php:2925
 #: src/Services/OrderWorkflowManager.php:1652
 msgid "a payment method"
 msgstr ""
 
-#: src/Admin/Admin.php:2897
+#: src/Admin/Admin.php:2902
 msgid "Mark refund sent"
 msgstr ""
 
-#: src/Admin/Admin.php:2912
+#: src/Admin/Admin.php:2917
 #: src/functions/notifications.php:619
 #: src/Integrations/PayPal/PayPalGateway.php:344
 #: src/Integrations/Stripe/StripeGateway.php:510
@@ -1283,31 +1283,31 @@ msgid "Refund failed"
 msgstr ""
 
 #. translators: 1: amount, 2: payment method, 3: number of attempts
-#: src/Admin/Admin.php:2918
+#: src/Admin/Admin.php:2923
 #, php-format
 msgid "%1$s could not be refunded via %2$s (%3$d attempt). The buyer has not been refunded and the order was not changed."
 msgid_plural "%1$s could not be refunded via %2$s (%3$d attempts). The buyer has not been refunded and the order was not changed."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/Admin.php:2928
+#: src/Admin/Admin.php:2933
 msgid "Fix the cause at the payment gateway, then retry. Check the gateway dashboard first if a refund may already have gone through."
 msgstr ""
 
-#: src/Admin/Admin.php:2933
+#: src/Admin/Admin.php:2938
 msgid "Retry refund"
 msgstr ""
 
-#: src/Admin/Admin.php:2973
+#: src/Admin/Admin.php:2978
 msgid "Payment Actions"
 msgstr ""
 
-#: src/Admin/Admin.php:3045
+#: src/Admin/Admin.php:3050
 msgid "Search Disputes"
 msgstr ""
 
-#: src/Admin/Admin.php:3077
-#: src/Admin/Admin.php:3111
+#: src/Admin/Admin.php:3082
+#: src/Admin/Admin.php:3116
 #: src/Admin/Metaboxes/ServiceMetabox.php:1218
 #: src/Admin/Metaboxes/ServiceMetabox.php:1410
 #: src/Admin/Pages/AuditLogPage.php:110
@@ -1320,12 +1320,12 @@ msgstr ""
 msgid "Overview"
 msgstr ""
 
-#: src/Admin/Admin.php:3078
+#: src/Admin/Admin.php:3083
 msgid "Orders represent every service purchase on your marketplace. Each order carries an 11-step lifecycle: pending payment, pending requirements, in progress, delivered, revision requested, completed, cancelled, disputed, and more. Use the filters above the table to focus on a single status, and click any order to open its detail view with messages, requirements, and delivery history."
 msgstr ""
 
-#: src/Admin/Admin.php:3085
-#: src/Admin/Admin.php:3119
+#: src/Admin/Admin.php:3090
+#: src/Admin/Admin.php:3124
 #: src/Admin/Pages/ReviewModerationPage.php:117
 #: src/Admin/Pages/ServiceModerationPage.php:186
 #: src/Admin/Pages/VendorsPage.php:163
@@ -1333,12 +1333,12 @@ msgstr ""
 msgid "Available actions"
 msgstr ""
 
-#: src/Admin/Admin.php:3086
+#: src/Admin/Admin.php:3091
 msgid "Bulk-select orders to mark them completed or cancelled. Click an order to manually update its status, issue a refund note, or open a dispute on the buyer or vendor behalf. Administrators can also create an order manually from Sell Services > Create Order when a buyer pays offline."
 msgstr ""
 
-#: src/Admin/Admin.php:3091
-#: src/Admin/Admin.php:3125
+#: src/Admin/Admin.php:3096
+#: src/Admin/Admin.php:3130
 #: src/Admin/Pages/AuditLogPage.php:124
 #: src/Admin/Pages/NotificationsPage.php:105
 #: src/Admin/Pages/ReviewModerationPage.php:123
@@ -1348,8 +1348,8 @@ msgstr ""
 msgid "For more information:"
 msgstr ""
 
-#: src/Admin/Admin.php:3092
-#: src/Admin/Admin.php:3126
+#: src/Admin/Admin.php:3097
+#: src/Admin/Admin.php:3131
 #: src/Admin/Pages/AuditLogPage.php:125
 #: src/Admin/Pages/NotificationsPage.php:106
 #: src/Admin/Pages/ReviewModerationPage.php:124
@@ -1359,32 +1359,32 @@ msgstr ""
 msgid "Plugin docs"
 msgstr ""
 
-#: src/Admin/Admin.php:3093
+#: src/Admin/Admin.php:3098
 msgid "Order workflow guide"
 msgstr ""
 
-#: src/Admin/Admin.php:3112
+#: src/Admin/Admin.php:3117
 msgid "A dispute opens when a buyer and vendor cannot agree on an order outcome. This screen surfaces every dispute case, its status, the order it relates to, and the most recent activity. Disputes are escalated from order detail pages when either party opens one."
 msgstr ""
 
-#: src/Admin/Admin.php:3120
+#: src/Admin/Admin.php:3125
 msgid "Click a dispute to review the full conversation, both parties evidence, and post an admin mediation note. From the detail screen you can resolve in favour of the buyer (refund) or the vendor (release), escalate, or close without action. Bulk actions can mark multiple disputes as pending review, escalated, or closed."
 msgstr ""
 
-#: src/Admin/Admin.php:3127
+#: src/Admin/Admin.php:3132
 msgid "Dispute mediation guide"
 msgstr ""
 
-#: src/Admin/Admin.php:3160
-#: src/Admin/Admin.php:3499
+#: src/Admin/Admin.php:3165
+#: src/Admin/Admin.php:3504
 msgid "Resolution:"
 msgstr ""
 
-#: src/Admin/Admin.php:3162
+#: src/Admin/Admin.php:3167
 msgid "— Select Resolution —"
 msgstr ""
 
-#: src/Admin/Admin.php:3185
+#: src/Admin/Admin.php:3190
 #: src/Services/NotificationService.php:769
 #: src/Services/NotificationService.php:791
 #: src/Services/NotificationService.php:1148
@@ -1393,71 +1393,71 @@ msgid "Refund Amount:"
 msgstr ""
 
 #. translators: %s: formatted order total.
-#: src/Admin/Admin.php:3202
+#: src/Admin/Admin.php:3207
 #, php-format
 msgid "How much of the %s order total goes back to the buyer. The vendor keeps the rest."
 msgstr ""
 
-#: src/Admin/Admin.php:3206
+#: src/Admin/Admin.php:3211
 msgid "How much goes back to the buyer. The vendor keeps the rest."
 msgstr ""
 
 #. translators: 1: amount refunded to the buyer
-#: src/Admin/Admin.php:3215
+#: src/Admin/Admin.php:3220
 #, php-format
 msgid "The buyer gets %1$s back (a full refund); the vendor keeps nothing."
 msgstr ""
 
 #. translators: 1: amount refunded to the buyer, 2: amount the vendor keeps
-#: src/Admin/Admin.php:3216
+#: src/Admin/Admin.php:3221
 #, php-format
 msgid "The buyer gets %1$s back; the vendor keeps %2$s."
 msgstr ""
 
 #. translators: 2: amount the vendor keeps
-#: src/Admin/Admin.php:3217
+#: src/Admin/Admin.php:3222
 #, php-format
 msgid "The buyer gets nothing back; the order completes and the vendor keeps %2$s."
 msgstr ""
 
-#: src/Admin/Admin.php:3239
+#: src/Admin/Admin.php:3244
 msgid "Dispute updated successfully."
 msgstr ""
 
-#: src/Admin/Admin.php:3241
-#: src/Services/DisputeService.php:828
+#: src/Admin/Admin.php:3246
+#: src/Services/DisputeService.php:851
 msgid "Failed to update dispute."
 msgstr ""
 
-#: src/Admin/Admin.php:3260
+#: src/Admin/Admin.php:3265
 #: src/API/DisputesController.php:373
 #: src/Frontend/AjaxHandlers.php:1129
-#: src/Services/DisputeService.php:783
-#: src/Services/DisputeService.php:943
+#: src/Services/DisputeService.php:799
+#: src/Services/DisputeService.php:973
 #: src/Services/DisputeWorkflowManager.php:109
-#: src/Services/DisputeWorkflowManager.php:301
-#: src/Services/DisputeWorkflowManager.php:387
-#: src/Services/DisputeWorkflowManager.php:464
+#: src/Services/DisputeWorkflowManager.php:300
+#: src/Services/DisputeWorkflowManager.php:386
+#: src/Services/DisputeWorkflowManager.php:478
 msgid "Dispute not found."
 msgstr ""
 
 #. translators: %d: dispute ID
-#: src/Admin/Admin.php:3287
+#: src/Admin/Admin.php:3292
 #: src/Admin/Pages/AuditLogPage.php:428
 #, php-format
 msgid "Dispute #%d"
 msgstr ""
 
-#: src/Admin/Admin.php:3293
+#: src/Admin/Admin.php:3298
 #: templates/dashboard/sections/disputes.php:57
 msgid "Back to disputes"
 msgstr ""
 
-#: src/Admin/Admin.php:3309
+#: src/Admin/Admin.php:3314
 msgid "Dispute Details"
 msgstr ""
 
-#: src/Admin/Admin.php:3319
+#: src/Admin/Admin.php:3324
 #: src/Admin/Pages/ReportsPage.php:323
 #: src/Admin/Pages/ReportsPage.php:344
 #: src/Admin/Tables/DisputesListTable.php:57
@@ -1472,11 +1472,11 @@ msgstr ""
 msgid "Reason"
 msgstr ""
 
-#: src/Admin/Admin.php:3323
+#: src/Admin/Admin.php:3328
 msgid "At Stake"
 msgstr ""
 
-#: src/Admin/Admin.php:3327
+#: src/Admin/Admin.php:3332
 #: src/Privacy/PersonalData.php:274
 #: templates/dashboard/sections/disputes.php:341
 #: templates/dashboard/sections/disputes.php:381
@@ -1486,32 +1486,32 @@ msgstr ""
 #. translators: %s: member name
 #. translators: %s: vendor or user display name
 #. translators: %s: seller name
-#: src/Admin/Admin.php:3333
+#: src/Admin/Admin.php:3338
 #: templates/cart/cart.php:495
 #: templates/dashboard/partials/order-row.php:124
 #, php-format
 msgid "by %s"
 msgstr ""
 
-#: src/Admin/Admin.php:3366
+#: src/Admin/Admin.php:3371
 msgid "The Order"
 msgstr ""
 
-#: src/Admin/Admin.php:3376
+#: src/Admin/Admin.php:3381
 #: src/Admin/Pages/ManualOrderPage.php:345
 #: src/API/OrdersController.php:2415
 msgid "Order status"
 msgstr ""
 
-#: src/Admin/Admin.php:3408
+#: src/Admin/Admin.php:3413
 msgid "Open the order: timeline, activity and messages"
 msgstr ""
 
-#: src/Admin/Admin.php:3416
+#: src/Admin/Admin.php:3421
 msgid "Parties Involved"
 msgstr ""
 
-#: src/Admin/Admin.php:3422
+#: src/Admin/Admin.php:3427
 #: src/Admin/Pages/ManualOrderPage.php:216
 #: src/Admin/Pages/VendorsPage.php:1859
 #: src/Admin/RequestListScreen.php:68
@@ -1530,7 +1530,7 @@ msgstr ""
 msgid "Buyer"
 msgstr ""
 
-#: src/Admin/Admin.php:3423
+#: src/Admin/Admin.php:3428
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:176
 #: src/Admin/Pages/ServiceModerationPage.php:454
 #: src/Admin/Pages/ServiceModerationPage.php:474
@@ -1562,14 +1562,14 @@ msgid "Vendor"
 msgstr ""
 
 #. translators: 1: number of orders, 2: number of disputes
-#: src/Admin/Admin.php:3439
+#: src/Admin/Admin.php:3444
 #, php-format
 msgid "%1$s · %2$s"
 msgstr ""
 
 #. translators: %s: number of orders
 #. translators: %s: number of items
-#: src/Admin/Admin.php:3441
+#: src/Admin/Admin.php:3446
 #: src/Admin/Pages/VendorsPage.php:1895
 #: src/Admin/ServiceListScreen.php:279
 #, php-format
@@ -1579,93 +1579,93 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: number of disputes
-#: src/Admin/Admin.php:3443
+#: src/Admin/Admin.php:3448
 #, php-format
 msgid "%s dispute"
 msgid_plural "%s disputes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/Admin.php:3458
-#: src/Admin/Admin.php:3496
+#: src/Admin/Admin.php:3463
+#: src/Admin/Admin.php:3501
 #: src/Privacy/PersonalData.php:273
 msgid "Resolution"
 msgstr ""
 
-#: src/Admin/Admin.php:3466
+#: src/Admin/Admin.php:3471
 msgid "Update Status:"
 msgstr ""
 
-#: src/Admin/Admin.php:3476
+#: src/Admin/Admin.php:3481
 #: src/Models/Dispute.php:243
-#: src/Services/DisputeService.php:1319
+#: src/Services/DisputeService.php:1349
 msgid "Resolved"
 msgstr ""
 
-#: src/Admin/Admin.php:3476
+#: src/Admin/Admin.php:3481
 msgid "you rule on the money: choose who gets what below."
 msgstr ""
 
-#: src/Admin/Admin.php:3477
+#: src/Admin/Admin.php:3482
 #: src/Admin/Pages/ReportsPage.php:113
 #: src/Models/BuyerRequest.php:276
 #: src/Models/Dispute.php:244
-#: src/Services/DisputeService.php:1321
+#: src/Services/DisputeService.php:1351
 msgid "Closed"
 msgstr ""
 
-#: src/Admin/Admin.php:3477
+#: src/Admin/Admin.php:3482
 msgid "ends the dispute with no ruling; the order goes back to where it was and no money moves."
 msgstr ""
 
-#: src/Admin/Admin.php:3485
-#: src/Admin/Admin.php:3504
+#: src/Admin/Admin.php:3490
+#: src/Admin/Admin.php:3509
 msgid "Decision note:"
 msgstr ""
 
-#: src/Admin/Admin.php:3487
+#: src/Admin/Admin.php:3492
 msgid "Saved with the decision and shown to both parties. To ask a question first, use the thread."
 msgstr ""
 
-#: src/Admin/Admin.php:3490
+#: src/Admin/Admin.php:3495
 msgid "Update Dispute"
 msgstr ""
 
-#: src/Admin/Admin.php:3500
+#: src/Admin/Admin.php:3505
 #: src/Blocks/SellerCard.php:275
 msgid "N/A"
 msgstr ""
 
-#: src/Admin/Admin.php:3510
+#: src/Admin/Admin.php:3515
 msgid "Resolved At:"
 msgstr ""
 
-#: src/Admin/Admin.php:3514
+#: src/Admin/Admin.php:3519
 msgid "A resolved or closed dispute is final: the order has already moved, and money moves once."
 msgstr ""
 
-#: src/Admin/Admin.php:3561
+#: src/Admin/Admin.php:3566
 msgid "Demo content is already imported. Delete it first if you want to import it again."
 msgstr ""
 
-#: src/Admin/Admin.php:3568
+#: src/Admin/Admin.php:3573
 msgid "Demo content module not found."
 msgstr ""
 
 #. translators: 1: services count, 2: categories count, 3: vendors count
-#: src/Admin/Admin.php:3637
+#: src/Admin/Admin.php:3642
 #, php-format
 msgid "Imported %1$d services, %2$d categories, and %3$d vendor profiles."
 msgstr ""
 
 #. translators: 1: services count, 2: vendors count
-#: src/Admin/Admin.php:3781
+#: src/Admin/Admin.php:3786
 #, php-format
 msgid "Deleted %1$d demo services and %2$d demo vendors."
 msgstr ""
 
 #. translators: %d: number of demo services kept
-#: src/Admin/Admin.php:3789
+#: src/Admin/Admin.php:3794
 #, php-format
 msgid "%d demo service was kept, with its vendor, because a buyer has ordered it."
 msgid_plural "%d demo services were kept, with their vendors, because buyers have ordered them."
@@ -1764,7 +1764,7 @@ msgstr ""
 #: src/Integrations/Standalone/StandaloneProductProvider.php:232
 #: src/Models/ExtensionRequest.php:215
 #: src/Models/Proposal.php:237
-#: src/Services/VendorService.php:837
+#: src/Services/VendorService.php:842
 #: templates/content-request-card.php:246
 #: templates/order/order-view.php:1593
 #: templates/order/order-view.php:1639
@@ -2643,7 +2643,7 @@ msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:127
 #: src/Admin/Pages/ManualOrderPage.php:705
-#: src/Checkout/CheckoutIntentService.php:971
+#: src/Checkout/CheckoutIntentService.php:978
 #: src/Integrations/Gateways/OfflineGateway.php:862
 #: src/Integrations/Gateways/TestGateway.php:394
 #: src/Integrations/PayPal/PayPalGateway.php:865
@@ -2788,7 +2788,7 @@ msgstr ""
 #: src/Models/Proposal.php:272
 #: src/Models/Review.php:214
 #: src/Models/ServiceOrder.php:628
-#: src/Services/EarningsService.php:1423
+#: src/Services/EarningsService.php:1434
 #: src/Services/ExtensionRequestService.php:491
 #: src/Services/ProposalService.php:918
 #: templates/dashboard/sections/proposals.php:61
@@ -2801,7 +2801,7 @@ msgstr ""
 #. translators: %s: payment method, e.g. Stripe.
 #: src/Admin/Pages/ManualOrderPage.php:361
 #: src/functions/order-status.php:314
-#: src/Services/EarningsService.php:1425
+#: src/Services/EarningsService.php:1436
 #: templates/emails/withdrawal-completed.php:59
 msgid "Paid"
 msgstr ""
@@ -2837,7 +2837,7 @@ msgid "Manual"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:372
-#: src/Services/EarningsService.php:1222
+#: src/Services/EarningsService.php:1233
 msgid "Bank Transfer"
 msgstr ""
 
@@ -2924,9 +2924,9 @@ msgstr ""
 #: src/Admin/Pages/ManualOrderPage.php:888
 #: src/Admin/Pages/ServiceModerationPage.php:663
 #: src/Admin/Pages/ServiceModerationPage.php:691
-#: src/Checkout/CheckoutIntentService.php:380
-#: src/Frontend/AjaxHandlers.php:2177
-#: src/Frontend/AjaxHandlers.php:2308
+#: src/Checkout/CheckoutIntentService.php:387
+#: src/Frontend/AjaxHandlers.php:2181
+#: src/Frontend/AjaxHandlers.php:2312
 #: src/Integrations/Gateways/OfflineGateway.php:758
 #: src/Integrations/Gateways/TestGateway.php:333
 msgid "Invalid service."
@@ -3195,7 +3195,7 @@ msgid "Close %s's account? Same restrictions as suspending, and it reads to them
 msgstr ""
 
 #: src/Admin/Pages/ReportsPage.php:530
-#: src/Admin/Pages/ReportsPage.php:591
+#: src/Admin/Pages/ReportsPage.php:598
 #: src/Integrations/Gateways/OfflineGateway.php:1179
 msgid "You do not have permission to do that."
 msgstr ""
@@ -3235,7 +3235,7 @@ msgstr ""
 #: src/Admin/ServiceListScreen.php:330
 #: src/Models/ExtensionRequest.php:283
 #: src/Models/Review.php:215
-#: src/Services/EarningsService.php:1424
+#: src/Services/EarningsService.php:1435
 #: src/Services/ExtensionRequestService.php:492
 #: src/Services/ModerationService.php:575
 #: templates/emails/moderation-approved.php:57
@@ -3259,7 +3259,7 @@ msgstr ""
 #: src/Models/Proposal.php:274
 #: src/Models/Review.php:216
 #: src/Models/ServiceOrder.php:630
-#: src/Services/EarningsService.php:1426
+#: src/Services/EarningsService.php:1437
 #: src/Services/ExtensionRequestService.php:493
 #: src/Services/ModerationService.php:576
 #: src/Services/ProposalService.php:920
@@ -3593,7 +3593,7 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:1145
 #: src/Admin/ServiceListScreen.php:329
 #: src/Models/Dispute.php:241
-#: src/Services/DisputeService.php:1318
+#: src/Services/DisputeService.php:1348
 #: src/Services/ModerationService.php:574
 #: templates/dashboard/sections/services.php:70
 #: templates/emails/moderation-pending.php:60
@@ -4405,7 +4405,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1132
 #: src/API/VendorsController.php:394
 #: src/API/VendorsController.php:406
-#: src/Frontend/AjaxHandlers.php:1901
+#: src/Frontend/AjaxHandlers.php:1905
 #: src/Frontend/Shortcodes.php:535
 #: src/Frontend/Shortcodes.php:546
 #: src/Services/EarningsService.php:423
@@ -4531,10 +4531,10 @@ msgid "Commission rate updated successfully."
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1527
-#: src/Frontend/AjaxHandlers.php:2443
-#: src/Frontend/AjaxHandlers.php:2713
-#: src/Frontend/AjaxHandlers.php:2809
-#: src/Frontend/AjaxHandlers.php:2841
+#: src/Frontend/AjaxHandlers.php:2447
+#: src/Frontend/AjaxHandlers.php:2717
+#: src/Frontend/AjaxHandlers.php:2813
+#: src/Frontend/AjaxHandlers.php:2845
 msgid "Invalid tab."
 msgstr ""
 
@@ -7303,22 +7303,22 @@ msgid "Request created successfully."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:626
-#: src/Frontend/AjaxHandlers.php:1359
+#: src/Frontend/AjaxHandlers.php:1363
 msgid "Failed to update request."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:635
-#: src/Frontend/AjaxHandlers.php:1354
+#: src/Frontend/AjaxHandlers.php:1358
 msgid "Request updated successfully."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:651
-#: src/Frontend/AjaxHandlers.php:1427
+#: src/Frontend/AjaxHandlers.php:1431
 msgid "This request has proposals, so it cannot be deleted. You can close it instead."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:659
-#: src/Frontend/AjaxHandlers.php:1431
+#: src/Frontend/AjaxHandlers.php:1435
 #: src/Frontend/UnifiedDashboard.php:218
 msgid "Failed to delete request."
 msgstr ""
@@ -7333,7 +7333,7 @@ msgstr ""
 
 #: src/API/BuyerRequestsController.php:726
 #: src/API/ProposalsController.php:383
-#: src/Frontend/AjaxHandlers.php:1497
+#: src/Frontend/AjaxHandlers.php:1501
 msgid "Proposal submitted successfully."
 msgstr ""
 
@@ -7352,20 +7352,20 @@ msgstr ""
 
 #: src/API/BuyerRequestsController.php:896
 #: src/API/ConversationsController.php:715
-#: src/API/DisputesController.php:848
+#: src/API/DisputesController.php:855
 #: src/API/NotificationsController.php:295
 #: src/API/OrdersController.php:99
 #: src/API/ProposalsController.php:629
 #: src/API/ReviewsController.php:991
 #: src/API/ServicesController.php:262
-#: src/API/ServicesController.php:1633
+#: src/API/ServicesController.php:1643
 #: src/API/VendorsController.php:996
 msgid "Current page."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:902
 #: src/API/ConversationsController.php:721
-#: src/API/DisputesController.php:854
+#: src/API/DisputesController.php:861
 #: src/API/MediaController.php:63
 #: src/API/NotificationsController.php:300
 #: src/API/OrdersController.php:105
@@ -7373,7 +7373,7 @@ msgstr ""
 #: src/API/ProposalsController.php:635
 #: src/API/ReviewsController.php:997
 #: src/API/ServicesController.php:268
-#: src/API/ServicesController.php:1638
+#: src/API/ServicesController.php:1648
 #: src/API/VendorsController.php:1002
 msgid "Items per page."
 msgstr ""
@@ -7410,9 +7410,9 @@ msgid "Service not found or not available."
 msgstr ""
 
 #: src/API/CartController.php:142
-#: src/Checkout/CheckoutIntentService.php:386
-#: src/Frontend/AjaxHandlers.php:2194
-#: src/Frontend/AjaxHandlers.php:2314
+#: src/Checkout/CheckoutIntentService.php:393
+#: src/Frontend/AjaxHandlers.php:2198
+#: src/Frontend/AjaxHandlers.php:2318
 #: src/Integrations/Gateways/OfflineGateway.php:828
 #: src/Integrations/Gateways/TestGateway.php:340
 msgid "You cannot purchase your own service."
@@ -7469,7 +7469,7 @@ msgstr ""
 
 #: src/API/ConversationsController.php:503
 #: src/Frontend/AjaxHandlers.php:648
-#: src/Frontend/AjaxHandlers.php:1890
+#: src/Frontend/AjaxHandlers.php:1894
 msgid "Please enter a message or attach a file."
 msgstr ""
 
@@ -7522,31 +7522,36 @@ msgstr ""
 msgid "Dispute opened successfully."
 msgstr ""
 
-#: src/API/DisputesController.php:572
-#: src/Frontend/AjaxHandlers.php:1167
-msgid "Could not store the file."
+#: src/API/DisputesController.php:563
+#: src/Frontend/AjaxHandlers.php:1133
+msgid "This dispute is no longer accepting evidence."
 msgstr ""
 
 #: src/API/DisputesController.php:579
-#: src/Frontend/AjaxHandlers.php:1177
+#: src/Frontend/AjaxHandlers.php:1171
+msgid "Could not store the file."
+msgstr ""
+
+#: src/API/DisputesController.php:586
+#: src/Frontend/AjaxHandlers.php:1181
 msgid "Please provide a message or attach a file."
 msgstr ""
 
-#: src/API/DisputesController.php:587
-#: src/Frontend/AjaxHandlers.php:1191
+#: src/API/DisputesController.php:594
+#: src/Frontend/AjaxHandlers.php:1195
 msgid "Failed to add evidence."
 msgstr ""
 
-#: src/API/DisputesController.php:595
-#: src/Frontend/AjaxHandlers.php:1212
+#: src/API/DisputesController.php:602
+#: src/Frontend/AjaxHandlers.php:1216
 msgid "Evidence added successfully."
 msgstr ""
 
-#: src/API/DisputesController.php:697
+#: src/API/DisputesController.php:704
 msgid "Failed to resolve dispute."
 msgstr ""
 
-#: src/API/DisputesController.php:705
+#: src/API/DisputesController.php:712
 msgid "Dispute resolved successfully."
 msgstr ""
 
@@ -7647,8 +7652,8 @@ msgstr ""
 #: src/API/ReviewsController.php:652
 #: src/API/ServicesController.php:782
 #: src/API/ServicesController.php:953
-#: src/API/ServicesController.php:1780
-#: src/Frontend/AjaxHandlers.php:2189
+#: src/API/ServicesController.php:1790
+#: src/Frontend/AjaxHandlers.php:2193
 #: src/Frontend/ServiceWizard.php:245
 #: src/functions/services.php:470
 #: src/Integrations/Gateways/OfflineGateway.php:824
@@ -7957,7 +7962,7 @@ msgstr ""
 
 #: src/API/OrdersController.php:1161
 #: src/Frontend/AjaxHandlers.php:461
-#: src/Frontend/AjaxHandlers.php:2670
+#: src/Frontend/AjaxHandlers.php:2674
 msgid "Vendor accepted cancellation request."
 msgstr ""
 
@@ -7990,12 +7995,12 @@ msgid "Action could not be completed. The order status transition may not be all
 msgstr ""
 
 #: src/API/OrdersController.php:1367
-#: src/Frontend/AjaxHandlers.php:2391
+#: src/Frontend/AjaxHandlers.php:2395
 msgid "This order is no longer waiting for requirements."
 msgstr ""
 
 #: src/API/OrdersController.php:1384
-#: src/Frontend/AjaxHandlers.php:2404
+#: src/Frontend/AjaxHandlers.php:2408
 msgid "Requirements skipped. You can submit them later."
 msgstr ""
 
@@ -8008,12 +8013,12 @@ msgid "You do not have permission to delete this file."
 msgstr ""
 
 #: src/API/OrdersController.php:1436
-#: src/Frontend/AjaxHandlers.php:2361
+#: src/Frontend/AjaxHandlers.php:2365
 msgid "This file cannot be deleted. It may belong to a request that already has proposals."
 msgstr ""
 
 #: src/API/OrdersController.php:1446
-#: src/Frontend/AjaxHandlers.php:2364
+#: src/Frontend/AjaxHandlers.php:2368
 msgid "File removed."
 msgstr ""
 
@@ -8168,7 +8173,7 @@ msgstr ""
 #: src/API/PortfolioController.php:273
 #: src/API/PortfolioController.php:415
 #: src/API/PortfolioController.php:462
-#: src/Frontend/AjaxHandlers.php:3140
+#: src/Frontend/AjaxHandlers.php:3144
 #: src/Services/PortfolioService.php:222
 #: src/Services/PortfolioService.php:324
 #: src/Services/PortfolioService.php:438
@@ -8182,8 +8187,8 @@ msgstr ""
 
 #: src/API/ProposalsController.php:220
 #: src/API/ProposalsController.php:268
-#: src/Frontend/AjaxHandlers.php:1526
-#: src/Frontend/AjaxHandlers.php:1590
+#: src/Frontend/AjaxHandlers.php:1530
+#: src/Frontend/AjaxHandlers.php:1594
 #: src/Services/BuyerRequestService.php:869
 msgid "Proposal not found."
 msgstr ""
@@ -8226,7 +8231,7 @@ msgid "Proposal updated successfully."
 msgstr ""
 
 #: src/API/ProposalsController.php:518
-#: src/Frontend/AjaxHandlers.php:1629
+#: src/Frontend/AjaxHandlers.php:1633
 msgid "Failed to withdraw proposal."
 msgstr ""
 
@@ -8399,7 +8404,7 @@ msgstr ""
 
 #: src/API/ReviewsController.php:830
 #: src/API/ReviewsController.php:878
-#: src/Frontend/AjaxHandlers.php:1291
+#: src/Frontend/AjaxHandlers.php:1295
 msgid "You must be logged in."
 msgstr ""
 
@@ -8424,7 +8429,7 @@ msgid "Filter by rating."
 msgstr ""
 
 #: src/API/ReviewsController.php:1018
-#: src/API/ServicesController.php:1672
+#: src/API/ServicesController.php:1682
 #: src/API/VendorsController.php:1017
 msgid "Order by field."
 msgstr ""
@@ -8466,74 +8471,74 @@ msgstr ""
 msgid "Status must be either publish or draft."
 msgstr ""
 
-#: src/API/ServicesController.php:969
-#: src/Frontend/AjaxHandlers.php:2528
+#: src/API/ServicesController.php:975
+#: src/Frontend/AjaxHandlers.php:2532
 msgid "Failed to delete service."
 msgstr ""
 
-#: src/API/ServicesController.php:1201
+#: src/API/ServicesController.php:1207
 msgid "Addon title."
 msgstr ""
 
-#: src/API/ServicesController.php:1206
+#: src/API/ServicesController.php:1212
 msgid "Addon description."
 msgstr ""
 
-#: src/API/ServicesController.php:1210
+#: src/API/ServicesController.php:1216
 msgid "Addon price: an amount, or a percent of the package when price_type is percentage."
 msgstr ""
 
-#: src/API/ServicesController.php:1216
+#: src/API/ServicesController.php:1222
 msgid "Days the add-on adds to delivery."
 msgstr ""
 
-#: src/API/ServicesController.php:1221
+#: src/API/ServicesController.php:1227
 msgid "How the buyer chooses it."
 msgstr ""
 
-#: src/API/ServicesController.php:1226
+#: src/API/ServicesController.php:1232
 #: src/Frontend/ServiceWizard.php:1074
 msgid "How it is priced."
 msgstr ""
 
-#: src/API/ServicesController.php:1231
+#: src/API/ServicesController.php:1237
 msgid "Dropdown choices, comma separated."
 msgstr ""
 
-#: src/API/ServicesController.php:1235
+#: src/API/ServicesController.php:1241
 msgid "Smallest quantity (quantity add-ons)."
 msgstr ""
 
-#: src/API/ServicesController.php:1240
+#: src/API/ServicesController.php:1246
 msgid "Largest quantity (quantity add-ons)."
 msgstr ""
 
-#: src/API/ServicesController.php:1245
+#: src/API/ServicesController.php:1251
 msgid "Every order includes it."
 msgstr ""
 
-#: src/API/ServicesController.php:1309
+#: src/API/ServicesController.php:1315
 msgid "Failed to create addon."
 msgstr ""
 
-#: src/API/ServicesController.php:1327
-#: src/API/ServicesController.php:1358
+#: src/API/ServicesController.php:1333
+#: src/API/ServicesController.php:1364
 msgid "Addon not found."
 msgstr ""
 
-#: src/API/ServicesController.php:1412
+#: src/API/ServicesController.php:1418
 #: src/Frontend/ServiceWizard.php:233
 #: src/Frontend/ServiceWizard.php:1714
 #: src/functions/services.php:520
-#: src/functions/services.php:856
+#: src/functions/services.php:862
 msgid "You have reached the maximum number of services allowed. Please remove an existing service before creating a new one."
 msgstr ""
 
-#: src/API/ServicesController.php:1428
+#: src/API/ServicesController.php:1434
 msgid "You do not have permission to create services."
 msgstr ""
 
-#: src/API/ServicesController.php:1454
+#: src/API/ServicesController.php:1460
 #: src/Frontend/ServiceWizard.php:249
 #: src/Frontend/ServiceWizard.php:1733
 #: src/Frontend/ServiceWizard.php:1898
@@ -8541,67 +8546,67 @@ msgstr ""
 msgid "You do not have permission to edit this service."
 msgstr ""
 
-#: src/API/ServicesController.php:1644
+#: src/API/ServicesController.php:1654
 msgid "Filter by category ID or slug."
 msgstr ""
 
-#: src/API/ServicesController.php:1648
+#: src/API/ServicesController.php:1658
 msgid "Filter by vendor ID."
 msgstr ""
 
-#: src/API/ServicesController.php:1652
+#: src/API/ServicesController.php:1662
 msgid "Search term."
 msgstr ""
 
-#: src/API/ServicesController.php:1660
+#: src/API/ServicesController.php:1670
 msgid "Search term. Alias of `search`, accepted for parity with /search."
 msgstr ""
 
-#: src/API/ServicesController.php:1664
+#: src/API/ServicesController.php:1674
 #: src/Core/AbilitiesRegistrar.php:111
 msgid "Minimum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1668
+#: src/API/ServicesController.php:1678
 #: src/Core/AbilitiesRegistrar.php:115
 msgid "Maximum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1678
+#: src/API/ServicesController.php:1688
 msgid "Sort order."
 msgstr ""
 
-#: src/API/ServicesController.php:1684
+#: src/API/ServicesController.php:1694
 msgid "Maximum delivery days filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1689
+#: src/API/ServicesController.php:1699
 msgid "Minimum rating filter (0-5)."
 msgstr ""
 
-#: src/API/ServicesController.php:1711
+#: src/API/ServicesController.php:1721
 #: src/Core/AbilitiesRegistrar.php:231
 #: src/Frontend/ServiceWizard.php:453
 msgid "Service title."
 msgstr ""
 
-#: src/API/ServicesController.php:1717
+#: src/API/ServicesController.php:1727
 msgid "Service description."
 msgstr ""
 
-#: src/API/ServicesController.php:1722
+#: src/API/ServicesController.php:1732
 msgid "Service excerpt."
 msgstr ""
 
-#: src/API/ServicesController.php:1727
+#: src/API/ServicesController.php:1737
 msgid "Base price."
 msgstr ""
 
-#: src/API/ServicesController.php:1735
+#: src/API/ServicesController.php:1745
 msgid "Category IDs or slugs."
 msgstr ""
 
-#: src/API/ServicesController.php:1741
+#: src/API/ServicesController.php:1751
 msgid "Tags."
 msgstr ""
 
@@ -8657,12 +8662,12 @@ msgstr ""
 #: src/API/VendorsController.php:429
 #: src/API/VendorsController.php:457
 #: src/API/VendorsController.php:581
-#: src/functions/vendors.php:432
+#: src/functions/vendors.php:442
 msgid "You are not registered as a vendor."
 msgstr ""
 
 #: src/API/VendorsController.php:537
-#: src/Frontend/AjaxHandlers.php:3036
+#: src/Frontend/AjaxHandlers.php:3040
 msgid "Your profile could not be saved. Please try again or contact support."
 msgstr ""
 
@@ -8897,8 +8902,8 @@ msgstr ""
 msgid "Please log in to continue."
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:75
-#: src/Checkout/CheckoutIntentService.php:854
+#: src/Checkout/CheckoutIntentService.php:82
+#: src/Checkout/CheckoutIntentService.php:861
 #: src/Frontend/AjaxHandlers.php:230
 #: src/Frontend/AjaxHandlers.php:281
 #: src/Frontend/AjaxHandlers.php:346
@@ -8914,48 +8919,48 @@ msgstr ""
 msgid "Invalid order."
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:90
+#: src/Checkout/CheckoutIntentService.php:97
 msgid "This phase is locked. Pay the previous phase first."
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:96
-#: src/Checkout/CheckoutIntentService.php:170
-#: src/Checkout/CheckoutIntentService.php:401
+#: src/Checkout/CheckoutIntentService.php:103
+#: src/Checkout/CheckoutIntentService.php:177
+#: src/Checkout/CheckoutIntentService.php:408
 #: src/Integrations/Stripe/StripeGateway.php:1031
 msgid "Invalid amount."
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:132
+#: src/Checkout/CheckoutIntentService.php:139
 #: src/Integrations/Gateways/OfflineGateway.php:686
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:426
 #: templates/cart/cart.php:377
 msgid "Your cart is empty."
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:182
+#: src/Checkout/CheckoutIntentService.php:189
 msgid "Multi-service cart checkout"
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:265
+#: src/Checkout/CheckoutIntentService.php:272
 msgid "Invalid package."
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:422
+#: src/Checkout/CheckoutIntentService.php:429
 #: src/Integrations/PayPal/PayPalGateway.php:181
 msgid "Service purchase"
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:775
+#: src/Checkout/CheckoutIntentService.php:782
 msgid "This payment was refunded and cannot pay for an order."
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:819
+#: src/Checkout/CheckoutIntentService.php:826
 #: src/Integrations/Gateways/AbstractPaymentGateway.php:122
 #: src/Integrations/PayPal/PayPalGateway.php:766
 msgid "The paid amount does not match the order total."
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:908
+#: src/Checkout/CheckoutIntentService.php:915
 msgid "Failed to create orders. Please contact support."
 msgstr ""
 
@@ -8969,8 +8974,8 @@ msgstr ""
 msgid "this store platform"
 msgstr ""
 
-#: src/Checkout/ServiceCart.php:82
-#: src/Frontend/AjaxHandlers.php:2183
+#: src/Checkout/ServiceCart.php:94
+#: src/Frontend/AjaxHandlers.php:2187
 msgid "No e-commerce platform is active. Please check your settings."
 msgstr ""
 
@@ -9436,7 +9441,7 @@ msgid "Cancellation accepted. Order has been cancelled."
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:512
-#: src/Frontend/AjaxHandlers.php:2684
+#: src/Frontend/AjaxHandlers.php:2688
 msgid "Vendor disputed the buyer cancellation request."
 msgstr ""
 
@@ -9480,20 +9485,20 @@ msgid "Message sent."
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:735
-#: src/Frontend/AjaxHandlers.php:2449
-#: src/Frontend/AjaxHandlers.php:2719
-#: src/Frontend/AjaxHandlers.php:2815
-#: src/Frontend/AjaxHandlers.php:2847
-#: src/Frontend/AjaxHandlers.php:2881
-#: src/Frontend/AjaxHandlers.php:2990
-#: src/Frontend/AjaxHandlers.php:3272
-#: src/Frontend/AjaxHandlers.php:3313
-#: src/Frontend/AjaxHandlers.php:3342
-#: src/Frontend/AjaxHandlers.php:3381
-#: src/Frontend/AjaxHandlers.php:3405
-#: src/Frontend/AjaxHandlers.php:3430
-#: src/Frontend/AjaxHandlers.php:3454
-#: src/Frontend/AjaxHandlers.php:3477
+#: src/Frontend/AjaxHandlers.php:2453
+#: src/Frontend/AjaxHandlers.php:2723
+#: src/Frontend/AjaxHandlers.php:2819
+#: src/Frontend/AjaxHandlers.php:2851
+#: src/Frontend/AjaxHandlers.php:2885
+#: src/Frontend/AjaxHandlers.php:2994
+#: src/Frontend/AjaxHandlers.php:3276
+#: src/Frontend/AjaxHandlers.php:3317
+#: src/Frontend/AjaxHandlers.php:3346
+#: src/Frontend/AjaxHandlers.php:3385
+#: src/Frontend/AjaxHandlers.php:3409
+#: src/Frontend/AjaxHandlers.php:3434
+#: src/Frontend/AjaxHandlers.php:3458
+#: src/Frontend/AjaxHandlers.php:3481
 msgid "Please log in."
 msgstr ""
 
@@ -9544,8 +9549,8 @@ msgid "You must be logged in to open a dispute."
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:1087
-#: src/Frontend/AjaxHandlers.php:1457
-#: src/Frontend/AjaxHandlers.php:1465
+#: src/Frontend/AjaxHandlers.php:1461
+#: src/Frontend/AjaxHandlers.php:1469
 msgid "Please fill in all required fields."
 msgstr ""
 
@@ -9562,268 +9567,268 @@ msgstr ""
 msgid "Invalid dispute."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1145
+#: src/Frontend/AjaxHandlers.php:1149
 msgid "You do not have permission to add evidence to this dispute."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1230
+#: src/Frontend/AjaxHandlers.php:1234
 msgid "You must be logged in to post a request."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1261
-#: src/Frontend/AjaxHandlers.php:1334
+#: src/Frontend/AjaxHandlers.php:1265
+#: src/Frontend/AjaxHandlers.php:1338
 msgid "Title and description are required."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1270
+#: src/Frontend/AjaxHandlers.php:1274
 msgid "Request posted successfully."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1275
+#: src/Frontend/AjaxHandlers.php:1279
 msgid "Failed to create request."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1397
+#: src/Frontend/AjaxHandlers.php:1401
 #: src/PostTypes/BuyerRequestPostType.php:135
 msgid "Request updated."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1434
+#: src/Frontend/AjaxHandlers.php:1438
 #: src/Frontend/UnifiedDashboard.php:217
 msgid "Request deleted."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1469
+#: src/Frontend/AjaxHandlers.php:1473
 #: src/Frontend/Frontend.php:274
 msgid "Add at least one milestone phase."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1502
+#: src/Frontend/AjaxHandlers.php:1506
 msgid "Failed to submit proposal. You may have already submitted a proposal for this request."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1518
-#: src/Frontend/AjaxHandlers.php:1583
-#: src/Frontend/AjaxHandlers.php:1620
+#: src/Frontend/AjaxHandlers.php:1522
+#: src/Frontend/AjaxHandlers.php:1587
+#: src/Frontend/AjaxHandlers.php:1624
 msgid "Invalid proposal."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1534
+#: src/Frontend/AjaxHandlers.php:1538
 msgid "You do not have permission to accept this proposal."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1549
+#: src/Frontend/AjaxHandlers.php:1553
 msgid "Proposal accepted — your project is set up. Opening the order…"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1552
+#: src/Frontend/AjaxHandlers.php:1556
 msgid "Proposal accepted! Redirecting to payment…"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1564
+#: src/Frontend/AjaxHandlers.php:1568
 #: src/Services/BuyerRequestService.php:1031
 msgid "Failed to create order. Please try again."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1596
+#: src/Frontend/AjaxHandlers.php:1600
 msgid "You are not authorized to decline this proposal."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1602
+#: src/Frontend/AjaxHandlers.php:1606
 msgid "Proposal declined."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1604
+#: src/Frontend/AjaxHandlers.php:1608
 msgid "Failed to decline proposal."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1627
+#: src/Frontend/AjaxHandlers.php:1631
 msgid "Proposal withdrawn."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1652
+#: src/Frontend/AjaxHandlers.php:1656
 msgid "Added to favorites."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1677
+#: src/Frontend/AjaxHandlers.php:1681
 #: src/Frontend/Frontend.php:350
 msgid "Removed from favorites."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1720
-#: src/Frontend/AjaxHandlers.php:2530
+#: src/Frontend/AjaxHandlers.php:1724
+#: src/Frontend/AjaxHandlers.php:2534
 msgid "Service deleted."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1732
+#: src/Frontend/AjaxHandlers.php:1736
 msgid "You must be logged in to upload files."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1741
+#: src/Frontend/AjaxHandlers.php:1745
 msgid "No file uploaded."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1859
+#: src/Frontend/AjaxHandlers.php:1863
 msgid "You must be logged in to contact vendors."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1877
+#: src/Frontend/AjaxHandlers.php:1881
 msgid "Invalid vendor."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1895
+#: src/Frontend/AjaxHandlers.php:1899
 msgid "You cannot contact yourself."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1907
+#: src/Frontend/AjaxHandlers.php:1911
 msgid "This vendor is not taking new messages right now."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1939
+#: src/Frontend/AjaxHandlers.php:1943
 msgid "Your session has expired. Please sign in again."
 msgstr ""
 
 #. translators: %s: sender name
-#: src/Frontend/AjaxHandlers.php:1947
+#: src/Frontend/AjaxHandlers.php:1951
 #, php-format
 msgid "New message from %s"
 msgstr ""
 
 #. translators: 1: sender name, 2: service title
-#: src/Frontend/AjaxHandlers.php:1954
+#: src/Frontend/AjaxHandlers.php:1958
 #, php-format
 msgid "%1$s sent you a message about \"%2$s\""
 msgstr ""
 
 #. translators: %s: sender name
-#: src/Frontend/AjaxHandlers.php:1960
+#: src/Frontend/AjaxHandlers.php:1964
 #, php-format
 msgid "%s sent you a message"
 msgstr ""
 
 #. translators: %s: service title
-#: src/Frontend/AjaxHandlers.php:1989
+#: src/Frontend/AjaxHandlers.php:1993
 #, php-format
 msgid "Inquiry about \"%s\""
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1992
+#: src/Frontend/AjaxHandlers.php:1996
 #: templates/dashboard/sections/messages.php:92
 #: templates/dashboard/sections/messages.php:360
 #: templates/dashboard/sections/messages.php:451
 msgid "Direct Message"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2011
+#: src/Frontend/AjaxHandlers.php:2015
 msgid "Your message has been sent successfully!"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2077
+#: src/Frontend/AjaxHandlers.php:2081
 msgid "Please log in to continue to checkout."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2206
+#: src/Frontend/AjaxHandlers.php:2210
 #: src/Frontend/Frontend.php:310
 #: src/Frontend/SingleServiceView.php:132
 msgid "Added to cart!"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2270
+#: src/Frontend/AjaxHandlers.php:2274
 msgid "Invalid notification."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2291
+#: src/Frontend/AjaxHandlers.php:2295
 msgid "All notifications marked as read."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2329
-#: src/Frontend/AjaxHandlers.php:2334
+#: src/Frontend/AjaxHandlers.php:2333
+#: src/Frontend/AjaxHandlers.php:2338
 msgid "Cart updated."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2457
+#: src/Frontend/AjaxHandlers.php:2461
 msgid "Tab content not found."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2498
+#: src/Frontend/AjaxHandlers.php:2502
 msgid "Service paused."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2508
+#: src/Frontend/AjaxHandlers.php:2512
 msgid "Service unpublished."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2522
+#: src/Frontend/AjaxHandlers.php:2526
 msgid "Service published."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2534
-#: src/Frontend/AjaxHandlers.php:2586
+#: src/Frontend/AjaxHandlers.php:2538
+#: src/Frontend/AjaxHandlers.php:2590
 msgid "Unknown action."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2614
+#: src/Frontend/AjaxHandlers.php:2618
 msgid "This action is not available in the order's current status."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2664
+#: src/Frontend/AjaxHandlers.php:2668
 msgid "Order cannot be refunded in its current status."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2672
+#: src/Frontend/AjaxHandlers.php:2676
 msgid "Cannot accept cancellation."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2688
+#: src/Frontend/AjaxHandlers.php:2692
 msgid "Failed to create dispute."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2691
+#: src/Frontend/AjaxHandlers.php:2695
 msgid "Cannot dispute cancellation."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2697
+#: src/Frontend/AjaxHandlers.php:2701
 msgid "Order updated."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2699
+#: src/Frontend/AjaxHandlers.php:2703
 msgid "Action failed."
 msgstr ""
 
 #. translators: %d: number of items processed
-#: src/Frontend/AjaxHandlers.php:2796
+#: src/Frontend/AjaxHandlers.php:2800
 #, php-format
 msgid "%d items updated."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2874
+#: src/Frontend/AjaxHandlers.php:2878
 msgid "Invalid export type."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3057
+#: src/Frontend/AjaxHandlers.php:3061
 #: src/Frontend/UnifiedDashboard.php:203
 msgid "Profile updated successfully."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3132
-#: src/Frontend/AjaxHandlers.php:3201
+#: src/Frontend/AjaxHandlers.php:3136
+#: src/Frontend/AjaxHandlers.php:3205
 msgid "Invalid portfolio item."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3230
+#: src/Frontend/AjaxHandlers.php:3234
 msgid "Invalid cart item."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3252
+#: src/Frontend/AjaxHandlers.php:3256
 msgid "Item removed from cart."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3281
-#: src/Frontend/AjaxHandlers.php:3353
+#: src/Frontend/AjaxHandlers.php:3285
+#: src/Frontend/AjaxHandlers.php:3357
 msgid "Missing order."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3320
+#: src/Frontend/AjaxHandlers.php:3324
 msgid "Missing request."
 msgstr ""
 
@@ -11121,7 +11126,7 @@ msgstr ""
 
 #: src/Frontend/ServiceWizard.php:1696
 #: src/Frontend/ServiceWizard.php:1832
-#: src/Frontend/ServiceWizard.php:2474
+#: src/Frontend/ServiceWizard.php:2442
 msgid "You are not authorized to create services."
 msgstr ""
 
@@ -11180,11 +11185,11 @@ msgstr ""
 msgid "You cannot delete this attachment."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2429
+#: src/Frontend/ServiceWizard.php:2397
 msgid "Please log in to create a service."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2430
+#: src/Frontend/ServiceWizard.php:2398
 #: src/Frontend/UnifiedDashboard.php:642
 #: src/functions/urls.php:534
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:999
@@ -11194,33 +11199,33 @@ msgstr ""
 msgid "Log In"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2441
+#: src/Frontend/ServiceWizard.php:2409
 msgid "You need to be a registered vendor to create services."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2448
+#: src/Frontend/ServiceWizard.php:2416
 #: src/Frontend/UnifiedDashboard.php:1022
 #: src/functions/urls.php:493
 #: templates/single-request.php:516
 msgid "Become a Vendor"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2463
+#: src/Frontend/ServiceWizard.php:2431
 msgid "Your vendor account is suspended. You cannot create services at this time."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2469
+#: src/Frontend/ServiceWizard.php:2437
 msgid "Your vendor account is pending approval. You will be able to create services once approved."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2488
+#: src/Frontend/ServiceWizard.php:2456
 #: templates/dashboard/sections/earnings.php:378
 #: templates/dashboard/sections/earnings.php:404
 msgid "Manage your services"
 msgstr ""
 
 #. translators: %d: maximum number of services allowed
-#: src/Frontend/ServiceWizard.php:2494
+#: src/Frontend/ServiceWizard.php:2462
 #, php-format
 msgid "You have reached the maximum limit of %d services. Please remove an existing service before creating a new one."
 msgstr ""
@@ -11470,7 +11475,7 @@ msgid "Select extras"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:142
-#: src/Services/EarningsService.php:1515
+#: src/Services/EarningsService.php:1526
 msgid "Day"
 msgstr ""
 
@@ -11584,7 +11589,7 @@ msgid "Skills"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:613
-#: src/functions/vendors.php:958
+#: src/functions/vendors.php:968
 msgid "This vendor is currently on vacation."
 msgstr ""
 
@@ -14544,6 +14549,14 @@ msgstr ""
 msgid "This vendor is away and not taking new orders right now."
 msgstr ""
 
+#: src/functions/services.php:709
+msgid "This vendor is not taking new orders right now."
+msgstr ""
+
+#: src/functions/services.php:899
+msgid "This service has orders, so it can only be moved to the trash. Its order history stays on the site."
+msgstr ""
+
 #. translators: %s: rating out of five, e.g. 4.5
 #: src/functions/templates.php:78
 #, php-format
@@ -14588,81 +14601,81 @@ msgstr ""
 msgid "Service Checkout"
 msgstr ""
 
-#: src/functions/vendors.php:443
+#: src/functions/vendors.php:453
 msgid "Your vendor account is pending approval."
 msgstr ""
 
-#: src/functions/vendors.php:447
+#: src/functions/vendors.php:457
 msgid "Your vendor account is suspended."
 msgstr ""
 
-#: src/functions/vendors.php:451
+#: src/functions/vendors.php:461
 msgid "Your vendor account was not approved."
 msgstr ""
 
-#: src/functions/vendors.php:460
+#: src/functions/vendors.php:470
 msgid "Your vendor account is not active."
 msgstr ""
 
-#: src/functions/vendors.php:485
+#: src/functions/vendors.php:495
 msgid "You must be a vendor to submit proposals."
 msgstr ""
 
-#: src/functions/vendors.php:891
+#: src/functions/vendors.php:901
 msgid "vendors already here"
 msgstr ""
 
-#: src/functions/vendors.php:900
+#: src/functions/vendors.php:910
 msgid "services on offer"
 msgstr ""
 
 #. translators: %s: percentage of each order the seller keeps.
-#: src/functions/vendors.php:911
+#: src/functions/vendors.php:921
 #, php-format
 msgid "%s%%"
 msgstr ""
 
-#: src/functions/vendors.php:912
+#: src/functions/vendors.php:922
 msgid "of every order is yours"
 msgstr ""
 
 #. translators: %s: formatted return date
-#: src/functions/vendors.php:998
+#: src/functions/vendors.php:1008
 #, php-format
 msgid "Orders resume on %s"
 msgstr ""
 
-#: src/functions/vendors.php:1026
+#: src/functions/vendors.php:1036
 msgid "Awarded by the marketplace team"
 msgstr ""
 
-#: src/functions/vendors.php:1029
+#: src/functions/vendors.php:1039
 msgid "Earned from completed orders, rating and on-time delivery"
 msgstr ""
 
-#: src/functions/vendors.php:1036
+#: src/functions/vendors.php:1046
 msgid "completed orders"
 msgstr ""
 
-#: src/functions/vendors.php:1037
+#: src/functions/vendors.php:1047
 msgid "rating"
 msgstr ""
 
-#: src/functions/vendors.php:1038
+#: src/functions/vendors.php:1048
 #: templates/order/order-view.php:893
 msgid "reviews"
 msgstr ""
 
-#: src/functions/vendors.php:1039
+#: src/functions/vendors.php:1049
 msgid "% on-time delivery"
 msgstr ""
 
-#: src/functions/vendors.php:1040
+#: src/functions/vendors.php:1050
 msgid "days selling"
 msgstr ""
 
 #. translators: 1: next seller level, 2: list of requirements not yet met
-#: src/functions/vendors.php:1052
+#: src/functions/vendors.php:1062
 #, php-format
 msgid "%1$s needs %2$s."
 msgstr ""
@@ -15025,7 +15038,7 @@ msgstr ""
 
 #: src/Integrations/PayPal/PayPalGateway.php:80
 #: src/Integrations/PayPal/PayPalGateway.php:1574
-#: src/Services/EarningsService.php:1212
+#: src/Services/EarningsService.php:1223
 msgid "PayPal"
 msgstr ""
 
@@ -15825,7 +15838,7 @@ msgstr ""
 #: src/Models/BuyerRequest.php:275
 #: src/Models/Dispute.php:240
 #: src/Services/BuyerRequestService.php:1363
-#: src/Services/DisputeService.php:1317
+#: src/Services/DisputeService.php:1347
 msgid "Open"
 msgstr ""
 
@@ -15843,7 +15856,7 @@ msgid "Expired"
 msgstr ""
 
 #: src/Models/Dispute.php:242
-#: src/Services/DisputeService.php:1320
+#: src/Services/DisputeService.php:1350
 #: templates/emails/dispute-escalated.php:60
 msgid "Escalated"
 msgstr ""
@@ -16385,7 +16398,7 @@ msgid "Marketplace withdrawals"
 msgstr ""
 
 #: src/Privacy/PersonalData.php:306
-#: src/Services/EarningsService.php:1263
+#: src/Services/EarningsService.php:1274
 msgid "Payout details"
 msgstr ""
 
@@ -16749,149 +16762,161 @@ msgid "This order cannot be moved into dispute from its current status."
 msgstr ""
 
 #. translators: 1: current dispute status label, 2: requested status label.
-#: src/Services/DisputeService.php:794
+#: src/Services/DisputeService.php:810
 #, php-format
 msgid "A dispute that is %1$s cannot be moved to %2$s."
 msgstr ""
 
+#: src/Services/DisputeService.php:858
+msgid "This dispute was just changed by someone else. Reload and try again."
+msgstr ""
+
 #. translators: %s: where the refund came from, e.g. stripe or admin.
-#: src/Services/DisputeService.php:894
+#: src/Services/DisputeService.php:924
 #, php-format
 msgid "Order refunded in full (%s). No further money was moved."
 msgstr ""
 
-#: src/Services/DisputeService.php:948
-#: src/Services/DisputeWorkflowManager.php:325
-#: src/Services/DisputeWorkflowManager.php:479
+#: src/Services/DisputeService.php:978
+#: src/Services/DisputeWorkflowManager.php:324
+#: src/Services/DisputeWorkflowManager.php:493
 msgid "This dispute has already been resolved or closed."
 msgstr ""
 
-#: src/Services/DisputeService.php:955
+#: src/Services/DisputeService.php:985
 msgid "Please select a resolution type when resolving a dispute."
 msgstr ""
 
-#: src/Services/DisputeService.php:967
+#: src/Services/DisputeService.php:997
 msgid "Enter the amount to refund. A partial refund needs a number greater than zero."
 msgstr ""
 
 #. translators: %s: formatted order total.
-#: src/Services/DisputeService.php:974
+#: src/Services/DisputeService.php:1004
 #, php-format
 msgid "A partial refund must be less than the %s order total. Choose Full Refund to return all of it."
 msgstr ""
 
-#: src/Services/DisputeService.php:1023
+#: src/Services/DisputeService.php:1053
 msgid "The order could not be moved for this resolution, so the dispute stays open. Check the order status and try again."
 msgstr ""
 
 #. translators: %s: message from the payment gateway.
-#: src/Services/DisputeService.php:1113
+#: src/Services/DisputeService.php:1143
 #, php-format
 msgid "The refund did not go through, so the dispute stays open: %s The order is flagged for retry."
 msgstr ""
 
-#: src/Services/DisputeService.php:1332
+#: src/Services/DisputeService.php:1362
 msgid "Full Refund"
 msgstr ""
 
-#: src/Services/DisputeService.php:1333
+#: src/Services/DisputeService.php:1363
 msgid "Partial Refund"
 msgstr ""
 
-#: src/Services/DisputeService.php:1334
+#: src/Services/DisputeService.php:1364
 msgid "In Favor of Vendor"
 msgstr ""
 
-#: src/Services/DisputeService.php:1335
+#: src/Services/DisputeService.php:1365
 msgid "In Favor of Buyer"
 msgstr ""
 
-#: src/Services/DisputeService.php:1336
+#: src/Services/DisputeService.php:1366
 msgid "Mutual Agreement"
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:118
+#: src/Services/DisputeWorkflowManager.php:117
 msgid "This dispute is no longer accepting responses."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:133
+#: src/Services/DisputeWorkflowManager.php:132
 msgid "You are not authorized to respond to this dispute."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:154
+#: src/Services/DisputeWorkflowManager.php:153
 msgid "One of the attachments is not a file you uploaded to this order."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:188
+#: src/Services/DisputeWorkflowManager.php:187
 msgid "Failed to submit response."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:213
+#: src/Services/DisputeWorkflowManager.php:212
 msgid "Response submitted successfully."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:324
+#: src/Services/DisputeWorkflowManager.php:323
 msgid "This dispute has already been escalated to support."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:363
+#: src/Services/DisputeWorkflowManager.php:362
 msgid "Dispute has been escalated to support."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:378
+#: src/Services/DisputeWorkflowManager.php:377
 msgid "Invalid admin user."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:412
+#: src/Services/DisputeWorkflowManager.php:393
+msgid "A resolved dispute cannot be assigned."
+msgstr ""
+
+#: src/Services/DisputeWorkflowManager.php:401
+msgid "Dispute already assigned to this admin."
+msgstr ""
+
+#: src/Services/DisputeWorkflowManager.php:426
 msgid "Failed to assign dispute."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:440
+#: src/Services/DisputeWorkflowManager.php:454
 msgid "Dispute assigned successfully."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:472
+#: src/Services/DisputeWorkflowManager.php:486
 msgid "You are not authorized to cancel this dispute."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:487
+#: src/Services/DisputeWorkflowManager.php:501
 msgid "This dispute has been escalated to the site team, so only they can close it."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:512
+#: src/Services/DisputeWorkflowManager.php:526
 msgid "The order could not be restored, so the dispute stays open."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:549
+#: src/Services/DisputeWorkflowManager.php:563
 msgid "Dispute cancelled successfully."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:583
+#: src/Services/DisputeWorkflowManager.php:597
 msgid "Auto-escalated: No response from other party within deadline."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:620
+#: src/Services/DisputeWorkflowManager.php:634
 msgid "Auto-escalated: Dispute unresolved for extended period."
 msgstr ""
 
 #. translators: %d: number of days the order has been late
-#: src/Services/DisputeWorkflowManager.php:746
+#: src/Services/DisputeWorkflowManager.php:760
 #, php-format
 msgid "Dispute auto-opened: Order has been late for more than %d days without delivery."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:881
+#: src/Services/DisputeWorkflowManager.php:895
 msgid "Dispute closed; order restored."
 msgstr ""
 
 #. translators: %d: dispute ID
-#: src/Services/DisputeWorkflowManager.php:900
+#: src/Services/DisputeWorkflowManager.php:914
 #, php-format
 msgid "[Action Required] Dispute #%d has been escalated"
 msgstr ""
 
 #. translators: 1: dispute ID, 2: order ID, 3: reason
-#: src/Services/DisputeWorkflowManager.php:906
+#: src/Services/DisputeWorkflowManager.php:920
 #, php-format
 msgid ""
 "Dispute #%1$d for Order #%2$d has been escalated.\n"
@@ -16901,7 +16926,7 @@ msgid ""
 "Please review and resolve this dispute."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:1160
+#: src/Services/DisputeWorkflowManager.php:1174
 msgid "Opened this dispute."
 msgstr ""
 
@@ -16931,7 +16956,7 @@ msgstr ""
 
 #: src/Services/EarningsService.php:539
 #: src/Services/EarningsService.php:1049
-#: src/Services/EarningsService.php:1479
+#: src/Services/EarningsService.php:1490
 msgid "Withdrawal not found."
 msgstr ""
 
@@ -16951,7 +16976,7 @@ msgid "This withdrawal is %1$s but the vendor's balance is only %2$s, so paying 
 msgstr ""
 
 #: src/Services/EarningsService.php:615
-#: src/Services/EarningsService.php:1086
+#: src/Services/EarningsService.php:1097
 msgid "Failed to update withdrawal."
 msgstr ""
 
@@ -16991,107 +17016,111 @@ msgstr ""
 msgid "Withdrawal request submitted successfully."
 msgstr ""
 
-#: src/Services/EarningsService.php:1108
+#: src/Services/EarningsService.php:1074
+msgid "This withdrawal already has that status."
+msgstr ""
+
+#: src/Services/EarningsService.php:1119
 msgid "Withdrawal updated successfully."
 msgstr ""
 
-#: src/Services/EarningsService.php:1215
+#: src/Services/EarningsService.php:1226
 msgid "PayPal email"
 msgstr ""
 
-#: src/Services/EarningsService.php:1225
+#: src/Services/EarningsService.php:1236
 msgid "Account holder name"
 msgstr ""
 
-#: src/Services/EarningsService.php:1230
+#: src/Services/EarningsService.php:1241
 msgid "Bank name"
 msgstr ""
 
-#: src/Services/EarningsService.php:1235
+#: src/Services/EarningsService.php:1246
 msgid "Account number or IBAN"
 msgstr ""
 
-#: src/Services/EarningsService.php:1240
+#: src/Services/EarningsService.php:1251
 msgid "Routing, SWIFT or IFSC code"
 msgstr ""
 
-#: src/Services/EarningsService.php:1270
+#: src/Services/EarningsService.php:1281
 msgid "A payout method needs a string id and a label."
 msgstr ""
 
-#: src/Services/EarningsService.php:1309
+#: src/Services/EarningsService.php:1320
 msgid "Choose a payout method this marketplace offers."
 msgstr ""
 
 #. translators: %s: field label
-#: src/Services/EarningsService.php:1320
+#: src/Services/EarningsService.php:1331
 #, php-format
 msgid "%s is not a valid email address."
 msgstr ""
 
 #. translators: %s: field label
-#: src/Services/EarningsService.php:1325
+#: src/Services/EarningsService.php:1336
 #, php-format
 msgid "Add your %s to receive payouts."
 msgstr ""
 
-#: src/Services/EarningsService.php:1483
+#: src/Services/EarningsService.php:1494
 msgid "Automatic withdrawals cannot be cancelled."
 msgstr ""
 
-#: src/Services/EarningsService.php:1486
+#: src/Services/EarningsService.php:1497
 msgid "Only a pending withdrawal can be cancelled. This one has already been processed."
 msgstr ""
 
-#: src/Services/EarningsService.php:1516
+#: src/Services/EarningsService.php:1527
 msgid "Week"
 msgstr ""
 
-#: src/Services/EarningsService.php:1517
+#: src/Services/EarningsService.php:1528
 msgid "Month"
 msgstr ""
 
-#: src/Services/EarningsService.php:1518
+#: src/Services/EarningsService.php:1529
 msgid "Year"
 msgstr ""
 
-#: src/Services/EarningsService.php:1647
+#: src/Services/EarningsService.php:1658
 msgid "Auto withdrawal is not enabled."
 msgstr ""
 
-#: src/Services/EarningsService.php:1657
+#: src/Services/EarningsService.php:1668
 msgid "No vendors eligible for auto withdrawal."
 msgstr ""
 
 #. translators: 1: processed count, 2: failed count
-#: src/Services/EarningsService.php:1703
+#: src/Services/EarningsService.php:1714
 #, php-format
 msgid "Auto withdrawal completed. Processed: %1$d, Failed: %2$d."
 msgstr ""
 
-#: src/Services/EarningsService.php:1741
+#: src/Services/EarningsService.php:1752
 msgid "Vendor already has a pending auto withdrawal."
 msgstr ""
 
-#: src/Services/EarningsService.php:1763
+#: src/Services/EarningsService.php:1774
 msgid "Failed to create auto withdrawal request."
 msgstr ""
 
-#: src/Services/EarningsService.php:1774
+#: src/Services/EarningsService.php:1785
 msgid "Auto Withdrawal Created"
 msgstr ""
 
 #. translators: %s: amount
-#: src/Services/EarningsService.php:1777
+#: src/Services/EarningsService.php:1788
 #, php-format
 msgid "An automatic withdrawal of %s has been scheduled based on your payout settings."
 msgstr ""
 
-#: src/Services/EarningsService.php:1797
+#: src/Services/EarningsService.php:1808
 msgid "Auto withdrawal request created successfully."
 msgstr ""
 
-#: src/Services/EarningsService.php:1813
+#: src/Services/EarningsService.php:1824
 msgid "Every 14 Days (Bi-weekly)"
 msgstr ""
 
@@ -19222,7 +19251,7 @@ msgid "Tip order created. Continue to payment."
 msgstr ""
 
 #. translators: %s: tip order number
-#: src/Services/TippingService.php:410
+#: src/Services/TippingService.php:415
 #, php-format
 msgid "Tip received for order %s"
 msgstr ""
@@ -19243,12 +19272,12 @@ msgstr ""
 msgid "Failed to register as vendor. Please try again."
 msgstr ""
 
-#: src/Services/VendorService.php:826
+#: src/Services/VendorService.php:831
 msgid "Less than 1 hour"
 msgstr ""
 
 #. translators: %d: number of hours
-#: src/Services/VendorService.php:830
+#: src/Services/VendorService.php:835
 #, php-format
 msgid "%d hour"
 msgid_plural "%d hours"

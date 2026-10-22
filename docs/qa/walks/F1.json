@@ -1,0 +1,271 @@
+{
+ "journey": "F1",
+ "mode": "free",
+ "sha_free": "46b5ad61",
+ "ran_at": "2026-10-22T04:15:00Z",
+ "env": {
+  "site": "http://wp-sell-services.local",
+  "theme": "reign-theme",
+  "plugins": "wp-sell-services 1.9.1 + woocommerce (wp-sell-services-pro deactivated)",
+  "ecommerce_platform": "auto (resolves standalone)",
+  "viewports": "1280x900, 390x844",
+  "mailpit": "127.0.0.1:10040",
+  "browser": "Playwright MCP"
+ },
+ "checks": [
+  {
+   "id": "a-standalone-checkout-renders-free",
+   "result": "pass",
+   "evidence": "Free mode (Pro off, Woo active, platform auto): /service-checkout/11406/?package=0 as Ella renders at 1280 (scrollWidth 1280==1280, [data-wpss-auto-container] max-width none padding 0) and 390 (390==390); summary 'Sales tax (10%)', total $27.50."
+  },
+  {
+   "id": "a-frozen-tax-label-admin-order",
+   "result": "pass",
+   "evidence": "Admin Add manual order (service 11406, Basic, buyer Ella, Pending Payment) with wpss_tax label GST rate 10 created order 5542 (meta tax_label GST, total 27.50). After renaming label to 'Sales tax' the wp-admin order screen still shows 'GST $2.50' and no 'Sales tax'."
+  },
+  {
+   "id": "a-frozen-tax-label-pay-page",
+   "result": "pass",
+   "evidence": "After rename to 'Sales tax': /service-checkout/?pay_order=5542 as Ella shows 'GST (10%)' at 1280 and 390 (no horizontal scroll). Request-order QA-WALK-REQ 5543 (frozen GST in meta) pay page also 'GST (10%)', Subtotal $50 + GST $5 = $55, and its order view + admin screen say GST. A new request order 5544 created after the rename froze 'Sales tax (10%)'."
+  },
+  {
+   "id": "b-requirements-page-request-title",
+   "result": "pass",
+   "evidence": "Order 2338 set to pending_requirements via DB, /dashboard/orders/2338/requirements/ as Ella shows heading 'Submit requirements' and the order card names 'QA-RFT milestone project' with Order #; 390 scrollWidth 390. Browser tab <title> is still 'Dashboard - wp-sell-services' (page title, not the card). Status restored to completed."
+  },
+  {
+   "id": "c-withdrawal-message-role-status",
+   "result": "pass",
+   "evidence": "Aisha /dashboard/earnings/: #wpss-withdrawal-message has role=status (outerHTML <div id=wpss-withdrawal-message class=wpss-notice role=status style=display:none>). Note: aria-live not set explicitly."
+  },
+  {
+   "id": "c-real-withdrawal-and-restore",
+   "result": "pass",
+   "evidence": "Aisha requested $25 PayPal (id 244): available fell 291.60 to 266.60, row PENDING, admin email 'New Withdrawal Request'. Admin approved (email 'Withdrawal of $25.00 Approved', body 'approved and is being processed', Status Approved) then Mark paid (email 'Withdrawal of $25.00 Paid', body 'has been paid', Status Paid; exactly one ledger row id 1768 type withdrawal, in-app 'has been paid'). Mark paid button absent afterwards. All QA rows deleted, balance back to 291.60 baseline."
+  },
+  {
+   "id": "d-payment-description-request-title",
+   "result": "pass",
+   "evidence": "wpss_get_order_title(order 5543/5544 platform=request) returns the request title ('QA-RFT milestone project' / 'QA-WALK request for logo'); CheckoutIntentService.php:110 builds the PaymentIntent description from wpss_get_order_title. The outgoing Stripe payload itself was not captured (outbound HTTP not inspectable), so this is code-path plus helper output."
+  },
+  {
+   "id": "j06-s1-page-contained-reign",
+   "result": "pass",
+   "evidence": "Reign at 1280: wrapper stands down (max-width none, padding 0), scrollWidth==clientWidth."
+  },
+  {
+   "id": "j06-s1-second-theme",
+   "result": "untested",
+   "evidence": "Needs a block theme switch (Twenty Twenty-Four); site-wide theme change not made in this walk."
+  },
+  {
+   "id": "j06-s2-390-no-scroll",
+   "result": "pass",
+   "evidence": "Checkout 390: scrollWidth 390==390; Order Summary card (top 905) sits above Payment Method (1794), About the Vendor (2331); Service Details (470) is first. Checkout badges disabled in config so the guarantees bar is not rendered (null), wrap not exercised."
+  },
+  {
+   "id": "j06-s3-logged-out-reaches-payment",
+   "result": "pass",
+   "evidence": "checkout_account_creation off (default): logged-out /service-checkout/11406/?package=0 shows 'Sign in to continue ... Log In Register' (correct per journey for off). On-state not exercised."
+  },
+  {
+   "id": "j06-s4-account-created-from-typed-data",
+   "result": "untested",
+   "evidence": "Creates a real user via checkout; not run (checkout_account_creation flag off and no teardown for a new account in this scope)."
+  },
+  {
+   "id": "j06-s5-offline-records-method",
+   "result": "pass",
+   "evidence": "Pay-order 5543 and 5544 via Offline: DB payment_method=offline (not NULL), payment_status pending. Order view with instructions set shows 'QA-WALK pay to IBAN 123' and 'Proof of payment ... Receipt or screenshot / Send receipt' file input; admin screen shows 'Offline Payment - Awaiting Confirmation' with Mark as paid. With the site as configured (offline instructions empty, receipts disabled) the buyer sees only 'The site owner will send you payment instructions by email' and no proof upload; settings restored to original."
+  },
+  {
+   "id": "j06-s6-mark-paid-credits-once",
+   "result": "pass",
+   "evidence": "Admin Mark as paid (confirm modal) on 5543 and 5544: status pending_requirements, payment_status paid, paid_at set, wpss_wallet_transactions rows for the order = 0 (credit happens on completion, as in journey 01). Button no longer rendered afterwards."
+  },
+  {
+   "id": "j06-s7-mapped-page-route",
+   "result": "untested",
+   "evidence": "/service-checkout/ page route (not rewrite) on two themes not separately compared."
+  },
+  {
+   "id": "j06-s8-tax-label-single-item",
+   "result": "pass",
+   "evidence": "Tax VAT 20: free-rail summary reads VAT/Sales tax label with rate; single-item summary 'Sales tax (10%)' total 27.50 matched charge. Cart of two and cleared-label 'Tax' fallback not exercised (Woo cart needs Pro)."
+  },
+  {
+   "id": "j06-sidebar-cards-never-overlap",
+   "result": "pass",
+   "evidence": "Scrolled /service-checkout/11406/?package=0 at 1280 in 100px steps (max 1398): Order Summary, About the Vendor, What happens next getBoundingClientRect never intersect at any step; 390 summary precedes payment/vendor cards."
+  },
+  {
+   "id": "j06-closed-order-not-already-paid",
+   "result": "pass",
+   "evidence": "?pay_order=5290 (cancelled) reads 'This order was cancelled and can no longer be paid.' with Back to order; ?pay_order=3902 (refunded) 'This order was refunded and can no longer be paid.'"
+  },
+  {
+   "id": "j01-s1-proposal-one-email",
+   "result": "pass",
+   "evidence": "Maya proposed 50/5d on QA-WALK request 15611: proposal row 297 pending; Mailpit shows exactly one '[wp-sell-services] New Proposal from Maya Chen' to Ella."
+  },
+  {
+   "id": "j01-s2-s3-inbox-and-deeplink",
+   "result": "pass",
+   "evidence": "Ella notifications: 'New proposal received' rows name the vendor and bid ($60.00 / $50.00), icon is a briefcase SVG, text 'You have a new notification' absent, title is an <a> to /buyer-request/qa-walk-request-for-logo/ and clicking lands on the request with proposals."
+  },
+  {
+   "id": "j01-s4-second-vendor",
+   "result": "pass",
+   "evidence": "Aisha proposal 298 created; Ella got a second 'New proposal received' and email."
+  },
+  {
+   "id": "j01-s5-hire",
+   "result": "pass",
+   "evidence": "Accept 297 (confirm modal): order 5544 platform=request status pending_payment service_id=0; Maya got 'Your proposal was accepted' naming the request and WPSS-QTZCN6KK (in-app + email); Aisha proposal 298 status rejected with 'Proposal not selected' in-app notification (no email sent to Aisha)."
+  },
+  {
+   "id": "j01-s6-s7-order-and-pay",
+   "result": "pass",
+   "evidence": "Pay page 5544 line item is the request title, hidden service_id=0, pay_order=5544; no 'Service Checkout' leak in item title. Offline recorded, admin Mark as Paid -> pending_requirements."
+  },
+  {
+   "id": "j01-s8-admin-sees-request",
+   "result": "pass",
+   "evidence": "Admin order 5543 service row 'Request: QA-RFT milestone project' linking post.php?post=11535&action=edit; not 'Deleted'."
+  },
+  {
+   "id": "j01-modals-above-theme",
+   "result": "untested",
+   "evidence": "Deliver Work / Open Dispute / Quote Extra Work modal stacking not measured with elementFromPoint."
+  },
+  {
+   "id": "j01-one-completion-email",
+   "result": "untested",
+   "evidence": "No order was completed in this walk."
+  },
+  {
+   "id": "j01-order-again",
+   "result": "untested",
+   "evidence": "No completed package order driven through Order again."
+  },
+  {
+   "id": "j09-s1-request-file",
+   "result": "pass",
+   "evidence": "Ella created request 15611 with an attached PNG through Dashboard > Post Request; request page lists qa-walk-req.png and the link returns 200."
+  },
+  {
+   "id": "j09-s2-s3-vendor-opens-order",
+   "result": "pass",
+   "evidence": "Maya via Messages card (/dashboard/orders/5544/) and /dashboard/sales/5544/: full page with sidebar and footer, 'Files the buyer attached' lists the request file, 2 wpss_order_file links both 200; 390 scrollWidth 390."
+  },
+  {
+   "id": "j09-s4-second-file-keeps-brief",
+   "result": "pass",
+   "evidence": "Ella submitted description + second PNG: order moved to In Progress; buyer view lists both files, both 200, QA-WALK buyer brief and the Maya proposal cover letter both still present. Vendor view lists both. Admin order view not re-opened for the second file."
+  },
+  {
+   "id": "j09-s5-rest",
+   "result": "pass",
+   "evidence": "As Ella GET /wpss/v1/orders/5544/requirements -> 200 status submitted, attachments [15610, uuid]; GET .../files/{id} 200 for both."
+  },
+  {
+   "id": "j09-s6-someone-else",
+   "result": "pass",
+   "evidence": "As Amelia: requirements GET 403, both file routes 403, POST requirements 403, wpss_order_file download 404 text/html (no file served). The 'foreign media id in attachments not stored' check was not reachable (POST refused 403 for non-owner) so untested for the owner path."
+  },
+  {
+   "id": "j10-s1-request-payout",
+   "result": "pass",
+   "evidence": "See c-real-withdrawal-and-restore: pending row, available reduced (291.60 to 266.60), admin email. After submit the page reloads with no visible success message (#wpss-withdrawal-message empty/hidden after reload)."
+  },
+  {
+   "id": "j10-s2-approve",
+   "result": "pass",
+   "evidence": "Withdrawals > Approve (confirm modal): row Approved, vendor email 'Withdrawal of $25.00 Approved' body 'approved and is being processed'."
+  },
+  {
+   "id": "j10-s3-mark-paid",
+   "result": "pass",
+   "evidence": "Mark paid: email 'Withdrawal of $25.00 Paid' status Paid, one ledger debit, no buttons left on row, in-app 'has been paid'. Settings > Emails lists Withdrawal approved/paid/rejected switches (switch-off behaviour not exercised)."
+  },
+  {
+   "id": "j10-s4-390",
+   "result": "pass",
+   "evidence": "Admin Withdrawals at 390: scrollWidth 390, action buttons 40px high (66/54px wide). Vendor Earnings page at 390 not measured."
+  },
+  {
+   "id": "j10-s5-auto-payout-dates",
+   "result": "untested",
+   "evidence": "Scheduled Actions / auto-withdrawal schedule not exercised."
+  },
+  {
+   "id": "j10-s6-negative-numbers",
+   "result": "untested",
+   "evidence": "Settings POST of -5 not run."
+  },
+  {
+   "id": "j10-s7-reject-auto-emails",
+   "result": "untested",
+   "evidence": "Reject and auto-payout mails not triggered (one withdrawal only)."
+  },
+  {
+   "id": "j10-s8-negative-balance",
+   "result": "untested",
+   "evidence": "Would require refunding an order after withdrawal; not run."
+  },
+  {
+   "id": "j16-s1-milestone-contract",
+   "result": "untested",
+   "evidence": "Milestone plan propose/pay/approve flow not walked; only existing phase order 5293 (pay page total $60.00, 'VAT (20%, included) $10.00', frozen included-tax at creation) was opened as Ella. Exclusive 50+10 split not seen because no fresh phase was created."
+  },
+  {
+   "id": "j16-s2-paid-extension",
+   "result": "untested",
+   "evidence": "Quote/accept not walked; extension order 5291 pay page shows Subtotal $30.00 VAT (20%) $6.00 Total $36.00 (matches expectation)."
+  },
+  {
+   "id": "j16-s3-deadline-extension",
+   "result": "untested",
+   "evidence": "Deadline extension request not walked."
+  },
+  {
+   "id": "j16-s4-tip-free-mode",
+   "result": "pass",
+   "evidence": "Free mode: completed order 5294 as Ella shows no Tip control or Pro error (absent). Existing tip order 5292 pay page: Order total $12.00 with no VAT line (tax_tips off)."
+  },
+  {
+   "id": "j16-s5-rest-role-guards",
+   "result": "untested",
+   "evidence": "As Ella: POST /orders/5544/extension and /orders/5064/extension -> 400 rest_missing_callback_param (params not supplied so role/catalog guard not distinguished: untested); GET /milestones/1 and POST /milestones/1/submit -> 404 wpss_milestone_not_found; POST /extensions/1/decline -> 200 (Ella is parent buyer; this declined pending request id 1 by mistake, reverted)."
+  },
+  {
+   "id": "j16-extra-work-pending-card-inset",
+   "result": "untested",
+   "evidence": "Not measured."
+  },
+  {
+   "id": "j16-awaiting-confirmation-heading",
+   "result": "untested",
+   "evidence": "Not walked."
+  },
+  {
+   "id": "j16-tax-on-phases-extensions-tips",
+   "result": "pass",
+   "evidence": "Tax 20% exclusive: extension order 5291 pays 36 (30 + VAT 6); tip order 5292 pays 12 with no VAT line; phase 5293 pays 60. Tax tips switch and prices-include-tax variants not exercised."
+  },
+  {
+   "id": "dark-light-dashboard-screen",
+   "result": "pass",
+   "evidence": "Vendor order page /dashboard/orders/5544 at 390: light body bg rgb(250,251,253) text rgb(64,72,85); dark (toggle) bg rgb(35,38,47) text rgb(197,200,205), card bg rgb(31,41,55); screenshot read, legible. Toggle returned to light."
+  }
+ ],
+ "proposed_checks": [
+  "Offline order view with offline instructions empty and receipts disabled: owner-visible warning that buyers get no instructions/proof upload.",
+  "Mark as paid on an offline request order sends both 'Order Confirmed' and a plain 'Order status updated' email to the buyer (seen for QA-WALK-REQ): confirm only one email per transition.",
+  "Proposal rejection sends no email to the losing vendor (in-app only): decide whether journey 01 step 5 requires an email.",
+  "Withdrawal request submit shows no visible confirmation after the page reload (#wpss-withdrawal-message stays hidden/empty); add an explicit success notice check.",
+  "REST POST /extensions/{id}/decline by the parent buyer succeeds with 200; add a negative check for non-pending and wrong-user cases, and a way to probe route roles without mutating live data."
+ ],
+ "restored": "wpss_tax back to VAT/20/enabled/not included; wpss_offline_settings.instructions back to '' and wpss_offline_receipt_settings back to {enabled:false}; order 2338 status completed with updated_at 2026-10-22 03:48:41; QA-WALK orders 5542/5543/5544 (+ messages, conversations, requirements, notifications 14901-14915), request post 15611 and attachment 15610, proposals 297/298, withdrawal 244, wallet tx 1768 and its audit row deleted; Aisha payout details meta restored to the original value; extension request 1 reverted from rejected to pending (responded_by/at/message NULL) and its notification deleted. Not undoable: Mailpit mails (including a 'Quote declined' mail to Sofia from the extension mistake) and WP user session cookies. Screenshots and .playwright-mcp contents moved to app/qa-artifacts.",
+ "debug_log_issues": []
+}

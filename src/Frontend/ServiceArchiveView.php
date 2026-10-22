@@ -683,7 +683,7 @@ class ServiceArchiveView {
 		$query->set( 'post_status', 'publish' );
 
 		// Exclude services from vendors who are on vacation mode.
-		$vacation_vendors = wpss_get_vacation_vendor_ids();
+		$vacation_vendors = wpss_get_unlisted_seller_ids();
 		if ( ! empty( $vacation_vendors ) ) {
 			$existing_excludes = $query->get( 'author__not_in' );
 			$existing_excludes = $existing_excludes ? $existing_excludes : array();

@@ -145,6 +145,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-dispute-cancel-after-escalation.php"
    },
    {
+    "id": "dispute-writes-are-scoped-to-status",
+    "run": "${WP_CLI:-wp} eval-file tests/test-dispute-writes-are-scoped-to-status.php"
+   },
+   {
     "id": "docs-audit",
     "run": "python3 bin/docs-audit.py"
    },
@@ -301,12 +305,24 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-review-verified-purchase-badge.php"
    },
    {
+    "id": "same-state-repeat-is-noop",
+    "run": "${WP_CLI:-wp} eval-file tests/test-same-state-repeat-is-noop.php"
+   },
+   {
     "id": "seller-levels-rest-earnings",
     "run": "${WP_CLI:-wp} eval-file tests/test-seller-levels-rest-earnings.php"
    },
    {
+    "id": "service-delete-guard-keeps-orders",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-delete-guard-keeps-orders.php"
+   },
+   {
     "id": "service-gallery-mobile-width",
     "run": "${WP_CLI:-wp} eval-file tests/test-service-gallery-mobile-width.php"
+   },
+   {
+    "id": "service-gallery-saver-sets-main-image",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-gallery-saver-sets-main-image.php"
    },
    {
     "id": "service-limit-every-publish-door",
@@ -341,6 +357,10 @@
     "run": "node tests/smoke-gate-surfaces.test.cjs"
    },
    {
+    "id": "standing-blocks-buying-doors",
+    "run": "${WP_CLI:-wp} eval-file tests/test-standing-blocks-buying-doors.php"
+   },
+   {
     "id": "sub-order-tax",
     "run": "${WP_CLI:-wp} eval-file tests/test-sub-order-tax.php"
    },
@@ -359,6 +379,10 @@
    {
     "id": "time-sweep",
     "run": "${WP_CLI:-wp} eval-file tests/test-time-sweep.php"
+   },
+   {
+    "id": "tip-override-commission-excludes-tax",
+    "run": "${WP_CLI:-wp} eval-file tests/test-tip-override-commission-excludes-tax.php"
    },
    {
     "id": "token-cannot-mint",

@@ -339,6 +339,11 @@ class VendorService {
 			return false;
 		}
 
+		// Repeating the same decision must not re-mail or re-audit.
+		if ( $from === $status ) {
+			return true;
+		}
+
 		$updated = $this->profile_repo->upsert(
 			$user_id,
 			array(

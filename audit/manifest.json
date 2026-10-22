@@ -1173,7 +1173,7 @@
   },
   "listing_rules_1_8_0": {
     "_note": "One rule per question, 1.8.0. Each replaced duplicated copies that had drifted.",
-    "vacation": "wpss_get_vacation_vendor_ids() (functions/vendors.php) is the one list of vendors to hide; VendorProfileRepository::on_vacation_sql() / not_on_vacation_sql() / get_on_vacation_user_ids() is the one SQL condition; VendorProfile::is_on_vacation() applies the same rule. A vendor is away while vacation_mode is on AND vacation_return_date is empty or not yet past - nothing is stored when the date passes. Used by ServiceArchiveView, SearchService, REST /services and /search, and the vendor directory queries.",
+    "vacation": "wpss_get_unlisted_seller_ids() (functions/vendors.php) is the one list of vendors to hide; VendorProfileRepository::on_vacation_sql() / not_on_vacation_sql() / get_on_vacation_user_ids() is the one SQL condition; VendorProfile::is_on_vacation() applies the same rule. A vendor is away while vacation_mode is on AND vacation_return_date is empty or not yet past - nothing is stored when the date passes. Used by ServiceArchiveView, SearchService, REST /services and /search, and the vendor directory queries. Since 1.9.1 the same list also holds sellers an owner suspended, rejected or banned, and wpss_service_unavailable_reason() refuses to sell them; wpss_save_service_gallery() is the one writer of a service's gallery and main image (wizard and REST); wpss_service_delete_refusal() guards permanent deletes of services with orders.",
     "service_sort": "wpss_apply_service_sort() + wpss_service_sort_clauses() (functions/services.php) is the one catalog sort (newest, price_low, price_high, rating, popular): a LEFT JOIN on one meta key, so services without the value stay in the list and sort last. Used by ServiceArchiveView (?sort=), SearchService, ServiceManager::search and REST GET /services (orderby=price|rating|popular). Do not write another meta_key sort.",
     "express": "ServiceMetabox::save_meta clears a non-faster Express on a LIVE service and shows a notice (transient wpss_express_cleared_{id}); the wizard and REST keep rejecting it at publish via wpss_validate_service_publishable().",
     "buyer_request_expiry": "_wpss_expires_at is stored in UTC and every comparison uses current_time('mysql', true); the wp-admin Expired filter also lists open requests past expiry that the sweep has not flipped yet.",
@@ -1231,7 +1231,7 @@
   },
   "shared_helpers_1_8_0": {
     "_note": "Seams added during the 1.8.0 card fixes. Reuse these; do not write a second copy.",
-    "services_grid": "wpss_render_services_grid() sorts through wpss_apply_service_sort() and excludes wpss_get_vacation_vendor_ids() unless one vendor is named. FeaturedServices and SellerCard blocks use the same sort.",
+    "services_grid": "wpss_render_services_grid() sorts through wpss_apply_service_sort() and excludes wpss_get_unlisted_seller_ids() unless one vendor is named. FeaturedServices and SellerCard blocks use the same sort.",
     "cart": "wpss_get_user_cart( $user_id, true ) is the one cart reader (flags unavailable lines); wpss_get_cart_count() is the one count. GET /cart, the cart page and the header badge all use them.",
     "demo_content": {
       "note": "wpss_delete_demo_content() is the one delete routine (Settings button and wp wpss demo delete); wpss_has_demo_content() replaces the wpss_demo_content_imported option. Demo-created categories carry term meta _wpss_demo_content.",
@@ -1266,7 +1266,7 @@
         "StandaloneOrderProvider",
         "Pro WCCheckoutProvider cart re-check"
       ],
-      "listing_rule": "Vendors on vacation are left out with author__not_in = wpss_get_vacation_vendor_ids(): catalog, search, REST services, services grid, featured block, Related services (SingleServiceView), live search (AjaxHandlers)."
+      "listing_rule": "Vendors on vacation are left out with author__not_in = wpss_get_unlisted_seller_ids(): catalog, search, REST services, services grid, featured block, Related services (SingleServiceView), live search (AjaxHandlers)."
     },
     "request_deadline": "A request's deadline is stored as _wpss_expires_at (service key expires_at). REST create and update both map the 'deadline' parameter to it, and the response's 'deadline' field reads it back."
   },

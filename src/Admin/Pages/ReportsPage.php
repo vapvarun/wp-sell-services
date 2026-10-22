@@ -549,13 +549,20 @@ class ReportsPage {
 	 * @return void
 	 */
 	private static function set_account_status( int $user_id, string $status ): void {
+		$from = (string) ( get_user_meta( $user_id, 'wpss_account_status', true ) ?: 'active' );
+
+		// Saving an unrelated profile field re-posts the current standing.
+		if ( $from === $status ) {
+			return;
+		}
+
 		( new \WPSellServices\Services\AuditLogService() )->log(
 			'member.account_status',
 			'user',
 			$user_id,
 			array(
 				'action'     => $status,
-				'from_value' => (string) ( get_user_meta( $user_id, 'wpss_account_status', true ) ?: 'active' ),
+				'from_value' => $from,
 				'to_value'   => $status,
 			)
 		);

@@ -95,6 +95,18 @@ class VendorProfileRepository extends AbstractRepository {
 	}
 
 	/**
+	 * User IDs of vendors an owner has suspended or rejected.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @return array<int>
+	 */
+	public function get_blocked_user_ids(): array {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return array_map( 'intval', (array) $this->wpdb->get_col( "SELECT user_id FROM {$this->table} WHERE status IN ('suspended','rejected')" ) );
+	}
+
+	/**
 	 * Get profile by user ID.
 	 *
 	 * @param int $user_id User ID.

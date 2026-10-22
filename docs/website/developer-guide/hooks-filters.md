@@ -55,7 +55,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:895` |
 | `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:756` |
 | `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:930` |
-| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:979` |
+| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:985` |
 
 ## Moderation Actions
 
@@ -71,7 +71,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:743` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:602` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:635` |
 
 ### Order Filters
 
@@ -225,22 +225,22 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 |--------|-----------|------|
 | `wpss_pre_vendor_register` | `array $profile_data, int $user_id` | `VendorService.php` |
 | `wpss_vendor_profile_allowed_fields` | `array $allowed_fields` | `VendorService.php` |
-| `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:921` |
+| `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:931` |
 | `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1344` |
 
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_vendor_registered` | `int $user_id, array $profile_data` | `src/Services/VendorService.php:182` |
-| `wpss_vendor_profile_updated` | `int $user_id, array $filtered_data` | `src/Services/VendorService.php:561` |
-| `wpss_vendor_vacation_mode_changed` | `int $user_id, bool $enabled, string $message` | `src/Services/VendorService.php:612` |
-| `wpss_vendor_tier_changed` | `int $user_id, string $tier` | `src/Services/VendorService.php:653` |
+| `wpss_vendor_profile_updated` | `int $user_id, array $filtered_data` | `src/Services/VendorService.php:566` |
+| `wpss_vendor_vacation_mode_changed` | `int $user_id, bool $enabled, string $message` | `src/Services/VendorService.php:617` |
+| `wpss_vendor_tier_changed` | `int $user_id, string $tier` | `src/Services/VendorService.php:658` |
 | `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `src/Services/SellerLevelService.php:367` |
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:264` |
-| `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:377` |
+| `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:381` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1468` |
-| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2008` |
-| `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:442` |
-| `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:494` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2012` |
+| `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:447` |
+| `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:499` |
 
 ## Financial Actions
 
@@ -254,10 +254,10 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 |------|-----------|------|
 | `wpss_commission_recorded` | `int $order_id, array $commission, int $vendor_id` | `src/Services/CommissionService.php:304` |
 | `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:905` |
-| `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `src/Services/EarningsService.php:1103` |
-| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1792` |
+| `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `src/Services/EarningsService.php:1114` |
+| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1803` |
 | `wpss_tip_order_created` | `int $tip_order_id, int $parent_order_id, int $customer_id, float $amount` | `src/Services/TippingService.php:296` |
-| `wpss_tip_sent` | `int $tip_txn_id, int $parent_order_id, int $vendor_id, int $customer_id, float $vendor_earnings, string $vendor_notes` | `src/Services/TippingService.php:496` |
+| `wpss_tip_sent` | `int $tip_txn_id, int $parent_order_id, int $vendor_id, int $customer_id, float $vendor_earnings, string $vendor_notes` | `src/Services/TippingService.php:501` |
 
 `wpss_tip_order_created` fires when the tip checkout is started; `wpss_tip_sent`
 fires only once the tip is actually paid and credited. The first argument of
@@ -276,12 +276,12 @@ tip. Tips are excluded from commission by default, so the two usually match.
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_dispute_opened` | `int $dispute_id, int $order_id, int $opened_by, array $data` | `src/Services/DisputeService.php:407` |
-| `wpss_dispute_evidence_added` | `int $dispute_id, int $user_id` | `src/Services/DisputeService.php:546` |
-| `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `src/Services/DisputeService.php:862` |
-| `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `src/Services/DisputeService.php:1063` |
+| `wpss_dispute_evidence_added` | `int $dispute_id, int $user_id` | `src/Services/DisputeService.php:562` |
+| `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `src/Services/DisputeService.php:892` |
+| `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `src/Services/DisputeService.php:1093` |
 | `wpss_dispute_response_submitted` | `int $message_id, int $dispute_id, int $user_id` | `src/Services/DisputeWorkflowManager.php:208` |
 | `wpss_dispute_escalated` | `int $dispute_id, string $reason, int $escalated_by` | `src/Services/DisputeWorkflowManager.php:358` |
-| `wpss_dispute_cancelled` | `int $dispute_id, int $user_id, string $reason` | `src/Services/DisputeWorkflowManager.php:544` |
+| `wpss_dispute_cancelled` | `int $dispute_id, int $user_id, string $reason` | `src/Services/DisputeWorkflowManager.php:558` |
 
 ## Review, Request, and Proposal Actions
 
@@ -347,7 +347,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2965` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2970` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:2053` |
 
 ### Admin Filters
@@ -416,7 +416,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1397` |
+| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1403` |
 | `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:640` |
 | `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
 | `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
@@ -516,7 +516,7 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Checkout/ServiceCart.php:122` |
+| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Checkout/ServiceCart.php:134` |
 | `wpss_pay_order_url_lookup` | `string $url, int $order_id, ?object $order` | `src/functions/urls.php` |
 | `wpss_ensure_pay_order` | `string $url, int $order_id` | `src/functions/urls.php` |
 
@@ -784,13 +784,13 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |
 | `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:373` |
 | `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:383` |
-| `wpss_payout_method_registry` | `$methods` (id => label + fields) | `src/Services/EarningsService.php:1254` |
+| `wpss_payout_method_registry` | `$methods` (id => label + fields) | `src/Services/EarningsService.php:1265` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:758` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:265` |
-| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1513` |
+| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1519` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |

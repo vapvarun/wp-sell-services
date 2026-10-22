@@ -2178,7 +2178,7 @@ class ServiceWizard {
 		// Verify main image ownership before accepting.
 		if ( ! empty( $gallery['main']['id'] ) ) {
 			$main_id = absint( $gallery['main']['id'] );
-			if ( $this->user_can_use_attachment( $main_id ) ) {
+			if ( wpss_user_can_use_attachment( $main_id ) ) {
 				$sanitized['main'] = array(
 					'id'  => $main_id,
 					'url' => esc_url( $gallery['main']['url'] ?? '' ),
@@ -2191,7 +2191,7 @@ class ServiceWizard {
 			foreach ( $gallery['images'] as $image ) {
 				if ( ! empty( $image['id'] ) ) {
 					$image_id = absint( $image['id'] );
-					if ( $this->user_can_use_attachment( $image_id ) ) {
+					if ( wpss_user_can_use_attachment( $image_id ) ) {
 						$sanitized['images'][] = array(
 							'id'  => $image_id,
 							'url' => esc_url( $image['url'] ?? '' ),
@@ -2347,55 +2347,23 @@ class ServiceWizard {
 		$revision_values = array_map( 'intval', wp_list_pluck( $numeric_packages, 'revisions' ) );
 		update_post_meta( $service_id, '_wpss_max_revisions', ! empty( $revision_values ) ? max( $revision_values ) : (int) ( $basic['revisions'] ?? 0 ) );
 
-		// Save gallery images.
-		// Collect additional gallery image IDs, filtering out invalid attachments.
+		// Gallery, main image and video go through the one writer REST also uses.
 		$gallery_ids = array();
 		foreach ( $data['gallery']['images'] as $image ) {
-			$id = absint( $image['id'] ?? 0 );
-			if ( $id && get_post( $id ) ) {
-				$gallery_ids[] = $id;
-			}
+			$gallery_ids[] = absint( $image['id'] ?? 0 );
 		}
 
-		// Determine the featured image ID (main image, or first gallery image as fallback).
-		$thumbnail_id = 0;
-		if ( ! empty( $data['gallery']['main']['id'] ) ) {
-			$main_id = absint( $data['gallery']['main']['id'] );
-			if ( $main_id && get_post( $main_id ) ) {
-				$thumbnail_id = $main_id;
-			}
-		}
-		$has_explicit_main = ! empty( $data['gallery']['main']['id'] );
-		if ( ! $has_explicit_main && ! $thumbnail_id && ! empty( $gallery_ids[0] ) ) {
-			$thumbnail_id = $gallery_ids[0];
-		}
-
-		// Include main image in gallery IDs so templates always have at least one
-		// image to display, even if set_post_thumbnail() were to fail silently.
-		$all_gallery_ids = $gallery_ids;
-		if ( $thumbnail_id && ! in_array( $thumbnail_id, $all_gallery_ids, true ) ) {
-			array_unshift( $all_gallery_ids, $thumbnail_id );
+		// The main image is part of the gallery, so a template always has one to show.
+		$thumbnail_id = wpss_pick_service_main_image( absint( $data['gallery']['main']['id'] ?? 0 ), $gallery_ids );
+		if ( $thumbnail_id && ! in_array( $thumbnail_id, $gallery_ids, true ) ) {
+			array_unshift( $gallery_ids, $thumbnail_id );
 		}
 
 		// The client hides the add buttons at the cap; the server is the enforcer.
-		$video = $data['gallery']['video'] ?? '';
-		$data  = wpss_enforce_service_limits( array_merge( $data, array( 'gallery' => $all_gallery_ids ) ) )['meta'];
+		$video = (string) ( $data['gallery']['video'] ?? '' );
+		$data  = wpss_enforce_service_limits( array_merge( $data, array( 'gallery' => $gallery_ids ) ) )['meta'];
 
-		update_post_meta(
-			$service_id,
-			'_wpss_gallery',
-			array(
-				'images' => $data['gallery'],
-				'video'  => $video,
-			)
-		);
-
-		// Set featured image directly via update_post_meta to avoid
-		// set_post_thumbnail()'s silent deletion when attachment metadata
-		// is incomplete (e.g., async thumbnail generation).
-		if ( $thumbnail_id ) {
-			update_post_meta( $service_id, '_thumbnail_id', $thumbnail_id );
-		}
+		wpss_save_service_gallery( $service_id, (array) $data['gallery'], $thumbnail_id, $video );
 
 		wpss_save_service_requirements( $service_id, $data['requirements'] );
 		wpss_save_service_addons( $service_id, $data['extras'] );
@@ -2506,62 +2474,5 @@ class ServiceWizard {
 	private function get_dashboard_url(): string {
 		$url = wpss_get_page_url( 'dashboard' );
 		return $url ? $url : home_url();
-	}
-
-	/**
-	 * Verify current user can use an attachment.
-	 *
-	 * Checks if the attachment exists and belongs to the current user,
-	 * or if the current user is an administrator.
-	 *
-	 * @param int $attachment_id Attachment ID to verify.
-	 * @return bool True if user can use this attachment.
-	 */
-	private function user_can_use_attachment( int $attachment_id ): bool {
-		if ( $attachment_id <= 0 ) {
-			return false;
-		}
-
-		$attachment = get_post( $attachment_id );
-
-		// Attachment must exist and be an attachment post type.
-		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
-			return false;
-		}
-
-		// Only allow image attachments in the gallery.
-		if ( ! wp_attachment_is_image( $attachment_id ) ) {
-			return false;
-		}
-
-		// Admins can use any attachment.
-		if ( current_user_can( 'manage_options' ) ) {
-			return true;
-		}
-
-		$current_user_id = get_current_user_id();
-
-		// Check if current user is the attachment author.
-		if ( $current_user_id === (int) $attachment->post_author ) {
-			return true;
-		}
-
-		// Allow attachments already attached to the user's own service
-		// (e.g., images imported/migrated with different post_author).
-		if ( $attachment->post_parent > 0 ) {
-			$parent = get_post( $attachment->post_parent );
-			if ( $parent && 'wpss_service' === $parent->post_type && $current_user_id === (int) $parent->post_author ) {
-				return true;
-			}
-		}
-
-		// For wizard-selected media, allow image attachments when the user has
-		// standard upload capability (covers environments where attachment authors
-		// are rewritten by media/offload plugins).
-		if ( current_user_can( 'upload_files' ) ) {
-			return true;
-		}
-
-		return false;
 	}
 }

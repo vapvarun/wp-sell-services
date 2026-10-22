@@ -188,7 +188,7 @@ class SearchService {
 		$query_args = wpss_apply_service_sort( $query_args, (string) ( $args['sort_by'] ?? 'relevance' ) );
 
 		// Exclude services from vendors on vacation mode.
-		$vacation_vendors = wpss_get_vacation_vendor_ids();
+		$vacation_vendors = wpss_get_unlisted_seller_ids();
 
 		if ( ! empty( $vacation_vendors ) ) {
 			$query_args['author__not_in'] = $vacation_vendors;

@@ -76,6 +76,18 @@ final class ServiceCart {
 	 * @return array{cart_count:int, checkout_url:string}|WP_Error
 	 */
 	public static function add( int $user_id, int $service_id, array $line, int $quantity = 1 ) {
+		$standing = wpss_account_status_block( $user_id );
+
+		if ( $standing ) {
+			return $standing;
+		}
+
+		$unavailable = wpss_service_unavailable_reason( $service_id );
+
+		if ( '' !== $unavailable ) {
+			return new WP_Error( 'wpss_service_unavailable', $unavailable, array( 'status' => 409 ) );
+		}
+
 		$adapter = wpss_get_active_adapter();
 
 		if ( ! $adapter ) {

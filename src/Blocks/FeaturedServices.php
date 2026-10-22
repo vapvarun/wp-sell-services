@@ -158,7 +158,7 @@ class FeaturedServices extends AbstractBlock {
 						'value' => '1',
 					),
 				),
-				'author__not_in' => wpss_get_vacation_vendor_ids(),
+				'author__not_in' => wpss_get_unlisted_seller_ids(),
 			),
 			'rating'
 		);

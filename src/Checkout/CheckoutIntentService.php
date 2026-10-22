@@ -52,6 +52,13 @@ class CheckoutIntentService {
 			return $this->resolve_order( $pay_order_id, $buyer_id );
 		}
 
+		// New purchases only: paying an order already placed (above) is an
+		// existing obligation and stays open to a member whose standing changed.
+		$standing = wpss_account_status_block( $buyer_id );
+		if ( $standing ) {
+			return $standing;
+		}
+
 		if ( ! empty( $request['is_multi_checkout'] ) ) {
 			return $this->resolve_cart( $buyer_id );
 		}

@@ -1275,7 +1275,7 @@ class API {
 					'posts_per_page' => $per_page,
 					'offset'         => $offset,
 					// Vendors on vacation are not listed, as in the storefront.
-					'author__not_in' => wpss_get_vacation_vendor_ids(),
+					'author__not_in' => wpss_get_unlisted_seller_ids(),
 				]
 			);
 

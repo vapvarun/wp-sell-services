@@ -703,6 +703,12 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 		return __( 'This vendor is away and not taking new orders right now.', 'wp-sell-services' );
 	}
 
+	// Seller suspended, rejected or banned by an owner: the live service stays
+	// out of listings and cannot be bought from a saved link or a REST call.
+	if ( in_array( (int) $service->post_author, wpss_get_unlisted_seller_ids(), true ) ) {
+		return __( 'This vendor is not taking new orders right now.', 'wp-sell-services' );
+	}
+
 	/**
 	 * Let an integration refuse a service for its own reason.
 	 *
@@ -867,4 +873,194 @@ function wpss_service_publish_refusal( int $service_id, int $user_id = 0 ): stri
 	);
 
 	return $errors ? implode( ' ', $errors ) : '';
+}
+
+/**
+ * Why a service may not be permanently deleted, or an empty string.
+ *
+ * Deleting a service for good cascades into every order, delivery, dispute,
+ * message and review placed against it (DataCascadeHandler), so a seller could
+ * erase a buyer's purchase history and a dispute with one call. Only an admin
+ * may do that; everyone else can trash the service, which keeps the order
+ * history readable and the service restorable.
+ *
+ * @since 1.9.1
+ *
+ * @param int $service_id Service post ID.
+ * @return string
+ */
+function wpss_service_delete_refusal( int $service_id ): string {
+	// An operator at the command line (no member logged in) decides for themselves.
+	if ( current_user_can( 'manage_options' ) || ( ! is_user_logged_in() && defined( 'WP_CLI' ) && WP_CLI ) ) {
+		return '';
+	}
+
+	if ( ( new \WPSellServices\Database\Repositories\OrderRepository() )->count( array( 'service_id' => $service_id ) ) > 0 ) {
+		return __( 'This service has orders, so it can only be moved to the trash. Its order history stays on the site.', 'wp-sell-services' );
+	}
+
+	return '';
+}
+
+/**
+ * Stop a permanent delete of a service that has orders, on every door.
+ *
+ * `pre_delete_post` is core's one seam: REST, wp-admin, bulk delete and
+ * wp_delete_post() all pass through it. A member closing their account trashes
+ * their listings and never reaches it.
+ *
+ * @since 1.9.1
+ *
+ * @param mixed    $check Short-circuit value; non-null stops the delete.
+ * @param \WP_Post $post  The post.
+ * @return mixed False to refuse, otherwise $check unchanged.
+ */
+function wpss_guard_service_with_orders( $check, $post ) {
+	if ( null !== $check || ! $post instanceof \WP_Post || 'wpss_service' !== $post->post_type ) {
+		return $check;
+	}
+
+	return '' === wpss_service_delete_refusal( (int) $post->ID ) ? $check : false;
+}
+
+add_filter( 'pre_delete_post', 'wpss_guard_service_with_orders', 10, 2 );
+
+
+/**
+ * Whether the current member may put an attachment in a service gallery.
+ *
+ * The one ownership rule for every door that accepts media ids (wizard, REST):
+ * the attachment must exist and be an image, and belong to the member, to a
+ * service of theirs, or be usable by anyone who may upload; admins may use any.
+ *
+ * @since 1.9.1
+ *
+ * @param int $attachment_id Attachment ID to verify.
+ * @return bool True if the current member can use this attachment.
+ */
+function wpss_user_can_use_attachment( int $attachment_id ): bool {
+	if ( $attachment_id <= 0 ) {
+		return false;
+	}
+
+	$attachment = get_post( $attachment_id );
+
+	// Attachment must exist and be an attachment post type.
+	if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+		return false;
+	}
+
+	// Only allow image attachments in the gallery.
+	if ( ! wp_attachment_is_image( $attachment_id ) ) {
+		return false;
+	}
+
+	// Admins can use any attachment.
+	if ( current_user_can( 'manage_options' ) ) {
+		return true;
+	}
+
+	$current_user_id = get_current_user_id();
+
+	// Check if current user is the attachment author.
+	if ( $current_user_id === (int) $attachment->post_author ) {
+		return true;
+	}
+
+	// Allow attachments already attached to the user's own service
+	// (e.g., images imported/migrated with different post_author).
+	if ( $attachment->post_parent > 0 ) {
+		$parent = get_post( $attachment->post_parent );
+		if ( $parent && 'wpss_service' === $parent->post_type && $current_user_id === (int) $parent->post_author ) {
+			return true;
+		}
+	}
+
+	// For wizard-selected media, allow image attachments when the user has
+	// standard upload capability (covers environments where attachment authors
+	// are rewritten by media/offload plugins).
+	if ( current_user_can( 'upload_files' ) ) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * The service's main image: the explicit choice, else the first usable image.
+ *
+ * @since 1.9.1
+ *
+ * @param int              $explicit    Requested main attachment ID (0 for none).
+ * @param array<int,mixed> $gallery_ids Gallery attachment IDs.
+ * @return int Attachment ID, 0 when none is usable.
+ */
+function wpss_pick_service_main_image( int $explicit, array $gallery_ids ): int {
+	foreach ( array_merge( array( $explicit ), $gallery_ids ) as $id ) {
+		$id = absint( $id );
+
+		if ( $id && wpss_user_can_use_attachment( $id ) ) {
+			return $id;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * Save a service's gallery and main image: the one writer for every door.
+ *
+ * Keeps only attachments the member may use, writes the structured
+ * `_wpss_gallery` shape the readers expect, keeps the stored video unless one
+ * is passed, and sets the main image (the featured image a publish needs) so a
+ * service made through REST is not left without one.
+ *
+ * @since 1.9.1
+ *
+ * @param int              $service_id    Service post ID.
+ * @param array<int,mixed> $image_ids     Gallery attachment IDs (already capped).
+ * @param int              $explicit_main Requested main attachment ID, 0 for automatic.
+ * @param string|null      $video         Video URL, null to keep the stored one.
+ * @return int The main image ID that was set, 0 when none.
+ */
+function wpss_save_service_gallery( int $service_id, array $image_ids, int $explicit_main = 0, ?string $video = null ): int {
+	$usable = array();
+
+	foreach ( $image_ids as $id ) {
+		$id = absint( $id );
+
+		if ( $id && ! in_array( $id, $usable, true ) && wpss_user_can_use_attachment( $id ) ) {
+			$usable[] = $id;
+		}
+	}
+
+	// Keep the current main image when it is still in the gallery and none was asked for.
+	$current = (int) get_post_thumbnail_id( $service_id );
+	$main    = wpss_pick_service_main_image( $explicit_main > 0 ? $explicit_main : ( in_array( $current, $usable, true ) ? $current : 0 ), $usable );
+
+	// The main image is part of the gallery so a template always has one to show.
+	if ( $main && ! in_array( $main, $usable, true ) ) {
+		array_unshift( $usable, $main );
+	}
+
+	if ( null === $video ) {
+		$video = wpss_get_gallery_video_url( get_post_meta( $service_id, '_wpss_gallery', true ) );
+	}
+
+	update_post_meta(
+		$service_id,
+		'_wpss_gallery',
+		array(
+			'images' => $usable,
+			'video'  => $video,
+		)
+	);
+
+	// Set directly: set_post_thumbnail() silently deletes it when attachment
+	// metadata is still being generated.
+	if ( $main ) {
+		update_post_meta( $service_id, '_thumbnail_id', $main );
+	}
+
+	return $main;
 }

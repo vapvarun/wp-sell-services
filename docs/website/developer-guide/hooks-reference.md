@@ -10,13 +10,13 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**551 hooks** across **772** firing sites.
+**551 hooks** across **771** firing sites.
 
 ## Actions (280)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
-| `wpss_account_status_changed` | 2 | `src/Admin/Pages/ReportsPage.php` *(+1 more)* |  |
+| `wpss_account_status_changed` | 2 | `src/Admin/Pages/ReportsPage.php` | Fires when an owner changes a member's account standing. |
 | `wpss_adapter_initialized` | 1 | `src/Integrations/IntegrationManager.php` | Fires after the active e-commerce adapter is initialized. |
 | `wpss_admin_order_actions` | 2 | `src/Admin/Admin.php` | Fires in the admin order actions area for gateway-specific actions. |
 | `wpss_advanced_settings_sections` | 0 | `src/Admin/Settings.php` |  |

@@ -111,8 +111,7 @@ class DisputeWorkflowManager {
 		}
 
 		// Check if dispute is still open for responses.
-		$closed_statuses = array( DisputeService::STATUS_RESOLVED, DisputeService::STATUS_CLOSED );
-		if ( in_array( $dispute->status, $closed_statuses, true ) ) {
+		if ( ! DisputeService::accepts_input( $dispute ) ) {
 			return array(
 				'success' => false,
 				'message' => __( 'This dispute is no longer accepting responses.', 'wp-sell-services' ),
@@ -385,6 +384,21 @@ class DisputeWorkflowManager {
 			return array(
 				'success' => false,
 				'message' => __( 'Dispute not found.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( in_array( $dispute->status, array( DisputeService::STATUS_RESOLVED, DisputeService::STATUS_CLOSED ), true ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'A resolved dispute cannot be assigned.', 'wp-sell-services' ),
+			);
+		}
+
+		// Same admin again: nothing to change, no second audit row.
+		if ( (int) ( $dispute->meta['assigned_to'] ?? 0 ) === $admin_id ) {
+			return array(
+				'success' => true,
+				'message' => __( 'Dispute already assigned to this admin.', 'wp-sell-services' ),
 			);
 		}
 

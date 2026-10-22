@@ -341,7 +341,7 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 	// vacation is not listed. A grid of one named vendor is that vendor's own
 	// page and keeps their services (Basecamp 10375176013).
 	if ( empty( $args['author'] ) ) {
-		$args['author__not_in'] = wpss_get_vacation_vendor_ids();
+		$args['author__not_in'] = wpss_get_unlisted_seller_ids();
 	}
 
 	$query = new \WP_Query( $args );
