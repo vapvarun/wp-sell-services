@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-21T19:11:10+00:00\n"
+"POT-Creation-Date: 2026-10-22T03:35:02+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -151,7 +151,7 @@ msgstr ""
 #: src/Admin/OrderScreen.php:238
 #: src/Admin/Pages/ManualOrderPage.php:466
 #: src/Admin/Pages/ManualOrderPage.php:499
-#: src/Admin/Pages/ManualOrderPage.php:885
+#: src/Admin/Pages/ManualOrderPage.php:881
 #: src/Admin/Pages/ReviewModerationPage.php:665
 #: src/Admin/Pages/ServiceModerationPage.php:657
 #: src/Admin/Pages/ServiceModerationPage.php:684
@@ -180,13 +180,13 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:1382
 #: src/Frontend/AjaxHandlers.php:1418
 #: src/Frontend/AjaxHandlers.php:1715
-#: src/Frontend/AjaxHandlers.php:2349
-#: src/Frontend/AjaxHandlers.php:2380
-#: src/Frontend/AjaxHandlers.php:2479
-#: src/Frontend/AjaxHandlers.php:2591
-#: src/Frontend/AjaxHandlers.php:3064
-#: src/Frontend/AjaxHandlers.php:3115
-#: src/Frontend/AjaxHandlers.php:3189
+#: src/Frontend/AjaxHandlers.php:2355
+#: src/Frontend/AjaxHandlers.php:2386
+#: src/Frontend/AjaxHandlers.php:2485
+#: src/Frontend/AjaxHandlers.php:2597
+#: src/Frontend/AjaxHandlers.php:3070
+#: src/Frontend/AjaxHandlers.php:3121
+#: src/Frontend/AjaxHandlers.php:3195
 #: src/Integrations/Gateways/OfflineGateway.php:874
 msgid "Permission denied."
 msgstr ""
@@ -197,7 +197,7 @@ msgstr ""
 #: src/Admin/Admin.php:1350
 #: src/Admin/Admin.php:1407
 #: src/Frontend/AjaxHandlers.php:531
-#: src/Frontend/AjaxHandlers.php:2546
+#: src/Frontend/AjaxHandlers.php:2552
 #: src/Integrations/Gateways/OfflineGateway.php:571
 #: src/Integrations/Gateways/TestGateway.php:246
 #: src/Integrations/PayPal/PayPalGateway.php:800
@@ -309,7 +309,7 @@ msgid "Invalid service ID."
 msgstr ""
 
 #: src/Admin/Admin.php:1331
-#: src/Admin/Metaboxes/ServiceMetabox.php:1546
+#: src/Admin/Metaboxes/ServiceMetabox.php:1547
 #: src/Frontend/ServiceWizard.php:588
 #: src/Frontend/ServiceWizard.php:1465
 #: templates/partials/service-packages.php:45
@@ -328,12 +328,12 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:1645
 #: src/Frontend/AjaxHandlers.php:1670
 #: src/Frontend/AjaxHandlers.php:1709
-#: src/Frontend/AjaxHandlers.php:2343
-#: src/Frontend/AjaxHandlers.php:2373
-#: src/Frontend/AjaxHandlers.php:2473
-#: src/Frontend/AjaxHandlers.php:2554
-#: src/Frontend/AjaxHandlers.php:2743
-#: src/Frontend/ServiceWizard.php:2023
+#: src/Frontend/AjaxHandlers.php:2349
+#: src/Frontend/AjaxHandlers.php:2379
+#: src/Frontend/AjaxHandlers.php:2479
+#: src/Frontend/AjaxHandlers.php:2560
+#: src/Frontend/AjaxHandlers.php:2749
+#: src/Frontend/ServiceWizard.php:1999
 #: src/Integrations/PayPal/PayPalGateway.php:859
 msgid "Invalid request."
 msgstr ""
@@ -531,9 +531,9 @@ msgstr ""
 #: src/Admin/Admin.php:1805
 #: src/Admin/Admin.php:1806
 #: src/Admin/Admin.php:2154
-#: src/Admin/Metaboxes/ServiceMetabox.php:539
-#: src/Admin/Metaboxes/ServiceMetabox.php:1420
-#: src/Admin/Metaboxes/ServiceMetabox.php:1487
+#: src/Admin/Metaboxes/ServiceMetabox.php:540
+#: src/Admin/Metaboxes/ServiceMetabox.php:1421
+#: src/Admin/Metaboxes/ServiceMetabox.php:1488
 #: src/Admin/Pages/AuditLogPage.php:376
 #: src/Admin/Pages/VendorsPage.php:780
 #: src/Admin/Pages/VendorsPage.php:800
@@ -583,9 +583,9 @@ msgid "Services awaiting moderation"
 msgstr ""
 
 #: src/Admin/Admin.php:1965
-#: src/Admin/Pages/ReportsPage.php:172
 #: src/Admin/Pages/ReportsPage.php:183
-#: src/Admin/Pages/ReportsPage.php:267
+#: src/Admin/Pages/ReportsPage.php:194
+#: src/Admin/Pages/ReportsPage.php:278
 msgid "Member reports"
 msgstr ""
 
@@ -620,7 +620,7 @@ msgid "Total Orders"
 msgstr ""
 
 #: src/Admin/Admin.php:2024
-#: src/Admin/Pages/ManualOrderPage.php:940
+#: src/Admin/Pages/ManualOrderPage.php:936
 #: src/Admin/Pages/VendorsPage.php:1835
 #: src/functions/order-status.php:64
 #: src/Models/ServiceOrder.php:633
@@ -630,7 +630,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:2032
 #: src/Admin/Admin.php:2774
-#: src/Admin/Pages/ManualOrderPage.php:942
+#: src/Admin/Pages/ManualOrderPage.php:938
 #: src/Admin/Pages/VendorsPage.php:1837
 #: src/Admin/Pages/WithdrawalsPage.php:405
 #: src/Admin/Pages/WithdrawalsPage.php:423
@@ -744,7 +744,7 @@ msgstr ""
 #: templates/emails/revision-requested.php:77
 #: templates/myaccount/service-orders.php:73
 #: templates/myaccount/service-orders.php:96
-#: templates/order/order-requirements.php:94
+#: templates/order/order-requirements.php:98
 msgid "Service"
 msgstr ""
 
@@ -761,7 +761,7 @@ msgstr ""
 #: templates/myaccount/service-orders.php:75
 #: templates/myaccount/service-orders.php:121
 #: templates/order/line-items.php:58
-#: templates/order/order-requirements.php:121
+#: templates/order/order-requirements.php:125
 msgid "Total"
 msgstr ""
 
@@ -776,7 +776,7 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:458
 #: src/Admin/Pages/ServiceModerationPage.php:478
 #: src/Admin/Pages/ServiceModerationPage.php:585
-#: src/Admin/Pages/ServiceModerationPage.php:1159
+#: src/Admin/Pages/ServiceModerationPage.php:1168
 #: src/Admin/Pages/VendorsPage.php:784
 #: src/Admin/Pages/VendorsPage.php:803
 #: src/Admin/Pages/VendorsPage.php:1102
@@ -926,7 +926,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:656
 #: src/Frontend/AjaxHandlers.php:818
 #: src/Frontend/AjaxHandlers.php:1137
-#: src/Frontend/AjaxHandlers.php:2561
+#: src/Frontend/AjaxHandlers.php:2567
 #: src/Frontend/Shortcodes.php:874
 #: src/Frontend/Shortcodes.php:887
 #: src/Integrations/Gateways/OfflineGateway.php:890
@@ -969,7 +969,7 @@ msgstr ""
 #: templates/emails/order-in-progress.php:78
 #: templates/emails/requirements-submitted.php:64
 #: templates/emails/revision-requested.php:71
-#: templates/order/order-requirements.php:99
+#: templates/order/order-requirements.php:103
 #: templates/order/order-view.php:145
 #, php-format
 msgid "Order #%s"
@@ -1006,7 +1006,7 @@ msgstr ""
 #: src/Admin/Admin.php:2501
 #: src/Admin/Pages/ManualOrderPage.php:172
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1082
-#: templates/order/order-requirements.php:114
+#: templates/order/order-requirements.php:118
 msgid "Order Details"
 msgstr ""
 
@@ -1097,7 +1097,7 @@ msgstr ""
 #: src/API/ConversationsController.php:690
 #: src/Models/Message.php:146
 #: src/Models/Message.php:170
-#: src/Services/DisputeWorkflowManager.php:1200
+#: src/Services/DisputeWorkflowManager.php:1212
 #: templates/dashboard/sections/disputes.php:199
 #: templates/partials/dispute-evidence-item.php:28
 msgid "System"
@@ -1182,7 +1182,7 @@ msgstr ""
 #: src/functions/order-status.php:71
 #: src/functions/order-status.php:153
 #: src/Models/ServiceOrder.php:638
-#: src/Services/BuyerRequestService.php:1369
+#: src/Services/BuyerRequestService.php:1367
 #: src/Services/EarningsService.php:1427
 #: templates/emails/order-cancelled.php:67
 #: templates/order/order-view.php:1307
@@ -1308,8 +1308,8 @@ msgstr ""
 
 #: src/Admin/Admin.php:3077
 #: src/Admin/Admin.php:3111
-#: src/Admin/Metaboxes/ServiceMetabox.php:1217
-#: src/Admin/Metaboxes/ServiceMetabox.php:1409
+#: src/Admin/Metaboxes/ServiceMetabox.php:1218
+#: src/Admin/Metaboxes/ServiceMetabox.php:1410
 #: src/Admin/Pages/AuditLogPage.php:110
 #: src/Admin/Pages/NotificationsPage.php:99
 #: src/Admin/Pages/ReviewModerationPage.php:109
@@ -1437,7 +1437,7 @@ msgstr ""
 #: src/Services/DisputeWorkflowManager.php:109
 #: src/Services/DisputeWorkflowManager.php:301
 #: src/Services/DisputeWorkflowManager.php:387
-#: src/Services/DisputeWorkflowManager.php:452
+#: src/Services/DisputeWorkflowManager.php:464
 msgid "Dispute not found."
 msgstr ""
 
@@ -1458,8 +1458,8 @@ msgid "Dispute Details"
 msgstr ""
 
 #: src/Admin/Admin.php:3319
-#: src/Admin/Pages/ReportsPage.php:330
-#: src/Admin/Pages/ReportsPage.php:351
+#: src/Admin/Pages/ReportsPage.php:341
+#: src/Admin/Pages/ReportsPage.php:362
 #: src/Admin/Tables/DisputesListTable.php:57
 #: src/Privacy/PersonalData.php:270
 #: src/Privacy/PersonalData.php:329
@@ -1571,7 +1571,7 @@ msgstr ""
 #. translators: %s: number of items
 #: src/Admin/Admin.php:3441
 #: src/Admin/Pages/VendorsPage.php:1895
-#: src/Admin/ServiceListScreen.php:276
+#: src/Admin/ServiceListScreen.php:279
 #, php-format
 msgid "%s order"
 msgid_plural "%s orders"
@@ -1735,8 +1735,8 @@ msgstr ""
 
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:177
 #: src/Admin/Metaboxes/ServiceMetabox.php:342
-#: src/Admin/Metaboxes/ServiceMetabox.php:632
-#: src/Admin/Metaboxes/ServiceMetabox.php:1796
+#: src/Admin/Metaboxes/ServiceMetabox.php:633
+#: src/Admin/Metaboxes/ServiceMetabox.php:1797
 #: src/Admin/Pages/ServiceModerationPage.php:456
 #: src/Admin/Pages/ServiceModerationPage.php:476
 #: src/Admin/Pages/ServiceModerationPage.php:579
@@ -1790,7 +1790,7 @@ msgid "Service Data"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:168
-#: src/Admin/Metaboxes/ServiceMetabox.php:1348
+#: src/Admin/Metaboxes/ServiceMetabox.php:1349
 #: src/Blocks/FeaturedServices.php:217
 #: src/Frontend/BuyerRequestArchiveView.php:292
 #: src/Frontend/ServiceArchiveView.php:260
@@ -1810,7 +1810,7 @@ msgid "Next"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:169
-#: src/Admin/Metaboxes/ServiceMetabox.php:1342
+#: src/Admin/Metaboxes/ServiceMetabox.php:1343
 #: src/Blocks/FeaturedServices.php:200
 #: src/Frontend/BuyerRequestArchiveView.php:291
 #: src/Frontend/ServiceArchiveView.php:259
@@ -1835,7 +1835,7 @@ msgid "Finish"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:171
-#: src/Admin/Metaboxes/ServiceMetabox.php:1345
+#: src/Admin/Metaboxes/ServiceMetabox.php:1346
 msgid "Skip to full editor"
 msgstr ""
 
@@ -1844,31 +1844,31 @@ msgid "New Package"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:310
-#: src/Admin/Metaboxes/ServiceMetabox.php:448
-#: src/Admin/Metaboxes/ServiceMetabox.php:587
-#: src/Admin/Metaboxes/ServiceMetabox.php:1698
-#: src/Admin/Metaboxes/ServiceMetabox.php:1752
-#: src/Admin/Metaboxes/ServiceMetabox.php:1853
-#: src/Admin/Metaboxes/ServiceMetabox.php:1895
+#: src/Admin/Metaboxes/ServiceMetabox.php:449
+#: src/Admin/Metaboxes/ServiceMetabox.php:588
+#: src/Admin/Metaboxes/ServiceMetabox.php:1699
+#: src/Admin/Metaboxes/ServiceMetabox.php:1753
+#: src/Admin/Metaboxes/ServiceMetabox.php:1854
+#: src/Admin/Metaboxes/ServiceMetabox.php:1896
 #: src/Services/GalleryService.php:436
 msgid "Drag to reorder"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:318
-#: src/Admin/Metaboxes/ServiceMetabox.php:590
-#: src/Admin/Metaboxes/ServiceMetabox.php:1755
+#: src/Admin/Metaboxes/ServiceMetabox.php:591
+#: src/Admin/Metaboxes/ServiceMetabox.php:1756
 msgid "Expand/Collapse"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:322
-#: src/Admin/Metaboxes/ServiceMetabox.php:469
-#: src/Admin/Metaboxes/ServiceMetabox.php:502
-#: src/Admin/Metaboxes/ServiceMetabox.php:593
-#: src/Admin/Metaboxes/ServiceMetabox.php:1601
-#: src/Admin/Metaboxes/ServiceMetabox.php:1702
-#: src/Admin/Metaboxes/ServiceMetabox.php:1758
-#: src/Admin/Metaboxes/ServiceMetabox.php:1871
-#: src/Admin/Metaboxes/ServiceMetabox.php:1898
+#: src/Admin/Metaboxes/ServiceMetabox.php:470
+#: src/Admin/Metaboxes/ServiceMetabox.php:503
+#: src/Admin/Metaboxes/ServiceMetabox.php:594
+#: src/Admin/Metaboxes/ServiceMetabox.php:1602
+#: src/Admin/Metaboxes/ServiceMetabox.php:1703
+#: src/Admin/Metaboxes/ServiceMetabox.php:1759
+#: src/Admin/Metaboxes/ServiceMetabox.php:1872
+#: src/Admin/Metaboxes/ServiceMetabox.php:1899
 #: src/Admin/Pages/VendorsPage.php:2429
 #: src/Frontend/UnifiedDashboard.php:236
 #: src/Services/GalleryService.php:439
@@ -1893,8 +1893,8 @@ msgid "Package price"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:355
-#: src/Admin/Metaboxes/ServiceMetabox.php:609
-#: src/Admin/Metaboxes/ServiceMetabox.php:1773
+#: src/Admin/Metaboxes/ServiceMetabox.php:610
+#: src/Admin/Metaboxes/ServiceMetabox.php:1774
 #: src/Admin/Pages/VendorsPage.php:2177
 #: src/Frontend/ServiceWizard.php:502
 #: src/Frontend/ServiceWizard.php:1124
@@ -1924,9 +1924,9 @@ msgid "Delivery time in days"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:371
-#: src/Admin/Metaboxes/ServiceMetabox.php:411
-#: src/Admin/Metaboxes/ServiceMetabox.php:667
-#: src/Admin/Metaboxes/ServiceMetabox.php:1829
+#: src/Admin/Metaboxes/ServiceMetabox.php:412
+#: src/Admin/Metaboxes/ServiceMetabox.php:668
+#: src/Admin/Metaboxes/ServiceMetabox.php:1830
 #: src/Frontend/ServiceWizard.php:1326
 #: templates/single-request.php:634
 #: templates/single-request.php:651
@@ -1947,102 +1947,106 @@ msgid "Number of revisions"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:383
-msgid "times"
+msgid "Use -1 for unlimited revisions."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:392
+#: src/Admin/Metaboxes/ServiceMetabox.php:384
+msgid "times (-1 = unlimited)"
+msgstr ""
+
+#: src/Admin/Metaboxes/ServiceMetabox.php:393
 msgid "Express price"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:396
+#: src/Admin/Metaboxes/ServiceMetabox.php:397
 #: src/Frontend/ServiceWizard.php:733
 msgid "Express delivery price"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:400
+#: src/Admin/Metaboxes/ServiceMetabox.php:401
 msgid "Optional. Blank means not offered."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:405
+#: src/Admin/Metaboxes/ServiceMetabox.php:406
 #: src/Frontend/SingleServiceView.php:847
 #: src/functions/packages.php:546
 #: src/functions/packages.php:547
 msgid "Express delivery"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:408
+#: src/Admin/Metaboxes/ServiceMetabox.php:409
 msgid "Express delivery time in days"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:413
+#: src/Admin/Metaboxes/ServiceMetabox.php:414
 msgid "Replaces the delivery time; must be shorter."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:420
-#: src/Admin/Metaboxes/ServiceMetabox.php:422
+#: src/Admin/Metaboxes/ServiceMetabox.php:421
+#: src/Admin/Metaboxes/ServiceMetabox.php:423
 msgid "Features included"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:424
+#: src/Admin/Metaboxes/ServiceMetabox.php:425
 msgid ""
 "Feature 1\n"
 "Feature 2\n"
 "Feature 3"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:425
+#: src/Admin/Metaboxes/ServiceMetabox.php:426
 msgid "Enter one feature per line"
-msgstr ""
-
-#: src/Admin/Metaboxes/ServiceMetabox.php:454
-#: src/Admin/Metaboxes/ServiceMetabox.php:1857
-msgid "Requirement question"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:455
 #: src/Admin/Metaboxes/ServiceMetabox.php:1858
+msgid "Requirement question"
+msgstr ""
+
+#: src/Admin/Metaboxes/ServiceMetabox.php:456
+#: src/Admin/Metaboxes/ServiceMetabox.php:1859
 msgid "Enter your question..."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:459
-#: src/Admin/Metaboxes/ServiceMetabox.php:1862
+#: src/Admin/Metaboxes/ServiceMetabox.php:460
+#: src/Admin/Metaboxes/ServiceMetabox.php:1863
 msgid "Requirement field type"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:467
-#: src/Admin/Metaboxes/ServiceMetabox.php:674
-#: src/Admin/Metaboxes/ServiceMetabox.php:1835
-#: src/Admin/Metaboxes/ServiceMetabox.php:1869
+#: src/Admin/Metaboxes/ServiceMetabox.php:468
+#: src/Admin/Metaboxes/ServiceMetabox.php:675
+#: src/Admin/Metaboxes/ServiceMetabox.php:1836
+#: src/Admin/Metaboxes/ServiceMetabox.php:1870
 #: src/Frontend/ServiceWizard.php:978
 msgid "Required"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:469
-#: src/Admin/Metaboxes/ServiceMetabox.php:1871
+#: src/Admin/Metaboxes/ServiceMetabox.php:470
+#: src/Admin/Metaboxes/ServiceMetabox.php:1872
 msgid "Remove requirement"
-msgstr ""
-
-#: src/Admin/Metaboxes/ServiceMetabox.php:476
-#: src/Admin/Metaboxes/ServiceMetabox.php:1877
-msgid "Requirement choices"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:477
 #: src/Admin/Metaboxes/ServiceMetabox.php:1878
+msgid "Requirement choices"
+msgstr ""
+
+#: src/Admin/Metaboxes/ServiceMetabox.php:478
+#: src/Admin/Metaboxes/ServiceMetabox.php:1879
 msgid "Enter choices separated by comma (e.g., Option 1, Option 2, Option 3)"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:510
-#: src/Admin/Metaboxes/ServiceMetabox.php:1609
+#: src/Admin/Metaboxes/ServiceMetabox.php:511
+#: src/Admin/Metaboxes/ServiceMetabox.php:1610
 msgid "Add Images"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:512
+#: src/Admin/Metaboxes/ServiceMetabox.php:513
 msgid "Drag to reorder images."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:546
-#: src/Admin/Metaboxes/ServiceMetabox.php:1495
+#: src/Admin/Metaboxes/ServiceMetabox.php:547
+#: src/Admin/Metaboxes/ServiceMetabox.php:1496
 #: src/Admin/Pages/ReviewModerationPage.php:361
 #: src/Admin/Pages/ReviewModerationPage.php:448
 #: src/Admin/Pages/VendorsPage.php:781
@@ -2056,8 +2060,8 @@ msgstr ""
 msgid "Rating"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:553
-#: src/Admin/Metaboxes/ServiceMetabox.php:1505
+#: src/Admin/Metaboxes/ServiceMetabox.php:554
+#: src/Admin/Metaboxes/ServiceMetabox.php:1506
 #: src/Admin/Pages/AuditLogPage.php:383
 #: src/Admin/Pages/VendorsPage.php:1267
 #: src/Frontend/UnifiedDashboard.php:559
@@ -2067,18 +2071,18 @@ msgstr ""
 msgid "Reviews"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:560
-#: src/Admin/Metaboxes/ServiceMetabox.php:1512
+#: src/Admin/Metaboxes/ServiceMetabox.php:561
+#: src/Admin/Metaboxes/ServiceMetabox.php:1513
 msgid "Views"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:583
-#: src/Admin/Metaboxes/ServiceMetabox.php:1753
+#: src/Admin/Metaboxes/ServiceMetabox.php:584
+#: src/Admin/Metaboxes/ServiceMetabox.php:1754
 msgid "New Add-on"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:601
-#: src/Admin/Metaboxes/ServiceMetabox.php:1766
+#: src/Admin/Metaboxes/ServiceMetabox.php:602
+#: src/Admin/Metaboxes/ServiceMetabox.php:1767
 #: src/Admin/Pages/VendorsPage.php:2380
 #: src/Integrations/Gateways/OfflineGateway.php:396
 #: src/Privacy/PersonalData.php:341
@@ -2091,119 +2095,119 @@ msgstr ""
 msgid "Title"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:604
-#: src/Admin/Metaboxes/ServiceMetabox.php:1768
+#: src/Admin/Metaboxes/ServiceMetabox.php:605
+#: src/Admin/Metaboxes/ServiceMetabox.php:1769
 msgid "e.g., Extra Fast Delivery"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:611
-#: src/Admin/Metaboxes/ServiceMetabox.php:1775
+#: src/Admin/Metaboxes/ServiceMetabox.php:612
+#: src/Admin/Metaboxes/ServiceMetabox.php:1776
 msgid "Brief description of this add-on..."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:616
-#: src/Admin/Metaboxes/ServiceMetabox.php:1780
+#: src/Admin/Metaboxes/ServiceMetabox.php:617
+#: src/Admin/Metaboxes/ServiceMetabox.php:1781
 msgid "Field Type"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:624
-#: src/Admin/Metaboxes/ServiceMetabox.php:1788
+#: src/Admin/Metaboxes/ServiceMetabox.php:625
+#: src/Admin/Metaboxes/ServiceMetabox.php:1789
 msgid "Price Type"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:643
-#: src/Admin/Metaboxes/ServiceMetabox.php:1806
+#: src/Admin/Metaboxes/ServiceMetabox.php:644
+#: src/Admin/Metaboxes/ServiceMetabox.php:1807
 msgid "Min Quantity"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:648
-#: src/Admin/Metaboxes/ServiceMetabox.php:1811
+#: src/Admin/Metaboxes/ServiceMetabox.php:649
+#: src/Admin/Metaboxes/ServiceMetabox.php:1812
 msgid "Max Quantity"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:655
-#: src/Admin/Metaboxes/ServiceMetabox.php:1818
+#: src/Admin/Metaboxes/ServiceMetabox.php:656
+#: src/Admin/Metaboxes/ServiceMetabox.php:1819
 #: src/Frontend/ServiceWizard.php:991
 msgid "Options"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:658
-#: src/Admin/Metaboxes/ServiceMetabox.php:1820
+#: src/Admin/Metaboxes/ServiceMetabox.php:659
+#: src/Admin/Metaboxes/ServiceMetabox.php:1821
 msgid "Option 1, Option 2, Option 3 (comma separated)"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:663
-#: src/Admin/Metaboxes/ServiceMetabox.php:1825
+#: src/Admin/Metaboxes/ServiceMetabox.php:664
+#: src/Admin/Metaboxes/ServiceMetabox.php:1826
 msgid "Extra Delivery Days"
 msgstr ""
 
 #. translators: %s: package names, comma separated.
-#: src/Admin/Metaboxes/ServiceMetabox.php:1146
+#: src/Admin/Metaboxes/ServiceMetabox.php:1147
 #, php-format
 msgid "Express delivery was not saved for: %s. Express must be faster than the package delivery time, so buyers could never have been offered it. Set a shorter Express time and save again."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1193
+#: src/Admin/Metaboxes/ServiceMetabox.php:1194
 msgid "This service is live and buyers see it as it is. It is still missing:"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1195
+#: src/Admin/Metaboxes/ServiceMetabox.php:1196
 msgid "Waiting for review. It cannot go live until:"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1197
+#: src/Admin/Metaboxes/ServiceMetabox.php:1198
 msgid "Not ready for the marketplace yet. This service stays a draft until:"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1222
+#: src/Admin/Metaboxes/ServiceMetabox.php:1223
 #: src/Admin/Pages/ManualOrderPage.php:254
 #: src/Frontend/ServiceWizard.php:88
 #: src/Frontend/ServiceWizard.php:560
 msgid "Pricing"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1227
+#: src/Admin/Metaboxes/ServiceMetabox.php:1228
 msgid "Media"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1232
+#: src/Admin/Metaboxes/ServiceMetabox.php:1233
 #: src/Models/ServiceOrder.php:1164
 #: templates/cart/cart.php:530
 #: templates/checkout/summary.php:46
 msgid "Add-ons"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1237
+#: src/Admin/Metaboxes/ServiceMetabox.php:1238
 #: src/Frontend/ServiceWizard.php:96
 #: src/Frontend/SingleServiceView.php:367
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1311
 msgid "Requirements"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1242
+#: src/Admin/Metaboxes/ServiceMetabox.php:1243
 msgid "FAQ"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1413
+#: src/Admin/Metaboxes/ServiceMetabox.php:1414
 #: src/Admin/Pages/VendorsPage.php:1624
 #: src/Admin/Pages/VendorsPage.php:2506
 #: templates/dashboard/sections/profile.php:242
 msgid "Availability"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1423
+#: src/Admin/Metaboxes/ServiceMetabox.php:1424
 msgid "Accepting orders"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1424
+#: src/Admin/Metaboxes/ServiceMetabox.php:1425
 msgid "Paused"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1427
+#: src/Admin/Metaboxes/ServiceMetabox.php:1428
 msgid "Paused keeps the page visible but stops new orders. Whether the service is live is set by Publish and Moderation."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1447
+#: src/Admin/Metaboxes/ServiceMetabox.php:1448
 #: src/Admin/Pages/VendorsPage.php:2382
 #: src/Admin/Pages/VendorsPage.php:2414
 #: src/Admin/ServiceListScreen.php:197
@@ -2216,120 +2220,120 @@ msgstr ""
 msgid "Featured"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1454
+#: src/Admin/Metaboxes/ServiceMetabox.php:1455
 msgid "Show in featured listings"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1457
+#: src/Admin/Metaboxes/ServiceMetabox.php:1458
 msgid "Shows it in the featured row on your homepage (the Featured Services block and the [wpss_featured_services] shortcode)."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1467
+#: src/Admin/Metaboxes/ServiceMetabox.php:1468
 msgid "Featured by the marketplace"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1469
+#: src/Admin/Metaboxes/ServiceMetabox.php:1470
 msgid "Not featured"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1473
+#: src/Admin/Metaboxes/ServiceMetabox.php:1474
 msgid "Only the site owner can feature a service."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1481
+#: src/Admin/Metaboxes/ServiceMetabox.php:1482
 msgid "Statistics"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1497
+#: src/Admin/Metaboxes/ServiceMetabox.php:1498
 #: src/Admin/Pages/VendorsPage.php:2281
-#: src/Admin/ServiceListScreen.php:291
+#: src/Admin/ServiceListScreen.php:294
 #: templates/dashboard/sections/reviews.php:64
 msgid "No reviews yet"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1521
+#: src/Admin/Metaboxes/ServiceMetabox.php:1522
 msgid "Delivery time and revisions are configured per package in the Pricing tab."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1558
+#: src/Admin/Metaboxes/ServiceMetabox.php:1559
 msgid "Pricing Packages"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1560
+#: src/Admin/Metaboxes/ServiceMetabox.php:1561
 msgid "Define your service package. Add more packages for tiered pricing (up to 3)."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1571
+#: src/Admin/Metaboxes/ServiceMetabox.php:1572
 msgid "Add Package"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1590
+#: src/Admin/Metaboxes/ServiceMetabox.php:1591
 #: src/Frontend/ServiceWizard.php:92
 #: src/Frontend/ServiceWizard.php:822
 msgid "Gallery"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1592
+#: src/Admin/Metaboxes/ServiceMetabox.php:1593
 msgid "Add images to showcase your service. Drag to reorder."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1627
+#: src/Admin/Metaboxes/ServiceMetabox.php:1628
 msgid "Service Add-ons"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1631
+#: src/Admin/Metaboxes/ServiceMetabox.php:1632
 msgid "Add extra services buyers can purchase with this service."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1641
+#: src/Admin/Metaboxes/ServiceMetabox.php:1642
 msgid "Add Add-on"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1659
+#: src/Admin/Metaboxes/ServiceMetabox.php:1660
 #: src/Frontend/ServiceWizard.php:929
 msgid "Buyer Requirements"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1661
+#: src/Admin/Metaboxes/ServiceMetabox.php:1662
 msgid "Questions to ask buyers when they place an order."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1671
+#: src/Admin/Metaboxes/ServiceMetabox.php:1672
 #: src/Frontend/ServiceWizard.php:1006
 msgid "Add Requirement"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1690
+#: src/Admin/Metaboxes/ServiceMetabox.php:1691
 #: src/Frontend/ServiceWizard.php:1153
 #: templates/partials/service-faqs.php:39
 msgid "Frequently Asked Questions"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1692
+#: src/Admin/Metaboxes/ServiceMetabox.php:1693
 msgid "Add frequently asked questions about your service."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1699
-#: src/Admin/Metaboxes/ServiceMetabox.php:1896
+#: src/Admin/Metaboxes/ServiceMetabox.php:1700
+#: src/Admin/Metaboxes/ServiceMetabox.php:1897
 msgid "FAQ question"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1701
-#: src/Admin/Metaboxes/ServiceMetabox.php:1897
+#: src/Admin/Metaboxes/ServiceMetabox.php:1702
+#: src/Admin/Metaboxes/ServiceMetabox.php:1898
 msgid "Enter question..."
-msgstr ""
-
-#: src/Admin/Metaboxes/ServiceMetabox.php:1706
-#: src/Admin/Metaboxes/ServiceMetabox.php:1902
-msgid "FAQ answer"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:1707
 #: src/Admin/Metaboxes/ServiceMetabox.php:1903
+msgid "FAQ answer"
+msgstr ""
+
+#: src/Admin/Metaboxes/ServiceMetabox.php:1708
+#: src/Admin/Metaboxes/ServiceMetabox.php:1904
 msgid "Enter answer..."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1715
+#: src/Admin/Metaboxes/ServiceMetabox.php:1716
 #: src/Frontend/ServiceWizard.php:1189
 msgid "Add FAQ"
 msgstr ""
@@ -2484,8 +2488,8 @@ msgstr ""
 
 #: src/Admin/Pages/AuditLogPage.php:284
 #: src/Admin/Pages/AuditLogPage.php:341
-#: src/Admin/Pages/ReportsPage.php:333
-#: src/Admin/Pages/ReportsPage.php:367
+#: src/Admin/Pages/ReportsPage.php:344
+#: src/Admin/Pages/ReportsPage.php:378
 msgid "When"
 msgstr ""
 
@@ -2638,7 +2642,7 @@ msgid "Note: This service has no requirements defined. Order was set to \"In Pro
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:127
-#: src/Admin/Pages/ManualOrderPage.php:709
+#: src/Admin/Pages/ManualOrderPage.php:705
 #: src/Checkout/CheckoutIntentService.php:971
 #: src/Integrations/Gateways/OfflineGateway.php:862
 #: src/Integrations/Gateways/TestGateway.php:394
@@ -2710,12 +2714,11 @@ msgstr ""
 
 #. translators: %s: tax label, e.g. VAT.
 #: src/Admin/Pages/ManualOrderPage.php:266
-#: src/Admin/Pages/ManualOrderPage.php:921
-#: src/Admin/Pages/ManualOrderPage.php:922
+#: src/Admin/Pages/ManualOrderPage.php:917
+#: src/Admin/Pages/ManualOrderPage.php:918
 #: src/Admin/Settings.php:944
 #: src/Admin/Settings.php:3847
 #: src/functions/money.php:239
-#: src/functions/money.php:288
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1799
 #: templates/cart/cart.php:593
 #: templates/order/line-items.php:50
@@ -2903,7 +2906,7 @@ msgstr ""
 #: templates/dashboard/partials/order-row.php:81
 #: templates/emails/new-order.php:123
 #: templates/myaccount/service-orders.php:154
-#: templates/order/order-requirements.php:72
+#: templates/order/order-requirements.php:76
 #: templates/order/order-view.php:336
 #: templates/order/order-view.php:944
 #: templates/order/requirements-form.php:342
@@ -2919,12 +2922,12 @@ msgid "Service and Buyer are required."
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:538
-#: src/Admin/Pages/ManualOrderPage.php:892
+#: src/Admin/Pages/ManualOrderPage.php:888
 #: src/Admin/Pages/ServiceModerationPage.php:663
 #: src/Admin/Pages/ServiceModerationPage.php:691
 #: src/Checkout/CheckoutIntentService.php:380
-#: src/Frontend/AjaxHandlers.php:2171
-#: src/Frontend/AjaxHandlers.php:2302
+#: src/Frontend/AjaxHandlers.php:2177
+#: src/Frontend/AjaxHandlers.php:2308
 #: src/Integrations/Gateways/OfflineGateway.php:758
 #: src/Integrations/Gateways/TestGateway.php:333
 msgid "Invalid service."
@@ -2947,37 +2950,37 @@ msgid "Buyer cannot be the same as the vendor."
 msgstr ""
 
 #. translators: %s: admin notes
-#: src/Admin/Pages/ManualOrderPage.php:724
+#: src/Admin/Pages/ManualOrderPage.php:720
 #, php-format
 msgid "[Admin Note] %s"
 msgstr ""
 
-#: src/Admin/Pages/ManualOrderPage.php:837
+#: src/Admin/Pages/ManualOrderPage.php:833
 msgid "Enter a price for this order: the package and service have none."
 msgstr ""
 
 #. translators: %s: tax label, e.g. VAT.
-#: src/Admin/Pages/ManualOrderPage.php:921
+#: src/Admin/Pages/ManualOrderPage.php:917
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1805
 #: templates/cart/cart.php:602
 #, php-format
 msgid "%s (included)"
 msgstr ""
 
-#: src/Admin/Pages/ManualOrderPage.php:938
+#: src/Admin/Pages/ManualOrderPage.php:934
 #: src/Admin/Pages/VendorsPage.php:1833
 #: src/functions/order-status.php:57
 #: src/Models/ServiceOrder.php:627
 msgid "Pending Payment"
 msgstr ""
 
-#: src/Admin/Pages/ManualOrderPage.php:939
+#: src/Admin/Pages/ManualOrderPage.php:935
 #: src/Admin/Pages/VendorsPage.php:1834
 #: src/functions/order-status.php:58
 msgid "Pending Requirements"
 msgstr ""
 
-#: src/Admin/Pages/ManualOrderPage.php:941
+#: src/Admin/Pages/ManualOrderPage.php:937
 #: src/functions/order-status.php:65
 #: src/Models/ServiceOrder.php:634
 #: src/Privacy/PersonalData.php:286
@@ -3054,26 +3057,26 @@ msgstr ""
 msgid "Suspended and closed members cannot list, bid, buy or start conversations, on the website or in the app. They can still finish orders a buyer has already paid for, so nobody loses work they paid for."
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:219
+#: src/Admin/Pages/ReportsPage.php:230
 #: templates/order/order-requirements.php:45
 msgid "You do not have permission to view this page."
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:270
+#: src/Admin/Pages/ReportsPage.php:281
 msgid "What members have reported to you, newest first. Acting on a member here applies everywhere: on the website and in the app."
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:276
-#: src/Admin/Pages/ReportsPage.php:288
+#: src/Admin/Pages/ReportsPage.php:287
+#: src/Admin/Pages/ReportsPage.php:299
 msgid "Needs review"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:280
-#: src/Admin/Pages/ReportsPage.php:289
+#: src/Admin/Pages/ReportsPage.php:291
+#: src/Admin/Pages/ReportsPage.php:300
 msgid "Dealt with"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:290
+#: src/Admin/Pages/ReportsPage.php:301
 #: src/Admin/Pages/ReviewModerationPage.php:294
 #: src/Admin/Pages/ServiceModerationPage.php:391
 #: src/Admin/Pages/VendorsPage.php:678
@@ -3085,36 +3088,36 @@ msgstr ""
 msgid "All"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:316
+#: src/Admin/Pages/ReportsPage.php:327
 msgid "Nothing needs your attention"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:317
+#: src/Admin/Pages/ReportsPage.php:328
 msgid "No reports here"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:321
+#: src/Admin/Pages/ReportsPage.php:332
 msgid "Reports members file from the website or the app arrive here."
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:329
-#: src/Admin/Pages/ReportsPage.php:345
+#: src/Admin/Pages/ReportsPage.php:340
+#: src/Admin/Pages/ReportsPage.php:356
 #: src/Privacy/PersonalData.php:328
 msgid "Reported"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:331
-#: src/Admin/Pages/ReportsPage.php:352
+#: src/Admin/Pages/ReportsPage.php:342
+#: src/Admin/Pages/ReportsPage.php:363
 msgid "What"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:332
-#: src/Admin/Pages/ReportsPage.php:366
+#: src/Admin/Pages/ReportsPage.php:343
+#: src/Admin/Pages/ReportsPage.php:377
 msgid "Filed by"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:334
-#: src/Admin/Pages/ReportsPage.php:379
+#: src/Admin/Pages/ReportsPage.php:345
+#: src/Admin/Pages/ReportsPage.php:390
 #: src/Admin/Pages/ReviewModerationPage.php:367
 #: src/Admin/Pages/ServiceModerationPage.php:459
 #: src/Admin/Pages/ServiceModerationPage.php:479
@@ -3131,22 +3134,22 @@ msgid "Actions"
 msgstr ""
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
-#: src/Admin/Pages/ReportsPage.php:373
+#: src/Admin/Pages/ReportsPage.php:384
 #: templates/partials/notifications-list.php:180
 #, php-format
 msgid "%s ago"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:381
+#: src/Admin/Pages/ReportsPage.php:392
 msgid "Uphold"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:382
+#: src/Admin/Pages/ReportsPage.php:393
 #: src/Assets/ScriptRegistry.php:140
 msgid "Dismiss"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:391
+#: src/Admin/Pages/ReportsPage.php:402
 #: src/Frontend/UnifiedDashboard.php:574
 #: templates/emails/vendor-approved.php:55
 #: templates/emails/vendor-rejected.php:54
@@ -3154,44 +3157,44 @@ msgstr ""
 msgid "Account"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:393
+#: src/Admin/Pages/ReportsPage.php:404
 msgid "Suspend member"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:394
+#: src/Admin/Pages/ReportsPage.php:405
 msgid "Close account"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:398
+#: src/Admin/Pages/ReportsPage.php:409
 msgid "Restore member"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:408
+#: src/Admin/Pages/ReportsPage.php:419
 msgid "Reports pages"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:418
+#: src/Admin/Pages/ReportsPage.php:429
 msgid "&laquo; Previous"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:419
+#: src/Admin/Pages/ReportsPage.php:430
 msgid "Next &raquo;"
 msgstr ""
 
 #. translators: %s: member display name
-#: src/Admin/Pages/ReportsPage.php:499
+#: src/Admin/Pages/ReportsPage.php:510
 #, php-format
 msgid "Suspend %s? They will not be able to list, bid, buy or start conversations. Orders already paid for can still be completed."
 msgstr ""
 
 #. translators: %s: member display name
-#: src/Admin/Pages/ReportsPage.php:504
+#: src/Admin/Pages/ReportsPage.php:515
 #, php-format
 msgid "Close %s's account? Same restrictions as suspending, and it reads to them as permanent. Orders already paid for can still be completed."
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:537
-#: src/Admin/Pages/ReportsPage.php:562
+#: src/Admin/Pages/ReportsPage.php:548
+#: src/Admin/Pages/ReportsPage.php:573
 #: src/Integrations/Gateways/OfflineGateway.php:1179
 msgid "You do not have permission to do that."
 msgstr ""
@@ -3226,9 +3229,9 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:373
 #: src/Admin/Pages/ServiceModerationPage.php:405
 #: src/Admin/Pages/ServiceModerationPage.php:958
-#: src/Admin/Pages/ServiceModerationPage.php:1138
+#: src/Admin/Pages/ServiceModerationPage.php:1146
 #: src/Admin/Pages/WithdrawalsPage.php:422
-#: src/Admin/ServiceListScreen.php:327
+#: src/Admin/ServiceListScreen.php:330
 #: src/Models/ExtensionRequest.php:283
 #: src/Models/Review.php:215
 #: src/Services/EarningsService.php:1424
@@ -3246,10 +3249,10 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:377
 #: src/Admin/Pages/ServiceModerationPage.php:412
 #: src/Admin/Pages/ServiceModerationPage.php:959
-#: src/Admin/Pages/ServiceModerationPage.php:1139
+#: src/Admin/Pages/ServiceModerationPage.php:1147
 #: src/Admin/Pages/WithdrawalsPage.php:410
 #: src/Admin/Pages/WithdrawalsPage.php:424
-#: src/Admin/ServiceListScreen.php:328
+#: src/Admin/ServiceListScreen.php:331
 #: src/functions/order-status.php:62
 #: src/Models/ExtensionRequest.php:284
 #: src/Models/Proposal.php:274
@@ -3391,7 +3394,7 @@ msgstr ""
 
 #: src/Admin/Pages/ServiceModerationPage.php:146
 #: src/Admin/Pages/ServiceModerationPage.php:352
-#: src/Admin/Pages/ServiceModerationPage.php:1194
+#: src/Admin/Pages/ServiceModerationPage.php:1203
 #: src/Admin/Settings.php:1046
 #: src/Admin/Settings.php:4200
 msgid "Service Moderation"
@@ -3582,12 +3585,12 @@ msgstr ""
 msgid "%d services processed."
 msgstr ""
 
-#: src/Admin/Pages/ServiceModerationPage.php:1119
+#: src/Admin/Pages/ServiceModerationPage.php:1127
 msgid "Moderation Status"
 msgstr ""
 
-#: src/Admin/Pages/ServiceModerationPage.php:1137
-#: src/Admin/ServiceListScreen.php:326
+#: src/Admin/Pages/ServiceModerationPage.php:1145
+#: src/Admin/ServiceListScreen.php:329
 #: src/Models/Dispute.php:241
 #: src/Services/DisputeService.php:1318
 #: src/Services/ModerationService.php:574
@@ -3596,31 +3599,31 @@ msgstr ""
 msgid "Pending review"
 msgstr ""
 
-#: src/Admin/Pages/ServiceModerationPage.php:1152
+#: src/Admin/Pages/ServiceModerationPage.php:1160
 msgid "Not submitted (draft)"
 msgstr ""
 
-#: src/Admin/Pages/ServiceModerationPage.php:1171
+#: src/Admin/Pages/ServiceModerationPage.php:1180
 msgid "Reason for the vendor (when rejecting)"
 msgstr ""
 
-#: src/Admin/Pages/ServiceModerationPage.php:1176
+#: src/Admin/Pages/ServiceModerationPage.php:1185
 msgid "Note: Service moderation is currently disabled in settings."
 msgstr ""
 
-#: src/Admin/Pages/ServiceModerationPage.php:1178
+#: src/Admin/Pages/ServiceModerationPage.php:1187
 msgid "This decision sets the service status: Approved publishes it, Rejected moves it to draft and tells the vendor, Pending holds it for review."
 msgstr ""
 
-#: src/Admin/Pages/ServiceModerationPage.php:1198
+#: src/Admin/Pages/ServiceModerationPage.php:1207
 msgid "Service moderation is currently disabled."
 msgstr ""
 
-#: src/Admin/Pages/ServiceModerationPage.php:1201
+#: src/Admin/Pages/ServiceModerationPage.php:1210
 msgid "When enabled, new services submitted by vendors will require admin approval before they become visible on the marketplace."
 msgstr ""
 
-#: src/Admin/Pages/ServiceModerationPage.php:1205
+#: src/Admin/Pages/ServiceModerationPage.php:1214
 msgid "Enable in Settings"
 msgstr ""
 
@@ -4527,10 +4530,10 @@ msgid "Commission rate updated successfully."
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1527
-#: src/Frontend/AjaxHandlers.php:2437
-#: src/Frontend/AjaxHandlers.php:2707
-#: src/Frontend/AjaxHandlers.php:2803
-#: src/Frontend/AjaxHandlers.php:2835
+#: src/Frontend/AjaxHandlers.php:2443
+#: src/Frontend/AjaxHandlers.php:2713
+#: src/Frontend/AjaxHandlers.php:2809
+#: src/Frontend/AjaxHandlers.php:2841
 msgid "Invalid tab."
 msgstr ""
 
@@ -5318,25 +5321,25 @@ msgid "Orders / rating"
 msgstr ""
 
 #. translators: 1: average rating out of 5, 2: number of reviews
-#: src/Admin/ServiceListScreen.php:285
+#: src/Admin/ServiceListScreen.php:288
 #, php-format
 msgid "%1$s from %2$s review"
 msgid_plural "%1$s from %2$s reviews"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/ServiceListScreen.php:314
+#: src/Admin/ServiceListScreen.php:317
 #: src/Blocks/BlocksManager.php:150
 #: src/Blocks/ServiceSearch.php:185
 #: src/Taxonomies/ServiceCategoryTaxonomy.php:69
 msgid "All categories"
 msgstr ""
 
-#: src/Admin/ServiceListScreen.php:325
+#: src/Admin/ServiceListScreen.php:328
 msgid "All moderation states"
 msgstr ""
 
-#: src/Admin/ServiceListScreen.php:331
+#: src/Admin/ServiceListScreen.php:334
 msgid "Filter by moderation state"
 msgstr ""
 
@@ -7354,7 +7357,7 @@ msgstr ""
 #: src/API/ProposalsController.php:629
 #: src/API/ReviewsController.php:991
 #: src/API/ServicesController.php:262
-#: src/API/ServicesController.php:1619
+#: src/API/ServicesController.php:1633
 #: src/API/VendorsController.php:996
 msgid "Current page."
 msgstr ""
@@ -7369,7 +7372,7 @@ msgstr ""
 #: src/API/ProposalsController.php:635
 #: src/API/ReviewsController.php:997
 #: src/API/ServicesController.php:268
-#: src/API/ServicesController.php:1624
+#: src/API/ServicesController.php:1638
 #: src/API/VendorsController.php:1002
 msgid "Items per page."
 msgstr ""
@@ -7407,8 +7410,8 @@ msgstr ""
 
 #: src/API/CartController.php:142
 #: src/Checkout/CheckoutIntentService.php:386
-#: src/Frontend/AjaxHandlers.php:2188
-#: src/Frontend/AjaxHandlers.php:2308
+#: src/Frontend/AjaxHandlers.php:2194
+#: src/Frontend/AjaxHandlers.php:2314
 #: src/Integrations/Gateways/OfflineGateway.php:828
 #: src/Integrations/Gateways/TestGateway.php:340
 msgid "You cannot purchase your own service."
@@ -7641,10 +7644,10 @@ msgstr ""
 #: src/API/ModerationController.php:234
 #: src/API/ModerationController.php:263
 #: src/API/ReviewsController.php:652
-#: src/API/ServicesController.php:777
-#: src/API/ServicesController.php:939
-#: src/API/ServicesController.php:1766
-#: src/Frontend/AjaxHandlers.php:2183
+#: src/API/ServicesController.php:782
+#: src/API/ServicesController.php:953
+#: src/API/ServicesController.php:1780
+#: src/Frontend/AjaxHandlers.php:2189
 #: src/Frontend/ServiceWizard.php:245
 #: src/functions/services.php:470
 #: src/Integrations/Gateways/OfflineGateway.php:824
@@ -7953,7 +7956,7 @@ msgstr ""
 
 #: src/API/OrdersController.php:1161
 #: src/Frontend/AjaxHandlers.php:461
-#: src/Frontend/AjaxHandlers.php:2664
+#: src/Frontend/AjaxHandlers.php:2670
 msgid "Vendor accepted cancellation request."
 msgstr ""
 
@@ -7986,12 +7989,12 @@ msgid "Action could not be completed. The order status transition may not be all
 msgstr ""
 
 #: src/API/OrdersController.php:1367
-#: src/Frontend/AjaxHandlers.php:2385
+#: src/Frontend/AjaxHandlers.php:2391
 msgid "This order is no longer waiting for requirements."
 msgstr ""
 
 #: src/API/OrdersController.php:1384
-#: src/Frontend/AjaxHandlers.php:2398
+#: src/Frontend/AjaxHandlers.php:2404
 msgid "Requirements skipped. You can submit them later."
 msgstr ""
 
@@ -8004,12 +8007,12 @@ msgid "You do not have permission to delete this file."
 msgstr ""
 
 #: src/API/OrdersController.php:1436
-#: src/Frontend/AjaxHandlers.php:2355
+#: src/Frontend/AjaxHandlers.php:2361
 msgid "This file cannot be deleted. It may belong to a request that already has proposals."
 msgstr ""
 
 #: src/API/OrdersController.php:1446
-#: src/Frontend/AjaxHandlers.php:2358
+#: src/Frontend/AjaxHandlers.php:2364
 msgid "File removed."
 msgstr ""
 
@@ -8055,7 +8058,7 @@ msgstr ""
 #: src/Privacy/PersonalData.php:351
 #: src/Privacy/PersonalData.php:507
 #: templates/dashboard/partials/order-filters.php:86
-#: templates/order/order-requirements.php:118
+#: templates/order/order-requirements.php:122
 #: templates/order/order-view.php:631
 msgid "Order number"
 msgstr ""
@@ -8164,7 +8167,7 @@ msgstr ""
 #: src/API/PortfolioController.php:273
 #: src/API/PortfolioController.php:415
 #: src/API/PortfolioController.php:462
-#: src/Frontend/AjaxHandlers.php:3134
+#: src/Frontend/AjaxHandlers.php:3140
 #: src/Services/PortfolioService.php:222
 #: src/Services/PortfolioService.php:324
 #: src/Services/PortfolioService.php:438
@@ -8270,7 +8273,7 @@ msgstr ""
 msgid "That content no longer exists."
 msgstr ""
 
-#: src/API/ReportsController.php:454
+#: src/API/ReportsController.php:465
 msgid "That report has already been dealt with."
 msgstr ""
 
@@ -8420,7 +8423,7 @@ msgid "Filter by rating."
 msgstr ""
 
 #: src/API/ReviewsController.php:1018
-#: src/API/ServicesController.php:1658
+#: src/API/ServicesController.php:1672
 #: src/API/VendorsController.php:1017
 msgid "Order by field."
 msgstr ""
@@ -8458,146 +8461,146 @@ msgid "Select at least one category. A service without one cannot be found by bu
 msgstr ""
 
 #: src/API/ServicesController.php:673
-#: src/API/ServicesController.php:806
+#: src/API/ServicesController.php:811
 msgid "Status must be either publish or draft."
 msgstr ""
 
-#: src/API/ServicesController.php:955
-#: src/Frontend/AjaxHandlers.php:2522
+#: src/API/ServicesController.php:969
+#: src/Frontend/AjaxHandlers.php:2528
 msgid "Failed to delete service."
 msgstr ""
 
-#: src/API/ServicesController.php:1187
+#: src/API/ServicesController.php:1201
 msgid "Addon title."
 msgstr ""
 
-#: src/API/ServicesController.php:1192
+#: src/API/ServicesController.php:1206
 msgid "Addon description."
 msgstr ""
 
-#: src/API/ServicesController.php:1196
+#: src/API/ServicesController.php:1210
 msgid "Addon price: an amount, or a percent of the package when price_type is percentage."
 msgstr ""
 
-#: src/API/ServicesController.php:1202
+#: src/API/ServicesController.php:1216
 msgid "Days the add-on adds to delivery."
 msgstr ""
 
-#: src/API/ServicesController.php:1207
+#: src/API/ServicesController.php:1221
 msgid "How the buyer chooses it."
 msgstr ""
 
-#: src/API/ServicesController.php:1212
+#: src/API/ServicesController.php:1226
 #: src/Frontend/ServiceWizard.php:1074
 msgid "How it is priced."
 msgstr ""
 
-#: src/API/ServicesController.php:1217
+#: src/API/ServicesController.php:1231
 msgid "Dropdown choices, comma separated."
 msgstr ""
 
-#: src/API/ServicesController.php:1221
+#: src/API/ServicesController.php:1235
 msgid "Smallest quantity (quantity add-ons)."
 msgstr ""
 
-#: src/API/ServicesController.php:1226
+#: src/API/ServicesController.php:1240
 msgid "Largest quantity (quantity add-ons)."
 msgstr ""
 
-#: src/API/ServicesController.php:1231
+#: src/API/ServicesController.php:1245
 msgid "Every order includes it."
 msgstr ""
 
-#: src/API/ServicesController.php:1295
+#: src/API/ServicesController.php:1309
 msgid "Failed to create addon."
 msgstr ""
 
-#: src/API/ServicesController.php:1313
-#: src/API/ServicesController.php:1344
+#: src/API/ServicesController.php:1327
+#: src/API/ServicesController.php:1358
 msgid "Addon not found."
 msgstr ""
 
-#: src/API/ServicesController.php:1398
+#: src/API/ServicesController.php:1412
 #: src/Frontend/ServiceWizard.php:233
 #: src/Frontend/ServiceWizard.php:1714
-#: src/Frontend/ServiceWizard.php:1871
-#: src/functions/services.php:814
+#: src/functions/services.php:520
+#: src/functions/services.php:856
 msgid "You have reached the maximum number of services allowed. Please remove an existing service before creating a new one."
 msgstr ""
 
-#: src/API/ServicesController.php:1414
+#: src/API/ServicesController.php:1428
 msgid "You do not have permission to create services."
 msgstr ""
 
-#: src/API/ServicesController.php:1440
+#: src/API/ServicesController.php:1454
 #: src/Frontend/ServiceWizard.php:249
 #: src/Frontend/ServiceWizard.php:1733
-#: src/Frontend/ServiceWizard.php:1922
+#: src/Frontend/ServiceWizard.php:1898
 #: templates/dashboard/sections/create.php:50
 msgid "You do not have permission to edit this service."
 msgstr ""
 
-#: src/API/ServicesController.php:1630
+#: src/API/ServicesController.php:1644
 msgid "Filter by category ID or slug."
 msgstr ""
 
-#: src/API/ServicesController.php:1634
+#: src/API/ServicesController.php:1648
 msgid "Filter by vendor ID."
 msgstr ""
 
-#: src/API/ServicesController.php:1638
+#: src/API/ServicesController.php:1652
 msgid "Search term."
 msgstr ""
 
-#: src/API/ServicesController.php:1646
+#: src/API/ServicesController.php:1660
 msgid "Search term. Alias of `search`, accepted for parity with /search."
 msgstr ""
 
-#: src/API/ServicesController.php:1650
+#: src/API/ServicesController.php:1664
 #: src/Core/AbilitiesRegistrar.php:111
 msgid "Minimum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1654
+#: src/API/ServicesController.php:1668
 #: src/Core/AbilitiesRegistrar.php:115
 msgid "Maximum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1664
+#: src/API/ServicesController.php:1678
 msgid "Sort order."
 msgstr ""
 
-#: src/API/ServicesController.php:1670
+#: src/API/ServicesController.php:1684
 msgid "Maximum delivery days filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1675
+#: src/API/ServicesController.php:1689
 msgid "Minimum rating filter (0-5)."
 msgstr ""
 
-#: src/API/ServicesController.php:1697
+#: src/API/ServicesController.php:1711
 #: src/Core/AbilitiesRegistrar.php:231
 #: src/Frontend/ServiceWizard.php:453
 msgid "Service title."
 msgstr ""
 
-#: src/API/ServicesController.php:1703
+#: src/API/ServicesController.php:1717
 msgid "Service description."
 msgstr ""
 
-#: src/API/ServicesController.php:1708
+#: src/API/ServicesController.php:1722
 msgid "Service excerpt."
 msgstr ""
 
-#: src/API/ServicesController.php:1713
+#: src/API/ServicesController.php:1727
 msgid "Base price."
 msgstr ""
 
-#: src/API/ServicesController.php:1721
+#: src/API/ServicesController.php:1735
 msgid "Category IDs or slugs."
 msgstr ""
 
-#: src/API/ServicesController.php:1727
+#: src/API/ServicesController.php:1741
 msgid "Tags."
 msgstr ""
 
@@ -8658,7 +8661,7 @@ msgid "You are not registered as a vendor."
 msgstr ""
 
 #: src/API/VendorsController.php:537
-#: src/Frontend/AjaxHandlers.php:3030
+#: src/Frontend/AjaxHandlers.php:3036
 msgid "Your profile could not be saved. Please try again or contact support."
 msgstr ""
 
@@ -8677,7 +8680,7 @@ msgid "You already have a pending vendor application. Please wait for admin appr
 msgstr ""
 
 #: src/API/VendorsController.php:653
-#: src/Frontend/UnifiedDashboard.php:1170
+#: src/Frontend/UnifiedDashboard.php:1171
 #: src/Services/VendorService.php:215
 msgid "Vendor registration is currently closed."
 msgstr ""
@@ -8792,7 +8795,7 @@ msgid "Display buyer requests for vendors to browse and respond."
 msgstr ""
 
 #: src/Blocks/BuyerRequests.php:220
-#: templates/content-no-requests.php:36
+#: templates/content-no-requests.php:39
 #: assets/js/blocks.js:654
 msgid "No buyer requests found."
 msgstr ""
@@ -8966,7 +8969,7 @@ msgid "this store platform"
 msgstr ""
 
 #: src/Checkout/ServiceCart.php:82
-#: src/Frontend/AjaxHandlers.php:2177
+#: src/Frontend/AjaxHandlers.php:2183
 msgid "No e-commerce platform is active. Please check your settings."
 msgstr ""
 
@@ -9317,21 +9320,21 @@ msgstr ""
 msgid "The site owner will send you payment instructions by email."
 msgstr ""
 
-#: src/Core/Plugin.php:1974
+#: src/Core/Plugin.php:1983
 msgid "All milestones on this custom-project order are complete."
 msgstr ""
 
 #. translators: %d: count of paid phases
-#: src/Core/Plugin.php:2036
+#: src/Core/Plugin.php:2045
 #, php-format
 msgid "Project cancelled while %d milestone was already paid. Money has moved to the vendor wallet; open a dispute if the work cannot be accepted."
 msgstr ""
 
-#: src/Core/Plugin.php:2041
+#: src/Core/Plugin.php:2050
 msgid "Paid milestone not delivered"
 msgstr ""
 
-#: src/Core/Plugin.php:2042
+#: src/Core/Plugin.php:2051
 msgid "Paid milestone on cancelled project"
 msgstr ""
 
@@ -9432,7 +9435,7 @@ msgid "Cancellation accepted. Order has been cancelled."
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:512
-#: src/Frontend/AjaxHandlers.php:2678
+#: src/Frontend/AjaxHandlers.php:2684
 msgid "Vendor disputed the buyer cancellation request."
 msgstr ""
 
@@ -9476,20 +9479,20 @@ msgid "Message sent."
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:735
-#: src/Frontend/AjaxHandlers.php:2443
-#: src/Frontend/AjaxHandlers.php:2713
-#: src/Frontend/AjaxHandlers.php:2809
-#: src/Frontend/AjaxHandlers.php:2841
-#: src/Frontend/AjaxHandlers.php:2875
-#: src/Frontend/AjaxHandlers.php:2984
-#: src/Frontend/AjaxHandlers.php:3266
-#: src/Frontend/AjaxHandlers.php:3307
-#: src/Frontend/AjaxHandlers.php:3336
-#: src/Frontend/AjaxHandlers.php:3375
-#: src/Frontend/AjaxHandlers.php:3399
-#: src/Frontend/AjaxHandlers.php:3424
-#: src/Frontend/AjaxHandlers.php:3448
-#: src/Frontend/AjaxHandlers.php:3471
+#: src/Frontend/AjaxHandlers.php:2449
+#: src/Frontend/AjaxHandlers.php:2719
+#: src/Frontend/AjaxHandlers.php:2815
+#: src/Frontend/AjaxHandlers.php:2847
+#: src/Frontend/AjaxHandlers.php:2881
+#: src/Frontend/AjaxHandlers.php:2990
+#: src/Frontend/AjaxHandlers.php:3272
+#: src/Frontend/AjaxHandlers.php:3313
+#: src/Frontend/AjaxHandlers.php:3342
+#: src/Frontend/AjaxHandlers.php:3381
+#: src/Frontend/AjaxHandlers.php:3405
+#: src/Frontend/AjaxHandlers.php:3430
+#: src/Frontend/AjaxHandlers.php:3454
+#: src/Frontend/AjaxHandlers.php:3477
 msgid "Please log in."
 msgstr ""
 
@@ -9617,7 +9620,7 @@ msgid "Proposal accepted! Redirecting to payment…"
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:1564
-#: src/Services/BuyerRequestService.php:1033
+#: src/Services/BuyerRequestService.php:1031
 msgid "Failed to create order. Please try again."
 msgstr ""
 
@@ -9647,7 +9650,7 @@ msgid "Removed from favorites."
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:1720
-#: src/Frontend/AjaxHandlers.php:2524
+#: src/Frontend/AjaxHandlers.php:2530
 msgid "Service deleted."
 msgstr ""
 
@@ -9671,151 +9674,155 @@ msgstr ""
 msgid "You cannot contact yourself."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1933
+#: src/Frontend/AjaxHandlers.php:1907
+msgid "This vendor is not taking new messages right now."
+msgstr ""
+
+#: src/Frontend/AjaxHandlers.php:1939
 msgid "Your session has expired. Please sign in again."
 msgstr ""
 
 #. translators: %s: sender name
-#: src/Frontend/AjaxHandlers.php:1941
+#: src/Frontend/AjaxHandlers.php:1947
 #, php-format
 msgid "New message from %s"
 msgstr ""
 
 #. translators: 1: sender name, 2: service title
-#: src/Frontend/AjaxHandlers.php:1948
+#: src/Frontend/AjaxHandlers.php:1954
 #, php-format
 msgid "%1$s sent you a message about \"%2$s\""
 msgstr ""
 
 #. translators: %s: sender name
-#: src/Frontend/AjaxHandlers.php:1954
+#: src/Frontend/AjaxHandlers.php:1960
 #, php-format
 msgid "%s sent you a message"
 msgstr ""
 
 #. translators: %s: service title
-#: src/Frontend/AjaxHandlers.php:1983
+#: src/Frontend/AjaxHandlers.php:1989
 #, php-format
 msgid "Inquiry about \"%s\""
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1986
+#: src/Frontend/AjaxHandlers.php:1992
 #: templates/dashboard/sections/messages.php:92
 #: templates/dashboard/sections/messages.php:360
 #: templates/dashboard/sections/messages.php:451
 msgid "Direct Message"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2005
+#: src/Frontend/AjaxHandlers.php:2011
 msgid "Your message has been sent successfully!"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2071
+#: src/Frontend/AjaxHandlers.php:2077
 msgid "Please log in to continue to checkout."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2200
+#: src/Frontend/AjaxHandlers.php:2206
 #: src/Frontend/Frontend.php:310
 #: src/Frontend/SingleServiceView.php:132
 msgid "Added to cart!"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2264
+#: src/Frontend/AjaxHandlers.php:2270
 msgid "Invalid notification."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2285
+#: src/Frontend/AjaxHandlers.php:2291
 msgid "All notifications marked as read."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2323
-#: src/Frontend/AjaxHandlers.php:2328
+#: src/Frontend/AjaxHandlers.php:2329
+#: src/Frontend/AjaxHandlers.php:2334
 msgid "Cart updated."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2451
+#: src/Frontend/AjaxHandlers.php:2457
 msgid "Tab content not found."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2492
+#: src/Frontend/AjaxHandlers.php:2498
 msgid "Service paused."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2502
+#: src/Frontend/AjaxHandlers.php:2508
 msgid "Service unpublished."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2516
+#: src/Frontend/AjaxHandlers.php:2522
 msgid "Service published."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2528
-#: src/Frontend/AjaxHandlers.php:2580
+#: src/Frontend/AjaxHandlers.php:2534
+#: src/Frontend/AjaxHandlers.php:2586
 msgid "Unknown action."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2608
+#: src/Frontend/AjaxHandlers.php:2614
 msgid "This action is not available in the order's current status."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2658
+#: src/Frontend/AjaxHandlers.php:2664
 msgid "Order cannot be refunded in its current status."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2666
+#: src/Frontend/AjaxHandlers.php:2672
 msgid "Cannot accept cancellation."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2682
+#: src/Frontend/AjaxHandlers.php:2688
 msgid "Failed to create dispute."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2685
+#: src/Frontend/AjaxHandlers.php:2691
 msgid "Cannot dispute cancellation."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2691
+#: src/Frontend/AjaxHandlers.php:2697
 msgid "Order updated."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2693
+#: src/Frontend/AjaxHandlers.php:2699
 msgid "Action failed."
 msgstr ""
 
 #. translators: %d: number of items processed
-#: src/Frontend/AjaxHandlers.php:2790
+#: src/Frontend/AjaxHandlers.php:2796
 #, php-format
 msgid "%d items updated."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2868
+#: src/Frontend/AjaxHandlers.php:2874
 msgid "Invalid export type."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3051
+#: src/Frontend/AjaxHandlers.php:3057
 #: src/Frontend/UnifiedDashboard.php:203
 msgid "Profile updated successfully."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3126
-#: src/Frontend/AjaxHandlers.php:3195
+#: src/Frontend/AjaxHandlers.php:3132
+#: src/Frontend/AjaxHandlers.php:3201
 msgid "Invalid portfolio item."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3224
+#: src/Frontend/AjaxHandlers.php:3230
 msgid "Invalid cart item."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3246
+#: src/Frontend/AjaxHandlers.php:3252
 msgid "Item removed from cart."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3275
-#: src/Frontend/AjaxHandlers.php:3347
+#: src/Frontend/AjaxHandlers.php:3281
+#: src/Frontend/AjaxHandlers.php:3353
 msgid "Missing order."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3314
+#: src/Frontend/AjaxHandlers.php:3320
 msgid "Missing request."
 msgstr ""
 
@@ -10102,7 +10109,7 @@ msgstr ""
 #: src/Frontend/Frontend.php:322
 #: src/Frontend/SingleServiceView.php:140
 #: src/Frontend/UnifiedDashboard.php:239
-#: templates/partials/review-body.php:90
+#: templates/partials/review-body.php:92
 msgid "Vendor Response:"
 msgstr ""
 
@@ -10438,7 +10445,7 @@ msgid "Service navigation"
 msgstr ""
 
 #: src/Frontend/ServiceArchiveView.php:412
-#: src/Services/BuyerRequestService.php:1381
+#: src/Services/BuyerRequestService.php:1379
 msgid "Price Range"
 msgstr ""
 
@@ -11113,12 +11120,12 @@ msgstr ""
 
 #: src/Frontend/ServiceWizard.php:1696
 #: src/Frontend/ServiceWizard.php:1832
-#: src/Frontend/ServiceWizard.php:2498
+#: src/Frontend/ServiceWizard.php:2474
 msgid "You are not authorized to create services."
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:1726
-#: src/Frontend/ServiceWizard.php:1886
+#: src/Frontend/ServiceWizard.php:1862
 msgid "Invalid data."
 msgstr ""
 
@@ -11134,49 +11141,49 @@ msgstr ""
 msgid "Your service is already being published. Please wait."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1895
+#: src/Frontend/ServiceWizard.php:1871
 msgid "Please complete all required fields."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1977
+#: src/Frontend/ServiceWizard.php:1953
 msgid "The service was saved as a draft but could not be published. Check it and try again."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1996
+#: src/Frontend/ServiceWizard.php:1972
 msgid "Service submitted for review. You will be notified once it is approved."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1999
+#: src/Frontend/ServiceWizard.php:1975
 msgid "Service published successfully!"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2034
+#: src/Frontend/ServiceWizard.php:2010
 msgid "Only image files (JPG, PNG, GIF, WebP) are allowed."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2043
+#: src/Frontend/ServiceWizard.php:2019
 msgid "Invalid file type. Please upload a valid image."
 msgstr ""
 
 #. translators: %s: maximum file size, e.g. 10 MB
-#: src/Frontend/ServiceWizard.php:2076
+#: src/Frontend/ServiceWizard.php:2052
 #, php-format
 msgid "Image file size exceeds the %s limit."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2112
+#: src/Frontend/ServiceWizard.php:2088
 msgid "Invalid attachment."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2118
+#: src/Frontend/ServiceWizard.php:2094
 msgid "You cannot delete this attachment."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2453
+#: src/Frontend/ServiceWizard.php:2429
 msgid "Please log in to create a service."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2454
+#: src/Frontend/ServiceWizard.php:2430
 #: src/Frontend/UnifiedDashboard.php:642
 #: src/functions/urls.php:534
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:999
@@ -11186,33 +11193,33 @@ msgstr ""
 msgid "Log In"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2465
+#: src/Frontend/ServiceWizard.php:2441
 msgid "You need to be a registered vendor to create services."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2472
-#: src/Frontend/UnifiedDashboard.php:1021
+#: src/Frontend/ServiceWizard.php:2448
+#: src/Frontend/UnifiedDashboard.php:1022
 #: src/functions/urls.php:493
 #: templates/single-request.php:516
 msgid "Become a Vendor"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2487
+#: src/Frontend/ServiceWizard.php:2463
 msgid "Your vendor account is suspended. You cannot create services at this time."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2493
+#: src/Frontend/ServiceWizard.php:2469
 msgid "Your vendor account is pending approval. You will be able to create services once approved."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2512
+#: src/Frontend/ServiceWizard.php:2488
 #: templates/dashboard/sections/earnings.php:378
 #: templates/dashboard/sections/earnings.php:404
 msgid "Manage your services"
 msgstr ""
 
 #. translators: %d: maximum number of services allowed
-#: src/Frontend/ServiceWizard.php:2518
+#: src/Frontend/ServiceWizard.php:2494
 #, php-format
 msgid "You have reached the maximum limit of %d services. Please remove an existing service before creating a new one."
 msgstr ""
@@ -11360,8 +11367,8 @@ msgstr ""
 
 #: src/Frontend/Shortcodes.php:1207
 #: src/Frontend/UnifiedDashboard.php:771
-#: src/Frontend/UnifiedDashboard.php:1024
-#: src/Frontend/UnifiedDashboard.php:1039
+#: src/Frontend/UnifiedDashboard.php:1025
+#: src/Frontend/UnifiedDashboard.php:1040
 msgid "Start selling"
 msgstr ""
 
@@ -11997,55 +12004,55 @@ msgstr ""
 msgid "Edit Request"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1022
+#: src/Frontend/UnifiedDashboard.php:1023
 msgid "Start selling your services on this marketplace. Click the button below to register as a vendor and begin offering your skills."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1035
+#: src/Frontend/UnifiedDashboard.php:1036
 msgid "Vendor Access Required"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1036
+#: src/Frontend/UnifiedDashboard.php:1037
 msgid "This section is available to vendors. Become a vendor to access this feature and start selling your services."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1059
+#: src/Frontend/UnifiedDashboard.php:1060
 msgid "Section Not Available"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1063
+#: src/Frontend/UnifiedDashboard.php:1064
 msgid "This section is not available on this site."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1065
+#: src/Frontend/UnifiedDashboard.php:1066
 msgid "This section is part of WP Sell Services Pro and is not available on this site."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1070
+#: src/Frontend/UnifiedDashboard.php:1071
 msgid "Back to Dashboard"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1164
+#: src/Frontend/UnifiedDashboard.php:1165
 msgid "Please log in first."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1176
+#: src/Frontend/UnifiedDashboard.php:1177
 msgid "You are already a vendor."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1181
+#: src/Frontend/UnifiedDashboard.php:1182
 msgid "Your vendor application is already pending approval."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1193
+#: src/Frontend/UnifiedDashboard.php:1194
 msgid "Your vendor application has been submitted! It is pending admin approval."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1218
+#: src/Frontend/UnifiedDashboard.php:1219
 msgid "Welcome! You can now create and sell services."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1224
+#: src/Frontend/UnifiedDashboard.php:1225
 msgid "Unable to complete registration. Please try again."
 msgstr ""
 
@@ -13226,606 +13233,606 @@ msgstr ""
 msgid "Report this vendor"
 msgstr ""
 
-#: src/functions/money.php:526
+#: src/functions/money.php:551
 msgid "US Dollar"
 msgstr ""
 
-#: src/functions/money.php:531
+#: src/functions/money.php:556
 msgid "Euro"
 msgstr ""
 
-#: src/functions/money.php:536
+#: src/functions/money.php:561
 msgid "British Pound"
 msgstr ""
 
-#: src/functions/money.php:541
+#: src/functions/money.php:566
 msgid "Japanese Yen"
 msgstr ""
 
-#: src/functions/money.php:546
+#: src/functions/money.php:571
 msgid "Indian Rupee"
 msgstr ""
 
-#: src/functions/money.php:551
+#: src/functions/money.php:576
 msgid "Australian Dollar"
 msgstr ""
 
-#: src/functions/money.php:556
+#: src/functions/money.php:581
 msgid "Canadian Dollar"
 msgstr ""
 
-#: src/functions/money.php:561
+#: src/functions/money.php:586
 msgid "Swiss Franc"
 msgstr ""
 
-#: src/functions/money.php:566
+#: src/functions/money.php:591
 msgid "Chinese Yuan"
 msgstr ""
 
-#: src/functions/money.php:571
+#: src/functions/money.php:596
 msgid "South Korean Won"
 msgstr ""
 
-#: src/functions/money.php:576
+#: src/functions/money.php:601
 msgid "Brazilian Real"
 msgstr ""
 
-#: src/functions/money.php:581
+#: src/functions/money.php:606
 msgid "Mexican Peso"
 msgstr ""
 
-#: src/functions/money.php:586
+#: src/functions/money.php:611
 msgid "Singapore Dollar"
 msgstr ""
 
-#: src/functions/money.php:591
+#: src/functions/money.php:616
 msgid "Hong Kong Dollar"
 msgstr ""
 
-#: src/functions/money.php:596
+#: src/functions/money.php:621
 msgid "Norwegian Krone"
 msgstr ""
 
-#: src/functions/money.php:601
+#: src/functions/money.php:626
 msgid "Swedish Krona"
 msgstr ""
 
-#: src/functions/money.php:606
+#: src/functions/money.php:631
 msgid "Danish Krone"
 msgstr ""
 
-#: src/functions/money.php:611
+#: src/functions/money.php:636
 msgid "New Zealand Dollar"
 msgstr ""
 
-#: src/functions/money.php:616
+#: src/functions/money.php:641
 msgid "South African Rand"
 msgstr ""
 
-#: src/functions/money.php:621
+#: src/functions/money.php:646
 msgid "Russian Ruble"
 msgstr ""
 
-#: src/functions/money.php:626
+#: src/functions/money.php:651
 msgid "Turkish Lira"
 msgstr ""
 
-#: src/functions/money.php:631
+#: src/functions/money.php:656
 msgid "Polish Zloty"
 msgstr ""
 
-#: src/functions/money.php:636
+#: src/functions/money.php:661
 msgid "Thai Baht"
 msgstr ""
 
-#: src/functions/money.php:641
+#: src/functions/money.php:666
 msgid "Malaysian Ringgit"
 msgstr ""
 
-#: src/functions/money.php:646
+#: src/functions/money.php:671
 msgid "Philippine Peso"
 msgstr ""
 
-#: src/functions/money.php:651
+#: src/functions/money.php:676
 msgid "Indonesian Rupiah"
 msgstr ""
 
-#: src/functions/money.php:656
+#: src/functions/money.php:681
 msgid "Vietnamese Dong"
 msgstr ""
 
-#: src/functions/money.php:661
+#: src/functions/money.php:686
 msgid "UAE Dirham"
 msgstr ""
 
-#: src/functions/money.php:666
+#: src/functions/money.php:691
 msgid "Saudi Riyal"
 msgstr ""
 
-#: src/functions/money.php:671
+#: src/functions/money.php:696
 msgid "Egyptian Pound"
 msgstr ""
 
-#: src/functions/money.php:676
+#: src/functions/money.php:701
 msgid "Nigerian Naira"
 msgstr ""
 
-#: src/functions/money.php:681
+#: src/functions/money.php:706
 msgid "Afghan Afghani"
 msgstr ""
 
-#: src/functions/money.php:686
+#: src/functions/money.php:711
 msgid "Albanian Lek"
 msgstr ""
 
-#: src/functions/money.php:691
+#: src/functions/money.php:716
 msgid "Armenian Dram"
 msgstr ""
 
-#: src/functions/money.php:696
+#: src/functions/money.php:721
 msgid "Netherlands Antillean Guilder"
 msgstr ""
 
-#: src/functions/money.php:701
+#: src/functions/money.php:726
 msgid "Angolan Kwanza"
 msgstr ""
 
-#: src/functions/money.php:706
+#: src/functions/money.php:731
 msgid "Argentine Peso"
 msgstr ""
 
-#: src/functions/money.php:711
+#: src/functions/money.php:736
 msgid "Aruban Florin"
 msgstr ""
 
-#: src/functions/money.php:716
+#: src/functions/money.php:741
 msgid "Azerbaijani Manat"
 msgstr ""
 
-#: src/functions/money.php:721
+#: src/functions/money.php:746
 msgid "Bosnia-Herzegovina Mark"
 msgstr ""
 
-#: src/functions/money.php:726
+#: src/functions/money.php:751
 msgid "Barbadian Dollar"
 msgstr ""
 
-#: src/functions/money.php:731
+#: src/functions/money.php:756
 msgid "Bangladeshi Taka"
 msgstr ""
 
-#: src/functions/money.php:736
+#: src/functions/money.php:761
 msgid "Bulgarian Lev"
 msgstr ""
 
-#: src/functions/money.php:741
+#: src/functions/money.php:766
 msgid "Bahraini Dinar"
 msgstr ""
 
-#: src/functions/money.php:746
+#: src/functions/money.php:771
 msgid "Burundian Franc"
 msgstr ""
 
-#: src/functions/money.php:751
+#: src/functions/money.php:776
 msgid "Bermudan Dollar"
 msgstr ""
 
-#: src/functions/money.php:756
+#: src/functions/money.php:781
 msgid "Brunei Dollar"
 msgstr ""
 
-#: src/functions/money.php:761
+#: src/functions/money.php:786
 msgid "Bolivian Boliviano"
 msgstr ""
 
-#: src/functions/money.php:766
+#: src/functions/money.php:791
 msgid "Bahamian Dollar"
 msgstr ""
 
-#: src/functions/money.php:771
+#: src/functions/money.php:796
 msgid "Bhutanese Ngultrum"
 msgstr ""
 
-#: src/functions/money.php:776
+#: src/functions/money.php:801
 msgid "Botswanan Pula"
 msgstr ""
 
-#: src/functions/money.php:781
+#: src/functions/money.php:806
 msgid "Belarusian Ruble"
 msgstr ""
 
-#: src/functions/money.php:786
+#: src/functions/money.php:811
 msgid "Belize Dollar"
 msgstr ""
 
-#: src/functions/money.php:791
+#: src/functions/money.php:816
 msgid "Congolese Franc"
 msgstr ""
 
-#: src/functions/money.php:796
+#: src/functions/money.php:821
 msgid "Chilean Peso"
 msgstr ""
 
-#: src/functions/money.php:801
+#: src/functions/money.php:826
 msgid "Colombian Peso"
 msgstr ""
 
-#: src/functions/money.php:806
+#: src/functions/money.php:831
 msgid "Costa Rican Colon"
 msgstr ""
 
-#: src/functions/money.php:811
+#: src/functions/money.php:836
 msgid "Cuban Peso"
 msgstr ""
 
-#: src/functions/money.php:816
+#: src/functions/money.php:841
 msgid "Cape Verdean Escudo"
 msgstr ""
 
-#: src/functions/money.php:821
+#: src/functions/money.php:846
 msgid "Czech Koruna"
 msgstr ""
 
-#: src/functions/money.php:826
+#: src/functions/money.php:851
 msgid "Djiboutian Franc"
 msgstr ""
 
-#: src/functions/money.php:831
+#: src/functions/money.php:856
 msgid "Dominican Peso"
 msgstr ""
 
-#: src/functions/money.php:836
+#: src/functions/money.php:861
 msgid "Algerian Dinar"
 msgstr ""
 
-#: src/functions/money.php:841
+#: src/functions/money.php:866
 msgid "Ethiopian Birr"
 msgstr ""
 
-#: src/functions/money.php:846
+#: src/functions/money.php:871
 msgid "Fijian Dollar"
 msgstr ""
 
-#: src/functions/money.php:851
+#: src/functions/money.php:876
 msgid "Georgian Lari"
 msgstr ""
 
-#: src/functions/money.php:856
+#: src/functions/money.php:881
 msgid "Ghanaian Cedi"
 msgstr ""
 
-#: src/functions/money.php:861
+#: src/functions/money.php:886
 msgid "Gambian Dalasi"
 msgstr ""
 
-#: src/functions/money.php:866
+#: src/functions/money.php:891
 msgid "Guinean Franc"
 msgstr ""
 
-#: src/functions/money.php:871
+#: src/functions/money.php:896
 msgid "Guatemalan Quetzal"
 msgstr ""
 
-#: src/functions/money.php:876
+#: src/functions/money.php:901
 msgid "Guyanaese Dollar"
 msgstr ""
 
-#: src/functions/money.php:881
+#: src/functions/money.php:906
 msgid "Honduran Lempira"
 msgstr ""
 
-#: src/functions/money.php:886
+#: src/functions/money.php:911
 msgid "Croatian Kuna"
 msgstr ""
 
-#: src/functions/money.php:891
+#: src/functions/money.php:916
 msgid "Haitian Gourde"
 msgstr ""
 
-#: src/functions/money.php:896
+#: src/functions/money.php:921
 msgid "Hungarian Forint"
 msgstr ""
 
-#: src/functions/money.php:901
+#: src/functions/money.php:926
 msgid "Israeli Shekel"
 msgstr ""
 
-#: src/functions/money.php:906
+#: src/functions/money.php:931
 msgid "Iraqi Dinar"
 msgstr ""
 
-#: src/functions/money.php:911
+#: src/functions/money.php:936
 msgid "Iranian Rial"
 msgstr ""
 
-#: src/functions/money.php:916
+#: src/functions/money.php:941
 msgid "Icelandic Krona"
 msgstr ""
 
-#: src/functions/money.php:921
+#: src/functions/money.php:946
 msgid "Jamaican Dollar"
 msgstr ""
 
-#: src/functions/money.php:926
+#: src/functions/money.php:951
 msgid "Jordanian Dinar"
 msgstr ""
 
-#: src/functions/money.php:931
+#: src/functions/money.php:956
 msgid "Kenyan Shilling"
 msgstr ""
 
-#: src/functions/money.php:936
+#: src/functions/money.php:961
 msgid "Kyrgystani Som"
 msgstr ""
 
-#: src/functions/money.php:941
+#: src/functions/money.php:966
 msgid "Cambodian Riel"
 msgstr ""
 
-#: src/functions/money.php:946
+#: src/functions/money.php:971
 msgid "Comorian Franc"
 msgstr ""
 
-#: src/functions/money.php:951
+#: src/functions/money.php:976
 msgid "Kuwaiti Dinar"
 msgstr ""
 
-#: src/functions/money.php:956
+#: src/functions/money.php:981
 msgid "Cayman Islands Dollar"
 msgstr ""
 
-#: src/functions/money.php:961
+#: src/functions/money.php:986
 msgid "Kazakhstani Tenge"
 msgstr ""
 
-#: src/functions/money.php:966
+#: src/functions/money.php:991
 msgid "Laotian Kip"
 msgstr ""
 
-#: src/functions/money.php:971
+#: src/functions/money.php:996
 msgid "Lebanese Pound"
 msgstr ""
 
-#: src/functions/money.php:976
+#: src/functions/money.php:1001
 msgid "Sri Lankan Rupee"
 msgstr ""
 
-#: src/functions/money.php:981
+#: src/functions/money.php:1006
 msgid "Liberian Dollar"
 msgstr ""
 
-#: src/functions/money.php:986
+#: src/functions/money.php:1011
 msgid "Lesotho Loti"
 msgstr ""
 
-#: src/functions/money.php:991
+#: src/functions/money.php:1016
 msgid "Libyan Dinar"
 msgstr ""
 
-#: src/functions/money.php:996
+#: src/functions/money.php:1021
 msgid "Moroccan Dirham"
 msgstr ""
 
-#: src/functions/money.php:1001
+#: src/functions/money.php:1026
 msgid "Moldovan Leu"
 msgstr ""
 
-#: src/functions/money.php:1006
+#: src/functions/money.php:1031
 msgid "Malagasy Ariary"
 msgstr ""
 
-#: src/functions/money.php:1011
+#: src/functions/money.php:1036
 msgid "Macedonian Denar"
 msgstr ""
 
-#: src/functions/money.php:1016
+#: src/functions/money.php:1041
 msgid "Myanmar Kyat"
 msgstr ""
 
-#: src/functions/money.php:1021
+#: src/functions/money.php:1046
 msgid "Mongolian Tugrik"
 msgstr ""
 
-#: src/functions/money.php:1026
+#: src/functions/money.php:1051
 msgid "Macanese Pataca"
 msgstr ""
 
-#: src/functions/money.php:1031
+#: src/functions/money.php:1056
 msgid "Mauritian Rupee"
 msgstr ""
 
-#: src/functions/money.php:1036
+#: src/functions/money.php:1061
 msgid "Maldivian Rufiyaa"
 msgstr ""
 
-#: src/functions/money.php:1041
+#: src/functions/money.php:1066
 msgid "Malawian Kwacha"
 msgstr ""
 
-#: src/functions/money.php:1046
+#: src/functions/money.php:1071
 msgid "Mozambican Metical"
 msgstr ""
 
-#: src/functions/money.php:1051
+#: src/functions/money.php:1076
 msgid "Namibian Dollar"
 msgstr ""
 
-#: src/functions/money.php:1056
+#: src/functions/money.php:1081
 msgid "Nicaraguan Cordoba"
 msgstr ""
 
-#: src/functions/money.php:1061
+#: src/functions/money.php:1086
 msgid "Nepalese Rupee"
 msgstr ""
 
-#: src/functions/money.php:1066
+#: src/functions/money.php:1091
 msgid "Omani Rial"
 msgstr ""
 
-#: src/functions/money.php:1071
+#: src/functions/money.php:1096
 msgid "Panamanian Balboa"
 msgstr ""
 
-#: src/functions/money.php:1076
+#: src/functions/money.php:1101
 msgid "Peruvian Sol"
 msgstr ""
 
-#: src/functions/money.php:1081
+#: src/functions/money.php:1106
 msgid "Papua New Guinean Kina"
 msgstr ""
 
-#: src/functions/money.php:1086
+#: src/functions/money.php:1111
 msgid "Pakistani Rupee"
 msgstr ""
 
-#: src/functions/money.php:1091
+#: src/functions/money.php:1116
 msgid "Paraguayan Guarani"
 msgstr ""
 
-#: src/functions/money.php:1096
+#: src/functions/money.php:1121
 msgid "Qatari Rial"
 msgstr ""
 
-#: src/functions/money.php:1101
+#: src/functions/money.php:1126
 msgid "Romanian Leu"
 msgstr ""
 
-#: src/functions/money.php:1106
+#: src/functions/money.php:1131
 msgid "Serbian Dinar"
 msgstr ""
 
-#: src/functions/money.php:1111
+#: src/functions/money.php:1136
 msgid "Rwandan Franc"
 msgstr ""
 
-#: src/functions/money.php:1116
+#: src/functions/money.php:1141
 msgid "Solomon Islands Dollar"
 msgstr ""
 
-#: src/functions/money.php:1121
+#: src/functions/money.php:1146
 msgid "Seychellois Rupee"
 msgstr ""
 
-#: src/functions/money.php:1126
+#: src/functions/money.php:1151
 msgid "Sudanese Pound"
 msgstr ""
 
-#: src/functions/money.php:1131
+#: src/functions/money.php:1156
 msgid "Sierra Leonean Leone"
 msgstr ""
 
-#: src/functions/money.php:1136
+#: src/functions/money.php:1161
 msgid "Somali Shilling"
 msgstr ""
 
-#: src/functions/money.php:1141
+#: src/functions/money.php:1166
 msgid "Surinamese Dollar"
 msgstr ""
 
-#: src/functions/money.php:1146
+#: src/functions/money.php:1171
 msgid "South Sudanese Pound"
 msgstr ""
 
-#: src/functions/money.php:1151
+#: src/functions/money.php:1176
 msgid "Salvadoran Colon"
 msgstr ""
 
-#: src/functions/money.php:1156
+#: src/functions/money.php:1181
 msgid "Swazi Lilangeni"
 msgstr ""
 
-#: src/functions/money.php:1161
+#: src/functions/money.php:1186
 msgid "Tajikistani Somoni"
 msgstr ""
 
-#: src/functions/money.php:1166
+#: src/functions/money.php:1191
 msgid "Turkmenistani Manat"
 msgstr ""
 
-#: src/functions/money.php:1171
+#: src/functions/money.php:1196
 msgid "Tunisian Dinar"
 msgstr ""
 
-#: src/functions/money.php:1176
+#: src/functions/money.php:1201
 msgid "Tongan Paanga"
 msgstr ""
 
-#: src/functions/money.php:1181
+#: src/functions/money.php:1206
 msgid "Trinidad and Tobago Dollar"
 msgstr ""
 
-#: src/functions/money.php:1186
+#: src/functions/money.php:1211
 msgid "New Taiwan Dollar"
 msgstr ""
 
-#: src/functions/money.php:1191
+#: src/functions/money.php:1216
 msgid "Tanzanian Shilling"
 msgstr ""
 
-#: src/functions/money.php:1196
+#: src/functions/money.php:1221
 msgid "Ukrainian Hryvnia"
 msgstr ""
 
-#: src/functions/money.php:1201
+#: src/functions/money.php:1226
 msgid "Ugandan Shilling"
 msgstr ""
 
-#: src/functions/money.php:1206
+#: src/functions/money.php:1231
 msgid "Uruguayan Peso"
 msgstr ""
 
-#: src/functions/money.php:1211
+#: src/functions/money.php:1236
 msgid "Uzbekistani Som"
 msgstr ""
 
-#: src/functions/money.php:1216
+#: src/functions/money.php:1241
 msgid "Venezuelan Bolivar"
 msgstr ""
 
-#: src/functions/money.php:1221
+#: src/functions/money.php:1246
 msgid "Vanuatu Vatu"
 msgstr ""
 
-#: src/functions/money.php:1226
+#: src/functions/money.php:1251
 msgid "Samoan Tala"
 msgstr ""
 
-#: src/functions/money.php:1231
+#: src/functions/money.php:1256
 msgid "Central African CFA Franc"
 msgstr ""
 
-#: src/functions/money.php:1236
+#: src/functions/money.php:1261
 msgid "East Caribbean Dollar"
 msgstr ""
 
-#: src/functions/money.php:1241
+#: src/functions/money.php:1266
 msgid "West African CFA Franc"
 msgstr ""
 
-#: src/functions/money.php:1246
+#: src/functions/money.php:1271
 msgid "CFP Franc"
 msgstr ""
 
-#: src/functions/money.php:1251
+#: src/functions/money.php:1276
 msgid "Yemeni Rial"
 msgstr ""
 
-#: src/functions/money.php:1256
+#: src/functions/money.php:1281
 msgid "Zambian Kwacha"
 msgstr ""
 
-#: src/functions/money.php:1261
+#: src/functions/money.php:1286
 msgid "Zimbabwean Dollar"
 msgstr ""
 
 #. translators: %s: formatted minimum order amount
-#: src/functions/money.php:1328
+#: src/functions/money.php:1353
 #, php-format
 msgid "The minimum order amount is %s."
 msgstr ""
 
 #. translators: %s: formatted maximum order amount
-#: src/functions/money.php:1334
+#: src/functions/money.php:1359
 #, php-format
 msgid "The maximum order amount is %s."
 msgstr ""
@@ -14344,7 +14351,7 @@ msgstr ""
 
 #: src/functions/payments.php:198
 #: templates/order/order-view.php:1960
-#: templates/partials/review-body.php:67
+#: templates/partials/review-body.php:69
 msgid "Communication"
 msgstr ""
 
@@ -14485,54 +14492,54 @@ msgstr ""
 msgid "Express delivery on package %d must be faster than its delivery time."
 msgstr ""
 
-#: src/functions/services.php:499
+#: src/functions/services.php:541
 msgid "packages"
 msgstr ""
 
-#: src/functions/services.php:500
+#: src/functions/services.php:542
 msgid "additional gallery images"
 msgstr ""
 
-#: src/functions/services.php:501
+#: src/functions/services.php:543
 msgid "extras"
 msgstr ""
 
-#: src/functions/services.php:502
+#: src/functions/services.php:544
 msgid "FAQs"
 msgstr ""
 
-#: src/functions/services.php:503
+#: src/functions/services.php:545
 msgid "requirements"
 msgstr ""
 
-#: src/functions/services.php:506
+#: src/functions/services.php:548
 msgid "tags"
 msgstr ""
 
-#: src/functions/services.php:524
+#: src/functions/services.php:566
 msgid "The same image was listed more than once; the repeats were not saved."
 msgstr ""
 
 #. translators: 1: maximum count, 2: list name (packages, gallery images, extras, FAQs, requirements)
-#: src/functions/services.php:543
+#: src/functions/services.php:585
 #, php-format
 msgid "A service can have at most %1$d %2$s; the extra entries were not saved."
 msgstr ""
 
-#: src/functions/services.php:641
+#: src/functions/services.php:683
 msgid "This service is no longer offered."
 msgstr ""
 
-#: src/functions/services.php:645
+#: src/functions/services.php:687
 #: templates/cart/cart.php:510
 msgid "This service is not currently available."
 msgstr ""
 
-#: src/functions/services.php:652
+#: src/functions/services.php:694
 msgid "This service is not taking new orders right now."
 msgstr ""
 
-#: src/functions/services.php:661
+#: src/functions/services.php:703
 msgid "This vendor is away and not taking new orders right now."
 msgstr ""
 
@@ -15816,20 +15823,20 @@ msgstr ""
 
 #: src/Models/BuyerRequest.php:275
 #: src/Models/Dispute.php:240
-#: src/Services/BuyerRequestService.php:1365
+#: src/Services/BuyerRequestService.php:1363
 #: src/Services/DisputeService.php:1317
 msgid "Open"
 msgstr ""
 
 #: src/Models/BuyerRequest.php:277
-#: src/Services/BuyerRequestService.php:1367
+#: src/Services/BuyerRequestService.php:1365
 msgid "Hired"
 msgstr ""
 
 #: src/Models/BuyerRequest.php:278
 #: src/Models/ExtensionRequest.php:245
 #: src/Models/ExtensionRequest.php:285
-#: src/Services/BuyerRequestService.php:1368
+#: src/Services/BuyerRequestService.php:1366
 #: templates/content-request-card.php:87
 msgid "Expired"
 msgstr ""
@@ -16674,29 +16681,29 @@ msgstr ""
 msgid "This proposal has already been processed."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1049
+#: src/Services/BuyerRequestService.php:1047
 msgid "This phased proposal has no phases defined."
 msgstr ""
 
 #. translators: 1: phase title, 2: error message
-#: src/Services/BuyerRequestService.php:1080
+#: src/Services/BuyerRequestService.php:1078
 #, php-format
 msgid "Could not create phase \"%1$s\": %2$s"
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1150
+#: src/Services/BuyerRequestService.php:1148
 msgid "Order requirements could not be saved. Please contact support."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1187
+#: src/Services/BuyerRequestService.php:1185
 msgid "Order created successfully. Proceed to payment."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1366
+#: src/Services/BuyerRequestService.php:1364
 msgid "In Review"
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1380
+#: src/Services/BuyerRequestService.php:1378
 #: templates/single-request.php:375
 #: templates/single-request.php:594
 msgid "Fixed price"
@@ -16754,7 +16761,7 @@ msgstr ""
 
 #: src/Services/DisputeService.php:948
 #: src/Services/DisputeWorkflowManager.php:325
-#: src/Services/DisputeWorkflowManager.php:467
+#: src/Services/DisputeWorkflowManager.php:479
 msgid "This dispute has already been resolved or closed."
 msgstr ""
 
@@ -16838,52 +16845,52 @@ msgstr ""
 msgid "Failed to assign dispute."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:428
+#: src/Services/DisputeWorkflowManager.php:440
 msgid "Dispute assigned successfully."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:460
+#: src/Services/DisputeWorkflowManager.php:472
 msgid "You are not authorized to cancel this dispute."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:475
+#: src/Services/DisputeWorkflowManager.php:487
 msgid "This dispute has been escalated to the site team, so only they can close it."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:500
+#: src/Services/DisputeWorkflowManager.php:512
 msgid "The order could not be restored, so the dispute stays open."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:537
+#: src/Services/DisputeWorkflowManager.php:549
 msgid "Dispute cancelled successfully."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:571
+#: src/Services/DisputeWorkflowManager.php:583
 msgid "Auto-escalated: No response from other party within deadline."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:608
+#: src/Services/DisputeWorkflowManager.php:620
 msgid "Auto-escalated: Dispute unresolved for extended period."
 msgstr ""
 
 #. translators: %d: number of days the order has been late
-#: src/Services/DisputeWorkflowManager.php:734
+#: src/Services/DisputeWorkflowManager.php:746
 #, php-format
 msgid "Dispute auto-opened: Order has been late for more than %d days without delivery."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:869
+#: src/Services/DisputeWorkflowManager.php:881
 msgid "Dispute closed; order restored."
 msgstr ""
 
 #. translators: %d: dispute ID
-#: src/Services/DisputeWorkflowManager.php:888
+#: src/Services/DisputeWorkflowManager.php:900
 #, php-format
 msgid "[Action Required] Dispute #%d has been escalated"
 msgstr ""
 
 #. translators: 1: dispute ID, 2: order ID, 3: reason
-#: src/Services/DisputeWorkflowManager.php:894
+#: src/Services/DisputeWorkflowManager.php:906
 #, php-format
 msgid ""
 "Dispute #%1$d for Order #%2$d has been escalated.\n"
@@ -16893,7 +16900,7 @@ msgid ""
 "Please review and resolve this dispute."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:1148
+#: src/Services/DisputeWorkflowManager.php:1160
 msgid "Opened this dispute."
 msgstr ""
 
@@ -17248,7 +17255,7 @@ msgstr ""
 #: src/Services/EmailService.php:771
 #: src/Services/EmailService.php:870
 #: src/Services/EmailService.php:1014
-#: templates/order/order-requirements.php:143
+#: templates/order/order-requirements.php:147
 msgid "Your vendor"
 msgstr ""
 
@@ -17849,13 +17856,13 @@ msgid "The service could not be published."
 msgstr ""
 
 #. translators: %s: Service title
-#: src/Services/ModerationService.php:366
+#: src/Services/ModerationService.php:363
 #, php-format
 msgid "Your service \"%s\" has been approved"
 msgstr ""
 
 #. translators: 1: User name, 2: Service title, 3: Service URL
-#: src/Services/ModerationService.php:372
+#: src/Services/ModerationService.php:369
 #, php-format
 msgid ""
 "Hi %1$s,\n"
@@ -17868,19 +17875,19 @@ msgid ""
 msgstr ""
 
 #. translators: %s: Service title
-#: src/Services/ModerationService.php:405
+#: src/Services/ModerationService.php:402
 #, php-format
 msgid "Your service \"%s\" has been approved and is now live."
 msgstr ""
 
 #. translators: %s: Service title
-#: src/Services/ModerationService.php:438
+#: src/Services/ModerationService.php:435
 #, php-format
 msgid "Your service \"%s\" requires changes"
 msgstr ""
 
 #. translators: 1: User name, 2: Service title, 3: Rejection reason, 4: Edit URL
-#: src/Services/ModerationService.php:455
+#: src/Services/ModerationService.php:452
 #, php-format
 msgid ""
 "Hi %1$s,\n"
@@ -17897,7 +17904,7 @@ msgid ""
 msgstr ""
 
 #. translators: %s: Service title
-#: src/Services/ModerationService.php:494
+#: src/Services/ModerationService.php:491
 #, php-format
 msgid "Your service \"%s\" requires changes before approval."
 msgstr ""
@@ -19424,11 +19431,11 @@ msgstr ""
 msgid "Order protection"
 msgstr ""
 
-#: templates/content-no-requests.php:24
+#: templates/content-no-requests.php:27
 msgid "There are no active buyer requests at the moment. Check back later or try adjusting your filters."
 msgstr ""
 
-#: templates/content-no-requests.php:57
+#: templates/content-no-requests.php:60
 msgid "Clear Filters"
 msgstr ""
 
@@ -21663,33 +21670,33 @@ msgid "Cancel this phase proposal? This removes it and cannot be undone."
 msgstr ""
 
 #. translators: %s: vendor name
-#: templates/order/order-requirements.php:77
+#: templates/order/order-requirements.php:81
 #, php-format
 msgid "Please provide the information %s needs to start working on your order."
 msgstr ""
 
-#: templates/order/order-requirements.php:125
+#: templates/order/order-requirements.php:129
 #: templates/single-request.php:462
 msgid "Expected Delivery"
 msgstr ""
 
-#: templates/order/order-requirements.php:173
+#: templates/order/order-requirements.php:177
 msgid "Need Help?"
 msgstr ""
 
-#: templates/order/order-requirements.php:176
+#: templates/order/order-requirements.php:180
 msgid "Be as detailed as possible so the vendor can deliver exactly what you need."
 msgstr ""
 
-#: templates/order/order-requirements.php:178
+#: templates/order/order-requirements.php:182
 msgid "Include all relevant information"
 msgstr ""
 
-#: templates/order/order-requirements.php:179
+#: templates/order/order-requirements.php:183
 msgid "Attach reference files if helpful"
 msgstr ""
 
-#: templates/order/order-requirements.php:180
+#: templates/order/order-requirements.php:184
 msgid "Mention any specific preferences"
 msgstr ""
 
@@ -22164,12 +22171,12 @@ msgid "Rate the details (optional)"
 msgstr ""
 
 #: templates/order/order-view.php:1961
-#: templates/partials/review-body.php:68
+#: templates/partials/review-body.php:70
 msgid "Quality"
 msgstr ""
 
 #: templates/order/order-view.php:1962
-#: templates/partials/review-body.php:69
+#: templates/partials/review-body.php:71
 msgid "Value"
 msgstr ""
 
@@ -22629,6 +22636,10 @@ msgstr ""
 
 #: templates/partials/review-body.php:42
 msgid "Imported review"
+msgstr ""
+
+#: templates/partials/review-body.php:44
+msgid "Verified Purchase"
 msgstr ""
 
 #. translators: %s: service title.
