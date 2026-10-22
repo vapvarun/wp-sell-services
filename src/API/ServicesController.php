@@ -907,7 +907,8 @@ class ServicesController extends RestController {
 		 */
 		$to_review = false;
 		if ( ModerationService::is_enabled() && ! current_user_can( 'manage_options' ) ) {
-			$edits_content = $request->has_param( 'title' ) || $request->has_param( 'description' ) || $request->has_param( 'excerpt' ) || $request->has_param( 'packages' );
+			// Any field but the route id counts, as in the wizard: a gallery, add-on or category swap is as reviewable as a title.
+			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'context', '_locale', '_fields', '_embed' ) ) );
 			$goes_live     = 'publish' === ( $update_data['post_status'] ?? '' );
 			$edits_live    = ! isset( $update_data['post_status'] ) && $edits_content && 'publish' === get_post_status( $service_id );
 

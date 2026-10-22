@@ -1268,6 +1268,10 @@ class AjaxHandlers {
 		$request_service = new BuyerRequestService();
 		$request_id      = $request_service->create( $data );
 
+		if ( is_wp_error( $request_id ) ) {
+			wp_send_json_error( array( 'message' => $request_id->get_error_message() ) );
+		}
+
 		if ( $request_id ) {
 			wp_send_json_success(
 				array(

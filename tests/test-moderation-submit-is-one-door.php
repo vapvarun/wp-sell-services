@@ -104,6 +104,21 @@ $check( 'the edited live service goes back to review', 'pending' === get_post_st
 $check( 'the queue meta says pending', ModerationService::STATUS_PENDING === get_post_meta( $service_id, ModerationService::META_MODERATION_STATUS, true ) );
 $check( 'the edit fired the pending hook once', 1 === $fired, (string) $fired );
 
+// Any content field counts, not only the title: a category swap on a live service is reviewed too.
+wp_update_post( array( 'ID' => $service_id, 'post_status' => 'publish' ) );
+update_post_meta( $service_id, ModerationService::META_MODERATION_STATUS, ModerationService::STATUS_APPROVED );
+wp_set_current_user( $vendor_id );
+$request = new WP_REST_Request( 'PUT', '/wpss/v1/services/' . $service_id );
+$request->set_param( 'tags', array( 'qa-review-tag' ) );
+rest_do_request( $request );
+clean_post_cache( $service_id );
+$check( 'a tag-only edit of a live service goes back to review', 'pending' === get_post_status( $service_id ), (string) get_post_status( $service_id ) );
+wp_set_object_terms( $service_id, array(), 'wpss_service_tag' );
+$qa_tag = get_term_by( 'slug', 'qa-review-tag', 'wpss_service_tag' );
+if ( $qa_tag ) {
+	wp_delete_term( $qa_tag->term_id, 'wpss_service_tag' );
+}
+
 // A vendor cannot publish straight past the queue.
 $fired   = 0;
 $request = new WP_REST_Request( 'PUT', '/wpss/v1/services/' . $service_id );

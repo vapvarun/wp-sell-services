@@ -113,6 +113,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-auto-withdrawal-schedule.php"
    },
    {
+    "id": "banned-member-cannot-start-new-activity",
+    "run": "${WP_CLI:-wp} eval-file tests/test-banned-member-cannot-start-new-activity.php"
+   },
+   {
     "id": "breadcrumb-helper",
     "run": "${WP_CLI:-wp} eval-file tests/test-breadcrumb-helper.php"
    },

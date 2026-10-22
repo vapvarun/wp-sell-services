@@ -89,6 +89,13 @@ class BuyerRequestService {
 			return false;
 		}
 
+		// A suspended or closed member posts no new request.
+		$standing = wpss_account_status_block( get_current_user_id() );
+
+		if ( $standing ) {
+			return $standing;
+		}
+
 		$post_data = array(
 			'post_type'    => BuyerRequestPostType::POST_TYPE,
 			'post_title'   => sanitize_text_field( $data['title'] ),

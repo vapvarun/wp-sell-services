@@ -183,6 +183,18 @@ class TippingService {
 			);
 		}
 
+		// A suspended or closed member starts no new payment, a tip included.
+		$standing = wpss_account_status_block( $customer_id );
+
+		if ( $standing ) {
+			return array(
+				'success'      => false,
+				'tip_order_id' => null,
+				'checkout_url' => null,
+				'message'      => $standing->get_error_message(),
+			);
+		}
+
 		if ( $amount <= 0 ) {
 			return array(
 				'success'      => false,

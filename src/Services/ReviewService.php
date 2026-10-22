@@ -49,6 +49,11 @@ class ReviewService {
 			return null;
 		}
 
+		// A suspended or closed member leaves no new review.
+		if ( wpss_account_status_block( $reviewer_id ) ) {
+			return null;
+		}
+
 		// Check if review already exists.
 		if ( $this->has_review( $order_id ) ) {
 			return null;

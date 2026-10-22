@@ -541,9 +541,9 @@ class BuyerRequestsController extends RestController {
 
 		if ( is_wp_error( $result ) ) {
 			return new WP_Error(
-				'create_failed',
+				$result->get_error_code() ?: 'create_failed',
 				$result->get_error_message(),
-				[ 'status' => 400 ]
+				[ 'status' => (int) ( $result->get_error_data()['status'] ?? 400 ) ]
 			);
 		}
 
