@@ -149,6 +149,10 @@
     "run": "python3 bin/docs-audit.py"
    },
    {
+    "id": "empty-state-loads-icon-runtime",
+    "run": "${WP_CLI:-wp} eval-file tests/test-empty-state-loads-icon-runtime.php"
+   },
+   {
     "id": "focus-indicator-css",
     "run": "${WP_CLI:-wp} eval-file tests/test-focus-indicator-css.php"
    },

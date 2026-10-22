@@ -20,6 +20,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// The icon below is a data-lucide placeholder; without the runtime it renders empty.
+wpss_enqueue_frontend_assets();
+
 // Default message.
 $default_message = esc_html__( 'There are no active buyer requests at the moment. Check back later or try adjusting your filters.', 'wp-sell-services' );
 
