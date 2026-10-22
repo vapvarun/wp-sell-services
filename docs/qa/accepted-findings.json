@@ -71,6 +71,16 @@
    "id": "WALK:small-ux-polish-batch",
    "card": "10427222944",
    "reason": "Open for 1.9.2: vendor names not linked on order cards, category select without optgroup, secondary controls under 40px at 390 (Menu, Replay tour, Load more), no vendor Featured control, 'Order Completion 0%' on the Woo vendor dashboard, decimal_places -5 saves as 4, repeat milestone submit wording, Become a Vendor CTA for a suspended vendor, seller-levels single endpoint lacks progress."
+  },
+  {
+   "id": "WALK17:S6b-standalone-pay-page-untested",
+   "card": "10427222944",
+   "reason": "Untested: the dev site's active rail is WooCommerce so the standalone pay page cannot render; covered by tests and the 1.9.1 standalone walk of 2026-10-20."
+  },
+  {
+   "id": "WALK17:S1c-limit-message-wording",
+   "card": "10427222944",
+   "reason": "Open for 1.9.2: REST limit refusal uses the Pro plan wording while the dashboard banner uses the Free wording; harmless, wording alignment."
   }
  ],
  "resolved": [
@@ -326,7 +336,7 @@
   },
   {
    "id": "WALK:request-order-requirements-title",
-   "fixed_in": "cf637bce and the commit after it",
+   "fixed_in": "cf637bce, bb7ce673, 8291fec3",
    "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Root cause: get_post(0)/get_the_title(0) return the page being viewed (Dashboard). One wpss_get_order_title() now serves the requirements page, 9 order emails and the Shortcodes order table. Browser-verified. tests/test-requirements-title-request-order.php."
   },
   {
@@ -368,6 +378,21 @@
    "id": "WALK:gallery-overflow-390",
    "fixed_in": "27a83f9f",
    "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Main column children are capped to the layout width; strip scrolls inside the gallery. Browser-verified at 390 with 11 thumbnails. tests/test-service-gallery-mobile-width.php."
+  },
+  {
+   "id": "WALK17:S3c-standing-action-not-audited",
+   "fixed_in": "8291fec3",
+   "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. One ReportsPage::set_account_status() serves the profile field and the queue action. tests/test-owner-decisions-audited.php fails on old code."
+  },
+  {
+   "id": "WALK17:S6a-order-screen-generic-tax",
+   "fixed_in": "8291fec3",
+   "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. templates/order/line-items.php prints the order's tax label. tests/test-order-tax-label-stored.php fails on old code."
+  },
+  {
+   "id": "WALK17:S5c-email-titles-use-current-page",
+   "fixed_in": "8291fec3",
+   "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. EmailService and the payment description use wpss_get_order_title(). Static check in tests/test-order-tax-label-stored.php; not run through a real email send."
   }
  ],
  "debug_log_accepted": [],
