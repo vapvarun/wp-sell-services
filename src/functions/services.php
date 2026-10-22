@@ -1082,7 +1082,7 @@ function wpss_save_service_gallery( int $service_id, array $image_ids, int $expl
  * @return array<string, mixed>
  */
 function wpss_enforce_service_limit_on_insert( array $data, array $postarr ): array {
-	if ( 'wpss_service' !== ( $data['post_type'] ?? '' ) || ! in_array( $data['post_status'] ?? '', array( 'publish', 'pending' ), true ) ) {
+	if ( 'wpss_service' !== ( $data['post_type'] ?? '' ) || ! in_array( $data['post_status'] ?? '', wpss_get_limit_counted_statuses(), true ) ) {
 		return $data;
 	}
 
@@ -1111,12 +1111,13 @@ add_filter( 'wp_insert_post_data', 'wpss_enforce_service_limit_on_insert', 5, 2 
  * The service statuses that take a slot toward a vendor's limit.
  *
  * One list for the per-profile maximum and Pro's plan limit, so the two cannot
- * disagree about whether a service waiting for review counts. A draft never does.
+ * disagree about whether a service waiting for review or for its scheduled date counts. A draft never does.
+ * A scheduled service is counted and gated because core publishes it later with no further check.
  *
  * @since 1.9.1
  *
  * @return array<string>
  */
 function wpss_get_limit_counted_statuses(): array {
-	return array( 'publish', 'pending' );
+	return array( 'publish', 'pending', 'future' );
 }

@@ -731,10 +731,6 @@ class ServicesController extends RestController {
 		$limit_error = $this->save_service_meta( $service_id, $request );
 
 		// Into the review queue: tell the owner, as the wizard and set_pending() do.
-		if ( 'pending' === $post_status ) {
-			do_action( 'wpss_service_pending_moderation', $service_id );
-		}
-
 		wp_set_object_terms( $service_id, $requested_categories, 'wpss_service_category' );
 
 		// Set tags. Capped by wpss_enforce_service_limits() inside
@@ -745,7 +741,9 @@ class ServicesController extends RestController {
 			wp_set_object_terms( $service_id, $tags, 'wpss_service_tag' );
 		}
 
-		wpss_settle_service_status( $service_id, $post_status );
+		if ( wpss_settle_service_status( $service_id, $post_status ) === 'pending' ) {
+			( new ModerationService() )->submit( $service_id );
+		}
 		$service = get_post( $service_id );
 
 		/**
@@ -902,10 +900,31 @@ class ServicesController extends RestController {
 			}
 		}
 
+		/*
+		 * With moderation on, a vendor going live or editing a live listing
+		 * goes back through review, as the wizard does. Judged after the
+		 * publishable check above, which pending must clear too.
+		 */
+		$to_review = false;
+		if ( ModerationService::is_enabled() && ! current_user_can( 'manage_options' ) ) {
+			$edits_content = $request->has_param( 'title' ) || $request->has_param( 'description' ) || $request->has_param( 'excerpt' ) || $request->has_param( 'packages' );
+			$goes_live     = 'publish' === ( $update_data['post_status'] ?? '' );
+			$edits_live    = ! isset( $update_data['post_status'] ) && $edits_content && 'publish' === get_post_status( $service_id );
+
+			if ( $goes_live || $edits_live ) {
+				$update_data['post_status'] = 'pending';
+				$to_review                  = true;
+			}
+		}
+
 		$result = wp_update_post( $update_data, true );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
+		}
+
+		if ( $to_review ) {
+			( new ModerationService() )->submit( $service_id );
 		}
 
 		// Update meta.

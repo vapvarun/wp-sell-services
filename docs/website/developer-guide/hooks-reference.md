@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**551 hooks** across **771** firing sites.
+**551 hooks** across **769** firing sites.
 
 ## Actions (280)
 
@@ -234,7 +234,7 @@ guide; this is the complete index.
 | `wpss_service_meta_saved` | 2 | `src/Admin/Metaboxes/ServiceMetabox.php` | Fires after service meta is saved. |
 | `wpss_service_orders_after` | 1 | `templates/myaccount/service-orders.php` | Fires after the service orders content. |
 | `wpss_service_orders_before` | 1 | `templates/myaccount/service-orders.php` | Fires before the service orders content. |
-| `wpss_service_pending_moderation` | 1 | `src/Frontend/ServiceWizard.php` *(+2 more)* |  |
+| `wpss_service_pending_moderation` | 1 | `src/Services/ModerationService.php` | Fires when a service is submitted for moderation. |
 | `wpss_service_rejected` | 2 | `src/Services/ModerationService.php` | Fires after a service is rejected. |
 | `wpss_service_updated` | 2 | `src/Services/ServiceManager.php` | Fires after a service is updated. |
 | `wpss_service_wizard_saved` | 2 | `src/Frontend/ServiceWizard.php` | Fires after a service is saved via the wizard. |

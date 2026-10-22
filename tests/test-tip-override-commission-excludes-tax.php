@@ -61,6 +61,8 @@ $tip['total']        = '14.40';
 $tip['status']         = 'completed';
 $tip['payment_status'] = 'paid';
 $tip['paid_at']        = current_time( 'mysql', true );
+$tip['addons']       = '[]';
+$tip['addons_total'] = '0.00';
 $tip['meta']         = wp_json_encode( array( 'tax_rate' => 20, 'tax_amount' => 2.4, 'tax_included' => false ) );
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $wpdb->insert( $orders, $tip );

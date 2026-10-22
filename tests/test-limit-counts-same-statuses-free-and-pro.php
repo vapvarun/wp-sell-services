@@ -20,7 +20,7 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) {
 };
 
 $statuses = wpss_get_limit_counted_statuses();
-$check( 'a service in review takes a slot, a draft does not', array( 'publish', 'pending' ) === $statuses, wp_json_encode( $statuses ) );
+$check( 'a service in review or scheduled takes a slot, a draft does not', array( 'publish', 'pending', 'future' ) === $statuses, wp_json_encode( $statuses ) );
 
 $profile = \WPSellServices\Models\VendorProfile::get_by_user_id( 7831 );
 $check( 'the profile count uses the shared list', $profile && $profile->get_service_count() === wpss_count_vendor_services( 7831, $statuses ) );

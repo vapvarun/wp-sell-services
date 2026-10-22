@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-22T04:52:11+00:00\n"
+"POT-Creation-Date: 2026-10-22T05:03:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -333,7 +333,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:2483
 #: src/Frontend/AjaxHandlers.php:2564
 #: src/Frontend/AjaxHandlers.php:2753
-#: src/Frontend/ServiceWizard.php:1999
+#: src/Frontend/ServiceWizard.php:1991
 #: src/Integrations/PayPal/PayPalGateway.php:859
 msgid "Invalid request."
 msgstr ""
@@ -1149,8 +1149,8 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:599
 #: src/API/EarningsController.php:639
 #: src/Models/Message.php:174
-#: src/Services/ModerationService.php:546
-#: src/Services/ModerationService.php:560
+#: src/Services/ModerationService.php:570
+#: src/Services/ModerationService.php:584
 #: templates/content-service-card.php:154
 #: templates/dashboard/partials/order-row.php:125
 #: templates/emails/withdrawal-auto.php:40
@@ -3237,7 +3237,7 @@ msgstr ""
 #: src/Models/Review.php:215
 #: src/Services/EarningsService.php:1435
 #: src/Services/ExtensionRequestService.php:492
-#: src/Services/ModerationService.php:575
+#: src/Services/ModerationService.php:599
 #: templates/emails/moderation-approved.php:57
 #: templates/emails/moderation-response.php:69
 #: templates/emails/vendor-approved.php:60
@@ -3261,7 +3261,7 @@ msgstr ""
 #: src/Models/ServiceOrder.php:630
 #: src/Services/EarningsService.php:1437
 #: src/Services/ExtensionRequestService.php:493
-#: src/Services/ModerationService.php:576
+#: src/Services/ModerationService.php:600
 #: src/Services/ProposalService.php:920
 #: templates/dashboard/sections/services.php:73
 #: templates/dashboard/sections/services.php:192
@@ -3594,7 +3594,7 @@ msgstr ""
 #: src/Admin/ServiceListScreen.php:329
 #: src/Models/Dispute.php:241
 #: src/Services/DisputeService.php:1348
-#: src/Services/ModerationService.php:574
+#: src/Services/ModerationService.php:598
 #: templates/dashboard/sections/services.php:70
 #: templates/emails/moderation-pending.php:60
 msgid "Pending review"
@@ -7358,7 +7358,7 @@ msgstr ""
 #: src/API/ProposalsController.php:629
 #: src/API/ReviewsController.php:991
 #: src/API/ServicesController.php:262
-#: src/API/ServicesController.php:1643
+#: src/API/ServicesController.php:1662
 #: src/API/VendorsController.php:996
 msgid "Current page."
 msgstr ""
@@ -7373,7 +7373,7 @@ msgstr ""
 #: src/API/ProposalsController.php:635
 #: src/API/ReviewsController.php:997
 #: src/API/ServicesController.php:268
-#: src/API/ServicesController.php:1648
+#: src/API/ServicesController.php:1667
 #: src/API/VendorsController.php:1002
 msgid "Items per page."
 msgstr ""
@@ -7650,9 +7650,9 @@ msgstr ""
 #: src/API/ModerationController.php:234
 #: src/API/ModerationController.php:263
 #: src/API/ReviewsController.php:652
-#: src/API/ServicesController.php:782
-#: src/API/ServicesController.php:953
-#: src/API/ServicesController.php:1790
+#: src/API/ServicesController.php:780
+#: src/API/ServicesController.php:972
+#: src/API/ServicesController.php:1809
 #: src/Frontend/AjaxHandlers.php:2193
 #: src/Frontend/ServiceWizard.php:245
 #: src/functions/services.php:470
@@ -8429,7 +8429,7 @@ msgid "Filter by rating."
 msgstr ""
 
 #: src/API/ReviewsController.php:1018
-#: src/API/ServicesController.php:1682
+#: src/API/ServicesController.php:1701
 #: src/API/VendorsController.php:1017
 msgid "Order by field."
 msgstr ""
@@ -8467,66 +8467,66 @@ msgid "Select at least one category. A service without one cannot be found by bu
 msgstr ""
 
 #: src/API/ServicesController.php:673
-#: src/API/ServicesController.php:811
+#: src/API/ServicesController.php:809
 msgid "Status must be either publish or draft."
 msgstr ""
 
-#: src/API/ServicesController.php:975
+#: src/API/ServicesController.php:994
 #: src/Frontend/AjaxHandlers.php:2532
 msgid "Failed to delete service."
 msgstr ""
 
-#: src/API/ServicesController.php:1207
+#: src/API/ServicesController.php:1226
 msgid "Addon title."
 msgstr ""
 
-#: src/API/ServicesController.php:1212
+#: src/API/ServicesController.php:1231
 msgid "Addon description."
 msgstr ""
 
-#: src/API/ServicesController.php:1216
+#: src/API/ServicesController.php:1235
 msgid "Addon price: an amount, or a percent of the package when price_type is percentage."
 msgstr ""
 
-#: src/API/ServicesController.php:1222
+#: src/API/ServicesController.php:1241
 msgid "Days the add-on adds to delivery."
 msgstr ""
 
-#: src/API/ServicesController.php:1227
+#: src/API/ServicesController.php:1246
 msgid "How the buyer chooses it."
 msgstr ""
 
-#: src/API/ServicesController.php:1232
+#: src/API/ServicesController.php:1251
 #: src/Frontend/ServiceWizard.php:1074
 msgid "How it is priced."
 msgstr ""
 
-#: src/API/ServicesController.php:1237
+#: src/API/ServicesController.php:1256
 msgid "Dropdown choices, comma separated."
 msgstr ""
 
-#: src/API/ServicesController.php:1241
+#: src/API/ServicesController.php:1260
 msgid "Smallest quantity (quantity add-ons)."
 msgstr ""
 
-#: src/API/ServicesController.php:1246
+#: src/API/ServicesController.php:1265
 msgid "Largest quantity (quantity add-ons)."
 msgstr ""
 
-#: src/API/ServicesController.php:1251
+#: src/API/ServicesController.php:1270
 msgid "Every order includes it."
 msgstr ""
 
-#: src/API/ServicesController.php:1315
+#: src/API/ServicesController.php:1334
 msgid "Failed to create addon."
 msgstr ""
 
-#: src/API/ServicesController.php:1333
-#: src/API/ServicesController.php:1364
+#: src/API/ServicesController.php:1352
+#: src/API/ServicesController.php:1383
 msgid "Addon not found."
 msgstr ""
 
-#: src/API/ServicesController.php:1418
+#: src/API/ServicesController.php:1437
 #: src/Frontend/ServiceWizard.php:233
 #: src/Frontend/ServiceWizard.php:1714
 #: src/functions/services.php:520
@@ -8534,11 +8534,11 @@ msgstr ""
 msgid "You have reached the maximum number of services allowed. Please remove an existing service before creating a new one."
 msgstr ""
 
-#: src/API/ServicesController.php:1434
+#: src/API/ServicesController.php:1453
 msgid "You do not have permission to create services."
 msgstr ""
 
-#: src/API/ServicesController.php:1460
+#: src/API/ServicesController.php:1479
 #: src/Frontend/ServiceWizard.php:249
 #: src/Frontend/ServiceWizard.php:1733
 #: src/Frontend/ServiceWizard.php:1898
@@ -8546,67 +8546,67 @@ msgstr ""
 msgid "You do not have permission to edit this service."
 msgstr ""
 
-#: src/API/ServicesController.php:1654
+#: src/API/ServicesController.php:1673
 msgid "Filter by category ID or slug."
 msgstr ""
 
-#: src/API/ServicesController.php:1658
+#: src/API/ServicesController.php:1677
 msgid "Filter by vendor ID."
 msgstr ""
 
-#: src/API/ServicesController.php:1662
+#: src/API/ServicesController.php:1681
 msgid "Search term."
 msgstr ""
 
-#: src/API/ServicesController.php:1670
+#: src/API/ServicesController.php:1689
 msgid "Search term. Alias of `search`, accepted for parity with /search."
 msgstr ""
 
-#: src/API/ServicesController.php:1674
+#: src/API/ServicesController.php:1693
 #: src/Core/AbilitiesRegistrar.php:111
 msgid "Minimum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1678
+#: src/API/ServicesController.php:1697
 #: src/Core/AbilitiesRegistrar.php:115
 msgid "Maximum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1688
+#: src/API/ServicesController.php:1707
 msgid "Sort order."
 msgstr ""
 
-#: src/API/ServicesController.php:1694
+#: src/API/ServicesController.php:1713
 msgid "Maximum delivery days filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1699
+#: src/API/ServicesController.php:1718
 msgid "Minimum rating filter (0-5)."
 msgstr ""
 
-#: src/API/ServicesController.php:1721
+#: src/API/ServicesController.php:1740
 #: src/Core/AbilitiesRegistrar.php:231
 #: src/Frontend/ServiceWizard.php:453
 msgid "Service title."
 msgstr ""
 
-#: src/API/ServicesController.php:1727
+#: src/API/ServicesController.php:1746
 msgid "Service description."
 msgstr ""
 
-#: src/API/ServicesController.php:1732
+#: src/API/ServicesController.php:1751
 msgid "Service excerpt."
 msgstr ""
 
-#: src/API/ServicesController.php:1737
+#: src/API/ServicesController.php:1756
 msgid "Base price."
 msgstr ""
 
-#: src/API/ServicesController.php:1745
+#: src/API/ServicesController.php:1764
 msgid "Category IDs or slugs."
 msgstr ""
 
-#: src/API/ServicesController.php:1751
+#: src/API/ServicesController.php:1770
 msgid "Tags."
 msgstr ""
 
@@ -11132,7 +11132,7 @@ msgstr ""
 
 #: src/Frontend/ServiceWizard.php:1696
 #: src/Frontend/ServiceWizard.php:1832
-#: src/Frontend/ServiceWizard.php:2442
+#: src/Frontend/ServiceWizard.php:2434
 msgid "You are not authorized to create services."
 msgstr ""
 
@@ -11161,41 +11161,41 @@ msgstr ""
 msgid "The service was saved as a draft but could not be published. Check it and try again."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1972
+#: src/Frontend/ServiceWizard.php:1964
 msgid "Service submitted for review. You will be notified once it is approved."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1975
+#: src/Frontend/ServiceWizard.php:1967
 msgid "Service published successfully!"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2010
+#: src/Frontend/ServiceWizard.php:2002
 msgid "Only image files (JPG, PNG, GIF, WebP) are allowed."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2019
+#: src/Frontend/ServiceWizard.php:2011
 msgid "Invalid file type. Please upload a valid image."
 msgstr ""
 
 #. translators: %s: maximum file size, e.g. 10 MB
-#: src/Frontend/ServiceWizard.php:2052
+#: src/Frontend/ServiceWizard.php:2044
 #, php-format
 msgid "Image file size exceeds the %s limit."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2088
+#: src/Frontend/ServiceWizard.php:2080
 msgid "Invalid attachment."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2094
+#: src/Frontend/ServiceWizard.php:2086
 msgid "You cannot delete this attachment."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2397
+#: src/Frontend/ServiceWizard.php:2389
 msgid "Please log in to create a service."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2398
+#: src/Frontend/ServiceWizard.php:2390
 #: src/Frontend/UnifiedDashboard.php:642
 #: src/functions/urls.php:534
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:999
@@ -11205,33 +11205,33 @@ msgstr ""
 msgid "Log In"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2409
+#: src/Frontend/ServiceWizard.php:2401
 msgid "You need to be a registered vendor to create services."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2416
+#: src/Frontend/ServiceWizard.php:2408
 #: src/Frontend/UnifiedDashboard.php:1022
 #: src/functions/urls.php:493
 #: templates/single-request.php:516
 msgid "Become a Vendor"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2431
+#: src/Frontend/ServiceWizard.php:2423
 msgid "Your vendor account is suspended. You cannot create services at this time."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2437
+#: src/Frontend/ServiceWizard.php:2429
 msgid "Your vendor account is pending approval. You will be able to create services once approved."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2456
+#: src/Frontend/ServiceWizard.php:2448
 #: templates/dashboard/sections/earnings.php:378
 #: templates/dashboard/sections/earnings.php:404
 msgid "Manage your services"
 msgstr ""
 
 #. translators: %d: maximum number of services allowed
-#: src/Frontend/ServiceWizard.php:2462
+#: src/Frontend/ServiceWizard.php:2454
 #, php-format
 msgid "You have reached the maximum limit of %d services. Please remove an existing service before creating a new one."
 msgstr ""
@@ -17892,13 +17892,13 @@ msgid "The service could not be published."
 msgstr ""
 
 #. translators: %s: Service title
-#: src/Services/ModerationService.php:363
+#: src/Services/ModerationService.php:387
 #, php-format
 msgid "Your service \"%s\" has been approved"
 msgstr ""
 
 #. translators: 1: User name, 2: Service title, 3: Service URL
-#: src/Services/ModerationService.php:369
+#: src/Services/ModerationService.php:393
 #, php-format
 msgid ""
 "Hi %1$s,\n"
@@ -17911,19 +17911,19 @@ msgid ""
 msgstr ""
 
 #. translators: %s: Service title
-#: src/Services/ModerationService.php:402
+#: src/Services/ModerationService.php:426
 #, php-format
 msgid "Your service \"%s\" has been approved and is now live."
 msgstr ""
 
 #. translators: %s: Service title
-#: src/Services/ModerationService.php:435
+#: src/Services/ModerationService.php:459
 #, php-format
 msgid "Your service \"%s\" requires changes"
 msgstr ""
 
 #. translators: 1: User name, 2: Service title, 3: Rejection reason, 4: Edit URL
-#: src/Services/ModerationService.php:452
+#: src/Services/ModerationService.php:476
 #, php-format
 msgid ""
 "Hi %1$s,\n"
@@ -17940,19 +17940,19 @@ msgid ""
 msgstr ""
 
 #. translators: %s: Service title
-#: src/Services/ModerationService.php:491
+#: src/Services/ModerationService.php:515
 #, php-format
 msgid "Your service \"%s\" requires changes before approval."
 msgstr ""
 
 #. translators: %s: Service title
-#: src/Services/ModerationService.php:522
+#: src/Services/ModerationService.php:546
 #, php-format
 msgid "New service pending review: %s"
 msgstr ""
 
 #. translators: 1: Service title, 2: Vendor name, 3: Review URL
-#: src/Services/ModerationService.php:536
+#: src/Services/ModerationService.php:560
 #, php-format
 msgid ""
 "A new service is pending review:\n"

@@ -47,6 +47,6 @@ $to_admin = array_filter(
 $check( 'the pending hook mails the owner once', 1 === count( $to_admin ), (string) count( $to_admin ) );
 
 $rest = (string) file_get_contents( dirname( __DIR__ ) . '/src/API/ServicesController.php' );
-$check( 'REST create fires the pending hook', false !== strpos( $rest, "do_action( 'wpss_service_pending_moderation'" ) );
+$check( 'REST create queues through the one submit door', false !== strpos( $rest, '( new ModerationService() )->submit(' ) );
 
 exit( $fails ? 1 : 0 );

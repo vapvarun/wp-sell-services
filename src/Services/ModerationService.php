@@ -311,7 +311,31 @@ class ModerationService {
 			return false;
 		}
 
+		$this->submit( $service_id );
+
+		return true;
+	}
+
+	/**
+	 * Put a service in the review queue: the one door every submit path uses.
+	 *
+	 * Sets the queue meta, drops a stale rejection reason and fires the pending
+	 * hook (owner notice, audit row). Submitting a service already in the queue
+	 * is a no-op, so a second save does not mail or log it again. The caller
+	 * owns the post status.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param int $service_id Service post ID.
+	 * @return bool True when the service was newly queued, false when it already was.
+	 */
+	public function submit( int $service_id ): bool {
+		if ( self::STATUS_PENDING === get_post_meta( $service_id, self::META_MODERATION_STATUS, true ) ) {
+			return false;
+		}
+
 		update_post_meta( $service_id, self::META_MODERATION_STATUS, self::STATUS_PENDING );
+		delete_post_meta( $service_id, self::META_REJECTION_REASON );
 
 		/**
 		 * Fires when a service is submitted for moderation.

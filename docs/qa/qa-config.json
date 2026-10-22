@@ -193,6 +193,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-moderation-pending-admin-mail.php"
    },
    {
+    "id": "moderation-submit-is-one-door",
+    "run": "${WP_CLI:-wp} eval-file tests/test-moderation-submit-is-one-door.php"
+   },
+   {
     "id": "multi-checkout-tax-label",
     "run": "${WP_CLI:-wp} eval-file tests/test-multi-checkout-tax-label.php"
    },

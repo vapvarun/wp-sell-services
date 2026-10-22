@@ -41,7 +41,7 @@ $restore = static function () use ( $option, &$created ) {
 };
 
 $vendor = 7831;
-$count  = (int) wpss_count_vendor_services( $vendor, array( 'publish', 'pending' ) );
+$count  = (int) wpss_count_vendor_services( $vendor, wpss_get_limit_counted_statuses() );
 $check( 'the QA vendor already holds services', $count >= 1, (string) $count );
 
 update_option( 'wpss_vendor', array_merge( (array) $option, array( 'max_services_per_vendor' => 1 ) ) );
@@ -65,6 +65,20 @@ $insert = static function ( string $status ) use ( $vendor, &$created ): int {
 wp_set_current_user( $vendor );
 $over = $insert( 'pending' );
 $check( 'a member at the limit who submits is saved as a draft', 'draft' === get_post_status( $over ), (string) get_post_status( $over ) );
+
+// A scheduled publish is the same door by another name: cron would publish it later with no check.
+$scheduled = wp_insert_post(
+	array(
+		'post_type'     => 'wpss_service',
+		'post_title'    => 'QA limit scheduled ' . wp_generate_password( 6, false ),
+		'post_status'   => 'future',
+		'post_date'     => gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ),
+		'post_date_gmt' => gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ),
+		'post_author'   => $vendor,
+	)
+);
+$created[] = $scheduled;
+$check( 'a member at the limit who schedules is saved as a draft', 'draft' === get_post_status( $scheduled ), (string) get_post_status( $scheduled ) );
 
 $draft = $insert( 'draft' );
 $check( 'a draft is always allowed', 'draft' === get_post_status( $draft ) );
