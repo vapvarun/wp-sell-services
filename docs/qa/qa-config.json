@@ -269,6 +269,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-requirements-skip-once.php"
    },
    {
+    "id": "requirements-title-request-order",
+    "run": "${WP_CLI:-wp} eval-file tests/test-requirements-title-request-order.php"
+   },
+   {
     "id": "rest-matrix",
     "run": "${WP_CLI:-wp} eval-file tests/test-rest-matrix.php"
    },
