@@ -173,6 +173,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-layout-surface-css.php"
    },
    {
+    "id": "limit-counts-same-statuses-free-and-pro",
+    "run": "${WP_CLI:-wp} eval-file tests/test-limit-counts-same-statuses-free-and-pro.php"
+   },
+   {
     "id": "lucide-icons-exist",
     "run": "${WP_CLI:-wp} eval-file tests/test-lucide-icons-exist.php"
    },
@@ -339,6 +343,10 @@
    {
     "id": "service-limit-every-publish-door",
     "run": "${WP_CLI:-wp} eval-file tests/test-service-limit-every-publish-door.php"
+   },
+   {
+    "id": "service-limit-on-core-insert",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-limit-on-core-insert.php"
    },
    {
     "id": "service-list-column-without-query",

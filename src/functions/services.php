@@ -1064,3 +1064,59 @@ function wpss_save_service_gallery( int $service_id, array $image_ids, int $expl
 
 	return $main;
 }
+
+/**
+ * Keep a member over their service limit from publishing by any door.
+ *
+ * The wizard and the REST controllers refuse with a message before they save,
+ * but a service can also be inserted by wp-admin Add New, Quick Edit and core
+ * REST (/wp/v2/wpss-services), which never asked. One check on the one write
+ * every door ends in: a service going live or pending past the limit is saved
+ * as a draft instead, and the member is told in the editor. Admins, CLI and
+ * cron are not limited, and a service already live or pending keeps its slot.
+ *
+ * @since 1.9.1
+ *
+ * @param array<string, mixed> $data    Post data about to be saved.
+ * @param array<string, mixed> $postarr Raw post array, with the ID on an update.
+ * @return array<string, mixed>
+ */
+function wpss_enforce_service_limit_on_insert( array $data, array $postarr ): array {
+	if ( 'wpss_service' !== ( $data['post_type'] ?? '' ) || ! in_array( $data['post_status'] ?? '', array( 'publish', 'pending' ), true ) ) {
+		return $data;
+	}
+
+	$user_id = get_current_user_id();
+
+	if ( $user_id <= 0 ) {
+		return $data;
+	}
+
+	$error = wpss_service_limit_error( (int) ( $postarr['ID'] ?? 0 ), $user_id );
+
+	if ( '' === $error ) {
+		return $data;
+	}
+
+	$data['post_status'] = 'draft';
+	set_transient( 'wpss_service_limit_notice_' . $user_id, array( $error ), MINUTE_IN_SECONDS );
+
+	return $data;
+}
+
+// Before ServiceModerationPage::intercept_publish (10), so a refused publish is not turned into a pending one.
+add_filter( 'wp_insert_post_data', 'wpss_enforce_service_limit_on_insert', 5, 2 );
+
+/**
+ * The service statuses that take a slot toward a vendor's limit.
+ *
+ * One list for the per-profile maximum and Pro's plan limit, so the two cannot
+ * disagree about whether a service waiting for review counts. A draft never does.
+ *
+ * @since 1.9.1
+ *
+ * @return array<string>
+ */
+function wpss_get_limit_counted_statuses(): array {
+	return array( 'publish', 'pending' );
+}
