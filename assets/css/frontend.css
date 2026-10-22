@@ -1246,8 +1246,9 @@ article.wpss-service-card:hover {
 	color: var(--wpss-text-light);
 }
 
-/* Marks a review an admin brought in rather than one written for an order. */
-.wpss-review-imported {
+/* Marks a review an admin brought in rather than one written for an order, and one that was. */
+.wpss-review-imported,
+.wpss-review-verified {
 	display: inline-block;
 	margin: 2px 0 6px;
 	padding: 1px 8px;

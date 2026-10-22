@@ -289,6 +289,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-review-sub-ratings.php"
    },
    {
+    "id": "review-verified-purchase-badge",
+    "run": "${WP_CLI:-wp} eval-file tests/test-review-verified-purchase-badge.php"
+   },
+   {
     "id": "seller-levels-rest-earnings",
     "run": "${WP_CLI:-wp} eval-file tests/test-seller-levels-rest-earnings.php"
    },
