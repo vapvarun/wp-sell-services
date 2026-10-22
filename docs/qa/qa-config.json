@@ -305,6 +305,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-seller-levels-rest-earnings.php"
    },
    {
+    "id": "service-gallery-mobile-width",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-gallery-mobile-width.php"
+   },
+   {
     "id": "service-limit-every-publish-door",
     "run": "${WP_CLI:-wp} eval-file tests/test-service-limit-every-publish-door.php"
    },

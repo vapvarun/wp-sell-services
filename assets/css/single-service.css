@@ -217,8 +217,13 @@
 		display: contents;
 	}
 
+	/* display:contents hands each child to the column layout, which aligns
+	   to start: without a cap a long thumbnail strip sizes the gallery to
+	   its full row and pushes the page past the viewport. */
 	.wpss-service-main > * {
 		order: 3;
+		min-width: 0;
+		max-width: 100%;
 	}
 
 	.wpss-service-main > .wpss-breadcrumb,
