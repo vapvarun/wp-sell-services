@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-22T05:32:54+00:00\n"
+"POT-Creation-Date: 2026-10-22T05:39:04+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -68,7 +68,7 @@ msgstr[1] ""
 #. translators: %d: order ID
 #: src/Admin/Admin.php:546
 #: src/Admin/Admin.php:596
-#: src/Admin/Pages/AuditLogPage.php:426
+#: src/Admin/Pages/AuditLogPage.php:429
 #: src/Checkout/CheckoutIntentService.php:117
 #, php-format
 msgid "Order #%d"
@@ -559,7 +559,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:1830
 #: src/Admin/Admin.php:1831
-#: src/Admin/Pages/AuditLogPage.php:385
+#: src/Admin/Pages/AuditLogPage.php:388
 #: src/Admin/Pages/VendorsPage.php:1273
 #: src/Admin/Settings.php:1704
 #: src/Frontend/Tour.php:442
@@ -942,7 +942,7 @@ msgstr ""
 #: src/Services/OrderService.php:1386
 #: src/Services/PaymentReceiptService.php:118
 #: src/Services/RequirementsService.php:101
-#: src/Services/ReviewService.php:665
+#: src/Services/ReviewService.php:679
 #: src/Services/TippingService.php:213
 #: templates/order/order-requirements.php:36
 #: templates/order/order-view.php:63
@@ -1097,7 +1097,7 @@ msgstr ""
 #: src/API/ConversationsController.php:690
 #: src/Models/Message.php:146
 #: src/Models/Message.php:170
-#: src/Services/DisputeWorkflowManager.php:1226
+#: src/Services/DisputeWorkflowManager.php:1233
 #: templates/dashboard/sections/disputes.php:199
 #: templates/partials/dispute-evidence-item.php:28
 msgid "System"
@@ -1443,7 +1443,7 @@ msgstr ""
 
 #. translators: %d: dispute ID
 #: src/Admin/Admin.php:3292
-#: src/Admin/Pages/AuditLogPage.php:428
+#: src/Admin/Pages/AuditLogPage.php:431
 #, php-format
 msgid "Dispute #%d"
 msgstr ""
@@ -2419,7 +2419,7 @@ msgid "Use the filter bar to narrow by object type (order, dispute, withdrawal, 
 msgstr ""
 
 #: src/Admin/Pages/AuditLogPage.php:188
-msgid "A tamper-evident record of sensitive marketplace events. This view is read-only."
+msgid "A record of sensitive marketplace events. This view is read-only."
 msgstr ""
 
 #: src/Admin/Pages/AuditLogPage.php:194
@@ -2578,28 +2578,41 @@ msgid "Services"
 msgstr ""
 
 #: src/Admin/Pages/AuditLogPage.php:384
+msgid "Reports"
+msgstr ""
+
+#: src/Admin/Pages/AuditLogPage.php:385
+msgid "Commission rules"
+msgstr ""
+
+#: src/Admin/Pages/AuditLogPage.php:386
+#: src/Admin/Settings.php:1968
+msgid "Payout batches"
+msgstr ""
+
+#: src/Admin/Pages/AuditLogPage.php:387
 #: src/Admin/Settings.php:93
 msgid "Emails"
 msgstr ""
 
-#: src/Admin/Pages/AuditLogPage.php:410
+#: src/Admin/Pages/AuditLogPage.php:413
 msgid "No recipient address"
 msgstr ""
 
 #. translators: %d: withdrawal ID
-#: src/Admin/Pages/AuditLogPage.php:430
+#: src/Admin/Pages/AuditLogPage.php:433
 #, php-format
 msgid "Withdrawal #%d"
 msgstr ""
 
 #. translators: %d: service ID
-#: src/Admin/Pages/AuditLogPage.php:432
+#: src/Admin/Pages/AuditLogPage.php:435
 #, php-format
 msgid "Service #%d"
 msgstr ""
 
 #. translators: %d: review ID
-#: src/Admin/Pages/AuditLogPage.php:434
+#: src/Admin/Pages/AuditLogPage.php:437
 #, php-format
 msgid "Review #%d"
 msgstr ""
@@ -6038,10 +6051,6 @@ msgstr ""
 msgid "Configure vendor withdrawal and payout settings."
 msgstr ""
 
-#: src/Admin/Settings.php:1968
-msgid "Payout batches"
-msgstr ""
-
 #. translators: %s: link to the Withdrawals admin screen.
 #: src/Admin/Settings.php:1975
 #, php-format
@@ -6707,6 +6716,7 @@ msgstr ""
 #: src/Admin/Settings.php:4185
 #: src/functions/notifications.php:416
 #: src/functions/notifications.php:622
+#: src/Services/AuditLogService.php:90
 #: src/Services/EmailService.php:1610
 #: src/Services/NotificationService.php:1219
 msgid "Dispute opened"
@@ -7356,7 +7366,7 @@ msgstr ""
 #: src/API/NotificationsController.php:295
 #: src/API/OrdersController.php:99
 #: src/API/ProposalsController.php:629
-#: src/API/ReviewsController.php:991
+#: src/API/ReviewsController.php:1018
 #: src/API/ServicesController.php:262
 #: src/API/ServicesController.php:1663
 #: src/API/VendorsController.php:996
@@ -7371,7 +7381,7 @@ msgstr ""
 #: src/API/OrdersController.php:105
 #: src/API/PortfolioController.php:104
 #: src/API/ProposalsController.php:635
-#: src/API/ReviewsController.php:997
+#: src/API/ReviewsController.php:1024
 #: src/API/ServicesController.php:268
 #: src/API/ServicesController.php:1668
 #: src/API/VendorsController.php:1002
@@ -7380,7 +7390,7 @@ msgstr ""
 
 #: src/API/CartController.php:52
 #: src/API/OrdersController.php:2418
-#: src/API/ReviewsController.php:1056
+#: src/API/ReviewsController.php:1083
 #: src/API/ServicesController.php:138
 msgid "Service ID."
 msgstr ""
@@ -7649,7 +7659,7 @@ msgstr ""
 #: src/API/ModerationController.php:204
 #: src/API/ModerationController.php:234
 #: src/API/ModerationController.php:263
-#: src/API/ReviewsController.php:652
+#: src/API/ReviewsController.php:679
 #: src/API/ServicesController.php:780
 #: src/API/ServicesController.php:973
 #: src/API/ServicesController.php:1810
@@ -7790,7 +7800,7 @@ msgstr ""
 #: src/API/OrdersController.php:277
 #: src/API/OrdersController.php:412
 #: src/API/ReviewsController.php:154
-#: src/API/ReviewsController.php:1050
+#: src/API/ReviewsController.php:1077
 #: src/Integrations/Gateways/OfflineGateway.php:1720
 #: templates/emails/dispute-escalated.php:55
 msgid "Order ID."
@@ -8326,13 +8336,13 @@ msgstr ""
 
 #: src/API/ReviewsController.php:76
 #: src/API/ReviewsController.php:159
-#: src/API/ReviewsController.php:1062
+#: src/API/ReviewsController.php:1089
 msgid "Rating (1-5)."
 msgstr ""
 
 #: src/API/ReviewsController.php:83
 #: src/API/ReviewsController.php:166
-#: src/API/ReviewsController.php:1069
+#: src/API/ReviewsController.php:1096
 msgid "Review text."
 msgstr ""
 
@@ -8362,8 +8372,8 @@ msgstr ""
 #: src/API/ReviewsController.php:330
 #: src/API/ReviewsController.php:341
 #: src/API/ReviewsController.php:487
-#: src/API/ReviewsController.php:572
-#: src/API/ReviewsController.php:611
+#: src/API/ReviewsController.php:584
+#: src/API/ReviewsController.php:638
 msgid "Review not found."
 msgstr ""
 
@@ -8382,7 +8392,7 @@ msgid "The review window of %d days has expired."
 msgstr ""
 
 #: src/API/ReviewsController.php:426
-#: src/Services/ReviewService.php:686
+#: src/Services/ReviewService.php:700
 msgid "You have already reviewed this order."
 msgstr ""
 
@@ -8394,67 +8404,67 @@ msgstr ""
 msgid "Failed to create review."
 msgstr ""
 
-#: src/API/ReviewsController.php:547
+#: src/API/ReviewsController.php:559
 msgid "The review status could not be changed."
 msgstr ""
 
-#: src/API/ReviewsController.php:619
+#: src/API/ReviewsController.php:646
 msgid "You have already replied to this review."
 msgstr ""
 
-#: src/API/ReviewsController.php:812
+#: src/API/ReviewsController.php:839
 msgid "You must be logged in to create reviews."
 msgstr ""
 
-#: src/API/ReviewsController.php:830
-#: src/API/ReviewsController.php:878
+#: src/API/ReviewsController.php:857
+#: src/API/ReviewsController.php:905
 #: src/Frontend/AjaxHandlers.php:1299
 msgid "You must be logged in."
 msgstr ""
 
-#: src/API/ReviewsController.php:844
+#: src/API/ReviewsController.php:871
 msgid "You can only edit your own reviews."
 msgstr ""
 
-#: src/API/ReviewsController.php:890
+#: src/API/ReviewsController.php:917
 msgid "Only the vendor can reply to reviews."
 msgstr ""
 
-#: src/API/ReviewsController.php:1004
+#: src/API/ReviewsController.php:1031
 msgid "Filter by service."
 msgstr ""
 
-#: src/API/ReviewsController.php:1008
+#: src/API/ReviewsController.php:1035
 msgid "Filter by vendor."
 msgstr ""
 
-#: src/API/ReviewsController.php:1012
+#: src/API/ReviewsController.php:1039
 msgid "Filter by rating."
 msgstr ""
 
-#: src/API/ReviewsController.php:1018
+#: src/API/ReviewsController.php:1045
 #: src/API/ServicesController.php:1702
 #: src/API/VendorsController.php:1017
 msgid "Order by field."
 msgstr ""
 
-#: src/API/ReviewsController.php:1024
+#: src/API/ReviewsController.php:1051
 msgid "Order direction."
 msgstr ""
 
-#: src/API/ReviewsController.php:1044
+#: src/API/ReviewsController.php:1071
 msgid "Review ID."
 msgstr ""
 
-#: src/API/ReviewsController.php:1074
+#: src/API/ReviewsController.php:1101
 msgid "Review status."
 msgstr ""
 
-#: src/API/ReviewsController.php:1080
+#: src/API/ReviewsController.php:1107
 msgid "Vendor reply."
 msgstr ""
 
-#: src/API/ReviewsController.php:1086
+#: src/API/ReviewsController.php:1113
 msgid "Created date."
 msgstr ""
 
@@ -14069,6 +14079,7 @@ msgid "Extension requested"
 msgstr ""
 
 #: src/functions/notifications.php:643
+#: src/Services/AuditLogService.php:100
 #: src/Services/NotificationService.php:1482
 msgid "Dispute assigned"
 msgstr ""
@@ -16686,6 +16697,62 @@ msgstr ""
 msgid "Email not sent"
 msgstr ""
 
+#: src/Services/AuditLogService.php:91
+msgid "Seller level changed"
+msgstr ""
+
+#: src/Services/AuditLogService.php:92
+msgid "Review deleted"
+msgstr ""
+
+#: src/Services/AuditLogService.php:93
+msgid "Review imported"
+msgstr ""
+
+#: src/Services/AuditLogService.php:94
+msgid "PayPal payout batch sent"
+msgstr ""
+
+#: src/Services/AuditLogService.php:95
+msgid "Stripe Connect setting changed"
+msgstr ""
+
+#: src/Services/AuditLogService.php:96
+msgid "Review edited"
+msgstr ""
+
+#: src/Services/AuditLogService.php:97
+msgid "Commission rule created"
+msgstr ""
+
+#: src/Services/AuditLogService.php:98
+msgid "Commission rule changed"
+msgstr ""
+
+#: src/Services/AuditLogService.php:99
+msgid "Commission rule deleted"
+msgstr ""
+
+#: src/Services/AuditLogService.php:101
+msgid "Report resolved"
+msgstr ""
+
+#: src/Services/AuditLogService.php:102
+msgid "Member standing changed"
+msgstr ""
+
+#: src/Services/AuditLogService.php:103
+msgid "Order repaired"
+msgstr ""
+
+#: src/Services/AuditLogService.php:104
+msgid "Refund not recorded"
+msgstr ""
+
+#: src/Services/AuditLogService.php:105
+msgid "Pending refund assigned"
+msgstr ""
+
 #: src/Services/BuyerRequestService.php:865
 #: templates/single-request.php:521
 msgid "This request is no longer accepting proposals."
@@ -16910,18 +16977,18 @@ msgstr ""
 msgid "Dispute auto-opened: Order has been late for more than %d days without delivery."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:895
+#: src/Services/DisputeWorkflowManager.php:902
 msgid "Dispute closed; order restored."
 msgstr ""
 
 #. translators: %d: dispute ID
-#: src/Services/DisputeWorkflowManager.php:914
+#: src/Services/DisputeWorkflowManager.php:921
 #, php-format
 msgid "[Action Required] Dispute #%d has been escalated"
 msgstr ""
 
 #. translators: 1: dispute ID, 2: order ID, 3: reason
-#: src/Services/DisputeWorkflowManager.php:920
+#: src/Services/DisputeWorkflowManager.php:927
 #, php-format
 msgid ""
 "Dispute #%1$d for Order #%2$d has been escalated.\n"
@@ -16931,7 +16998,7 @@ msgid ""
 "Please review and resolve this dispute."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:1174
+#: src/Services/DisputeWorkflowManager.php:1181
 msgid "Opened this dispute."
 msgstr ""
 
@@ -19183,16 +19250,16 @@ msgstr ""
 msgid "The review could not be saved."
 msgstr ""
 
-#: src/Services/ReviewService.php:672
+#: src/Services/ReviewService.php:686
 msgid "Order must be completed before leaving a review."
 msgstr ""
 
-#: src/Services/ReviewService.php:679
+#: src/Services/ReviewService.php:693
 msgid "Only the buyer can review this order."
 msgstr ""
 
 #. translators: %d: number of days
-#: src/Services/ReviewService.php:696
+#: src/Services/ReviewService.php:710
 #, php-format
 msgid "The review period has expired. Reviews must be submitted within %d days of order completion."
 msgstr ""

@@ -521,6 +521,18 @@ class ReviewsController extends RestController {
 		if ( current_user_can( 'manage_options' ) && $request->has_param( 'reviewer_name' ) ) {
 			$name                     = sanitize_text_field( (string) $request->get_param( 'reviewer_name' ) );
 			$updates['reviewer_name'] = '' !== $name ? $name : null;
+
+			( new \WPSellServices\Services\AuditLogService() )->log(
+				'review.edited',
+				'review',
+				$review_id,
+				array(
+					'action'     => 'edit',
+					'from_value' => (string) ( $review->reviewer_name ?? '' ),
+					'to_value'   => $name,
+					'context'    => array( 'field' => 'reviewer_name' ),
+				)
+			);
 		}
 
 		if ( ! empty( $updates ) ) {
@@ -581,6 +593,21 @@ class ReviewsController extends RestController {
 			$wpdb->prefix . 'wpss_reviews',
 			array( 'id' => $review_id ),
 			array( '%d' )
+		);
+
+		( new \WPSellServices\Services\AuditLogService() )->log(
+			'review.deleted',
+			'review',
+			$review_id,
+			array(
+				'action'  => 'delete',
+				'context' => array(
+					'vendor_id'   => $vendor_id,
+					'customer_id' => (int) $review->customer_id,
+					'order_id'    => (int) ( $review->order_id ?? 0 ),
+					'rating'      => (int) ( $review->rating ?? 0 ),
+				),
+			)
 		);
 
 		// Update rating cache.

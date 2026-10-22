@@ -87,6 +87,22 @@ class AuditLogService {
 			'ledger.duplicate_removed'       => __( 'Duplicate wallet entry removed', 'wp-sell-services' ),
 			'review.duplicate_removed'       => __( 'Duplicate review removed', 'wp-sell-services' ),
 			'email.failed'                   => __( 'Email not sent', 'wp-sell-services' ),
+			'dispute.opened'                 => __( 'Dispute opened', 'wp-sell-services' ),
+			'vendor.level_changed'           => __( 'Seller level changed', 'wp-sell-services' ),
+			'review.deleted'                 => __( 'Review deleted', 'wp-sell-services' ),
+			'review.imported'                => __( 'Review imported', 'wp-sell-services' ),
+			'payout.batch_created'           => __( 'PayPal payout batch sent', 'wp-sell-services' ),
+			'settings.stripe_connect'        => __( 'Stripe Connect setting changed', 'wp-sell-services' ),
+			'review.edited'                  => __( 'Review edited', 'wp-sell-services' ),
+			'commission.rule_created'        => __( 'Commission rule created', 'wp-sell-services' ),
+			'commission.rule_updated'        => __( 'Commission rule changed', 'wp-sell-services' ),
+			'commission.rule_deleted'        => __( 'Commission rule deleted', 'wp-sell-services' ),
+			'dispute.assign'                 => __( 'Dispute assigned', 'wp-sell-services' ),
+			'report.resolve'                 => __( 'Report resolved', 'wp-sell-services' ),
+			'member.account_status'          => __( 'Member standing changed', 'wp-sell-services' ),
+			'order.repair'                   => __( 'Order repaired', 'wp-sell-services' ),
+			'order.refund_unrecorded'        => __( 'Refund not recorded', 'wp-sell-services' ),
+			'order.pending_refund_assigned'  => __( 'Pending refund assigned', 'wp-sell-services' ),
 		);
 	}
 
@@ -137,6 +153,44 @@ class AuditLogService {
 			function (): void {
 				$this->cleanup_expired();
 			}
+		);
+
+		add_action(
+			'wpss_dispute_opened',
+			function ( int $dispute_id, int $order_id, int $opened_by ): void {
+				$this->log(
+					'dispute.opened',
+					'dispute',
+					$dispute_id,
+					array(
+						'action'   => 'open',
+						'to_value' => 'open',
+						'context'  => array(
+							'order_id'  => $order_id,
+							'opened_by' => $opened_by,
+						),
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_vendor_level_updated',
+			function ( int $user_id, string $level ): void {
+				$this->log(
+					'vendor.level_changed',
+					'vendor',
+					$user_id,
+					array(
+						'action'   => 'level',
+						'to_value' => $level,
+					)
+				);
+			},
+			10,
+			2
 		);
 
 		add_action(

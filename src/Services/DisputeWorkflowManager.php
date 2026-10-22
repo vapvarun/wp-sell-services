@@ -817,16 +817,23 @@ class DisputeWorkflowManager {
 		$response_days = (int) get_option( 'wpss_dispute_response_days', 3 );
 		$new_deadline  = gmdate( 'Y-m-d H:i:s', strtotime( "+{$response_days} days" ) );
 
+		// A new deadline is owed a new reminder: the one-per-dispute marker would otherwise silence every later one.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$raw_meta = $wpdb->get_var( $wpdb->prepare( "SELECT meta FROM {$this->disputes_table} WHERE id = %d", $dispute_id ) );
+		$meta     = $this->decode_json_array( $raw_meta );
+		unset( $meta['reminder_sent'] );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
 			$this->disputes_table,
 			array(
 				'response_deadline' => $new_deadline,
 				'last_response_by'  => $responder_id,
+				'meta'              => $meta ? wp_json_encode( $meta ) : null,
 				'updated_at'        => current_time( 'mysql', true ),
 			),
 			array( 'id' => $dispute_id ),
-			array( '%s', '%d', '%s' ),
+			array( '%s', '%d', '%s', '%s' ),
 			array( '%d' )
 		);
 	}

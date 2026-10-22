@@ -105,6 +105,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-ajax-standing-gate.php"
    },
    {
+    "id": "audit-labels-and-dispute-reminder-reset",
+    "run": "${WP_CLI:-wp} eval-file tests/test-audit-labels-and-dispute-reminder-reset.php"
+   },
+   {
     "id": "audit-log-coverage",
     "run": "${WP_CLI:-wp} eval-file tests/test-audit-log-coverage.php"
    },
@@ -263,6 +267,10 @@
    {
     "id": "owner-decisions-audited",
     "run": "${WP_CLI:-wp} eval-file tests/test-owner-decisions-audited.php"
+   },
+   {
+    "id": "owner-decisions-leave-audit-rows",
+    "run": "${WP_CLI:-wp} eval-file tests/test-owner-decisions-leave-audit-rows.php"
    },
    {
     "id": "package-revisions-unlimited-input",

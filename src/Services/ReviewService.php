@@ -200,6 +200,20 @@ class ReviewService {
 		$this->update_service_rating( $service_id );
 		$this->update_vendor_rating( $vendor_id );
 
+		( new AuditLogService() )->log(
+			'review.imported',
+			'review',
+			(int) $review_id,
+			array(
+				'action'  => 'import',
+				'context' => array(
+					'vendor_id'  => $vendor_id,
+					'service_id' => $service_id,
+					'rating'     => $rating,
+				),
+			)
+		);
+
 		return $this->get( $review_id );
 	}
 

@@ -294,7 +294,7 @@ tip. Tips are excluded from commission by default, so the two usually match.
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_review_created` | `int $review_id, int $order_id` | `src/Services/ReviewService.php:131` |
-| `wpss_review_reply_created` | `int $review_id` | `src/API/ReviewsController.php:630` |
+| `wpss_review_reply_created` | `int $review_id` | `src/API/ReviewsController.php:657` |
 | `wpss_buyer_request_created` | `int $post_id, array $data` | `src/Services/BuyerRequestService.php:128` |
 | `wpss_buyer_request_updated` | `int $request_id, array $data` | `src/Services/BuyerRequestService.php:181` |
 | `wpss_buyer_request_status_changed` | `int $request_id, string $status, string $old_status` | `src/Services/BuyerRequestService.php:652` |
@@ -778,8 +778,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_realtime_settings` | `array $settings` | `RealtimeService.php` |
-| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:610` |
-| `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/Services/ReviewService.php:507` |
+| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:624` |
+| `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/Services/ReviewService.php:521` |
 | `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:648` |
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |
 | `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:373` |
