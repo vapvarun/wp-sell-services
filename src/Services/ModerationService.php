@@ -320,9 +320,6 @@ class ModerationService {
 		 */
 		do_action( 'wpss_service_pending_moderation', $service_id );
 
-		// Send notification to admins.
-		$this->send_admin_notification( $service_id );
-
 		return true;
 	}
 
@@ -504,12 +501,15 @@ If you have any questions, please contact our support team.',
 	}
 
 	/**
-	 * Send notification to admins about new pending service.
+	 * Tell the owner a service is waiting for review.
+	 *
+	 * Bound to `wpss_service_pending_moderation` in Plugin, so the wizard, the
+	 * REST API and set_pending() all notify the owner once.
 	 *
 	 * @param int $service_id Service post ID.
 	 * @return void
 	 */
-	private function send_admin_notification( int $service_id ): void {
+	public function notify_pending( int $service_id ): void {
 		$post = get_post( $service_id );
 		if ( ! $post ) {
 			return;

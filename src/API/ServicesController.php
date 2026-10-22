@@ -730,6 +730,11 @@ class ServicesController extends RestController {
 		// Save meta.
 		$limit_error = $this->save_service_meta( $service_id, $request );
 
+		// Into the review queue: tell the owner, as the wizard and set_pending() do.
+		if ( 'pending' === $post_status ) {
+			do_action( 'wpss_service_pending_moderation', $service_id );
+		}
+
 		wp_set_object_terms( $service_id, $requested_categories, 'wpss_service_category' );
 
 		// Set tags. Capped by wpss_enforce_service_limits() inside

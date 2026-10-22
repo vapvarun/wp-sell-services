@@ -1641,6 +1641,15 @@ final class Plugin {
 		// (ModerationService, the admin moderation page, the REST controller);
 		// the vendor is told from here, once, whichever one it was.
 		$this->loader->add_action(
+			'wpss_service_pending_moderation',
+			static function ( int $service_id ): void {
+				( new \WPSellServices\Services\ModerationService() )->notify_pending( $service_id );
+			},
+			null,
+			10,
+			1
+		);
+		$this->loader->add_action(
 			'wpss_service_approved',
 			static function ( int $service_id ): void {
 				( new \WPSellServices\Services\ModerationService() )->notify_approved( $service_id );
