@@ -517,6 +517,17 @@
                     $modal.find('.wpss-delivery-time').text(days + ' ' + (days === 1 ? wpssService.i18n.day : wpssService.i18n.days));
                     // Carry the base amount like wpss_catalog_price_html() does, so a
                     // display-currency layer can hint this total too.
+                    // Show the tax line when one applies, so the total is never a surprise.
+                    const $tax = $modal.find('.wpss-summary-tax');
+                    if (quote.tax > 0) {
+                        $tax.find('.wpss-summary-label').text(quote.tax_included
+                            ? wpssService.i18n.taxIncluded.replace('%s', quote.tax_label)
+                            : quote.tax_label + ' (' + quote.tax_rate + '%):');
+                        $tax.find('.wpss-summary-value').text(quote.formatted.tax);
+                        $tax.prop('hidden', false);
+                    } else {
+                        $tax.prop('hidden', true);
+                    }
                     $total.text(quote.formatted.total).attr('data-wbcom-amount', Number(quote.total).toFixed(4));
 
                     document.dispatchEvent(new CustomEvent('wbcom:prices-updated', {
@@ -720,7 +731,14 @@
 
             if ($modal.length) {
                 const $error = $('<div class="wpss-modal__feedback wpss-modal__feedback--error" role="alert">' + this.escapeHtml(message) + '</div>');
-                $modal.find('.wpss-modal__body').prepend($error);
+                // The order modal hides an empty body (no extras to pick), so the
+                // message goes above the footer there or nobody would see it.
+                const $body = $modal.find('.wpss-modal__body:visible').first();
+                if ($body.length) {
+                    $body.prepend($error);
+                } else {
+                    $modal.find('.wpss-modal__footer').first().before($error);
+                }
 
                 setTimeout(function() {
                     $error.fadeOut(function() {

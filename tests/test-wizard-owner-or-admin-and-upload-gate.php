@@ -122,3 +122,20 @@ wp_update_post( array( 'ID' => $service_id, 'post_status' => 'draft' ) );
 add_filter( 'wpss_vendor_can_create_service', '__return_false' );
 $check( 'a draft at the limit is refused for it', $limit_text === wpss_service_publish_refusal( $service_id, $seller ) );
 remove_filter( 'wpss_vendor_can_create_service', '__return_false' );
+
+// The dashboard page is a door too: it must ask the same rule as the wizard.
+$render_create = static function ( int $as ) use ( $service_id ): string {
+	wp_set_current_user( $as );
+	$_GET['id'] = $service_id;
+	$user_id    = $as;
+	ob_start();
+	include WP_PLUGIN_DIR . '/wp-sell-services/templates/dashboard/sections/create.php';
+	$html = (string) ob_get_clean();
+	unset( $_GET['id'] );
+
+	return $html;
+};
+$denied = 'You do not have permission to edit this service.';
+$check( 'the dashboard editor refuses a stranger', false !== strpos( $render_create( $other ), $denied ) );
+$check( 'the dashboard editor opens for an admin on a seller\'s service', false === strpos( $render_create( 1 ), $denied ) );
+wp_set_current_user( 1 );

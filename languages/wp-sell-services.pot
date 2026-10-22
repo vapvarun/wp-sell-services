@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-22T05:56:32+00:00\n"
+"POT-Creation-Date: 2026-10-22T06:25:33+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -332,7 +332,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:2357
 #: src/Frontend/AjaxHandlers.php:2387
 #: src/Frontend/AjaxHandlers.php:2494
-#: src/Frontend/ServiceWizard.php:2014
+#: src/Frontend/ServiceWizard.php:1997
 #: src/Integrations/PayPal/PayPalGateway.php:859
 msgid "Invalid request."
 msgstr ""
@@ -1750,7 +1750,7 @@ msgstr ""
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:178
 #: src/Admin/Metaboxes/ServiceMetabox.php:365
 #: src/Frontend/SingleServiceView.php:150
-#: src/Frontend/SingleServiceView.php:843
+#: src/Frontend/SingleServiceView.php:845
 #: src/Models/Message.php:143
 #: templates/order/timeline.php:174
 msgid "Delivery"
@@ -1967,7 +1967,7 @@ msgid "Optional. Blank means not offered."
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:406
-#: src/Frontend/SingleServiceView.php:847
+#: src/Frontend/SingleServiceView.php:849
 #: src/functions/packages.php:546
 #: src/functions/packages.php:547
 msgid "Express delivery"
@@ -2178,7 +2178,7 @@ msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:1238
 #: src/Frontend/ServiceWizard.php:96
-#: src/Frontend/SingleServiceView.php:367
+#: src/Frontend/SingleServiceView.php:369
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1311
 msgid "Requirements"
 msgstr ""
@@ -2563,7 +2563,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1255
 #: src/Blocks/BlocksManager.php:135
 #: src/Blocks/SellerCard.php:200
-#: src/Frontend/SingleServiceView.php:217
+#: src/Frontend/SingleServiceView.php:219
 #: src/Frontend/Tour.php:412
 #: src/functions/urls.php:469
 #: src/SEO/RankMathIntegration.php:188
@@ -2634,12 +2634,12 @@ msgid "No addons available for this service."
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:122
-#: src/Frontend/SingleServiceView.php:895
+#: src/Frontend/SingleServiceView.php:897
 msgid "Choose one"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:123
-#: src/Frontend/SingleServiceView.php:895
+#: src/Frontend/SingleServiceView.php:897
 msgid "None"
 msgstr ""
 
@@ -4475,7 +4475,7 @@ msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1270
 #: src/Frontend/MenuVisibility.php:84
-#: src/Frontend/SingleServiceView.php:697
+#: src/Frontend/SingleServiceView.php:699
 #: src/Frontend/UnifiedDashboard.php:567
 #: src/Frontend/UnifiedDashboard.php:902
 msgid "Portfolio"
@@ -6915,8 +6915,8 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:405
 #: src/Frontend/Frontend.php:335
 #: src/Frontend/SingleServiceView.php:148
-#: src/Frontend/SingleServiceView.php:817
-#: src/Frontend/SingleServiceView.php:994
+#: src/Frontend/SingleServiceView.php:819
+#: src/Frontend/SingleServiceView.php:1000
 #: templates/dashboard/sections/portfolio.php:166
 #: templates/dashboard/sections/portfolio.php:228
 #: templates/dashboard/sections/requests.php:166
@@ -9122,7 +9122,7 @@ msgstr ""
 
 #: src/Core/AbilitiesRegistrar.php:364
 #: src/Frontend/SingleServiceView.php:145
-#: src/Frontend/SingleServiceView.php:1068
+#: src/Frontend/SingleServiceView.php:1074
 #: templates/order/conversation.php:323
 msgid "Send message"
 msgstr ""
@@ -11124,7 +11124,7 @@ msgstr ""
 
 #: src/Frontend/ServiceWizard.php:1696
 #: src/Frontend/ServiceWizard.php:1837
-#: src/Frontend/ServiceWizard.php:2440
+#: src/Frontend/ServiceWizard.php:2423
 msgid "You are not authorized to create services."
 msgstr ""
 
@@ -11161,29 +11161,29 @@ msgstr ""
 msgid "Service published successfully!"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2020
+#: src/Frontend/ServiceWizard.php:2003
 msgid "Only sellers can upload service images."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2031
+#: src/Frontend/ServiceWizard.php:2014
 msgid "Only image files (JPG, PNG, GIF, WebP) are allowed."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2040
+#: src/Frontend/ServiceWizard.php:2023
 msgid "Invalid file type. Please upload a valid image."
 msgstr ""
 
 #. translators: %s: maximum file size, e.g. 10 MB
-#: src/Frontend/ServiceWizard.php:2073
+#: src/Frontend/ServiceWizard.php:2056
 #, php-format
 msgid "Image file size exceeds the %s limit."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2395
+#: src/Frontend/ServiceWizard.php:2378
 msgid "Please log in to create a service."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2396
+#: src/Frontend/ServiceWizard.php:2379
 #: src/Frontend/UnifiedDashboard.php:642
 #: src/functions/urls.php:534
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:999
@@ -11193,33 +11193,33 @@ msgstr ""
 msgid "Log In"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2407
+#: src/Frontend/ServiceWizard.php:2390
 msgid "You need to be a registered vendor to create services."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2414
+#: src/Frontend/ServiceWizard.php:2397
 #: src/Frontend/UnifiedDashboard.php:1022
 #: src/functions/urls.php:493
 #: templates/single-request.php:516
 msgid "Become a Vendor"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2429
+#: src/Frontend/ServiceWizard.php:2412
 msgid "Your vendor account is suspended. You cannot create services at this time."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2435
+#: src/Frontend/ServiceWizard.php:2418
 msgid "Your vendor account is pending approval. You will be able to create services once approved."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2454
+#: src/Frontend/ServiceWizard.php:2437
 #: templates/dashboard/sections/earnings.php:378
 #: templates/dashboard/sections/earnings.php:404
 msgid "Manage your services"
 msgstr ""
 
 #. translators: %d: maximum number of services allowed
-#: src/Frontend/ServiceWizard.php:2460
+#: src/Frontend/ServiceWizard.php:2443
 #, php-format
 msgid "You have reached the maximum limit of %d services. Please remove an existing service before creating a new one."
 msgstr ""
@@ -11387,7 +11387,7 @@ msgid "Register as Vendor"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1253
-#: src/Frontend/SingleServiceView.php:154
+#: src/Frontend/SingleServiceView.php:156
 #: src/Frontend/UnifiedDashboard.php:209
 #: src/Integrations/Gateways/OfflineGateway.php:1017
 #: templates/dashboard/sections/create-request.php:238
@@ -11491,12 +11491,18 @@ msgid "Copied!"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:153
-#: src/Frontend/SingleServiceView.php:962
+#: src/Frontend/SingleServiceView.php:968
 msgid "Continue to Checkout"
 msgstr ""
 
+#. translators: %s: tax name, for example VAT
+#: src/Frontend/SingleServiceView.php:155
+#, php-format
+msgid "Includes %s"
+msgstr ""
+
 #. translators: %d: number of this service's completed orders
-#: src/Frontend/SingleServiceView.php:296
+#: src/Frontend/SingleServiceView.php:298
 #, php-format
 msgid "%d completed"
 msgid_plural "%d completed"
@@ -11504,53 +11510,53 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of orders in queue
-#: src/Frontend/SingleServiceView.php:313
+#: src/Frontend/SingleServiceView.php:315
 #, php-format
 msgid "%d order in queue"
 msgid_plural "%d orders in queue"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Frontend/SingleServiceView.php:343
+#: src/Frontend/SingleServiceView.php:345
 msgid "About This Service"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:369
+#: src/Frontend/SingleServiceView.php:371
 msgid "To get started, the vendor needs:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:411
+#: src/Frontend/SingleServiceView.php:413
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1215
 msgid "About the Vendor"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:443
+#: src/Frontend/SingleServiceView.php:445
 msgid "Overall vendor rating across all their services"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:447
+#: src/Frontend/SingleServiceView.php:449
 msgid "vendor rating"
 msgstr ""
 
 #. translators: %d: number of completed orders
-#: src/Frontend/SingleServiceView.php:456
+#: src/Frontend/SingleServiceView.php:458
 #, php-format
 msgid "%d order completed"
 msgid_plural "%d orders completed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Frontend/SingleServiceView.php:468
+#: src/Frontend/SingleServiceView.php:470
 msgid "Contact Me"
 msgstr ""
 
 #. translators: %s: vendor display name
-#: src/Frontend/SingleServiceView.php:484
+#: src/Frontend/SingleServiceView.php:486
 #, php-format
 msgid "Intro video from %s"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:501
+#: src/Frontend/SingleServiceView.php:503
 #: templates/emails/vendor-contact.php:73
 #: templates/order/extension-view.php:152
 #: templates/order/milestone-view.php:175
@@ -11559,60 +11565,60 @@ msgstr ""
 msgid "From"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:507
+#: src/Frontend/SingleServiceView.php:509
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1240
 #: templates/partials/vendor-card.php:149
 msgid "Member since"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:516
+#: src/Frontend/SingleServiceView.php:518
 msgid "Avg. Response Time"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:528
+#: src/Frontend/SingleServiceView.php:530
 #: templates/partials/vendor-card.php:168
 msgid "Last Delivery"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:536
+#: src/Frontend/SingleServiceView.php:538
 msgid "Languages"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:552
+#: src/Frontend/SingleServiceView.php:554
 msgid "Skills"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:613
+#: src/Frontend/SingleServiceView.php:615
 #: src/functions/vendors.php:968
 msgid "This vendor is currently on vacation."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:769
+#: src/Frontend/SingleServiceView.php:771
 msgid "Related Services"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:816
+#: src/Frontend/SingleServiceView.php:818
 msgid "Order Options"
 msgstr ""
 
 #. translators: %d: number of days
-#: src/Frontend/SingleServiceView.php:836
+#: src/Frontend/SingleServiceView.php:838
 #, php-format
 msgid "Delivered in %d day"
 msgid_plural "Delivered in %d days"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Frontend/SingleServiceView.php:857
+#: src/Frontend/SingleServiceView.php:859
 msgid "Add Extras"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:873
+#: src/Frontend/SingleServiceView.php:875
 msgid "(required)"
 msgstr ""
 
 #. translators: %d: extra delivery days
-#: src/Frontend/SingleServiceView.php:886
+#: src/Frontend/SingleServiceView.php:888
 #, php-format
 msgid "(+%d day)"
 msgid_plural "(+%d days)"
@@ -11620,65 +11626,65 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: add-on name
-#: src/Frontend/SingleServiceView.php:892
+#: src/Frontend/SingleServiceView.php:894
 #, php-format
 msgid "How many: %s"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:901
+#: src/Frontend/SingleServiceView.php:903
 msgid "Tell the vendor what you need"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:927
+#: src/Frontend/SingleServiceView.php:929
 msgid "Quantity"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:948
+#: src/Frontend/SingleServiceView.php:950
 msgid "Package:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:952
+#: src/Frontend/SingleServiceView.php:954
 msgid "Delivery:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:956
+#: src/Frontend/SingleServiceView.php:962
 msgid "Total:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:993
+#: src/Frontend/SingleServiceView.php:999
 #: templates/partials/service-packages.php:411
 msgid "Contact Vendor"
 msgstr ""
 
 #. translators: %s: response time
-#: src/Frontend/SingleServiceView.php:1012
+#: src/Frontend/SingleServiceView.php:1018
 #, php-format
 msgid "Usually responds in %s"
 msgstr ""
 
 #. translators: 1: login URL, 2: register URL
-#: src/Frontend/SingleServiceView.php:1028
+#: src/Frontend/SingleServiceView.php:1034
 #, php-format
 msgid "Please <a href=\"%1$s\">log in</a> or <a href=\"%2$s\">register</a> to contact this vendor."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1043
+#: src/Frontend/SingleServiceView.php:1049
 msgid "Your Message"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1047
+#: src/Frontend/SingleServiceView.php:1053
 msgid "Tell the vendor what you need..."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1050
+#: src/Frontend/SingleServiceView.php:1056
 msgid "Be specific about your requirements for better assistance."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1055
+#: src/Frontend/SingleServiceView.php:1061
 msgid "Attach Files (optional)"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1062
+#: src/Frontend/SingleServiceView.php:1068
 msgid "Max 5 files. Allowed: images, PDF, Word, ZIP."
 msgstr ""
 

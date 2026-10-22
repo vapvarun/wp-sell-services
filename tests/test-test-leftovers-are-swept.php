@@ -20,12 +20,15 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) {
 };
 
 $tag   = 'sweep' . wp_generate_password( 6, false );
+// A post that already exists: a script that only updates it must not delete it.
+$keep  = (int) wp_insert_post( array( 'post_type' => 'wpss_service', 'post_status' => 'draft', 'post_title' => $tag . '-keep' ) );
 $child = sys_get_temp_dir() . '/wpss-sweep-child-' . $tag . '.php';
 file_put_contents(
 	$child,
 	"<?php\nrequire " . var_export( __DIR__ . '/exit-on-fail.php', true ) . ";\n"
 	. 'wp_insert_user( array( "user_login" => ' . var_export( $tag, true ) . ', "user_pass" => "x", "user_email" => ' . var_export( $tag . '@example.test', true ) . " ) );\n"
 	. 'wp_insert_post( array( "post_type" => "wpss_service", "post_status" => "publish", "post_title" => ' . var_export( $tag, true ) . " ) );\n"
+	. 'wp_update_post( array( "ID" => ' . $keep . ', "post_title" => ' . var_export( $tag . '-kept', true ) . " ) );\n"
 	. "echo \"FAIL deliberate\\n\";\nreturn;\n"
 );
 
@@ -39,6 +42,8 @@ $post = (int) $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHE
 $check( 'the child ran and failed on purpose', 1 === $status, $status . ' ' . implode( ' ', array_slice( $out, -2 ) ) );
 $check( 'its user was removed', 0 === $user, (string) $user );
 $check( 'its service was removed', 0 === $post, (string) $post );
+$kept = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE ID = %d", $keep ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the child process deleted rows this process may still have cached.
+$check( 'a post it only updated is still there', 1 === $kept );
 
 if ( $user ) {
 	require_once ABSPATH . 'wp-admin/includes/user.php';
@@ -47,4 +52,5 @@ if ( $user ) {
 if ( $post ) {
 	wp_delete_post( $post, true );
 }
+wp_delete_post( $keep, true );
 wp_delete_file( $child );

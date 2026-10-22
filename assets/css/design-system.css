@@ -961,7 +961,8 @@ select.wpss-form-input {
 	appearance: none;
 	-webkit-appearance: none;
 	-moz-appearance: none;
-	height: 48px;
+	height: auto;
+	min-height: 48px;
 	line-height: 1.5;
 	padding-right: 44px;
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
@@ -1144,6 +1145,7 @@ select.wpss-form-input::-ms-expand {
 .wpss-modal__feedback { margin-bottom: var(--wpss-space-4); font-size: var(--wpss-text-sm); }
 .wpss-modal__feedback--error { color: var(--wpss-danger-dark, var(--wpss-danger)); }
 .wpss-modal__feedback--success { color: var(--wpss-success-dark, var(--wpss-success)); }
+.wpss-modal__dialog > .wpss-modal__feedback { margin: 0; padding: var(--wpss-space-3) var(--wpss-space-6); }
 .wpss-modal__footer { display: flex; flex-wrap: wrap; gap: var(--wpss-space-3); justify-content: flex-end; padding: var(--wpss-space-4) var(--wpss-space-6) var(--wpss-space-6); border-top: 1px solid var(--wpss-border); }
 /* A footer that holds a summary above one full-width action. */
 .wpss-modal__footer--stack { flex-direction: column; align-items: stretch; }

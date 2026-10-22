@@ -78,13 +78,14 @@ if ( function_exists( 'add_action' ) ) {
 	);
 	add_action(
 		'wp_insert_post',
-		static function ( $post_id, $post ) {
-			if ( ! in_array( $post->post_type, array( 'revision', 'nav_menu_item' ), true ) ) {
+		static function ( $post_id, $post, $update ) {
+			// Only rows this script made: an update of an existing post is not ours to delete.
+			if ( ! $update && ! in_array( $post->post_type, array( 'revision', 'nav_menu_item' ), true ) ) {
 				$GLOBALS['wpss_test_created']['posts'][] = (int) $post_id;
 			}
 		},
 		10,
-		2
+		3
 	);
 }
 

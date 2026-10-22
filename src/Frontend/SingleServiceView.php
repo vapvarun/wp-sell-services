@@ -151,6 +151,8 @@ class SingleServiceView {
 					'revisions'          => __( 'Revisions', 'wp-sell-services' ),
 					'copied'             => __( 'Copied!', 'wp-sell-services' ),
 					'continueToCheckout' => __( 'Continue to Checkout', 'wp-sell-services' ),
+					/* translators: %s: tax name, for example VAT */
+					'taxIncluded'        => __( 'Includes %s', 'wp-sell-services' ),
 					'errorGeneric'       => __( 'An error occurred.', 'wp-sell-services' ),
 				),
 			)
@@ -951,6 +953,10 @@ class SingleServiceView {
 						<div class="wpss-summary-row wpss-summary-delivery">
 							<span class="wpss-summary-label"><?php esc_html_e( 'Delivery:', 'wp-sell-services' ); ?></span>
 							<span class="wpss-summary-value wpss-delivery-time"></span>
+						</div>
+						<div class="wpss-summary-row wpss-summary-tax" hidden>
+							<span class="wpss-summary-label"></span>
+							<span class="wpss-summary-value"></span>
 						</div>
 						<div class="wpss-summary-row wpss-summary-total">
 							<span class="wpss-summary-label"><?php esc_html_e( 'Total:', 'wp-sell-services' ); ?></span>

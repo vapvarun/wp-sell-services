@@ -41,10 +41,10 @@ if ( ! $service_id && isset( $_GET['service_id'] ) ) {
 }
 // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-// Verify ownership if editing.
+// Verify the member may edit it (owner, or an admin).
 if ( $service_id ) {
 	$service = get_post( $service_id );
-	if ( ! $service || (int) $service->post_author !== $user_id || 'wpss_service' !== $service->post_type ) {
+	if ( ! wpss_user_can_edit_service( $service, $user_id ) ) {
 		?>
 		<div class="wpss-alert wpss-alert--error">
 			<?php esc_html_e( 'You do not have permission to edit this service.', 'wp-sell-services' ); ?>

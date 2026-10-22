@@ -244,7 +244,7 @@ class ServiceWizard {
 				return '<div class="wpss-notice wpss-notice-error">' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</div>';
 			}
 
-			if ( ! $this->can_edit_service( $service, $user_id ) ) {
+			if ( ! wpss_user_can_edit_service( $service, $user_id ) ) {
 				return '<div class="wpss-notice wpss-notice-error">' . esc_html__( 'You do not have permission to edit this service.', 'wp-sell-services' ) . '</div>';
 			}
 		}
@@ -1730,7 +1730,7 @@ class ServiceWizard {
 		$author_id = $user_id;
 		if ( $service_id ) {
 			$service = get_post( $service_id );
-			if ( ! $this->can_edit_service( $service, $user_id ) ) {
+			if ( ! wpss_user_can_edit_service( $service, $user_id ) ) {
 				wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this service.', 'wp-sell-services' ) ) );
 			}
 
@@ -1898,7 +1898,7 @@ class ServiceWizard {
 
 		if ( $service_id ) {
 			$service = get_post( $service_id );
-			if ( ! $this->can_edit_service( $service, $user_id ) ) {
+			if ( ! wpss_user_can_edit_service( $service, $user_id ) ) {
 				delete_transient( $lock_key );
 				wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this service.', 'wp-sell-services' ) ) );
 			}
@@ -1983,23 +1983,6 @@ class ServiceWizard {
 				'redirect_url' => $redirect_url,
 			)
 		);
-	}
-
-	/**
-	 * Whether a member may edit a service in the wizard: its author, or an admin.
-	 *
-	 * One rule for the page and both save handlers, so an admin who can open a
-	 * seller's service can also save it.
-	 *
-	 * @since 1.9.1
-	 *
-	 * @param \WP_Post|null $service Service post.
-	 * @param int           $user_id Member ID.
-	 * @return bool
-	 */
-	private function can_edit_service( ?\WP_Post $service, int $user_id ): bool {
-		return $service && 'wpss_service' === $service->post_type
-			&& ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
 	}
 
 	/**

@@ -763,7 +763,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1106` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:369` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:1033` |
-| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:921` |
+| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:923` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:215` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:691` |
 | `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1393` |
@@ -786,7 +786,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_payout_method_registry` | `$methods` (id => label + fields) | `src/Services/EarningsService.php:1265` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |
-| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:758` |
+| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:760` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:265` |
 | `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1539` |
@@ -879,7 +879,7 @@ WooCommerce or standalone checkout.
 | `wpss_edd_services_processed` | `int $order_id, ServiceItem[] $items` | `src/Integrations/EDD/EDDOrderProvider.php:149` |
 | `wpss_edd_order_record_created` | `int $record_id, ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:407` |
 | `wpss_edd_service_meta_saved` | `int $product_id` | `src/Integrations/EDD/EDDProductProvider.php:237` |
-| `wpss_edd_service_checkout_processed` | `int $order_id, int $download_id, array $service_data, int $index` | `EDDCheckoutProvider.php:222` |
+| `wpss_edd_service_checkout_processed` | `int $order_id, int $download_id, array $service_data, int $index` | `src/Integrations/EDD/EDDCheckoutProvider.php:228` |
 
 ### FluentCart Integration Actions
 
@@ -950,8 +950,8 @@ WooCommerce or standalone checkout.
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_edd_cart_item_data` | `$cart_item_data, $product_id, $variation_id` | `EDDCheckoutProvider.php:56` |
-| `wpss_edd_validate_add_to_cart` | `$valid, $product_id, $quantity` | `EDDCheckoutProvider.php:97` |
-| `wpss_edd_thankyou_redirect` | `$redirect, $order_id` | `EDDCheckoutProvider.php:251` |
+| `wpss_edd_validate_add_to_cart` | `$valid, $product_id, $quantity` | `src/Integrations/EDD/EDDCheckoutProvider.php:102` |
+| `wpss_edd_thankyou_redirect` | `$redirect, $order_id` | `src/Integrations/EDD/EDDCheckoutProvider.php:257` |
 | `wpss_edd_can_access_vendor_dashboard` | `$can_access, $user_id` | `src/Integrations/EDD/EDDAccountProvider.php:450` |
 
 ### WooCommerce Filters

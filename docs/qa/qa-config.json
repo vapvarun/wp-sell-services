@@ -257,6 +257,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-order-again.php"
    },
    {
+    "id": "order-modal-and-selects-presentation",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-modal-and-selects-presentation.php"
+   },
+   {
     "id": "order-not-payable-message",
     "run": "${WP_CLI:-wp} eval-file tests/test-order-not-payable-message.php"
    },

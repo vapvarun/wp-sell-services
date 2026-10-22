@@ -1117,3 +1117,22 @@ add_filter( 'wp_insert_post_data', 'wpss_enforce_service_limit_on_insert', 5, 2 
 function wpss_get_limit_counted_statuses(): array {
 	return array( 'publish', 'pending', 'future' );
 }
+
+
+/**
+ * Whether a member may open and change a service in the editor.
+ *
+ * The seller who owns it, or an admin repairing a listing on their behalf. The
+ * seller stays the post author either way. The dashboard page and every wizard
+ * AJAX door ask this one rule.
+ *
+ * @since 1.9.1
+ *
+ * @param \WP_Post|null $service Service post.
+ * @param int           $user_id Member ID.
+ * @return bool
+ */
+function wpss_user_can_edit_service( ?\WP_Post $service, int $user_id ): bool {
+	return $service && 'wpss_service' === $service->post_type
+		&& ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
+}

@@ -1491,6 +1491,10 @@
 	margin-bottom: 1rem;
 }
 
+.wpss-summary-row[hidden] {
+	display: none;
+}
+
 .wpss-summary-row {
 	display: flex;
 	justify-content: space-between;
