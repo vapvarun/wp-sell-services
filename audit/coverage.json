@@ -82,9 +82,6 @@
             "wpss_become_vendor": [
                 "audit/render-coverage.json"
             ],
-            "wpss_bulk_action": [
-                "audit/render-coverage.json"
-            ],
             "wpss_bulk_moderate_services": [
                 "audit/render-coverage.json"
             ],
@@ -273,9 +270,6 @@
                 "audit/render-coverage.json"
             ],
             "wpss_send_test_email": [
-                "audit/render-coverage.json"
-            ],
-            "wpss_service_action": [
                 "audit/render-coverage.json"
             ],
             "wpss_skip_requirements": [
@@ -545,7 +539,6 @@
             "wpss_before_cascade_delete_user": [
                 "audit/render-coverage.json"
             ],
-            "wpss_before_service_deleted": [],
             "wpss_billing_address": [
                 "audit/render-coverage.json"
             ],

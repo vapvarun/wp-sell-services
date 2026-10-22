@@ -38,8 +38,6 @@ $body  = static function ( string $src, string $fn ): string {
 	$i = strpos( $src, 'function ' . $fn . '(' );
 	return false === $i ? '' : substr( $src, $i, 2500 );
 };
-$check( 'service_action publish uses the gate', str_contains( $body( $ajax, 'service_action' ), 'wpss_service_publish_refusal' ) );
-$check( 'bulk_action publish uses the gate', str_contains( $body( $ajax, 'bulk_action' ), 'wpss_service_publish_refusal' ) );
 foreach ( array( 'add_portfolio_item', 'update_portfolio_item' ) as $fn ) {
 	$check( "$fn checks standing", str_contains( $body( $ajax, $fn ), 'wpss_vendor_status_block' ) );
 }

@@ -149,6 +149,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-dark-mode-and-icon-hooks.php"
    },
    {
+    "id": "dead-service-doors-are-gone",
+    "run": "${WP_CLI:-wp} eval-file tests/test-dead-service-doors-are-gone.php"
+   },
+   {
     "id": "design-token-integrity",
     "run": "${WP_CLI:-wp} eval-file tests/test-design-token-integrity.php"
    },
@@ -167,6 +171,10 @@
    {
     "id": "empty-state-loads-icon-runtime",
     "run": "${WP_CLI:-wp} eval-file tests/test-empty-state-loads-icon-runtime.php"
+   },
+   {
+    "id": "failing-test-still-cleans-up",
+    "run": "${WP_CLI:-wp} eval-file tests/test-failing-test-still-cleans-up.php"
    },
    {
     "id": "focus-indicator-css",

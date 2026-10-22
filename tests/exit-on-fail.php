@@ -45,11 +45,19 @@ ob_start(
 	1
 );
 
+// exit() inside a shutdown function skips every one registered after it, so a
+// failing script would leave its fixtures and restored options behind. Queue the
+// exit behind everything the script registers: callbacks added during shutdown
+// run after the ones already waiting.
 register_shutdown_function(
 	static function () {
-		if ( ! empty( $GLOBALS['wpss_test_saw_failure'] ) ) {
-			exit( 1 );
-		}
+		register_shutdown_function(
+			static function () {
+				if ( ! empty( $GLOBALS['wpss_test_saw_failure'] ) ) {
+					exit( 1 );
+				}
+			}
+		);
 	}
 );
 

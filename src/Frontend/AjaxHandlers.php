@@ -189,10 +189,8 @@ class AjaxHandlers {
 
 		// Dashboard.
 		add_action( 'wp_ajax_wpss_get_dashboard_tab', array( $this, 'get_dashboard_tab' ) );
-		add_action( 'wp_ajax_wpss_service_action', array( $this, 'service_action' ) );
 		add_action( 'wp_ajax_wpss_order_action', array( $this, 'order_action' ) );
 		add_action( 'wp_ajax_wpss_filter_dashboard', array( $this, 'filter_dashboard' ) );
-		add_action( 'wp_ajax_wpss_bulk_action', array( $this, 'bulk_action' ) );
 		add_action( 'wp_ajax_wpss_search_dashboard', array( $this, 'search_dashboard' ) );
 		add_action( 'wp_ajax_wpss_paginate_dashboard', array( $this, 'paginate_dashboard' ) );
 		add_action( 'wp_ajax_wpss_export_data', array( $this, 'export_data' ) );
@@ -1723,7 +1721,9 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		wp_trash_post( $service_id );
+		if ( ! wp_trash_post( $service_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete service.', 'wp-sell-services' ) ) );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'Service deleted.', 'wp-sell-services' ) ) );
 	}
@@ -2472,80 +2472,6 @@ class AjaxHandlers {
 
 
 	/**
-	 * Handle service action from dashboard.
-	 *
-	 * @return void
-	 */
-	public function service_action(): void {
-		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
-
-		$action     = sanitize_key( $_POST['service_action'] ?? '' );
-		$service_id = absint( $_POST['service_id'] ?? 0 );
-		$user_id    = get_current_user_id();
-
-		if ( ! $service_id || ! $action ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
-		}
-
-		// Verify ownership.
-		$service = get_post( $service_id );
-		if ( ! $service || 'wpss_service' !== $service->post_type || (int) $service->post_author !== $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
-		}
-
-		$message = '';
-
-		switch ( $action ) {
-			case 'pause':
-				wp_update_post(
-					array(
-						'ID'          => $service_id,
-						'post_status' => 'draft',
-					)
-				);
-				$message = __( 'Service paused.', 'wp-sell-services' );
-				break;
-
-			case 'unpublish':
-				wp_update_post(
-					array(
-						'ID'          => $service_id,
-						'post_status' => 'draft',
-					)
-				);
-				$message = __( 'Service unpublished.', 'wp-sell-services' );
-				break;
-
-			case 'publish':
-				$refusal = wpss_service_publish_refusal( $service_id, $user_id );
-				if ( '' !== $refusal ) {
-					wp_send_json_error( array( 'message' => $refusal ) );
-				}
-				wp_update_post(
-					array(
-						'ID'          => $service_id,
-						'post_status' => 'publish',
-					)
-				);
-				$message = __( 'Service published.', 'wp-sell-services' );
-				break;
-
-			case 'delete':
-				$trashed = wp_trash_post( $service_id );
-				if ( ! $trashed ) {
-					wp_send_json_error( array( 'message' => __( 'Failed to delete service.', 'wp-sell-services' ) ) );
-				}
-				$message = __( 'Service deleted.', 'wp-sell-services' );
-				break;
-
-			default:
-				wp_send_json_error( array( 'message' => __( 'Unknown action.', 'wp-sell-services' ) ) );
-		}
-
-		wp_send_json_success( array( 'message' => $message ) );
-	}
-
-	/**
 	 * Handle order action from dashboard.
 	 *
 	 * @return void
@@ -2738,70 +2664,6 @@ class AjaxHandlers {
 		$html = ob_get_clean();
 
 		wp_send_json_success( array( 'html' => $html ) );
-	}
-
-	/**
-	 * Handle bulk action.
-	 *
-	 * @return void
-	 */
-	public function bulk_action(): void {
-		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
-
-		$action  = sanitize_key( $_POST['bulk_action'] ?? '' );
-		$ids     = array_map( 'absint', (array) ( $_POST['ids'] ?? array() ) );
-		$type    = sanitize_key( $_POST['type'] ?? 'services' );
-		$user_id = get_current_user_id();
-
-		if ( empty( $ids ) || ! $action ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
-		}
-
-		$processed = 0;
-		$refused   = 0;
-
-		if ( 'services' === $type ) {
-			foreach ( $ids as $service_id ) {
-				$service = get_post( $service_id );
-				if ( $service && 'wpss_service' === $service->post_type && (int) $service->post_author === $user_id ) {
-					switch ( $action ) {
-						case 'delete':
-							wp_trash_post( $service_id );
-							++$processed;
-							break;
-						case 'pause':
-							wp_update_post(
-								array(
-									'ID'          => $service_id,
-									'post_status' => 'draft',
-								)
-							);
-							++$processed;
-							break;
-						case 'publish':
-							if ( '' !== wpss_service_publish_refusal( $service_id, $user_id ) ) {
-								++$refused;
-								break;
-							}
-							wp_update_post(
-								array(
-									'ID'          => $service_id,
-									'post_status' => 'publish',
-								)
-							);
-							++$processed;
-							break;
-					}
-				}
-			}
-		}
-
-		if ( $refused && ! $processed ) {
-			wp_send_json_error( array( 'message' => wpss_service_publish_refusal( (int) reset( $ids ), $user_id ) ) );
-		}
-
-		/* translators: %d: number of items processed */
-		wp_send_json_success( array( 'message' => sprintf( __( '%d items updated.', 'wp-sell-services' ), $processed ) ) );
 	}
 
 	/**

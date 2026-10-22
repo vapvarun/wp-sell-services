@@ -135,13 +135,6 @@
       "rate_limited": false,
       "anonymous": false
     },
-    "wp_ajax_wpss_bulk_action": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::bulk_action",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": false,
-      "anonymous": false
-    },
     "wp_ajax_wpss_cancel_order": {
       "callback": "WPSellServices\\Frontend\\AjaxHandlers::cancel_order",
       "nonce": true,
@@ -448,13 +441,6 @@
       "nonce": true,
       "capability": false,
       "rate_limited": true,
-      "anonymous": false
-    },
-    "wp_ajax_wpss_service_action": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::service_action",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": false,
       "anonymous": false
     },
     "wp_ajax_wpss_skip_requirements": {

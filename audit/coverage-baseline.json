@@ -9,7 +9,6 @@
         "hook:wpss_app_token_lifetime",
         "hook:wpss_auth_login_challenge",
         "hook:wpss_auto_withdrawal_created",
-        "hook:wpss_before_service_deleted",
         "hook:wpss_billing_address_saved",
         "hook:wpss_breadcrumbs",
         "hook:wpss_buyer_request_deleted",

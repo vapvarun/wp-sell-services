@@ -428,7 +428,6 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 57
 - `wpss_notification_created` — src/Services/NotificationService.php
 - `wpss_service_created` — src/Services/ServiceManager.php
 - `wpss_service_updated` — src/Services/ServiceManager.php
-- `wpss_before_service_deleted` — src/Services/ServiceManager.php
 - `wpss_cancellation_requested` — src/Services/OrderService.php
 - `wpss_milestone_proposed` — src/Services/MilestoneService.php
 - `wpss_commission_recorded` — src/Services/MilestoneService.php

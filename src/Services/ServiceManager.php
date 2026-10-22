@@ -309,45 +309,6 @@ class ServiceManager {
 	}
 
 	/**
-	 * Delete a service.
-	 *
-	 * @param int  $service_id  Service post ID.
-	 * @param bool $force_delete Whether to bypass trash.
-	 * @return bool True on success.
-	 */
-	public function delete( int $service_id, bool $force_delete = false ): bool {
-		$post = get_post( $service_id );
-
-		if ( ! $post || self::POST_TYPE !== $post->post_type ) {
-			return false;
-		}
-
-		// Delete packages.
-		$this->package_repo->delete_by_service( $service_id );
-
-		// Delete add-ons.
-		delete_post_meta( $service_id, '_wpss_addons' );
-
-		// Delete FAQs.
-		$this->delete_faqs( $service_id );
-
-		// Delete requirements.
-		$this->delete_requirements( $service_id );
-
-		/**
-		 * Fires before a service is deleted.
-		 *
-		 * @since 1.0.0
-		 * @param int $service_id Service post ID.
-		 */
-		do_action( 'wpss_before_service_deleted', $service_id );
-
-		$result = wp_delete_post( $service_id, $force_delete );
-
-		return false !== $result;
-	}
-
-	/**
 	 * Get services by vendor.
 	 *
 	 * @param int                  $vendor_id Vendor user ID.
@@ -530,16 +491,6 @@ class ServiceManager {
 	}
 
 	/**
-	 * Delete service FAQs.
-	 *
-	 * @param int $service_id Service post ID.
-	 * @return void
-	 */
-	private function delete_faqs( int $service_id ): void {
-		delete_post_meta( $service_id, '_wpss_faqs' );
-	}
-
-	/**
 	 * Save service requirements.
 	 *
 	 * @param int                        $service_id   Service post ID.
@@ -548,16 +499,6 @@ class ServiceManager {
 	 */
 	private function save_requirements( int $service_id, array $requirements ): void {
 		wpss_save_service_requirements( $service_id, $requirements );
-	}
-
-	/**
-	 * Delete service requirements.
-	 *
-	 * @param int $service_id Service post ID.
-	 * @return void
-	 */
-	private function delete_requirements( int $service_id ): void {
-		delete_post_meta( $service_id, '_wpss_requirements' );
 	}
 
 	/**

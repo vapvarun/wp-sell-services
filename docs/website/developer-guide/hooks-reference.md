@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**551 hooks** across **767** firing sites.
+**550 hooks** across **766** firing sites.
 
-## Actions (280)
+## Actions (279)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -73,7 +73,6 @@ guide; this is the complete index.
 | `wpss_before_requirements_form_component` | 2 | `templates/order/requirements-form.php` | Fires before the requirements form content. |
 | `wpss_before_service_archive` | 0 | `templates/archive-service.php` | Hook: wpss_before_service_archive |
 | `wpss_before_service_card` | 1 | `templates/content-service-card.php` | Hook: wpss_before_service_card |
-| `wpss_before_service_deleted` | 1 | `src/Services/ServiceManager.php` | Fires before a service is deleted. |
 | `wpss_before_service_faqs` | 1 | `templates/partials/service-faqs.php` | Fires before the service FAQs section. |
 | `wpss_before_service_gallery` | 1 | `templates/partials/service-gallery.php` | Fires before the service gallery. |
 | `wpss_before_service_loop` | 0 | `templates/archive-service.php` | Hook: wpss_before_service_loop |
