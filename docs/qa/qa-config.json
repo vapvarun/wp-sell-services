@@ -221,6 +221,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-order-tax-label-stored.php"
    },
    {
+    "id": "owner-decisions-audited",
+    "run": "${WP_CLI:-wp} eval-file tests/test-owner-decisions-audited.php"
+   },
+   {
     "id": "package-revisions-unlimited-input",
     "run": "${WP_CLI:-wp} eval-file tests/test-package-revisions-unlimited-input.php"
    },

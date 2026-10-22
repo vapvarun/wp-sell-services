@@ -150,6 +150,17 @@ class ReportsPage {
 			return;
 		}
 
+		( new \WPSellServices\Services\AuditLogService() )->log(
+			'member.account_status',
+			'user',
+			$user_id,
+			array(
+				'action'     => $status,
+				'from_value' => (string) ( get_user_meta( $user_id, 'wpss_account_status', true ) ?: 'active' ),
+				'to_value'   => $status,
+			)
+		);
+
 		if ( 'active' === $status ) {
 			delete_user_meta( $user_id, 'wpss_account_status' );
 		} else {

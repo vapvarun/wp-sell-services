@@ -426,6 +426,17 @@ class ReportsController extends RestController {
 			return false;
 		}
 
+		( new \WPSellServices\Services\AuditLogService() )->log(
+			'report.resolve',
+			'report',
+			$report_id,
+			array(
+				'action'     => $resolution,
+				'from_value' => 'open',
+				'to_value'   => $resolution,
+			)
+		);
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$reporter_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT reporter_id FROM {$table} WHERE id = %d", $report_id ) );
 

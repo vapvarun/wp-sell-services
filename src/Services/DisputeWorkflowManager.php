@@ -413,6 +413,18 @@ class DisputeWorkflowManager {
 			);
 		}
 
+		( new \WPSellServices\Services\AuditLogService() )->log(
+			'dispute.assign',
+			'dispute',
+			$dispute_id,
+			array(
+				'action'     => 'assign',
+				'from_value' => (int) ( $dispute->meta['assigned_to'] ?? 0 ),
+				'to_value'   => $admin_id,
+				'context'    => array( 'order_id' => (int) $dispute->order_id ),
+			)
+		);
+
 		// Notify assigned admin.
 		$this->notification_service->send(
 			$admin_id,
