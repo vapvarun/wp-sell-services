@@ -305,6 +305,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-service-limit-every-publish-door.php"
    },
    {
+    "id": "service-list-column-without-query",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-list-column-without-query.php"
+   },
+   {
     "id": "service-moderation-admin-publish",
     "run": "${WP_CLI:-wp} eval-file tests/test-service-moderation-admin-publish.php"
    },
