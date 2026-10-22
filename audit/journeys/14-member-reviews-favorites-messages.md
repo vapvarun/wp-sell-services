@@ -30,7 +30,7 @@ Buyer messages the vendor from a service (pre-sale) and from an order.
 ### 5. Where reviews and FAQs show
 A service page lists approved reviews (`partials/service-reviews`) and the vendor's FAQs (`partials/service-faqs`); a service with neither shows no empty heading. Reviews held for moderation never appear.
 
-### 6. Helpful is a toggle (card:10385175812)
-As a signed-in reader who is not the author, press Helpful on a review, reload, then press it again.
+### 6. No Helpful control on the public review list
+Open a service page as a signed-in reader and look at a review.
 
-**Expect** the count rises by one and the button shows it is marked after a reload; pressing again removes the vote; the author's own review offers no button; a signed-out reader is asked to log in.
+**Expect** the review shows the reviewer, stars, text, the Verified Purchase badge (or Imported review) and any vendor response; there is no Helpful button in 1.9.1. The helpful-vote handler stays in the code for a later release, so a vote cast over AJAX still toggles (card:10385175812).

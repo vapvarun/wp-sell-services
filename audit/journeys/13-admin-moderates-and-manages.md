@@ -10,7 +10,7 @@
 ### 1. Service moderation
 Settings > Vendor Settings > Require Service Moderation on. The vendor publishes a service.
 
-**Expect** it lands in Moderation as Pending and is hidden from buyers; Approve makes it live and emails the vendor; Reject returns it to draft with the reason in the email. The queue shows thumbnail, title, vendor, category, price, date.
+**Expect** it lands in Moderation as Pending and is hidden from buyers; Approve makes it live and emails the vendor; Reject returns it to draft with the reason in the email. The queue shows thumbnail, title, vendor, category, price, date. Repeating the same decision on a service already in that state is a no-op 200 that sends nothing; changing a decision (a different reason, or approve after reject) is allowed and is mailed once. The owner is mailed once when a service enters the queue, from the wizard and from the REST API alike. Publishing a pending service from the editor approves it. Resolving a member report, assigning a dispute and changing a member's standing each leave an Audit Log row.
 
 ### 2. Review moderation
 Settings > Vendors > moderate reviews on. A buyer leaves a review.
