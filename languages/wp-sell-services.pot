@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-22T04:42:13+00:00\n"
+"POT-Creation-Date: 2026-10-22T04:49:40+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -184,9 +184,9 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:2390
 #: src/Frontend/AjaxHandlers.php:2489
 #: src/Frontend/AjaxHandlers.php:2601
-#: src/Frontend/AjaxHandlers.php:3074
-#: src/Frontend/AjaxHandlers.php:3125
-#: src/Frontend/AjaxHandlers.php:3199
+#: src/Frontend/AjaxHandlers.php:3073
+#: src/Frontend/AjaxHandlers.php:3124
+#: src/Frontend/AjaxHandlers.php:3198
 #: src/Integrations/Gateways/OfflineGateway.php:874
 msgid "Permission denied."
 msgstr ""
@@ -724,9 +724,9 @@ msgstr ""
 #: src/Frontend/Shortcodes.php:793
 #: src/functions/moderation.php:156
 #: src/Integrations/ProductTypes/ServiceProductType.php:40
-#: src/Services/NotificationService.php:380
-#: src/Services/NotificationService.php:508
-#: src/Services/NotificationService.php:1124
+#: src/Services/NotificationService.php:379
+#: src/Services/NotificationService.php:506
+#: src/Services/NotificationService.php:1121
 #: templates/cart/cart.php:444
 #: templates/emails/cancellation-requested.php:76
 #: templates/emails/delivery-ready.php:70
@@ -891,7 +891,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/Admin.php:2325
-#: src/Services/NotificationService.php:808
+#: src/Services/NotificationService.php:806
 msgid "Order status updated"
 msgstr ""
 
@@ -1026,7 +1026,7 @@ msgid "Created"
 msgstr ""
 
 #: src/Admin/Admin.php:2540
-#: src/API/OrdersController.php:2438
+#: src/API/OrdersController.php:2436
 #: templates/order/order-view.php:665
 msgid "Due date"
 msgstr ""
@@ -1160,7 +1160,7 @@ msgid "Unknown"
 msgstr ""
 
 #: src/Admin/Admin.php:2744
-#: src/Services/NotificationService.php:600
+#: src/Services/NotificationService.php:598
 msgid "Vendor:"
 msgstr ""
 
@@ -1385,10 +1385,10 @@ msgid "— Select Resolution —"
 msgstr ""
 
 #: src/Admin/Admin.php:3190
-#: src/Services/NotificationService.php:769
-#: src/Services/NotificationService.php:791
-#: src/Services/NotificationService.php:1148
-#: src/Services/NotificationService.php:1180
+#: src/Services/NotificationService.php:767
+#: src/Services/NotificationService.php:789
+#: src/Services/NotificationService.php:1145
+#: src/Services/NotificationService.php:1177
 msgid "Refund Amount:"
 msgstr ""
 
@@ -1499,7 +1499,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:3381
 #: src/Admin/Pages/ManualOrderPage.php:345
-#: src/API/OrdersController.php:2415
+#: src/API/OrdersController.php:2413
 msgid "Order status"
 msgstr ""
 
@@ -1518,8 +1518,8 @@ msgstr ""
 #: src/Admin/Tables/OrdersListTable.php:53
 #: src/Privacy/PersonalData.php:513
 #: src/Services/EmailService.php:2421
-#: src/Services/NotificationService.php:382
-#: src/Services/NotificationService.php:510
+#: src/Services/NotificationService.php:381
+#: src/Services/NotificationService.php:508
 #: templates/emails/dispute-opened.php:98
 #: templates/emails/new-order.php:92
 #: templates/emails/order-completed.php:87
@@ -1544,8 +1544,8 @@ msgstr ""
 #: src/Frontend/UnifiedDashboard.php:693
 #: src/Privacy/PersonalData.php:514
 #: src/Services/EmailService.php:2432
-#: src/Services/NotificationService.php:384
-#: src/Services/NotificationService.php:512
+#: src/Services/NotificationService.php:383
+#: src/Services/NotificationService.php:510
 #: templates/emails/delivery-ready.php:74
 #: templates/emails/dispute-opened.php:107
 #: templates/emails/new-order.php:89
@@ -2643,7 +2643,7 @@ msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:127
 #: src/Admin/Pages/ManualOrderPage.php:705
-#: src/Checkout/CheckoutIntentService.php:978
+#: src/Checkout/CheckoutIntentService.php:1035
 #: src/Integrations/Gateways/OfflineGateway.php:862
 #: src/Integrations/Gateways/TestGateway.php:394
 #: src/Integrations/PayPal/PayPalGateway.php:865
@@ -2733,7 +2733,7 @@ msgid "Auto-calculated"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:286
-#: src/API/OrdersController.php:2420
+#: src/API/OrdersController.php:2418
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:667
 #: templates/emails/cancellation-requested.php:80
 msgid "Order total"
@@ -6639,7 +6639,7 @@ msgstr ""
 #: src/Admin/Settings.php:4177
 #: src/functions/notifications.php:598
 #: src/functions/notifications.php:599
-#: src/Services/NotificationService.php:591
+#: src/Services/NotificationService.php:589
 #: src/Services/OrderTimelineService.php:100
 msgid "Order completed"
 msgstr ""
@@ -6649,8 +6649,8 @@ msgstr ""
 #: src/functions/notifications.php:597
 #: src/Services/AuditLogService.php:64
 #: src/Services/EmailService.php:1541
-#: src/Services/NotificationService.php:704
-#: src/Services/NotificationService.php:722
+#: src/Services/NotificationService.php:702
+#: src/Services/NotificationService.php:720
 #: src/Services/OrderWorkflowManager.php:601
 #: src/Services/OrderWorkflowManager.php:613
 msgid "Order cancelled"
@@ -6662,7 +6662,7 @@ msgstr ""
 #: src/functions/order-status.php:68
 #: src/Models/ServiceOrder.php:642
 #: src/Services/EmailService.php:1439
-#: src/Services/NotificationService.php:661
+#: src/Services/NotificationService.php:659
 #: templates/emails/cancellation-requested.php:85
 #: templates/order/timeline.php:96
 msgid "Cancellation requested"
@@ -6681,8 +6681,8 @@ msgstr ""
 #: src/Models/ServiceOrder.php:636
 #: src/Services/EmailService.php:981
 #: src/Services/EmailService.php:1226
-#: src/Services/NotificationService.php:633
-#: src/Services/NotificationService.php:1361
+#: src/Services/NotificationService.php:631
+#: src/Services/NotificationService.php:1358
 #: src/Services/OrderTimelineService.php:185
 #: templates/emails/revision-requested.php:82
 #: templates/order/timeline.php:123
@@ -6708,14 +6708,14 @@ msgstr ""
 #: src/functions/notifications.php:416
 #: src/functions/notifications.php:622
 #: src/Services/EmailService.php:1610
-#: src/Services/NotificationService.php:1222
+#: src/Services/NotificationService.php:1219
 msgid "Dispute opened"
 msgstr ""
 
 #: src/Admin/Settings.php:4186
 #: src/functions/notifications.php:649
 #: src/Services/AuditLogService.php:69
-#: src/Services/NotificationService.php:1506
+#: src/Services/NotificationService.php:1503
 msgid "Withdrawal requested"
 msgstr ""
 
@@ -6762,7 +6762,7 @@ msgstr ""
 #: src/Admin/Settings.php:4193
 #: src/functions/notifications.php:635
 #: src/Services/EmailService.php:793
-#: src/Services/NotificationService.php:1323
+#: src/Services/NotificationService.php:1320
 msgid "Milestone proposed"
 msgstr ""
 
@@ -6774,14 +6774,14 @@ msgstr ""
 
 #: src/Admin/Settings.php:4195
 #: src/Services/EmailService.php:897
-#: src/Services/NotificationService.php:1343
+#: src/Services/NotificationService.php:1340
 msgid "Milestone delivered"
 msgstr ""
 
 #: src/Admin/Settings.php:4196
 #: src/functions/notifications.php:638
 #: src/Services/EmailService.php:941
-#: src/Services/NotificationService.php:1370
+#: src/Services/NotificationService.php:1367
 msgid "Milestone approved"
 msgstr ""
 
@@ -6814,13 +6814,13 @@ msgstr ""
 
 #: src/Admin/Settings.php:4203
 #: src/functions/notifications.php:627
-#: src/Services/NotificationService.php:1472
+#: src/Services/NotificationService.php:1469
 msgid "Dispute escalated"
 msgstr ""
 
 #: src/Admin/Settings.php:4204
 #: src/functions/notifications.php:630
-#: src/Services/NotificationService.php:1494
+#: src/Services/NotificationService.php:1491
 msgid "Dispute cancelled"
 msgstr ""
 
@@ -7049,7 +7049,7 @@ msgstr ""
 #: src/API/API.php:266
 #: src/API/API.php:298
 #: src/API/MediaController.php:57
-#: src/API/OrdersController.php:2330
+#: src/API/OrdersController.php:2328
 #: src/API/PortfolioController.php:98
 msgid "Current page of the collection."
 msgstr ""
@@ -7113,24 +7113,24 @@ msgstr ""
 msgid "Your account and personal data have been deleted."
 msgstr ""
 
-#: src/API/API.php:1235
+#: src/API/API.php:1234
 #: src/API/EarningsController.php:345
 #: src/Services/EarningsService.php:743
 #: templates/dashboard/partials/order-row.php:68
 msgid "Deleted Service"
 msgstr ""
 
-#: src/API/API.php:1367
+#: src/API/API.php:1366
 msgid "A batch request cannot contain another batch request."
 msgstr ""
 
 #. translators: %d: maximum number of batch requests
-#: src/API/API.php:1403
+#: src/API/API.php:1402
 #, php-format
 msgid "Batch requests limited to %d operations."
 msgstr ""
 
-#: src/API/API.php:1422
+#: src/API/API.php:1421
 msgid "Path must start with /wpss/v1/"
 msgstr ""
 
@@ -7379,7 +7379,7 @@ msgid "Items per page."
 msgstr ""
 
 #: src/API/CartController.php:52
-#: src/API/OrdersController.php:2397
+#: src/API/OrdersController.php:2395
 #: src/API/ReviewsController.php:1056
 #: src/API/ServicesController.php:138
 msgid "Service ID."
@@ -8040,27 +8040,27 @@ msgstr ""
 msgid "Only the buyer can perform this action."
 msgstr ""
 
-#: src/API/OrdersController.php:2336
+#: src/API/OrdersController.php:2334
 msgid "Maximum number of items per page."
 msgstr ""
 
-#: src/API/OrdersController.php:2343
+#: src/API/OrdersController.php:2341
 msgid "Filter by user role (vendor or customer)."
 msgstr ""
 
-#: src/API/OrdersController.php:2348
+#: src/API/OrdersController.php:2346
 msgid "Filter by order status."
 msgstr ""
 
-#: src/API/OrdersController.php:2352
+#: src/API/OrdersController.php:2350
 msgid "Filter by service ID."
 msgstr ""
 
-#: src/API/OrdersController.php:2370
+#: src/API/OrdersController.php:2368
 msgid "Exclude orders in these statuses. Repeatable."
 msgstr ""
 
-#: src/API/OrdersController.php:2391
+#: src/API/OrdersController.php:2389
 #: src/Privacy/PersonalData.php:351
 #: src/Privacy/PersonalData.php:507
 #: templates/dashboard/partials/order-filters.php:86
@@ -8069,19 +8069,19 @@ msgstr ""
 msgid "Order number"
 msgstr ""
 
-#: src/API/OrdersController.php:2403
+#: src/API/OrdersController.php:2401
 msgid "Vendor user ID."
 msgstr ""
 
-#: src/API/OrdersController.php:2409
+#: src/API/OrdersController.php:2407
 msgid "Buyer user ID."
 msgstr ""
 
-#: src/API/OrdersController.php:2426
+#: src/API/OrdersController.php:2424
 msgid "Order currency."
 msgstr ""
 
-#: src/API/OrdersController.php:2432
+#: src/API/OrdersController.php:2430
 msgid "Note written with a sub-order (tip message, extension reason, milestone description)."
 msgstr ""
 
@@ -8173,7 +8173,7 @@ msgstr ""
 #: src/API/PortfolioController.php:273
 #: src/API/PortfolioController.php:415
 #: src/API/PortfolioController.php:462
-#: src/Frontend/AjaxHandlers.php:3144
+#: src/Frontend/AjaxHandlers.php:3143
 #: src/Services/PortfolioService.php:222
 #: src/Services/PortfolioService.php:324
 #: src/Services/PortfolioService.php:438
@@ -8667,7 +8667,7 @@ msgid "You are not registered as a vendor."
 msgstr ""
 
 #: src/API/VendorsController.php:537
-#: src/Frontend/AjaxHandlers.php:3040
+#: src/Frontend/AjaxHandlers.php:3039
 msgid "Your profile could not be saved. Please try again or contact support."
 msgstr ""
 
@@ -8708,7 +8708,7 @@ msgid "Filter by skill."
 msgstr ""
 
 #: src/API/VendorsController.php:1043
-#: src/Services/NotificationService.php:1706
+#: src/Services/NotificationService.php:1703
 #: templates/dashboard/sections/profile.php:108
 msgid "Display name"
 msgstr ""
@@ -8960,7 +8960,13 @@ msgstr ""
 msgid "The paid amount does not match the order total."
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:915
+#. translators: %s: payment reference
+#: src/Checkout/CheckoutIntentService.php:917
+#, php-format
+msgid "Your payment was received, but the order could not be confirmed. Please contact support and quote this reference: %s"
+msgstr ""
+
+#: src/Checkout/CheckoutIntentService.php:963
 msgid "Failed to create orders. Please contact support."
 msgstr ""
 
@@ -9490,15 +9496,15 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:2819
 #: src/Frontend/AjaxHandlers.php:2851
 #: src/Frontend/AjaxHandlers.php:2885
-#: src/Frontend/AjaxHandlers.php:2994
-#: src/Frontend/AjaxHandlers.php:3276
-#: src/Frontend/AjaxHandlers.php:3317
-#: src/Frontend/AjaxHandlers.php:3346
-#: src/Frontend/AjaxHandlers.php:3385
-#: src/Frontend/AjaxHandlers.php:3409
-#: src/Frontend/AjaxHandlers.php:3434
-#: src/Frontend/AjaxHandlers.php:3458
-#: src/Frontend/AjaxHandlers.php:3481
+#: src/Frontend/AjaxHandlers.php:2993
+#: src/Frontend/AjaxHandlers.php:3275
+#: src/Frontend/AjaxHandlers.php:3316
+#: src/Frontend/AjaxHandlers.php:3345
+#: src/Frontend/AjaxHandlers.php:3384
+#: src/Frontend/AjaxHandlers.php:3408
+#: src/Frontend/AjaxHandlers.php:3433
+#: src/Frontend/AjaxHandlers.php:3457
+#: src/Frontend/AjaxHandlers.php:3480
 msgid "Please log in."
 msgstr ""
 
@@ -9805,30 +9811,30 @@ msgstr ""
 msgid "Invalid export type."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3061
+#: src/Frontend/AjaxHandlers.php:3060
 #: src/Frontend/UnifiedDashboard.php:203
 msgid "Profile updated successfully."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3136
-#: src/Frontend/AjaxHandlers.php:3205
+#: src/Frontend/AjaxHandlers.php:3135
+#: src/Frontend/AjaxHandlers.php:3204
 msgid "Invalid portfolio item."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3234
+#: src/Frontend/AjaxHandlers.php:3233
 msgid "Invalid cart item."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3256
+#: src/Frontend/AjaxHandlers.php:3255
 msgid "Item removed from cart."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3285
-#: src/Frontend/AjaxHandlers.php:3357
+#: src/Frontend/AjaxHandlers.php:3284
+#: src/Frontend/AjaxHandlers.php:3356
 msgid "Missing order."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3324
+#: src/Frontend/AjaxHandlers.php:3323
 msgid "Missing request."
 msgstr ""
 
@@ -9905,7 +9911,7 @@ msgid "Clear All"
 msgstr ""
 
 #: src/Frontend/Frontend.php:186
-#: src/Services/NotificationService.php:1516
+#: src/Services/NotificationService.php:1513
 msgid "You have a new notification."
 msgstr ""
 
@@ -10357,7 +10363,7 @@ msgstr ""
 
 #: src/Frontend/PublicSignup.php:551
 #: src/functions/billing.php:137
-#: src/Services/NotificationService.php:1710
+#: src/Services/NotificationService.php:1707
 #: templates/emails/vendor-contact.php:77
 #: templates/emails/withdrawal-auto.php:43
 #: templates/emails/withdrawal-requested.php:43
@@ -13932,8 +13938,8 @@ msgstr ""
 
 #: src/functions/notifications.php:417
 #: src/functions/notifications.php:623
-#: src/Services/NotificationService.php:1157
-#: src/Services/NotificationService.php:1194
+#: src/Services/NotificationService.php:1154
+#: src/Services/NotificationService.php:1191
 msgid "Dispute resolved"
 msgstr ""
 
@@ -13955,7 +13961,7 @@ msgid "Order confirmation"
 msgstr ""
 
 #: src/functions/notifications.php:594
-#: src/Services/NotificationService.php:525
+#: src/Services/NotificationService.php:523
 msgid "Order ready to start"
 msgstr ""
 
@@ -14035,7 +14041,7 @@ msgid "Dispute update"
 msgstr ""
 
 #: src/functions/notifications.php:628
-#: src/Services/NotificationService.php:1245
+#: src/Services/NotificationService.php:1242
 msgid "Dispute response due"
 msgstr ""
 
@@ -14064,12 +14070,12 @@ msgid "Extension requested"
 msgstr ""
 
 #: src/functions/notifications.php:643
-#: src/Services/NotificationService.php:1485
+#: src/Services/NotificationService.php:1482
 msgid "Dispute assigned"
 msgstr ""
 
 #: src/functions/notifications.php:648
-#: src/Services/NotificationService.php:1079
+#: src/Services/NotificationService.php:1077
 #: templates/order/order-view.php:1728
 #: templates/order/tip-view.php:105
 msgid "Tip sent"
@@ -15306,7 +15312,7 @@ msgid "We are confirming your payment. Please check your orders in a moment — 
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:196
-#: src/Services/OrderWorkflowManager.php:1981
+#: src/Services/OrderWorkflowManager.php:1988
 msgid "Payment received"
 msgstr ""
 
@@ -15459,7 +15465,7 @@ msgid "Verified Buyer"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1272
-#: src/Services/NotificationService.php:1654
+#: src/Services/NotificationService.php:1651
 msgid "What happens next?"
 msgstr ""
 
@@ -16624,8 +16630,8 @@ msgid "Order paid"
 msgstr ""
 
 #: src/Services/AuditLogService.php:65
-#: src/Services/NotificationService.php:759
-#: src/Services/NotificationService.php:780
+#: src/Services/NotificationService.php:757
+#: src/Services/NotificationService.php:778
 msgid "Order refunded"
 msgstr ""
 
@@ -17168,7 +17174,7 @@ msgid "[%1$s] Order #%2$s is Now In Progress"
 msgstr ""
 
 #: src/Services/EmailService.php:409
-#: src/Services/NotificationService.php:545
+#: src/Services/NotificationService.php:543
 msgid "Your Order is In Progress"
 msgstr ""
 
@@ -17191,7 +17197,7 @@ msgid "Your Delivery is Ready!"
 msgstr ""
 
 #: src/Services/EmailService.php:520
-#: src/Services/NotificationService.php:945
+#: src/Services/NotificationService.php:943
 msgid "your service"
 msgstr ""
 
@@ -17206,7 +17212,7 @@ msgid "You received a new review"
 msgstr ""
 
 #: src/Services/EmailService.php:569
-#: src/Services/NotificationService.php:1037
+#: src/Services/NotificationService.php:1035
 #: templates/emails/new-order.php:29
 msgid "A buyer"
 msgstr ""
@@ -17218,7 +17224,7 @@ msgid "[%1$s] You received a tip from %2$s"
 msgstr ""
 
 #: src/Services/EmailService.php:588
-#: src/Services/NotificationService.php:1056
+#: src/Services/NotificationService.php:1054
 msgid "You received a tip!"
 msgstr ""
 
@@ -17349,7 +17355,7 @@ msgid "[%s] Quote for extra work from your vendor"
 msgstr ""
 
 #: src/Services/EmailService.php:1032
-#: src/Services/NotificationService.php:1303
+#: src/Services/NotificationService.php:1300
 #: templates/order/order-view.php:1578
 msgid "Quote for extra work"
 msgstr ""
@@ -17361,7 +17367,7 @@ msgid "[%s] Extra work paid — continue working"
 msgstr ""
 
 #: src/Services/EmailService.php:1088
-#: src/Services/NotificationService.php:1312
+#: src/Services/NotificationService.php:1309
 #: templates/order/extension-view.php:103
 #: templates/order/extension-view.php:113
 msgid "Extra work paid"
@@ -17374,7 +17380,7 @@ msgid "[%s] Extension declined"
 msgstr ""
 
 #: src/Services/EmailService.php:1134
-#: src/Services/NotificationService.php:1379
+#: src/Services/NotificationService.php:1376
 #: templates/order/extension-view.php:109
 #: templates/order/extension-view.php:119
 msgid "Quote declined"
@@ -17405,7 +17411,7 @@ msgstr ""
 
 #: src/Services/EmailService.php:1385
 #: src/Services/EmailService.php:1833
-#: src/Services/NotificationService.php:898
+#: src/Services/NotificationService.php:896
 msgid "New Message Received"
 msgstr ""
 
@@ -17422,7 +17428,7 @@ msgid "[%1$s] Cancellation Request Submitted - Order #%2$s"
 msgstr ""
 
 #: src/Services/EmailService.php:1467
-#: src/Services/NotificationService.php:682
+#: src/Services/NotificationService.php:680
 msgid "Cancellation Request Submitted"
 msgstr ""
 
@@ -17539,7 +17545,7 @@ msgid "[%1$s] New Proposal from %2$s"
 msgstr ""
 
 #: src/Services/EmailService.php:1929
-#: src/Services/NotificationService.php:1403
+#: src/Services/NotificationService.php:1400
 msgid "New proposal received"
 msgstr ""
 
@@ -17958,168 +17964,168 @@ msgid ""
 msgstr ""
 
 #. translators: %s: buyer name
-#: src/Services/NotificationService.php:392
+#: src/Services/NotificationService.php:391
 #, php-format
 msgid "Great news! %s has placed an order for your service."
 msgstr ""
 
-#: src/Services/NotificationService.php:395
+#: src/Services/NotificationService.php:394
 msgid "Order Details:"
 msgstr ""
 
 #. translators: %s: service name
-#: src/Services/NotificationService.php:398
-#: src/Services/NotificationService.php:432
+#: src/Services/NotificationService.php:397
+#: src/Services/NotificationService.php:431
 #, php-format
 msgid "Service: %s"
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:403
-#: src/Services/NotificationService.php:442
+#: src/Services/NotificationService.php:402
+#: src/Services/NotificationService.php:441
 #, php-format
 msgid "Order Number: #%s"
 msgstr ""
 
 #. translators: %s: formatted monetary amount
-#: src/Services/NotificationService.php:408
-#: src/Services/NotificationService.php:447
+#: src/Services/NotificationService.php:407
+#: src/Services/NotificationService.php:446
 #, php-format
 msgid "Amount: %s"
 msgstr ""
 
-#: src/Services/NotificationService.php:411
+#: src/Services/NotificationService.php:410
 msgid "The buyer will submit their requirements shortly. You'll be notified when they do so you can start working on the order."
 msgstr ""
 
-#: src/Services/NotificationService.php:416
+#: src/Services/NotificationService.php:415
 msgid "New Order Received"
 msgstr ""
 
-#: src/Services/NotificationService.php:428
+#: src/Services/NotificationService.php:427
 msgid "Thank you for your order!"
 msgstr ""
 
-#: src/Services/NotificationService.php:429
+#: src/Services/NotificationService.php:428
 msgid "Order Confirmation:"
 msgstr ""
 
 #. translators: %s: seller name
-#: src/Services/NotificationService.php:437
+#: src/Services/NotificationService.php:436
 #, php-format
 msgid "Vendor: %s"
 msgstr ""
 
-#: src/Services/NotificationService.php:452
+#: src/Services/NotificationService.php:451
 msgid "Next Step:"
 msgstr ""
 
-#: src/Services/NotificationService.php:453
+#: src/Services/NotificationService.php:452
 msgid "Please submit your requirements so the vendor can start working on your order."
 msgstr ""
 
-#: src/Services/NotificationService.php:459
+#: src/Services/NotificationService.php:458
 msgid "Order Confirmed"
 msgstr ""
 
 #. translators: 1: buyer name, 2: order number
-#: src/Services/NotificationService.php:529
+#: src/Services/NotificationService.php:527
 #, php-format
 msgid "%1$s has submitted the requirements for Order #%2$s."
 msgstr ""
 
-#: src/Services/NotificationService.php:534
-#: src/Services/NotificationService.php:554
-#: src/Services/NotificationService.php:577
-#: src/Services/NotificationService.php:599
-#: src/Services/NotificationService.php:619
-#: src/Services/NotificationService.php:642
-#: src/Services/NotificationService.php:670
-#: src/Services/NotificationService.php:690
-#: src/Services/NotificationService.php:712
-#: src/Services/NotificationService.php:731
-#: src/Services/NotificationService.php:768
-#: src/Services/NotificationService.php:790
-#: src/Services/NotificationService.php:817
-#: src/Services/NotificationService.php:881
-#: src/Services/NotificationService.php:1145
-#: src/Services/NotificationService.php:1176
+#: src/Services/NotificationService.php:532
+#: src/Services/NotificationService.php:552
+#: src/Services/NotificationService.php:575
+#: src/Services/NotificationService.php:597
+#: src/Services/NotificationService.php:617
+#: src/Services/NotificationService.php:640
+#: src/Services/NotificationService.php:668
+#: src/Services/NotificationService.php:688
+#: src/Services/NotificationService.php:710
+#: src/Services/NotificationService.php:729
+#: src/Services/NotificationService.php:766
+#: src/Services/NotificationService.php:788
+#: src/Services/NotificationService.php:815
+#: src/Services/NotificationService.php:879
+#: src/Services/NotificationService.php:1142
+#: src/Services/NotificationService.php:1173
 msgid "Service:"
 msgstr ""
 
-#: src/Services/NotificationService.php:535
+#: src/Services/NotificationService.php:533
 msgid "You can now start working on this order. Please deliver within the agreed timeframe."
 msgstr ""
 
 #. translators: 1: vendor name, 2: order number
-#: src/Services/NotificationService.php:549
+#: src/Services/NotificationService.php:547
 #, php-format
 msgid "%1$s has received your requirements and started working on Order #%2$s."
 msgstr ""
 
-#: src/Services/NotificationService.php:555
+#: src/Services/NotificationService.php:553
 msgid "You'll be notified when the delivery is ready for your review."
 msgstr ""
 
-#: src/Services/NotificationService.php:568
+#: src/Services/NotificationService.php:566
 msgid "Delivery Ready for Review"
 msgstr ""
 
 #. translators: 1: vendor name, 2: order number
-#: src/Services/NotificationService.php:572
+#: src/Services/NotificationService.php:570
 #, php-format
 msgid "%1$s has submitted the delivery for Order #%2$s."
 msgstr ""
 
-#: src/Services/NotificationService.php:578
+#: src/Services/NotificationService.php:576
 #: templates/emails/delivery-ready.php:81
 msgid "Please review the delivery and either accept it to complete the order, or request a revision if changes are needed."
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:595
+#: src/Services/NotificationService.php:593
 #, php-format
 msgid "Order #%s has been completed successfully!"
 msgstr ""
 
-#: src/Services/NotificationService.php:601
+#: src/Services/NotificationService.php:599
 msgid "Thank you for your business. If you're satisfied with the service, please consider leaving a review to help other buyers."
 msgstr ""
 
-#: src/Services/NotificationService.php:610
+#: src/Services/NotificationService.php:608
 msgid "Order Completed - Payment Released"
 msgstr ""
 
 #. translators: 1: buyer name, 2: order number
-#: src/Services/NotificationService.php:614
+#: src/Services/NotificationService.php:612
 #, php-format
 msgid "Congratulations! %1$s has accepted the delivery for Order #%2$s."
 msgstr ""
 
-#: src/Services/NotificationService.php:620
+#: src/Services/NotificationService.php:618
 msgid "The payment has been released to your account. Thank you for providing excellent service!"
 msgstr ""
 
 #. translators: 1: buyer name, 2: order number
-#: src/Services/NotificationService.php:637
+#: src/Services/NotificationService.php:635
 #, php-format
 msgid "%1$s has requested a revision for Order #%2$s."
 msgstr ""
 
-#: src/Services/NotificationService.php:643
+#: src/Services/NotificationService.php:641
 msgid "Please review their feedback and submit an updated delivery."
 msgstr ""
 
 #. translators: 1: buyer name, 2: order number
-#: src/Services/NotificationService.php:665
+#: src/Services/NotificationService.php:663
 #, php-format
 msgid "%1$s has requested to cancel Order #%2$s."
 msgstr ""
 
-#: src/Services/NotificationService.php:671
-#: src/Services/NotificationService.php:1232
-#: src/Services/NotificationService.php:1479
-#: src/Services/NotificationService.php:1501
+#: src/Services/NotificationService.php:669
+#: src/Services/NotificationService.php:1229
+#: src/Services/NotificationService.php:1476
+#: src/Services/NotificationService.php:1498
 #: templates/emails/order-cancelled.php:96
 #: templates/emails/vendor-rejected.php:66
 #: templates/emails/vendor-suspended.php:67
@@ -18128,625 +18134,625 @@ msgstr ""
 msgid "Reason:"
 msgstr ""
 
-#: src/Services/NotificationService.php:672
+#: src/Services/NotificationService.php:670
 msgid "You have 48 hours to accept or dispute this cancellation request."
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:686
+#: src/Services/NotificationService.php:684
 #, php-format
 msgid "Your cancellation request for Order #%s has been submitted."
 msgstr ""
 
-#: src/Services/NotificationService.php:691
+#: src/Services/NotificationService.php:689
 msgid "The vendor has 48 hours to respond. If they don't respond, the order will be automatically cancelled."
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:708
+#: src/Services/NotificationService.php:706
 #, php-format
 msgid "Order #%s has been cancelled."
 msgstr ""
 
-#: src/Services/NotificationService.php:713
-#: src/Services/NotificationService.php:732
+#: src/Services/NotificationService.php:711
+#: src/Services/NotificationService.php:730
 msgid "If you have any questions about this cancellation, please contact support."
 msgstr ""
 
 #. translators: 1: order number, 2: buyer name
-#: src/Services/NotificationService.php:726
+#: src/Services/NotificationService.php:724
 #, php-format
 msgid "Order #%1$s from %2$s has been cancelled."
 msgstr ""
 
 #. translators: 1: order number, 2: amount
-#: src/Services/NotificationService.php:763
+#: src/Services/NotificationService.php:761
 #, php-format
 msgid "Order #%1$s has been refunded. %2$s is on its way back to your original payment method."
 msgstr ""
 
 #. translators: 1: order number, 2: buyer name, 3: amount
-#: src/Services/NotificationService.php:784
+#: src/Services/NotificationService.php:782
 #, php-format
 msgid "Order #%1$s from %2$s has been refunded (%3$s)."
 msgstr ""
 
 #. translators: 1: order number, 2: status label
-#: src/Services/NotificationService.php:812
+#: src/Services/NotificationService.php:810
 #, php-format
 msgid "Order #%1$s status has been updated to: %2$s"
 msgstr ""
 
-#: src/Services/NotificationService.php:841
+#: src/Services/NotificationService.php:839
 #: templates/emails/new-message.php:30
 #: templates/emails/vendor-contact.php:33
 msgid "Someone"
 msgstr ""
 
 #. translators: %s: sender name
-#: src/Services/NotificationService.php:868
+#: src/Services/NotificationService.php:866
 #, php-format
 msgid "You have received a new message from %s."
 msgstr ""
 
-#: src/Services/NotificationService.php:877
+#: src/Services/NotificationService.php:875
 msgid "Order:"
 msgstr ""
 
-#: src/Services/NotificationService.php:888
+#: src/Services/NotificationService.php:886
 msgid "Message:"
 msgstr ""
 
-#: src/Services/NotificationService.php:893
+#: src/Services/NotificationService.php:891
 msgid "Open the conversation to read it in full and reply."
 msgstr ""
 
 #. translators: 1: reviewer name, 2: service name
-#: src/Services/NotificationService.php:955
+#: src/Services/NotificationService.php:953
 #, php-format
 msgid "%1$s has left a review for %2$s."
 msgstr ""
 
-#: src/Services/NotificationService.php:961
+#: src/Services/NotificationService.php:959
 msgid "Rating:"
 msgstr ""
 
 #. translators: 1: star rating glyphs, 2: numeric rating out of five
-#: src/Services/NotificationService.php:964
+#: src/Services/NotificationService.php:962
 #, php-format
 msgid "%1$s (%2$d/5)"
 msgstr ""
 
-#: src/Services/NotificationService.php:972
+#: src/Services/NotificationService.php:970
 msgid "Review:"
 msgstr ""
 
-#: src/Services/NotificationService.php:977
+#: src/Services/NotificationService.php:975
 msgid "Thank you for providing excellent service! Reviews help build your reputation and attract more buyers."
 msgstr ""
 
-#: src/Services/NotificationService.php:982
+#: src/Services/NotificationService.php:980
 msgid "New Review Received"
 msgstr ""
 
 #. translators: 1: buyer name, 2: net amount credited
-#: src/Services/NotificationService.php:1045
+#: src/Services/NotificationService.php:1043
 #, php-format
 msgid "%1$s just sent you a tip of %2$s. It has been added to your earnings balance."
 msgstr ""
 
 #. translators: 1: amount, 2: vendor name, 3: order number
-#: src/Services/NotificationService.php:1082
+#: src/Services/NotificationService.php:1080
 #, php-format
 msgid "Your tip of %1$s to %2$s on Order #%3$s has been paid."
 msgstr ""
 
-#: src/Services/NotificationService.php:1084
+#: src/Services/NotificationService.php:1082
 msgid "your vendor"
 msgstr ""
 
-#: src/Services/NotificationService.php:1128
+#: src/Services/NotificationService.php:1125
 msgid "resolved with a full refund"
 msgstr ""
 
-#: src/Services/NotificationService.php:1129
+#: src/Services/NotificationService.php:1126
 msgid "resolved with a partial refund"
 msgstr ""
 
-#: src/Services/NotificationService.php:1130
+#: src/Services/NotificationService.php:1127
 msgid "resolved in favor of the buyer"
 msgstr ""
 
-#: src/Services/NotificationService.php:1131
+#: src/Services/NotificationService.php:1128
 msgid "resolved in favor of the vendor"
 msgstr ""
 
-#: src/Services/NotificationService.php:1132
+#: src/Services/NotificationService.php:1129
 msgid "resolved by mutual agreement"
 msgstr ""
 
-#: src/Services/NotificationService.php:1134
+#: src/Services/NotificationService.php:1131
 msgid "resolved"
 msgstr ""
 
 #. translators: 1: order number, 2: resolution
-#: src/Services/NotificationService.php:1140
-#: src/Services/NotificationService.php:1171
+#: src/Services/NotificationService.php:1137
+#: src/Services/NotificationService.php:1168
 #, php-format
 msgid "The dispute for Order #%1$s has been %2$s."
 msgstr ""
 
-#: src/Services/NotificationService.php:1149
+#: src/Services/NotificationService.php:1146
 msgid "The refund will be processed according to our refund policy."
 msgstr ""
 
-#: src/Services/NotificationService.php:1152
+#: src/Services/NotificationService.php:1149
 msgid "If you have any questions about this resolution, please contact our support team."
 msgstr ""
 
 #. translators: %s: refund amount
-#: src/Services/NotificationService.php:1183
+#: src/Services/NotificationService.php:1180
 #, php-format
 msgid "%s (deducted from earnings)"
 msgstr ""
 
-#: src/Services/NotificationService.php:1189
+#: src/Services/NotificationService.php:1186
 msgid "Thank you for your cooperation in resolving this dispute. If you have any questions, please contact our support team."
 msgstr ""
 
-#: src/Services/NotificationService.php:1224
-#: src/Services/NotificationService.php:1263
+#: src/Services/NotificationService.php:1221
+#: src/Services/NotificationService.php:1260
 msgid "The other party"
 msgstr ""
 
 #. translators: 1: opener name, 2: order ID
-#: src/Services/NotificationService.php:1227
+#: src/Services/NotificationService.php:1224
 #, php-format
 msgid "%1$s has opened a dispute for Order #%2$s."
 msgstr ""
 
 #. translators: %s: deadline date
-#: src/Services/NotificationService.php:1238
-#: src/Services/NotificationService.php:1254
+#: src/Services/NotificationService.php:1235
+#: src/Services/NotificationService.php:1251
 #, php-format
 msgid "Please respond by %s to avoid automatic escalation."
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:1248
+#: src/Services/NotificationService.php:1245
 #, php-format
 msgid "A dispute on Order #%s is waiting for your response."
 msgstr ""
 
-#: src/Services/NotificationService.php:1261
+#: src/Services/NotificationService.php:1258
 msgid "Dispute Response Received"
 msgstr ""
 
 #. translators: 1: responder name, 2: order ID
-#: src/Services/NotificationService.php:1266
+#: src/Services/NotificationService.php:1263
 #, php-format
 msgid "%1$s has responded to the dispute for Order #%2$s."
 msgstr ""
 
-#: src/Services/NotificationService.php:1270
+#: src/Services/NotificationService.php:1267
 msgid "Open the dispute to read the response and reply if needed."
 msgstr ""
 
-#: src/Services/NotificationService.php:1283
+#: src/Services/NotificationService.php:1280
 msgid "Dispute Response Reminder"
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:1286
+#: src/Services/NotificationService.php:1283
 #, php-format
 msgid "This is a reminder that you have a pending dispute for Order #%s that requires your response."
 msgstr ""
 
-#: src/Services/NotificationService.php:1289
+#: src/Services/NotificationService.php:1286
 msgid "Respond to the dispute to avoid automatic escalation."
 msgstr ""
 
-#: src/Services/NotificationService.php:1293
+#: src/Services/NotificationService.php:1290
 msgid "Order Deadline Approaching"
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:1296
+#: src/Services/NotificationService.php:1293
 #, php-format
 msgid "The delivery deadline for Order #%s is approaching."
 msgstr ""
 
-#: src/Services/NotificationService.php:1299
+#: src/Services/NotificationService.php:1296
 msgid "Please ensure you deliver the order on time to maintain your vendor rating."
 msgstr ""
 
 #. translators: %s: parent order number
-#: src/Services/NotificationService.php:1306
+#: src/Services/NotificationService.php:1303
 #, php-format
 msgid "Your vendor sent a quote for additional work on Order #%s. Open the order to review — Accept & Pay to expand the scope, or Decline to keep things as-is."
 msgstr ""
 
 #. translators: 1: net amount, 2: extra days, 3: parent order ID
-#: src/Services/NotificationService.php:1315
+#: src/Services/NotificationService.php:1312
 #, php-format
 msgid "Buyer approved your quote. %1$s credited to your wallet, deadline on Order #%3$s extended by %2$d days."
 msgstr ""
 
 #. translators: 1: phase name and amount, 2: parent order number
-#: src/Services/NotificationService.php:1326
+#: src/Services/NotificationService.php:1323
 #, php-format
 msgid "Your vendor proposed %1$s on Order #%2$s. Open the order to review and Accept & Pay."
 msgstr ""
 
-#: src/Services/NotificationService.php:1333
+#: src/Services/NotificationService.php:1330
 msgid "Milestone paid - start work"
 msgstr ""
 
 #. translators: 1: net amount, 2: parent order ID
-#: src/Services/NotificationService.php:1336
+#: src/Services/NotificationService.php:1333
 #, php-format
 msgid "Buyer paid the phase on Order #%2$s, so you can start work. %1$s is credited to your wallet when the buyer approves it."
 msgstr ""
 
 #. translators: %s: parent order number
-#: src/Services/NotificationService.php:1346
+#: src/Services/NotificationService.php:1343
 #, php-format
 msgid "Your vendor submitted a phase delivery on Order #%s. Review it and approve, or request a revision in chat."
 msgstr ""
 
-#: src/Services/NotificationService.php:1352
+#: src/Services/NotificationService.php:1349
 msgid "Your report was reviewed"
 msgstr ""
 
-#: src/Services/NotificationService.php:1355
+#: src/Services/NotificationService.php:1352
 msgid "Thanks for your report. We reviewed it and took action."
 msgstr ""
 
-#: src/Services/NotificationService.php:1356
+#: src/Services/NotificationService.php:1353
 msgid "Thanks for your report. We reviewed it and found nothing that breaks the rules."
 msgstr ""
 
 #. translators: %s: parent order number
-#: src/Services/NotificationService.php:1364
+#: src/Services/NotificationService.php:1361
 #, php-format
 msgid "The buyer asked for changes to a phase on Order #%s. Update the work and submit it again."
 msgstr ""
 
 #. translators: %s: parent order number
-#: src/Services/NotificationService.php:1373
+#: src/Services/NotificationService.php:1370
 #, php-format
 msgid "Buyer approved your phase on Order #%s."
 msgstr ""
 
 #. translators: 1: order number, 2: buyer's note
-#: src/Services/NotificationService.php:1384
+#: src/Services/NotificationService.php:1381
 #, php-format
 msgid "Buyer declined your quote on Order #%1$s. Their note: %2$s"
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:1391
+#: src/Services/NotificationService.php:1388
 #, php-format
 msgid "Buyer declined your quote on Order #%s."
 msgstr ""
 
 #. translators: 1: vendor name, 2: request title
-#: src/Services/NotificationService.php:1407
+#: src/Services/NotificationService.php:1404
 #, php-format
 msgid "%1$s sent a proposal on your request \"%2$s\"."
 msgstr ""
 
-#: src/Services/NotificationService.php:1408
+#: src/Services/NotificationService.php:1405
 msgid "A vendor"
 msgstr ""
 
-#: src/Services/NotificationService.php:1413
+#: src/Services/NotificationService.php:1410
 msgid "Their price:"
 msgstr ""
 
-#: src/Services/NotificationService.php:1417
+#: src/Services/NotificationService.php:1414
 msgid "Open the request to compare proposals and hire when you are ready."
 msgstr ""
 
-#: src/Services/NotificationService.php:1421
+#: src/Services/NotificationService.php:1418
 msgid "Your proposal was accepted"
 msgstr ""
 
 #. translators: %s: request title
-#: src/Services/NotificationService.php:1424
+#: src/Services/NotificationService.php:1421
 #, php-format
 msgid "The buyer accepted your proposal on \"%s\" and the order is now open."
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:1429
+#: src/Services/NotificationService.php:1426
 #, php-format
 msgid "Order #%s is yours — open it to see the brief and start work."
 msgstr ""
 
-#: src/Services/NotificationService.php:1435
+#: src/Services/NotificationService.php:1432
 msgid "Proposal not selected"
 msgstr ""
 
 #. translators: %s: request title
-#: src/Services/NotificationService.php:1439
+#: src/Services/NotificationService.php:1436
 #, php-format
 msgid "The buyer went with another vendor on \"%s\"."
 msgstr ""
 
-#: src/Services/NotificationService.php:1443
+#: src/Services/NotificationService.php:1440
 msgid "Their note:"
 msgstr ""
 
-#: src/Services/NotificationService.php:1445
+#: src/Services/NotificationService.php:1442
 msgid "Nothing is wrong with your account — browse open requests and send another proposal."
 msgstr ""
 
-#: src/Services/NotificationService.php:1449
+#: src/Services/NotificationService.php:1446
 msgid "Your review got a reply"
 msgstr ""
 
 #. translators: 1: vendor name, 2: service name
-#: src/Services/NotificationService.php:1452
+#: src/Services/NotificationService.php:1449
 #, php-format
 msgid "%1$s replied to your review of \"%2$s\"."
 msgstr ""
 
-#: src/Services/NotificationService.php:1457
+#: src/Services/NotificationService.php:1454
 msgid "Reply:"
 msgstr ""
 
-#: src/Services/NotificationService.php:1462
+#: src/Services/NotificationService.php:1459
 msgid "Your request has expired"
 msgstr ""
 
 #. translators: %s: request title
-#: src/Services/NotificationService.php:1465
+#: src/Services/NotificationService.php:1462
 #, php-format
 msgid "Your request \"%s\" reached its closing date and is no longer open to proposals."
 msgstr ""
 
-#: src/Services/NotificationService.php:1468
+#: src/Services/NotificationService.php:1465
 msgid "Post it again if you still need the work done."
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:1475
+#: src/Services/NotificationService.php:1472
 #, php-format
 msgid "The dispute for Order #%s has been escalated to the marketplace team for a decision."
 msgstr ""
 
-#: src/Services/NotificationService.php:1481
+#: src/Services/NotificationService.php:1478
 msgid "A member of the team will review the case and both parties will be told the outcome."
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:1488
+#: src/Services/NotificationService.php:1485
 #, php-format
 msgid "You have been assigned the dispute for Order #%s."
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/NotificationService.php:1497
+#: src/Services/NotificationService.php:1494
 #, php-format
 msgid "The dispute for Order #%s has been withdrawn and the order is back to where it was."
 msgstr ""
 
 #. translators: %s: amount
-#: src/Services/NotificationService.php:1509
+#: src/Services/NotificationService.php:1506
 #, php-format
 msgid "Your withdrawal request for %s has been received and is waiting for review."
 msgstr ""
 
-#: src/Services/NotificationService.php:1515
+#: src/Services/NotificationService.php:1512
 msgid "Notification"
 msgstr ""
 
-#: src/Services/NotificationService.php:1550
+#: src/Services/NotificationService.php:1547
 msgid "Vendor Registration Received"
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/NotificationService.php:1553
+#: src/Services/NotificationService.php:1550
 #, php-format
 msgid "Thank you for registering as a vendor on %s. Your application has been submitted and is pending admin review. We will notify you once your application is approved."
 msgstr ""
 
-#: src/Services/NotificationService.php:1569
+#: src/Services/NotificationService.php:1566
 msgid "Welcome to the Marketplace!"
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/NotificationService.php:1572
+#: src/Services/NotificationService.php:1569
 #, php-format
 msgid "Congratulations! Your vendor account on %s has been created. You can now start creating services and accepting orders."
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/NotificationService.php:1599
+#: src/Services/NotificationService.php:1596
 #, php-format
 msgid "Welcome to %s - Your Vendor Account is Ready!"
 msgstr ""
 
-#: src/Services/NotificationService.php:1603
+#: src/Services/NotificationService.php:1600
 msgid "Congratulations! Your vendor account has been successfully created."
 msgstr ""
 
-#: src/Services/NotificationService.php:1604
+#: src/Services/NotificationService.php:1601
 msgid "You can now:"
 msgstr ""
 
-#: src/Services/NotificationService.php:1606
+#: src/Services/NotificationService.php:1603
 msgid "Create and publish services"
 msgstr ""
 
-#: src/Services/NotificationService.php:1607
+#: src/Services/NotificationService.php:1604
 msgid "Receive and manage orders"
 msgstr ""
 
-#: src/Services/NotificationService.php:1608
+#: src/Services/NotificationService.php:1605
 msgid "Communicate with buyers"
 msgstr ""
 
-#: src/Services/NotificationService.php:1609
+#: src/Services/NotificationService.php:1606
 msgid "Track your earnings"
 msgstr ""
 
-#: src/Services/NotificationService.php:1611
+#: src/Services/NotificationService.php:1608
 msgid "If you have any questions, please don't hesitate to contact us."
 msgstr ""
 
-#: src/Services/NotificationService.php:1628
+#: src/Services/NotificationService.php:1625
 msgid "Welcome aboard"
 msgstr ""
 
-#: src/Services/NotificationService.php:1631
+#: src/Services/NotificationService.php:1628
 #: templates/emails/vendor-approved.php:89
 msgid "Go to Your Dashboard"
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/NotificationService.php:1648
+#: src/Services/NotificationService.php:1645
 #, php-format
 msgid "Vendor Registration Received - %s"
 msgstr ""
 
-#: src/Services/NotificationService.php:1652
+#: src/Services/NotificationService.php:1649
 msgid "Thank you for registering as a vendor on our marketplace!"
 msgstr ""
 
-#: src/Services/NotificationService.php:1653
+#: src/Services/NotificationService.php:1650
 msgid "Your application has been received and is currently under review by our team. We will carefully review your profile and get back to you as soon as possible."
 msgstr ""
 
-#: src/Services/NotificationService.php:1656
+#: src/Services/NotificationService.php:1653
 msgid "Our team will review your application"
 msgstr ""
 
-#: src/Services/NotificationService.php:1657
+#: src/Services/NotificationService.php:1654
 msgid "You will receive an email once a decision has been made"
 msgstr ""
 
-#: src/Services/NotificationService.php:1658
+#: src/Services/NotificationService.php:1655
 msgid "If approved, you can start creating services immediately"
 msgstr ""
 
-#: src/Services/NotificationService.php:1660
+#: src/Services/NotificationService.php:1657
 msgid "If you have any questions in the meantime, please don't hesitate to contact us."
 msgstr ""
 
-#: src/Services/NotificationService.php:1677
+#: src/Services/NotificationService.php:1674
 msgid "Application received"
 msgstr ""
 
 #. translators: %s: vendor display name
-#: src/Services/NotificationService.php:1700
+#: src/Services/NotificationService.php:1697
 #, php-format
 msgid "New Vendor Registration: %s"
 msgstr ""
 
-#: src/Services/NotificationService.php:1704
+#: src/Services/NotificationService.php:1701
 msgid "A new vendor has registered on your marketplace."
 msgstr ""
 
-#: src/Services/NotificationService.php:1708
+#: src/Services/NotificationService.php:1705
 msgid "Username"
 msgstr ""
 
-#: src/Services/NotificationService.php:1712
+#: src/Services/NotificationService.php:1709
 msgid "Registration Date"
 msgstr ""
 
-#: src/Services/NotificationService.php:1730
+#: src/Services/NotificationService.php:1727
 msgid "New Vendor Registration"
 msgstr ""
 
-#: src/Services/NotificationService.php:1733
+#: src/Services/NotificationService.php:1730
 msgid "View All Vendors"
 msgstr ""
 
-#: src/Services/NotificationService.php:1760
+#: src/Services/NotificationService.php:1757
 msgid "Vendor Application Approved"
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/NotificationService.php:1763
+#: src/Services/NotificationService.php:1760
 #, php-format
 msgid "Your vendor application on %s has been approved! You can now create services and start accepting orders."
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/NotificationService.php:1777
+#: src/Services/NotificationService.php:1774
 #, php-format
 msgid "Your Vendor Application Has Been Approved - %s"
 msgstr ""
 
-#: src/Services/NotificationService.php:1783
+#: src/Services/NotificationService.php:1780
 msgid "Application approved"
 msgstr ""
 
-#: src/Services/NotificationService.php:1810
+#: src/Services/NotificationService.php:1807
 msgid "Vendor Application Update"
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/NotificationService.php:1813
+#: src/Services/NotificationService.php:1810
 #, php-format
 msgid "Your vendor application on %s was not approved at this time."
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/NotificationService.php:1823
+#: src/Services/NotificationService.php:1820
 #, php-format
 msgid "Vendor Application Update - %s"
 msgstr ""
 
-#: src/Services/NotificationService.php:1829
+#: src/Services/NotificationService.php:1826
 msgid "Application not approved"
 msgstr ""
 
-#: src/Services/NotificationService.php:1859
+#: src/Services/NotificationService.php:1856
 msgid "Vendor Account Suspended"
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/NotificationService.php:1862
+#: src/Services/NotificationService.php:1859
 #, php-format
 msgid "Your vendor account on %s has been suspended. Your services are hidden and you cannot take new orders until it is reinstated."
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/NotificationService.php:1872
+#: src/Services/NotificationService.php:1869
 #, php-format
 msgid "Your Vendor Account Has Been Suspended - %s"
 msgstr ""
 
-#: src/Services/NotificationService.php:1878
+#: src/Services/NotificationService.php:1875
 msgid "Account suspended"
 msgstr ""
 
-#: src/Services/NotificationService.php:2031
+#: src/Services/NotificationService.php:2028
 msgid "a new phase"
 msgstr ""
 
 #. translators: %s: formatted amount
-#: src/Services/NotificationService.php:2043
+#: src/Services/NotificationService.php:2040
 #, php-format
 msgid "a new phase (%s)"
 msgstr ""
 
 #. translators: 1: phase name, 2: formatted amount
-#: src/Services/NotificationService.php:2047
+#: src/Services/NotificationService.php:2044
 #, php-format
 msgid "\"%1$s\" (%2$s)"
 msgstr ""
 
-#: src/Services/NotificationService.php:2116
+#: src/Services/NotificationService.php:2113
 #: templates/emails/order-cancelled.php:124
 msgid "View Order Details"
 msgstr ""
 
-#: src/Services/NotificationService.php:2116
+#: src/Services/NotificationService.php:2113
 msgid "View Details"
 msgstr ""
 

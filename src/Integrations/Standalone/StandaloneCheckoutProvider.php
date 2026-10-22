@@ -965,7 +965,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		<div class="wpss-checkout-page">
 			<!-- Header bar -->
 			<div class="wpss-co-header">
-				<a href="<?php echo esc_url( get_permalink( $service->id ) ); ?>" class="wpss-co-header__back">
+				<a href="<?php echo esc_url( ( $service->id > 0 ? get_permalink( $service->id ) : home_url( '/' ) ) ); ?>" class="wpss-co-header__back">
 					<span aria-hidden="true">&larr;</span>
 					<?php esc_html_e( 'Back to service', 'wp-sell-services' ); ?>
 				</a>

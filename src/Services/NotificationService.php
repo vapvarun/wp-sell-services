@@ -376,8 +376,7 @@ class NotificationService {
 
 		// Get service and user details (null-safe to prevent PHP 8.1+ deprecation
 		// notices in string functions, which would corrupt AJAX JSON responses).
-		$service      = get_post( $order->service_id );
-		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
+		$service_name = wpss_get_order_title( $order ) ?: __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
 		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
@@ -504,8 +503,7 @@ class NotificationService {
 		}
 
 		// Get service and user details (null-safe for PHP 8.1+ compat).
-		$service      = get_post( $order->service_id );
-		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
+		$service_name = wpss_get_order_title( $order ) ?: __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
 		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
@@ -941,8 +939,8 @@ class NotificationService {
 		$reviewer_name = \WPSellServices\Models\Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null );
 
 		// Get service info.
-		$service      = get_post( $review->service_id );
-		$service_name = $service ? $service->post_title : __( 'your service', 'wp-sell-services' );
+		$reviewed_order = $review->service_id > 0 || ! $review->order_id ? null : wpss_get_order( (int) $review->order_id );
+		$service_name   = ( $review->service_id > 0 ? (string) get_the_title( (int) $review->service_id ) : ( $reviewed_order ? wpss_get_order_title( $reviewed_order ) : '' ) ) ?: __( 'your service', 'wp-sell-services' );
 
 		// Format rating display.
 		$rating       = (int) $review->rating;
@@ -1120,8 +1118,7 @@ class NotificationService {
 		}
 
 		// Get service name.
-		$service      = get_post( $order->service_id );
-		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
+		$service_name = wpss_get_order_title( $order ) ?: __( 'Service', 'wp-sell-services' );
 
 		// Get resolution label.
 		$resolution_labels = array(

@@ -177,6 +177,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-lucide-icons-exist.php"
    },
    {
+    "id": "mark-as-paid-loses-race-quietly",
+    "run": "${WP_CLI:-wp} eval-file tests/test-mark-as-paid-loses-race-quietly.php"
+   },
+   {
     "id": "milestone-decline-messages",
     "run": "${WP_CLI:-wp} eval-file tests/test-milestone-decline-messages.php"
    },
@@ -199,6 +203,10 @@
    {
     "id": "no-defaults-on-update-routes",
     "run": "${WP_CLI:-wp} eval-file tests/test-no-defaults-on-update-routes.php"
+   },
+   {
+    "id": "no-unguarded-order-service-lookup",
+    "run": "${WP_CLI:-wp} eval-file tests/test-no-unguarded-order-service-lookup.php"
    },
    {
     "id": "notification-center-retention",
@@ -239,6 +247,10 @@
    {
     "id": "package-revisions-unlimited-input",
     "run": "${WP_CLI:-wp} eval-file tests/test-package-revisions-unlimited-input.php"
+   },
+   {
+    "id": "paid-sub-order-skips-service-transition",
+    "run": "${WP_CLI:-wp} eval-file tests/test-paid-sub-order-skips-service-transition.php"
    },
    {
     "id": "portfolio-reorder-ownership",
@@ -351,6 +363,10 @@
    {
     "id": "settings-no-negative-numbers",
     "run": "${WP_CLI:-wp} eval-file tests/test-settings-no-negative-numbers.php"
+   },
+   {
+    "id": "settle-confirms-order-paid",
+    "run": "${WP_CLI:-wp} eval-file tests/test-settle-confirms-order-paid.php"
    },
    {
     "id": "smoke-gate-surfaces",

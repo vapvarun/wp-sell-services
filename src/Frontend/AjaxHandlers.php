@@ -2928,13 +2928,12 @@ class AjaxHandlers {
 			);
 
 			foreach ( $orders as $order ) {
-				$service  = get_post( $order->service_id );
 				$customer = get_userdata( $order->customer_id );
 				wpss_fputcsv(
 					$output,
 					array(
 						$order->id,
-						self::sanitize_csv_cell( $service ? $service->post_title : 'N/A' ),
+						self::sanitize_csv_cell( wpss_get_order_title( $order ) ?: 'N/A' ),
 						self::sanitize_csv_cell( $customer ? $customer->display_name : 'N/A' ),
 						$order->status,
 						$order->total,

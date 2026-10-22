@@ -1973,6 +1973,13 @@ class OrderWorkflowManager {
 			return;
 		}
 
+		// A tip, extension or milestone phase owns its lifecycle through its own
+		// wpss_order_paid handler; moving it here first only flickers its status
+		// and writes extra history rows (mark_as_paid skips the same step).
+		if ( in_array( (string) $order->platform, wpss_get_sub_order_platforms(), true ) ) {
+			return;
+		}
+
 		// Transition to pending requirements, or straight to in progress when the service asks for none.
 		// This fires wpss_order_status_changed → Plugin.php handles notifications.
 		$this->order_service->update_status(

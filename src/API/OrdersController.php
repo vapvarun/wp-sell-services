@@ -2039,13 +2039,11 @@ class OrdersController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function prepare_item_for_response( $order, $request ): WP_REST_Response {
-		$service = get_post( $order->service_id );
-
 		$data = array(
 			'id'                  => (int) $order->id,
 			'order_number'        => $order->order_number,
 			'service_id'          => (int) $order->service_id,
-			'service_title'       => $service ? $service->post_title : '',
+			'service_title'       => wpss_get_order_title( $order ),
 			'package_id'          => (int) $order->package_id,
 			// Flat keys KEPT. The app reads them today, so removing them would
 			// break it; they are the compatibility surface and should be retired

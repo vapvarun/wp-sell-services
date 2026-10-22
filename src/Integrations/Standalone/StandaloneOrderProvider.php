@@ -444,8 +444,20 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		$result = $wpdb->update(
 			$table,
 			$update_data,
-			array( 'id' => $order_id )
+			array(
+				'id'             => $order_id,
+				'payment_status' => (string) $order->payment_status,
+			)
 		);
+
+		// Another request recorded this payment between our read and this write
+		// (a webhook and the return page together): it already fired the hooks,
+		// so this one stays silent and reports what is true now.
+		if ( 0 === $result ) {
+			$now = wpss_get_order( $order_id );
+
+			return $now && in_array( (string) $now->payment_status, array( 'paid', 'partially_refunded', 'refunded' ), true );
+		}
 
 		if ( $result ) {
 			// Fire status-change hooks only for real service orders. Sub-orders

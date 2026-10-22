@@ -864,11 +864,59 @@ class CheckoutIntentService {
 
 		$provider->mark_as_paid( $order->id, $txn, $gateway );
 
+		if ( ! $this->confirm_paid( (int) $order->id ) ) {
+			return $this->unconfirmed_payment( array( (int) $order->id ), $gateway, $txn );
+		}
+
 		return array(
 			'success'      => true,
 			'order_id'     => (int) $order->id,
 			'order_number' => $order->order_number,
 			'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_requirements_url( $order->id ), 'intent' ),
+		);
+	}
+
+	/**
+	 * Whether an order really is paid now.
+	 *
+	 * The provider's mark_as_paid() answers false for a closed order, a failed
+	 * update and a lost race. Asked of the order as stored, so a payment a webhook already
+	 * recorded counts and a charge that paid nothing never reads as success.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	private function confirm_paid( int $order_id ): bool {
+		$order = wpss_get_order( $order_id );
+
+		return $order && in_array( (string) $order->payment_status, array( 'paid', 'partially_refunded', 'refunded' ), true );
+	}
+
+	/**
+	 * The answer for a charge that did not pay its order.
+	 *
+	 * The buyer is told the truth and given the reference, and the owner gets an
+	 * error in the log naming the orders and the transaction to review.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param array<int> $order_ids Orders the charge should have paid.
+	 * @param string     $gateway   Gateway slug.
+	 * @param string     $txn       Transaction ID.
+	 * @return array<string,mixed>
+	 */
+	private function unconfirmed_payment( array $order_ids, string $gateway, string $txn ): array {
+		wpss_log( sprintf( '%s payment %s was taken but order(s) %s could not be marked paid. Review this payment.', $gateway, $txn, implode( ', ', $order_ids ) ), 'error' );
+
+		return array(
+			'success' => false,
+			'error'   => sprintf(
+				/* translators: %s: payment reference */
+				__( 'Your payment was received, but the order could not be confirmed. Please contact support and quote this reference: %s', 'wp-sell-services' ),
+				$txn
+			),
 		);
 	}
 
@@ -916,8 +964,17 @@ class CheckoutIntentService {
 			);
 		}
 
+		$unpaid = array();
 		foreach ( $order_ids as $oid ) {
 			$provider->mark_as_paid( (int) $oid, $txn, $gateway );
+
+			if ( ! $this->confirm_paid( (int) $oid ) ) {
+				$unpaid[] = (int) $oid;
+			}
+		}
+
+		if ( $unpaid ) {
+			return $this->unconfirmed_payment( $unpaid, $gateway, $txn );
 		}
 
 		delete_user_meta( $intent->buyer_id, '_wpss_cart' );
@@ -980,6 +1037,10 @@ class CheckoutIntentService {
 		}
 
 		$provider->mark_as_paid( $order->id, $txn, $gateway );
+
+		if ( ! $this->confirm_paid( (int) $order->id ) ) {
+			return $this->unconfirmed_payment( array( (int) $order->id ), $gateway, $txn );
+		}
 
 		// Remove the purchased line from the cart so it can't be re-paid.
 		// settle_cart() clears the whole cart after a multi-item checkout; the

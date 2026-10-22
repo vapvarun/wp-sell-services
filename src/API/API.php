@@ -1228,11 +1228,10 @@ class API {
 
 			$data['pending_orders'] = array_map(
 				function ( $order ) {
-					$service = get_post( $order->service_id );
 					return [
 						'id'           => (int) $order->id,
 						'order_number' => $order->order_number,
-						'service'      => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
+						'service'      => wpss_get_order_title( $order ) ?: __( 'Deleted Service', 'wp-sell-services' ),
 						'total'        => wpss_format_currency( (float) $order->total, $order->currency ),
 						'created_at'   => wpss_rest_date( $order->created_at ),
 					];
