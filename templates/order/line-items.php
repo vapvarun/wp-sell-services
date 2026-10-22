@@ -22,10 +22,11 @@ if ( empty( $wpss_order ) ) {
 	return;
 }
 
-$wpss_items    = $wpss_order->get_items();
-$wpss_currency = (string) $wpss_order->currency;
-$wpss_tax      = (float) ( $wpss_order->meta['tax_amount'] ?? 0 );
-$wpss_included = ! empty( $wpss_order->meta['tax_included'] );
+$wpss_items     = $wpss_order->get_items();
+$wpss_currency  = (string) $wpss_order->currency;
+$wpss_tax       = (float) ( $wpss_order->meta['tax_amount'] ?? 0 );
+$wpss_included  = ! empty( $wpss_order->meta['tax_included'] );
+$wpss_tax_label = wpss_get_order_tax( $wpss_order )['label'];
 ?>
 <table class="wpss-line-items">
 	<caption class="screen-reader-text"><?php esc_html_e( 'What this order includes', 'wp-sell-services' ); ?></caption>
@@ -47,7 +48,14 @@ $wpss_included = ! empty( $wpss_order->meta['tax_included'] );
 		<?php if ( $wpss_tax > 0 ) : ?>
 			<tr class="wpss-line-items__tax">
 				<th scope="row" class="wpss-line-items__name">
-					<?php echo $wpss_included ? esc_html__( 'Tax (included)', 'wp-sell-services' ) : esc_html__( 'Tax', 'wp-sell-services' ); ?>
+					<?php
+					echo esc_html(
+						$wpss_included
+							/* translators: %s: tax label, e.g. VAT */
+							? sprintf( __( '%s (included)', 'wp-sell-services' ), $wpss_tax_label )
+							: $wpss_tax_label
+					);
+					?>
 				</th>
 				<td class="wpss-line-items__amount"><?php echo esc_html( wpss_format_price( $wpss_tax, $wpss_currency ) ); ?></td>
 			</tr>

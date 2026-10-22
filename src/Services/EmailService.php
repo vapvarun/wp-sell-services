@@ -282,7 +282,7 @@ class EmailService {
 		$vendor   = get_user_by( 'id', $order->vendor_id );
 		$customer = get_user_by( 'id', $order->customer_id );
 
-		$service_title = get_the_title( $order->service_id );
+		$service_title = wpss_get_order_title( $order );
 
 		// Send to vendor.
 		if ( $vendor ) {
@@ -1714,7 +1714,7 @@ class EmailService {
 			'reminder_num'  => $reminder_num,
 			'message'       => $message,
 			'vendor_name'   => $this->get_vendor_name( $order->vendor_id ),
-			'service_title' => get_the_title( $order->service_id ),
+			'service_title' => wpss_get_order_title( $order ),
 		);
 
 		return $this->send( $customer->user_email, $subject, self::TYPE_REQUIREMENTS_REMINDER, $template_vars );

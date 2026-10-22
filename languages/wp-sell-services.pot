@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-22T03:35:02+00:00\n"
+"POT-Creation-Date: 2026-10-22T03:54:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -583,9 +583,9 @@ msgid "Services awaiting moderation"
 msgstr ""
 
 #: src/Admin/Admin.php:1965
-#: src/Admin/Pages/ReportsPage.php:183
-#: src/Admin/Pages/ReportsPage.php:194
-#: src/Admin/Pages/ReportsPage.php:278
+#: src/Admin/Pages/ReportsPage.php:165
+#: src/Admin/Pages/ReportsPage.php:176
+#: src/Admin/Pages/ReportsPage.php:260
 msgid "Member reports"
 msgstr ""
 
@@ -744,7 +744,7 @@ msgstr ""
 #: templates/emails/revision-requested.php:77
 #: templates/myaccount/service-orders.php:73
 #: templates/myaccount/service-orders.php:96
-#: templates/order/order-requirements.php:98
+#: templates/order/order-requirements.php:96
 msgid "Service"
 msgstr ""
 
@@ -760,8 +760,8 @@ msgstr ""
 #: templates/emails/order-completed.php:92
 #: templates/myaccount/service-orders.php:75
 #: templates/myaccount/service-orders.php:121
-#: templates/order/line-items.php:58
-#: templates/order/order-requirements.php:125
+#: templates/order/line-items.php:66
+#: templates/order/order-requirements.php:123
 msgid "Total"
 msgstr ""
 
@@ -969,7 +969,7 @@ msgstr ""
 #: templates/emails/order-in-progress.php:78
 #: templates/emails/requirements-submitted.php:64
 #: templates/emails/revision-requested.php:71
-#: templates/order/order-requirements.php:103
+#: templates/order/order-requirements.php:101
 #: templates/order/order-view.php:145
 #, php-format
 msgid "Order #%s"
@@ -1006,7 +1006,7 @@ msgstr ""
 #: src/Admin/Admin.php:2501
 #: src/Admin/Pages/ManualOrderPage.php:172
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1082
-#: templates/order/order-requirements.php:118
+#: templates/order/order-requirements.php:116
 msgid "Order Details"
 msgstr ""
 
@@ -1458,8 +1458,8 @@ msgid "Dispute Details"
 msgstr ""
 
 #: src/Admin/Admin.php:3319
-#: src/Admin/Pages/ReportsPage.php:341
-#: src/Admin/Pages/ReportsPage.php:362
+#: src/Admin/Pages/ReportsPage.php:323
+#: src/Admin/Pages/ReportsPage.php:344
 #: src/Admin/Tables/DisputesListTable.php:57
 #: src/Privacy/PersonalData.php:270
 #: src/Privacy/PersonalData.php:329
@@ -2488,8 +2488,8 @@ msgstr ""
 
 #: src/Admin/Pages/AuditLogPage.php:284
 #: src/Admin/Pages/AuditLogPage.php:341
-#: src/Admin/Pages/ReportsPage.php:344
-#: src/Admin/Pages/ReportsPage.php:378
+#: src/Admin/Pages/ReportsPage.php:326
+#: src/Admin/Pages/ReportsPage.php:360
 msgid "When"
 msgstr ""
 
@@ -2721,7 +2721,6 @@ msgstr ""
 #: src/functions/money.php:239
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1799
 #: templates/cart/cart.php:593
-#: templates/order/line-items.php:50
 msgid "Tax"
 msgstr ""
 
@@ -2906,7 +2905,7 @@ msgstr ""
 #: templates/dashboard/partials/order-row.php:81
 #: templates/emails/new-order.php:123
 #: templates/myaccount/service-orders.php:154
-#: templates/order/order-requirements.php:76
+#: templates/order/order-requirements.php:74
 #: templates/order/order-view.php:336
 #: templates/order/order-view.php:944
 #: templates/order/requirements-form.php:342
@@ -2960,9 +2959,11 @@ msgid "Enter a price for this order: the package and service have none."
 msgstr ""
 
 #. translators: %s: tax label, e.g. VAT.
+#. translators: %s: tax label, e.g. VAT
 #: src/Admin/Pages/ManualOrderPage.php:917
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1805
 #: templates/cart/cart.php:602
+#: templates/order/line-items.php:55
 #, php-format
 msgid "%s (included)"
 msgstr ""
@@ -3057,26 +3058,26 @@ msgstr ""
 msgid "Suspended and closed members cannot list, bid, buy or start conversations, on the website or in the app. They can still finish orders a buyer has already paid for, so nobody loses work they paid for."
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:230
+#: src/Admin/Pages/ReportsPage.php:212
 #: templates/order/order-requirements.php:45
 msgid "You do not have permission to view this page."
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:281
+#: src/Admin/Pages/ReportsPage.php:263
 msgid "What members have reported to you, newest first. Acting on a member here applies everywhere: on the website and in the app."
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:287
-#: src/Admin/Pages/ReportsPage.php:299
+#: src/Admin/Pages/ReportsPage.php:269
+#: src/Admin/Pages/ReportsPage.php:281
 msgid "Needs review"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:291
-#: src/Admin/Pages/ReportsPage.php:300
+#: src/Admin/Pages/ReportsPage.php:273
+#: src/Admin/Pages/ReportsPage.php:282
 msgid "Dealt with"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:301
+#: src/Admin/Pages/ReportsPage.php:283
 #: src/Admin/Pages/ReviewModerationPage.php:294
 #: src/Admin/Pages/ServiceModerationPage.php:391
 #: src/Admin/Pages/VendorsPage.php:678
@@ -3088,36 +3089,36 @@ msgstr ""
 msgid "All"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:327
+#: src/Admin/Pages/ReportsPage.php:309
 msgid "Nothing needs your attention"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:328
+#: src/Admin/Pages/ReportsPage.php:310
 msgid "No reports here"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:332
+#: src/Admin/Pages/ReportsPage.php:314
 msgid "Reports members file from the website or the app arrive here."
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:340
-#: src/Admin/Pages/ReportsPage.php:356
+#: src/Admin/Pages/ReportsPage.php:322
+#: src/Admin/Pages/ReportsPage.php:338
 #: src/Privacy/PersonalData.php:328
 msgid "Reported"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:342
-#: src/Admin/Pages/ReportsPage.php:363
+#: src/Admin/Pages/ReportsPage.php:324
+#: src/Admin/Pages/ReportsPage.php:345
 msgid "What"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:343
-#: src/Admin/Pages/ReportsPage.php:377
+#: src/Admin/Pages/ReportsPage.php:325
+#: src/Admin/Pages/ReportsPage.php:359
 msgid "Filed by"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:345
-#: src/Admin/Pages/ReportsPage.php:390
+#: src/Admin/Pages/ReportsPage.php:327
+#: src/Admin/Pages/ReportsPage.php:372
 #: src/Admin/Pages/ReviewModerationPage.php:367
 #: src/Admin/Pages/ServiceModerationPage.php:459
 #: src/Admin/Pages/ServiceModerationPage.php:479
@@ -3134,22 +3135,22 @@ msgid "Actions"
 msgstr ""
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
-#: src/Admin/Pages/ReportsPage.php:384
+#: src/Admin/Pages/ReportsPage.php:366
 #: templates/partials/notifications-list.php:180
 #, php-format
 msgid "%s ago"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:392
+#: src/Admin/Pages/ReportsPage.php:374
 msgid "Uphold"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:393
+#: src/Admin/Pages/ReportsPage.php:375
 #: src/Assets/ScriptRegistry.php:140
 msgid "Dismiss"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:402
+#: src/Admin/Pages/ReportsPage.php:384
 #: src/Frontend/UnifiedDashboard.php:574
 #: templates/emails/vendor-approved.php:55
 #: templates/emails/vendor-rejected.php:54
@@ -3157,44 +3158,44 @@ msgstr ""
 msgid "Account"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:404
+#: src/Admin/Pages/ReportsPage.php:386
 msgid "Suspend member"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:405
+#: src/Admin/Pages/ReportsPage.php:387
 msgid "Close account"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:409
+#: src/Admin/Pages/ReportsPage.php:391
 msgid "Restore member"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:419
+#: src/Admin/Pages/ReportsPage.php:401
 msgid "Reports pages"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:429
+#: src/Admin/Pages/ReportsPage.php:411
 msgid "&laquo; Previous"
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:430
+#: src/Admin/Pages/ReportsPage.php:412
 msgid "Next &raquo;"
 msgstr ""
 
 #. translators: %s: member display name
-#: src/Admin/Pages/ReportsPage.php:510
+#: src/Admin/Pages/ReportsPage.php:492
 #, php-format
 msgid "Suspend %s? They will not be able to list, bid, buy or start conversations. Orders already paid for can still be completed."
 msgstr ""
 
 #. translators: %s: member display name
-#: src/Admin/Pages/ReportsPage.php:515
+#: src/Admin/Pages/ReportsPage.php:497
 #, php-format
 msgid "Close %s's account? Same restrictions as suspending, and it reads to them as permanent. Orders already paid for can still be completed."
 msgstr ""
 
-#: src/Admin/Pages/ReportsPage.php:548
-#: src/Admin/Pages/ReportsPage.php:573
+#: src/Admin/Pages/ReportsPage.php:530
+#: src/Admin/Pages/ReportsPage.php:591
 #: src/Integrations/Gateways/OfflineGateway.php:1179
 msgid "You do not have permission to do that."
 msgstr ""
@@ -8058,7 +8059,7 @@ msgstr ""
 #: src/Privacy/PersonalData.php:351
 #: src/Privacy/PersonalData.php:507
 #: templates/dashboard/partials/order-filters.php:86
-#: templates/order/order-requirements.php:122
+#: templates/order/order-requirements.php:120
 #: templates/order/order-view.php:631
 msgid "Order number"
 msgstr ""
@@ -14205,94 +14206,94 @@ msgstr ""
 msgid "This order has already been paid."
 msgstr ""
 
-#: src/functions/orders.php:702
+#: src/functions/orders.php:735
 msgid "Payment Reference"
 msgstr ""
 
 #. translators: %s: parent order number.
-#: src/functions/orders.php:750
+#: src/functions/orders.php:783
 #, php-format
 msgid "Tip on order #%s"
 msgstr ""
 
 #. translators: %s: parent order number.
-#: src/functions/orders.php:752
+#: src/functions/orders.php:785
 #, php-format
 msgid "Extension on order #%s"
 msgstr ""
 
 #. translators: %s: parent order number.
-#: src/functions/orders.php:754
+#: src/functions/orders.php:787
 #, php-format
 msgid "Milestone of order #%s"
 msgstr ""
 
 #. translators: %s: sub-order platform (Tip/Extension/Milestone).
-#: src/functions/orders.php:771
+#: src/functions/orders.php:804
 #, php-format
 msgid "%s sub-order (parent missing)"
 msgstr ""
 
 #. translators: %s: buyer request title.
-#: src/functions/orders.php:785
-#: src/functions/orders.php:811
+#: src/functions/orders.php:818
+#: src/functions/orders.php:844
 #, php-format
 msgid "Request: %s"
 msgstr ""
 
-#: src/functions/orders.php:814
+#: src/functions/orders.php:847
 #: src/Services/EmailService.php:2033
 msgid "Buyer request"
 msgstr ""
 
-#: src/functions/orders.php:821
+#: src/functions/orders.php:854
 msgid "No service linked"
 msgstr ""
 
 #. translators: %d: removed service post ID.
-#: src/functions/orders.php:832
+#: src/functions/orders.php:865
 #, php-format
 msgid "Deleted service #%d"
 msgstr ""
 
-#: src/functions/orders.php:911
+#: src/functions/orders.php:944
 msgid "Payment proof received. We will confirm it shortly and let you know."
 msgstr ""
 
-#: src/functions/orders.php:912
+#: src/functions/orders.php:945
 msgid "Order placed and waiting for your payment. Work starts once it is confirmed."
 msgstr ""
 
-#: src/functions/orders.php:940
+#: src/functions/orders.php:973
 msgid "Only the buyer can order this again."
 msgstr ""
 
-#: src/functions/orders.php:955
+#: src/functions/orders.php:988
 msgid "This order cannot be ordered again."
 msgstr ""
 
-#: src/functions/orders.php:976
+#: src/functions/orders.php:1009
 msgid "The package you bought is no longer offered. Open the service to choose another."
 msgstr ""
 
 #. translators: %s: comma-separated add-on names
-#: src/functions/orders.php:1012
+#: src/functions/orders.php:1045
 #, php-format
 msgid "No longer available, so left out: %s."
 msgstr ""
 
-#: src/functions/orders.php:1013
+#: src/functions/orders.php:1046
 msgid "an add-on from your last order"
 msgstr ""
 
 #. translators: 1: quantity on the last order, 2: quantity added now
-#: src/functions/orders.php:1020
+#: src/functions/orders.php:1053
 #, php-format
 msgid "You bought %1$d last time; this store sells %2$d per order, so %2$d is added."
 msgstr ""
 
 #. translators: 1: price on the last order, 2: price today
-#: src/functions/orders.php:1034
+#: src/functions/orders.php:1067
 #, php-format
 msgid "The price has changed since your last order: it was %1$s and is now %2$s."
 msgstr ""
@@ -17255,7 +17256,7 @@ msgstr ""
 #: src/Services/EmailService.php:771
 #: src/Services/EmailService.php:870
 #: src/Services/EmailService.php:1014
-#: templates/order/order-requirements.php:147
+#: templates/order/order-requirements.php:145
 msgid "Your vendor"
 msgstr ""
 
@@ -21526,12 +21527,8 @@ msgstr ""
 msgid "View original order"
 msgstr ""
 
-#: templates/order/line-items.php:31
+#: templates/order/line-items.php:32
 msgid "What this order includes"
-msgstr ""
-
-#: templates/order/line-items.php:50
-msgid "Tax (included)"
 msgstr ""
 
 #. translators: %s: parent order number link
@@ -21670,33 +21667,33 @@ msgid "Cancel this phase proposal? This removes it and cannot be undone."
 msgstr ""
 
 #. translators: %s: vendor name
-#: templates/order/order-requirements.php:81
+#: templates/order/order-requirements.php:79
 #, php-format
 msgid "Please provide the information %s needs to start working on your order."
 msgstr ""
 
-#: templates/order/order-requirements.php:129
+#: templates/order/order-requirements.php:127
 #: templates/single-request.php:462
 msgid "Expected Delivery"
 msgstr ""
 
-#: templates/order/order-requirements.php:177
+#: templates/order/order-requirements.php:175
 msgid "Need Help?"
 msgstr ""
 
-#: templates/order/order-requirements.php:180
+#: templates/order/order-requirements.php:178
 msgid "Be as detailed as possible so the vendor can deliver exactly what you need."
 msgstr ""
 
-#: templates/order/order-requirements.php:182
+#: templates/order/order-requirements.php:180
 msgid "Include all relevant information"
 msgstr ""
 
-#: templates/order/order-requirements.php:183
+#: templates/order/order-requirements.php:181
 msgid "Attach reference files if helpful"
 msgstr ""
 
-#: templates/order/order-requirements.php:184
+#: templates/order/order-requirements.php:182
 msgid "Mention any specific preferences"
 msgstr ""
 

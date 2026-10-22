@@ -50,4 +50,21 @@ if ( $has ) {
 $legacy = (object) array( 'meta' => wp_json_encode( array( 'tax_rate' => 10, 'tax_amount' => 5 ) ) );
 $check( 'an order without a stored label reads the current setting label', 'Sales tax' === wpss_get_order_tax( $legacy )['label'], wpss_get_order_tax( $legacy )['label'] );
 
+// The order screens print that label, not a generic "Tax".
+global $wpdb;
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$any = (int) $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}wpss_orders LIMIT 1" );
+$po  = $any ? wpss_get_order( $any ) : null;
+if ( $po ) {
+	$po->meta = array_merge( (array) $po->meta, array( 'tax_amount' => 5.0, 'tax_label' => 'GST', 'tax_included' => false ) );
+	$wpss_order = $po;
+	ob_start();
+	include dirname( __DIR__ ) . '/templates/order/line-items.php';
+	$html = (string) ob_get_clean();
+	$check( 'line items print the order tax label', false !== strpos( $html, '>GST<' ) || false !== strpos( $html, 'GST' ) );
+}
+
+$mail = (string) file_get_contents( dirname( __DIR__ ) . '/src/Services/EmailService.php' );
+$check( 'order emails take the title from wpss_get_order_title()', false === strpos( $mail, 'get_the_title( $order->service_id )' ) );
+
 exit( $fails ? 1 : 0 );

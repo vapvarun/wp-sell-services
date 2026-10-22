@@ -107,7 +107,7 @@ class CheckoutIntentService {
 				'service_id'  => (int) $order->service_id,
 				'customer_id' => $buyer_id,
 				/* translators: %d: order ID */
-				'description' => wp_strip_all_tags( get_the_title( (int) $order->service_id ) ) ?: sprintf( __( 'Order #%d', 'wp-sell-services' ), $order_id ),
+				'description' => wp_strip_all_tags( wpss_get_order_title( $order ) ) ?: sprintf( __( 'Order #%d', 'wp-sell-services' ), $order_id ),
 			)
 		);
 	}

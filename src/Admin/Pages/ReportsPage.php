@@ -150,25 +150,7 @@ class ReportsPage {
 			return;
 		}
 
-		( new \WPSellServices\Services\AuditLogService() )->log(
-			'member.account_status',
-			'user',
-			$user_id,
-			array(
-				'action'     => $status,
-				'from_value' => (string) ( get_user_meta( $user_id, 'wpss_account_status', true ) ?: 'active' ),
-				'to_value'   => $status,
-			)
-		);
-
-		if ( 'active' === $status ) {
-			delete_user_meta( $user_id, 'wpss_account_status' );
-		} else {
-			update_user_meta( $user_id, 'wpss_account_status', $status );
-		}
-
-		/** This action is documented in src/Admin/Pages/ReportsPage.php */
-		do_action( 'wpss_account_status_changed', $user_id, $status );
+		self::set_account_status( $user_id, $status );
 	}
 
 	/**
@@ -560,6 +542,42 @@ class ReportsPage {
 	}
 
 	/**
+	 * Set a member's account standing: the one writer for the profile field and the queue row action.
+	 *
+	 * @param int    $user_id Member.
+	 * @param string $status  active, suspended or banned.
+	 * @return void
+	 */
+	private static function set_account_status( int $user_id, string $status ): void {
+		( new \WPSellServices\Services\AuditLogService() )->log(
+			'member.account_status',
+			'user',
+			$user_id,
+			array(
+				'action'     => $status,
+				'from_value' => (string) ( get_user_meta( $user_id, 'wpss_account_status', true ) ?: 'active' ),
+				'to_value'   => $status,
+			)
+		);
+
+		if ( 'active' === $status ) {
+			delete_user_meta( $user_id, 'wpss_account_status' );
+		} else {
+			update_user_meta( $user_id, 'wpss_account_status', $status );
+		}
+
+		/**
+		 * Fires when an owner changes a member's account standing.
+		 *
+		 * @since 1.5.1
+		 *
+		 * @param int    $user_id Member.
+		 * @param string $status  New standing.
+		 */
+		do_action( 'wpss_account_status_changed', $user_id, $status );
+	}
+
+	/**
 	 * Set a member's account standing.
 	 *
 	 * @return void
@@ -585,21 +603,7 @@ class ReportsPage {
 			$this->redirect_back( 'is_admin' );
 		}
 
-		if ( 'active' === $status ) {
-			delete_user_meta( $user_id, 'wpss_account_status' );
-		} else {
-			update_user_meta( $user_id, 'wpss_account_status', $status );
-		}
-
-		/**
-		 * Fires when an owner changes a member's account standing.
-		 *
-		 * @since 1.5.1
-		 *
-		 * @param int    $user_id Member.
-		 * @param string $status  New standing.
-		 */
-		do_action( 'wpss_account_status_changed', $user_id, $status );
+		self::set_account_status( $user_id, $status );
 
 		$this->redirect_back( 'standing_' . $status );
 	}

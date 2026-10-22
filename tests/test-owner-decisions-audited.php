@@ -46,7 +46,7 @@ $report_id = 0;
 
 $restore = static function () use ( $wpdb, $audit, $audit_before, $reports, &$report_id, $disputes, $dispute ) {
 	// phpcs:disable WordPress.DB.DirectDatabaseQuery
-	$wpdb->query( $wpdb->prepare( "DELETE FROM {$audit} WHERE id > %d AND event_type IN ('report.resolve','dispute.assign')", $audit_before ) );
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$audit} WHERE id > %d AND event_type IN ('report.resolve','dispute.assign','member.account_status')", $audit_before ) );
 	if ( $report_id ) {
 		$wpdb->delete( $reports, array( 'id' => $report_id ) );
 	}
@@ -84,6 +84,21 @@ if ( $dispute ) {
 	$check( 'assigning a dispute writes one audit row', 1 === $n, (string) $n );
 } else {
 	echo "SKIP  no dispute on this install\n";
+}
+
+// The queue row action and the profile field share one standing setter, so both are audited.
+$qa_user = wp_insert_user( array( 'user_login' => 'qa-audit-standing', 'user_pass' => wp_generate_password(), 'user_email' => 'qa-audit-standing@example.test' ) );
+if ( ! is_wp_error( $qa_user ) ) {
+	$method = method_exists( \WPSellServices\Admin\Pages\ReportsPage::class, 'set_account_status' ) ? new ReflectionMethod( \WPSellServices\Admin\Pages\ReportsPage::class, 'set_account_status' ) : null;
+	if ( $method ) {
+		$method->setAccessible( true );
+		$method->invoke( null, (int) $qa_user, 'suspended' );
+	}
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	$n = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$audit} WHERE id > %d AND event_type = 'member.account_status' AND object_id = %d", $audit_before, $qa_user ) );
+	$check( 'changing a standing writes one audit row', 1 === $n, (string) $n );
+	require_once ABSPATH . 'wp-admin/includes/user.php';
+	wp_delete_user( (int) $qa_user );
 }
 
 exit( $fails ? 1 : 0 );
