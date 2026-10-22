@@ -287,6 +287,9 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Improve  - The Earnings ledger follows the chosen period, and the cart tax line names the rate like checkout does.
 * Improve  - Vendor profiles show the website and edit the social links from the dashboard.
 * Improve  - Contact Vendor says which attachments were skipped, and notification and ledger buttons are 44px tall on phones.
+* Improve  - Reviews written for an order show a Verified Purchase badge, and the owner is emailed when a service enters the review queue from the dashboard wizard or the REST API.
+* Improve  - Orders keep the tax label they were priced with, so renaming the Tax label later does not change past orders.
+* Improve  - Resolving a member report, assigning a dispute and changing a member's standing are recorded in the Audit Log.
 * Fix      - CSV exports no longer log a PHP 8.4 deprecation.
 * Fix      - Portfolio reordering refuses another vendor's items.
 * Fix      - A dispute opener can no longer cancel after escalation, and repeat notices are not sent.
@@ -316,6 +319,12 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - The admin order screen shows the contract total for milestone projects.
 * Fix      - An unpaid milestone, tip or extension no longer credits the vendor's wallet when an admin marks the order completed.
 * Fix      - The Extra Work and tip cards have inset spacing on mobile.
+* Fix      - Publishing from the dashboard, the wizard or the REST API all enforce the vendor's service limit, and the limit shown on the dashboard follows the vendor's plan.
+* Fix      - Publishing a pending service from the editor now approves it instead of putting it back in the review queue.
+* Fix      - The package editor accepts -1 for unlimited revisions.
+* Fix      - Request orders show the request title on the requirements page and in order emails instead of the page the buyer was on.
+* Fix      - The service gallery thumbnail strip no longer widens the page on phones, and the Quick Edit refresh in the service list no longer logs a PHP warning.
+* Fix      - The withdrawal confirmation stays on screen before the page refreshes.
 * Dev      - Updating removes the retired Helpful vote options and cleanup job; the helpful_count column is left in place.
 * Dev      - ReviewRepository::rating_stats() is the one rating query, and ReviewService::create_imported() the one door for imported reviews.
 * Dev      - Removed unused classes (FAQService, three repositories and the admin viewer data classes).
