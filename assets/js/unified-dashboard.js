@@ -21,6 +21,21 @@
 		init: function () {
 			this.bindEvents();
 			this.initWalletLedger();
+			this.showFlash();
+		},
+
+		/**
+		 * Show the confirmation a submit left for the page it reloaded into.
+		 */
+		showFlash: function () {
+			var text = null;
+			try {
+				text = window.sessionStorage.getItem('wpssWithdrawalFlash');
+				window.sessionStorage.removeItem('wpssWithdrawalFlash');
+			} catch (e) {}
+			if (text) {
+				$('#wpss-withdrawal-message').removeClass('wpss-notice--error').addClass('wpss-notice--success').text(text).show();
+			}
 		},
 
 		/**
@@ -641,10 +656,11 @@
 				},
 				success: function () {
 					show(wpssUnifiedDashboard.i18n.withdrawalSubmitted, 'success');
-					// Long enough to read the confirmation before the history list refreshes.
-					setTimeout(function () {
-						window.location.reload();
-					}, 1800);
+					// The reload refreshes the history list; the reloaded page shows the confirmation again.
+					try {
+						window.sessionStorage.setItem('wpssWithdrawalFlash', wpssUnifiedDashboard.i18n.withdrawalSubmitted);
+					} catch (e) {}
+					window.location.reload();
 				},
 				error: function (xhr) {
 					show((xhr.responseJSON && xhr.responseJSON.message) || wpssUnifiedDashboard.i18n.errorOccurred, 'error');

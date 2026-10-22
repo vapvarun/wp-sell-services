@@ -367,7 +367,7 @@
   {
    "id": "WALK:withdrawal-confirmation-wiped",
    "fixed_in": "04fc5412",
-   "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. The confirmation stays visible 1.8s before the refresh; message region has role=status. Code-level only; not browser-submitted to avoid writing a payout."
+   "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. The confirmation is kept in sessionStorage across the reload and shown on the reloaded page (role=status); browser-verified by injecting the flag. Walk F1 found the first version (a 1.8s delay) still showed nothing after reload."
   },
   {
    "id": "WALK:buyer-requests-empty-icon-blank",
