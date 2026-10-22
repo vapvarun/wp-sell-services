@@ -29,6 +29,7 @@ file_put_contents(
 	. 'wp_insert_user( array( "user_login" => ' . var_export( $tag, true ) . ', "user_pass" => "x", "user_email" => ' . var_export( $tag . '@example.test', true ) . " ) );\n"
 	. 'wp_insert_post( array( "post_type" => "wpss_service", "post_status" => "publish", "post_title" => ' . var_export( $tag, true ) . " ) );\n"
 	. 'wp_update_post( array( "ID" => ' . $keep . ', "post_title" => ' . var_export( $tag . '-kept', true ) . " ) );\n"
+	. '$GLOBALS["wpdb"]->insert( $GLOBALS["wpdb"]->prefix . "wpss_audit_log", array( "event_type" => "qa.sweep", "object_type" => "qa", "object_id" => 1, "actor_id" => 0, "created_at" => gmdate( "Y-m-d H:i:s" ) ) );' . "\n"
 	. "echo \"FAIL deliberate\\n\";\nreturn;\n"
 );
 
@@ -43,6 +44,8 @@ $check( 'the child ran and failed on purpose', 1 === $status, $status . ' ' . im
 $check( 'its user was removed', 0 === $user, (string) $user );
 $check( 'its service was removed', 0 === $post, (string) $post );
 $kept = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE ID = %d", $keep ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the child process deleted rows this process may still have cached.
+$audit_left = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wpss_audit_log WHERE event_type = 'qa.sweep'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$check( 'the audit row it wrote was removed', 0 === $audit_left, (string) $audit_left );
 $check( 'a post it only updated is still there', 1 === $kept );
 
 if ( $user ) {
@@ -52,5 +55,6 @@ if ( $user ) {
 if ( $post ) {
 	wp_delete_post( $post, true );
 }
+$wpdb->delete( $wpdb->prefix . 'wpss_audit_log', array( 'event_type' => 'qa.sweep' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 wp_delete_post( $keep, true );
 wp_delete_file( $child );

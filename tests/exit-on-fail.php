@@ -69,6 +69,13 @@ register_shutdown_function(
 // remove what it left, once everything else has had its turn.
 $GLOBALS['wpss_test_created'] = array( 'users' => array(), 'posts' => array() );
 
+// Audit rows written while the script ran (imports, deletes, status changes) go
+// with it, so the Audit Log screen shows the site's history and not the suite's.
+global $wpdb;
+$GLOBALS['wpss_test_audit_mark'] = ( isset( $wpdb ) && $wpdb->get_var( "SHOW TABLES LIKE '{$wpdb->prefix}wpss_audit_log'" ) ) // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	? (int) $wpdb->get_var( "SELECT COALESCE(MAX(id),0) FROM {$wpdb->prefix}wpss_audit_log" ) // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	: null;
+
 if ( function_exists( 'add_action' ) ) {
 	add_action(
 		'user_register',
@@ -112,6 +119,11 @@ if ( ! function_exists( 'wpss_test_sweep_created_rows' ) ) {
 			if ( 1 !== $user_id && get_userdata( $user_id ) ) {
 				wp_delete_user( $user_id );
 			}
+		}
+
+		global $wpdb;
+		if ( null !== $GLOBALS['wpss_test_audit_mark'] ) {
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}wpss_audit_log WHERE id > %d", $GLOBALS['wpss_test_audit_mark'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		}
 	}
 }
