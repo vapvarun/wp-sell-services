@@ -52,11 +52,9 @@ if ( ! in_array( $order->status, array( 'pending_requirements', 'pending_payment
 	exit;
 }
 
-$service = get_post( $order->service_id );
+$service = $order->service_id ? get_post( $order->service_id ) : null;
 
-// A request order has no service post: its title is the request the proposal answered.
-$order_meta  = is_string( $order->meta ?? null ) ? (array) json_decode( $order->meta, true ) : (array) ( $order->meta ?? array() );
-$order_title = $service ? $service->post_title : (string) ( $order_meta['proposal_snapshot']['request_title'] ?? '' );
+$order_title = wpss_get_order_title( $order );
 $vendor      = get_userdata( $order->vendor_id );
 
 /**

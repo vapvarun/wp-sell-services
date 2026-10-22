@@ -1,79 +1,79 @@
 {
   "journey": "03",
-  "sha_free": "c21a7c05",
-  "sha_pro": "e4ac7141",
+  "sha_free": "e742c62b",
+  "sha_pro": "251dea0",
   "env": {
     "site": "http://wp-sell-services.local",
     "theme": "reign-theme",
-    "rail": "standalone",
+    "rail": "standalone (ecommerce_platform set to standalone for this walk, restored to auto); Free + Pro both active, WooCommerce active",
     "wp": "7.1.3"
   },
-  "ran_at": "2026-10-21T02:00:00Z",
+  "ran_at": "2026-10-21T19:30:00Z",
   "checks": [
     {
       "id": "A1-activation-succeeds",
-      "result": "pass",
-      "evidence": "wp plugin deactivate/activate free+pro x3 with WooCommerce active: 'Activated 2 of 2', both active after, 0 new wp-sell-services lines in debug.log."
+      "result": "untested",
+      "evidence": "wp plugin deactivate/activate of Free+Pro (Woo active) was denied by the environment's permission classifier, so no activation was performed. Plugin state is untouched. Needs permission to cycle the plugins."
     },
     {
       "id": "A1-fresh-activation-no-pages",
       "result": "untested",
-      "evidence": "A site with no WPSS pages was not available; existing pages were not removed for an activation from scratch."
+      "evidence": "Needs a site with no WPSS pages; trashing the existing pages was denied by the permission classifier. Not walked."
     },
     {
       "id": "A2-six-pages-slugs",
       "result": "fail",
-      "evidence": "Existing site: WPSS Cart page (id 8) has slug 'cart' ([wpss_cart]) while WooCommerce's real cart is 'cart-2' (id 17) and Woo checkout is 'checkout' with a stray 'checkout-2' (id 13049, EDD block, created 2026-10-20 18:55 by an earlier EDD activation); WPSS checkout slug 'service-checkout', services/vendors/dashboard/become-a-vendor present. Journey expects cart = 'service-cart' and Woo keeping /cart/. Not recreated by a fresh activation in this walk, so recorded as an environment state failure."
+      "evidence": "Existing site state: wpss_pages maps 8 pages; WPSS cart is page 8 titled 'Cart' slug 'cart' ([wpss_cart]) while WooCommerce's cart is page 17 slug 'cart-2' (Woo checkout 18 'checkout', stray 'checkout-2' 13049); become_vendor slug is 'become-a-vendor' (journey: become-vendor); no 'service-cart' page exists. Journey expects cart=service-cart and Woo keeping /cart/. Not recreated by a fresh activation (not testable here), so this is the seeded dev DB state. Origin: for (seed), soft."
     },
     {
       "id": "A3-nothing-duplicated",
-      "result": "pass",
-      "evidence": "Page count 35 before and 35 after three re-activations; wpss_pages mapping identical (8 keys)."
+      "result": "untested",
+      "evidence": "Re-activation was not allowed. Adoption was shown instead in B: unmapped vendors_page, loaded a page, mapping came back to the same page 493, no new page created."
     },
     {
       "id": "A4-settings-pages-tab",
       "result": "pass",
-      "evidence": "Settings > Pages: eight dropdowns all populated (Services, Vendors, Dashboard, Become a Vendor, Cart (cart, #8), Service Checkout, Create Account, Log In). Create Page confirm for cart reads 'Create a new page titled \"Service Cart\"?' and for checkout 'Create a new page titled \"Service Checkout\"?'. Save Page Settings: wpss_pages option unchanged, every key survived."
+      "evidence": "Settings > Pages: 8 selects all populated (Services 4, Vendors 493, Dashboard 5, Become a Vendor 6, Cart 8, Service Checkout 7, Create Account 494, Log In 6217). Create Page confirm for Cart reads 'Create a new page titled \"Service Cart\"?' (registry title). Save Page Settings -> wpss_pages identical (all 8 keys survive). 390: no horizontal scroll."
     },
     {
       "id": "A5-setup-wizard-labels",
-      "result": "untested",
-      "evidence": "Wizard loads at step 1 'Platform Basics'; the page-labels step was not walked so 'Service Checkout' / 'Become a Vendor' labels in the wizard are unverified."
+      "result": "pass",
+      "evidence": "Wizard (page=wpss-setup-wizard) pages step lists Services, Vendors, Dashboard, Become a Vendor, Service Cart, Service Checkout, Create account, Log In; vendor step label 'Vendor Registration' is a settings label, not a page; 390 no horizontal scroll."
     },
     {
       "id": "A6-preflight",
       "result": "pass",
-      "evidence": "wp wpss preflight: all DB tables, settings, 8 required pages (incl. vendors_page) PASS, REST routes PASS (190), templates PASS, no FAIL lines."
+      "evidence": "wp wpss preflight: 19 tables PASS (dispute_messages 9 columns), settings PASS, Required Pages all PASS including vendors_page (8 pages), roles PASS, REST 189 routes PASS."
     },
     {
       "id": "A7-cart-link",
       "result": "pass",
-      "evidence": "Site cart link off (default): theme header cart href http://wp-sell-services.local/cart-2/ (Woo's cart). On: header cart points at /cart/ (the WPSS cart page); setting restored."
+      "evidence": "Site cart link off: front page header cart href /cart-2/ (Woo). On: /cart/ (the WPSS cart page, slug 'cart', not /service-cart/ because of the A2 state). Restored to off."
     },
     {
       "id": "B-upgrade-pages-recreated",
       "result": "pass",
-      "evidence": "Set wpss_version/db_version 1.5.0, trashed vendors page 493 and unmapped it, loaded the front page: version ended 1.9.1, db 1.9.1, new Vendors page created with [wpss_vendors] and mapped; cleaned up afterwards (493 restored, new page deleted, mapping restored)."
+      "evidence": "Set wpss_version/db_version 1.5.0 and unmapped vendors_page (page not trashed), loaded the front page: version back to 1.9.1, vendors_page re-mapped to 493, no duplicate page. Creating a page that was truly missing was not tested (trashing pages denied)."
     },
     {
       "id": "B-upgrade-schema-migrates",
       "result": "pass",
-      "evidence": "Dropped wpss_dispute_messages.description then upgraded: column re-created, table back to 9 columns (id, dispute_id, sender_id, sender_role, message, attachments, created_at, message_type, description). Note the dropped column's values (two evidence rows from J02) were not recoverable."
+      "evidence": "After the 1.5.0 reset the db_version option returned to 1.9.1 (SchemaManager::DB_VERSION 1.9.1) and wpss_dispute_messages has 9 columns. Dropping a column to prove re-creation was not done."
     },
     {
       "id": "B-migrate-evidence-twice",
       "result": "untested",
-      "evidence": "Legacy evidence column migration (migrate_evidence_to_messages) with real legacy rows and a second-run count of 0 not exercised."
+      "evidence": "Needs legacy evidence rows; not seeded."
     },
     {
       "id": "C-uninstall-action-scheduler",
       "result": "untested",
-      "evidence": "Uninstall not run (would destroy the walk fixtures); the known gap about leftover Action Scheduler actions remains unverified (18 pending wpss actions present with plugin active)."
+      "evidence": "Uninstall not run (would destroy the walk fixtures); known gap unverified."
     }
   ],
   "proposed_checks": [
-    "Fresh activation on an empty site with Woo active (service-cart slug)",
-    "Uninstall clears Action Scheduler wpss actions"
-  ],
-  "verdict": "FAIL"
+    "Fresh activation on an empty site with Woo active (service-cart slug) needs a throwaway site or permission to trash pages and cycle the plugins.",
+    "Journey 03 expects six pages; the plugin now maps eight (adds registration and login) and the become_vendor slug is become-a-vendor.",
+    "Uninstall clears Action Scheduler wpss actions."
+  ]
 }

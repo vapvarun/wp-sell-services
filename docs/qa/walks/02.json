@@ -1,119 +1,125 @@
 {
   "journey": "02",
-  "sha_free": "c21a7c05",
-  "sha_pro": "e4ac7141",
+  "sha_free": "e742c62b",
+  "sha_pro": "251dea0",
   "env": {
     "site": "http://wp-sell-services.local",
     "theme": "reign-theme",
-    "rail": "standalone",
+    "rail": "standalone (ecommerce_platform set to standalone for this walk, restored to auto); Free + Pro both active, WooCommerce active",
     "wp": "7.1.3"
   },
-  "ran_at": "2026-10-21T00:10:00Z",
+  "ran_at": "2026-10-21T19:26:00Z",
   "checks": [
     {
       "id": "s1-buyer-opens-dispute",
       "result": "pass",
-      "evidence": "Ella opened dispute 420 on in-progress order 3888 (reason communication); DB status=open, initiated_by 7848. Same via REST on order 3887 (Tomas) created dispute 421 status open."
+      "evidence": "Ella opened dispute 537 via the Open dispute modal on order 5449 (reason communication): wpss_disputes status=open, initiated_by 7848, order status disputed."
     },
     {
       "id": "s2-own-statement-visible",
-      "result": "pass",
-      "evidence": "Opening statement shown in Messages & evidence immediately, 'No messages yet' absent, timeline entry present; 1440 and 390 no horizontal scroll."
+      "result": "fail",
+      "evidence": "Messages & evidence shows the opening statement once and 'No messages yet' is absent (1440 and 390, no horizontal scroll). But Activity lists only 'Opened this dispute.'; the opening statement never appears in Activity or in GET /disputes/537/timeline, while later evidence and reply messages do. Journey expects Activity to show opening plus statement. Soft."
     },
     {
       "id": "s3-seller-reply-both-threads",
       "result": "pass",
-      "evidence": "Maya reply (msg 457) visible in Ella and Maya thread and in Activity timeline at 1440 and 390; each shows once in thread and once in timeline."
+      "evidence": "Maya's reply posted from the on-page form: in Maya's, Ella's and the admin thread and once in Activity after reload (the Activity list does not update until reload)."
     },
     {
       "id": "s4-evidence-renders-as-image",
       "result": "pass",
-      "evidence": "Evidence stored in attachments; thread renders .wpss-evidence-image > img via admin-post wpss_order_file link in both parties' views and in admin; no raw text/URL; toast 'Evidence added successfully.'"
+      "evidence": "Ella attached chat-screenshot.png with caption: thread renders <img src=admin-post.php?action=wpss_order_file...> naturalWidth 300 (219px wide at 390); admin view also naturalWidth 300. A link-type evidence was not exercised."
     },
     {
       "id": "s5-admin-reads-whole-thread",
       "result": "pass",
-      "evidence": "wp-admin Disputes #420: opening statement, Maya reply and evidence image all present; status select, admin notes, Update Dispute controls."
+      "evidence": "wp-admin Disputes #537 shows opening statement, evidence caption + image and Maya's reply."
     },
     {
       "id": "s6-order-links-to-dispute",
       "result": "pass",
-      "evidence": "Seller and buyer order headers show <a href='/dashboard/disputes/?dispute=420'> View Dispute; 1px solid rgb(220,38,38) at rest, red fill with white text on hover."
+      "evidence": "Buyer and vendor order headers: <a href='/dashboard/disputes/?dispute=537'> View Dispute, 1px solid rgb(220,38,38) at rest; after 1s hover background rgb(220,38,38) color white; 390 fits (131x42); click lands on the dispute."
     },
     {
       "id": "s7-open-dispute-not-offered-twice",
       "result": "pass",
-      "evidence": "Open Dispute control absent (0 visible) while dispute open and after resolution; View Dispute shown."
+      "evidence": "Open dispute control count 0 and View Dispute present while open and after resolution/completion."
     },
     {
       "id": "s8-admin-order-view",
       "result": "pass",
-      "evidence": "Admin order 3888 screen has 'Open dispute' link to wpss-disputes view dispute_id=420."
+      "evidence": "Admin order 5449 screen has 'Open dispute' link to wpss-disputes view dispute_id=537."
     },
     {
       "id": "s9-resolution-with-note",
       "result": "pass",
-      "evidence": "Resolved 420 favor_vendor with note: members see status resolved / in favor of vendor, note once, no blank row; View Dispute persists on order; order status completed, no refund; Dispute Resolved mail to both."
+      "evidence": "Admin resolved 537 favor_vendor with a note: members see 'Resolved / In Favor of Vendor', the note once, no blank row; order became completed; View Dispute still on the order."
     },
     {
       "id": "upgrade-migrate-evidence-to-messages",
       "result": "untested",
-      "evidence": "Upgrade simulation of legacy evidence column not run in this walk (see J03)."
+      "evidence": "Needs legacy pre-1.6.0 evidence rows; not seeded, and no test runs are allowed during the walk."
+    },
+    {
+      "id": "woo-rail-dispute",
+      "result": "untested",
+      "evidence": "Journey rail includes woo; rail was not switched, Woo-rail dispute not walked."
     },
     {
       "id": "rest-respond-third-user-403",
       "result": "pass",
-      "evidence": "Dispute 421: third user respond and GET both 403 wpss_not_owner; other party respond 200 (msg 459); opener got 'Dispute Response Received' mail."
+      "evidence": "Dispute 538 (order 2267): Ella (third user) GET, respond, escalate and cancel -> 403 wpss_not_owner; Maya (other party) respond -> 200 message 584; opener Emma got dispute_response_received."
     },
     {
       "id": "rest-cancel-only-opener-only-while-open",
-      "result": "fail",
-      "evidence": "Non-opener cancel refused (400 'not authorized'). But the opener cancelled dispute 421 while status was escalated (200, status closed); journey says only while open. Cancelling also re-sent 'Order Completed' mail to buyer and seller on an already completed order (duplicate completion email)."
+      "result": "pass",
+      "evidence": "Maya (non-opener) cancel -> 400 'You are not authorized to cancel'; Emma cancel -> 200 (dispute was pending_review after the reply). On dispute 539 after escalation Emma cancel -> 400 'escalated to the site team, so only they can close it'. Note: cancel is allowed in pending_review, not only status open."
     },
     {
       "id": "rest-cancel-other-party-told-and-reopen",
-      "result": "pass",
-      "evidence": "Dispute Cancelled mail to Maya; dispute closed."
+      "result": "fail",
+      "evidence": "Maya got dispute_cancelled notification (id 14510), dispute 538 closed, order restored to in_progress. But Open Dispute is NOT offered again: order page shows View Dispute and no Open dispute, and POST /orders/2267/dispute -> 400 'A dispute already exists for this order.' (DisputeService::open_guard: one dispute per order, ever). Journey text and product rule disagree. Soft, doc vs code."
     },
     {
       "id": "rest-escalate-once",
       "result": "pass",
-      "evidence": "Escalate by non-party 403; first escalate 200 -> status escalated; second 400 'already escalated', status unchanged."
+      "evidence": "Emma escalate on 539 -> 200 status escalated, second -> 400 'already been escalated'; status unchanged."
     },
     {
       "id": "rest-escalate-admin-mail-recipient",
-      "result": "fail",
-      "evidence": "Escalation admin mail '[Action Required] Dispute #421 has been escalated' captured with an EMPTY recipient: option wpss_dispute_admin_email exists as '' so get_option default (admin_email) is never used in DisputeWorkflowManager::notify_admins_of_escalation; admin is never told."
+      "result": "untested",
+      "evidence": "No mail catcher. Code (DisputeWorkflowManager::notify_admins_of_escalation) now falls back to admin_email (varun@wbcomdesigns.com) when wpss_dispute_admin_email is unset, but the sent mail was not captured."
     },
     {
       "id": "rest-assign-admin-only",
       "result": "pass",
-      "evidence": "Buyer and seller assign 403 wpss_not_admin; admin assign 200; dispute_assigned notification to admin 9552."
+      "evidence": "Emma (buyer), Maya (seller), Ella -> 403 wpss_not_admin; admin assign 200; dispute_assigned notification to user 1."
     },
     {
       "id": "rest-resolve-admin-only-and-idempotent",
       "result": "pass",
-      "evidence": "Seller resolve 403; admin resolve 200 status resolved; second resolve (full_refund 384) 400 'already resolved', status and order payment_status unchanged (paid)."
+      "evidence": "Maya and Ella resolve -> 403; admin resolve favor_vendor on 539 -> 200 (order completed); second resolve full_refund -> 400 'already resolved or closed'; refunded_amount unchanged."
     },
     {
       "id": "rest-one-audit-row-each",
-      "result": "pass",
-      "evidence": "wpss_audit_log dispute.transition rows: one per respond/escalate/cancel on 421, one for resolve on 420."
+      "result": "fail",
+      "evidence": "wpss_audit_log dispute.transition rows: one each for respond (538 open->pending_review), cancel (538 closed), escalate (539), resolve (539, 537). The admin assign call on 539 wrote no audit row (assigned_to only stored in dispute meta; notification sent). Journey expects one audit row per call. Soft."
     },
     {
       "id": "rest-resolve-refund-paths",
       "result": "untested",
-      "evidence": "full_refund / partial_refund resolution on standalone not exercised to avoid altering order money; only favor_vendor run."
+      "evidence": "full_refund / partial_refund not exercised to avoid altering order money on shared fixtures."
     },
     {
       "id": "rest-suspended-seller-refusal",
       "result": "untested",
-      "evidence": "Refusal for a suspended seller across the dispute doors not exercised (member standing suspend path already failing in J05)."
+      "evidence": "Suspending a vendor to test the refusal was not done in this walk."
     }
   ],
   "proposed_checks": [
-    "Escalation admin email goes to a real recipient when wpss_dispute_admin_email is blank",
-    "Cancelling a dispute never re-sends an order completion email"
-  ],
-  "verdict": "FAIL"
+    "Activity timeline should include the opening statement as an entry (currently only 'Opened this dispute.').",
+    "Journey 02 REST cancel text ('Open Dispute is offered again') contradicts the one-dispute-per-order rule enforced by DisputeService; decide which is right and align.",
+    "dispute.assign should write an audit-log row like the other dispute transitions.",
+    "After an Ajax reply on the dispute page the Activity list does not refresh until reload."
+  ]
 }

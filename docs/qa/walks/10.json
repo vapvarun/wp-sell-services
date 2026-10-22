@@ -1,88 +1,90 @@
 {
   "journey": "10",
-  "sha_free": "c21a7c05",
-  "sha_pro": "e4ac7141",
+  "sha_free": "bc6f982f",
+  "sha_pro": "f34e07d",
   "env": {
     "site": "http://wp-sell-services.local",
     "theme": "reign-theme",
-    "rail": "standalone",
-    "wp": "7.1.3"
+    "wp": "7.1.3",
+    "rail": "standalone (platform option set via wp eval for the journey and restored to auto)"
   },
-  "ran_at": "2026-10-21T00:40:00Z",
+  "ran_at": "2026-10-21T20:58:00Z",
   "checks": [
     {
       "id": "s1-request-withdrawal",
-      "result": "pass",
-      "evidence": "Yuki (available $294): requested $100 PayPal from Earnings; history row Pending with Cancel; Available 294->194, Withdrawal in progress $100; exactly one 'New Withdrawal Request' mail to admin in Mailpit."
+      "result": "fail",
+      "evidence": "Soft. UI request (amount 25, PayPal email) created a Pending row, available 291.60 -> 266.60 with 'Withdrawal in progress $25.00' and admin got 'New Withdrawal Request'. But the success message is wiped at once: assets/js/unified-dashboard.js handleWithdrawalSubmit (~604-650) calls show(withdrawalSubmitted,'success') then window.location.reload(), so the vendor sees no confirmation. Vendor Cancel (custom confirm) restores the balance."
     },
     {
       "id": "s2-admin-approves",
       "result": "pass",
-      "evidence": "Admin Withdrawals #173 Approve -> modal with optional note -> Confirm; row Approved; seller mail 'Withdrawal of $100.00 Approved' body 'approved and is being processed', Status Approved."
+      "evidence": "Admin Approve in the modal: row Approved; vendor mail 'Withdrawal of $25.00 Approved' ('approved and is being processed')."
     },
     {
       "id": "s3-mark-paid-email-and-ledger",
       "result": "pass",
-      "evidence": "Mark paid -> modal 'Confirm only after the payment has been sent'; row Paid; mail 'Withdrawal of $100.00 Paid' body 'has been paid', Status Paid; wpss_wallet_transactions one withdrawal row (ref 173, balance_after 194); replay mark_paid/process refused 'already_finalised' with 0 new mails and 0 new ledger rows; seller notification type withdrawal_completed 'has been paid'; Earnings history PAID and ledger -$100.00."
+      "evidence": "Mark paid on #235: mail 'Withdrawal of $25.00 Paid', status Paid, exactly one ledger debit (row 1753, reference_type withdrawal, reference_id 235), replay of complete/approve 'already finalised' with no new mail or ledger row, in-app withdrawal_completed created."
     },
     {
       "id": "s3-paid-email-switch",
       "result": "pass",
-      "evidence": "Settings notify_withdrawal_completed=false: withdrawal #174 approved mail sent, no Paid mail; switch restored true."
+      "evidence": "With wpss_notifications[notify_withdrawal_completed] off: #237 approved and paid, Approved mail sent, no Paid mail, 1 ledger row, in-app notice present. Setting restored to on."
     },
     {
       "id": "s4-390-layout",
       "result": "fail",
-      "evidence": "390px: no horizontal scroll on Earnings and admin Withdrawals; admin row Approve/Reject 40px; but Earnings 'Export CSV' button is 38px high (<40)."
+      "evidence": "Soft. Admin Withdrawals at 390: Approve/Reject 66x40 and 54x40, bulk select 250x44, no overflow. Vendor Earnings at 390: Request Withdrawal 44, Export CSV 44, selects 42-46, scrollWidth 390, no overlaps. But Menu is 38px, Replay tour 30px, Load more 38px, and 'Manage your services' 38px on the paused view, below the 40px target."
     },
     {
       "id": "s5-auto-payout-dates",
       "result": "pass",
-      "evidence": "Monthly: one pending single action Sun 2026-11-01 02:00 (not recurring); after run_scheduled_auto_withdrawals still one pending 2026-11-01; weekly -> Mon 2026-10-26 02:00; off -> 0 pending; saving Payouts settings in the UI with auto on armed 2026-11-01 02:00. Setting options read 'Weekly (every Monday)', 'Bi-weekly (1st and 15th)', 'Monthly (1st of month)'. Run-on-31st edge not exercised."
+      "evidence": "Enabling auto-withdrawal monthly creates one pending wpss_process_auto_withdrawals for 2026-11-01 02:00 UTC (site tz UTC); Run (Oct 21) completed and scheduled the next on 2026-11-01; weekly moves it to Monday 2026-10-26; off leaves none; help text 'Monthly (1st of month)' / 'Weekly (every Monday)'. End-of-month case not tested. Setting restored off/monthly."
     },
     {
       "id": "s6-negative-numbers-clamp",
       "result": "pass",
-      "evidence": "UI Payouts save with -5 in minimum withdrawal and clearance days: both stored 0 (wpss_payouts); message_email_delay_minutes sanitizer returns 0 for -5 and 120 for 500."
+      "evidence": "POST -5 to min_withdrawal, clearance_days and message_email_delay_minutes each saved as 0; values restored."
     },
     {
       "id": "s7-approve-reject-emails",
       "result": "pass",
-      "evidence": "Approved mail says approved not yet paid. Rejected #175: mail has 'Reason: The PayPal address on file bounced...' and 'returned to your available balance'; available 129->169; seller history 'REJECTED Reason: ...' at 1440 and 390."
+      "evidence": "Reject #238 with note: mail 'Withdrawal Request for $23.00 Rejected' with 'Reason: QA-SMOKE: PayPal email bounced...' and 'returned to your available balance'; balance 200.6 -> 223.6."
     },
     {
       "id": "s7-auto-withdrawal-email",
-      "result": "untested",
-      "evidence": "emails/withdrawal-auto only fires from a scheduled auto run with a vendor above the threshold; not forced to avoid creating rows for several vendors."
+      "result": "fail",
+      "evidence": "Soft. The automatic run created #239 for Maya and mailed only the admin ('Hi Admin', src/Services/EmailService.php:1770, templates/emails/withdrawal-auto.php: vendor, email, amount, no payout method). The vendor gets only the in-app auto_withdrawal_created notice."
     },
     {
       "id": "s7-emails-dark-rtl",
-      "result": "untested",
-      "evidence": "Mails not rendered in dark/RTL."
+      "result": "fail",
+      "evidence": "Soft. Emails are light-only: no prefers-color-scheme/color-scheme rules, hard-coded #f7f7f7/#3c3c3c; Amount/Status value cells 2.98:1, footer text 2.66:1, footer links 1.79:1 (12px); th cells hard-code text-align:left (templates/emails/withdrawal-completed.php:54,58); dir comes only from language_attributes() (templates/emails/email-header.php:32), so RTL depends on the site locale."
     },
     {
       "id": "s8-negative-balance",
       "result": "pass",
-      "evidence": "Seeded refund debit for Liam: balance -143; Earnings shows 'Your balance is below zero' explanation (6.84:1) and figure -$143.00 (4.83:1, rgb(220,38,38) on white), request form absent, request_withdrawal refused insufficient_balance; Vendors admin notice lists Liam -$143.00 with Write off; write-off with reason -> balance exactly 0, total earned still 117, second write-off refused not_negative. Seeded rows removed afterwards."
+      "evidence": "Liam (7834): reversal -150 left ledger -33 (available -133 with a $100 withdrawal in progress); vendor page explains it in words and replaces the form with 'Withdrawals are paused'; Admin > Vendors lists him with a Write off form. Write off with a reason: notice 'Negative balance written off', one ledger row (1759, balance_write_off +33, balance_after 0), ledger sum 0, total_earned unchanged (-33), vendor gone from the list; replaying with another vendor's nonce -> 403. Available stays -100 only because my approved #240 is still open."
     },
     {
       "id": "s8-approved-cannot-be-marked-paid",
-      "result": "untested",
-      "evidence": "Approved request on a vendor in debt not constructed."
+      "result": "pass",
+      "evidence": "Admin Mark paid on approved #240 ($100 vs -$33): toast 'would put them in debt', row stays Approved, no ledger row."
     },
     {
       "id": "rejected-reason-visible",
       "result": "pass",
-      "evidence": "History row 'Reason: <note>' under Rejected badge and email carries it."
+      "evidence": "Aisha's Earnings history: REJECTED row shows 'Reason: QA-SMOKE: PayPal email bounced, please correct it and resubmit.'; mail carried it too."
     },
     {
       "id": "dark-mode-contrast",
-      "result": "untested",
-      "evidence": "Dark contrast of the debt figure not measured (Reign exposes toggle; not required by this walk)."
+      "result": "fail",
+      "evidence": "Soft. '.wpss-banner--danger .wpss-banner__text' (assets/css/design-system.css:1027-1029 and -rtl) is #991b1b on rgb(17,24,39) = 2.13:1 in the 'Withdrawals are paused' banner (no dark override). The CANCELLED badge on Aisha's history is 4.06:1 (rgb(156,163,175) on rgb(55,65,81)). Other measured text >= 4.5."
     }
   ],
   "proposed_checks": [
-    "Earnings page secondary buttons (Export CSV) meet 40px at 390"
-  ],
-  "verdict": "FAIL"
+    "After a successful withdrawal request show the confirmation after the page reloads (or update in place without a reload).",
+    "Send the vendor a mail when an automatic withdrawal is created, or document that it is admin-only.",
+    "Email templates: add color-scheme meta and dark rules, bump footer/Amount colours to 4.5:1, use dir-aware alignment.",
+    "Test the end-of-month auto-payout date (run on the 31st)."
+  ]
 }

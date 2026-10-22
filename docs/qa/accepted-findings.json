@@ -326,8 +326,8 @@
   },
   {
    "id": "WALK:request-order-requirements-title",
-   "fixed_in": "cf637bce",
-   "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. The requirements page names a request order after its request. tests/test-requirements-title-request-order.php."
+   "fixed_in": "cf637bce and the commit after it",
+   "verified_by": "Fixed in the 1.9.1 re-cut by the author; NOT yet verified by QA. Root cause: get_post(0)/get_the_title(0) return the page being viewed (Dashboard). One wpss_get_order_title() now serves the requirements page, 9 order emails and the Shortcodes order table. Browser-verified. tests/test-requirements-title-request-order.php."
   },
   {
    "id": "WALK:vendor-max-services-filter-ignored-on-dashboard",

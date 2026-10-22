@@ -68,7 +68,7 @@ do_action( 'wpss_email_content_before', 'delivery_ready', $order, $recipient );
 	<tbody>
 		<tr>
 			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( get_the_title( $order->service_id ) ); ?></td>
+			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( wpss_get_order_title( $order ) ); ?></td>
 		</tr>
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>

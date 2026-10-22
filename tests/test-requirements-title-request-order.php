@@ -48,11 +48,19 @@ wp_cache_flush();
 
 wp_set_current_user( (int) $row->customer_id );
 
+// The visitor is on a page (the Dashboard): get_post( 0 ) and get_the_title( 0 ) answer with it.
+$page_id = (int) get_option( 'page_on_front' ) ?: (int) $wpdb->get_var( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'page' AND post_status = 'publish' LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$GLOBALS['post'] = get_post( $page_id );
+setup_postdata( $GLOBALS['post'] );
+$page_title = (string) get_the_title( $page_id );
+
 ob_start();
 include dirname( __DIR__ ) . '/templates/order/order-requirements.php';
 $html = (string) ob_get_clean();
 
-$ok = '' !== $title && false !== strpos( $html, esc_html( $title ) )
-	&& false === strpos( $html, 'wpss-requirements-page__summary-title">Service<' );
-echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . "requirements summary names the request ('{$title}')\n";
+$email_title = function_exists( 'wpss_get_order_title' ) ? wpss_get_order_title( wpss_get_order( $order_id ) ) : get_the_title( 0 );
+
+$ok = '' !== $title && $title !== $page_title && $title === $email_title && false !== strpos( $html, esc_html( $title ) )
+	&& false === strpos( $html, 'wpss-requirements-page__summary-title">' . esc_html( $page_title ) . '<' );
+echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . "requirements summary and order title name the request ('{$title}')\n";
 exit( $ok ? 0 : 1 );

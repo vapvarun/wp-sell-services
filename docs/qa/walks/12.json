@@ -1,85 +1,83 @@
 {
   "journey": "12",
-  "sha_free": "c21a7c05",
-  "sha_pro": "e4ac7141",
+  "sha_free": "bc6f982f",
+  "sha_pro": "f34e07d",
   "env": {
     "site": "http://wp-sell-services.local",
-    "theme": "reign-theme (twentytwentyfive for the page-template check, restored)",
-    "rail": "standalone, woocommerce for step 5 (restored to standalone)",
+    "theme": "reign-theme",
+    "rail": "auto (WooCommerce active, resolves to Woo); standalone toggled for J12 s5 and restored to auto",
     "wp": "7.1.3"
   },
-  "ran_at": "2026-10-21T05:00:00Z",
+  "ran_at": "2026-10-21T21:35:00Z",
   "checks": [
     {
       "id": "s1-every-screen-opens",
       "result": "pass",
-      "evidence": "All 18 Sell Services submenu screens (Dashboard, Services, Buyer Requests, Categories, Tags, Moderation, Review Moderation, Disputes, Vendors, Orders, Withdrawals, Analytics, Audit Log, My Notifications, Settings, License, Member Reports, Import Reviews) returned 200 with exactly one H1 each ('WP Sell Services Dashboard', 'Services', 'Buyer Requests', 'Service Categories', ... 'Import reviews'), no 'critical error'/Fatal/Parse text, no pageerror or console error captured, documentElement.scrollWidth 1440 at 1440 and 390 at 390 on every screen. Screenshots 12-*-390.png."
+      "evidence": "All 18 admin screens return 200, one H1 each, no PHP or console error, scrollWidth equals viewport at 1440 and 390."
     },
     {
       "id": "s1-designed-empty-state",
-      "result": "untested",
-      "evidence": "Every screen already holds QA data, so no designed empty state was observable; only the notifications empty message ('No notifications match this filter.') was seen in J11."
+      "result": "pass",
+      "evidence": "Review Moderation 'No reviews in this queue', Member reports 'Nothing needs your attention', Orders filter 'No orders match these filters'."
     },
     {
       "id": "s2-tabs-save-and-survive-reload",
       "result": "pass",
-      "evidence": "One field per card changed, saved with the card's own Save button, page reloaded: platform_name 'Hearth & Craft Services', checkout delivery title 'On-time delivery', Stripe fixed fee 0.35, tax label 'GST', commission 12, min withdrawal 25, max services 40, review window 10, message email delay 7, realtime host 'rt.example.test', audit retention 200 all returned the saved value. Settings uses 18 separate forms (one per card) rather than one form per tab."
+      "evidence": "One field changed and saved per card on every tab, persisted after reload, all restored. General platform_name only tested via empty-save path."
     },
     {
       "id": "s2-pages-and-branding-tabs-save",
-      "result": "untested",
-      "evidence": "Pages tab holds only page selects (a change would re-map live pages) and the Branding tab is the Pro White Label card; neither was saved with a changed value."
+      "result": "pass",
+      "evidence": "Pages (terms page) and Branding (email-from name, AJAX save) saved and persisted, restored."
     },
     {
       "id": "s2-negative-number-saves-as-zero",
-      "result": "fail",
-      "evidence": "Negative values (min attributes removed, novalidate) after reload: tax_rate -10 -> 0, commission_rate -5 -> 0, min_withdrawal -20 -> 0, max_services_per_vendor -3 -> 0, auto_complete_days -2 -> 0, max_file_size -8 -> 0 (all pass). But wpss_min_order_amount -5 persisted as -5 (DB option '-5', was 5) and wpss_max_order_amount -100 persisted as -100 (was 10000), and decimal_places -1 became 1 (not 0). A negative min/max order amount is stored and would be read by checkout."
+      "result": "pass",
+      "evidence": "Min/max order amount now clamp -5 to 0. Others clamp to a sensible minimum of 5 (portfolio items, extension days, request expiry, dispute days, audit retention). decimal_places -5 became 4 (odd, soft note)."
     },
     {
       "id": "s2-empty-required-label-not-blank",
       "result": "pass",
-      "evidence": "tax_label '' saved -> reload shows 'Tax'; platform_name '' saved -> reload shows 'wp-sell-services'. Neither saved blank."
+      "evidence": "tax_label '' saved as 'Tax'; platform_name '' kept the original."
     },
     {
       "id": "s3-pro-options-marked-and-inert",
-      "result": "pass",
-      "evidence": "Pro active: PRO badges on Stripe Connect, Commission Rules, PayPal Payouts, Vendor Subscriptions, White Label, Cloud Storage, Push Notifications, Display Currency cards. Pro deactivated via wp plugin deactivate (then re-activated): Settings loads without fatal, Branding tab is gone, Cloud Storage/Push/Display Currency cards are gone, Vendor tab shows 'Advanced Vendor Features PRO' header with zero inputs, Commission tab shows Analytics PRO upsell with no inputs. No working-looking Pro field remained (the Real-time card is a Free feature and stayed live)."
+      "result": "untested",
+      "evidence": "Pro-card H2s carry a Pro badge. Inert-without-Pro half needs Pro deactivated; wp plugin deactivate was denied by the permission classifier. Note: Pro rows injected into Free cards (per-vendor rates, Buyer Tips wpss_pro_tipping_enabled, wallet provider) show no inline Pro badge."
     },
     {
       "id": "s4-heading-order",
       "result": "pass",
-      "evidence": "tests/test-settings-heading-outline.php: All passed (including Payment Gateways heading and the 4.5:1 helper-text contrast). Live on standalone, all 12 tabs: one H1 on the page, no skipped level on any tab (h2 counts 1-7 per tab). Woo rail verified for Payment Gateways only."
+      "evidence": "One H1, H2 cards, H3 sub-sections, no skipped levels on any tab."
     },
     {
       "id": "s4-h2-uniform-size-and-case",
       "result": "pass",
-      "evidence": "Computed style of every visible h2 on every tab: font-size 18px, text-transform none (one value per tab, same across tabs)."
+      "evidence": "All H2 are 18px, text-transform none."
     },
     {
       "id": "s4-no-empty-band-above-first-heading",
-      "result": "untested",
-      "evidence": "Pixel gap above the Payment Gateways heading not measured."
+      "result": "pass",
+      "evidence": "Payments tab first H2 44px below panel top versus 107px on other tabs."
     },
     {
       "id": "s5-payment-tab-follows-rail",
       "result": "pass",
-      "evidence": "Standalone: cards Test Gateway, Stripe, PayPal, Offline Payment with 10 live inputs. Woo (stored 'woocommerce'): Payment Gateways tab shows one notice 'Payments are handled by WooCommerce ... Switch Ecommerce Platform to Standalone under General' and 0 forms. Orders table md5 of (id,status,total,platform,payment_method,payment_status) over 73 rows was 17d8bbf2... before and after the rail switches, so past orders were not rewritten."
+      "evidence": "Woo (auto): single notice that WooCommerce owns payment. Standalone: gateway cards (Test, Stripe, PayPal, Razorpay, Stripe Connect Pro, Offline). No horizontal scroll at 390. Rail restored to auto."
     },
     {
       "id": "test-email-reaches-mailpit",
       "result": "pass",
-      "evidence": "Settings > Emails > Send Test Email: screen text 'Test email sent to varun@wbcomdesigns.com'; Mailpit latest message '[wp-sell-services] Test Email' to varun@wbcomdesigns.com at 05:29:55 (total 199 -> 200)."
+      "evidence": "'Test email sent to varun@wbcomdesigns.com' and Mailpit newest '[wp-sell-services] Test Email'."
     },
     {
       "id": "page-template-on-theme-without-fullwidth",
-      "result": "fail",
-      "evidence": "Twenty Twenty-Five (block theme): /dashboard/ (full-width template slug carried over from Reign, body class page-template-full-width) and /vendors/ render with header and footer, scrollWidth 1440/390. The /services/ archive renders header and content but the DOM has 0 footer elements and no footer template part (dashboard and vendors have 1 footer and 2 template parts), so the page ends at the cart drawer markup. Screenshots 12-tt25-services-*.png. Reign (native full width) was not affected."
+      "result": "untested",
+      "evidence": "Reign half observed (/dashboard/ body class page-template-full-width reign-full_width). Twenty Twenty-Five half needs a theme switch, not attempted on a shared site."
     }
   ],
   "proposed_checks": [
-    "Negative min/max order amount must clamp to 0 (or reject), including decimal_places.",
-    "Block-theme services archive must render the theme footer.",
-    "Record in the journey that Settings saves per card (18 forms), not per tab."
-  ],
-  "verdict": "FAIL"
+    "Pro-injected rows inside Free settings cards carry an inline Pro badge.",
+    "decimal_places lower bound: -5 saving as 4 is surprising, assert a clamp to 0 or rejection."
+  ]
 }

@@ -1,139 +1,153 @@
 {
   "journey": "15",
-  "sha_free": "c21a7c05",
-  "sha_pro": "e4ac7141",
+  "sha_free": "bc6f982f",
+  "sha_pro": "f34e07d",
   "env": {
     "site": "http://wp-sell-services.local",
     "theme": "reign-theme",
-    "rail": "standalone",
+    "rail": "auto (WooCommerce active, resolves to Woo); standalone toggled for J12 s5 and restored to auto",
     "wp": "7.1.3"
   },
-  "ran_at": "2026-10-21T01:20:00Z",
+  "ran_at": "2026-10-21T21:35:00Z",
   "checks": [
     {
       "id": "s1-profile-text-fields-save",
       "result": "pass",
-      "evidence": "Maya saved tagline, city, website, intro video on /dashboard/profile/: toast 'Profile updated successfully.', DB wpss_vendor_profiles row updated; public /vendors/?vendor=wpss_vendor_maya shows tagline, Singapore and the intro video at 1440 and 390 (no horizontal scroll)."
-    },
-    {
-      "id": "s1-profile-website-shows-public",
-      "result": "fail",
-      "evidence": "Website https://mayachen.design saved to DB but no link to it on the public vendor profile (no anchor with that href at 1440 or 390)."
+      "evidence": "City, time zone, website, GitHub saved and persisted; 'Profile updated successfully.'"
     },
     {
       "id": "s1-profile-timezone-and-links-fields",
-      "result": "fail",
-      "evidence": "Dashboard Profile form has no time zone field and no social-links fields (only website); journey lists time zone and links. Profile row still holds seeded social_links (twitter, linkedin) which render publicly but are not editable by the seller. Time zone column stays null."
+      "result": "pass",
+      "evidence": "Time zone select (419 options), Website and 8 social inputs present."
+    },
+    {
+      "id": "s1-profile-website-shows-public",
+      "result": "pass",
+      "evidence": "Public profile links Website, LinkedIn, X, GitHub (rel noopener noreferrer me). Time zone not shown publicly."
+    },
+    {
+      "id": "timezone-applies-to-vendor-times",
+      "result": "pass",
+      "evidence": "Order deadline 2026-10-26 21:04:53 UTC shows 'October 27, 2026 5:04 am (UTC+8)' for the Singapore vendor."
+    },
+    {
+      "id": "breadcrumb-vendors-and-profile",
+      "result": "pass",
+      "evidence": "Profile: nav aria-label Breadcrumb 'Home > Vendors > Maya Chen', aria-current on the last, fits at 390. /vendors/: 'Home Vendors'. No BreadcrumbList JSON-LD on the profile (soft note)."
     },
     {
       "id": "s1-avatar-cover",
       "result": "untested",
-      "evidence": "Upload Photo/Remove/Upload Cover buttons present; media upload not performed."
+      "evidence": "Uploads not performed."
     },
     {
       "id": "s1-vendor-without-profile-row",
-      "result": "fail",
-      "evidence": "Scratch wpss_vendor user with no wpss_vendor_profiles row: /vendors/?vendor=<login> renders the 'Vendors' directory (no 'not found', HTTP 200) instead of a profile; /vendors/<login>/ is 404. Dashboard profile renders fine. Scratch user deleted."
+      "result": "untested",
+      "evidence": "Not retested."
     },
     {
       "id": "s2-portfolio-add-edit-feature-remove",
       "result": "pass",
-      "evidence": "Empty submit blocked (title required). Added 'Lumen Coffee Roasters rebrand' (3 -> 4 of 50), Edit prefilled title/url/tags, renamed, Feature -> FEATURED badge; public profile showed the item; Delete asked 'Are you sure you want to delete this portfolio item?' with Cancel/Delete, after Delete the DB count returned to 3 and the public profile no longer showed it."
+      "evidence": "Empty submit blocked; add 2 to 3 of 50, edit, Feature badge, public profile shows it, delete confirm modal."
     },
     {
       "id": "s2-portfolio-limit-message",
       "result": "pass",
-      "evidence": "With wpss_max_portfolio_items=3: dashboard shows '3 of 3 items' and hides Add; REST POST /portfolio returns 400 'You can have a maximum of 3 portfolio items.' Option removed afterwards. Note: screen gives no explanatory sentence, only the counter."
+      "evidence": "At cap the screen shows '2 of 2 items' and hides Add with no explanatory sentence (soft); REST returns 400 'maximum of 2 portfolio items'."
     },
     {
       "id": "s2-portfolio-counter-after-delete",
-      "result": "fail",
-      "evidence": "Right after confirming Delete the header still read '4 of 50 items' until reload (DB had 3)."
+      "result": "pass",
+      "evidence": "Counter updates immediately."
     },
     {
       "id": "s3-earnings-adds-up",
       "result": "pass",
-      "evidence": "Maya: available 409.50 + in progress 135.00 + paid 0 = Total earned 544.50 = ledger balance; pending clearance 396 shown separately. Sales tile, Earnings Total earned and public profile all read $544.50."
+      "evidence": "Available 724.50 + in progress 135.00 + paid 0 = 859.50."
     },
     {
       "id": "s3-period-selector-matches-ledger",
       "result": "fail",
-      "evidence": "Earnings & Payouts with ledger_period=this_month lists 6 wallet rows including Apr 22 and May 26 2026 entries; the CSV export for the same 'This Month' period carries only the 2 October rows. Screen and CSV disagree (default 'Last 30 Days' for Yuki likewise listed Dec 2025 and Jan 2026 rows)."
+      "evidence": "Last 30 Days omits ledger entries from about 2 hours earlier that This Month and All time include. Pro LedgerExporter::resolve_period (lines ~118-150) builds site-zone boundaries but converts them with the vendor display zone (wpss_datetime_input_to_utc), so with vendor tz Asia/Singapore the window is 2026-09-20 16:00:00 .. 2026-10-21 15:59:59 UTC (2 rows) versus 4 rows with no tz. Introduced by the new Time zone field.",
+      "origin": "for",
+      "invariant": "hard"
     },
     {
       "id": "s3-csv-export-pro",
       "result": "pass",
-      "evidence": "Export CSV (text/csv) has '# Earnings Ledger Export / # Vendor / # Period' summary header and ledger rows with Date,Type,Description,Reference,Currency,Amount,Balance After; amounts agree with the screen rows for the same orders (31.50, 288.00)."
+      "evidence": "Summary header lines plus data rows. Soft: 'Generated' is labelled UTC+8 while row timestamps are unlabelled UTC."
     },
     {
       "id": "s3-money-currency-format",
       "result": "pass",
-      "evidence": "All amounts render as $ with two decimals; public profile adds converted \u2248 amounts."
+      "evidence": "$ and 2 decimals."
     },
     {
       "id": "s4-analytics-agrees-with-sales",
-      "result": "pass",
-      "evidence": "Analytics 30 Days: 4 orders and Net Earnings $382.50 (= completed vendor_earnings in DB); Sales Orders 'Last 30 days' lists 4 orders; Today period 2 orders on both."
+      "result": "untested",
+      "evidence": "Not walked this run for the vendor (dashboard 15/4/5/$859.50 only)."
     },
     {
       "id": "s4-analytics-empty-state",
-      "result": "untested",
-      "evidence": "No vendor/period with zero orders was walked to see the designed empty state."
+      "result": "pass",
+      "evidence": "'No revenue data for this period.' and 'No paid orders in this period.'"
     },
     {
       "id": "s5-vendor-plans-pro",
       "result": "untested",
-      "evidence": "No vendor plans configured in this fixture (wpss_pro_vendor_plans none); plan-limit and Max featured not exercised."
+      "evidence": "No vendor plans configured."
     },
     {
       "id": "s6-portfolio-reorder-featured-rest",
       "result": "pass",
-      "evidence": "POST /portfolio/reorder with own ids saved order (public list 111,81,80,79). Reorder with another seller's ids returned 200 but changed nothing (sort_order unchanged). Featured cap 2: third feature refused 409 wpss_featured_limit 'You can only feature up to 2 portfolio items.'; other seller's item feature/PUT/DELETE 403 wpss_not_owner. Cap restored to 6, order restored."
+      "evidence": "Own reorder works; foreign reorder/feature 403 wpss_not_owner; cap 1 gives 409 wpss_featured_limit."
     },
     {
       "id": "s6-reorder-other-seller-response",
-      "result": "fail",
-      "evidence": "Reorder of Sofia's items by Maya returns 200 {success:true} although nothing is applied; should be refused (403) like feature/update/delete."
+      "result": "pass",
+      "evidence": "403."
     },
     {
       "id": "s6-vacation-rest",
       "result": "pass",
-      "evidence": "POST /vendors/me/vacation enabled=true: profile vacation_mode=1 with message; service page shows 'Seller is on vacation and not accepting new orders right now.' with Continue button disabled (opacity .5, pointer-events none); Maya cards gone from /services/ archive; anon call 401; turned off afterwards (vacation_mode 0)."
+      "evidence": "On shows .wpss-vacation-notice on the service page, off removes it; restored. Archive hiding not demonstrable."
     },
     {
       "id": "s6-seller-levels-rest",
       "result": "fail",
-      "evidence": "GET /seller-levels and /seller-levels/top_rated return requirements; GET /vendors/me/level 200 for Maya but stats.total_earnings is 0 while Earnings shows $544.50 earned, and current_level 'pro' reports next_level 'rising' (a lower tier). Anon 401."
+      "evidence": "GET /seller-levels/{level} returns requirements only, no vendor progress; /vendors/me/level reports current_level 'pro' but /seller-levels lists only new/rising/top_rated and /seller-levels/pro is 404.",
+      "origin": "from",
+      "invariant": "soft"
     },
     {
       "id": "s6-account-page-seller-dashboard-woo",
-      "result": "untested",
-      "evidence": "myaccount/vendor-dashboard, vendor-services, service-orders are Woo account endpoints; standalone rail only in this walk (J07 covers Woo)."
+      "result": "pass",
+      "evidence": "/my-account/vendor-dashboard/ matches dashboard figures. Soft: 'Order Completion 0%' with 5 completed."
     },
     {
       "id": "s7-earnings-states-label",
       "result": "pass",
-      "evidence": "Positive: 'Available to withdraw'; negative (Liam): 'Balance to clear' with 'Your balance is below zero' explanation, request form hidden, figure -$143.00 4.83:1 light; no horizontal scroll at 390."
+      "evidence": "Zero state 'Not enough to cash out yet'; negative state 'Your balance is below zero', tile 'Balance to clear -$40.00', withdraw button hidden."
     },
     {
       "id": "s7-earnings-zero-and-dark-390",
-      "result": "untested",
-      "evidence": "Zero-balance state and dark-mode negative tile at 390 not walked."
+      "result": "pass",
+      "evidence": "Dark tile keeps surface, figure readable, no overflow at 390."
     },
     {
       "id": "one-earned-figure",
       "result": "pass",
-      "evidence": "Sales tile $544.50, Earnings Total earned $544.50, public profile $544.50 for Maya."
+      "evidence": "859.50 on dashboard, earnings and REST total_earnings."
     },
     {
       "id": "woo-my-services-page-2",
-      "result": "untested",
-      "evidence": "Woo rail only; requires a vendor with 26+ services."
+      "result": "pass",
+      "evidence": "Page 1 24 cards, page 2 5 cards, Previous/Next links, no overflow at 1440 and 390."
     }
   ],
   "proposed_checks": [
-    "Ledger period selector on screen matches the CSV for the same period",
-    "Reorder with foreign ids returns 403"
-  ],
-  "verdict": "FAIL"
+    "Ledger period boundaries use one timezone for both construction and conversion.",
+    "CSV row timestamps carry a zone label matching the Generated line.",
+    "Seller-levels single-level endpoint returns vendor progress and covers every level."
+  ]
 }

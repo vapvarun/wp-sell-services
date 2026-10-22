@@ -37,6 +37,39 @@ function wpss_get_order_not_payable_message( $order ): string {
 }
 
 /**
+ * The title an order is shown under.
+ *
+ * A service order is its service's title. A request order has no service post
+ * (service_id 0), and get_post( 0 ) / get_the_title( 0 ) answer with whatever
+ * page the visitor is on - the Dashboard - so the title comes from the request
+ * the proposal answered instead. An empty string means the caller picks its own
+ * generic label.
+ *
+ * @since 1.9.1
+ *
+ * @param object $order ServiceOrder or order row (JSON meta string).
+ * @return string Order title, or '' when it has none.
+ */
+function wpss_get_order_title( object $order ): string {
+	$service_id = (int) ( $order->service_id ?? 0 );
+
+	if ( $service_id > 0 ) {
+		return (string) get_the_title( $service_id );
+	}
+
+	$meta = $order->meta ?? array();
+	$meta = is_string( $meta ) ? (array) json_decode( $meta, true ) : (array) $meta;
+
+	if ( ! empty( $meta['proposal_snapshot']['request_title'] ) ) {
+		return (string) $meta['proposal_snapshot']['request_title'];
+	}
+
+	$request_id = 'request' === ( $order->platform ?? '' ) ? (int) ( $order->platform_order_id ?? 0 ) : 0;
+
+	return $request_id > 0 ? (string) get_the_title( $request_id ) : '';
+}
+
+/**
  * Get order by ID.
  *
  * @param int $order_id Order ID.

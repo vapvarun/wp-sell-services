@@ -801,7 +801,7 @@ class Shortcodes {
 						<?php foreach ( $orders as $order ) : ?>
 							<tr>
 								<td>#<?php echo esc_html( $order->order_number ?: $order->id ); ?></td>
-								<td><?php echo esc_html( get_the_title( $order->service_id ) ); ?></td>
+								<td><?php echo esc_html( wpss_get_order_title( $order ) ); ?></td>
 								<td><?php echo wp_kses_post( function_exists( 'wpss_format_currency' ) ? wpss_format_currency( (float) $order->total, $order->currency ) : '$' . number_format( (float) $order->total, 2 ) ); ?></td>
 								<td><span class="<?php echo esc_attr( wpss_status_class( (string) $order->status ) ); ?>"><?php echo esc_html( wpss_get_order_status_label( (string) $order->status ) ); ?></span></td>
 								<td>
