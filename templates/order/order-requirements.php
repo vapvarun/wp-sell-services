@@ -57,7 +57,7 @@ $service = get_post( $order->service_id );
 // A request order has no service post: its title is the request the proposal answered.
 $order_meta  = is_string( $order->meta ?? null ) ? (array) json_decode( $order->meta, true ) : (array) ( $order->meta ?? array() );
 $order_title = $service ? $service->post_title : (string) ( $order_meta['proposal_snapshot']['request_title'] ?? '' );
-$vendor  = get_userdata( $order->vendor_id );
+$vendor      = get_userdata( $order->vendor_id );
 
 /**
  * Hook: wpss_before_requirements_form
