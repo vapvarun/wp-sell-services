@@ -360,12 +360,7 @@ class CheckoutIntentService {
 			'subtotal' => $amount,
 			'total'    => (float) $line['total'],
 			'tax_meta' => $line['tax'] > 0
-				? array(
-					'tax_rate'     => (float) $line['tax_rate'],
-					'tax_amount'   => round( (float) $line['tax'], 2 ),
-					'tax_included' => (bool) $line['tax_included'],
-					'tax_label'    => (string) $line['tax_label'],
-				)
+				? wpss_order_tax_meta( (float) $line['tax_rate'], (float) $line['tax'], (bool) $line['tax_included'], (string) $line['tax_label'] )
 				: array(),
 		);
 	}

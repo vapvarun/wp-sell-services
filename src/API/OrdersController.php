@@ -2032,6 +2032,26 @@ class OrdersController extends RestController {
 	}
 
 	/**
+	 * The tax an order was priced with, for the response.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param object $order Order.
+	 * @return array{amount: float, amount_minor: int, rate: float, label: string, included: bool}
+	 */
+	private function get_tax_payload( object $order ): array {
+		$tax = wpss_get_order_tax( $order );
+
+		return array(
+			'amount'       => $tax['amount'],
+			'amount_minor' => wpss_amount_to_minor_units( $tax['amount'], (string) $order->currency ),
+			'rate'         => $tax['rate'],
+			'label'        => $tax['label'],
+			'included'     => $tax['included'],
+		);
+	}
+
+	/**
 	 * Shape one order row for the API.
 	 *
 	 * @param object          $order   Order row.
@@ -2078,6 +2098,9 @@ class OrdersController extends RestController {
 			'total_minor'         => wpss_amount_to_minor_units( (float) $order->total, (string) $order->currency ),
 			'currency'            => $order->currency,
 			'formatted_total'     => wpss_format_currency( (float) $order->total, $order->currency ),
+			// The tax inside `total`, from the same reader as the pay page and the
+			// emails. amount is 0 when the order carries none.
+			'tax'                 => $this->get_tax_payload( $order ),
 			// Revisions. Both numbers were already ON the order row and simply
 			// never exposed, so a client could not tell a buyer how many
 			// revisions were left before requesting one -- nor a vendor before
@@ -2417,6 +2440,12 @@ class OrdersController extends RestController {
 					'total'        => array(
 						'description' => __( 'Order total', 'wp-sell-services' ),
 						'type'        => 'number',
+						'context'     => array( 'view', 'edit' ),
+						'readonly'    => true,
+					),
+					'tax'          => array(
+						'description' => __( 'Tax included in the total: amount, amount_minor, rate, label and whether the price already included it.', 'wp-sell-services' ),
+						'type'        => 'object',
 						'context'     => array( 'view', 'edit' ),
 						'readonly'    => true,
 					),

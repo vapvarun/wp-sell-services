@@ -19,6 +19,8 @@ $id   = wp_insert_user( array( 'user_login' => 'qa_rft_tok' . wp_rand( 1000, 999
 $user = get_userdata( $id );
 list( $token ) = WP_Application_Passwords::create_new_application_password( $id, array( 'name' => 'QA-RFT' ) );
 
+// Repeated guard runs share one IP and trip the real login limiter; this test is about the token, not the limit.
+\WPSellServices\Core\RateLimiter::clear( 'auth_login' );
 wp_set_current_user( 0 );
 $req = new WP_REST_Request( 'POST', '/wpss/v1/auth/login' );
 $req->set_body_params( array( 'username' => $user->user_login, 'password' => $token ) );
@@ -29,5 +31,6 @@ $check( '  and no token is in the response', ! $res->is_error() ? false : empty(
 $check( '  and the code is one of the two documented ones', in_array( $res->is_error() ? $res->as_error()->get_error_code() : '', array( 'invalid_credentials', 'wpss_token_cannot_mint' ), true ) );
 $check( 'the member still holds exactly the one token they started with', 1 === count( WP_Application_Passwords::get_user_application_passwords( $id ) ) );
 
+\WPSellServices\Core\RateLimiter::clear( 'auth_login' );
 require_once ABSPATH . 'wp-admin/includes/user.php';
 wp_delete_user( $id );

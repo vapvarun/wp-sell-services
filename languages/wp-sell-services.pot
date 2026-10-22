@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-22T05:10:41+00:00\n"
+"POT-Creation-Date: 2026-10-22T05:16:16+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -1026,7 +1026,7 @@ msgid "Created"
 msgstr ""
 
 #: src/Admin/Admin.php:2540
-#: src/API/OrdersController.php:2436
+#: src/API/OrdersController.php:2465
 #: templates/order/order-view.php:665
 msgid "Due date"
 msgstr ""
@@ -1499,7 +1499,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:3381
 #: src/Admin/Pages/ManualOrderPage.php:345
-#: src/API/OrdersController.php:2413
+#: src/API/OrdersController.php:2436
 msgid "Order status"
 msgstr ""
 
@@ -2643,7 +2643,7 @@ msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:127
 #: src/Admin/Pages/ManualOrderPage.php:705
-#: src/Checkout/CheckoutIntentService.php:1035
+#: src/Checkout/CheckoutIntentService.php:1030
 #: src/Integrations/Gateways/OfflineGateway.php:862
 #: src/Integrations/Gateways/TestGateway.php:394
 #: src/Integrations/PayPal/PayPalGateway.php:865
@@ -2733,7 +2733,7 @@ msgid "Auto-calculated"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:286
-#: src/API/OrdersController.php:2418
+#: src/API/OrdersController.php:2441
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:667
 #: templates/emails/cancellation-requested.php:80
 msgid "Order total"
@@ -2924,7 +2924,7 @@ msgstr ""
 #: src/Admin/Pages/ManualOrderPage.php:888
 #: src/Admin/Pages/ServiceModerationPage.php:663
 #: src/Admin/Pages/ServiceModerationPage.php:691
-#: src/Checkout/CheckoutIntentService.php:387
+#: src/Checkout/CheckoutIntentService.php:382
 #: src/Frontend/AjaxHandlers.php:2185
 #: src/Frontend/AjaxHandlers.php:2316
 #: src/Integrations/Gateways/OfflineGateway.php:758
@@ -7049,7 +7049,7 @@ msgstr ""
 #: src/API/API.php:266
 #: src/API/API.php:298
 #: src/API/MediaController.php:57
-#: src/API/OrdersController.php:2328
+#: src/API/OrdersController.php:2351
 #: src/API/PortfolioController.php:98
 msgid "Current page of the collection."
 msgstr ""
@@ -7379,7 +7379,7 @@ msgid "Items per page."
 msgstr ""
 
 #: src/API/CartController.php:52
-#: src/API/OrdersController.php:2395
+#: src/API/OrdersController.php:2418
 #: src/API/ReviewsController.php:1056
 #: src/API/ServicesController.php:138
 msgid "Service ID."
@@ -7410,7 +7410,7 @@ msgid "Service not found or not available."
 msgstr ""
 
 #: src/API/CartController.php:142
-#: src/Checkout/CheckoutIntentService.php:393
+#: src/Checkout/CheckoutIntentService.php:388
 #: src/Frontend/AjaxHandlers.php:2202
 #: src/Frontend/AjaxHandlers.php:2322
 #: src/Integrations/Gateways/OfflineGateway.php:828
@@ -8040,27 +8040,27 @@ msgstr ""
 msgid "Only the buyer can perform this action."
 msgstr ""
 
-#: src/API/OrdersController.php:2334
+#: src/API/OrdersController.php:2357
 msgid "Maximum number of items per page."
 msgstr ""
 
-#: src/API/OrdersController.php:2341
+#: src/API/OrdersController.php:2364
 msgid "Filter by user role (vendor or customer)."
 msgstr ""
 
-#: src/API/OrdersController.php:2346
+#: src/API/OrdersController.php:2369
 msgid "Filter by order status."
 msgstr ""
 
-#: src/API/OrdersController.php:2350
+#: src/API/OrdersController.php:2373
 msgid "Filter by service ID."
 msgstr ""
 
-#: src/API/OrdersController.php:2368
+#: src/API/OrdersController.php:2391
 msgid "Exclude orders in these statuses. Repeatable."
 msgstr ""
 
-#: src/API/OrdersController.php:2389
+#: src/API/OrdersController.php:2412
 #: src/Privacy/PersonalData.php:351
 #: src/Privacy/PersonalData.php:507
 #: templates/dashboard/partials/order-filters.php:86
@@ -8069,19 +8069,23 @@ msgstr ""
 msgid "Order number"
 msgstr ""
 
-#: src/API/OrdersController.php:2401
+#: src/API/OrdersController.php:2424
 msgid "Vendor user ID."
 msgstr ""
 
-#: src/API/OrdersController.php:2407
+#: src/API/OrdersController.php:2430
 msgid "Buyer user ID."
 msgstr ""
 
-#: src/API/OrdersController.php:2424
+#: src/API/OrdersController.php:2447
+msgid "Tax included in the total: amount, amount_minor, rate, label and whether the price already included it."
+msgstr ""
+
+#: src/API/OrdersController.php:2453
 msgid "Order currency."
 msgstr ""
 
-#: src/API/OrdersController.php:2430
+#: src/API/OrdersController.php:2459
 msgid "Note written with a sub-order (tip message, extension reason, milestone description)."
 msgstr ""
 
@@ -8903,7 +8907,7 @@ msgid "Please log in to continue."
 msgstr ""
 
 #: src/Checkout/CheckoutIntentService.php:82
-#: src/Checkout/CheckoutIntentService.php:861
+#: src/Checkout/CheckoutIntentService.php:856
 #: src/Frontend/AjaxHandlers.php:230
 #: src/Frontend/AjaxHandlers.php:281
 #: src/Frontend/AjaxHandlers.php:346
@@ -8925,7 +8929,7 @@ msgstr ""
 
 #: src/Checkout/CheckoutIntentService.php:103
 #: src/Checkout/CheckoutIntentService.php:177
-#: src/Checkout/CheckoutIntentService.php:408
+#: src/Checkout/CheckoutIntentService.php:403
 #: src/Integrations/Stripe/StripeGateway.php:1031
 msgid "Invalid amount."
 msgstr ""
@@ -8945,28 +8949,28 @@ msgstr ""
 msgid "Invalid package."
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:429
+#: src/Checkout/CheckoutIntentService.php:424
 #: src/Integrations/PayPal/PayPalGateway.php:181
 msgid "Service purchase"
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:782
+#: src/Checkout/CheckoutIntentService.php:777
 msgid "This payment was refunded and cannot pay for an order."
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:826
+#: src/Checkout/CheckoutIntentService.php:821
 #: src/Integrations/Gateways/AbstractPaymentGateway.php:122
 #: src/Integrations/PayPal/PayPalGateway.php:766
 msgid "The paid amount does not match the order total."
 msgstr ""
 
 #. translators: %s: payment reference
-#: src/Checkout/CheckoutIntentService.php:917
+#: src/Checkout/CheckoutIntentService.php:912
 #, php-format
 msgid "Your payment was received, but the order could not be confirmed. Please contact support and quote this reference: %s"
 msgstr ""
 
-#: src/Checkout/CheckoutIntentService.php:963
+#: src/Checkout/CheckoutIntentService.php:958
 msgid "Failed to create orders. Please contact support."
 msgstr ""
 

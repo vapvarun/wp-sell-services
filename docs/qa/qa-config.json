@@ -245,6 +245,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-order-not-payable-message.php"
    },
    {
+    "id": "order-payload-exposes-tax",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-payload-exposes-tax.php"
+   },
+   {
     "id": "order-product-columns",
     "run": "${WP_CLI:-wp} eval-file tests/test-order-product-columns.php"
    },
