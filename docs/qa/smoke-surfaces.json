@@ -1,34 +1,114 @@
 {
-  "_doc": [
-    "Which files belong to which browser-walked surface, for bin/smoke-gate.cjs.",
-    "",
-    "A changed rendered file used to invalidate the whole smoke walk. A file listed here only makes its own",
-    "surface stale: re-walk that surface, record it under `surfaces` in the smoke report with the commit it ran",
-    "against, and the file is covered again.",
-    "",
-    "Safety property: a file that matches NO glob here invalidates everything, exactly as before. A shared",
-    "helper, a new file, a rename or an unmapped directory therefore fails safe. This file can only narrow",
-    "invalidation for files someone deliberately mapped; list a file under a surface only when a walk of that",
-    "surface would notice a regression in it.",
-    "",
-    "Globs: ** crosses directories, * stays inside one. `free` paths are relative to the Free plugin, `pro` to Pro."
-  ],
-  "surfaces": {
-    "cart": {
-      "free": [ "templates/cart/**" ],
-      "pro": [ "src/Integrations/*/*Cart*" ]
-    },
-    "checkout": {
-      "free": [ "src/Checkout/**", "templates/checkout/**" ],
-      "pro": [ "src/Integrations/*/*Checkout*" ]
-    },
-    "earnings": {
-      "free": [ "templates/dashboard/sections/earnings.php", "assets/css/unified-dashboard*.css" ],
-      "pro": []
-    },
-    "publish": {
-      "free": [ "src/Admin/Metaboxes/ServiceMetabox.php", "src/Services/ServiceManager.php" ],
-      "pro": []
-    }
+ "_doc": [
+  "Which files belong to which browser-walked surface, for bin/smoke-gate.cjs.",
+  "",
+  "A changed rendered file used to invalidate the whole smoke walk. A file listed here only makes its own",
+  "surface stale: re-walk that surface, record it under `surfaces` in the smoke report with the commit it ran",
+  "against, and the file is covered again.",
+  "",
+  "Safety property: a file that matches NO glob here invalidates everything, exactly as before. A shared",
+  "helper, a new file, a rename or an unmapped directory therefore fails safe. This file can only narrow",
+  "invalidation for files someone deliberately mapped; list a file under a surface only when a walk of that",
+  "surface would notice a regression in it.",
+  "",
+  "Globs: ** crosses directories, * stays inside one. `free` paths are relative to the Free plugin, `pro` to Pro.",
+  "",
+  "1.9.1 re-cut: surfaces added for the files the fix round touched. src/Core/Plugin.php sits under `moderation` because the only change is one listener binding; it is verified by the surface walk plus the full guard run, not by a walk of every bootstrap path."
+ ],
+ "surfaces": {
+  "cart": {
+   "free": [
+    "templates/cart/**"
+   ],
+   "pro": [
+    "src/Integrations/*/*Cart*"
+   ]
+  },
+  "checkout": {
+   "free": [
+    "src/Checkout/**",
+    "templates/checkout/**"
+   ],
+   "pro": [
+    "src/Integrations/*/*Checkout*"
+   ]
+  },
+  "earnings": {
+   "free": [
+    "templates/dashboard/sections/earnings.php",
+    "assets/css/unified-dashboard*.css",
+    "assets/js/unified-dashboard*.js"
+   ],
+   "pro": []
+  },
+  "publish": {
+   "free": [
+    "src/Admin/Metaboxes/ServiceMetabox.php",
+    "src/Services/ServiceManager.php",
+    "src/functions/services.php",
+    "src/API/ServicesController.php",
+    "src/Frontend/ServiceWizard.php",
+    "src/Models/VendorProfile.php"
+   ],
+   "pro": []
+  },
+  "moderation": {
+   "free": [
+    "src/Admin/Pages/ServiceModerationPage.php",
+    "src/Services/ModerationService.php",
+    "src/Core/Plugin.php"
+   ],
+   "pro": []
+  },
+  "owner-decisions": {
+   "free": [
+    "src/API/ReportsController.php",
+    "src/Admin/Pages/ReportsPage.php",
+    "src/Services/DisputeWorkflowManager.php"
+   ],
+   "pro": []
+  },
+  "vendor-doors": {
+   "free": [
+    "src/Frontend/UnifiedDashboard.php",
+    "src/Frontend/AjaxHandlers.php"
+   ],
+   "pro": []
+  },
+  "order-titles-and-tax": {
+   "free": [
+    "src/functions/money.php",
+    "src/functions/orders.php",
+    "src/Admin/Pages/ManualOrderPage.php",
+    "src/Integrations/Standalone/StandaloneOrderProvider.php",
+    "src/Services/BuyerRequestService.php",
+    "templates/order/order-requirements.php",
+    "templates/emails/**",
+    "src/Frontend/Shortcodes.php"
+   ],
+   "pro": []
+  },
+  "reviews-and-service-page": {
+   "free": [
+    "assets/css/frontend*.css",
+    "assets/css/single-service*.css",
+    "templates/partials/review-body.php",
+    "templates/content-no-requests.php"
+   ],
+   "pro": []
+  },
+  "admin-service-list": {
+   "free": [
+    "src/Admin/ServiceListScreen.php"
+   ],
+   "pro": []
+  },
+  "analytics-and-ledger": {
+   "free": [],
+   "pro": [
+    "src/Analytics/AnalyticsManager.php",
+    "src/Services/LedgerExporter.php"
+   ]
   }
+ }
 }
