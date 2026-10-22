@@ -267,6 +267,31 @@ function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 
 }
 
 /**
+ * The tax keys an order stores in its meta, in one shape for every order creator.
+ *
+ * The label is stored with the order so a later change to the Tax label setting
+ * does not rename the line on orders already priced. `wpss_get_order_tax()` reads these keys.
+ *
+ * @since 1.9.1
+ *
+ * @param float  $rate     Tax rate in percent.
+ * @param float  $amount   Tax amount.
+ * @param bool   $included Whether the price already includes the tax.
+ * @param string $label    Tax label; empty uses the current setting.
+ * @return array{tax_rate: float, tax_amount: float, tax_included: bool, tax_label: string}
+ */
+function wpss_order_tax_meta( float $rate, float $amount, bool $included, string $label = '' ): array {
+	$label = trim( $label );
+
+	return array(
+		'tax_rate'     => $rate,
+		'tax_amount'   => round( $amount, 2 ),
+		'tax_included' => $included,
+		'tax_label'    => '' !== $label ? $label : wpss_calculate_tax( 0.0 )['label'],
+	);
+}
+
+/**
  * The tax an order was priced with, as stored in its meta at creation.
  *
  * One reader for the pay page and every store rail's pay-order, so none of them re-parses the meta
@@ -285,7 +310,7 @@ function wpss_get_order_tax( object $order ): array {
 	return array(
 		'amount'   => (float) ( $meta['tax_amount'] ?? 0 ),
 		'rate'     => (float) ( $meta['tax_rate'] ?? 0 ),
-		'label'    => '' !== $label ? $label : __( 'Tax', 'wp-sell-services' ),
+		'label'    => '' !== $label ? $label : wpss_calculate_tax( 0.0 )['label'],
 		'included' => ! empty( $meta['tax_included'] ),
 	);
 }

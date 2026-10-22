@@ -1013,9 +1013,7 @@ class BuyerRequestService {
 						[
 							'proposal_snapshot' => $proposal_snapshot,
 							'contract_type'     => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
-							'tax_rate'          => $line['tax_rate'],
-							'tax_amount'        => $line['tax'],
-							'tax_included'      => $line['tax_included'],
+							...wpss_order_tax_meta( (float) $line['tax_rate'], (float) $line['tax'], (bool) $line['tax_included'], (string) ( $line['tax_label'] ?? '' ) ),
 						]
 					)
 				),

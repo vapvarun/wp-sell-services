@@ -637,11 +637,7 @@ class ManualOrderPage {
 			'revisions_included' => $revisions_included,
 			'revisions_used'     => 0,
 			'meta'               => wp_json_encode(
-				array(
-					'tax_rate'     => (float) $line['tax_rate'],
-					'tax_amount'   => round( (float) $line['tax'], 2 ),
-					'tax_included' => (bool) $line['tax_included'],
-				)
+				wpss_order_tax_meta( (float) $line['tax_rate'], (float) $line['tax'], (bool) $line['tax_included'], (string) ( $line['tax_label'] ?? '' ) )
 			),
 			'created_at'         => current_time( 'mysql', true ),
 			'updated_at'         => current_time( 'mysql', true ),

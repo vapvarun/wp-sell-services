@@ -217,6 +217,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-order-product-columns.php"
    },
    {
+    "id": "order-tax-label-stored",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-tax-label-stored.php"
+   },
+   {
     "id": "package-revisions-unlimited-input",
     "run": "${WP_CLI:-wp} eval-file tests/test-package-revisions-unlimited-input.php"
    },

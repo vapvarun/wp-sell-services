@@ -140,9 +140,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 				'meta'               => wp_json_encode(
 					array_filter(
 						[
-							'tax_rate'         => $tax_rate,
-							'tax_amount'       => round( $tax_amount, 2 ),
-							'tax_included'     => (bool) $tax['included'],
+							...wpss_order_tax_meta( (float) $tax_rate, (float) $tax_amount, (bool) $tax['included'], (string) ( $tax['label'] ?? '' ) ),
 							'package_snapshot' => $package_snapshot,
 						]
 					)
