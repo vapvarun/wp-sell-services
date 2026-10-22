@@ -84,7 +84,10 @@
     "src/Services/BuyerRequestService.php",
     "templates/order/order-requirements.php",
     "templates/emails/**",
-    "src/Frontend/Shortcodes.php"
+    "src/Frontend/Shortcodes.php",
+    "src/Services/EmailService.php",
+    "src/Checkout/CheckoutIntentService.php",
+    "templates/order/line-items.php"
    ],
    "pro": []
   },
