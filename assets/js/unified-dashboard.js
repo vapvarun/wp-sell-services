@@ -641,7 +641,10 @@
 				},
 				success: function () {
 					show(wpssUnifiedDashboard.i18n.withdrawalSubmitted, 'success');
-					window.location.reload();
+					// Long enough to read the confirmation before the history list refreshes.
+					setTimeout(function () {
+						window.location.reload();
+					}, 1800);
 				},
 				error: function (xhr) {
 					show((xhr.responseJSON && xhr.responseJSON.message) || wpssUnifiedDashboard.i18n.errorOccurred, 'error');
