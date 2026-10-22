@@ -597,6 +597,34 @@ function wpss_build_package_snapshot_from_legacy_id( int $service_id, int $packa
 }
 
 /**
+ * The delivery terms a new order starts with, for any rail that creates one.
+ *
+ * Revisions come from the package the buyer bought (-1 is unlimited), falling
+ * back to the service's own count; the deadline is the line's days from now
+ * (see wpss_line_delivery_days()) and is also the original deadline. One place,
+ * so an order from a store rail is due and revisable exactly like a standalone one.
+ *
+ * @since 1.9.1
+ *
+ * @param int                              $service_id Service post ID.
+ * @param int                              $package_id Package the buyer bought (stable id or index).
+ * @param array<int, array<string, mixed>> $addons Priced add-on rows, when the rail has them.
+ * @return array{revisions_included: int, revisions_used: int, delivery_deadline: string, original_deadline: string}
+ */
+function wpss_order_delivery_terms( int $service_id, int $package_id, array $addons = array() ): array {
+	$resolved = wpss_resolve_service_package( $service_id, $package_id );
+	$package  = $resolved ? $resolved['package'] : array();
+	$deadline = gmdate( 'Y-m-d H:i:s', strtotime( '+' . wpss_line_delivery_days( $package, $addons ) . ' days' ) );
+
+	return array(
+		'revisions_included' => (int) ( $package['revisions'] ?? wpss_get_service_revisions( $service_id ) ),
+		'revisions_used'     => 0,
+		'delivery_deadline'  => $deadline,
+		'original_deadline'  => $deadline,
+	);
+}
+
+/**
  * Run the shared post-creation steps for a service order.
  *
  * Every rail creates its order row itself — standalone, WooCommerce, EDD,

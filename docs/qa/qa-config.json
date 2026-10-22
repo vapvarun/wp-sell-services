@@ -401,6 +401,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-standing-blocks-buying-doors.php"
    },
    {
+    "id": "store-rails-start-orders-with-delivery-terms",
+    "run": "${WP_CLI:-wp} eval-file tests/test-store-rails-start-orders-with-delivery-terms.php"
+   },
+   {
     "id": "sub-order-tax",
     "run": "${WP_CLI:-wp} eval-file tests/test-sub-order-tax.php"
    },

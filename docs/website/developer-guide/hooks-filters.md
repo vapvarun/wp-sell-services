@@ -71,7 +71,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:743` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:635` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:663` |
 
 ### Order Filters
 
@@ -878,7 +878,7 @@ WooCommerce or standalone checkout.
 | `wpss_edd_adapter_init` | `EDDAdapter $adapter` | `src/Integrations/EDD/EDDAdapter.php:169` |
 | `wpss_edd_service_purchased` | `ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:119` |
 | `wpss_edd_services_processed` | `int $order_id, ServiceItem[] $items` | `src/Integrations/EDD/EDDOrderProvider.php:149` |
-| `wpss_edd_order_record_created` | `int $record_id, ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:410` |
+| `wpss_edd_order_record_created` | `int $record_id, ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:407` |
 | `wpss_edd_service_meta_saved` | `int $product_id` | `src/Integrations/EDD/EDDProductProvider.php:237` |
 | `wpss_edd_service_checkout_processed` | `int $order_id, int $download_id, array $service_data, int $index` | `EDDCheckoutProvider.php:222` |
 
@@ -887,7 +887,7 @@ WooCommerce or standalone checkout.
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_fluentcart_adapter_init` | `FluentCartAdapter $adapter` | `src/Integrations/FluentCart/FluentCartAdapter.php:216` |
-| `wpss_fluentcart_order_created` | `int $order_id, int $external_order_id, array $order_data` | `src/Integrations/FluentCart/FluentCartOrderProvider.php:110` |
+| `wpss_fluentcart_order_created` | `int $order_id, int $external_order_id, array $order_data` | `src/Integrations/FluentCart/FluentCartOrderProvider.php:116` |
 | `wpss_fluentcart_order_detail` | `object $order` | `src/Integrations/FluentCart/FluentCartAccountProvider.php:367` |
 
 > `wpss_fluentcart_product_created` was removed in 1.6.1. FluentCart is a
