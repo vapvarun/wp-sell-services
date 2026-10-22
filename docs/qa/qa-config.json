@@ -341,6 +341,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-token-cannot-mint.php"
    },
    {
+    "id": "vendor-max-services-filter",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-max-services-filter.php"
+   },
+   {
     "id": "vendor-timezone",
     "run": "${WP_CLI:-wp} eval-file tests/test-vendor-timezone.php"
    },

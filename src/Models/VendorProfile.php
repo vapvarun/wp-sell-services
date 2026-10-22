@@ -611,29 +611,7 @@ class VendorProfile {
 	 * @return bool True if the vendor has reached or exceeded the limit.
 	 */
 	public function has_reached_service_limit(): bool {
-		$max_services = absint( wpss_get_option( 'vendor', 'max_services_per_vendor' ) );
-
-		/**
-		 * Filter the number of services this vendor may have.
-		 *
-		 * The site-wide setting is the default, and it is the right answer for
-		 * a vendor nobody has sold anything better to. A vendor paying for a
-		 * plan that promises more must not be held to it: Pro raises this to
-		 * the plan's own maximum.
-		 *
-		 * This is deliberately a number, not a second veto. The limit used to
-		 * be asked twice - this check at priority 10 on
-		 * `wpss_vendor_can_create_service`, and Pro's plan check at 20 - and
-		 * because the chain short-circuits on the first denial, the global cap
-		 * always won and the plan's higher allowance was never consulted
-		 * (Basecamp 10309440054).
-		 *
-		 * @since 1.7.1
-		 *
-		 * @param int $max_services Maximum services. 0 means unlimited.
-		 * @param int $vendor_id    Vendor user ID.
-		 */
-		$max_services = (int) apply_filters( 'wpss_vendor_max_services', $max_services, (int) $this->user_id );
+		$max_services = $this->get_max_services();
 
 		// 0 (or a negative "unlimited" sentinel) means no ceiling.
 		if ( $max_services <= 0 ) {
@@ -662,7 +640,32 @@ class VendorProfile {
 	 * @return int Maximum services. 0 means unlimited.
 	 */
 	public function get_max_services(): int {
-		return absint( wpss_get_option( 'vendor', 'max_services_per_vendor' ) );
+		$max_services = absint( wpss_get_option( 'vendor', 'max_services_per_vendor' ) );
+
+		/**
+		 * Filter the number of services this vendor may have.
+		 *
+		 * The site-wide setting is the default, and it is the right answer for
+		 * a vendor nobody has sold anything better to. A vendor paying for a
+		 * plan that promises more must not be held to it: Pro raises this to
+		 * the plan's own maximum.
+		 *
+		 * This is deliberately a number, not a second veto. The limit used to
+		 * be asked twice - this check at priority 10 on
+		 * `wpss_vendor_can_create_service`, and Pro's plan check at 20 - and
+		 * because the chain short-circuits on the first denial, the global cap
+		 * always won and the plan's higher allowance was never consulted
+		 * (Basecamp 10309440054).
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param int $max_services Maximum services. 0 means unlimited.
+		 * @param int $vendor_id    Vendor user ID.
+		 */
+		$max_services = (int) apply_filters( 'wpss_vendor_max_services', $max_services, (int) $this->user_id );
+
+		// A negative "unlimited" sentinel from the filter means no ceiling, same as 0.
+		return max( 0, $max_services );
 	}
 
 	/**
