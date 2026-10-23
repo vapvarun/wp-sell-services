@@ -369,7 +369,7 @@ array says, new IDs are added, and `DELETE /media/{id}` on such a file answers
 | GET | `/disputes/options` |
 
 `resolve` and `assign` require dispute-management capability. See
-[Admin Mediation](../disputes-resolution/admin-dispute-mediation.md).
+[Admin Mediation](../disputes-resolution/admin-mediation.md).
 
 ### Earnings and withdrawals
 

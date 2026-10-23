@@ -20,7 +20,7 @@ An admin can write off a vendor's negative balance, and the REST API reports the
 
 ## Closed orders and phases
 
-A cancelled, refunded or declined order can no longer be paid. A milestone phase stays locked until the previous phase is approved, and its page says so. See [Milestones](../order-management/milestones-wpss.md).
+A cancelled, refunded or declined order can no longer be paid. A milestone phase stays locked until the previous phase is approved, and its page says so. See [Milestones](../order-management/milestones.md).
 
 ## Deliveries and messages
 

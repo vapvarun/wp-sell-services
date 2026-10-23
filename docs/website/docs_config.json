@@ -62,6 +62,10 @@
         {
           "slug": "documentation-coverage",
           "title": "Documentation Coverage"
+        },
+        {
+          "slug": "feature-catalog",
+          "title": "Feature Catalog"
         }
       ],
       "description": "Install the plugin, finish setup and take a tour of the dashboard."
@@ -91,7 +95,7 @@
           "title": "Tips for Getting Great Results"
         },
         {
-          "slug": "favorites-saved-services",
+          "slug": "favorites",
           "title": "Favorites: Save Services for Later"
         },
         {
@@ -153,7 +157,7 @@
           "title": "Managing Requests"
         },
         {
-          "slug": "proposal-contracts-wpss",
+          "slug": "proposal-contracts",
           "title": "Proposal Contracts: Fixed vs Milestone"
         }
       ],
@@ -180,11 +184,11 @@
           "title": "Deliveries & Revisions"
         },
         {
-          "slug": "milestones-wpss",
+          "slug": "milestones",
           "title": "Milestone Contracts"
         },
         {
-          "slug": "extensions-wpss",
+          "slug": "extensions",
           "title": "Paid Extensions"
         },
         {
@@ -265,7 +269,7 @@
           "title": "The Dispute Process"
         },
         {
-          "slug": "admin-dispute-mediation",
+          "slug": "admin-mediation",
           "title": "Resolving Disputes (Admin Guide)"
         }
       ],
@@ -343,7 +347,7 @@
           "title": "Automated Payouts"
         },
         {
-          "slug": "ledger-csv-wpss",
+          "slug": "ledger-csv",
           "title": "Earnings Ledger & CSV Export"
         },
         {
@@ -462,7 +466,7 @@
           "title": "Creating Orders Manually"
         },
         {
-          "slug": "guided-tour",
+          "slug": "admin-guided-tour",
           "title": "Guided Admin Tour"
         },
         {
@@ -679,7 +683,7 @@
         {
           "title": "Feature Catalog",
           "slug": "feature-catalog-wpss",
-          "file": "feature-catalog.md",
+          "file": "getting-started/feature-catalog.md",
           "order": 15
         }
       ]
@@ -722,7 +726,7 @@
         {
           "title": "Favorites: Save Services for Later",
           "slug": "favorites-wpss",
-          "file": "buyer-guide/favorites-saved-services.md",
+          "file": "buyer-guide/favorites.md",
           "order": 6
         },
         {
@@ -808,7 +812,7 @@
         {
           "title": "Proposal Contracts: Fixed vs Milestone",
           "slug": "proposal-contracts-wpss",
-          "file": "buyer-requests/proposal-contracts-wpss.md",
+          "file": "buyer-requests/proposal-contracts.md",
           "order": 4
         }
       ]
@@ -845,13 +849,13 @@
         {
           "title": "Milestone Contracts",
           "slug": "milestones-wpss",
-          "file": "order-management/milestones-wpss.md",
+          "file": "order-management/milestones.md",
           "order": 5
         },
         {
           "title": "Paid Extensions",
           "slug": "extensions-wpss",
-          "file": "order-management/extensions-wpss.md",
+          "file": "order-management/extensions.md",
           "order": 6
         },
         {
@@ -962,7 +966,7 @@
         {
           "title": "Admin Mediation & Resolution Types",
           "slug": "admin-mediation-wpss",
-          "file": "disputes-resolution/admin-dispute-mediation.md",
+          "file": "disputes-resolution/admin-mediation.md",
           "order": 3
         }
       ]
@@ -1072,7 +1076,7 @@
         {
           "title": "Earnings Ledger & CSV Export [PRO]",
           "slug": "ledger-csv-wpss",
-          "file": "earnings-wallet/ledger-csv-wpss.md",
+          "file": "earnings-wallet/ledger-csv.md",
           "order": 6
         },
         {
@@ -1233,7 +1237,7 @@
         {
           "title": "Guided Admin Tour",
           "slug": "admin-guided-tour-wpss",
-          "file": "admin-tools/guided-tour.md",
+          "file": "admin-tools/admin-guided-tour.md",
           "order": 5
         },
         {

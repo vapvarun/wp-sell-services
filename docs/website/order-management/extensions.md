@@ -16,7 +16,7 @@ FluentCart). These are fixed-price jobs where the buyer already paid the
 full amount upfront.
 
 If the order is a custom project that started from a buyer request, use
-a [Milestone Contract](milestones-wpss.md) instead. Extensions and
+a [Milestone Contract](milestones.md) instead. Extensions and
 milestones are mutually exclusive - one order will only ever show one of
 the two CTAs, never both.
 
@@ -156,6 +156,6 @@ you'll get another notification.
 
 ## Related documentation
 
-- [Milestone Contracts](milestones-wpss.md)
+- [Milestone Contracts](milestones.md)
 - [Order Lifecycle & 11 Statuses](order-lifecycle.md)
 - [Tipping & Deadline Extensions](tipping-extensions.md)
