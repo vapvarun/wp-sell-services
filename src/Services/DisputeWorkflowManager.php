@@ -870,22 +870,7 @@ class DisputeWorkflowManager {
 	 * @return bool True when the order is back on its pre-dispute status.
 	 */
 	private function restore_order_status( int $order_id ): bool {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$order = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT meta FROM {$wpdb->prefix}wpss_orders WHERE id = %d",
-				$order_id
-			)
-		);
-
-		if ( ! $order ) {
-			return false;
-		}
-
-		$meta            = $this->decode_json_array( $order->meta );
-		$previous_status = (string) ( $meta['status_before_dispute'] ?? '' );
+		$previous_status = self::status_before_dispute( $order_id );
 
 		// Rows written by the pre-1.6 bug recorded `disputed` as the status to
 		// go back to; that would leave the order stuck, so treat it as unknown.
@@ -893,10 +878,41 @@ class DisputeWorkflowManager {
 			$previous_status = \WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS;
 		}
 
+		return self::hand_back_order( $order_id, $previous_status, __( 'Dispute closed; order restored.', 'wp-sell-services' ) );
+	}
+
+	/**
+	 * The status an order held before its dispute was opened, or '' when unknown.
+	 *
+	 * @since 1.9.1
+	 * @param int $order_id Order ID.
+	 * @return string
+	 */
+	public static function status_before_dispute( int $order_id ): string {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$raw  = $wpdb->get_var( $wpdb->prepare( "SELECT meta FROM {$wpdb->prefix}wpss_orders WHERE id = %d", $order_id ) );
+		$meta = json_decode( (string) $raw, true );
+
+		return is_array( $meta ) ? (string) ( $meta['status_before_dispute'] ?? '' ) : '';
+	}
+
+	/**
+	 * Move an order out of `disputed` without re-running what its earlier status
+	 * already did: no second commission, completion hook or status notice.
+	 *
+	 * @since 1.9.1
+	 * @param int    $order_id Order ID.
+	 * @param string $status   Status to move to.
+	 * @param string $note     Order note.
+	 * @return bool True when the order moved.
+	 */
+	public static function hand_back_order( int $order_id, string $status, string $note = '' ): bool {
 		self::$restoring[ $order_id ] = true;
 
 		try {
-			return ( new OrderService() )->update_status( $order_id, $previous_status, __( 'Dispute closed; order restored.', 'wp-sell-services' ) );
+			return ( new OrderService() )->update_status( $order_id, $status, $note );
 		} finally {
 			unset( self::$restoring[ $order_id ] );
 		}

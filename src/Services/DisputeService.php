@@ -1150,6 +1150,11 @@ class DisputeService {
 
 			case self::RESOLUTION_FAVOR_VENDOR:
 			case self::RESOLUTION_MUTUAL:
+				// Completed before the dispute: it already paid out and announced, so the ruling hands it back quietly.
+				if ( ServiceOrder::STATUS_COMPLETED === DisputeWorkflowManager::status_before_dispute( $order_id ) ) {
+					return DisputeWorkflowManager::hand_back_order( $order_id, ServiceOrder::STATUS_COMPLETED );
+				}
+
 				return $this->order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
 		}
 

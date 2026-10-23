@@ -825,6 +825,23 @@
    "added": "2026-10-23",
    "fails_on": "627e94cd",
    "check": "tests/test-service-limits-and-accept-lock.php"
+  },
+  {
+   "card": "10431603325",
+   "title": "the public vendor-stats route answered a non-vendor id with that account's registration date",
+   "guard": "static:vendor-stats-hides-non-vendor-registration",
+   "added": "2026-10-23",
+   "fails_on": "3b0a53e1",
+   "check": "tests/test-vendor-stats-hides-non-vendor-registration.php"
+  },
+  {
+   "card": "10432412919",
+   "title": "a ruling for the vendor or by agreement on an already-completed order fires wpss_order_completed and the buyer's Order completed notice a second time",
+   "guard": "static:dispute-ruling-on-completed-order-fires-once",
+   "added": "2026-10-23",
+   "fails_on": "cff919c2",
+   "check": "tests/test-dispute-ruling-on-completed-order-fires-once.php",
+   "note": "commission was already idempotent; the in_progress case is the control that a first completion still fires once"
   }
  ]
 }

@@ -643,6 +643,14 @@
    {
     "id": "service-limits-and-accept-lock",
     "run": "${WP_CLI:-wp} eval-file tests/test-service-limits-and-accept-lock.php"
+   },
+   {
+    "id": "vendor-stats-hides-non-vendor-registration",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-stats-hides-non-vendor-registration.php"
+   },
+   {
+    "id": "dispute-ruling-on-completed-order-fires-once",
+    "run": "${WP_CLI:-wp} eval-file tests/test-dispute-ruling-on-completed-order-fires-once.php"
    }
   ]
  }

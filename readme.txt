@@ -343,6 +343,7 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - A vendor's response rate can no longer go above 100 percent.
 * Fix      - A member who signs up as a vendor sees their vendor permissions at once.
 * Fix      - Review stars and icons on the admin vendor detail screen show filled instead of blank.
+* Fix      - A dispute ruled for the vendor, or settled by agreement, on an order that was already completed no longer sends the buyer a second Order completed notice.
 * Fix      - The total override, commission rate and select-all fields in admin have names for screen readers.
 * Security - Vendor stats no longer reveal when a non-vendor account registered.
 * Dev      - Updating removes the retired Helpful vote options and cleanup job; the helpful_count column is left in place.
