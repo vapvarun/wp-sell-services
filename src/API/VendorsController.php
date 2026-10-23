@@ -880,7 +880,7 @@ class VendorsController extends RestController {
 				'total_reviews'     => $review_stats['count'],
 				'average_rating'    => round( $review_stats['average'], 1 ),
 				'avg_response_time' => $avg_response_time,
-				'member_since'      => $this->format_datetime( $wpss_vp && $wpss_vp->member_since ? $wpss_vp->member_since->format( 'Y-m-d H:i:s' ) : ( get_userdata( $vendor_id )->user_registered ?? null ) ),
+				'member_since'      => $this->format_datetime( $wpss_vp && $wpss_vp->member_since ? $wpss_vp->member_since->format( 'Y-m-d H:i:s' ) : ( wpss_is_vendor( $vendor_id ) ? ( get_userdata( $vendor_id )->user_registered ?? null ) : null ) ),
 			)
 		);
 	}
