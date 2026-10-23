@@ -30,6 +30,14 @@ The Earnings ledger follows the chosen period, and the Pro CSV export uses the s
 - An unpaid milestone, tip or extension no longer credits the vendor's wallet when an admin marks the order completed.
 - Custom-price manual orders read **Custom order**, and **Create Order** keeps a package order as a package.
 
+## Re-cut fixes
+
+- Admins are emailed when a member report or dispute is filed.
+- Creating or updating a service over REST returns 200 or 201 with a `notices` array when a limit trims the request, instead of 400 after saving.
+- Vendor order counts and the response rate ignore milestone, extension and tip rows, in Free and in Pro analytics.
+- A dispute ruling for the vendor or by agreement on a completed order no longer fires completion twice.
+- If Pro is older than Free requires, Pro stays switched off until it is updated.
+
 ## Settings and admin
 
 Order amount limits and other number settings cannot be saved below their minimum. Withdrawals has a **Cancelled** tab, and the Orders and Withdrawals filters fit a phone. The cart tax line names the rate, such as **VAT (20%)**, the same as checkout.

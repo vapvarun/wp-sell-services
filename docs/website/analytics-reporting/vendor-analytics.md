@@ -34,7 +34,7 @@ The dashboard shows key order metrics:
 - **Total orders** received (all time or filtered by period)
 - **Completed orders** -- Successfully delivered and accepted
 - **Active orders** -- Currently in progress
-- **Response rate** -- How often the vendor responds to buyer messages
+- **Response rate** -- Share of completed orders that received a buyer review
 - **Active services** -- Number of published service listings
 
 ---
@@ -66,7 +66,7 @@ Each service tracks how many times it has been viewed and how many orders it has
 
 ## Response Rate
 
-The response rate shows what percentage of buyer messages the vendor has responded to. A high response rate builds trust and can influence the vendor's vendor level ranking.
+The response rate shows what percentage of the vendor's completed orders received a buyer review, capped at 100%. Milestone, extension and tip rows are not counted as orders. A high response rate builds trust and can influence the vendor's vendor level ranking.
 
 ---
 
