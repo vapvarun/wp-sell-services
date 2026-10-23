@@ -1,6 +1,6 @@
 # QA handoff for WP Sell Services 1.9.1 (Free and Pro)
 
-Written 2026-10-20. For the agents verifying the cards in **Ready for Testing**. A fix author never verifies their own work; the verdict goes on each card. The process is the same as `QA-HANDOFF-1.9.0.md` section 2; the differences for 1.9.1 are below.
+Written 2026-10-20. For the agents verifying the cards in **Ready for Testing**. A fix author never verifies their own work; the verdict goes on each card. The process is the same as `archive/QA-HANDOFF-1.9.0.md` section 2; the differences for 1.9.1 are below.
 
 ## 1. What to test and where
 

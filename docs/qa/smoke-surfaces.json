@@ -13,7 +13,8 @@
   "",
   "Globs: ** crosses directories, * stays inside one. `free` paths are relative to the Free plugin, `pro` to Pro.",
   "",
-  "1.9.1 re-cut: surfaces added for the files the fix round touched. src/Core/Plugin.php sits under `moderation` because the only change is one listener binding; it is verified by the surface walk plus the full guard run, not by a walk of every bootstrap path."
+  "1.9.1 re-cut: surfaces added for the files the fix round touched. src/Core/Plugin.php sits under `moderation` because the only change is one listener binding; it is verified by the surface walk plus the full guard run, not by a walk of every bootstrap path.",
+  "Cross-cutting files stay unmapped on purpose: design-system CSS, frontend.js, src/Core, src/Models, src/Database, src/Services (except the named ones) and src/functions. A change there re-walks everything, because no single surface checklist would notice every regression in it."
  ],
  "surfaces": {
   "cart": {
@@ -112,6 +113,82 @@
     "src/Analytics/AnalyticsManager.php",
     "src/Services/LedgerExporter.php"
    ]
+  },
+  "dashboard-sections": {
+   "free": [
+    "templates/dashboard/partials/**",
+    "assets/css/vendor-dashboard*.css",
+    "assets/js/vendor/**",
+    "templates/dashboard/sections/create-request.php",
+    "templates/dashboard/sections/create.php",
+    "templates/dashboard/sections/disputes.php",
+    "templates/dashboard/sections/edit-request.php",
+    "templates/dashboard/sections/favorites.php",
+    "templates/dashboard/sections/messages.php",
+    "templates/dashboard/sections/orders.php",
+    "templates/dashboard/sections/portfolio.php",
+    "templates/dashboard/sections/profile.php",
+    "templates/dashboard/sections/proposals.php",
+    "templates/dashboard/sections/requests.php",
+    "templates/dashboard/sections/reviews.php",
+    "templates/dashboard/sections/sales.php",
+    "templates/dashboard/sections/services.php"
+   ],
+   "pro": []
+  },
+  "admin-screens": {
+   "free": [
+    "src/Admin/Admin.php",
+    "src/Admin/Settings.php",
+    "src/Admin/OrderScreen.php",
+    "src/Admin/RequestListScreen.php",
+    "src/Admin/ProTeaser.php",
+    "src/Admin/PageDropdownWalker.php",
+    "src/Admin/Tables/**",
+    "src/Admin/Pages/AuditLogPage.php",
+    "src/Admin/Pages/ReviewModerationPage.php",
+    "src/Admin/Pages/SetupWizardPage.php",
+    "src/Admin/Pages/UpgradePage.php",
+    "src/Admin/Pages/VendorsPage.php",
+    "src/Admin/Pages/WithdrawalsPage.php",
+    "assets/css/admin*.css",
+    "assets/js/admin-*.js",
+    "src/Admin/Metaboxes/BuyerRequestMetabox.php"
+   ],
+   "pro": []
+  },
+  "notifications": {
+   "free": [
+    "assets/css/notifications*.css",
+    "src/Admin/Pages/NotificationsPage.php",
+    "templates/dashboard/sections/notifications.php",
+    "src/Services/NotificationService.php"
+   ],
+   "pro": []
+  },
+  "rest-api": {
+   "free": [
+    "src/API/**"
+   ],
+   "pro": []
+  },
+  "order-view": {
+   "free": [
+    "templates/order/**",
+    "assets/css/order-view*.css",
+    "assets/css/orders*.css",
+    "assets/js/dispute-thread.js",
+    "assets/js/requirements-form.js"
+   ],
+   "pro": []
+  },
+  "blocks": {
+   "free": [
+    "src/Blocks/**",
+    "assets/css/blocks*.css",
+    "assets/js/blocks*.js"
+   ],
+   "pro": []
   }
  }
 }

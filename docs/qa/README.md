@@ -9,10 +9,11 @@ One page, in the order QA works. Everything QA needs is linked from here; nothin
 | [`../../audit/journeys/`](../../audit/journeys/) | developer | one role walking one flow, with `Expect` lines |
 | [`../../audit/gate-parameters.md`](../../audit/gate-parameters.md) | developer | the conditions every flow is walked under (rail, theme, dark, 390, RTL, upgraded site, time zone) |
 | [`TESTING-GUIDELINE.md`](TESTING-GUIDELINE.md) | developer | how to judge what you see (expectation first) |
+| [`CHECKLIST.md`](CHECKLIST.md) | developer | the per-surface walk: one row per check, with its role, URL and measurable assertion; this is what a release walk runs |
 | [`CORE_PATHS.md`](CORE_PATHS.md) | developer | the flows that matter most; a bug there outranks one on an edge |
 | [`smoke-surfaces.json`](smoke-surfaces.json) | developer | which files belong to which walked surface; the release gate re-walks only a changed surface (an unmapped file re-walks everything) |
 | `qa-config.json`, `.qa-results/walks.json` (untracked, local to the tester), `../../audit/escapes.json` | QA | gate config, walk ledger, regression-guard rows |
-| `QA-HANDOFF-1.9.0.md` | developer | what changed this release, by fix group (replaced each release) |
+| `QA-HANDOFF-1.9.1.md` | developer | what changed this release, by fix group (replaced each release; older ones go to `archive/`) |
 | `OWNER_INVENTORY.md` | generated | what the site owner can see; regenerate, never edit |
 
 Tests all live in Free: `tests/` for the core and `tests/pro/` for Pro features (each skips with a message when Pro is not active). Run any of them with `wp eval-file tests/<file>.php` from the WordPress root.
@@ -56,7 +57,7 @@ Each flow that renders UI is walked under the parameters in `audit/gate-paramete
 
 ## 6. Check the cards
 
-From Ready for Testing, by fix group in `QA-HANDOFF-1.9.0.md`.
+From Ready for Testing, by fix group in `QA-HANDOFF-1.9.1.md`.
 
 1. Run the card's acceptance bar literally, as the stated role, then the negative case.
 2. Check every door the handoff lists as fixed, unaffected or not covered. An unlisted door is a question for the developer.
