@@ -358,7 +358,8 @@ class CheckoutIntentService {
 
 		return array(
 			'subtotal' => $amount,
-			'total'    => (float) $line['total'],
+			// To the currency's minor unit: the column holds 3 places, and every rail charges in minor units.
+			'total'    => round( (float) $line['total'], wpss_get_currency_decimals() ),
 			'tax_meta' => $line['tax'] > 0
 				? wpss_order_tax_meta( (float) $line['tax_rate'], (float) $line['tax'], (bool) $line['tax_included'], (string) $line['tax_label'] )
 				: array(),

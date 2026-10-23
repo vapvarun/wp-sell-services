@@ -466,7 +466,7 @@
 		description: __('Display a vendor profile card with stats.', 'wp-sell-services'),
 		icon: 'businessman',
 		category: 'wp-sell-services',
-		keywords: [__('vendor', 'wp-sell-services'), __('vendor', 'wp-sell-services'), __('profile', 'wp-sell-services')],
+		keywords: [__('seller', 'wp-sell-services'), __('vendor', 'wp-sell-services'), __('profile', 'wp-sell-services')],
 		supports: {
 			anchor: true
 		},

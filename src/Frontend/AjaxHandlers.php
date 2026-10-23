@@ -1005,8 +1005,14 @@ class AjaxHandlers {
 		$service_id = absint( $_POST['service_id'] ?? 0 );
 		$vendor_id  = absint( $_POST['vendor_id'] ?? 0 );
 		$page       = max( 1, absint( $_POST['page'] ?? 1 ) );
-		$per_page   = 10;
-		$args       = array(
+		/**
+		 * Filters the number of reviews to display per page.
+		 *
+		 * The filter page one uses (templates/partials/service-reviews.php), so
+		 * page two lines up with it. The vendor profile renders a fixed 10.
+		 */
+		$per_page = $service_id ? max( 1, (int) apply_filters( 'wpss_reviews_per_page', 10, $service_id ) ) : 10;
+		$args     = array(
 			'limit'  => $per_page,
 			'offset' => ( $page - 1 ) * $per_page,
 		);
@@ -1909,9 +1915,9 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Vendor not found.', 'wp-sell-services' ) ) );
 		}
 
-		// A suspended vendor takes no new enquiries; paid orders already open
-		// keep their own conversation.
-		if ( 'suspended' === wpss_get_vendor_status( $vendor_id ) ) {
+		// A vendor not in good standing (suspended, rejected, banned) takes no new
+		// enquiries; paid orders already open keep their own conversation.
+		if ( wpss_vendor_status_block( $vendor_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'This vendor is not taking new messages right now.', 'wp-sell-services' ) ) );
 		}
 

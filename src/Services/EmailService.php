@@ -211,6 +211,12 @@ class EmailService {
 			return;
 		}
 
+		// A dispute handing the order back (ruling or withdrawal) is announced by
+		// the dispute emails; the status emails would repeat an old event.
+		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) ) {
+			return;
+		}
+
 		switch ( $new_status ) {
 			case ServiceOrder::STATUS_PENDING_REQUIREMENTS:
 				$this->send_new_order( $order );
@@ -1622,20 +1628,33 @@ class EmailService {
 			);
 		}
 
-		// Also notify admin with full details.
-		$admin_email = get_option( 'admin_email' );
-		$this->send(
-			$admin_email,
-			$subject,
-			self::TYPE_DISPUTE_OPENED,
-			array_merge(
-				$base_vars,
-				array(
-					'recipient' => get_user_by( 'email', $admin_email ) ?: $customer,
-					'is_admin'  => true,
-				)
-			)
+		/**
+		 * Tell the site owner a member filed a report or a dispute.
+		 *
+		 * The owner's one copy of a new dispute, with full details. Same recipient
+		 * as the report alert: the dispute admin email replaces the site admin
+		 * email when set.
+		 */
+		$admin_email = (string) apply_filters(
+			'wpss_admin_filing_recipient',
+			get_option( 'wpss_dispute_admin_email' ) ?: get_option( 'admin_email' ),
+			'dispute',
+			$dispute ? (int) $dispute->id : 0
 		);
+		if ( is_email( $admin_email ) ) {
+			$this->send(
+				$admin_email,
+				$subject,
+				self::TYPE_DISPUTE_OPENED,
+				array_merge(
+					$base_vars,
+					array(
+						'recipient' => get_user_by( 'email', $admin_email ) ?: $customer,
+						'is_admin'  => true,
+					)
+				)
+			);
+		}
 
 		return true;
 	}

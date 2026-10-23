@@ -22,12 +22,13 @@ $vendor = $f->vendor;
 $sid    = ( $f->service )( 'draft' );
 
 delete_user_meta( $vendor, 'wpss_account_status' );
-$check( 'good standing: refusal is about the publish bar, not standing', ! str_contains( wpss_service_publish_refusal( $sid, $vendor ), 'suspended' ) );
+$check( 'good standing: the standing gate lets the seller through', null === wpss_vendor_status_block( $vendor ) );
 
 update_user_meta( $vendor, 'wpss_account_status', 'suspended' );
-$check( 'suspended: publish is refused', '' !== wpss_service_publish_refusal( $sid, $vendor ) );
+$check( 'suspended: the standing gate refuses', is_wp_error( wpss_vendor_status_block( $vendor ) ) );
 wp_update_post( array( 'ID' => $sid, 'post_status' => 'publish' ) );
-$check( 'suspended: refused even for an already-live service', '' !== wpss_service_publish_refusal( $sid, $vendor ) );
+$check( 'suspended: refused even with an already-live service', is_wp_error( wpss_vendor_status_block( $vendor ) ) );
+delete_user_meta( $vendor, 'wpss_account_status' );
 
 
 // Every door that starts new work carries the gate.

@@ -8,8 +8,8 @@
  *
  * The docs promise the three sub-ratings; the review form, the AJAX handler
  * and REST dropped them, and REST inserted a second copy of the review logic
- * that skipped them and the wpss_auto_approve_reviews rule. Every row and
- * timestamp touched here is restored.
+ * that skipped them and the wpss_auto_approve_reviews rule. The order, service
+ * and members are throwaway and removed on any exit.
  *
  * @package WPSellServices
  */
@@ -17,6 +17,7 @@
 use WPSellServices\Services\ReviewService;
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 defined( 'ABSPATH' ) || exit;
 
@@ -30,29 +31,24 @@ global $wpdb;
 $orders_table  = $wpdb->prefix . 'wpss_orders';
 $reviews_table = $wpdb->prefix . 'wpss_reviews';
 
-// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$order = $wpdb->get_row(
-	"SELECT * FROM {$orders_table} o
-	WHERE o.status = 'completed' AND o.service_id > 0
-	AND NOT EXISTS ( SELECT 1 FROM {$reviews_table} r WHERE r.order_id = o.id )
-	ORDER BY o.id DESC LIMIT 1"
+// A throwaway order completed just now, inside any review window, between
+// throwaway members on a throwaway service; all removed on any exit.
+$f        = wpss_test_fixtures();
+$order_id = ( $f->order )(
+	array(
+		'service_id'   => ( $f->service )( 'draft' ),
+		'status'       => 'completed',
+		'completed_at' => current_time( 'mysql', true ),
+	)
 );
-
-if ( ! $order ) {
-	echo "SKIP  no completed order without a review on this install; nothing to assert\n";
-	exit( 0 );
-}
-
-$order_id     = (int) $order->id;
-$orig_done_at = $order->completed_at;
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$wpdb->update( $orders_table, array( 'completed_at' => current_time( 'mysql', true ) ), array( 'id' => $order_id ) );
+$order    = wpss_get_order( $order_id );
 wp_set_current_user( (int) $order->customer_id );
 
 $cleanup = static function () use ( $wpdb, $reviews_table, $order_id ) {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->delete( $reviews_table, array( 'order_id' => $order_id ) );
 };
+register_shutdown_function( $cleanup );
 
 // 1. REST: sub-ratings stored, returned, and the response carries them.
 $request = new WP_REST_Request( 'POST', '/wpss/v1/reviews' );
@@ -117,8 +113,6 @@ $ajax = (string) file_get_contents( dirname( __DIR__ ) . '/src/Frontend/AjaxHand
 $check( 'AJAX handler forwards the sub-ratings', false !== strpos( $ajax, "\$_POST['rating_quality']" ) );
 
 $cleanup();
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$wpdb->update( $orders_table, array( 'completed_at' => $orig_done_at ), array( 'id' => $order_id ) );
 wp_set_current_user( 0 );
 if ( function_exists( 'wpss_recount_service_rating' ) ) {
 	wpss_recount_service_rating( (int) $order->service_id );

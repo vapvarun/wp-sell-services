@@ -17,7 +17,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.6.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var WPSellServices\Models\Review $wpss_review Review to render.
  */

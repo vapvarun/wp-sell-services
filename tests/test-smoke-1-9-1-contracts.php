@@ -10,6 +10,7 @@
  */
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 /**
  * Print one assertion.
@@ -34,39 +35,27 @@ wpss_t( 0.0 === (float) sanitize_option( 'wpss_min_order_amount', '-5' ), 'minim
 wpss_t( 0.0 === (float) sanitize_option( 'wpss_max_order_amount', '-100' ), 'maximum order amount -100 is stored as 0' );
 
 // 10425686711: a vendor suspended on the profile row starts no new thread.
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$vendor = $wpdb->get_row( "SELECT user_id, status FROM {$profiles} WHERE status = 'active' LIMIT 1" );
-if ( $vendor ) {
-	$uid = (int) $vendor->user_id;
-	$svc = new \WPSellServices\Services\ConversationService();
-	wpss_t( null === $svc->standing_block( 0, $uid ), 'active vendor may start a pre-sale thread' );
-	( new \WPSellServices\Services\VendorService() )->set_status( $uid, 'suspended' );
-	$block = $svc->standing_block( 0, $uid );
-	wpss_t( $block instanceof \WP_Error, 'suspended vendor is refused a new pre-sale thread' );
-	$nav = new ReflectionMethod( \WPSellServices\Frontend\UnifiedDashboard::class, 'is_suspended_vendor' );
-	$nav->setAccessible( true );
-	wpss_t( $nav->invoke( new \WPSellServices\Frontend\UnifiedDashboard(), $uid ), 'dashboard sees the vendor as suspended (Sales Orders stays)' );
-	( new \WPSellServices\Services\VendorService() )->set_status( $uid, 'active' );
-} else {
-	echo "  SKIP  no active vendor profile.\n";
-}
+// A throwaway vendor with an active profile, removed on any exit.
+$uid = wpss_test_fixtures()->vendor;
+$svc = new \WPSellServices\Services\ConversationService();
+wpss_t( null === $svc->standing_block( 0, $uid ), 'active vendor may start a pre-sale thread' );
+( new \WPSellServices\Services\VendorService() )->set_status( $uid, 'suspended' );
+$block = $svc->standing_block( 0, $uid );
+wpss_t( $block instanceof \WP_Error, 'suspended vendor is refused a new pre-sale thread' );
+$nav = new ReflectionMethod( \WPSellServices\Frontend\UnifiedDashboard::class, 'is_suspended_vendor' );
+wpss_t( $nav->invoke( new \WPSellServices\Frontend\UnifiedDashboard(), $uid ), 'dashboard sees the vendor as suspended (Sales Orders stays)' );
+( new \WPSellServices\Services\VendorService() )->set_status( $uid, 'active' );
 
 // 10425686815: a repeat milestone submit fires nothing.
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$phase = $wpdb->get_row( "SELECT id, vendor_id, status FROM {$orders} WHERE platform = 'milestone' ORDER BY id DESC LIMIT 1" );
-if ( $phase ) {
-	$fired = 0;
-	add_action( 'wpss_milestone_submitted', function () use ( &$fired ) { ++$fired; } );
-	$wpdb->update( $orders, array( 'status' => 'in_progress' ), array( 'id' => $phase->id ) );
-	$ms = new \WPSellServices\Services\MilestoneService();
-	$ms->submit( (int) $phase->id, (int) $phase->vendor_id, 'QA-SMOKE' );
-	$ms->submit( (int) $phase->id, (int) $phase->vendor_id, 'QA-SMOKE' );
-	$ms->submit( (int) $phase->id, (int) $phase->vendor_id, 'QA-SMOKE' );
-	wpss_t( 1 === $fired, "three submits of one phase notify once (fired {$fired})" );
-	$wpdb->update( $orders, array( 'status' => $phase->status ), array( 'id' => $phase->id ) );
-} else {
-	echo "  SKIP  no milestone phase.\n";
-}
+// A throwaway paid phase in progress, removed on any exit.
+$staged = wpss_test_milestone_contract( array( array( 'status' => 'in_progress', 'payment_status' => 'paid', 'paid_at' => current_time( 'mysql', true ) ) ) );
+$fired  = 0;
+add_action( 'wpss_milestone_submitted', function () use ( &$fired ) { ++$fired; } );
+$ms = new \WPSellServices\Services\MilestoneService();
+$ms->submit( $staged['phases'][0], $staged['vendor'], 'QA-SMOKE' );
+$ms->submit( $staged['phases'][0], $staged['vendor'], 'QA-SMOKE' );
+$ms->submit( $staged['phases'][0], $staged['vendor'], 'QA-SMOKE' );
+wpss_t( 1 === $fired, "three submits of one phase notify once (fired {$fired})" );
 
 // 10425686815: the paid-extension path returns a late order to In Progress.
 $src = (string) file_get_contents( dirname( __DIR__ ) . '/src/Services/ExtensionOrderService.php' );
@@ -74,7 +63,6 @@ wpss_t( false !== strpos( $src, "'late' === \$parent->status" ), 'paid extension
 
 // Triage of the other smoke failures.
 $method = new ReflectionMethod( \WPSellServices\Services\NotificationService::class, 'is_email_service_handling' );
-$method->setAccessible( true );
 wpss_t( true === $method->invoke( new \WPSellServices\Services\NotificationService(), 'tip_received' ), 'a tip sends the seller one email, not two' );
 
 update_option( 'wpss_dispute_admin_email', '' );
@@ -82,17 +70,13 @@ $dsrc = (string) file_get_contents( dirname( __DIR__ ) . '/src/Services/DisputeW
 wpss_t( false !== strpos( $dsrc, "get_option( 'wpss_dispute_admin_email' ) ?: get_option( 'admin_email' )" ), 'a blank dispute admin email falls back to the site admin email' );
 delete_option( 'wpss_dispute_admin_email' );
 
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$svc_id = (int) $wpdb->get_var( "SELECT p.ID FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = '_wpss_moderation_status' AND m.meta_value = 'approved' WHERE p.post_type = 'wpss_service' AND p.post_status = 'publish' LIMIT 1" );
-if ( $svc_id ) {
-	$mod   = new \WPSellServices\Services\ModerationService();
-	$count = did_action( 'wpss_service_approved' );
-	$mod->approve( $svc_id );
-	$mod->approve( $svc_id );
-	wpss_t( did_action( 'wpss_service_approved' ) === $count, 'approving an approved, live service twice announces nothing' );
-} else {
-	echo "  SKIP  no approved live service.\n";
-}
+// A throwaway approved, live service, removed on any exit.
+$svc_id = wpss_test_live_service();
+$mod    = new \WPSellServices\Services\ModerationService();
+$count  = did_action( 'wpss_service_approved' );
+$mod->approve( $svc_id );
+$mod->approve( $svc_id );
+wpss_t( did_action( 'wpss_service_approved' ) === $count, 'approving an approved, live service twice announces nothing' );
 
 // Standard-practice fixes from the smoke triage.
 $notes = $wpdb->prefix . 'wpss_notifications';
@@ -100,7 +84,7 @@ $title = static function ( int $user, string $type ) use ( $wpdb, $notes ): stri
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	return (string) $wpdb->get_var( $wpdb->prepare( "SELECT title FROM {$notes} WHERE user_id = %d AND type = %s ORDER BY id DESC LIMIT 1", $user, $type ) );
 };
-$qa_user = (int) $wpdb->get_var( "SELECT user_id FROM {$profiles} LIMIT 1" );
+$qa_user = $uid; // The throwaway vendor: its notifications go with it.
 $ns      = new \WPSellServices\Services\NotificationService();
 
 $ns->send( $qa_user, 'dispute_response_reminder', array( 'order_id' => 0 ) );

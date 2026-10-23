@@ -298,6 +298,8 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Improve  - A new dispute deadline earns the next response reminder.
 * Improve  - Creating or updating a service over REST with more items than the plan allows saves the allowed ones and lists the trimmed items in a notices array, instead of failing with an error.
 * Improve  - The site admin is emailed when a member files a report or a dispute is opened.
+* Improve  - The dashboard Services list marks services waiting for approval as Pending review.
+* Improve  - The owner gets at most five report alerts per member per hour; every report is still saved.
 * Fix      - CSV exports no longer log a PHP 8.4 deprecation.
 * Fix      - Portfolio reordering refuses another vendor's items.
 * Fix      - A dispute opener can no longer cancel after escalation, and repeat notices are not sent.
@@ -345,13 +347,29 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - Review stars and icons on the admin vendor detail screen show filled instead of blank.
 * Fix      - A dispute ruled for the vendor, or settled by agreement, on an order that was already completed no longer sends the buyer a second Order completed notice.
 * Fix      - The total override, commission rate and select-all fields in admin have names for screen readers.
+* Fix      - A suspended or rejected vendor can no longer reinstate themselves by applying to sell again.
+* Fix      - Offline checkout, new milestone phases, extensions and tips check the standing of both the buyer and the seller.
+* Fix      - Posting a review or accepting a proposal while banned or suspended returns the standing message instead of a server error.
+* Fix      - A manual order saved with any status after Pending Payment must be marked Paid, so unpaid money is never credited.
+* Fix      - Mark as Paid is offered on an unpaid offline tip, milestone phase or extension even after it was set to completed, and credits the vendor once.
+* Fix      - Milestone, extension and tip totals and tax round to the currency's decimals.
+* Fix      - The waiting for payment confirmation notice still shows after the offline gateway is switched off.
+* Fix      - Orders from older versions with no payment status can be marked paid.
+* Fix      - A vendor's new service enters the review queue and notifies the owner once, and an admin's own new service is approved at once.
+* Fix      - Restoring an order sends no status emails, and a dispute opening sends the owner one email.
+* Fix      - A completed order handed back to the vendor keeps its completion date, and a seller level that did not change records nothing.
+* Fix      - Editing a review without changes writes no Audit Log row.
+* Fix      - The admin vendor detail Reviews tab shows the review text and the service it belongs to.
+* Fix      - Imported review dates follow the site time zone.
+* Fix      - The tax rate label on the service page can be translated, and the admin Orders filters fit on tablets.
 * Security - Vendor stats no longer reveal when a non-vendor account registered.
+* Security - A service gallery accepts only images the vendor uploaded.
 * Dev      - Updating removes the retired Helpful vote options and cleanup job; the helpful_count column is left in place.
 * Dev      - ReviewRepository::rating_stats() is the one rating query, and ReviewService::create_imported() the one door for imported reviews.
 * Dev      - Removed unused classes (FAQService, three repositories and the admin viewer data classes).
-* Compat   - Aligned with WP Sell Services Pro 1.9.1. Install both updates together.
 * Dev      - Removed the unused service and bulk AJAX handlers and ServiceManager::delete; wpss_user_can_edit_service() is the one rule for who may edit a service.
 * Dev      - Test scripts clean up the rows they create on any exit, and only those rows.
+* Compat   - Aligned with WP Sell Services Pro 1.9.1. Install both updates together.
 
 = 1.9.0 - October 2026 =
 

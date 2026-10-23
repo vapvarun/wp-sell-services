@@ -765,7 +765,15 @@ class ServiceModerationPage {
 	}
 
 	/**
-	 * Set default moderation status on new service.
+	 * Stamp a new admin service approved; send a member's service that lands in review through submit().
+	 *
+	 * Every door that holds a member's service for review ends in a save at
+	 * post_status=pending: the wizard and REST settle it there, the dashboard
+	 * Publish toggle is REST, and wp-admin's Submit for Review or a publish
+	 * held by intercept_publish() saves it there too. Announcing from this one
+	 * save means the owner notice and audit row fire on every door, once:
+	 * submit() is a no-op for a service already queued. A new draft is not
+	 * stamped, so a later submit is the first one and does announce.
 	 *
 	 * @param int      $post_id Post ID.
 	 * @param \WP_Post $post    Post object.
@@ -773,26 +781,22 @@ class ServiceModerationPage {
 	 * @return void
 	 */
 	public function set_default_moderation_status( int $post_id, \WP_Post $post, bool $update ): void {
-		// Skip if updating existing post.
-		if ( $update ) {
-			return;
-		}
-
-		// Skip auto-drafts.
 		if ( 'auto-draft' === $post->post_status ) {
 			return;
 		}
 
-		// Skip if meta already exists.
-		if ( metadata_exists( 'post', $post_id, self::META_KEY ) ) {
+		// An admin's own service is approved; an admin acting on a member's service is not a submit.
+		if ( current_user_can( 'manage_options' ) ) {
+			if ( ! $update && ! metadata_exists( 'post', $post_id, self::META_KEY ) ) {
+				update_post_meta( $post_id, self::META_KEY, self::STATUS_APPROVED );
+			}
 			return;
 		}
 
-		// Admins get auto-approved.
-		if ( current_user_can( 'manage_options' ) ) {
-			update_post_meta( $post_id, self::META_KEY, self::STATUS_APPROVED );
-		} else {
-			update_post_meta( $post_id, self::META_KEY, self::STATUS_PENDING );
+		// A save with nobody logged in (upgrade migration, cron, CLI) is the system, not a member
+		// submitting: re-queuing a rejected service there must not erase the rejection or email the owner.
+		if ( 'pending' === $post->post_status && get_current_user_id() && ModerationService::is_enabled() ) {
+			( new ModerationService() )->submit( $post_id );
 		}
 	}
 
@@ -1254,14 +1258,8 @@ class ServiceModerationPage {
 
 			// Only allow publish if moderation status is approved.
 			if ( self::STATUS_APPROVED !== $moderation_status ) {
-				// Set post status to pending and update moderation meta.
+				// Held at pending; set_default_moderation_status() queues and announces it once saved.
 				$data['post_status'] = 'pending';
-
-				// If rejected or new, reset moderation to pending.
-				if ( self::STATUS_REJECTED === $moderation_status || ! $moderation_status ) {
-					update_post_meta( $post_id, self::META_KEY, self::STATUS_PENDING );
-					delete_post_meta( $post_id, self::REJECTION_REASON_KEY );
-				}
 			}
 		}
 

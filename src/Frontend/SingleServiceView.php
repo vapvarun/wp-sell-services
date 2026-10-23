@@ -153,6 +153,8 @@ class SingleServiceView {
 					'continueToCheckout' => __( 'Continue to Checkout', 'wp-sell-services' ),
 					/* translators: %s: tax name, for example VAT */
 					'taxIncluded'        => __( 'Includes %s', 'wp-sell-services' ),
+					/* translators: 1: tax name, for example VAT, 2: tax rate number. %% prints a percent sign. */
+					'taxRateLabel'       => __( '%1$s (%2$s%%):', 'wp-sell-services' ),
 					'errorGeneric'       => __( 'An error occurred.', 'wp-sell-services' ),
 				),
 			)
@@ -1099,7 +1101,7 @@ class SingleServiceView {
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$table}
-				WHERE vendor_id = %d AND status IN ('pending', 'in_progress')",
+				WHERE vendor_id = %d AND status IN ('pending', 'in_progress') AND " . wpss_order_rows_sql(),
 				$vendor_id
 			)
 		);

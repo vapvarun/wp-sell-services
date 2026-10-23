@@ -437,6 +437,12 @@ class ReviewsController extends RestController {
 			);
 		}
 
+		// Standing refusal: 403 with the reason, not a 500 from create() returning null.
+		$standing = wpss_account_status_block( $user_id );
+		if ( $standing ) {
+			return $standing;
+		}
+
 		// The service is the one writer: moderation, rating caches, the
 		// one-review-per-order guard and the sub-ratings live there.
 		$created = $review_service->create(
@@ -521,30 +527,34 @@ class ReviewsController extends RestController {
 		if ( current_user_can( 'manage_options' ) && $request->has_param( 'reviewer_name' ) ) {
 			$name                     = sanitize_text_field( (string) $request->get_param( 'reviewer_name' ) );
 			$updates['reviewer_name'] = '' !== $name ? $name : null;
-
-			( new \WPSellServices\Services\AuditLogService() )->log(
-				'review.edited',
-				'review',
-				$review_id,
-				array(
-					'action'     => 'edit',
-					'from_value' => (string) ( $review->reviewer_name ?? '' ),
-					'to_value'   => $name,
-					'context'    => array( 'field' => 'reviewer_name' ),
-				)
-			);
 		}
 
 		if ( ! empty( $updates ) ) {
 			$updates['updated_at'] = current_time( 'mysql', true );
 
-			$wpdb->update(
+			$saved = $wpdb->update(
 				$wpdb->prefix . 'wpss_reviews',
 				$updates,
 				array( 'id' => $review_id ),
 				null,
 				array( '%d' )
 			);
+
+			// Audited only once stored, and only when the name really changed.
+			$old_name = (string) ( $review->reviewer_name ?? '' );
+			if ( false !== $saved && array_key_exists( 'reviewer_name', $updates ) && (string) $updates['reviewer_name'] !== $old_name ) {
+				( new \WPSellServices\Services\AuditLogService() )->log(
+					'review.edited',
+					'review',
+					$review_id,
+					array(
+						'action'     => 'edit',
+						'from_value' => $old_name,
+						'to_value'   => (string) $updates['reviewer_name'],
+						'context'    => array( 'field' => 'reviewer_name' ),
+					)
+				);
+			}
 
 			// Update rating cache if rating changed.
 			if ( isset( $updates['rating'] ) ) {

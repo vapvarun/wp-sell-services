@@ -364,7 +364,7 @@ class ManualOrderPage {
 											<option value="failed"><?php esc_html_e( 'Failed', 'wp-sell-services' ); ?></option>
 											<option value="refunded"><?php esc_html_e( 'Refunded', 'wp-sell-services' ); ?></option>
 										</select>
-										<p class="description"><?php esc_html_e( 'An order set to Pending Payment is saved as unpaid, whatever this says.', 'wp-sell-services' ); ?></p>
+										<p class="description"><?php esc_html_e( 'An order set to Pending Payment is saved as unpaid, whatever this says. Any later status needs Paid.', 'wp-sell-services' ); ?></p>
 									</div>
 
 									<div class="wpss-form-row">
@@ -513,6 +513,12 @@ class ManualOrderPage {
 		// An order waiting for payment is not paid: the default Paid beside Pending Payment gave a Pay button on a paid order.
 		if ( 'pending_payment' === $status && 'paid' === $payment_status ) {
 			$payment_status = 'pending';
+		}
+		// Every later status means the money arrived: an unpaid In Progress or
+		// Completed order would fire the completion pipeline and credit the
+		// vendor for money nobody received. Unpaid work is saved as Pending Payment.
+		if ( 'pending_payment' !== $status && 'paid' !== $payment_status ) {
+			wp_send_json_error( array( 'message' => __( 'Only a Pending Payment order can be saved unpaid. Set Payment Status to Paid, or set the order status to Pending Payment.', 'wp-sell-services' ) ) );
 		}
 		$payment_method  = sanitize_key( $_POST['payment_method'] ?? 'manual' );
 		$transaction_id  = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';

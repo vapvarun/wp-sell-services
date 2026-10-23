@@ -572,10 +572,22 @@
 						// .wpss-service-card wrapper + .wpss-service-card__status badge.
 						const $card = $button.closest('.wpss-service-card');
 						const $badge = $card.find('.wpss-service-card__status');
-						const newStatusText = newStatus === 'publish' ? wpssUnifiedDashboard.i18n.published : wpssUnifiedDashboard.i18n.draft;
-						$badge.text(newStatusText);
-						$badge.removeClass('wpss-service-card__status--publish wpss-service-card__status--draft');
-						$badge.addClass(newStatus === 'publish' ? 'wpss-service-card__status--publish' : 'wpss-service-card__status--draft');
+						const labels = {
+							publish: wpssUnifiedDashboard.i18n.published,
+							pending: wpssUnifiedDashboard.i18n.pendingReview,
+							draft: wpssUnifiedDashboard.i18n.draft
+						};
+						const badgeStatus = labels[newStatus] ? newStatus : 'draft';
+						$badge.text(labels[badgeStatus]);
+						$badge.removeClass('wpss-service-card__status--publish wpss-service-card__status--pending wpss-service-card__status--draft');
+						$badge.addClass('wpss-service-card__status--' + badgeStatus);
+
+						// With moderation on, Publish sends it to review: the card
+						// then has no toggle, as the template renders a pending one.
+						if (newStatus === 'pending') {
+							$button.remove();
+							return;
+						}
 
 						// Button label is plain text ("Pause" / "Publish"),
 						// matching how the template renders it.

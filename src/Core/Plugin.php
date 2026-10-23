@@ -1730,12 +1730,20 @@ final class Plugin {
 			4
 		);
 
-		// The owner hears about every new report and dispute.
+		// The owner hears about every new report. A new dispute reaches the owner
+		// once, through EmailService::send_dispute_opened().
 		$this->loader->add_action(
 			'wpss_report_filed',
 			static function ( int $report_id, string $target_type, int $target_id, int $reported_user_id ) use ( $notification_service ): void {
 				$reporter = get_current_user_id();
-				$target   = $reported_user_id ? get_userdata( $reported_user_id ) : false;
+
+				// Every report is stored and listed; only the owner's email is capped,
+				// so one member filing in a loop cannot flood the owner's inbox.
+				if ( ! current_user_can( 'manage_options' ) && \WPSellServices\Core\RateLimiter::check_and_track( 'report_alert', $reporter ) ) {
+					return;
+				}
+
+				$target = $reported_user_id ? get_userdata( $reported_user_id ) : false;
 				$notification_service->notify_admin_of_filing(
 					'report',
 					$report_id,
@@ -1746,15 +1754,6 @@ final class Plugin {
 			null,
 			10,
 			4
-		);
-		$this->loader->add_action(
-			'wpss_dispute_opened',
-			static function ( int $dispute_id, int $order_id, int $opened_by ) use ( $notification_service ): void {
-				$notification_service->notify_admin_of_filing( 'dispute', $dispute_id, $opened_by, sprintf( '#%d', $order_id ) );
-			},
-			null,
-			10,
-			3
 		);
 
 		// Tip received notification — fires after TippingService credits the
@@ -2453,6 +2452,11 @@ final class Plugin {
 		 */
 		$moved = 0;
 
+		// Run as the system: the save hook treats a logged-in member's pending save as a
+		// submit, and the upgrade can fire on any member's request.
+		$acting_user = get_current_user_id();
+		wp_set_current_user( 0 );
+
 		do {
 			$stranded = get_posts(
 				array(
@@ -2486,6 +2490,8 @@ final class Plugin {
 				++$moved;
 			}
 		} while ( self::MODERATION_MIGRATION_BATCH === $found );
+
+		wp_set_current_user( $acting_user );
 
 		if ( $moved ) {
 			wpss_log(

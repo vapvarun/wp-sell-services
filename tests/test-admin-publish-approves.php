@@ -10,7 +10,7 @@
  * service, saw "pending" differ from the new "approved" state and demoted the
  * service back to pending, so Publish appeared to do nothing. The select now
  * carries the state it was rendered with, and an unchanged select is not a
- * decision. Option, post status and meta are restored on any exit.
+ * decision. The option is restored and the throwaway service removed on any exit.
  *
  * @package WPSellServices
  */
@@ -40,20 +40,11 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) use ( 
 
 global $wpdb;
 
-// A complete published service: one the publish rules let go live.
-$service_id = 0;
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-foreach ( $wpdb->get_col( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'wpss_service' AND post_status = 'publish' ORDER BY ID DESC LIMIT 60" ) as $candidate ) {
-	if ( ! wpss_get_service_publish_errors( (int) $candidate ) ) {
-		$service_id = (int) $candidate;
-		break;
-	}
-}
-
-if ( ! $service_id ) {
-	echo "SKIP  no complete published service on this install; nothing to assert\n";
-	exit( 0 );
-}
+// A complete published service (one the publish rules let go live), throwaway
+// and removed on any exit, so the contract asserts on a site seeded without images.
+$service_id = wpss_test_live_service();
+$errors     = wpss_get_service_publish_errors( $service_id );
+$check( 'the staged service is complete', ! $errors, implode( ' ', $errors ) );
 
 $orig_option = get_option( 'wpss_vendor' );
 $orig_meta   = get_post_meta( $service_id, '_wpss_moderation_status', true );

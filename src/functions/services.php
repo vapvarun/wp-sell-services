@@ -493,11 +493,12 @@ function wpss_get_service_publish_errors( int $service_id ): array {
  * @since 1.9.1
  *
  * @param int $service_id Service post ID, or 0 for a service not yet created.
- * @param int $user_id    The vendor.
+ * @param int $user_id    The member saving; a site owner is never limited. A new service is judged against this member, an existing one against its author.
  * @return string User-facing sentence; empty when the service may count.
  */
 function wpss_service_limit_error( int $service_id, int $user_id ): string {
-	if ( user_can( $user_id, 'manage_options' ) ) {
+	// The site owner may knowingly publish past a vendor's limit (the control rung).
+	if ( wpss_member_bypasses_limits( $user_id ) ) {
 		return '';
 	}
 
@@ -505,6 +506,13 @@ function wpss_service_limit_error( int $service_id, int $user_id ): string {
 		$existing = get_post( $service_id );
 		// Already counted toward the limit (the same statuses the count uses), so no new slot is taken.
 		if ( ! $existing || in_array( $existing->post_status, wpss_get_limit_counted_statuses(), true ) ) {
+			return '';
+		}
+
+		// The slot is the seller's: anyone else saving it is judged against the seller's limit.
+		$user_id = (int) $existing->post_author;
+
+		if ( wpss_member_bypasses_limits( $user_id ) ) {
 			return '';
 		}
 	}
@@ -829,49 +837,6 @@ add_action(
 );
 
 /**
- * Whether the member may put this service live from a dashboard control.
- *
- * One gate for every door that flips a service to publish (dashboard publish,
- * bulk publish): marketplace standing first, then the plan limit when the
- * service is not already counted, then the publish bar. Pausing and deleting are
- * not gated, so a suspended seller can still take listings down.
- *
- * @since 1.9.0
- *
- * @param int $service_id Service post ID.
- * @param int $user_id    Member ID. Defaults to the current user.
- * @return string Refusal sentence, or '' when the service may go live.
- */
-function wpss_service_publish_refusal( int $service_id, int $user_id = 0 ): string {
-	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
-
-	$block = wpss_vendor_status_block( $user_id );
-	if ( $block ) {
-		return $block->get_error_message();
-	}
-
-	if ( 'publish' === get_post_status( $service_id ) ) {
-		return '';
-	}
-
-	// The one limit rule: a service already counted (published, pending, scheduled) takes no new slot.
-	$limit = wpss_service_limit_error( $service_id, $user_id );
-	if ( '' !== $limit ) {
-		return $limit;
-	}
-
-	$errors = wpss_validate_service_publishable(
-		array(
-			'title'       => get_the_title( $service_id ),
-			'description' => (string) get_post_field( 'post_content', $service_id ),
-			'packages'    => (array) get_post_meta( $service_id, '_wpss_packages', true ),
-		)
-	);
-
-	return $errors ? implode( ' ', $errors ) : '';
-}
-
-/**
  * Why a service may not be permanently deleted, or an empty string.
  *
  * Deleting a service for good cascades into every order, delivery, dispute,
@@ -926,8 +891,8 @@ add_filter( 'pre_delete_post', 'wpss_guard_service_with_orders', 10, 2 );
  * Whether the current member may put an attachment in a service gallery.
  *
  * The one ownership rule for every door that accepts media ids (wizard, REST):
- * the attachment must exist and be an image, and belong to the member, to a
- * service of theirs, or be usable by anyone who may upload; admins may use any.
+ * the attachment must exist and be an image, and be the member's own upload or
+ * attached to a service they may edit; admins may use any.
  *
  * @since 1.9.1
  *
@@ -956,30 +921,14 @@ function wpss_user_can_use_attachment( int $attachment_id ): bool {
 		return true;
 	}
 
-	$current_user_id = get_current_user_id();
-
-	// Check if current user is the attachment author.
-	if ( $current_user_id === (int) $attachment->post_author ) {
+	// The member's own upload.
+	if ( get_current_user_id() === (int) $attachment->post_author ) {
 		return true;
 	}
 
-	// Allow attachments already attached to the user's own service
-	// (e.g., images imported/migrated with different post_author).
-	if ( $attachment->post_parent > 0 ) {
-		$parent = get_post( $attachment->post_parent );
-		if ( $parent && 'wpss_service' === $parent->post_type && $current_user_id === (int) $parent->post_author ) {
-			return true;
-		}
-	}
-
-	// For wizard-selected media, allow image attachments when the user has
-	// standard upload capability (covers environments where attachment authors
-	// are rewritten by media/offload plugins).
-	if ( current_user_can( 'upload_files' ) ) {
-		return true;
-	}
-
-	return false;
+	// Attached to a service the member may edit (e.g. images imported with another author).
+	// Nothing broader: every seller can upload_files, so that alone would let them show another member's images.
+	return $attachment->post_parent > 0 && wpss_user_can_edit_service( get_post( $attachment->post_parent ), get_current_user_id() );
 }
 
 /**
@@ -1068,8 +1017,9 @@ function wpss_save_service_gallery( int $service_id, array $image_ids, int $expl
  * but a service can also be inserted by wp-admin Add New, Quick Edit and core
  * REST (/wp/v2/wpss-services), which never asked. One check on the one write
  * every door ends in: a service going live or pending past the limit is saved
- * as a draft instead, and the member is told in the editor. Admins, CLI and
- * cron are not limited, and a service already live or pending keeps its slot.
+ * as a draft instead, and the member is told in the editor. The limit is the
+ * author's, so an admin publishing a vendor's draft is held to the vendor's;
+ * CLI and cron are not limited, and a service already live or pending keeps its slot.
  *
  * @since 1.9.1
  *
@@ -1088,7 +1038,8 @@ function wpss_enforce_service_limit_on_insert( array $data, array $postarr ): ar
 		return $data;
 	}
 
-	$error = wpss_service_limit_error( (int) ( $postarr['ID'] ?? 0 ), $user_id );
+	// The site owner is never limited; anyone else's new service is judged against the author it is saved for.
+	$error = wpss_member_bypasses_limits( $user_id ) ? '' : wpss_service_limit_error( (int) ( $postarr['ID'] ?? 0 ), (int) ( $data['post_author'] ?? 0 ) ?: $user_id );
 
 	if ( '' === $error ) {
 		return $data;

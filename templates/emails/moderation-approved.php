@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var string   $service_title Service title.
  * @var string   $service_url   Service permalink URL.

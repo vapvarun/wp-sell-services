@@ -6,8 +6,8 @@
  *
  * Run: wp eval-file tests/test-wizard-owner-or-admin-and-upload-gate.php
  *
- * Creates one QA draft service owned by a QA seller and sets `wpss_account_status`
- * on that seller; both are put back on any exit.
+ * Creates one QA draft service owned by a throwaway seller and sets
+ * `wpss_account_status` on that seller; all removed on any exit.
  *
  * @package WPSellServices
  */
@@ -24,6 +24,7 @@ register_shutdown_function(
 );
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 defined( 'ABSPATH' ) || exit;
 
@@ -31,11 +32,11 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) {
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . ( $ok || '' === $detail ? '' : ' - ' . $detail ) . "\n";
 };
 
-$seller = wpss_test_fixture_user( 'vendor' );
-if ( ! $seller ) {
-	echo "SKIP  no seeded vendor on this site\n";
-	return;
-}
+// A throwaway seller with no services yet, so the limit checks below start from
+// a known count (a seeded seller can already sit at a plan's limit), and a
+// throwaway member; both removed on any exit.
+$f      = wpss_test_fixtures();
+$seller = $f->vendor;
 $prior  = get_user_meta( $seller, 'wpss_account_status', true );
 
 wp_set_current_user( 0 );
@@ -94,7 +95,7 @@ $check( 'an admin can save a seller\'s service in the wizard', ! empty( $res['su
 $check( 'and the seller is still its author', $seller === (int) get_post_field( 'post_author', $service_id ), (string) get_post_field( 'post_author', $service_id ) );
 
 // Another member cannot.
-$other = (int) get_users( array( 'role' => 'subscriber', 'number' => 1, 'fields' => 'ID', 'exclude' => array( $seller, 1 ) ) )[0];
+$other = $f->buyer;
 wp_set_current_user( $other );
 $res = $ajax( array( $wizard, 'ajax_save_draft' ), array( 'service_id' => $service_id, 'data' => $data ) );
 $check( 'another member cannot save it', empty( $res['success'] ), wp_json_encode( $res ) );
@@ -113,18 +114,17 @@ $_FILES = array();
 // Dead handler gone.
 $check( 'the no-op remove-gallery handler is gone', ! method_exists( $wizard, 'ajax_remove_gallery' ) && ! has_action( 'wp_ajax_wpss_wizard_remove_gallery' ) );
 
-// Publish refusal and the limit rule agree: a service already pending takes no new slot.
+// The limit rule: a service already pending takes no new slot.
 // Pending is set before the limit is lowered: going draft to pending at the limit is itself refused.
 wp_update_post( array( 'ID' => $service_id, 'post_status' => 'pending' ) );
 add_filter( 'wpss_vendor_can_create_service', '__return_false' );
 $limit_text = wpss_service_limit_error( 0, $seller );
 $check( 'a new service at the limit gets a limit error', '' !== $limit_text );
 $check( 'a pending service at the limit takes no new slot', '' === wpss_service_limit_error( $service_id, $seller ) );
-$check( 'pressing Publish on it is not refused for the limit', $limit_text !== wpss_service_publish_refusal( $service_id, $seller ), wpss_service_publish_refusal( $service_id, $seller ) );
 remove_filter( 'wpss_vendor_can_create_service', '__return_false' );
 wp_update_post( array( 'ID' => $service_id, 'post_status' => 'draft' ) );
 add_filter( 'wpss_vendor_can_create_service', '__return_false' );
-$check( 'a draft at the limit is refused for it', $limit_text === wpss_service_publish_refusal( $service_id, $seller ) );
+$check( 'a draft at the limit is refused for it', $limit_text === wpss_service_limit_error( $service_id, $seller ) );
 remove_filter( 'wpss_vendor_can_create_service', '__return_false' );
 
 // The dashboard page is a door too: it must ask the same rule as the wizard.

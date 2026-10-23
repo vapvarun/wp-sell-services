@@ -645,6 +645,12 @@ class VendorsController extends RestController {
 			);
 		}
 
+		// Suspended/rejected sellers and blocked members: 403 with the reason.
+		$block = $vendor_service->registration_block( $user_id );
+		if ( $block ) {
+			return $block;
+		}
+
 		// Check if vendor registration is open.
 		$registration_open = apply_filters( 'wpss_vendor_registration_open', true );
 		if ( ! $registration_open ) {
@@ -859,7 +865,7 @@ class VendorsController extends RestController {
 		$on_time_deliveries = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$orders_table}
-				WHERE vendor_id = %d AND status = 'completed' AND completed_at <= delivery_deadline",
+				WHERE vendor_id = %d AND status = 'completed' AND completed_at <= delivery_deadline AND {$is_order}",
 				$vendor_id
 			)
 		);

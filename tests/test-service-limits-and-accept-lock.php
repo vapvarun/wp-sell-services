@@ -36,12 +36,8 @@ foreach ( array( 'packages' => 3, 'gallery' => 4, 'extras' => 3, 'faq' => 5, 're
 }
 
 $category = wp_insert_term( 'F12 limit test ' . wp_rand(), 'wpss_service_category' );
-// The gallery saver only keeps real attachments the user may use, so the lists need real ones.
-$attachments = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'numberposts' => 9, 'fields' => 'ids' ) );
-if ( count( $attachments ) < 9 ) {
-	echo "SKIP  needs 9 media items on this site\n";
-	return;
-}
+// The gallery saver only keeps real image attachments, so stage nine (swept at shutdown).
+$attachments = array_map( static fn() => wpss_test_image( 1 ), range( 1, 9 ) );
 
 $rows     = static fn( int $n, string $prefix ) => array_map( static fn( $i ) => array( 'question' => "{$prefix} {$i}", 'answer' => 'a', 'label' => "{$prefix} {$i}", 'title' => "{$prefix} {$i}", 'name' => "{$prefix} {$i}", 'price' => 10 * $i, 'delivery_days' => 2 ), range( 1, $n ) );
 
@@ -76,10 +72,10 @@ if ( 201 !== $response->get_status() || empty( $data['notices'] ) ) {
 if ( 3 !== count( (array) get_post_meta( $rest_id, '_wpss_packages', true ) ) ) {
 	$failures[] = 'REST stored ' . count( (array) get_post_meta( $rest_id, '_wpss_packages', true ) ) . ' packages - expected 3.';
 }
-// The gallery is stored as { images, video }; the main image is the first of the five allowed.
+// The gallery is stored as { images, video }: the main image plus max_gallery (4) additional, five in all.
 $rest_images = (array) ( get_post_meta( $rest_id, '_wpss_gallery', true )['images'] ?? array() );
-if ( 4 !== count( $rest_images ) ) {
-	$failures[] = 'REST stored ' . count( $rest_images ) . ' gallery images - expected 4 (main + 4 in all).';
+if ( 5 !== count( $rest_images ) ) {
+	$failures[] = 'REST stored ' . count( $rest_images ) . ' gallery images - expected 5 (main + 4 additional).';
 }
 if ( 5 !== count( (array) get_post_meta( $rest_id, '_wpss_requirements', true ) ) ) {
 	$failures[] = 'REST stored ' . count( (array) get_post_meta( $rest_id, '_wpss_requirements', true ) ) . ' requirements - expected 5.';
@@ -116,8 +112,8 @@ foreach ( array( '_wpss_faqs' => 5, '_wpss_requirements' => 5, '_wpss_addons' =>
 		$failures[] = "Wizard stored {$stored} {$meta_key} - expected {$expected}.";
 	}
 }
-if ( 4 !== count( $wizard_gallery['images'] ?? array() ) ) {
-	$failures[] = 'Wizard stored ' . count( $wizard_gallery['images'] ?? array() ) . ' gallery images - expected 4 (main + 4 in all).';
+if ( 5 !== count( $wizard_gallery['images'] ?? array() ) ) {
+	$failures[] = 'Wizard stored ' . count( $wizard_gallery['images'] ?? array() ) . ' gallery images - expected 5 (main + 4 additional).';
 }
 
 // 3. Accept: the second accept of one request is refused and one order exists.

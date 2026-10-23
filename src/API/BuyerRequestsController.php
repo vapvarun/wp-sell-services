@@ -743,10 +743,11 @@ class BuyerRequestsController extends RestController {
 		$result = $this->request_service->convert_to_order( $request_id, $proposal_id );
 
 		if ( ! $result['success'] ) {
+			// A standing refusal is a 403, not a malformed request.
 			return new WP_Error(
 				'accept_failed',
 				$result['message'],
-				[ 'status' => 400 ]
+				[ 'status' => (int) ( $result['status'] ?? 400 ) ]
 			);
 		}
 

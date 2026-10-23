@@ -45,24 +45,14 @@ global $wpdb;
 $orders = $wpdb->prefix . 'wpss_orders';
 $service = new \WPSellServices\Services\MilestoneService();
 
-// Work on a real phase, restored afterwards, rather than a synthetic row -
-// the guards read platform, customer_id and status off the actual table.
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-$phase = $wpdb->get_row( "SELECT * FROM {$orders} WHERE platform = 'milestone' ORDER BY id DESC LIMIT 1" );
-
-if ( ! $phase ) {
-	echo "  SKIP  no milestone phase on this install.\n";
-	return;
-}
-
-$phase_id  = (int) $phase->id;
-$buyer     = (int) $phase->customer_id;
-$seller    = (int) $phase->vendor_id;
-$restore   = array(
-	'status'       => $phase->status,
-	'meta'         => $phase->meta,
-	'completed_at' => $phase->completed_at,
-);
+// A throwaway contract phase between throwaway members: the guards read
+// platform, customer_id and status off the real table, and nothing a real
+// member owns is touched. Its rows and conversation are removed at shutdown.
+$staged   = wpss_test_milestone_contract( array( array( 'status' => 'in_progress', 'payment_status' => 'paid', 'paid_at' => current_time( 'mysql', true ) ) ) );
+$phase_id = $staged['phases'][0];
+$phase    = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$orders} WHERE id = %d", $phase_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$buyer    = $staged['buyer'];
+$seller   = $staged['vendor'];
 
 /**
  * Put the phase into a known status.
@@ -132,30 +122,5 @@ wpss_t(
 	'pending_approval' === $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$orders} WHERE id = %d", $phase_id ) ),
 	'resubmitting returns the phase to the buyer for approval'
 );
-
-// Restore. The reason lands in a REAL conversation, so the message this test
-// posts is cleaned up too - the first run left one in a demo thread where it
-// read like genuine buyer feedback.
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-$wpdb->update( $orders, $restore, array( 'id' => $phase_id ) );
-
-$removed = 0;
-$parent  = (int) $phase->platform_order_id;
-if ( $parent > 0 ) {
-	$conversation = ( new \WPSellServices\Services\ConversationService() )->get_by_order( $parent );
-	if ( $conversation ) {
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$removed = (int) $wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->prefix}wpss_messages
-				WHERE conversation_id = %d AND type = 'revision' AND content LIKE %s",
-				(int) $conversation->id,
-				'%' . $wpdb->esc_like( 'Logo should sit left of the wordmark.' ) . '%'
-			)
-		);
-	}
-}
-
-echo "\n  (phase #{$phase_id} restored to {$restore['status']}; {$removed} test message(s) removed)\n";
 
 echo "\n{$GLOBALS['wpss_pass']} passed, {$GLOBALS['wpss_fail']} failed\n";

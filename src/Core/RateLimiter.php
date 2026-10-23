@@ -50,6 +50,10 @@ class RateLimiter {
 			'requests' => 3,
 			'window'   => 86400,
 		), // 3 attempts per day.
+		'report_alert'         => array(
+			'requests' => 5,
+			'window'   => 3600,
+		), // 5 owner report alerts per member per hour; every report is still stored.
 		// Account creation during checkout. Unauthenticated and it creates users,
 		// so it has to have a ceiling — but the key is the IP, and behind CGNAT
 		// or an office NAT that IP can be a whole town, which is exactly the

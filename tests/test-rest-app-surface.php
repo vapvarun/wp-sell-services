@@ -166,13 +166,18 @@ wp_delete_file( $path );
 // --- 4. GET /orders is a fixed number of queries -------------------------
 $busiest = $wpdb->get_row( "SELECT customer_id AS uid, COUNT(*) AS n FROM {$wpdb->prefix}wpss_orders WHERE customer_id > 0 GROUP BY customer_id ORDER BY n DESC LIMIT 1" );
 wp_set_current_user( (int) $busiest->uid );
-wp_cache_flush();
-
-$before = $wpdb->num_queries;
-$response = $call( 'GET', '/wpss/v1/orders', array( 'per_page' => 100 ) );
-$queries = $wpdb->num_queries - $before;
-$rows    = count( (array) $response->get_data() );
-$check( "GET /orders per_page=100 ({$rows} rows) runs under 20 queries", $queries < 20, "{$queries} queries" );
+// Fixed overhead (non-autoloaded options, a cart plugin's checkout page) varies by site, so compare
+// five rows with a full page. A larger page may first meet a row type that primes once more or looks
+// up the plugin's pages (one each, cached); a per-row query would add one per extra row.
+$count_queries = static function ( int $per_page ) use ( $call, $wpdb ): array {
+	wp_cache_flush();
+	$before   = $wpdb->num_queries;
+	$response = $call( 'GET', '/wpss/v1/orders', array( 'per_page' => $per_page ) );
+	return array( $wpdb->num_queries - $before, count( (array) $response->get_data() ) );
+};
+list( $one ) = $count_queries( 5 );
+list( $queries, $rows ) = $count_queries( 100 );
+$check( "GET /orders per_page=100 ({$rows} rows) costs at most 6 queries more than five rows", $rows > 5 && $queries - $one <= 6, "{$one} vs {$queries} queries" );
 
 wp_set_current_user( $original );
 if ( null === $original_ip ) {

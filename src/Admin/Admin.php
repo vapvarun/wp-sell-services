@@ -2576,7 +2576,7 @@ class Admin {
 
 							$wpss_extras = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_paid_extras( $order_id );
 							?>
-							<?php if ( in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_MILESTONE, ServiceOrder::SUB_ORDER_TYPE_EXTENSION ), true ) && 'paid' !== ( $order->payment_status ?? '' ) && empty( $order->paid_at ) ) : ?>
+							<?php if ( 'offline' === ( $order->payment_method ?? '' ) && in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_MILESTONE, ServiceOrder::SUB_ORDER_TYPE_EXTENSION ), true ) && 'paid' !== ( $order->payment_status ?? '' ) && empty( $order->paid_at ) ) : ?>
 								<p class="description"><?php esc_html_e( 'Payment not received. Nothing is credited to the vendor until it is confirmed with Mark as Paid, whatever status this order is given.', 'wp-sell-services' ); ?></p>
 							<?php endif; ?>
 							<table class="wpss-admin-order__figures">

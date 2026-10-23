@@ -34,7 +34,6 @@ The dashboard shows key order metrics:
 - **Total orders** received (all time or filtered by period)
 - **Completed orders** -- Successfully delivered and accepted
 - **Active orders** -- Currently in progress
-- **Response rate** -- Share of completed orders that received a buyer review
 - **Active services** -- Number of published service listings
 
 ---
@@ -66,7 +65,7 @@ Each service tracks how many times it has been viewed and how many orders it has
 
 ## Response Rate
 
-The response rate shows what percentage of the vendor's completed orders received a buyer review, capped at 100%. Milestone, extension and tip rows are not counted as orders. A high response rate builds trust and can influence the vendor's vendor level ranking.
+The response rate is the percentage of the vendor's completed orders that received a buyer review, capped at 100%. Milestone, extension and tip rows are not counted as orders, and reviews without an order are left out. It is not shown on the vendor dashboard and does not affect vendor levels. It is available as `response_rate` from the REST endpoint `GET /wp-json/wpss/v1/vendors/{vendor_id}/reviews/summary`, for themes or custom code that want to display it.
 
 ---
 
@@ -100,7 +99,7 @@ See [Data Export](data-export.md) for details.
 
 ## What Is Included in the Free Version
 
-The free version provides basic stats: total orders, earnings totals, top services, and response rate. The full analytics dashboard with charts, trend lines, time period comparisons, and advanced metrics is a Pro feature.
+The free version provides basic stats: total orders, earnings totals, and top services. The full analytics dashboard with charts, trend lines, time period comparisons, and advanced metrics is a Pro feature.
 
 ---
 

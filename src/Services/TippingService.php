@@ -232,6 +232,16 @@ class TippingService {
 			);
 		}
 
+		// The seller's standing too: a suspended or banned vendor takes no new money.
+		if ( wpss_vendor_status_block( (int) $parent->vendor_id ) ) {
+			return array(
+				'success'      => false,
+				'tip_order_id' => null,
+				'checkout_url' => null,
+				'message'      => __( 'This seller cannot receive tips right now.', 'wp-sell-services' ),
+			);
+		}
+
 		if ( $this->has_tipped( $parent_order_id, $customer_id ) ) {
 			return array(
 				'success'      => false,

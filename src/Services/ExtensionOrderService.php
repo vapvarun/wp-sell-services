@@ -161,6 +161,17 @@ class ExtensionOrderService {
 			return $fail( __( 'Only the vendor can request an extension on this order.', 'wp-sell-services' ) );
 		}
 
+		// An extension is new paid work for both sides, so both must be in good
+		// standing, whichever door (AJAX, REST) calls this.
+		$standing = wpss_vendor_status_block( $vendor_id );
+		if ( $standing ) {
+			return $fail( $standing->get_error_message() );
+		}
+
+		if ( wpss_account_status_block( (int) $parent->customer_id ) ) {
+			return $fail( __( 'This buyer cannot take on new purchases right now, so an extension cannot be requested.', 'wp-sell-services' ) );
+		}
+
 		// Extensions are for small ad-hoc top-ups on fixed-price catalog
 		// orders where the buyer already paid the full price. Custom
 		// buyer-request projects use Milestones for their phased payment

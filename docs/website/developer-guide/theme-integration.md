@@ -370,10 +370,10 @@ html[data-bx-mode="dark"] {
 
 | Handle | File | Dependencies |
 |--------|------|-------------|
-| `alpinejs` | `assets/js/vendor/alpine.min.js` | None (defer) |
-| `wpss-frontend` | `assets/js/frontend.js` | `alpinejs` |
-| `wpss-single-service` | `assets/js/single-service.js` | `jquery`, `wpss-frontend` |
-| `wpss-unified-dashboard` | `assets/js/unified-dashboard.js` | `jquery` |
+| `wpss-alpine` | `assets/js/vendor/alpine.min.js` | None (defer) |
+| `wpss-frontend` | `assets/js/frontend.js` | `jquery`, `wpss-alpine`, `wpss-icons`, `wpss-ux-primitives`, `wpss-ui` |
+| `wpss-single-service` | `assets/js/single-service.js` | `jquery`, `wpss-frontend`, `wpss-ui` |
+| `wpss-unified-dashboard` | `assets/js/unified-dashboard.js` | `jquery`, `wpss-ui` |
 
 ### JavaScript Data Objects
 

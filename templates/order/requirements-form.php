@@ -15,7 +15,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var int    $order_id        Order ID.
  * @var object $order           Order object (service_id is read).

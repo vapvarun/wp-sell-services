@@ -2856,6 +2856,9 @@ class Settings {
 	 *   - option_name (string) Option array name.
 	 *   - field       (string) Field key within the option array.
 	 *   - label       (string) Optional accessible label (falls back to field).
+	 *   - id          (string) Optional input id, so a caller's <label for> matches
+	 *                          (falls back to field; pass one when two forms on a
+	 *                          page share a field key).
 	 *   - description (string) Optional help text.
 	 *   - prefix      (string) Optional non-secret prefix to hint which key is set
 	 *                          (e.g. 'whsec_'). Shown for recognition only.
@@ -2876,6 +2879,7 @@ class Settings {
 		$label       = (string) ( $args['label'] ?? $field );
 		$prefix_hint = isset( $args['prefix'] ) ? (string) $args['prefix'] : '';
 		$input_name  = (string) ( $args['name'] ?? $option_name . '[' . $field . ']' );
+		$input_id    = (string) ( $args['id'] ?? $field );
 
 		$placeholder = $has_secret
 			? __( '••••••••••••  (saved — leave blank to keep)', 'wp-sell-services' )
@@ -2888,7 +2892,7 @@ class Settings {
 
 		printf(
 			'<input type="password" id="%1$s" name="%2$s" value="" autocomplete="off" spellcheck="false" placeholder="%3$s" aria-label="%4$s" class="regular-text wpss-secret-field__input">',
-			esc_attr( $field ),
+			esc_attr( $input_id ),
 			esc_attr( $input_name ),
 			esc_attr( $placeholder ),
 			esc_attr( $label )

@@ -97,6 +97,54 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-account-standing.php"
    },
    {
+    "id": "manual-order-unpaid-is-not-credited",
+    "run": "${WP_CLI:-wp} eval-file tests/test-manual-order-unpaid-is-not-credited.php"
+   },
+   {
+    "id": "mark-paid-null-payment-status",
+    "run": "${WP_CLI:-wp} eval-file tests/test-mark-paid-null-payment-status.php"
+   },
+   {
+    "id": "moderation-migration-is-silent",
+    "run": "${WP_CLI:-wp} eval-file tests/test-moderation-migration-is-silent.php"
+   },
+   {
+    "id": "new-money-checks-both-standings",
+    "run": "${WP_CLI:-wp} eval-file tests/test-new-money-checks-both-standings.php"
+   },
+   {
+    "id": "offline-mark-paid-any-unpaid-sub-order",
+    "run": "${WP_CLI:-wp} eval-file tests/test-offline-mark-paid-any-unpaid-sub-order.php"
+   },
+   {
+    "id": "offline-waiting-notice-without-gateway",
+    "run": "${WP_CLI:-wp} eval-file tests/test-offline-waiting-notice-without-gateway.php"
+   },
+   {
+    "id": "order-counts-skip-sub-orders",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-counts-skip-sub-orders.php"
+   },
+   {
+    "id": "review-lists-and-quiet-writes",
+    "run": "${WP_CLI:-wp} eval-file tests/test-review-lists-and-quiet-writes.php"
+   },
+   {
+    "id": "service-gallery-and-limit-owner",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-gallery-and-limit-owner.php"
+   },
+   {
+    "id": "standing-refusals-are-403",
+    "run": "${WP_CLI:-wp} eval-file tests/test-standing-refusals-are-403.php"
+   },
+   {
+    "id": "sub-order-rounds-to-currency",
+    "run": "${WP_CLI:-wp} eval-file tests/test-sub-order-rounds-to-currency.php"
+   },
+   {
+    "id": "vendor-reapply-keeps-owner-decision",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-reapply-keeps-owner-decision.php"
+   },
+   {
     "id": "admin-publish-approves",
     "run": "${WP_CLI:-wp} eval-file tests/test-admin-publish-approves.php"
    },

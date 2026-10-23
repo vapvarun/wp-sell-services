@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace WPSellServices\Integrations\Gateways;
 
+use WPSellServices\Models\ServiceOrder;
+
 defined( 'ABSPATH' ) || exit;
 
 
@@ -677,6 +679,13 @@ class OfflineGateway extends AbstractPaymentGateway {
 
 			$customer_id = get_current_user_id();
 
+			// A new purchase: the same standing rule CheckoutIntentService::resolve() applies.
+			$standing = wpss_account_status_block( $customer_id );
+			if ( $standing ) {
+				wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
+				return;
+			}
+
 			// The one cart reader. Read raw, this charged for services the
 			// seller had paused or deleted - the cart screen said they could
 			// not be bought and this rail billed for them anyway.
@@ -828,6 +837,13 @@ class OfflineGateway extends AbstractPaymentGateway {
 			return new \WP_Error( 'wpss_own_service', __( 'You cannot purchase your own service.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
+		// A new purchase on every offline door (checkout form, REST create-intent,
+		// Pro /payments/offline/submit): the standing rule resolve() applies.
+		$standing = wpss_account_status_block( get_current_user_id() );
+		if ( $standing ) {
+			return $standing;
+		}
+
 		// Priced by the one line pricer, from ids alone - package (stable id or
 		// index), quantity and the add-ons as the vendor set them.
 		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, $package_id, max( 1, $quantity ), $selection );
@@ -891,8 +907,9 @@ class OfflineGateway extends AbstractPaymentGateway {
 			return;
 		}
 
-		// Verify order is pending payment.
-		if ( 'pending_payment' !== $order->status ) {
+		// Verify order is pending payment, or an unpaid offline sub-order an
+		// admin already moved on (it is credited only once this confirms it).
+		if ( 'pending_payment' !== $order->status && ! $this->is_unpaid_offline_sub_order( $order ) ) {
 			// wp_send_json_error() exits, so no return is needed here.
 			wp_send_json_error( array( 'message' => __( 'Order is not awaiting payment.', 'wp-sell-services' ) ) );
 		}
@@ -928,6 +945,28 @@ class OfflineGateway extends AbstractPaymentGateway {
 	}
 
 	/**
+	 * Is this an offline tip, extension or phase whose payment is still unconfirmed?
+	 *
+	 * An admin can move such a sub-order to any status, Completed included, and
+	 * CommissionService::record() / MilestoneService::credit_phase() then credit
+	 * nothing until the payment is confirmed. Mark as Paid is that confirmation,
+	 * so it has to stay available whatever the status (except a closed order,
+	 * which mark_as_paid() refuses anyway).
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param object $order Order object.
+	 * @return bool
+	 */
+	private function is_unpaid_offline_sub_order( object $order ): bool {
+		return self::GATEWAY_ID === ( $order->payment_method ?? '' )
+			&& in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_EXTENSION, ServiceOrder::SUB_ORDER_TYPE_MILESTONE ), true )
+			&& ! in_array( (string) ( $order->payment_status ?? '' ), array( 'paid', 'refunded', 'partially_refunded' ), true )
+			&& empty( $order->paid_at )
+			&& ! in_array( (string) ( $order->status ?? '' ), array( ServiceOrder::STATUS_CANCELLED, ServiceOrder::STATUS_REFUNDED ), true );
+	}
+
+	/**
 	 * Render admin order actions for offline orders.
 	 *
 	 * @param object $order  Order object.
@@ -935,8 +974,8 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 * @return void
 	 */
 	public function render_admin_order_actions( object $order, string $status ): void {
-		// Only show for offline orders in pending_payment status.
-		if ( 'offline' !== $order->payment_method || 'pending_payment' !== $status ) {
+		// Offline orders awaiting payment, and unpaid offline sub-orders whatever their status.
+		if ( 'offline' !== $order->payment_method || ( 'pending_payment' !== $status && ! $this->is_unpaid_offline_sub_order( $order ) ) ) {
 			return;
 		}
 
@@ -1212,23 +1251,34 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 * @return void
 	 */
 	public function display_order_payment_instructions( $order ): void {
-		// Only show for offline orders in pending_payment status
-		if ( 'pending_payment' !== $order->status ) {
+		// Only the buyer, and only while a submitted payment waits on the owner.
+		if ( (int) $order->customer_id !== get_current_user_id() || ! wpss_order_awaits_payment_confirmation( $order ) ) {
 			return;
 		}
 
-		// Check if this order was paid with offline gateway
-		if ( 'offline' !== $order->payment_method ) {
-			return;
-		}
+		/*
+		 * Acknowledge the submission FIRST, and unconditionally.
+		 *
+		 * Reaching this point means the buyer already submitted a payment the
+		 * owner has to confirm; until now nothing on any screen said so, and
+		 * they were shown the same Pay button they had just used (Basecamp
+		 * 10305169436).
+		 *
+		 * This deliberately sits ABOVE the gateway checks and the instructions
+		 * lookup. The lookup returns early when the owner has written no
+		 * instructions - the default on a fresh install - and the gateway check
+		 * returns early once the owner disables Offline after the buyer paid.
+		 * The notice is about the ORDER, so neither may silence it; the order,
+		 * phase, extension and tip views all print it through this hook only.
+		 */
+		?>
+		<p class="wpss-notice wpss-notice--info wpss-offline-awaiting">
+			<?php echo esc_html( wpss_offline_payment_notice( $order ) ); ?>
+		</p>
+		<?php
 
-		// Only show to the customer
-		if ( (int) $order->customer_id !== get_current_user_id() ) {
-			return;
-		}
-
-		// Check if gateway is enabled and has instructions
-		if ( ! $this->is_enabled() ) {
+		// Instructions: offline orders, while the gateway is enabled.
+		if ( self::GATEWAY_ID !== ( $order->payment_method ?? '' ) || ! $this->is_enabled() ) {
 			return;
 		}
 
@@ -1246,27 +1296,6 @@ class OfflineGateway extends AbstractPaymentGateway {
 		 * get_order_method() existed for exactly this and had no callers - the
 		 * snapshot was being written and never read.
 		 */
-
-		/*
-		 * Acknowledge the submission FIRST, and unconditionally.
-		 *
-		 * Reaching this point means the buyer already chose offline and
-		 * submitted; until now nothing on any screen said so, and they were
-		 * shown the same Pay button they had just used (Basecamp 10305169436).
-		 *
-		 * This deliberately sits ABOVE the instructions lookup. The lookup
-		 * returns early when the owner has written no instructions - which is
-		 * the default on a fresh install - and an acknowledgement nested inside
-		 * it inherited that silence. The first version of this fix did exactly
-		 * that: the Pay button was correctly withdrawn and the explanation
-		 * never rendered, which left the buyer with less than before.
-		 */
-		?>
-		<p class="wpss-notice wpss-notice--info wpss-offline-awaiting">
-			<?php echo esc_html( wpss_offline_payment_notice( $order ) ); ?>
-		</p>
-		<?php
-
 		$method       = self::get_order_method( $order );
 		$instructions = $method['instructions'] ?? '';
 

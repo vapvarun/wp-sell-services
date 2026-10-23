@@ -1883,7 +1883,7 @@ class ServiceWizard {
 		$sanitized = $this->sanitize_service_data( $data );
 
 		// Determine post status based on moderation setting.
-		$post_status = ModerationService::is_enabled() ? 'pending' : 'publish';
+		$post_status = ModerationService::requires_review( (int) $user_id ) ? 'pending' : 'publish';
 
 		// Create or update post. A new service starts as a draft and an existing
 		// one keeps its status until its meta is written; the status is settled

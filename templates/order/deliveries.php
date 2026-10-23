@@ -12,7 +12,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var \WPSellServices\Models\ServiceOrder $wpss_order      The order.
  * @var object[]                            $wpss_deliveries Rows from wpss_deliveries, newest first.

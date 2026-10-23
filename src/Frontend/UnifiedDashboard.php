@@ -210,6 +210,7 @@ class UnifiedDashboard {
 					'errorTryAgain'          => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'published'              => __( 'Published', 'wp-sell-services' ),
 					'draft'                  => __( 'Draft', 'wp-sell-services' ),
+					'pendingReview'          => __( 'Pending review', 'wp-sell-services' ),
 					'requestClosed'          => __( 'Request closed.', 'wp-sell-services' ),
 					'requestCloseFailed'     => __( 'Failed to close request.', 'wp-sell-services' ),
 					'requestReopened'        => __( 'Request reopened.', 'wp-sell-services' ),
@@ -1180,6 +1181,11 @@ class UnifiedDashboard {
 		// Check for existing pending application.
 		if ( $this->vendor_service->has_pending_application( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Your vendor application is already pending approval.', 'wp-sell-services' ) ) );
+		}
+
+		$block = $this->vendor_service->registration_block( $user_id );
+		if ( $block ) {
+			wp_send_json_error( array( 'message' => $block->get_error_message() ) );
 		}
 
 		$result = $this->vendor_service->register( $user_id );

@@ -1064,7 +1064,8 @@ class OrderRepository extends AbstractRepository {
 				SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress,
 				SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
 				SUM(CASE WHEN status IN ('pending_payment', 'pending_requirements') THEN 1 ELSE 0 END) AS pending
-			FROM {$this->table}"
+			FROM {$this->table}
+			WHERE " . wpss_order_rows_sql()
 		);
 
 		$revenue = $this->get_revenue()[0] ?? null;
@@ -1184,8 +1185,10 @@ class OrderRepository extends AbstractRepository {
 		);
 		$key    = $groups[ (string) $args['group_by'] ] ?? "''";
 
+		// Revenue sums every paid row, tips and extensions included: that money
+		// was taken. The order count counts orders, not their sub-orders.
 		$sql = "SELECT {$key} AS group_key,
-				COUNT(*) AS orders,
+				SUM( CASE WHEN " . wpss_order_rows_sql() . " THEN 1 ELSE 0 END ) AS orders,
 				COALESCE( SUM( total ), 0 ) AS gross,
 				COALESCE( SUM( {$refund} ), 0 ) AS refunded,
 				COALESCE( SUM( total - {$refund} ), 0 ) AS revenue,

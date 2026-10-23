@@ -901,6 +901,7 @@ class BuyerRequestService {
 			return array(
 				'success' => false,
 				'message' => $standing->get_error_message(),
+				'status'  => 403,
 			);
 		}
 
@@ -910,6 +911,7 @@ class BuyerRequestService {
 			return array(
 				'success' => false,
 				'message' => __( 'This seller cannot take new work right now, so the proposal cannot be accepted.', 'wp-sell-services' ),
+				'status'  => 403,
 			);
 		}
 

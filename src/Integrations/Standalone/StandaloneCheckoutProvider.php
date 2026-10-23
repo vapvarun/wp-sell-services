@@ -1202,7 +1202,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								global $wpdb;
 								$orders_table      = $wpdb->prefix . 'wpss_orders';
 								$reviews_table     = $wpdb->prefix . 'wpss_reviews';
-								$vendor_orders     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+								$vendor_orders     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed' AND " . wpss_order_rows_sql(), $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 								$vendor_member_obj = get_userdata( $vendor_id_for_stats );
 								// The profile row's date, the one the vendor profile and card show.
 								$vendor_joined = $vendor_member_obj ? wpss_date_label( ( new \WPSellServices\Services\VendorService() )->get_profile( (int) $vendor_id_for_stats )->created_at ?? $vendor_member_obj->user_registered, '—', 'M Y' ) : '';

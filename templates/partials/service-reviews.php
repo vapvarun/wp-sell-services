@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var WPSellServices\Models\Service $service      Service object.
  * @var int                            $service_id   Service post ID.
@@ -60,7 +60,7 @@ $reviews = $wpdb->get_results(
 	$wpdb->prepare(
 		"SELECT * FROM {$reviews_table}
 		WHERE service_id = %d AND status = 'approved'
-		ORDER BY created_at DESC
+		ORDER BY created_at DESC, id DESC
 		LIMIT %d",
 		$service_id,
 		$reviews_per_page

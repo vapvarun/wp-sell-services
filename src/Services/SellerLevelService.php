@@ -242,6 +242,13 @@ class SellerLevelService {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_vendor_profiles';
 
+		// Setting the level the vendor already has changes nothing, so it writes
+		// nothing and announces nothing (no "Seller level changed" audit row).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( $wpdb->get_var( $wpdb->prepare( "SELECT verification_tier FROM {$table} WHERE user_id = %d", $user_id ) ) === $level ) {
+			return true;
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$updated = $wpdb->update(
 			$table,

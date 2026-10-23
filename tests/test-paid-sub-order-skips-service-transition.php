@@ -26,6 +26,7 @@ register_shutdown_function(
 );
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 defined( 'ABSPATH' ) || exit;
 
@@ -35,6 +36,7 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) {
 
 global $wpdb;
 $orders = $wpdb->prefix . 'wpss_orders';
+$f      = wpss_test_fixtures();
 
 $restore = static function () use ( $wpdb, $orders, &$order_id ) {
 	if ( $order_id ) {
@@ -48,8 +50,8 @@ $wpdb->insert(
 	$orders,
 	array(
 		'order_number'   => 'QA-SUB-' . wp_generate_password( 6, false ),
-		'customer_id'    => 7844,
-		'vendor_id'      => 7831,
+		'customer_id'    => $f->buyer,
+		'vendor_id'      => $f->vendor,
 		'service_id'     => 0,
 		'platform'       => 'tip',
 		'status'         => 'pending_payment',

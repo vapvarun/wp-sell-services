@@ -105,6 +105,23 @@ class ModerationService {
 	}
 
 	/**
+	 * Whether a service this member saves goes to review instead of live.
+	 *
+	 * The one rule for the wizard and REST: an admin's save is the approval, so
+	 * an admin editing a vendor's live service does not queue it or mail themselves.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param int $user_id Acting member. Defaults to the current user.
+	 * @return bool
+	 */
+	public static function requires_review( int $user_id = 0 ): bool {
+		$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+
+		return self::is_enabled() && ! user_can( $user_id, 'manage_options' );
+	}
+
+	/**
 	 * Get services pending moderation.
 	 *
 	 * @param array $args Optional query arguments.

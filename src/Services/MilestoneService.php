@@ -177,6 +177,17 @@ class MilestoneService {
 			return $fail( __( 'Only the vendor can propose milestones on this order.', 'wp-sell-services' ) );
 		}
 
+		// A phase is new paid work for both sides, so both must be in good
+		// standing, whichever door (AJAX, REST, contract acceptance) calls this.
+		$standing = wpss_vendor_status_block( $vendor_id );
+		if ( $standing ) {
+			return $fail( $standing->get_error_message() );
+		}
+
+		if ( wpss_account_status_block( (int) $parent->customer_id ) ) {
+			return $fail( __( 'This buyer cannot take on new purchases right now, so a phase cannot be proposed.', 'wp-sell-services' ) );
+		}
+
 		// Milestones are the payment model for custom, buyer-posted projects
 		// (platform='request'). Fixed-price catalog orders top up via
 		// Extensions instead, so there is one payment story per order and
@@ -302,6 +313,12 @@ class MilestoneService {
 
 		if ( 'paid' !== ( $sub->payment_status ?? '' ) && empty( $sub->paid_at ) ) {
 			return false;
+		}
+
+		// An admin completed this phase before its payment was confirmed: credit
+		// it now (credit_phase() is idempotent) instead of reopening it.
+		if ( ServiceOrder::STATUS_COMPLETED === $sub->status ) {
+			return $this->credit_phase( $milestone_id );
 		}
 
 		// Started once: a webhook retry finds started_at already set.

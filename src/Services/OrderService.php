@@ -844,7 +844,10 @@ class OrderService {
 			$data['started_at'] = current_time( 'mysql', true );
 		}
 
-		if ( ServiceOrder::STATUS_COMPLETED === $new_status ) {
+		// A dispute handing a completed order back keeps its original completion
+		// time, so the review window and earnings periods do not restart.
+		if ( ServiceOrder::STATUS_COMPLETED === $new_status
+			&& ! ( $order->completed_at && DisputeWorkflowManager::is_restoring_order( $order_id ) ) ) {
 			$data['completed_at'] = current_time( 'mysql', true );
 		}
 

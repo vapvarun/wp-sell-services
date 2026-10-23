@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.7.1
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var string                                                   $filter_prefix Query-arg prefix: 'orders' or 'sales'.
  * @var array<string, array{label: string, statuses: string[]}> $status_groups Status groups, incl. any runtime 'other' group.

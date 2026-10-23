@@ -10,7 +10,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var int    $order_id     Order ID.
  * @var object $order        Order object.
@@ -544,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			},
 			error: function(xhr) {
 				var msg = (xhr.responseJSON && xhr.responseJSON.message)
-					|| '<?php esc_html_e( 'Failed to send message.', 'wp-sell-services' ); ?>';
+					|| <?php echo wp_json_encode( __( 'Failed to send message.', 'wp-sell-services' ), JSON_HEX_TAG ); ?>;
 				wpssToast(msg, 'error');
 			},
 			complete: function() {

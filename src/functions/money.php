@@ -285,7 +285,7 @@ function wpss_order_tax_meta( float $rate, float $amount, bool $included, string
 
 	return array(
 		'tax_rate'     => $rate,
-		'tax_amount'   => round( $amount, 2 ),
+		'tax_amount'   => round( $amount, wpss_get_currency_decimals() ),
 		'tax_included' => $included,
 		'tax_label'    => '' !== $label ? $label : wpss_calculate_tax( 0.0 )['label'],
 	);

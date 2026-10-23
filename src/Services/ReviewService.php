@@ -148,7 +148,7 @@ class ReviewService {
 	 *
 	 * @param int                  $vendor_id  Vendor user ID.
 	 * @param int                  $service_id Service the review is about; must be the vendor's.
-	 * @param array<string, mixed> $data       reviewer_name, rating (1-5), content, date (optional, any strtotime format).
+	 * @param array<string, mixed> $data       reviewer_name, rating (1-5), content, date (optional, read in the site timezone).
 	 * @param bool                 $dry_run    Run every check and save nothing.
 	 * @return Review|true|\WP_Error The review, true for a dry run that would succeed, or why not.
 	 */
@@ -166,7 +166,9 @@ class ReviewService {
 			return new \WP_Error( 'wpss_import_review_data', __( 'A reviewer name and a rating from 1 to 5 are required.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		$when    = ! empty( $data['date'] ) ? strtotime( (string) $data['date'] ) : false;
+		// A CSV date has no zone: it is the site's local day, stored in UTC.
+		$when    = ! empty( $data['date'] ) ? wpss_datetime_input_to_utc( (string) $data['date'] ) : null;
+		$now     = current_time( 'mysql', true );
 		$content = wp_kses_post( (string) ( $data['content'] ?? '' ) );
 		$repo    = new ReviewRepository();
 
@@ -189,7 +191,7 @@ class ReviewService {
 				'rating'        => $rating,
 				'review'        => $content,
 				'status'        => Review::STATUS_APPROVED,
-				'created_at'    => gmdate( 'Y-m-d H:i:s', $when && $when <= time() ? $when : time() ),
+				'created_at'    => null !== $when && $when <= $now ? $when : $now,
 			)
 		);
 
@@ -374,7 +376,7 @@ class ReviewService {
 			$wpdb->prepare(
 				"SELECT * FROM {$table}
 				WHERE service_id = %d AND status = %s
-				ORDER BY created_at DESC
+				ORDER BY created_at DESC, id DESC
 				LIMIT %d OFFSET %d",
 				$service_id,
 				$args['status'],
@@ -410,7 +412,7 @@ class ReviewService {
 			$wpdb->prepare(
 				"SELECT * FROM {$table}
 				WHERE vendor_id = %d AND status = %s
-				ORDER BY created_at DESC
+				ORDER BY created_at DESC, id DESC
 				LIMIT %d OFFSET %d",
 				$vendor_id,
 				$args['status'],
@@ -691,6 +693,15 @@ class ReviewService {
 			return array(
 				'can_review' => false,
 				'reason'     => __( 'Only the buyer can review this order.', 'wp-sell-services' ),
+			);
+		}
+
+		// A suspended or closed member leaves no new review; say so instead of "try again".
+		$standing = wpss_account_status_block( $reviewer_id );
+		if ( $standing ) {
+			return array(
+				'can_review' => false,
+				'reason'     => $standing->get_error_message(),
 			);
 		}
 

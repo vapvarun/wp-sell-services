@@ -40,8 +40,10 @@ $disputes = $wpdb->prefix . 'wpss_disputes';
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $audit_before = (int) $wpdb->get_var( "SELECT COALESCE(MAX(id),0) FROM {$audit}" );
+// An escalated dispute: an existing one, or one staged into that status and restored.
+$dispute_id = wpss_test_dispute_in( 'escalated' );
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$dispute = $wpdb->get_row( "SELECT id, meta FROM {$disputes} WHERE status = 'escalated' ORDER BY id DESC LIMIT 1" );
+$dispute = $dispute_id ? $wpdb->get_row( $wpdb->prepare( "SELECT id, meta FROM {$disputes} WHERE id = %d", $dispute_id ) ) : null;
 $report_id = 0;
 
 $restore = static function () use ( $wpdb, $audit, $audit_before, $reports, &$report_id, $disputes, $dispute ) {
@@ -88,7 +90,7 @@ if ( $dispute ) {
 	$n = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$audit} WHERE id > %d AND event_type = 'dispute.assign' AND object_id = %d", $audit_before, $dispute->id ) );
 	$check( 'assigning a dispute writes one audit row', 1 === $n, (string) $n );
 } else {
-	echo "SKIP  no dispute on this install\n";
+	echo "SKIP  no dispute on this install (seed one with wp wpss demo marketplace)\n";
 }
 
 // The queue row action and the profile field share one standing setter, so both are audited.

@@ -12,7 +12,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var \WPSellServices\Models\ServiceOrder      $milestone    Milestone sub-order.
  * @var \WPSellServices\Models\ServiceOrder|null $parent_order Parent order (may be null).

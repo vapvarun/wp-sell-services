@@ -28,6 +28,7 @@ register_shutdown_function(
 );
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 defined( 'ABSPATH' ) || exit;
 
@@ -37,7 +38,9 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) {
 
 global $wpdb;
 $orders = $wpdb->prefix . 'wpss_orders';
-$buyer  = 7844;
+$f      = wpss_test_fixtures();
+$buyer  = $f->buyer;
+$vendor = $f->vendor;
 
 $restore = static function () use ( $wpdb, $orders, &$order_ids ) {
 	foreach ( $order_ids as $id ) {
@@ -46,14 +49,14 @@ $restore = static function () use ( $wpdb, $orders, &$order_ids ) {
 	}
 };
 
-$make = static function ( string $status, string $payment ) use ( $wpdb, $orders, $buyer, &$order_ids ): int {
+$make = static function ( string $status, string $payment ) use ( $wpdb, $orders, $buyer, $vendor, &$order_ids ): int {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->insert(
 		$orders,
 		array(
 			'order_number'   => 'QA-SETTLE-' . wp_generate_password( 6, false ),
 			'customer_id'    => $buyer,
-			'vendor_id'      => 7831,
+			'vendor_id'      => $vendor,
 			'service_id'     => 0,
 			'platform'       => 'standalone',
 			'status'         => $status,

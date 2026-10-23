@@ -522,7 +522,10 @@
                     if (quote.tax > 0) {
                         $tax.find('.wpss-summary-label').text(quote.tax_included
                             ? wpssService.i18n.taxIncluded.replace('%s', quote.tax_label)
-                            : quote.tax_label + ' (' + quote.tax_rate + '%):');
+                            : wpssService.i18n.taxRateLabel
+                                .replace('%1$s', () => quote.tax_label)
+                                .replace('%2$s', () => quote.tax_rate)
+                                .replace('%%', '%'));
                         $tax.find('.wpss-summary-value').text(quote.formatted.tax);
                         $tax.prop('hidden', false);
                     } else {

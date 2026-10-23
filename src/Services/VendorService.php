@@ -90,6 +90,12 @@ class VendorService {
 			return false;
 		}
 
+		// A suspended or rejected seller, or a member whose account is blocked,
+		// must not reinstate themselves: upsert() below would reset the status.
+		if ( $this->registration_block( $user_id ) ) {
+			return false;
+		}
+
 		// Determine vendor status based on registration mode setting.
 		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
@@ -232,6 +238,15 @@ class VendorService {
 			);
 		}
 
+		$block = $this->registration_block( $user_id );
+
+		if ( $block ) {
+			return array(
+				'success' => false,
+				'message' => $block->get_error_message(),
+			);
+		}
+
 		$success = $this->register( $user_id, $data );
 
 		if ( $success ) {
@@ -293,6 +308,33 @@ class VendorService {
 		}
 
 		return 'pending' === ( $profile->status ?? '' );
+	}
+
+	/**
+	 * Why this user may not apply to sell, or null when they may.
+	 *
+	 * An application only ever starts or resumes a vendor: a profile the owner
+	 * suspended or rejected (or any other non-active, non-pending state) is the
+	 * owner's decision, and applying again must not overwrite it. The member's
+	 * account standing is checked first, as on every other door.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param int $user_id User ID.
+	 * @return \WP_Error|null WP_Error (status 403) when refused, null when allowed.
+	 */
+	public function registration_block( int $user_id ): ?\WP_Error {
+		$block = wpss_account_status_block( $user_id );
+
+		if ( $block ) {
+			return $block;
+		}
+
+		if ( in_array( (string) $this->get_vendor_status( $user_id ), array( '', 'active', 'pending' ), true ) ) {
+			return null;
+		}
+
+		return wpss_vendor_status_block( $user_id );
 	}
 
 	/**

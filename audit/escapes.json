@@ -860,6 +860,102 @@
    "fails_on": "Pro 8fbac15 (checkout-only hook) and 0c45949 (no hook)",
    "check": "tests/test-pro-edd-standing-is-hooked.php",
    "note": "SKIPs without Pro installed. Live proof: Docker run with real EDD 3.7.2, logged on the card"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "a suspended or rejected vendor could reinstate themselves by registering again, overriding the owner's decision",
+   "guard": "static:vendor-reapply-keeps-owner-decision",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-vendor-reapply-keeps-owner-decision.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "offline checkout, new phases, extensions and tips skipped the buyer's or seller's standing",
+   "guard": "static:new-money-checks-both-standings",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-new-money-checks-both-standings.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "standing refusals on review and proposal-accept doors returned 500 or 400 with a generic message",
+   "guard": "static:standing-refusals-are-403",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-standing-refusals-are-403.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "a manual order saved past Pending Payment while unpaid credited money that never arrived",
+   "guard": "static:manual-order-unpaid-is-not-credited",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-manual-order-unpaid-is-not-credited.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "an unpaid offline sub-order forced to completed could never be marked paid",
+   "guard": "static:offline-mark-paid-any-unpaid-sub-order",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-offline-mark-paid-any-unpaid-sub-order.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "the awaiting-confirmation notice disappeared once the offline gateway was switched off",
+   "guard": "static:offline-waiting-notice-without-gateway",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-offline-waiting-notice-without-gateway.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "sub-order totals and tax were not rounded to the currency's decimals",
+   "guard": "static:sub-order-rounds-to-currency",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-sub-order-rounds-to-currency.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "a legacy order with NULL payment_status could not be marked paid",
+   "guard": "static:mark-paid-null-payment-status",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-mark-paid-null-payment-status.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "the upgrade migration announced a fake submit and erased the rejection when it ran on a member's request",
+   "guard": "static:moderation-migration-is-silent",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-moderation-migration-is-silent.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "the gallery accepted any upload-capable user's attachment and the service limit judged the editor, not the owner",
+   "guard": "static:service-gallery-and-limit-owner",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-service-gallery-and-limit-owner.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "order counts in several aggregates included tips, phases and extensions",
+   "guard": "static:order-counts-skip-sub-orders",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-order-counts-skip-sub-orders.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "review lists paged inconsistently and unchanged edits wrote audit rows",
+   "guard": "static:review-lists-and-quiet-writes",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-review-lists-and-quiet-writes.php"
   }
  ]
 }

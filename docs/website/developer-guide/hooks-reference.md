@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**551 hooks** across **767** firing sites.
+**551 hooks** across **769** firing sites.
 
 ## Actions (279)
 
@@ -303,7 +303,7 @@ guide; this is the complete index.
 | `wpss_account_page_section` | 2 | `src/Integrations/Standalone/StandaloneAccountProvider.php` | Filters the dashboard section a legacy [wpss_account] page maps to. |
 | `wpss_account_status` | 2 | `src/functions/moderation.php` | Filter a member's account standing. |
 | `wpss_add_service_to_cart` | 3 | `src/Checkout/ServiceCart.php` | Filter to let e-commerce adapters handle cart addition natively. |
-| `wpss_admin_filing_recipient` | 3 | `src/Services/NotificationService.php` | Tell the site owner a member filed a report or a dispute. |
+| `wpss_admin_filing_recipient` | 3 | `src/Services/EmailService.php` *(+1 more)* | Tell the site owner a member filed a report or a dispute. |
 | `wpss_admin_menu_label` | 1 | `src/Admin/Admin.php` | Filter the admin menu label for white-labelling. |
 | `wpss_admin_notification_email` | 1 | `src/Services/EmailService.php` | Tell the site owner a buyer has sent proof of an offline payment. |
 | `wpss_admin_vendor_notification_content` | 2 | `src/Services/NotificationService.php` | Filter admin vendor notification email content. |
@@ -484,7 +484,7 @@ guide; this is the complete index.
 | `wpss_rest_service_data` | 3 | `src/API/ServicesController.php` | Filter service REST response data. |
 | `wpss_rest_vendor_data` | 3 | `src/API/VendorsController.php` | Filters the vendor data returned in REST API responses. |
 | `wpss_review_window_days` | 1 | `src/Services/ReviewService.php` | Filter the review time window in days. |
-| `wpss_reviews_per_page` | 2 | `templates/partials/service-reviews.php` | Filters the number of reviews to display per page. |
+| `wpss_reviews_per_page` | 2 | `src/Frontend/AjaxHandlers.php` *(+1 more)* | Filters the number of reviews to display per page. |
 | `wpss_search_categories_limit` | 1 | `src/Blocks/ServiceSearch.php` |  |
 | `wpss_search_query_args` | 2 | `src/Services/SearchService.php` | Filter the WP_Query arguments for service search. |
 | `wpss_search_results` | 3 | `src/Services/SearchService.php` | Filter search results. |

@@ -677,7 +677,7 @@ class ServicesController extends RestController {
 
 		$post_status = 'draft' === $requested_status
 			? 'draft'
-			: ( ModerationService::is_enabled() ? 'pending' : 'publish' );
+			: ( ModerationService::requires_review() ? 'pending' : 'publish' );
 
 		/*
 		 * Creating a service over REST is the app's version of finishing the
@@ -902,7 +902,7 @@ class ServicesController extends RestController {
 		 * publishable check above, which pending must clear too.
 		 */
 		$to_review = false;
-		if ( ModerationService::is_enabled() && ! current_user_can( 'manage_options' ) ) {
+		if ( ModerationService::requires_review() ) {
 			// Any field but the route id counts, as in the wizard: a gallery, add-on or category swap is as reviewable as a title.
 			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'context', '_locale', '_fields', '_embed' ) ) );
 			$goes_live     = 'publish' === ( $update_data['post_status'] ?? '' );

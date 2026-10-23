@@ -29,7 +29,7 @@ global $wpdb;
 $orders_table = $wpdb->prefix . 'wpss_orders';
 
 $snapshot = array();
-foreach ( array( 'wpss_orders', 'wpss_advanced', 'wpss_decimal_places', 'wpss_max_order_amount', 'wpss_min_order_amount' ) as $name ) {
+foreach ( array( 'wpss_orders', 'wpss_advanced', 'wpss_general', 'wpss_decimal_places', 'wpss_max_order_amount', 'wpss_min_order_amount' ) as $name ) {
 	$snapshot[ $name ] = get_option( $name, null );
 }
 $restore = static function () use ( $snapshot ) {
@@ -85,14 +85,19 @@ update_option( 'wpss_decimal_places', 0 );
 $advanced                      = is_array( $snapshot['wpss_advanced'] ) ? $snapshot['wpss_advanced'] : array();
 $advanced['currency_position'] = 'after';
 update_option( 'wpss_advanced', $advanced );
+// The General tab's position wins over the legacy Advanced one when a site has saved it.
+$general = is_array( $snapshot['wpss_general'] ) ? $snapshot['wpss_general'] : array();
+if ( isset( $general['currency_position'] ) ) {
+	$general['currency_position'] = 'after';
+	update_option( 'wpss_general', $general );
+}
 $symbol = wpss_get_currency_symbol( wpss_get_currency() );
 $check( 'wpss_format_price honours decimals=0 and position=after', 99 . $symbol === wpss_format_price( 99 ) );
 
-// 3. A total above the maximum is refused before any gateway sees it.
-$service_id = (int) $wpdb->get_var( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'wpss_service' AND post_status = 'publish' ORDER BY ID ASC LIMIT 1" );
+// 3. A total above the maximum is refused before any gateway sees it. Stage the priced service (swept at shutdown).
+$service_id = wpss_test_live_service();
 $packages   = $service_id ? get_post_meta( $service_id, '_wpss_packages', true ) : array();
-$author_id  = $service_id ? (int) get_post_field( 'post_author', $service_id ) : 0;
-$buyer_id   = 1 === $author_id ? (int) $wpdb->get_var( "SELECT ID FROM {$wpdb->users} WHERE ID <> 1 ORDER BY ID ASC LIMIT 1" ) : 1;
+$buyer_id   = wpss_test_fixture_user( 'buyer' );
 
 if ( $service_id && is_array( $packages ) && $packages && $buyer_id ) {
 	update_option( 'wpss_max_order_amount', 0.01 );

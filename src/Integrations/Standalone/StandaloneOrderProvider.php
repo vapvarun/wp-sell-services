@@ -446,7 +446,8 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			$update_data,
 			array(
 				'id'             => $order_id,
-				'payment_status' => (string) $order->payment_status,
+				// Uncast: a legacy NULL becomes `IS NULL`; (string) matched 0 rows and reported the charge unconfirmed.
+				'payment_status' => $order->payment_status,
 			)
 		);
 

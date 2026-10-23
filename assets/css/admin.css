@@ -3258,15 +3258,6 @@ h2.wpss-settings-subhead__title {
 		max-width: 100%;
 	}
 
-	/* WordPress hides a list table's extra filters under 783px; the Orders filters are the point of that screen. */
-	.wpss-list-card__body .tablenav .alignleft.actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		float: none;
-		width: 100%;
-	}
-
 	.wpss-list-card__body .tablenav .alignleft.actions select {
 		flex: 1 1 45%;
 		max-width: 100%;
@@ -3279,6 +3270,17 @@ h2.wpss-settings-subhead__title {
 
 	.wpss-withdrawals-table {
 		min-width: 720px;
+	}
+}
+
+/* WordPress hides a list table's extra filters under 783px; the Orders filters are the point of that screen. */
+@media screen and (max-width: 782px) {
+	.wpss-list-card__body .tablenav .alignleft.actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		float: none;
+		width: 100%;
 	}
 }
 /* ==========================================================================

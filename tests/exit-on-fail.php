@@ -254,3 +254,168 @@ if ( ! function_exists( 'wpss_test_dispute_in' ) ) {
 		return $id;
 	}
 }
+
+if ( ! function_exists( 'wpss_test_milestone_contract' ) ) {
+	/**
+	 * A throwaway milestone contract to test against, so a script that needs a
+	 * phase asserts on a site seeded without one (CI's demo data has none).
+	 *
+	 * The parent is a request order and each phase carries the columns and meta
+	 * MilestoneService::propose() writes, between the throwaway buyer and vendor
+	 * from fixtures.php. The rows, and any conversation the run opens on them,
+	 * are removed at shutdown.
+	 *
+	 * @param array<int, array<string, mixed>> $phases One set of column overrides per phase,
+	 *                                               e.g. array( 'status' => 'completed', 'payment_status' => 'paid' ).
+	 * @return array{parent: int, phases: int[], buyer: int, vendor: int}
+	 */
+	function wpss_test_milestone_contract( array $phases = array( array() ) ): array {
+		require_once __DIR__ . '/fixtures.php';
+		global $wpdb;
+		$f = wpss_test_fixtures();
+
+		$parent = ( $f->order )(
+			array(
+				'platform'   => 'request',
+				'service_id' => 0,
+				'subtotal'   => 0,
+				'total'      => 0,
+				'meta'       => wp_json_encode(
+					array(
+						'contract_type'     => 'milestone',
+						'proposal_snapshot' => array( 'contract_type' => 'milestone', 'request_title' => 'QA milestone contract' ),
+					)
+				),
+			)
+		);
+
+		$ids = array();
+		foreach ( array_values( $phases ) as $i => $columns ) {
+			$ids[] = ( $f->order )(
+				array_merge(
+					array(
+						'order_number'      => 'MS-QA' . strtoupper( wp_generate_password( 6, false, false ) ),
+						'platform'          => 'milestone',
+						'platform_order_id' => $parent,
+						'status'            => 'pending_payment',
+						'payment_status'    => 'pending',
+						'paid_at'           => null,
+						'subtotal'          => 50,
+						'total'             => 50,
+						'meta'              => wp_json_encode(
+							array(
+								'milestone'             => true,
+								'parent_order_id'       => $parent,
+								'title'                 => 'QA phase ' . ( $i + 1 ),
+								'description'           => 'QA phase',
+								'deliverables'          => '',
+								'sort_order'            => $i + 1,
+								'is_contract_milestone' => true,
+							)
+						),
+					),
+					$columns
+				)
+			);
+		}
+
+		$orders = array_merge( array( $parent ), $ids );
+		register_shutdown_function(
+			static function () use ( $wpdb, $orders ) {
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$in    = implode( ',', array_map( 'intval', $orders ) );
+				$convs = $wpdb->get_col( "SELECT id FROM {$wpdb->prefix}wpss_conversations WHERE order_id IN ({$in})" );
+				if ( $convs ) {
+					$wpdb->query( "DELETE FROM {$wpdb->prefix}wpss_messages WHERE conversation_id IN (" . implode( ',', array_map( 'intval', $convs ) ) . ')' );
+					$wpdb->query( "DELETE FROM {$wpdb->prefix}wpss_conversations WHERE order_id IN ({$in})" );
+				}
+				// phpcs:enable
+			}
+		);
+
+		return array(
+			'parent' => $parent,
+			'phases' => $ids,
+			'buyer'  => $f->buyer,
+			'vendor' => $f->vendor,
+		);
+	}
+}
+
+if ( ! function_exists( 'wpss_test_image' ) ) {
+	/**
+	 * A 1x1 PNG attachment owned by $author, for a site seeded with --no-images.
+	 * Swept with the script's other posts (the file goes with it).
+	 *
+	 * @param int $author Attachment author.
+	 * @return int Attachment id, or 0 when the upload failed.
+	 */
+	function wpss_test_image( int $author ): int {
+		$bits = wp_upload_bits( 'qa-image-' . wp_generate_password( 6, false, false ) . '.png', null, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		if ( ! empty( $bits['error'] ) ) {
+			return 0;
+		}
+
+		return (int) wp_insert_attachment(
+			array(
+				'post_mime_type' => 'image/png',
+				'post_title'     => 'QA image',
+				'post_status'    => 'inherit',
+				'post_author'    => $author,
+			),
+			$bits['file']
+		);
+	}
+}
+
+if ( ! function_exists( 'wpss_test_live_service' ) ) {
+	/**
+	 * A throwaway service that passes wpss_get_service_publish_errors(), is
+	 * published and approved, owned by the fixtures.php vendor: title, category,
+	 * description, packages, a main image and ($images - 1) further gallery
+	 * images. Removed at shutdown with its images (and the category, when the
+	 * site had none to file it in).
+	 *
+	 * Published by writing the status, not through wp_update_post(): the script
+	 * gets the state it needs without the publish guards and their mail running.
+	 *
+	 * @param int $images Images in total, main image included (at least 1).
+	 * @return int Service id.
+	 */
+	function wpss_test_live_service( int $images = 1 ): int {
+		require_once __DIR__ . '/fixtures.php';
+		global $wpdb;
+		$f  = wpss_test_fixtures();
+		$id = ( $f->service )( 'draft' );
+
+		$terms = get_terms( array( 'taxonomy' => 'wpss_service_category', 'hide_empty' => false, 'number' => 1, 'fields' => 'ids' ) );
+		$term  = is_array( $terms ) ? (int) ( $terms[0] ?? 0 ) : 0;
+		if ( ! $term ) {
+			$made = wp_insert_term( 'QA category ' . wp_generate_password( 4, false, false ), 'wpss_service_category' );
+			$term = is_wp_error( $made ) ? 0 : (int) $made['term_id'];
+			register_shutdown_function( static fn() => $term && wp_delete_term( $term, 'wpss_service_category' ) );
+		}
+		wp_set_object_terms( $id, array( $term ), 'wpss_service_category' );
+
+		update_post_meta(
+			$id,
+			'_wpss_packages',
+			array(
+				array( 'id' => 1000, 'name' => 'Basic', 'description' => 'QA package.', 'price' => 40, 'delivery_days' => 3, 'revisions' => 1, 'features' => array( 'QA deliverable' ) ),
+			)
+		);
+
+		$ids = array();
+		for ( $i = 0; $i < max( 1, $images ); $i++ ) {
+			$ids[] = wpss_test_image( $f->vendor );
+		}
+		set_post_thumbnail( $id, $ids[0] );
+		update_post_meta( $id, '_wpss_gallery', array( 'images' => array_slice( $ids, 1 ), 'video' => '' ) );
+		update_post_meta( $id, '_wpss_moderation_status', 'approved' );
+
+		$wpdb->update( $wpdb->posts, array( 'post_status' => 'publish' ), array( 'ID' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		clean_post_cache( $id );
+
+		return $id;
+	}
+}

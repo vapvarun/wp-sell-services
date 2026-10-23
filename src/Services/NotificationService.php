@@ -1681,8 +1681,9 @@ class NotificationService {
 	/**
 	 * Tell the site owner a member filed a report or a dispute.
 	 *
-	 * Bound to `wpss_report_filed` and `wpss_dispute_opened`. Always sent: the
-	 * owner is the only person who can act on either. The recipient is the
+	 * Bound to `wpss_report_filed` (the owner's dispute email is
+	 * EmailService::send_dispute_opened(), same recipient and filter). The
+	 * owner is the only person who can act on a report. The recipient is the
 	 * dispute admin email when set, else the site admin email, and can be
 	 * changed with the `wpss_admin_filing_recipient` filter.
 	 *

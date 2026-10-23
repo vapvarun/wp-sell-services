@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.6.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var array $cart_items Cart items from _wpss_cart user meta.
  * @var bool  $wpss_guest Whether the visitor is logged out (the cart needs an account).

@@ -1173,7 +1173,7 @@ class API {
 					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
 					SUM(CASE WHEN status IN ('pending', 'accepted', 'in_progress', 'delivered') THEN 1 ELSE 0 END) as active
 				FROM {$orders_table}
-				WHERE customer_id = %d",
+				WHERE customer_id = %d AND " . wpss_order_rows_sql(),
 				$user_id
 			)
 		);
