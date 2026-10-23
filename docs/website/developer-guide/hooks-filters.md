@@ -27,7 +27,7 @@ add_filter( 'wpss_review_window_days', fn( $days ) => 14 );
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_loaded` | `Plugin $plugin` | `src/Core/Plugin.php:311` |
+| `wpss_loaded` | `Plugin $plugin` | `src/Core/Plugin.php:313` |
 | `wpss_adapter_initialized` | `EcommerceAdapterInterface $adapter` | `src/Integrations/IntegrationManager.php:136` |
 
 **`wpss_loaded`** is the primary extension hook. All Pro features register here:
@@ -53,8 +53,8 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_pre_update_service` | `array $data, int $service_id` | `ServiceManager.php` |
 | `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:895` |
 | `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:754` |
-| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:950` |
-| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:1005` |
+| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:946` |
+| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:1000` |
 
 ## Moderation Actions
 
@@ -68,9 +68,9 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:743` |
+| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:745` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:663` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:683` |
 
 ### Order Filters
 
@@ -233,8 +233,8 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_profile_updated` | `int $user_id, array $filtered_data` | `src/Services/VendorService.php:566` |
 | `wpss_vendor_vacation_mode_changed` | `int $user_id, bool $enabled, string $message` | `src/Services/VendorService.php:617` |
 | `wpss_vendor_tier_changed` | `int $user_id, string $tier` | `src/Services/VendorService.php:658` |
-| `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `src/Services/SellerLevelService.php:367` |
-| `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:264` |
+| `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `src/Services/SellerLevelService.php:368` |
+| `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:265` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:381` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1468` |
 | `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2016` |
@@ -415,7 +415,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1423` |
+| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1418` |
 | `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:640` |
 | `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
 | `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
@@ -605,8 +605,8 @@ These filters let you customize outgoing email content without modifying templat
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2129` |
-| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2105` |
+| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2130` |
+| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2106` |
 | `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1665` |
 
 ```php
@@ -696,7 +696,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:205` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:428` |
 | `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4092` |
-| `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:965` |
+| `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:967` |
 
 **`wpss_currency_registry`** is the preferred, single-place override - add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
 
@@ -789,7 +789,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:760` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:265` |
-| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1539` |
+| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1534` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
@@ -843,9 +843,9 @@ add_filter( 'wpss_fullwidth_page_keys', function( $keys ) {
 | `wpss_open_graph_data` | `$data, $service_id` | `src/SEO/SEO.php:260` |
 | `wpss_sitemap_post_types` | `$post_types` | `src/SEO/SEO.php:324` |
 | `wpss_breadcrumbs` | `$breadcrumbs, $service_id` | `src/SEO/SEO.php:392` |
-| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2108` |
+| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2160` |
 | `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1616` |
-| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1718` |
+| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1770` |
 
 ## Pro Plugin Actions **[PRO]**
 
@@ -874,12 +874,12 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_edd_adapter_init` | `EDDAdapter $adapter` | `src/Integrations/EDD/EDDAdapter.php:169` |
+| `wpss_edd_adapter_init` | `EDDAdapter $adapter` | `src/Integrations/EDD/EDDAdapter.php:170` |
 | `wpss_edd_service_purchased` | `ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:119` |
 | `wpss_edd_services_processed` | `int $order_id, ServiceItem[] $items` | `src/Integrations/EDD/EDDOrderProvider.php:149` |
-| `wpss_edd_order_record_created` | `int $record_id, ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:407` |
-| `wpss_edd_service_meta_saved` | `int $product_id` | `src/Integrations/EDD/EDDProductProvider.php:237` |
-| `wpss_edd_service_checkout_processed` | `int $order_id, int $download_id, array $service_data, int $index` | `src/Integrations/EDD/EDDCheckoutProvider.php:228` |
+| `wpss_edd_order_record_created` | `int $record_id, ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:412` |
+| `wpss_edd_service_meta_saved` | `int $product_id` | `src/Integrations/EDD/EDDProductProvider.php:248` |
+| `wpss_edd_service_checkout_processed` | `int $order_id, int $download_id, array $service_data, int $index` | `src/Integrations/EDD/EDDCheckoutProvider.php:266` |
 
 ### FluentCart Integration Actions
 
@@ -951,7 +951,7 @@ WooCommerce or standalone checkout.
 |--------|-----------|------|
 | `wpss_edd_cart_item_data` | `$cart_item_data, $product_id, $variation_id` | `EDDCheckoutProvider.php:56` |
 | `wpss_edd_validate_add_to_cart` | `$valid, $product_id, $quantity` | `src/Integrations/EDD/EDDCheckoutProvider.php:102` |
-| `wpss_edd_thankyou_redirect` | `$redirect, $order_id` | `src/Integrations/EDD/EDDCheckoutProvider.php:257` |
+| `wpss_edd_thankyou_redirect` | `$redirect, $order_id` | `src/Integrations/EDD/EDDCheckoutProvider.php:295` |
 | `wpss_edd_can_access_vendor_dashboard` | `$can_access, $user_id` | `src/Integrations/EDD/EDDAccountProvider.php:450` |
 
 ### WooCommerce Filters

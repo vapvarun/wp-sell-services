@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**550 hooks** across **766** firing sites.
+**551 hooks** across **767** firing sites.
 
 ## Actions (279)
 
@@ -196,7 +196,7 @@ guide; this is the complete index.
 | `wpss_proposal_submitted` | 4 | `src/Services/ProposalService.php` | Fires when a proposal is submitted. |
 | `wpss_proposal_updated` | 2 | `src/Services/ProposalService.php` | Fires when a proposal is updated. |
 | `wpss_proposal_withdrawn` | 2 | `src/Services/ProposalService.php` | Fires when a proposal is withdrawn. |
-| `wpss_public_signup_complete` | 2 | `src/Frontend/PublicSignup.php` | Fires after a user signs up via the public signup form or checkout. |
+| `wpss_public_signup_complete` | 2 | `src/Frontend/PublicSignup.php` |  |
 | `wpss_razorpay_refund_processed` | 2 | `src/Integrations/Razorpay/RazorpayGateway.php` **[PRO]** | Fires when a Razorpay refund is processed. |
 | `wpss_recurring_payment_failed` | 2 | `src/RecurringServices/RecurringWebhookHandler.php` **[PRO]** | Fires after a recurring subscription is marked past_due due to a failed payment. |
 | `wpss_recurring_renewal_order_created` | 3 | `src/RecurringServices/RecurringOrderFactory.php` **[PRO]** | Fires after a recurring renewal order is created. |
@@ -296,13 +296,14 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (271)
+## Filters (272)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
 | `wpss_account_page_section` | 2 | `src/Integrations/Standalone/StandaloneAccountProvider.php` | Filters the dashboard section a legacy [wpss_account] page maps to. |
 | `wpss_account_status` | 2 | `src/functions/moderation.php` | Filter a member's account standing. |
 | `wpss_add_service_to_cart` | 3 | `src/Checkout/ServiceCart.php` | Filter to let e-commerce adapters handle cart addition natively. |
+| `wpss_admin_filing_recipient` | 3 | `src/Services/NotificationService.php` | Tell the site owner a member filed a report or a dispute. |
 | `wpss_admin_menu_label` | 1 | `src/Admin/Admin.php` | Filter the admin menu label for white-labelling. |
 | `wpss_admin_notification_email` | 1 | `src/Services/EmailService.php` | Tell the site owner a buyer has sent proof of an offline payment. |
 | `wpss_admin_vendor_notification_content` | 2 | `src/Services/NotificationService.php` | Filter admin vendor notification email content. |

@@ -1638,9 +1638,9 @@ class ServicesController extends RestController {
 	/**
 	 * Add the limit notices to a saved service's payload.
 	 *
-	 * @param array    $data    Service payload.
-	 * @param string[] $notices Sentences from save_service_meta().
-	 * @return array Payload, with `notices` and `limits` when a list was cut.
+	 * @param array<string, mixed> $data    Service payload.
+	 * @param string[]             $notices Sentences from save_service_meta().
+	 * @return array<string, mixed> Payload, with `notices` and `limits` when a list was cut.
 	 */
 	private function with_limit_notices( array $data, array $notices ): array {
 		if ( $notices ) {
