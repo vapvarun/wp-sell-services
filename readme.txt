@@ -296,6 +296,8 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Improve  - Orders from WooCommerce, EDD and FluentCart start with the package's revisions and deadline, and FluentCart orders are announced to the vendor.
 * Improve  - The order REST payload shows the tax inside the total, and Audit Log events carry plain labels.
 * Improve  - A new dispute deadline earns the next response reminder.
+* Improve  - Creating or updating a service over REST with more items than the plan allows saves the allowed ones and lists the trimmed items in a notices array, instead of failing with an error.
+* Improve  - The site admin is emailed when a member files a report or a dispute is opened.
 * Fix      - CSV exports no longer log a PHP 8.4 deprecation.
 * Fix      - Portfolio reordering refuses another vendor's items.
 * Fix      - A dispute opener can no longer cancel after escalation, and repeat notices are not sent.
@@ -337,6 +339,12 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - Repeating a decision that was already made, such as approving a withdrawal or setting the same status, sends no second email and writes no second Audit Log row.
 * Fix      - A payment that cannot be settled now says so, and a second payment arriving at the same moment is handled quietly.
 * Fix      - Updating Free before Pro no longer takes the site down: an older Pro is switched off with a notice until it is updated.
+* Fix      - Order counts on the seller card, vendor stats, seller levels and earnings leave out tips, milestone phases and extensions, so they match the Vendors screen.
+* Fix      - A vendor's response rate can no longer go above 100 percent.
+* Fix      - A member who signs up as a vendor sees their vendor permissions at once.
+* Fix      - Review stars and icons on the admin vendor detail screen show filled instead of blank.
+* Fix      - The total override, commission rate and select-all fields in admin have names for screen readers.
+* Security - Vendor stats no longer reveal when a non-vendor account registered.
 * Dev      - Updating removes the retired Helpful vote options and cleanup job; the helpful_count column is left in place.
 * Dev      - ReviewRepository::rating_stats() is the one rating query, and ReviewService::create_imported() the one door for imported reviews.
 * Dev      - Removed unused classes (FAQService, three repositories and the admin viewer data classes).
