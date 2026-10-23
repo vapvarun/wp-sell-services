@@ -40,7 +40,7 @@ Status per row: OPEN, FOUND (card), FIXED (commit), VERIFIED (by someone other t
 ### dashboard-sections, vendor-doors, notifications
 | id | role | check | assertion | status |
 |---|---|---|---|---|
-| DASH-1 | vendor | open every section (services, sales, earnings, portfolio, messages, profile, create, orders, requests, reviews) | HTTP 200, no PHP notice, no overflow at 390 | OPEN |
+| DASH-1 | vendor | open every section (services, sales, earnings, portfolio, messages, profile, create, orders, requests, reviews) | HTTP 200, no PHP notice, no overflow at 390 | PASS 2026-10-23 at c8748e76, combo, Maya, 390 (one `evaluate`, 10 sections, 0 console errors); not yet verified by a second person |
 | DASH-2 | vendor | delete a service that has a paid order | refused with a message, row stays | OPEN |
 | DASH-3 | suspended vendor | open the dashboard and the portfolio | standing message shown, new-activity buttons absent | OPEN |
 | NOT-1 | buyer | open notifications, mark one read | unread count drops by one, state survives reload | OPEN |
