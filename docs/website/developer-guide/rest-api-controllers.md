@@ -109,6 +109,11 @@ rejected. Public read; no authentication needed.
 }
 ```
 
+When a create or update (`POST`, `PUT`, `PATCH` on `/services`) sends more than a limit
+allows, the service is still saved. The response is 200 or 201 and carries a `notices`
+array naming what was cut, plus a `limits` object with the same ceilings. It no longer
+returns 400 after saving.
+
 `-1` means unlimited. The numbers above are the Free defaults; Pro raises
 `max_gallery`, `max_extras`, `max_faq` and `max_requirements` to `-1` and leaves
 `max_packages` and `max_videos` where they are. Each value passes through its own
