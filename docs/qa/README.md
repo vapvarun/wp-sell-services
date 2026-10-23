@@ -38,9 +38,12 @@ Verification time follows the diff, not the plugin.
 ## 2. Run the gate
 
 ```
-node <qa-mcp>/bin/wppqa-run.mjs --plugin <plugin dir> --only static --allow-static
-python3 <claude-backup>/skills/wp-qa-gate/scripts/ready-check.py <plugin dir>
+bin/run-guards.sh                  # every checks.static guard in qa-config.json; ends "guards done, red=N"
+php vendor/bin/phpcs --standard=phpcs.xml <changed php files>
+node <qa-mcp>/bin/wppqa-run.mjs --plugin <plugin dir> --only <class>   # roundtrip, parity, states, presentation, crawl, release
 ```
+
+The wp-plugin-qa MCP replays only those six classes. It does not replay `static` guards, so `bin/run-guards.sh` is their gate. Static code standards (WPCS, PHPStan, PHP compatibility) belong to the `wpcs` MCP; that server needs the plugin root as its path so it finds `phpcs.xml`.
 
 Before a release, `grunt verify:smoke-gate` dates both smoke reports against Free and Pro. A changed file that `smoke-surfaces.json` maps to a surface is covered once that surface is re-walked and recorded under `surfaces` in the report (`ran_against`, and `pro_ran_against` for Pro files); a file it does not map invalidates the whole walk. `node tests/smoke-gate-surfaces.test.cjs` proves both.
 
