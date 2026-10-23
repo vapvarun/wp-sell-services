@@ -42,6 +42,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'WPSS_VERSION', '1.9.1' );
 
 /**
+ * Oldest Pro this Free can run beside. Pro 1.8.x implements contracts that
+ * 1.9.0 gave new abstract methods, so a Pro below this fatals on load.
+ * Raise it in the same commit that changes src/Integrations/Contracts.
+ *
+ * @var string
+ */
+define( 'WPSS_MIN_PRO_VERSION', '1.9.0' );
+
+/**
  * Add-on id of a package's Express delivery in a buyer's selection and on an
  * order's add-on rows. Real add-on ids are indexes (0 and up), so it cannot
  * collide, and it survives every (int) cast on the way through the rails.

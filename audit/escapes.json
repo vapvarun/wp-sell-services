@@ -776,6 +776,15 @@
    "added": "2026-10-21",
    "fails_on": "f8fab03f",
    "check": "tests/test-smoke-1-9-1-contracts.php"
+  },
+  {
+   "card": "10435263190",
+   "title": "an older Pro never boots against a newer Free: Pro's startup callback is removed and an admin notice names the version to update to",
+   "guard": "static:stale-pro-held-back",
+   "added": "2026-10-23",
+   "fails_on": "v1.9.0",
+   "check": "tests/test-stale-pro-is-held-back.php",
+   "note": "upgrade flow also proven in Docker: Free 1.8.0 + Pro 1.8.0 updated to Free 1.9.0 returns 500, to this build returns 200"
   }
  ]
 }

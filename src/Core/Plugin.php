@@ -309,7 +309,58 @@ final class Plugin {
 		 * @since 1.0.0
 		 * @param Plugin $plugin Plugin instance.
 		 */
+		$this->hold_back_stale_pro();
+
 		do_action( 'wpss_loaded', $this );
+	}
+
+	/**
+	 * Keep an older Pro from booting against this Free.
+	 *
+	 * Free updates first on many sites (auto-updates, one-at-a-time updates).
+	 * An older Pro then declares classes against contracts that gained abstract
+	 * methods, and PHP fatals the whole site. Pro starts from a `wpss_loaded`
+	 * callback in its own namespace, so those callbacks are removed before the
+	 * action fires and an admin notice says what to update.
+	 *
+	 * @since 1.9.1
+	 * @param string|null $pro_version Installed Pro version; defaults to WPSS_PRO_VERSION (a parameter so a test can pass an old one).
+	 * @return void
+	 */
+	private function hold_back_stale_pro( ?string $pro_version = null ): void {
+		$pro_version = $pro_version ?? ( defined( 'WPSS_PRO_VERSION' ) ? WPSS_PRO_VERSION : null );
+		if ( null === $pro_version || version_compare( $pro_version, WPSS_MIN_PRO_VERSION, '>=' ) ) {
+			return;
+		}
+
+		global $wp_filter;
+		foreach ( $wp_filter['wpss_loaded']->callbacks ?? array() as $priority => $callbacks ) {
+			foreach ( $callbacks as $callback ) {
+				if ( is_string( $callback['function'] ) && 0 === strpos( $callback['function'], 'WPSellServicesPro\\' ) ) {
+					remove_action( 'wpss_loaded', $callback['function'], $priority );
+				}
+			}
+		}
+
+		add_action(
+			'admin_notices',
+			static function () use ( $pro_version ): void {
+				if ( ! current_user_can( 'manage_options' ) ) {
+					return;
+				}
+				printf(
+					'<div class="notice notice-error"><p>%s</p></div>',
+					esc_html(
+						sprintf(
+							/* translators: 1: minimum Pro version, 2: installed Pro version. */
+							__( 'WP Sell Services Pro is switched off until you update it. This version of WP Sell Services needs Pro %1$s or later, and %2$s is installed.', 'wp-sell-services' ),
+							WPSS_MIN_PRO_VERSION,
+							$pro_version
+						)
+					)
+				);
+			}
+		);
 	}
 
 	/**

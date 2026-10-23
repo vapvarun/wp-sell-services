@@ -619,6 +619,10 @@
    {
     "id": "string-variants",
     "run": "${WP_CLI:-wp} eval-file tests/test-string-variants.php"
+   },
+   {
+    "id": "stale-pro-held-back",
+    "run": "${WP_CLI:-wp} eval-file tests/test-stale-pro-is-held-back.php"
    }
   ]
  }
