@@ -164,8 +164,15 @@ $wpdb->delete( $wpdb->prefix . 'wpss_deliveries', array( 'id' => $delivery_id ) 
 wp_delete_file( $path );
 
 // --- 4. GET /orders is a fixed number of queries -------------------------
-$busiest = $wpdb->get_row( "SELECT customer_id AS uid, COUNT(*) AS n FROM {$wpdb->prefix}wpss_orders WHERE customer_id > 0 GROUP BY customer_id ORDER BY n DESC LIMIT 1" );
-wp_set_current_user( (int) $busiest->uid );
+// A buyer with 30 orders of their own, so the page is larger than the comparison baseline on any site.
+require_once __DIR__ . '/fixtures.php';
+$qa_orders  = wpss_test_fixtures();
+$qa_service = ( $qa_orders->service )( 'publish' );
+for ( $i = 0; $i < 30; $i++ ) {
+	( $qa_orders->order )( array( 'service_id' => $qa_service ) );
+}
+wp_set_current_user( $qa_orders->buyer );
+
 // Fixed overhead (non-autoloaded options, a cart plugin's checkout page) varies by site, so compare
 // five rows with a full page. A larger page may first meet a row type that primes once more or looks
 // up the plugin's pages (one each, cached); a per-row query would add one per extra row.
@@ -177,7 +184,7 @@ $count_queries = static function ( int $per_page ) use ( $call, $wpdb ): array {
 };
 list( $one ) = $count_queries( 5 );
 list( $queries, $rows ) = $count_queries( 100 );
-$check( "GET /orders per_page=100 ({$rows} rows) costs at most 6 queries more than five rows", $rows > 5 && $queries - $one <= 6, "{$one} vs {$queries} queries" );
+$check( "GET /orders per_page=100 ({$rows} rows) costs at most 6 queries more than five rows", $rows >= 30 && $queries - $one <= 6, "{$one} vs {$queries} queries" );
 
 wp_set_current_user( $original );
 if ( null === $original_ip ) {
