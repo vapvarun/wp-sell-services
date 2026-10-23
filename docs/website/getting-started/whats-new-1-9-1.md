@@ -30,7 +30,7 @@ The Earnings ledger follows the chosen period, and the Pro CSV export uses the s
 - An unpaid milestone, tip or extension no longer credits the vendor's wallet when an admin marks the order completed.
 - Custom-price manual orders read **Custom order**, and **Create Order** keeps a package order as a package.
 
-## Re-cut fixes
+## More fixes
 
 - Admins are emailed when a member report or dispute is filed.
 - Creating or updating a service over REST returns 200 or 201 with a `notices` array when a limit trims the request, instead of 400 after saving.
