@@ -336,6 +336,7 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - A failed delete from the dashboard says so instead of reporting success.
 * Fix      - Repeating a decision that was already made, such as approving a withdrawal or setting the same status, sends no second email and writes no second Audit Log row.
 * Fix      - A payment that cannot be settled now says so, and a second payment arriving at the same moment is handled quietly.
+* Fix      - Updating Free before Pro no longer takes the site down: an older Pro is switched off with a notice until it is updated.
 * Dev      - Updating removes the retired Helpful vote options and cleanup job; the helpful_count column is left in place.
 * Dev      - ReviewRepository::rating_stats() is the one rating query, and ReviewService::create_imported() the one door for imported reviews.
 * Dev      - Removed unused classes (FAQService, three repositories and the admin viewer data classes).

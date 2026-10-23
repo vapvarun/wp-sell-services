@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-22T06:49:24+00:00\n"
+"POT-Creation-Date: 2026-10-23T06:08:53+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -21,7 +21,7 @@ msgstr ""
 #: src/Blocks/BlocksManager.php:134
 #: src/Blocks/BlocksManager.php:222
 #: src/Frontend/UnifiedDashboard.php:871
-#: wp-sell-services.php:398
+#: wp-sell-services.php:407
 msgid "WP Sell Services"
 msgstr ""
 
@@ -562,7 +562,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1273
 #: src/Admin/Settings.php:1704
 #: src/Frontend/Tour.php:442
-#: wp-sell-services.php:433
+#: wp-sell-services.php:442
 msgid "Settings"
 msgstr ""
 
@@ -9344,21 +9344,27 @@ msgstr ""
 msgid "The site owner will send you payment instructions by email."
 msgstr ""
 
-#: src/Core/Plugin.php:1983
+#. translators: 1: minimum Pro version, 2: installed Pro version.
+#: src/Core/Plugin.php:356
+#, php-format
+msgid "WP Sell Services Pro is switched off until you update it. This version of WP Sell Services needs Pro %1$s or later, and %2$s is installed."
+msgstr ""
+
+#: src/Core/Plugin.php:2034
 msgid "All milestones on this custom-project order are complete."
 msgstr ""
 
 #. translators: %d: count of paid phases
-#: src/Core/Plugin.php:2045
+#: src/Core/Plugin.php:2096
 #, php-format
 msgid "Project cancelled while %d milestone was already paid. Money has moved to the vendor wallet; open a dispute if the work cannot be accepted."
 msgstr ""
 
-#: src/Core/Plugin.php:2050
+#: src/Core/Plugin.php:2101
 msgid "Paid milestone not delivered"
 msgstr ""
 
-#: src/Core/Plugin.php:2051
+#: src/Core/Plugin.php:2102
 msgid "Paid milestone on cancelled project"
 msgstr ""
 
@@ -22948,52 +22954,52 @@ msgid "Deliverables (optional, e.g. Figma file + 2 mockups)"
 msgstr ""
 
 #. translators: 1: Required PHP version, 2: Current PHP version
-#: wp-sell-services.php:159
+#: wp-sell-services.php:168
 #, php-format
 msgid "WP Sell Services requires PHP version %1$s or higher. Your current PHP version is %2$s. Please upgrade PHP to use this plugin."
 msgstr ""
 
 #. translators: 1: Required WordPress version, 2: Current WordPress version
-#: wp-sell-services.php:181
+#: wp-sell-services.php:190
 #, php-format
 msgid "WP Sell Services requires WordPress version %1$s or higher. Your current WordPress version is %2$s. Please upgrade WordPress to use this plugin."
 msgstr ""
 
-#: wp-sell-services.php:200
-#: wp-sell-services.php:218
+#: wp-sell-services.php:209
+#: wp-sell-services.php:227
 msgid "WP Sell Services failed to load."
 msgstr ""
 
-#: wp-sell-services.php:201
+#: wp-sell-services.php:210
 msgid "The plugin's Composer autoloader is missing. Re-download the plugin ZIP from the official release page or run `composer install` from the plugin directory if installing from source."
 msgstr ""
 
-#: wp-sell-services.php:219
+#: wp-sell-services.php:228
 msgid "The plugin's Composer autoloader references files that are not present in this build. This usually means a release ZIP was packaged with development dependencies still referenced in the autoloader. Re-download the latest plugin ZIP from the official release page."
 msgstr ""
 
-#: wp-sell-services.php:399
+#: wp-sell-services.php:408
 msgid "The plugin now works standalone with built-in checkout! WooCommerce integration has moved to Pro. Your marketplace continues working with the built-in checkout system."
 msgstr ""
 
-#: wp-sell-services.php:438
+#: wp-sell-services.php:447
 msgid "Go Pro"
 msgstr ""
 
-#: wp-sell-services.php:457
+#: wp-sell-services.php:466
 msgid "WP Sell Services requires PHP 8.1+ and WordPress 6.4+."
 msgstr ""
 
-#: wp-sell-services.php:458
-#: wp-sell-services.php:470
+#: wp-sell-services.php:467
+#: wp-sell-services.php:479
 msgid "Plugin Activation Error"
 msgstr ""
 
-#: wp-sell-services.php:469
+#: wp-sell-services.php:478
 msgid "WP Sell Services could not be activated: its Composer autoloader is missing or corrupt. Please re-download the plugin ZIP from the official release page."
 msgstr ""
 
-#: wp-sell-services.php:605
+#: wp-sell-services.php:614
 msgid "WP Sell Services: the bundled updater library is incomplete, so automatic updates are disabled. Re-install the plugin from a complete zip. All marketplace features continue to work."
 msgstr ""
 
