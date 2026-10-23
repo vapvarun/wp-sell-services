@@ -851,6 +851,15 @@
    "fails_on": "Pro deee8ac (35 -> 37 orders with one tip and one extension)",
    "check": "tests/test-pro-vendor-analytics-ignore-sub-orders.php",
    "note": "SKIPs without Pro active; run in combo mode"
+  },
+  {
+   "card": "10430799820,10431899379",
+   "title": "the EDD rail's banned-buyer check sat in a method nothing hooked, so a banned buyer could add and buy a service",
+   "guard": "static:pro-edd-standing-is-hooked",
+   "added": "2026-10-23",
+   "fails_on": "Pro 8fbac15 (checkout-only hook) and 0c45949 (no hook)",
+   "check": "tests/test-pro-edd-standing-is-hooked.php",
+   "note": "SKIPs without Pro installed. Live proof: Docker run with real EDD 3.7.2, logged on the card"
   }
  ]
 }

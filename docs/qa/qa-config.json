@@ -655,6 +655,10 @@
    {
     "id": "pro-vendor-analytics-ignore-sub-orders",
     "run": "${WP_CLI:-wp} eval-file tests/test-pro-vendor-analytics-ignore-sub-orders.php"
+   },
+   {
+    "id": "pro-edd-standing-is-hooked",
+    "run": "${WP_CLI:-wp} eval-file tests/test-pro-edd-standing-is-hooked.php"
    }
   ]
  }
