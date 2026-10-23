@@ -64,5 +64,17 @@
   "surface": "admin-service-list",
   "url": "/wp-admin/edit.php?post_type=wpss_service",
   "width": 1280
+ },
+ {
+  "id": "ADM-1.create-order",
+  "surface": "admin-screens",
+  "url": "/wp-admin/admin.php?page=wpss-create-order",
+  "width": 1280
+ },
+ {
+  "id": "ADM-1.requests",
+  "surface": "admin-screens",
+  "url": "/wp-admin/edit.php?post_type=wpss_request",
+  "width": 1280
  }
 ]

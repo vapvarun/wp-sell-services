@@ -43,6 +43,7 @@ Status per row: OPEN, FOUND (card), FIXED (commit), VERIFIED (by someone other t
 | DASH-1 | vendor | open every section (services, sales, earnings, portfolio, messages, profile, create, orders, requests, reviews) | HTTP 200, no PHP notice, no overflow at 390 | PASS 2026-10-23 at c8748e76, combo, Maya, 390 (one `evaluate`, 10 sections, 0 console errors); not yet verified by a second person |
 | DASH-2 | vendor | delete a service that has a paid order | refused with a message, row stays | OPEN |
 | DASH-3 | suspended vendor | open the dashboard and the portfolio | standing message shown, new-activity buttons absent | OPEN |
+| BUY-1 | buyer | dashboard orders, requests, favorites, messages, notifications, disputes and the orders page at 390 | HTTP 200, no PHP notice, no overflow | PASS 2026-10-23, combo, Ella, 8 of 8 |
 | NOT-1 | buyer | open notifications, mark one read | unread count drops by one, state survives reload | OPEN |
 
 ### order-view, order-titles-and-tax
@@ -57,7 +58,7 @@ Status per row: OPEN, FOUND (card), FIXED (commit), VERIFIED (by someone other t
 |---|---|---|---|---|
 | OWN-1 | admin | resolve a report twice, assign a dispute to the same admin twice | one audit row, no second mail | OPEN |
 | OWN-2 | admin | ban a member, then try to buy as them | purchase refused with the standing message | OPEN |
-| ADM-1 | admin | open every admin screen (vendors, orders, disputes, withdrawals, review moderation, reports, audit log, settings, analytics, setup wizard, notifications, license, import reviews) | HTTP 200, no PHP notice, no overflow | OPEN (fetched clean 2026-10-22, not walked) |
+| ADM-1 | admin | open every admin screen (vendors, orders, disputes, withdrawals, review moderation, reports, audit log, settings, setup wizard, moderation, create order, service and request lists) | HTTP 200, no PHP notice, no overflow at 1280 | PASS 2026-10-23, combo, 14 of 14 (`upgrade` is registered only without Pro: Free-only pass) |
 | ADM-2 | admin | audit log filter and pagination | filter narrows rows, page 2 loads | OPEN |
 
 ### rest-api, blocks, reviews-and-service-page
@@ -65,7 +66,7 @@ Status per row: OPEN, FOUND (card), FIXED (commit), VERIFIED (by someone other t
 |---|---|---|---|---|
 | API-1 | each role | the REST routes of journey 08 | 401 or 403 where the role must not act, tax present in the order payload | OPEN |
 | BLK-1 | admin | insert each block in the editor, then view the page | block renders, no console error | OPEN |
-| SVC-1 | visitor | single service page at 1280 and 390 | no overflow, reviews listed, CTA works | OPEN |
+| SVC-1 | visitor | home, vendors, buyer requests and cart at 390 | HTTP 200, no PHP notice, no overflow | PASS 2026-10-23, combo (cart is `/cart/` on this site; `/service-cart/` is 404). Single service page still OPEN |
 | SVC-2 | visitor | a suspended seller's service | not listed, page says unavailable | OPEN |
 
 ### earnings, analytics-and-ledger (money, last)

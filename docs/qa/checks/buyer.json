@@ -34,5 +34,11 @@
   "surface": "dashboard-sections",
   "url": "/dashboard/?section=disputes",
   "width": 390
+ },
+ {
+  "id": "BUY-1.orders-page",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/orders/",
+  "width": 390
  }
 ]

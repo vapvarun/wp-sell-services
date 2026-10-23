@@ -20,7 +20,7 @@
  {
   "id": "SVC-1.cart",
   "surface": "cart",
-  "url": "/service-cart/",
+  "url": "/cart/",
   "width": 390
  }
 ]
