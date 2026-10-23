@@ -197,3 +197,60 @@ if ( ! function_exists( 'wpss_test_fixture_user' ) ) {
 		return 0;
 	}
 }
+
+if ( ! function_exists( 'wpss_test_patch_row' ) ) {
+	/**
+	 * Change a few columns on an existing row and put them back when the script
+	 * ends, so a script can stage the state it needs (a dispute in a given
+	 * status, an order completed today) on whatever site it runs on.
+	 *
+	 * @param string               $table   Table name without the prefix, e.g. 'wpss_disputes'.
+	 * @param int                  $id      Row id.
+	 * @param array<string, mixed> $changes Column => value.
+	 * @return bool Whether the row was found and changed.
+	 */
+	function wpss_test_patch_row( string $table, int $id, array $changes ): bool {
+		global $wpdb;
+		$table   = $wpdb->prefix . $table;
+		$columns = implode( ', ', array_map( static fn( $c ) => '`' . esc_sql( $c ) . '`', array_keys( $changes ) ) );
+		$before  = $wpdb->get_row( $wpdb->prepare( "SELECT {$columns} FROM {$table} WHERE id = %d", $id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( ! $before ) {
+			return false;
+		}
+
+		$wpdb->update( $table, $changes, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		register_shutdown_function(
+			static function () use ( $wpdb, $table, $id, $before ) {
+				$wpdb->update( $table, $before, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			}
+		);
+
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wpss_test_dispute_in' ) ) {
+	/**
+	 * A dispute in the given status: an existing one, or another dispute staged
+	 * into that status with wpss_test_patch_row() and restored afterwards.
+	 *
+	 * @param string $status  Dispute status, e.g. 'escalated' or 'resolved'.
+	 * @param int    $exclude A dispute id not to use (one already staged for another status).
+	 * @return int Dispute id, or 0 when the site has no dispute at all.
+	 */
+	function wpss_test_dispute_in( string $status, int $exclude = 0 ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_disputes';
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE status = %s AND id <> %d ORDER BY id DESC LIMIT 1", $status, $exclude ) );
+		if ( ! $id ) {
+			$id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE id <> %d ORDER BY id DESC LIMIT 1", $exclude ) );
+			if ( ! $id || ! wpss_test_patch_row( 'wpss_disputes', $id, array( 'status' => $status ) ) ) {
+				return 0;
+			}
+		}
+		// phpcs:enable
+
+		return $id;
+	}
+}

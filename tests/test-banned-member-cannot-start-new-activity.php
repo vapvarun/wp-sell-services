@@ -49,8 +49,19 @@ foreach ( $wpdb->get_results( "SELECT id FROM {$orders} WHERE status = 'complete
 	}
 }
 
+// None inside the review window (a freshly seeded site): stage one completed today.
 if ( ! $order_id ) {
-	$check( 'a reviewable completed order exists to test against', false, 'none on this site' );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	foreach ( $wpdb->get_col( "SELECT id FROM {$orders} WHERE status = 'completed' AND (platform IS NULL OR platform NOT IN ('tip','milestone','extension')) ORDER BY id DESC LIMIT 40" ) as $candidate_id ) {
+		if ( ! $reviewer->has_review( (int) $candidate_id ) && wpss_test_patch_row( 'wpss_orders', (int) $candidate_id, array( 'completed_at' => current_time( 'mysql', true ) ) ) ) {
+			$order_id = (int) $candidate_id;
+			break;
+		}
+	}
+}
+
+if ( ! $order_id ) {
+	echo "SKIP  no unreviewed completed order on this site\n";
 	return;
 }
 

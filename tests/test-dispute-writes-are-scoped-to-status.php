@@ -36,9 +36,11 @@ global $wpdb;
 $table = $wpdb->prefix . 'wpss_disputes';
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$escalated = $wpdb->get_row( "SELECT * FROM {$table} WHERE status = 'escalated' ORDER BY id DESC LIMIT 1", ARRAY_A );
+$escalated_id = wpss_test_dispute_in( 'escalated' );
+$escalated    = $escalated_id ? $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $escalated_id ), ARRAY_A ) : null;
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$resolved = $wpdb->get_row( "SELECT * FROM {$table} WHERE status = 'resolved' ORDER BY id DESC LIMIT 1", ARRAY_A );
+$resolved_id = wpss_test_dispute_in( 'resolved', $escalated_id );
+$resolved    = $resolved_id ? $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $resolved_id ), ARRAY_A ) : null;
 
 $restore = static function () use ( $wpdb, $table, $escalated ) {
 	if ( $escalated ) {
@@ -47,8 +49,10 @@ $restore = static function () use ( $wpdb, $table, $escalated ) {
 	}
 };
 
-$check( 'an escalated dispute exists to test against', (bool) $escalated );
-$check( 'a resolved dispute exists to test against', (bool) $resolved );
+if ( ! $escalated || ! $resolved ) {
+	echo "SKIP  this site has fewer than two disputes to stage\n";
+	return;
+}
 
 if ( $escalated ) {
 	// A service whose first read is stale: it believes the dispute is still open.

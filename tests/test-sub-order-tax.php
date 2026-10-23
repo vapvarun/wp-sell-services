@@ -65,6 +65,8 @@ $ex  = $row( (int) ( $res['pay_order_id'] ?? 0 ) );
 $made[] = (int) ( $ex->id ?? 0 );
 $check( 'extension: subtotal 30, taxed total 36', $ex && $near( $ex->subtotal, 30 ) && $near( $ex->total, 36 ) && $near( $meta( $ex )['tax_amount'] ?? 0, 6 ) );
 
+// Tipping is switched on by Pro; the pricing under test is Free's, so turn it on here.
+add_filter( 'wpss_tipping_enabled', '__return_true' );
 $res = ( new TippingService() )->create_pending_tip_order( $done, 12.0, $buyer );
 $tp  = $row( (int) ( $res['tip_order_id'] ?? 0 ) );
 $made[] = (int) ( $tp->id ?? 0 );

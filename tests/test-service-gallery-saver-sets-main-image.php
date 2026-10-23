@@ -37,6 +37,21 @@ if ( ! $vendor ) {
 global $wpdb;
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $image = (int) $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_mime_type LIKE 'image/%%' AND post_author = %d LIMIT 1", $vendor ) );
+// A site seeded without images: upload a 1x1 PNG the vendor owns (swept with the script's posts).
+if ( ! $image ) {
+	$bits = wp_upload_bits( 'qa-gallery-' . wp_generate_password( 6, false, false ) . '.png', null, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+	if ( empty( $bits['error'] ) ) {
+		$image = (int) wp_insert_attachment(
+			array(
+				'post_mime_type' => 'image/png',
+				'post_title'     => 'QA-GALLERY image',
+				'post_status'    => 'inherit',
+				'post_author'    => $vendor,
+			),
+			$bits['file']
+		);
+	}
+}
 $check( 'the QA vendor has an image to use', $image > 0 );
 
 $service_id = (int) wp_insert_post(

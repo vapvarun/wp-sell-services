@@ -49,9 +49,16 @@ $restore = static function () use ( $wpdb, $orders, $ledger, $option, &$cloned )
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $tip = $wpdb->get_row( "SELECT * FROM {$orders} WHERE platform = 'tip' ORDER BY id DESC LIMIT 1", ARRAY_A );
+// No tip on this site (tipping is a Pro switch): shape one from a completed order.
 if ( ! $tip ) {
-	$check( 'a tip order exists to clone', false, 'none on this site' );
-	return;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	$tip = $wpdb->get_row( "SELECT * FROM {$orders} WHERE status = 'completed' AND (platform IS NULL OR platform NOT IN ('tip','milestone','extension')) ORDER BY id DESC LIMIT 1", ARRAY_A );
+	if ( ! $tip ) {
+		echo "SKIP  no completed order to shape a tip from\n";
+		return;
+	}
+	$tip['platform_order_id'] = $tip['id'];
+	$tip['platform']          = 'tip';
 }
 
 unset( $tip['id'] );
