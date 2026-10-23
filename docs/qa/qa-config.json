@@ -651,6 +651,10 @@
    {
     "id": "dispute-ruling-on-completed-order-fires-once",
     "run": "${WP_CLI:-wp} eval-file tests/test-dispute-ruling-on-completed-order-fires-once.php"
+   },
+   {
+    "id": "pro-vendor-analytics-ignore-sub-orders",
+    "run": "${WP_CLI:-wp} eval-file tests/test-pro-vendor-analytics-ignore-sub-orders.php"
    }
   ]
  }

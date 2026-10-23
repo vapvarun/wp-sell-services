@@ -842,6 +842,15 @@
    "fails_on": "cff919c2",
    "check": "tests/test-dispute-ruling-on-completed-order-fires-once.php",
    "note": "commission was already idempotent; the in_progress case is the control that a first completion still fires once"
+  },
+  {
+   "card": "10431603325",
+   "title": "Pro vendor analytics overview and per-service totals counted tips, extensions and milestone phases as orders",
+   "guard": "static:pro-vendor-analytics-ignore-sub-orders",
+   "added": "2026-10-23",
+   "fails_on": "Pro deee8ac (35 -> 37 orders with one tip and one extension)",
+   "check": "tests/test-pro-vendor-analytics-ignore-sub-orders.php",
+   "note": "SKIPs without Pro active; run in combo mode"
   }
  ]
 }
