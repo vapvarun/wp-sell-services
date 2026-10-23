@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-23T06:34:31+00:00\n"
+"POT-Creation-Date: 2026-10-23T06:57:22+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -1096,7 +1096,7 @@ msgstr ""
 #: src/API/ConversationsController.php:690
 #: src/Models/Message.php:146
 #: src/Models/Message.php:170
-#: src/Services/DisputeWorkflowManager.php:1222
+#: src/Services/DisputeWorkflowManager.php:1238
 #: templates/dashboard/sections/disputes.php:199
 #: templates/partials/dispute-evidence-item.php:28
 msgid "System"
@@ -1597,7 +1597,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:3481
 #: src/Models/Dispute.php:243
-#: src/Services/DisputeService.php:1349
+#: src/Services/DisputeService.php:1354
 msgid "Resolved"
 msgstr ""
 
@@ -1609,7 +1609,7 @@ msgstr ""
 #: src/Admin/Pages/ReportsPage.php:113
 #: src/Models/BuyerRequest.php:276
 #: src/Models/Dispute.php:244
-#: src/Services/DisputeService.php:1351
+#: src/Services/DisputeService.php:1356
 msgid "Closed"
 msgstr ""
 
@@ -3618,7 +3618,7 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:1147
 #: src/Admin/ServiceListScreen.php:329
 #: src/Models/Dispute.php:241
-#: src/Services/DisputeService.php:1348
+#: src/Services/DisputeService.php:1353
 #: src/Services/ModerationService.php:598
 #: templates/dashboard/sections/services.php:70
 #: templates/emails/moderation-pending.php:60
@@ -15863,7 +15863,7 @@ msgstr ""
 #: src/Models/BuyerRequest.php:275
 #: src/Models/Dispute.php:240
 #: src/Services/BuyerRequestService.php:1390
-#: src/Services/DisputeService.php:1347
+#: src/Services/DisputeService.php:1352
 msgid "Open"
 msgstr ""
 
@@ -15881,7 +15881,7 @@ msgid "Expired"
 msgstr ""
 
 #: src/Models/Dispute.php:242
-#: src/Services/DisputeService.php:1350
+#: src/Services/DisputeService.php:1355
 #: templates/emails/dispute-escalated.php:60
 msgid "Escalated"
 msgstr ""
@@ -16892,23 +16892,23 @@ msgstr ""
 msgid "The refund did not go through, so the dispute stays open: %s The order is flagged for retry."
 msgstr ""
 
-#: src/Services/DisputeService.php:1362
+#: src/Services/DisputeService.php:1367
 msgid "Full Refund"
 msgstr ""
 
-#: src/Services/DisputeService.php:1363
+#: src/Services/DisputeService.php:1368
 msgid "Partial Refund"
 msgstr ""
 
-#: src/Services/DisputeService.php:1364
+#: src/Services/DisputeService.php:1369
 msgid "In Favor of Vendor"
 msgstr ""
 
-#: src/Services/DisputeService.php:1365
+#: src/Services/DisputeService.php:1370
 msgid "In Favor of Buyer"
 msgstr ""
 
-#: src/Services/DisputeService.php:1366
+#: src/Services/DisputeService.php:1371
 msgid "Mutual Agreement"
 msgstr ""
 
@@ -16990,17 +16990,17 @@ msgstr ""
 msgid "Dispute auto-opened: Order has been late for more than %d days without delivery."
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:899
+#: src/Services/DisputeWorkflowManager.php:881
 msgid "Dispute closed; order restored."
 msgstr ""
 
 #. translators: %d: dispute ID
-#: src/Services/DisputeWorkflowManager.php:918
+#: src/Services/DisputeWorkflowManager.php:934
 #, php-format
 msgid "[Action Required] Dispute #%d has been escalated"
 msgstr ""
 
-#: src/Services/DisputeWorkflowManager.php:1170
+#: src/Services/DisputeWorkflowManager.php:1186
 msgid "Opened this dispute."
 msgstr ""
 
