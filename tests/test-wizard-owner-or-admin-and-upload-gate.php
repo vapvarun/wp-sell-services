@@ -31,7 +31,11 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) {
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . ( $ok || '' === $detail ? '' : ' - ' . $detail ) . "\n";
 };
 
-$seller = 7831;
+$seller = wpss_test_fixture_user( 'vendor' );
+if ( ! $seller ) {
+	echo "SKIP  no seeded vendor on this site\n";
+	return;
+}
 $prior  = get_user_meta( $seller, 'wpss_account_status', true );
 
 wp_set_current_user( 0 );

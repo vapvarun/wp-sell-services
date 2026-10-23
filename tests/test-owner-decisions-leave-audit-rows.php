@@ -62,7 +62,11 @@ $rows = static function ( string $event ) use ( $wpdb, $audit, $mark ): int {
 };
 
 wp_set_current_user( 1 );
-$vendor  = 7831;
+$vendor  = wpss_test_fixture_user( 'vendor' );
+if ( ! $vendor ) {
+	echo "SKIP  no seeded vendor on this site\n";
+	return;
+}
 $service = (int) get_posts( array( 'post_type' => 'wpss_service', 'post_status' => 'publish', 'author' => $vendor, 'numberposts' => 1, 'fields' => 'ids' ) )[0];
 
 // Review import, edit (name), delete.

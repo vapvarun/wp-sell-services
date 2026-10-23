@@ -153,3 +153,47 @@ if ( ! function_exists( 'wpss_test_activate_vendor' ) ) {
 		);
 	}
 }
+
+if ( ! function_exists( 'wpss_test_fixture_user' ) ) {
+	/**
+	 * A real member of the seeded marketplace to test against, so a script runs
+	 * on any site built by `wp wpss demo marketplace`, not only the one it was
+	 * written on.
+	 *
+	 * 'vendor': the lowest-id active vendor with a published service.
+	 * 'buyer':  the lowest-id member with an order who is neither a vendor nor an admin.
+	 *
+	 * @param string $kind 'vendor' or 'buyer'.
+	 * @return int User ID, or 0 when the site has none (the script should SKIP).
+	 */
+	function wpss_test_fixture_user( string $kind ): int {
+		global $wpdb;
+		$profiles = $wpdb->prefix . 'wpss_vendor_profiles';
+		$orders   = $wpdb->prefix . 'wpss_orders';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( 'vendor' === $kind ) {
+			$ids = $wpdb->get_col(
+				"SELECT p.user_id FROM {$profiles} p
+				INNER JOIN {$wpdb->posts} s ON s.post_author = p.user_id AND s.post_type = 'wpss_service' AND s.post_status = 'publish'
+				WHERE p.status = 'active' GROUP BY p.user_id ORDER BY p.user_id ASC LIMIT 20"
+			);
+		} else {
+			$ids = $wpdb->get_col(
+				"SELECT DISTINCT o.customer_id FROM {$orders} o
+				LEFT JOIN {$profiles} p ON p.user_id = o.customer_id
+				WHERE p.user_id IS NULL AND o.customer_id > 0 ORDER BY o.customer_id ASC LIMIT 20"
+			);
+		}
+		// phpcs:enable
+
+		foreach ( $ids as $id ) {
+			$user = get_userdata( (int) $id );
+			if ( $user && ! user_can( $user, 'manage_options' ) && 'active' === ( get_user_meta( $user->ID, 'wpss_account_status', true ) ?: 'active' ) ) {
+				return (int) $user->ID;
+			}
+		}
+
+		return 0;
+	}
+}

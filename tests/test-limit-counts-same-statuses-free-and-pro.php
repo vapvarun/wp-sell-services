@@ -22,8 +22,13 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) {
 $statuses = wpss_get_limit_counted_statuses();
 $check( 'a service in review or scheduled takes a slot, a draft does not', array( 'publish', 'pending', 'future' ) === $statuses, wp_json_encode( $statuses ) );
 
-$profile = \WPSellServices\Models\VendorProfile::get_by_user_id( 7831 );
-$check( 'the profile count uses the shared list', $profile && $profile->get_service_count() === wpss_count_vendor_services( 7831, $statuses ) );
+$qa_vendor = wpss_test_fixture_user( 'vendor' );
+if ( ! $qa_vendor ) {
+	echo "SKIP  no seeded vendor on this site\n";
+	return;
+}
+$profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $qa_vendor );
+$check( 'the profile count uses the shared list', $profile && $profile->get_service_count() === wpss_count_vendor_services( $qa_vendor, $statuses ) );
 
 $pro = dirname( dirname( __DIR__ ) ) . '/wp-sell-services-pro/src/VendorSubscriptions/VendorSubscriptionService.php';
 if ( is_readable( $pro ) ) {

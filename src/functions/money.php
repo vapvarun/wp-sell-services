@@ -1375,3 +1375,14 @@ function wpss_check_order_limits( float $total, string $context = '' ): ?\WP_Err
 	 */
 	return apply_filters( 'wpss_check_order_limits', $error, $total, $context );
 }
+
+/**
+ * Whether tips carry tax (Settings > Tax > Tax tips, off by default).
+ *
+ * @since 1.9.1
+ *
+ * @return bool
+ */
+function wpss_tips_are_taxed(): bool {
+	return ! empty( get_option( 'wpss_tax', array() )['tax_tips'] );
+}

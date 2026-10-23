@@ -40,7 +40,11 @@ $restore = static function () use ( $option, &$created ) {
 	}
 };
 
-$vendor = 7831;
+$vendor = wpss_test_fixture_user( 'vendor' );
+if ( ! $vendor ) {
+	echo "SKIP  no seeded vendor on this site\n";
+	return;
+}
 $count  = (int) wpss_count_vendor_services( $vendor, wpss_get_limit_counted_statuses() );
 $check( 'the QA vendor already holds services', $count >= 1, (string) $count );
 

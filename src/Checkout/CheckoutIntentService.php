@@ -345,7 +345,7 @@ class CheckoutIntentService {
 	 * @return array{subtotal:float,total:float,tax_meta:array<string,mixed>}
 	 */
 	public static function price_sub_order( string $kind, float $amount, int $service_id, int $vendor_id ): array {
-		$taxable = 'tip' !== $kind || ! empty( ( get_option( 'wpss_tax', array() ) )['tax_tips'] );
+		$taxable = 'tip' !== $kind || wpss_tips_are_taxed();
 		$line    = $taxable
 			? self::price_line( $service_id, $amount, 0.0, $vendor_id )
 			: array(

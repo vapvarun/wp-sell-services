@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-23T06:57:22+00:00\n"
+"POT-Creation-Date: 2026-10-23T09:44:22+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -2761,6 +2761,8 @@ msgid "Commission Rate"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:296
+#: src/Admin/Pages/SetupWizardPage.php:510
+#: src/Admin/Settings.php:703
 msgid "Commission rate (%)"
 msgstr ""
 
@@ -3720,11 +3722,6 @@ msgstr ""
 
 #: src/Admin/Pages/SetupWizardPage.php:494
 msgid "Marketplace Name"
-msgstr ""
-
-#: src/Admin/Pages/SetupWizardPage.php:510
-#: src/Admin/Settings.php:703
-msgid "Commission Rate (%)"
 msgstr ""
 
 #: src/Admin/Pages/SetupWizardPage.php:512

@@ -62,12 +62,19 @@ $rows_since = static function ( string $where ) use ( $wpdb, $audit, &$audit_bef
 
 wp_set_current_user( 1 );
 
+$qa_vendor = wpss_test_fixture_user( 'vendor' );
+$qa_member = wpss_test_fixture_user( 'buyer' );
+if ( ! $qa_vendor || ! $qa_member ) {
+	echo "SKIP  no seeded vendor or buyer on this site\n";
+	return;
+}
+
 // 1. Withdrawal: approved -> approved sends nothing the second time.
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $wpdb->insert(
 	$withdrawals,
 	array(
-		'vendor_id'  => 7831,
+		'vendor_id'  => $qa_vendor,
 		'amount'     => 1.00,
 		'method'     => 'manual',
 		'details'    => '{}',
@@ -94,8 +101,8 @@ $count = static function () use ( &$fired ) {
 };
 add_action( 'wpss_vendor_status_updated', $count );
 $vendors = new VendorService();
-$current = $vendors->get_vendor_status( 7831 );
-$ok      = $vendors->set_status( 7831, (string) $current );
+$current = $vendors->get_vendor_status( $qa_vendor );
+$ok      = $vendors->set_status( $qa_vendor, (string) $current );
 remove_action( 'wpss_vendor_status_updated', $count );
 $check( 'same vendor status returns true', true === $ok );
 $check( 'same vendor status fires no hook', 0 === $fired, (string) $fired );
@@ -107,9 +114,9 @@ $count = static function () use ( &$fired ) {
 	++$fired;
 };
 add_action( 'wpss_account_status_changed', $count );
-$standing = (string) ( get_user_meta( 7844, 'wpss_account_status', true ) ?: 'active' );
+$standing = (string) ( get_user_meta( $qa_member, 'wpss_account_status', true ) ?: 'active' );
 $method   = new ReflectionMethod( '\WPSellServices\Admin\Pages\ReportsPage', 'set_account_status' );
-$method->invoke( null, 7844, $standing );
+$method->invoke( null, $qa_member, $standing );
 remove_action( 'wpss_account_status_changed', $count );
 $check( 'same member standing fires no hook', 0 === $fired, (string) $fired );
 $check( 'same member standing writes no audit row', 0 === $rows_since( "event_type = 'member.account_status'" ) );

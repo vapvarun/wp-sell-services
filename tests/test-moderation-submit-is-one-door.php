@@ -32,7 +32,11 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) {
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . ( $ok || '' === $detail ? '' : ' - ' . $detail ) . "\n";
 };
 
-$vendor_id  = 7831;
+$vendor_id  = wpss_test_fixture_user( 'vendor' );
+if ( ! $vendor_id ) {
+	echo "SKIP  no seeded vendor on this site\n";
+	return;
+}
 $service_id = (int) ( get_posts(
 	array(
 		'post_type'   => 'wpss_service',

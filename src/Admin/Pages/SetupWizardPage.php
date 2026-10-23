@@ -507,7 +507,7 @@ class SetupWizardPage {
 				</div>
 
 				<div class="wpss-wizard-field">
-					<label for="wpss-wiz-commission"><?php esc_html_e( 'Commission Rate (%)', 'wp-sell-services' ); ?></label>
+					<label for="wpss-wiz-commission"><?php esc_html_e( 'Commission rate (%)', 'wp-sell-services' ); ?></label>
 					<input type="number" id="wpss-wiz-commission" value="<?php echo esc_attr( $commission_rate ); ?>" min="0" max="100" step="0.1">
 					<p class="description"><?php esc_html_e( 'The percentage you keep from each transaction.', 'wp-sell-services' ); ?></p>
 				</div>

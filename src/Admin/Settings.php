@@ -700,7 +700,7 @@ class Settings {
 
 		add_settings_field(
 			'commission_rate',
-			__( 'Commission Rate (%)', 'wp-sell-services' ),
+			__( 'Commission rate (%)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_commission',
 			'wpss_commission_section',

@@ -29,7 +29,11 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) {
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . ( $ok || '' === $detail ? '' : ' - ' . $detail ) . "\n";
 };
 
-$vendor = 7831;
+$vendor = wpss_test_fixture_user( 'vendor' );
+if ( ! $vendor ) {
+	echo "SKIP  no seeded vendor on this site\n";
+	return;
+}
 global $wpdb;
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $image = (int) $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_mime_type LIKE 'image/%%' AND post_author = %d LIMIT 1", $vendor ) );

@@ -34,8 +34,16 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) {
 
 global $wpdb;
 $orders = $wpdb->prefix . 'wpss_orders';
-$buyer  = 7844;
-$seller = 7831;
+$buyer = wpss_test_fixture_user( 'buyer' );
+if ( ! $buyer ) {
+	echo "SKIP  no seeded buyer on this site\n";
+	return;
+}
+$seller = wpss_test_fixture_user( 'vendor' );
+if ( ! $seller ) {
+	echo "SKIP  no seeded vendor on this site\n";
+	return;
+}
 $prior  = array(
 	$buyer  => get_user_meta( $buyer, 'wpss_account_status', true ),
 	$seller => get_user_meta( $seller, 'wpss_account_status', true ),

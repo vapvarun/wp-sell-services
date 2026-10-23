@@ -202,6 +202,10 @@ $check( '  and one that changed underneath it', false === $service->update_statu
 $saved_tax = get_option( 'wpss_tax', array() );
 update_option( 'wpss_tax', array_merge( (array) $saved_tax, array( 'enable_tax' => 1, 'tax_rate' => 18, 'tax_included' => 0 ) ) );
 
+// The proposal side needs a real vendor in good standing: accepting checks both standings.
+$prop_vendor = (int) wp_insert_user( array( 'user_login' => 'qa-rft-prop-' . wp_generate_password( 6, false, false ), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) );
+wpss_test_activate_vendor( $prop_vendor );
+
 $requests   = new BuyerRequestService();
 $request_id = $requests->create( array( 'title' => 'F23 contract', 'description' => 'tax on proposal orders', 'budget_min' => 50, 'budget_max' => 100 ) );
 $request_id = is_int( $request_id ) ? $request_id : 0;
@@ -209,7 +213,7 @@ $wpdb->insert(
 	$wpdb->prefix . 'wpss_proposals',
 	array(
 		'request_id'     => $request_id,
-		'vendor_id'      => $vendor,
+		'vendor_id'      => $prop_vendor,
 		'cover_letter'   => 'contract',
 		'proposed_price' => 95.0,
 		'proposed_days'  => 7,
@@ -242,6 +246,7 @@ $wpdb->delete( $ledger, array( 'user_id' => $vendor ) );
 $wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $proposal_id ) );
 $wpdb->delete( $wpdb->prefix . 'wpss_notifications', array( 'user_id' => $vendor ) );
 $wpdb->delete( $wpdb->prefix . 'wpss_notifications', array( 'user_id' => $buyer ) );
+$wpdb->delete( $wpdb->prefix . 'wpss_notifications', array( 'user_id' => $prop_vendor ) );
 if ( $request_id ) {
 	wp_delete_post( $request_id, true );
 }
