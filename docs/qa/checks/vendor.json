@@ -1,0 +1,62 @@
+[
+ {
+  "id": "DASH-1.services",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=services",
+  "width": 390
+ },
+ {
+  "id": "DASH-1.sales",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=sales",
+  "width": 390
+ },
+ {
+  "id": "DASH-1.earnings",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=earnings",
+  "width": 390
+ },
+ {
+  "id": "DASH-1.portfolio",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=portfolio",
+  "width": 390
+ },
+ {
+  "id": "DASH-1.messages",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=messages",
+  "width": 390
+ },
+ {
+  "id": "DASH-1.profile",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=profile",
+  "width": 390
+ },
+ {
+  "id": "DASH-1.create",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=create",
+  "width": 390
+ },
+ {
+  "id": "DASH-1.orders",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=orders",
+  "width": 390
+ },
+ {
+  "id": "DASH-1.requests",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=requests",
+  "width": 390
+ },
+ {
+  "id": "DASH-1.reviews",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=reviews",
+  "width": 390
+ }
+]

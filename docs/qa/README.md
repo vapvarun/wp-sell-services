@@ -18,6 +18,16 @@ One page, in the order QA works. Everything QA needs is linked from here; nothin
 
 Tests all live in Free: `tests/` for the core and `tests/pro/` for Pro features (each skips with a message when Pro is not active). Run any of them with `wp eval-file tests/<file>.php` from the WordPress root.
 
+## Fast flow (run this first)
+
+Verification time follows the diff, not the plugin.
+
+1. `node bin/qa-plan.cjs [<sha>]` lists the surfaces the diff touched and how many checks each persona must run. It reports `runAll: true` and the unmapped files when a change touches a file no surface owns.
+2. Static: `php vendor/bin/phpcs --standard=phpcs.xml` on the changed files, and the guards.
+3. Browser: for each persona the plan names, log in (`?autologin=`), then paste `checks/runner.fn.js` plus that persona's `checks/<persona>.json` into one Playwright `browser_evaluate`. It returns pass or fail per row (status, PHP notice, text present or absent, horizontal overflow at the stated width).
+4. Anything a check cannot express (a double click, an approve-twice, a visual judgement) stays a row in `CHECKLIST.md` for a human or a targeted walk.
+5. A fix is not ready for testing until its check row exists in `checks/` or `CHECKLIST.md`.
+
 ## 1. Set up (every session)
 
 1. Plugin on the branch named on the card, Free and Pro at origin HEAD.

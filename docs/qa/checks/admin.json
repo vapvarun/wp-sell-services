@@ -1,0 +1,68 @@
+[
+ {
+  "id": "ADM-1.vendors",
+  "surface": "admin-screens",
+  "url": "/wp-admin/admin.php?page=wpss-vendors",
+  "width": 1280
+ },
+ {
+  "id": "ADM-1.orders",
+  "surface": "admin-screens",
+  "url": "/wp-admin/admin.php?page=wpss-orders",
+  "width": 1280
+ },
+ {
+  "id": "ADM-1.disputes",
+  "surface": "admin-screens",
+  "url": "/wp-admin/admin.php?page=wpss-disputes",
+  "width": 1280
+ },
+ {
+  "id": "ADM-1.withdrawals",
+  "surface": "admin-screens",
+  "url": "/wp-admin/admin.php?page=wpss-withdrawals",
+  "width": 1280
+ },
+ {
+  "id": "ADM-1.review-moderation",
+  "surface": "admin-screens",
+  "url": "/wp-admin/admin.php?page=wpss-review-moderation",
+  "width": 1280
+ },
+ {
+  "id": "ADM-1.reports",
+  "surface": "admin-screens",
+  "url": "/wp-admin/admin.php?page=wpss-reports",
+  "width": 1280
+ },
+ {
+  "id": "ADM-1.audit-log",
+  "surface": "admin-screens",
+  "url": "/wp-admin/admin.php?page=wpss-audit-log",
+  "width": 1280
+ },
+ {
+  "id": "ADM-1.settings",
+  "surface": "admin-screens",
+  "url": "/wp-admin/admin.php?page=wpss-settings",
+  "width": 1280
+ },
+ {
+  "id": "ADM-1.setup-wizard",
+  "surface": "admin-screens",
+  "url": "/wp-admin/admin.php?page=wpss-setup-wizard",
+  "width": 1280
+ },
+ {
+  "id": "ADM-1.moderation",
+  "surface": "admin-screens",
+  "url": "/wp-admin/admin.php?page=wpss-moderation",
+  "width": 1280
+ },
+ {
+  "id": "ADM-1.services",
+  "surface": "admin-service-list",
+  "url": "/wp-admin/edit.php?post_type=wpss_service",
+  "width": 1280
+ }
+]

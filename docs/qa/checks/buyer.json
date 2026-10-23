@@ -1,0 +1,38 @@
+[
+ {
+  "id": "BUY-1.orders",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=orders",
+  "width": 390
+ },
+ {
+  "id": "BUY-1.requests",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=requests",
+  "width": 390
+ },
+ {
+  "id": "BUY-1.favorites",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=favorites",
+  "width": 390
+ },
+ {
+  "id": "BUY-1.messages",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=messages",
+  "width": 390
+ },
+ {
+  "id": "BUY-1.notifications",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=notifications",
+  "width": 390
+ },
+ {
+  "id": "BUY-1.disputes",
+  "surface": "dashboard-sections",
+  "url": "/dashboard/?section=disputes",
+  "width": 390
+ }
+]

@@ -1,0 +1,26 @@
+[
+ {
+  "id": "SVC-1.home",
+  "surface": "reviews-and-service-page",
+  "url": "/",
+  "width": 390
+ },
+ {
+  "id": "SVC-1.vendors",
+  "surface": "reviews-and-service-page",
+  "url": "/vendors/",
+  "width": 390
+ },
+ {
+  "id": "SVC-1.requests",
+  "surface": "reviews-and-service-page",
+  "url": "/buyer-request/",
+  "width": 390
+ },
+ {
+  "id": "SVC-1.cart",
+  "surface": "cart",
+  "url": "/service-cart/",
+  "width": 390
+ }
+]
