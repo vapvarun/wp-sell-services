@@ -43,7 +43,7 @@ php vendor/bin/phpcs --standard=phpcs.xml <changed php files>
 node <qa-mcp>/bin/wppqa-run.mjs --plugin <plugin dir> --only <class>   # roundtrip, parity, states, presentation, crawl, release
 ```
 
-The wp-plugin-qa MCP replays only those six classes. It does not replay `static` guards, so `bin/run-guards.sh` is their gate. Static code standards (WPCS, PHPStan, PHP compatibility) belong to the `wpcs` MCP; that server needs the plugin root as its path so it finds `phpcs.xml`.
+The wp-plugin-qa MCP replays only those six classes. It does not replay `static` guards, so `bin/run-guards.sh` is their gate. Static code standards (WPCS, PHPStan, PHP compatibility) belong to the `wpcs` MCP; call `wpcs_check_directory` or `wpcs_check_file` with an absolute path and `working_dir` set to the plugin root, or it ignores `phpcs.xml` (no `working_dir`: PEAR rules, tens of thousands of false errors; relative path: the plain WordPress standard). `wpcs_full_check` currently crashes on an invalid regex in the MCP.
 
 Before a release, `grunt verify:smoke-gate` dates both smoke reports against Free and Pro. A changed file that `smoke-surfaces.json` maps to a surface is covered once that surface is re-walked and recorded under `surfaces` in the report (`ran_against`, and `pro_ran_against` for Pro files); a file it does not map invalidates the whole walk. `node tests/smoke-gate-surfaces.test.cjs` proves both.
 
