@@ -2008,7 +2008,7 @@ class OrderWorkflowManager {
 		$completed_orders = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$orders_table}
-				WHERE vendor_id = %d AND status = %s",
+				WHERE vendor_id = %d AND status = %s AND " . wpss_order_rows_sql(),
 				$vendor_id,
 				ServiceOrder::STATUS_COMPLETED
 			)
@@ -2017,7 +2017,7 @@ class OrderWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$total_orders = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d",
+				"SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND " . wpss_order_rows_sql(),
 				$vendor_id
 			)
 		);

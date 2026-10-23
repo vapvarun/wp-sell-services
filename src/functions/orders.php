@@ -504,6 +504,26 @@ function wpss_get_sub_order_platforms(): array {
 }
 
 /**
+ * SQL predicate that keeps only real orders: no tips, extensions or milestones.
+ *
+ * Every "how many orders" count reads this one list, so the seller card, the
+ * REST stats, the seller level and the profile row cannot disagree with
+ * OrderRepository. The slugs come from a fixed map, not from request input.
+ *
+ * @since 1.9.1
+ * @param string $column Platform column, qualified when the query joins tables.
+ * @return string Predicate to AND into a WHERE clause.
+ */
+function wpss_order_rows_sql( string $column = 'platform' ): string {
+	$slugs = array_map(
+		static fn( string $platform ): string => "'" . esc_sql( sanitize_key( $platform ) ) . "'",
+		wpss_get_sub_order_platforms()
+	);
+
+	return $slugs ? "COALESCE({$column}, '') NOT IN (" . implode( ', ', $slugs ) . ')' : '1=1';
+}
+
+/**
  * Freeze the package an order was bought on.
  *
  * Package data lives in the service's `_wpss_packages` post meta, which the

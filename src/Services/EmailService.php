@@ -50,6 +50,7 @@ class EmailService {
 	public const TYPE_PROPOSAL_ACCEPTED      = 'proposal_accepted';
 	public const TYPE_PROPOSAL_REJECTED      = 'proposal_rejected';
 	public const TYPE_DISPUTE_ESCALATED      = 'dispute_escalated';
+	public const TYPE_ADMIN_FILING           = 'admin_filing';
 	public const TYPE_MODERATION_APPROVED    = 'moderation_approved';
 	public const TYPE_MODERATION_REJECTED    = 'moderation_rejected';
 	public const TYPE_MODERATION_PENDING     = 'moderation_pending';
@@ -2332,6 +2333,7 @@ class EmailService {
 			self::TYPE_PROPOSAL_SUBMITTED     => 'generic.php',
 			self::TYPE_PROPOSAL_ACCEPTED      => 'generic.php',
 			self::TYPE_DISPUTE_ESCALATED      => 'dispute-escalated.php',
+			self::TYPE_ADMIN_FILING           => 'generic.php',
 			self::TYPE_MODERATION_APPROVED    => 'moderation-approved.php',
 			self::TYPE_MODERATION_REJECTED    => 'moderation-rejected.php',
 			self::TYPE_MODERATION_PENDING     => 'moderation-pending.php',

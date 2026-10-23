@@ -447,6 +447,7 @@ class ServiceModerationPage {
 					<thead>
 						<tr>
 							<td class="manage-column column-cb check-column">
+								<label class="screen-reader-text" for="cb-select-all-1"><?php esc_html_e( 'Select all', 'wp-sell-services' ); ?></label>
 								<input type="checkbox" id="cb-select-all-1">
 							</td>
 							<th scope="col" class="manage-column column-thumbnail"><?php esc_html_e( 'Image', 'wp-sell-services' ); ?></th>
@@ -467,6 +468,7 @@ class ServiceModerationPage {
 					<tfoot>
 						<tr>
 							<td class="manage-column column-cb check-column">
+								<label class="screen-reader-text" for="cb-select-all-2"><?php esc_html_e( 'Select all', 'wp-sell-services' ); ?></label>
 								<input type="checkbox" id="cb-select-all-2">
 							</td>
 							<th scope="col" class="manage-column column-thumbnail"><?php esc_html_e( 'Image', 'wp-sell-services' ); ?></th>

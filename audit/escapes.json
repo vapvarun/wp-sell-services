@@ -785,6 +785,46 @@
    "fails_on": "v1.9.0",
    "check": "tests/test-stale-pro-is-held-back.php",
    "note": "upgrade flow also proven in Docker: Free 1.8.0 + Pro 1.8.0 updated to Free 1.9.0 returns 500, to this build returns 200"
+  },
+  {
+   "card": "10432412624",
+   "title": "the owner is emailed once for every new member report and dispute, to the dispute admin email when set",
+   "guard": "static:admin-told-of-filing",
+   "added": "2026-10-23",
+   "fails_on": "627e94cd",
+   "check": "tests/test-admin-told-of-filing.php"
+  },
+  {
+   "card": "10431603325, 10431936693",
+   "title": "every completed-order count reads the one real-orders predicate, so tips, extensions and milestones never raise the seller card, REST stats, seller level, reviews summary or profile row; the reviews response rate never passes 100",
+   "guard": "static:order-counts-ignore-sub-orders",
+   "added": "2026-10-23",
+   "fails_on": "627e94cd",
+   "check": "tests/test-order-counts-ignore-sub-orders.php"
+  },
+  {
+   "card": "10431598185",
+   "title": "the vendor signup response reports the new vendor's real capabilities, from the target user and a rebuilt current user",
+   "guard": "static:signup-reports-the-new-vendors-caps",
+   "added": "2026-10-23",
+   "fails_on": "627e94cd",
+   "check": "tests/test-signup-reports-the-new-vendors-caps.php"
+  },
+  {
+   "card": "10435186161, 10431578930",
+   "title": "admin number inputs and select-all boxes keep an accessible name, and every vendor-detail AJAX injection redraws the Lucide icons",
+   "guard": "static:admin-inputs-and-icons-wiring",
+   "added": "2026-10-23",
+   "fails_on": "627e94cd",
+   "check": "tests/test-admin-inputs-and-icons-wiring.php"
+  },
+  {
+   "card": "10430703737",
+   "title": "REST service create and update save, then answer 201/200 with a notices array when a limit cut a list; no 400 after saving",
+   "guard": "static:service-limits-and-accept-lock",
+   "added": "2026-10-23",
+   "fails_on": "627e94cd",
+   "check": "tests/test-service-limits-and-accept-lock.php"
   }
  ]
 }

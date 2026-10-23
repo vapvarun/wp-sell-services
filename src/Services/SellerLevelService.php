@@ -151,6 +151,7 @@ class SellerLevelService {
 		}
 
 		// Get order stats.
+		$is_order = wpss_order_rows_sql();
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$order_stats = $wpdb->get_row(
 			$wpdb->prepare(
@@ -159,7 +160,7 @@ class SellerLevelService {
 					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
 					SUM(CASE WHEN status = 'completed' AND completed_at <= delivery_deadline THEN 1 ELSE 0 END) as on_time_orders
 				FROM {$orders_table}
-				WHERE vendor_id = %d",
+				WHERE vendor_id = %d AND {$is_order}",
 				$user_id
 			)
 		);

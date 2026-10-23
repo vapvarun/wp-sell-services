@@ -245,10 +245,11 @@ class SellerCard extends AbstractBlock {
 		$services = count_user_posts( $user_id, 'wpss_service', true );
 
 		// Count completed orders.
+		$is_order         = wpss_order_rows_sql();
 		$orders_completed = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_orders
-				WHERE vendor_id = %d AND status = 'completed'",
+				WHERE vendor_id = %d AND status = 'completed' AND {$is_order}",
 				$user_id
 			)
 		);

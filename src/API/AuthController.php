@@ -980,8 +980,8 @@ class AuthController extends RestController {
 			// supersets now: these are /me's fields, added here rather than
 			// dropping anything, so neither existing consumer breaks.
 			'capabilities'  => array(
-				'can_create_services' => current_user_can( 'wpss_manage_services' ) && $is_vendor,
-				'can_manage_orders'   => current_user_can( 'wpss_vendor_orders' ) || current_user_can( 'wpss_manage_orders' ),
+				'can_create_services' => $user->has_cap( 'wpss_manage_services' ) && $is_vendor,
+				'can_manage_orders'   => $user->has_cap( 'wpss_vendor_orders' ) || $user->has_cap( 'wpss_manage_orders' ),
 			),
 			// Same profile row /me reads, so the two endpoints cannot report
 			// different numbers for the same user.

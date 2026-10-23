@@ -728,7 +728,7 @@ class ServicesController extends RestController {
 		}
 
 		// Save meta.
-		$limit_error = $this->save_service_meta( $service_id, $request );
+		$notices = $this->save_service_meta( $service_id, $request );
 
 		// Into the review queue: tell the owner, as the wizard and set_pending() do.
 		wp_set_object_terms( $service_id, $requested_categories, 'wpss_service_category' );
@@ -754,12 +754,8 @@ class ServicesController extends RestController {
 		 */
 		do_action( 'wpss_rest_service_created', $service_id, $request );
 
-		if ( $limit_error ) {
-			return $limit_error;
-		}
-
 		return new WP_REST_Response(
-			$this->prepare_item_for_response( $service, $request )->get_data(),
+			$this->with_limit_notices( $this->prepare_item_for_response( $service, $request )->get_data(), $notices ),
 			201
 		);
 	}
@@ -929,7 +925,7 @@ class ServicesController extends RestController {
 		}
 
 		// Update meta.
-		$limit_error = $this->save_service_meta( $service_id, $request );
+		$notices = $this->save_service_meta( $service_id, $request );
 
 		// Update categories.
 		if ( $request->has_param( 'categories' ) ) {
@@ -950,11 +946,10 @@ class ServicesController extends RestController {
 		 */
 		do_action( 'wpss_rest_service_updated', $service_id, $request );
 
-		if ( $limit_error ) {
-			return $limit_error;
-		}
+		$response = $this->prepare_item_for_response( get_post( $service_id ), $request );
+		$response->set_data( $this->with_limit_notices( $response->get_data(), $notices ) );
 
-		return $this->prepare_item_for_response( get_post( $service_id ), $request );
+		return $response;
 	}
 
 	/**
@@ -1546,14 +1541,14 @@ class ServicesController extends RestController {
 	 * Save service meta from request.
 	 *
 	 * Lists over wpss_get_service_limits() are cut to the cap before they are
-	 * stored and the call returns a 400 naming the limit, so an app learns the
-	 * rule the same way the web wizard shows it.
+	 * stored. The save succeeds and the cuts come back as notices, as in the web
+	 * wizard, so a client that retries on an error never creates a duplicate.
 	 *
 	 * @param int             $service_id Service ID.
 	 * @param WP_REST_Request $request    Request object.
-	 * @return WP_Error|null Error when any list was over its limit.
+	 * @return string[] One sentence per cut list; empty when nothing was cut.
 	 */
-	private function save_service_meta( int $service_id, WP_REST_Request $request ): ?WP_Error {
+	private function save_service_meta( int $service_id, WP_REST_Request $request ): array {
 		$capped = wpss_enforce_service_limits(
 			array(
 				'packages'     => $request->get_param( 'packages' ),
@@ -1637,19 +1632,23 @@ class ServicesController extends RestController {
 			wpss_save_service_requirements( $service_id, $capped['meta']['requirements'] );
 		}
 
-		if ( empty( $capped['truncated'] ) ) {
-			return null;
+		return array_values( $capped['truncated'] );
+	}
+
+	/**
+	 * Add the limit notices to a saved service's payload.
+	 *
+	 * @param array    $data    Service payload.
+	 * @param string[] $notices Sentences from save_service_meta().
+	 * @return array Payload, with `notices` and `limits` when a list was cut.
+	 */
+	private function with_limit_notices( array $data, array $notices ): array {
+		if ( $notices ) {
+			$data['notices'] = $notices;
+			$data['limits']  = wpss_get_service_limits();
 		}
 
-		return new WP_Error(
-			'wpss_service_limit',
-			implode( ' ', $capped['truncated'] ),
-			array(
-				'status'     => 400,
-				'service_id' => $service_id,
-				'limits'     => wpss_get_service_limits(),
-			)
-		);
+		return $data;
 	}
 
 	/**

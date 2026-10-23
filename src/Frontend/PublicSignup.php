@@ -500,6 +500,9 @@ class PublicSignup {
 		// and the REST register all follow the site's vendor registration mode.
 		if ( 'vendor' === $intent ) {
 			( new VendorService() )->register( $user_id );
+			// The current user object was built before the vendor role was granted;
+			// rebuild it so this request, its hooks and the response see the new caps.
+			wp_set_current_user( $user_id );
 		}
 
 		do_action( 'wpss_public_signup_complete', $user_id, $intent );

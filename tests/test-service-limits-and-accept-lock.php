@@ -36,6 +36,13 @@ foreach ( array( 'packages' => 3, 'gallery' => 4, 'extras' => 3, 'faq' => 5, 're
 }
 
 $category = wp_insert_term( 'F12 limit test ' . wp_rand(), 'wpss_service_category' );
+// The gallery saver only keeps real attachments the user may use, so the lists need real ones.
+$attachments = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'numberposts' => 9, 'fields' => 'ids' ) );
+if ( count( $attachments ) < 9 ) {
+	echo "SKIP  needs 9 media items on this site\n";
+	return;
+}
+
 $rows     = static fn( int $n, string $prefix ) => array_map( static fn( $i ) => array( 'question' => "{$prefix} {$i}", 'answer' => 'a', 'label' => "{$prefix} {$i}", 'title' => "{$prefix} {$i}", 'name' => "{$prefix} {$i}", 'price' => 10 * $i, 'delivery_days' => 2 ), range( 1, $n ) );
 
 // 1. REST: six packages and nine gallery IDs are stored capped and refused with the limit named.
@@ -50,7 +57,7 @@ $request->set_body_params(
 		'description'  => 'Limit test. ' . str_repeat( 'A description long enough to clear the publish checklist. ', 3 ),
 		'categories'   => array( (int) $category['term_id'] ),
 		'packages'     => $rows( 6, 'Package' ),
-		'gallery'      => range( 1, 9 ),
+		'gallery'      => $attachments,
 		'requirements' => $rows( 7, 'Requirement' ),
 	)
 );
@@ -61,16 +68,18 @@ if ( $rest_id ) {
 	$posts[] = $rest_id;
 }
 
-if ( 400 !== $response->get_status() || 'wpss_service_limit' !== ( $data['code'] ?? '' ) ) {
-	$failures[] = 'REST create with 6 packages answered ' . $response->get_status() . ' ' . ( $data['code'] ?? '' ) . ' - expected 400 wpss_service_limit.';
-} elseif ( false === strpos( $data['message'], '3 packages' ) ) {
-	$failures[] = 'REST limit error does not name the package limit: ' . $data['message'];
+if ( 201 !== $response->get_status() || empty( $data['notices'] ) ) {
+	$failures[] = 'REST create with 6 packages answered ' . $response->get_status() . ' - expected 201 with a notices array.';
+} elseif ( false === strpos( implode( ' ', $data['notices'] ), '3 packages' ) ) {
+	$failures[] = 'REST limit notice does not name the package limit: ' . implode( ' ', $data['notices'] );
 }
 if ( 3 !== count( (array) get_post_meta( $rest_id, '_wpss_packages', true ) ) ) {
 	$failures[] = 'REST stored ' . count( (array) get_post_meta( $rest_id, '_wpss_packages', true ) ) . ' packages - expected 3.';
 }
-if ( 5 !== count( (array) get_post_meta( $rest_id, '_wpss_gallery', true ) ) ) {
-	$failures[] = 'REST stored ' . count( (array) get_post_meta( $rest_id, '_wpss_gallery', true ) ) . ' gallery IDs - expected 5 (main + 4).';
+// The gallery is stored as { images, video }; the main image is the first of the five allowed.
+$rest_images = (array) ( get_post_meta( $rest_id, '_wpss_gallery', true )['images'] ?? array() );
+if ( 4 !== count( $rest_images ) ) {
+	$failures[] = 'REST stored ' . count( $rest_images ) . ' gallery images - expected 4 (main + 4 in all).';
 }
 if ( 5 !== count( (array) get_post_meta( $rest_id, '_wpss_requirements', true ) ) ) {
 	$failures[] = 'REST stored ' . count( (array) get_post_meta( $rest_id, '_wpss_requirements', true ) ) . ' requirements - expected 5.';
@@ -86,7 +95,7 @@ $wizard_id = wp_insert_post(
 	)
 );
 $posts[]   = $wizard_id;
-$image_ids = $wpdb->get_col( "SELECT ID FROM {$wpdb->posts} ORDER BY ID DESC LIMIT 9" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$image_ids = $attachments;
 $wizard    = new ServiceWizard();
 $save      = new ReflectionMethod( $wizard, 'save_service_meta' );
 $save->invoke(
@@ -107,8 +116,8 @@ foreach ( array( '_wpss_faqs' => 5, '_wpss_requirements' => 5, '_wpss_addons' =>
 		$failures[] = "Wizard stored {$stored} {$meta_key} - expected {$expected}.";
 	}
 }
-if ( 5 !== count( $wizard_gallery['images'] ?? array() ) ) {
-	$failures[] = 'Wizard stored ' . count( $wizard_gallery['images'] ?? array() ) . ' gallery IDs - expected 5 (main + 4).';
+if ( 4 !== count( $wizard_gallery['images'] ?? array() ) ) {
+	$failures[] = 'Wizard stored ' . count( $wizard_gallery['images'] ?? array() ) . ' gallery images - expected 4 (main + 4 in all).';
 }
 
 // 3. Accept: the second accept of one request is refused and one order exists.

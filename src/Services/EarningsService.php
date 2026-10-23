@@ -82,7 +82,7 @@ class EarningsService {
 			$wpdb->prepare(
 				"SELECT COUNT(*) as order_count
 				FROM {$orders_table}
-				WHERE vendor_id = %d AND status = %s",
+				WHERE vendor_id = %d AND status = %s AND " . wpss_order_rows_sql(),
 				$vendor_id,
 				ServiceOrder::STATUS_COMPLETED
 			)

@@ -2653,6 +2653,11 @@ h2.wpss-settings-subhead__title {
 	color: var(--wpss-warning, #ffb900);
 }
 
+/* Lucide draws stars as outlines; the filled ones are painted in the rating colour. */
+.wpss-review-rating .wpss-star.filled {
+	fill: currentColor;
+}
+
 .wpss-review-meta {
 	font-size: 12px;
 	color: var(--wpss-admin-text-light);

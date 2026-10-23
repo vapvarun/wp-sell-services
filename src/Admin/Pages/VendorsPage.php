@@ -2007,6 +2007,7 @@ class VendorsPage {
 				</p>
 				<div class="form-row">
 					<input type="number" id="wpss-commission-rate-detail"
+							aria-label="<?php esc_attr_e( 'Commission rate for this vendor (%)', 'wp-sell-services' ); ?>"
 							value="<?php echo esc_attr( $effective_rate['is_custom'] ? number_format( $effective_rate['rate'], 2, '.', '' ) : '' ); ?>"
 							placeholder="<?php echo esc_attr( number_format( $global_rate, 1 ) ); ?>"
 							min="0" max="100" step="0.01">
@@ -2468,6 +2469,7 @@ class VendorsPage {
 				</p>
 				<div class="form-row" style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
 					<input type="number" id="wpss-commission-rate-detail"
+							aria-label="<?php esc_attr_e( 'Commission rate for this vendor (%)', 'wp-sell-services' ); ?>"
 							value="<?php echo esc_attr( $effective_rate['is_custom'] ? number_format( $effective_rate['rate'], 2, '.', '' ) : '' ); ?>"
 							placeholder="<?php echo esc_attr( number_format( $global_rate, 1 ) ); ?>"
 							min="0" max="100" step="0.01"

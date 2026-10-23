@@ -15,6 +15,11 @@
 ( function( $ ) {
 	'use strict';
 
+	// Tab markup arrives over AJAX with Lucide placeholders; wpss-icons.js turns them into SVG on this event.
+	function wpssRefreshIcons() {
+		document.dispatchEvent(new CustomEvent('wpss:icons:refresh'));
+	}
+
 	function wpssAdminNotice(msg, type) {
 		type = type || 'error';
 		var cls = type === 'success' ? 'notice-success' : 'notice-error';
@@ -159,6 +164,7 @@
 			// Check cache.
 			if (tabCache[tab]) {
 				$content.html(tabCache[tab]);
+				wpssRefreshIcons();
 				initTabHandlers(tab);
 				return;
 			}
@@ -178,6 +184,7 @@
 					if (response.success) {
 						tabCache[tab] = response.data.html;
 						$content.html(response.data.html);
+						wpssRefreshIcons();
 						initTabHandlers(tab);
 					} else {
 						$content.html('<div class="notice notice-error"><p>' + (response.data.message || wpssVendors.i18n.failedToLoadContent) + '</p></div>');
@@ -399,6 +406,7 @@
 							if (response.success) {
 								delete tabCache['portfolio'];
 								$('#wpss-tab-content').html(response.data.html);
+								wpssRefreshIcons();
 								initPortfolioHandlers();
 							} else {
 								wpssAdminNotice(response.data.message || wpssVendors.i18n.errorModeratingPortfolioItem, 'error');
@@ -448,6 +456,7 @@
 				success: function(response) {
 					if (response.success) {
 						$('#wpss-tab-content').html(response.data.html);
+						wpssRefreshIcons();
 						initEarningsHandlers();
 					}
 				}
@@ -479,6 +488,7 @@
 					if (response.success) {
 						delete tabCache['services'];
 						$('#wpss-tab-content').html(response.data.html);
+						wpssRefreshIcons();
 						initServicesHandlers();
 					}
 				}
@@ -517,6 +527,7 @@
 					if (response.success) {
 						delete tabCache['orders'];
 						$('#wpss-tab-content').html(response.data.html);
+						wpssRefreshIcons();
 						initOrdersHandlers();
 					}
 				}
@@ -548,6 +559,7 @@
 					if (response.success) {
 						delete tabCache['reviews'];
 						$('#wpss-tab-content').html(response.data.html);
+						wpssRefreshIcons();
 						initReviewsHandlers();
 					}
 				}

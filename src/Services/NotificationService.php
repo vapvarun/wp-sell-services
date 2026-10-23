@@ -1679,6 +1679,58 @@ class NotificationService {
 	}
 
 	/**
+	 * Tell the site owner a member filed a report or a dispute.
+	 *
+	 * Bound to `wpss_report_filed` and `wpss_dispute_opened`. Always sent: the
+	 * owner is the only person who can act on either. The recipient is the
+	 * dispute admin email when set, else the site admin email, and can be
+	 * changed with the `wpss_admin_filing_recipient` filter.
+	 *
+	 * @since 1.9.1
+	 * @param string $kind    'report' or 'dispute'.
+	 * @param int    $id      Report or dispute ID.
+	 * @param int    $user_id Member who filed it.
+	 * @param string $detail  What it is about, already plain text.
+	 * @return void
+	 */
+	public function notify_admin_of_filing( string $kind, int $id, int $user_id, string $detail ): void {
+		$recipient = (string) apply_filters(
+			'wpss_admin_filing_recipient',
+			get_option( 'wpss_dispute_admin_email' ) ?: get_option( 'admin_email' ),
+			$kind,
+			$id
+		);
+
+		if ( ! is_email( $recipient ) ) {
+			return;
+		}
+
+		$member  = get_userdata( $user_id );
+		$is_case = 'dispute' === $kind;
+		$heading = $is_case ? __( 'New dispute opened', 'wp-sell-services' ) : __( 'New member report', 'wp-sell-services' );
+		$content = sprintf(
+			/* translators: 1: member display name, 2: what it is about */
+			$is_case ? __( '%1$s opened a dispute: %2$s', 'wp-sell-services' ) : __( '%1$s filed a report: %2$s', 'wp-sell-services' ),
+			$member ? $member->display_name : __( 'A member', 'wp-sell-services' ),
+			$detail
+		);
+
+		( new EmailService() )->send(
+			$recipient,
+			sprintf( '%s #%d', $heading, $id ),
+			EmailService::TYPE_ADMIN_FILING,
+			array(
+				'recipient'     => get_user_by( 'email', $recipient ),
+				'email_heading' => $heading,
+				'content'       => esc_html( $content ),
+				'button_url'    => admin_url( $is_case ? 'admin.php?page=wpss-disputes' : 'admin.php?page=wpss-reports' ),
+				'button_text'   => $is_case ? __( 'View disputes', 'wp-sell-services' ) : __( 'View reports', 'wp-sell-services' ),
+				'template'      => 'generic',
+			)
+		);
+	}
+
+	/**
 	 * Send admin notification for new vendor.
 	 *
 	 * @param \WP_User $user         User object.

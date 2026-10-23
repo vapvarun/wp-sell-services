@@ -746,13 +746,14 @@ class ReviewsController extends RestController {
 				"SELECT
 					COUNT(*) as total,
 					AVG(rating) as average,
+					SUM(CASE WHEN order_id IS NOT NULL THEN 1 ELSE 0 END) as order_reviews,
 					SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_star,
 					SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_star,
 					SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_star,
 					SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star,
 					SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star
 				FROM {$table}
-				WHERE vendor_id = %d AND status = 'approved'",
+				WHERE vendor_id = %d AND status = 'approved' AND review_type = 'customer_to_vendor'",
 				$vendor_id
 			)
 		);
@@ -764,12 +765,14 @@ class ReviewsController extends RestController {
 		$orders_table     = $wpdb->prefix . 'wpss_orders';
 		$completed_orders = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'",
+				"SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed' AND " . wpss_order_rows_sql(),
 				$vendor_id
 			)
 		);
 
-		$response_rate = $completed_orders > 0 ? round( ( $total / $completed_orders ) * 100, 1 ) : 0;
+		// Share of completed orders that left a review. Reviews without an order
+		// (imported, marketplace) are not part of it, and it never passes 100.
+		$response_rate = $completed_orders > 0 ? min( 100, round( ( (int) $stats->order_reviews / $completed_orders ) * 100, 1 ) ) : 0;
 
 		return new WP_REST_Response(
 			array(

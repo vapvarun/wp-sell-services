@@ -1730,6 +1730,33 @@ final class Plugin {
 			4
 		);
 
+		// The owner hears about every new report and dispute.
+		$this->loader->add_action(
+			'wpss_report_filed',
+			static function ( int $report_id, string $target_type, int $target_id, int $reported_user_id ) use ( $notification_service ): void {
+				$reporter = get_current_user_id();
+				$target   = $reported_user_id ? get_userdata( $reported_user_id ) : false;
+				$notification_service->notify_admin_of_filing(
+					'report',
+					$report_id,
+					$reporter,
+					sprintf( '%s #%d%s', $target_type, $target_id, $target ? ' (' . $target->display_name . ')' : '' )
+				);
+			},
+			null,
+			10,
+			4
+		);
+		$this->loader->add_action(
+			'wpss_dispute_opened',
+			static function ( int $dispute_id, int $order_id, int $opened_by ) use ( $notification_service ): void {
+				$notification_service->notify_admin_of_filing( 'dispute', $dispute_id, $opened_by, sprintf( '#%d', $order_id ) );
+			},
+			null,
+			10,
+			3
+		);
+
 		// Tip received notification — fires after TippingService credits the
 		// vendor wallet for a paid tip sub-order.
 		$this->loader->add_action(

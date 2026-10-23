@@ -623,6 +623,26 @@
    {
     "id": "stale-pro-held-back",
     "run": "${WP_CLI:-wp} eval-file tests/test-stale-pro-is-held-back.php"
+   },
+   {
+    "id": "admin-told-of-filing",
+    "run": "${WP_CLI:-wp} eval-file tests/test-admin-told-of-filing.php"
+   },
+   {
+    "id": "order-counts-ignore-sub-orders",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-counts-ignore-sub-orders.php"
+   },
+   {
+    "id": "signup-reports-the-new-vendors-caps",
+    "run": "${WP_CLI:-wp} eval-file tests/test-signup-reports-the-new-vendors-caps.php"
+   },
+   {
+    "id": "admin-inputs-and-icons-wiring",
+    "run": "${WP_CLI:-wp} eval-file tests/test-admin-inputs-and-icons-wiring.php"
+   },
+   {
+    "id": "service-limits-and-accept-lock",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-limits-and-accept-lock.php"
    }
   ]
  }
