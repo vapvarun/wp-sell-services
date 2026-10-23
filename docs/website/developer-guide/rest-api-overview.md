@@ -672,7 +672,7 @@ every earlier phase has reached `completed` **or** `cancelled` -- and `cancelled
 covers a buyer declining it, a vendor deleting it while unpaid, and the 48-hour
 abandon sweep. *Paying* an earlier phase does **not** unlock the next one: a paid
 phase is `in_progress`, which still blocks. See
-[Milestone Contracts](../order-management/milestones-wpss.md#the-lock-step-rule-and-where-it-actually-holds).
+[Milestone Contracts](../order-management/milestones.md#the-lock-step-rule-and-where-it-actually-holds).
 
 There is also a second, differently-spelled code for the same condition:
 `wpss_phase_locked`, returned by `CheckoutIntentService` on the Stripe and

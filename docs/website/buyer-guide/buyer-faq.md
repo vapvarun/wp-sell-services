@@ -105,7 +105,7 @@ commission on tips -- owners choose whether tips reach the vendor in full.
 
 **Can I re-order from the same vendor?**
 Yes. Order again from their profile, or save them first with
-[Favorites](favorites-saved-services.md).
+[Favorites](favorites.md).
 
 ## Account and privacy
 

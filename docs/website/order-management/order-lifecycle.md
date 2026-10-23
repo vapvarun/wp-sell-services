@@ -128,6 +128,6 @@ You can adjust how orders behave at **Sell Services > Settings > Orders & Disput
 - [Requirements Collection](requirements-collection.md)
 - [Order Messaging](order-messaging.md)
 - [Deliveries & Revisions](deliveries-revisions.md)
-- [Milestones](milestones-wpss.md)
+- [Milestones](milestones.md)
 - [Tipping & Extensions](tipping-extensions.md)
 - [Order Settings](order-settings.md)
