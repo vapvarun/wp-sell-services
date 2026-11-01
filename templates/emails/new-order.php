@@ -65,13 +65,15 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #f9f9f9; border-radius: 4px;">
 	<tbody>
 		<tr>
-			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
+			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php echo $order->is_request_order() ? esc_html__( 'Project', 'wp-sell-services' ) : esc_html__( 'Service', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( wpss_get_order_title( $order ) ); ?></td>
 		</tr>
+		<?php if ( ! $order->is_request_order() ) : // A custom project has no package; its title is already the row above. ?>
 		<tr>
 			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $order->get_package_name() ); ?></td>
 		</tr>
+		<?php endif; ?>
 		<?php foreach ( array_slice( $order->get_items(), 1 ) as $wpss_addon_line ) : // Index 0 is the package row above. ?>
 			<tr>
 				<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Add-on', 'wp-sell-services' ); ?></th>

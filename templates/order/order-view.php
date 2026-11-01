@@ -818,7 +818,7 @@ do_action( 'wpss_before_order_view', $order );
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
 				<i data-lucide="image" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Service Details', 'wp-sell-services' ); ?>
+				<?php echo 'project' === $wpss_subject['kind'] ? esc_html__( 'Project', 'wp-sell-services' ) : esc_html__( 'Service Details', 'wp-sell-services' ); ?>
 			</h2>
 		</div>
 		<div class="wpss-order-section__body">

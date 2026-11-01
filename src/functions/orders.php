@@ -810,7 +810,7 @@ function wpss_get_order_payment_reference( object $order ): ?array {
  *
  * @param object $order   Order model or raw `wpss_orders` row.
  * @param string $context 'admin' for edit links, 'public' for permalinks.
- * @return array{label: string, url: string, service_id: int, is_service: bool} Resolved subject.
+ * @return array{label: string, url: string, service_id: int, is_service: bool, kind: string} Resolved subject. `kind` is 'service', 'project' (a buyer-request order, which is not a gig) or 'sub' (tip, extension, phase).
  */
 function wpss_get_order_subject( object $order, string $context = 'public' ): array {
 	$platform   = (string) ( $order->platform ?? 'standalone' );
@@ -823,6 +823,7 @@ function wpss_get_order_subject( object $order, string $context = 'public' ): ar
 		'url'        => '',
 		'service_id' => 0,
 		'is_service' => false,
+		'kind'       => 'service',
 	);
 
 	// 1. Sub-orders describe their parent, never a service post they never had.
@@ -836,6 +837,7 @@ function wpss_get_order_subject( object $order, string $context = 'public' ): ar
 	);
 
 	if ( isset( $sub_order_labels[ $platform ] ) ) {
+		$subject['kind'] = 'sub';
 		if ( $parent_id > 0 ) {
 			$subject['label'] = sprintf( $sub_order_labels[ $platform ], $parent_id );
 			$subject['url']   = $is_admin
@@ -856,19 +858,15 @@ function wpss_get_order_subject( object $order, string $context = 'public' ): ar
 		return $subject;
 	}
 
-	// 2. Buyer-request orders carry the request post ID in platform_order_id.
+	// 2. Buyer-request orders carry the request post ID in platform_order_id. A custom project is not a gig:
+	// the plain title, no "Request:" prefix, and no public link (the admin keeps the edit link).
 	if ( 'request' === $platform ) {
-		$request_post = $parent_id > 0 ? get_post( $parent_id ) : null;
+		$subject['kind'] = 'project';
+		$request_post    = $parent_id > 0 ? get_post( $parent_id ) : null;
 
 		if ( $request_post && 'wpss_request' === $request_post->post_type ) {
-			$subject['label'] = sprintf(
-				/* translators: %s: buyer request title. */
-				__( 'Request: %s', 'wp-sell-services' ),
-				$request_post->post_title
-			);
-			$subject['url'] = (string) ( $is_admin
-				? get_edit_post_link( $request_post->ID, 'raw' )
-				: get_permalink( $request_post->ID ) );
+			$subject['label'] = $request_post->post_title;
+			$subject['url']   = $is_admin ? (string) get_edit_post_link( $request_post->ID, 'raw' ) : '';
 
 			return $subject;
 		}
@@ -886,13 +884,7 @@ function wpss_get_order_subject( object $order, string $context = 'public' ): ar
 			? (string) $meta['proposal_snapshot']['request_title']
 			: '';
 
-		$subject['label'] = '' !== $frozen_title
-			? sprintf(
-				/* translators: %s: buyer request title. */
-				__( 'Request: %s', 'wp-sell-services' ),
-				$frozen_title
-			)
-			: __( 'Buyer request', 'wp-sell-services' );
+		$subject['label'] = '' !== $frozen_title ? $frozen_title : __( 'Custom project', 'wp-sell-services' );
 
 		return $subject;
 	}

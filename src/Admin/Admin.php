@@ -2515,7 +2515,7 @@ class Admin {
 									</span>
 								</div>
 								<div class="wpss-order-detail-item">
-									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></span>
+									<span class="wpss-order-detail-item__label"><?php echo 'project' === $subject['kind'] ? esc_html__( 'Project', 'wp-sell-services' ) : esc_html__( 'Service', 'wp-sell-services' ); ?></span>
 									<span class="wpss-order-detail-item__value">
 										<?php if ( '' !== $subject['url'] ) : ?>
 											<a href="<?php echo esc_url( $subject['url'] ); ?>"><?php echo esc_html( $subject['label'] ); ?></a>
@@ -2525,7 +2525,7 @@ class Admin {
 									</span>
 								</div>
 								<?php $wpss_package_name = $order->get_package_name(); ?>
-								<?php if ( '' !== $wpss_package_name ) : ?>
+								<?php if ( '' !== $wpss_package_name && 'project' !== $subject['kind'] ) : ?>
 									<div class="wpss-order-detail-item">
 										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></span>
 										<span class="wpss-order-detail-item__value"><?php echo esc_html( $wpss_package_name ); ?></span>
