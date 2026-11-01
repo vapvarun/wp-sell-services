@@ -322,15 +322,15 @@ ids: `$milestone_id` is the sub-order, `$order_id` is the parent. See
 | `wpss_milestone_approved` | `int $milestone_id, int $order_id, int $vendor_id, int $customer_id` | `src/Services/MilestoneService.php:602` |
 | `wpss_milestone_declined` | `int $milestone_id, int $order_id, int $customer_id` | `src/Services/MilestoneService.php:783` |
 | `wpss_milestone_revision_requested` | `int $milestone_id, int $parent_id, int $vendor_id, int $customer_id, string $reason` | `src/Services/MilestoneService.php:721` |
-| `wpss_extension_request_created` | `int $request_id, int $order_id, array $data` (`requested_by`, `extra_days`, `reason`) | `ExtensionRequestService.php:249` |
-| `wpss_extension_request_approved` | `int $request_id, object $request` | `ExtensionRequestService.php:371` |
-| `wpss_extension_request_rejected` | `int $request_id, object $request` | `ExtensionRequestService.php:455` |
+| `wpss_extension_request_created` | `int $request_id, int $pay_order_id, int $parent_order_id, int $vendor_id` | A vendor offered an extension and the buyer has not paid yet. `ExtensionOrderService.php` |
+| `wpss_extension_rejected` | `int $request_id, int $order_id, int $customer_id, string $note` | The buyer declined the offer. `ExtensionOrderService.php` |
 | `wpss_extension_approved` | `int $pay_order_id, int $parent_order_id, int $vendor_id, int $customer_id, float $vendor_earnings, int $extra_days, int $request_id` | Paid extension approved and the vendor credited. NET earnings, not gross. `ExtensionOrderService.php` |
 
 > **Renamed in 1.3.0.** The milestone lifecycle uses *proposed* and *declined*,
 > not *created* and *rejected* -- see [Milestone terminology](https://github.com/vapvarun/wp-sell-services/blob/main/docs/decisions/milestone-terminology.md).
-> `wpss_milestone_created`, `wpss_milestone_rejected` and
-> `wpss_extension_requested` were listed in earlier docs but are **not fired by
+> `wpss_milestone_created`, `wpss_milestone_rejected`,
+> `wpss_extension_requested`, `wpss_extension_request_approved` and
+> `wpss_extension_request_rejected` were listed in earlier docs but are **not fired by
 > the plugin**. Callbacks bound to those names never run.
 >
 > `wpss_extension_approved` is a different case: it **does** fire, with seven

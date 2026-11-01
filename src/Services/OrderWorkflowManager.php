@@ -1847,13 +1847,17 @@ class OrderWorkflowManager {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		// Find offline orders stuck in pending_payment beyond the threshold.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// Find offline orders stuck in pending_payment beyond the threshold. Phases, tips and extensions are left
+		// alone: the contract they belong to is still running, and the owner settles or cancels them by hand.
+		$real_orders = wpss_order_rows_sql();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$pending_orders = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, customer_id, vendor_id, created_at FROM {$table}
 				WHERE status = %s
 				AND payment_method = %s
+				AND {$real_orders}
 				AND created_at <= %s",
 				ServiceOrder::STATUS_PENDING_PAYMENT,
 				'offline',

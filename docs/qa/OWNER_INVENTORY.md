@@ -454,9 +454,7 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 57
 - `wpss_order_partially_refunded` — src/Services/OrderWorkflowManager.php
 - `wpss_order_refund_processed` — src/Services/OrderWorkflowManager.php
 - `wpss_order_auto_refunded` — src/Services/OrderWorkflowManager.php
-- `wpss_extension_request_created` — src/Services/ExtensionRequestService.php
-- `wpss_extension_request_approved` — src/Services/ExtensionRequestService.php
-- `wpss_extension_request_rejected` — src/Services/ExtensionRequestService.php
+- `wpss_extension_request_created` — src/Services/ExtensionOrderService.php
 - `wpss_before_account_deletion` — src/Services/AccountDeletionService.php
 - `wpss_after_account_deletion` — src/Services/AccountDeletionService.php
 - `wpss_requirements_submitted` — src/Services/RequirementsService.php

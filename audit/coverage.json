@@ -749,9 +749,7 @@
             ],
             "wpss_extension_approved": [],
             "wpss_extension_rejected": [],
-            "wpss_extension_request_approved": [],
             "wpss_extension_request_created": [],
-            "wpss_extension_request_rejected": [],
             "wpss_foreign_page_map": [
                 "audit/render-coverage.json"
             ],

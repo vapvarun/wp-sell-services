@@ -123,9 +123,7 @@ guide; this is the complete index.
 | `wpss_enqueue_dashboard_assets` | 0 | `src/Frontend/Shortcodes.php` |  |
 | `wpss_extension_approved` | 7 | `src/Services/ExtensionOrderService.php` | Fires after a paid extension has been credited and the parent order extended. |
 | `wpss_extension_rejected` | 4 | `src/Services/ExtensionOrderService.php` | Fires when a buyer declines a pending extension request. |
-| `wpss_extension_request_approved` | 2 | `src/Services/ExtensionRequestService.php` | Fires after extension request is approved. |
 | `wpss_extension_request_created` | 4 | `src/Services/ExtensionOrderService.php` *(+1 more)* | Fires after an extension sub-order has been created and is awaiting the buyer's payment. |
-| `wpss_extension_request_rejected` | 2 | `src/Services/ExtensionRequestService.php` | Fires after extension request is rejected. |
 | `wpss_fluentcart_adapter_init` | 1 | `src/Integrations/FluentCart/FluentCartAdapter.php` **[PRO]** | Fires after Fluent Cart adapter is initialized. |
 | `wpss_fluentcart_order_created` | 3 | `src/Integrations/FluentCart/FluentCartOrderProvider.php` **[PRO]** | Fires when a WPSS order is created from Fluent Cart. |
 | `wpss_fluentcart_order_detail` | 1 | `src/Integrations/FluentCart/FluentCartAccountProvider.php` **[PRO]** | Fires after order detail content. |
