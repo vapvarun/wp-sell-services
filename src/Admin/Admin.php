@@ -2570,11 +2570,28 @@ class Admin {
 							$wpss_contract = ( new \WPSellServices\Services\MilestoneService() )->get_contract_totals( $order_id );
 
 							if ( ! $wpss_contract['count'] ) {
-								// The same line items the buyer sees: package, add-ons, tax, total.
-								wpss_get_template_part( 'order/line-items', '', array( 'wpss_order' => $order ) );
+								// The same line items the buyer sees: package, add-ons, tax, total, and the tips and extensions paid on top.
+								wpss_get_template_part(
+									'order/line-items',
+									'',
+									array(
+										'wpss_order' => $order,
+										'wpss_extras_admin_link' => true,
+									)
+								);
+							} else {
+								// A contract keeps its money on the phases; its tips are still listed.
+								echo '<table class="wpss-line-items"><tfoot>';
+								wpss_get_template_part(
+									'order/line-items-extras',
+									'',
+									array(
+										'wpss_extras' => ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_paid_extras( $order_id ),
+										'wpss_extras_admin_link' => true,
+									)
+								);
+								echo '</tfoot></table>';
 							}
-
-							$wpss_extras = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_paid_extras( $order_id );
 							?>
 							<?php if ( 'offline' === ( $order->payment_method ?? '' ) && in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_MILESTONE, ServiceOrder::SUB_ORDER_TYPE_EXTENSION ), true ) && 'paid' !== ( $order->payment_status ?? '' ) && empty( $order->paid_at ) ) : ?>
 								<p class="description"><?php esc_html_e( 'Payment not received. Nothing is credited to the vendor until it is confirmed with Mark as Paid, whatever status this order is given.', 'wp-sell-services' ); ?></p>
@@ -2603,27 +2620,6 @@ class Admin {
 										<td><?php echo esc_html( wpss_format_price( $wpss_contract['earnings'], $order->currency ) ); ?></td>
 									</tr>
 								<?php endif; ?>
-								<?php foreach ( $wpss_extras as $wpss_extra ) : ?>
-									<tr>
-										<td>
-											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . (int) $wpss_extra->id ) ); ?>">
-												<?php
-												echo esc_html(
-													ServiceOrder::SUB_ORDER_TYPE_TIP === $wpss_extra->platform
-														/* translators: %s: sub-order number */
-														? sprintf( __( 'Tip #%s', 'wp-sell-services' ), $wpss_extra->order_number )
-														/* translators: %s: sub-order number */
-														: sprintf( __( 'Extension #%s', 'wp-sell-services' ), $wpss_extra->order_number )
-												);
-												?>
-											</a>
-											<?php if ( in_array( $wpss_extra->status, array( 'refunded', 'partially_refunded' ), true ) ) : ?>
-												<small>(<?php echo esc_html( wpss_get_order_status_label( (string) $wpss_extra->status ) ); ?>)</small>
-											<?php endif; ?>
-										</td>
-										<td><?php echo esc_html( wpss_format_price( (float) $wpss_extra->total, (string) $wpss_extra->currency ) ); ?></td>
-									</tr>
-								<?php endforeach; ?>
 								<?php if ( isset( $order->vendor_earnings ) && $order->vendor_earnings > 0 ) : ?>
 									<tr>
 										<td><?php esc_html_e( 'Vendor Earning', 'wp-sell-services' ); ?></td>

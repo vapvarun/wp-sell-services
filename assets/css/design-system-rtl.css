@@ -1884,6 +1884,15 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	font-weight: 600;
 	color: var(--wpss-text-secondary);
 }
+/* Tips and extensions paid on top of the order: a quiet group heading, amounts as in the lines above. */
+.wpss-line-items .wpss-line-items__extras-title {
+	padding-block-start: var(--wpss-space-4);
+	font-size: var(--wpss-text-xs);
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--wpss-text-muted);
+}
 
 /* Checkout: the second Pay button under the payment methods sat against the
    last method's box (Basecamp 10337204220). */

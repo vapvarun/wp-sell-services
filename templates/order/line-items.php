@@ -27,6 +27,8 @@ $wpss_currency  = (string) $wpss_order->currency;
 $wpss_tax       = (float) ( $wpss_order->meta['tax_amount'] ?? 0 );
 $wpss_included  = ! empty( $wpss_order->meta['tax_included'] );
 $wpss_tax_label = wpss_get_order_tax( $wpss_order )['label'];
+// One query per order page; a tip or extension has none of its own, so it returns nothing there.
+$wpss_extras = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_paid_extras( (int) $wpss_order->id );
 ?>
 <table class="wpss-line-items">
 	<caption class="screen-reader-text"><?php esc_html_e( 'What this order includes', 'wp-sell-services' ); ?></caption>
@@ -66,5 +68,16 @@ $wpss_tax_label = wpss_get_order_tax( $wpss_order )['label'];
 			<th scope="row"><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></th>
 			<td class="wpss-line-items__amount"><?php echo esc_html( wpss_format_price( (float) $wpss_order->total, $wpss_currency ) ); ?></td>
 		</tr>
+		<?php
+		// Rows inside the footer, so they are drawn after the Total, never mistaken for part of it.
+		wpss_get_template_part(
+			'order/line-items-extras',
+			'',
+			array(
+				'wpss_extras'            => $wpss_extras,
+				'wpss_extras_admin_link' => ! empty( $wpss_extras_admin_link ),
+			)
+		);
+		?>
 	</tfoot>
 </table>
