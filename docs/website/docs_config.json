@@ -532,6 +532,10 @@
           "title": "Custom Integrations Guide"
         },
         {
+          "slug": "payments-outside-the-plugin",
+          "title": "Take Payments Outside the Plugin"
+        },
+        {
           "slug": "theme-integration",
           "title": "Theme Integration Guide"
         },

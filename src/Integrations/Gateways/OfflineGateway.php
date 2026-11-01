@@ -895,53 +895,66 @@ class OfflineGateway extends AbstractPaymentGateway {
 		$order_id       = isset( $_POST['order_id'] ) ? (int) wp_unslash( $_POST['order_id'] ) : 0;
 		$transaction_id = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
 
-		if ( ! $order_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-			return;
+		$result = $this->settle_manually( $order_id, $transaction_id );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
-
-		$order = wpss_get_order( $order_id );
-
-		if ( ! $order ) {
-			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Verify order is pending payment, or an unpaid offline sub-order an
-		// admin already moved on (it is credited only once this confirms it).
-		if ( 'pending_payment' !== $order->status && ! $this->is_unpaid_offline_sub_order( $order ) ) {
-			// wp_send_json_error() exits, so no return is needed here.
-			wp_send_json_error( array( 'message' => __( 'Order is not awaiting payment.', 'wp-sell-services' ) ) );
-		}
-
-		// Generate transaction ID if not provided.
-		if ( empty( $transaction_id ) ) {
-			$transaction_id = 'offline_manual_' . time();
-		}
-
-		// Get order provider and mark as paid.
-		$order_provider = wpss_get_order_provider();
-
-		$result = $order_provider->mark_as_paid( $order_id, $transaction_id, 'offline' );
-
-		if ( ! $result ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to mark order as paid.', 'wp-sell-services' ) ) );
-		}
-
-		/**
-		 * Fires when an offline order is marked as paid.
-		 *
-		 * @param int    $order_id       Order ID.
-		 * @param string $transaction_id Transaction ID.
-		 */
-		do_action( 'wpss_offline_order_paid', $order_id, $transaction_id );
 
 		wp_send_json_success(
 			array(
 				'message'    => __( 'Order marked as paid successfully.', 'wp-sell-services' ),
-				'new_status' => (string) ( wpss_get_order( $order_id )->status ?? 'pending_requirements' ),
+				'new_status' => $result['status'],
 			)
 		);
+	}
+
+	/**
+	 * Record a payment that was made outside the plugin and settle the order.
+	 *
+	 * The one door for the admin "Mark as Paid" box and the REST route, so an
+	 * integration (Make, Zapier, a custom gateway's webhook) settles an order
+	 * exactly the way the admin does. The caller checks the capability.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param int    $order_id       Order ID.
+	 * @param string $transaction_id Reference from the payment provider; generated when empty.
+	 * @param string $payment_method Slug stored on the order, e.g. flutterwave. Defaults to offline.
+	 * @return array{status: string}|\WP_Error The order's new status, or why it was refused.
+	 */
+	public function settle_manually( int $order_id, string $transaction_id = '', string $payment_method = 'offline' ) {
+		$order = $order_id > 0 ? wpss_get_order( $order_id ) : null;
+
+		if ( ! $order ) {
+			return new \WP_Error( 'wpss_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		// A whole order must be awaiting payment. A tip, extension or phase may be in any state an admin moved
+		// it to, as long as its payment was never confirmed (it is credited only once this confirms it).
+		if ( 'pending_payment' !== $order->status && ! $this->is_unpaid_offline_sub_order( $order ) ) {
+			return new \WP_Error( 'wpss_order_not_awaiting_payment', __( 'Order is not awaiting payment.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
+		$payment_method = sanitize_key( $payment_method );
+		$payment_method = '' === $payment_method ? 'offline' : $payment_method;
+		$transaction_id = '' === $transaction_id ? 'offline_manual_' . time() : $transaction_id;
+
+		if ( ! wpss_get_order_provider()->mark_as_paid( $order_id, $transaction_id, $payment_method ) ) {
+			return new \WP_Error( 'wpss_mark_paid_failed', __( 'Failed to mark order as paid.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
+		if ( 'offline' === $payment_method ) {
+			/**
+			 * Fires when an offline order is marked as paid.
+			 *
+			 * @param int    $order_id       Order ID.
+			 * @param string $transaction_id Transaction ID.
+			 */
+			do_action( 'wpss_offline_order_paid', $order_id, $transaction_id );
+		}
+
+		return array( 'status' => (string) ( wpss_get_order( $order_id )->status ?? 'pending_requirements' ) );
 	}
 
 	/**

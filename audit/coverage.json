@@ -1694,6 +1694,9 @@
             "/wpss/v1/orders/(?P<id>[\\d]+)/deliverables": [
                 "audit/render-coverage.json"
             ],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/mark-paid": [
+                "tests/test-rest-mark-order-paid.php"
+            ],
             "/wpss/v1/orders/(?P<id>[\\d]+)/files/(?P<file_id>[A-Za-z0-9\\-]+)": [
                 "audit/journeys/09-request-files-to-order.md",
                 "audit/render-coverage.json"

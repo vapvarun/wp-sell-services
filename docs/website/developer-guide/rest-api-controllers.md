@@ -130,6 +130,7 @@ rather than hard-coding these numbers.
 | GET, POST | `/orders/(?P<id>[\d]+)/deliverables` |
 | GET | `/orders/(?P<id>[\d]+)/files/(?P<file_id>[A-Za-z0-9\-]+)` |
 | POST | `/orders/(?P<id>[\d]+)/(?P<action>…)` |
+| POST | `/orders/(?P<id>[\d]+)/mark-paid` |
 | GET, POST | `/orders/(?P<id>[\d]+)/requirements` |
 | POST | `/orders/(?P<id>[\d]+)/requirements/skip` |
 | DELETE | `/orders/(?P<id>[\d]+)/requirements/files/(?P<file_id>[\d]+)` |

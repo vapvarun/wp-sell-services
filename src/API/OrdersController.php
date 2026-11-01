@@ -197,6 +197,38 @@ class OrdersController extends RestController {
 			)
 		);
 
+		// Record a payment made outside the plugin (a bank transfer, or a gateway the plugin does not ship) and settle the
+		// order the same way the admin Mark as Paid button does. Admin only: it moves money.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/mark-paid',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'mark_order_paid' ),
+					'permission_callback' => array( $this, 'check_admin_permissions' ),
+					'args'                => array(
+						'id'             => array(
+							'description' => __( 'Order ID.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+						'transaction_id' => array(
+							'description'       => __( 'Reference from the payment provider. Generated when empty.', 'wp-sell-services' ),
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'payment_method' => array(
+							'description'       => __( 'Slug stored on the order, for example flutterwave. Defaults to offline.', 'wp-sell-services' ),
+							'type'              => 'string',
+							'default'           => 'offline',
+							'sanitize_callback' => 'sanitize_key',
+						),
+					),
+				),
+			)
+		);
+
 		// Order status actions.
 		//
 		// 'accept' and 'reject' are deliberately absent. Both gated on status
@@ -1884,6 +1916,37 @@ class OrdersController extends RestController {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE id = %d", $order_id ) );
+	}
+
+	/**
+	 * Mark an order as paid. Repeating the call on a paid order changes nothing.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function mark_order_paid( WP_REST_Request $request ) {
+		$order_id = (int) $request->get_param( 'id' );
+		$order    = wpss_get_order( $order_id );
+
+		// mark_as_paid() treats a second call as success, so an integration that retries is safe. Answer it
+		// here too: the settle check below would call a paid order "not awaiting payment".
+		if ( $order && 'paid' === ( $order->payment_status ?? '' ) ) {
+			return rest_ensure_response( array( 'order_id' => $order_id, 'status' => (string) $order->status, 'payment_status' => 'paid', 'already_paid' => true ) );
+		}
+
+		$result = ( new \WPSellServices\Integrations\Gateways\OfflineGateway() )->settle_manually(
+			$order_id,
+			(string) $request->get_param( 'transaction_id' ),
+			(string) $request->get_param( 'payment_method' )
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( array( 'order_id' => $order_id, 'status' => $result['status'], 'payment_status' => 'paid', 'already_paid' => false ) );
 	}
 
 	/**
