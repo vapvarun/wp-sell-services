@@ -959,7 +959,9 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 * @return bool
 	 */
 	private function is_unpaid_offline_sub_order( object $order ): bool {
-		return self::GATEWAY_ID === ( $order->payment_method ?? '' )
+		// Offline, or no method chosen at all: the buyer never opened the pay page, or the
+		// owner was paid outside the site. A card or store rail confirms itself, so it is no door.
+		return in_array( (string) ( $order->payment_method ?? '' ), array( self::GATEWAY_ID, '' ), true )
 			&& in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_EXTENSION, ServiceOrder::SUB_ORDER_TYPE_MILESTONE ), true )
 			&& ! in_array( (string) ( $order->payment_status ?? '' ), array( 'paid', 'refunded', 'partially_refunded' ), true )
 			&& empty( $order->paid_at )
@@ -975,7 +977,9 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 */
 	public function render_admin_order_actions( object $order, string $status ): void {
 		// Offline orders awaiting payment, and unpaid offline sub-orders whatever their status.
-		if ( 'offline' !== $order->payment_method || ( 'pending_payment' !== $status && ! $this->is_unpaid_offline_sub_order( $order ) ) ) {
+		$is_sub_order_door = $this->is_unpaid_offline_sub_order( $order );
+
+		if ( ! $is_sub_order_door && ( 'offline' !== $order->payment_method || 'pending_payment' !== $status ) ) {
 			return;
 		}
 

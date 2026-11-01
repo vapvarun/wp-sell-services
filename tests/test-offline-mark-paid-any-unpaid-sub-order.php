@@ -110,6 +110,46 @@ if ( ! $ms ) {
 	$check( 'phase: stays completed, not reopened', 'completed' === (string) wpss_get_order( $ms )->status, (string) wpss_get_order( $ms )->status );
 }
 
+// No payment method chosen: the buyer never opened the pay page, or the owner was paid outside the site.
+// The sub-order has an empty payment_method; Mark as Paid must still settle it (1.9.2).
+$no_method = static function ( int $id ) use ( $wpdb, $orders ): void {
+	$wpdb->update( $orders, array( 'payment_method' => '', 'status' => 'completed', 'completed_at' => current_time( 'mysql', true ) ), array( 'id' => $id ) );
+	( new CommissionService() )->record( $id );
+};
+
+$res = ( new MilestoneService() )->propose( $parent( 'request' ), $vendor, 'QA no-method phase', 'd', 40.0, 3 );
+$nm  = (int) ( $res['milestone_id'] ?? 0 );
+if ( $nm ) {
+	$no_method( $nm );
+	$check( 'no-method phase: the admin box offers Mark as Paid', str_contains( $box( $nm ), 'wpss-mark-paid-btn' ) );
+	$json = $mark_paid( $nm );
+	$check( 'no-method phase: Mark as Paid is accepted', ! empty( $json['success'] ), wp_json_encode( $json ) );
+	$check( 'no-method phase: credited exactly once', 1 === $credits( $nm, MilestoneService::TYPE_MILESTONE ) );
+	$mark_paid( $nm );
+	$check( 'no-method phase: a second Mark as Paid credits nothing more', 1 === $credits( $nm, MilestoneService::TYPE_MILESTONE ) );
+	$check( 'no-method phase: once paid the box is gone', ! str_contains( $box( $nm ), 'wpss-mark-paid-btn' ) );
+}
+
+$res = ( new ExtensionOrderService() )->create_extension_request( $parent( 'standalone' ), 14.0, 2, $vendor, 'QA no-method extension' );
+$nx  = (int) ( $res['pay_order_id'] ?? 0 );
+if ( $nx ) {
+	$no_method( $nx );
+	$check( 'no-method extension: the admin box offers Mark as Paid', str_contains( $box( $nx ), 'wpss-mark-paid-btn' ) );
+	$json = $mark_paid( $nx );
+	$check( 'no-method extension: Mark as Paid is accepted', ! empty( $json['success'] ), wp_json_encode( $json ) );
+}
+
+// A sub-order the buyer started on a card gateway is not a door for Mark as Paid: that rail confirms itself.
+if ( $nx ) {
+	$stripe = $parent( 'standalone' );
+	$res2   = ( new ExtensionOrderService() )->create_extension_request( $stripe, 9.0, 1, $vendor, 'QA stripe extension' );
+	$sx     = (int) ( $res2['pay_order_id'] ?? 0 );
+	if ( $sx ) {
+		$wpdb->update( $orders, array( 'payment_method' => 'stripe' ), array( 'id' => $sx ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$check( 'a card-gateway sub-order does not get the box', ! str_contains( $box( $sx ), 'wpss-mark-paid-btn' ) );
+	}
+}
+
 // Not a door for anything else: a paid service order is still refused.
 $paid = $parent( 'standalone' );
 $json = $mark_paid( $paid );
