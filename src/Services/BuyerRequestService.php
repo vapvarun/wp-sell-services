@@ -1123,6 +1123,20 @@ class BuyerRequestService {
 			foreach ( $created_milestone_ids as $ms_id ) {
 				do_action( 'wpss_milestone_proposed', $ms_id, $order_id, (int) $proposal->vendor_id );
 			}
+
+			/**
+			 * Fires once when an accepted phased proposal has created all of its phases.
+			 *
+			 * The built-in buyer email and notification hang off this, not off the per-phase hook above, so a
+			 * 17-phase contract sends one message instead of seventeen.
+			 *
+			 * @since 1.9.2
+			 *
+			 * @param int   $order_id      Parent order ID.
+			 * @param int[] $milestone_ids Phase order IDs, in plan order.
+			 * @param int   $vendor_id     Seller user ID.
+			 */
+			do_action( 'wpss_contract_phases_proposed', $order_id, $created_milestone_ids, (int) $proposal->vendor_id );
 		}
 
 		// The proposal was claimed inside the transaction; announce it now that

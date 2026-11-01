@@ -1890,6 +1890,11 @@ final class Plugin {
 				if ( ! $parent ) {
 					return;
 				}
+				// Phases created with an accepted contract are announced once by wpss_contract_phases_proposed below.
+				$phase = wpss_get_order( $milestone_id );
+				if ( $phase && ! empty( $phase->meta['is_contract_milestone'] ) ) {
+					return;
+				}
 				$notification_service->send(
 					(int) $parent->customer_id,
 					'milestone_proposed',
@@ -1906,6 +1911,30 @@ final class Plugin {
 			null,
 			10,
 			3
+		);
+
+		// A phased proposal was accepted: one notification and one email for the whole contract.
+		$this->loader->add_action(
+			'wpss_contract_phases_proposed',
+			function ( int $order_id, array $milestone_ids ) use ( $notification_service, $email_service ): void {
+				$parent = wpss_get_order( $order_id );
+				if ( ! $parent || empty( $milestone_ids ) ) {
+					return;
+				}
+				$notification_service->send(
+					(int) $parent->customer_id,
+					'milestone_proposed',
+					array(
+						'order_id'     => $order_id,
+						'milestone_id' => (int) $milestone_ids[0],
+						'phase_count'  => count( $milestone_ids ),
+					)
+				);
+				$email_service->send_contract_phases_proposed( $order_id, array_map( 'intval', $milestone_ids ) );
+			},
+			null,
+			10,
+			2
 		);
 
 		// Milestone paid - buyer's payment cleared, the phase is in_progress.

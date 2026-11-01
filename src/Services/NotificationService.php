@@ -1317,6 +1317,16 @@ class NotificationService {
 				break;
 
 			case 'milestone_proposed':
+				if ( (int) ( $data['phase_count'] ?? 0 ) > 1 ) {
+					$title = __( 'Contract phases ready', 'wp-sell-services' );
+					$message->line(
+						/* translators: 1: number of phases, 2: parent order number */
+						__( 'Your vendor set up %1$d phases on Order #%2$s. Open the order and pay the first phase to start.', 'wp-sell-services' ),
+						(int) $data['phase_count'],
+						$this->order_ref( $data['order_id'] ?? 0 )
+					);
+					break;
+				}
 				$title = __( 'Milestone proposed', 'wp-sell-services' );
 				$message->line(
 					/* translators: 1: phase name and amount, 2: parent order number */

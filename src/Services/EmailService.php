@@ -59,6 +59,7 @@ class EmailService {
 	public const TYPE_REVIEW_RECEIVED        = 'review_received';
 	public const TYPE_MILESTONE_PROPOSED     = 'milestone_proposed';
 	public const TYPE_MILESTONE_PAID         = 'milestone_paid';
+	public const TYPE_CONTRACT_PHASES        = 'contract_phases_proposed';
 	public const TYPE_MILESTONE_SUBMITTED    = 'milestone_submitted';
 	public const TYPE_MILESTONE_APPROVED     = 'milestone_approved';
 	public const TYPE_MILESTONE_REVISION     = 'milestone_revision_requested';
@@ -344,6 +345,17 @@ class EmailService {
 		if ( ! $order ) {
 			return false;
 		}
+
+		// Once per order: the pay-an-existing-order request can be repeated, and each repeat would mail three people.
+		if ( ! empty( $order->meta['offline_placed_emailed'] ) ) {
+			return false;
+		}
+
+		$meta                           = $order->meta;
+		$meta['offline_placed_emailed'] = true;
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update( $wpdb->prefix . 'wpss_orders', array( 'meta' => wp_json_encode( $meta ) ), array( 'id' => $order_id ) );
 
 		$buyer  = get_user_by( 'id', $order->customer_id );
 		$vendor = get_user_by( 'id', $order->vendor_id );
@@ -889,6 +901,74 @@ class EmailService {
 				'amount'        => (float) $milestone->total,
 				'currency'      => $milestone->currency ?? wpss_get_currency(),
 				'pay_url'       => $pay_url,
+			)
+		);
+	}
+
+	/**
+	 * Tell the buyer an accepted phased proposal is set up: every phase, the total, and where to pay first.
+	 *
+	 * One email for the contract, however many phases it has. A phase the seller proposes later on its own still
+	 * goes through send_milestone_proposed().
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param int   $order_id      Parent order ID.
+	 * @param int[] $milestone_ids Phase order IDs, in plan order.
+	 * @return bool
+	 */
+	public function send_contract_phases_proposed( int $order_id, array $milestone_ids ): bool {
+		$parent = wpss_get_order( $order_id );
+		$buyer  = $parent ? get_user_by( 'id', (int) $parent->customer_id ) : false;
+
+		if ( ! $buyer || empty( $milestone_ids ) ) {
+			return false;
+		}
+
+		$vendor   = get_user_by( 'id', (int) $parent->vendor_id );
+		$currency = (string) ( $parent->currency ?: wpss_get_currency() );
+		$rows     = '';
+		$total    = 0.0;
+
+		foreach ( $milestone_ids as $index => $milestone_id ) {
+			$phase = wpss_get_order( (int) $milestone_id );
+			if ( ! $phase ) {
+				continue;
+			}
+			$total += (float) $phase->total;
+			$rows  .= sprintf(
+				'<tr><td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;">%1$d. %2$s</td><td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;text-align:right;">%3$s</td></tr>',
+				$index + 1,
+				esc_html( (string) ( ( (array) $phase->meta )['title'] ?? __( 'Phase', 'wp-sell-services' ) ) ),
+				esc_html( wpss_format_price( (float) $phase->total, $currency ) )
+			);
+		}
+
+		$content = sprintf(
+			/* translators: 1: vendor name, 2: number of phases, 3: contract total */
+			__( '%1$s accepted your project and split it into %2$d phases, %3$s in total. Phases are paid one at a time, in this order.', 'wp-sell-services' ),
+			esc_html( $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' ) ),
+			count( $milestone_ids ),
+			esc_html( wpss_format_price( $total, $currency ) )
+		) . '</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f9f9f9;border-radius:4px;font-size:16px;color:#3c3c3c;">' . $rows . '</table><p style="margin:16px 0 0 0;font-size:16px;color:#3c3c3c;line-height:1.6;">'
+			. __( 'Pay the first phase to start the work.', 'wp-sell-services' );
+
+		return $this->send(
+			$buyer->user_email,
+			sprintf(
+				/* translators: 1: site name, 2: order number */
+				__( '[%1$s] Your project plan for order #%2$s', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$parent->order_number
+			),
+			self::TYPE_CONTRACT_PHASES,
+			array(
+				'recipient'     => $buyer,
+				'email_heading' => __( 'Your project is planned', 'wp-sell-services' ),
+				'content'       => $content,
+				'button_url'    => wpss_ensure_pay_order( (int) $milestone_ids[0] ),
+				'button_text'   => __( 'Pay the first phase', 'wp-sell-services' ),
+				'order'         => $parent,
 			)
 		);
 	}

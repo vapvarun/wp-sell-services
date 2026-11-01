@@ -62,6 +62,11 @@ $check( 'admin is told an order is waiting for payment', count( $to( $admin_emai
 $s = $to( get_userdata( $vendor )->user_email );
 $check( 'seller is told the order awaits payment, and not asked to start work', 1 === count( $s ) && ! str_contains( $s[0]['message'], 'Submit requirements' ) );
 
+// Putting the same order on the offline rail again (a retried request) does not mail everyone a second time.
+$before = count( $mails );
+do_action( 'wpss_offline_order_created', $one, wpss_get_order( $one ) );
+$check( 'a repeat for the same order sends nothing more', count( $mails ) === $before, (string) ( count( $mails ) - $before ) );
+
 // The cart path places several orders at once: one email per order, not one per hook.
 $mails = array();
 $two   = array( $make_order(), $make_order() );
