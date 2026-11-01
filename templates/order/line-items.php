@@ -27,6 +27,10 @@ $wpss_currency  = (string) $wpss_order->currency;
 $wpss_tax       = (float) ( $wpss_order->meta['tax_amount'] ?? 0 );
 $wpss_included  = ! empty( $wpss_order->meta['tax_included'] );
 $wpss_tax_label = wpss_get_order_tax( $wpss_order )['label'];
+// What the lines add up to, against what was charged. A coupon (Pro stores it as meta.discount) or a custom price
+// moves the Total away from the lines, and the page used to say nothing about it.
+$wpss_lines_sum = array_sum( array_column( $wpss_items, 'total' ) ) + ( $wpss_included ? 0 : $wpss_tax );
+$wpss_gap       = round( (float) $wpss_order->total - $wpss_lines_sum, 2 );
 // One query per order page; a tip or extension has none of its own, so it returns nothing there.
 $wpss_extras = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_paid_extras( (int) $wpss_order->id );
 ?>
@@ -60,6 +64,14 @@ $wpss_extras = ( new \WPSellServices\Database\Repositories\OrderRepository() )->
 					?>
 				</th>
 				<td class="wpss-line-items__amount"><?php echo esc_html( wpss_format_price( $wpss_tax, $wpss_currency ) ); ?></td>
+			</tr>
+		<?php endif; ?>
+		<?php if ( abs( $wpss_gap ) >= 0.01 && (float) $wpss_order->total > 0 ) : ?>
+			<tr class="wpss-line-items__tax wpss-line-items__adjust">
+				<th scope="row" class="wpss-line-items__name">
+					<?php echo $wpss_gap < 0 ? esc_html__( 'Discount', 'wp-sell-services' ) : esc_html__( 'Price adjustment', 'wp-sell-services' ); ?>
+				</th>
+				<td class="wpss-line-items__amount"><?php echo esc_html( ( $wpss_gap < 0 ? '-' : '' ) . wpss_format_price( abs( $wpss_gap ), $wpss_currency ) ); ?></td>
 			</tr>
 		<?php endif; ?>
 	</tbody>
