@@ -78,6 +78,14 @@ class EmailService {
 	public const TYPE_RECEIPT_REJECTED  = 'receipt_rejected';
 
 	/**
+	 * A bank-transfer order was placed and is waiting for the money.
+	 *
+	 * @since 1.9.2
+	 * @var string
+	 */
+	public const TYPE_OFFLINE_ORDER_PLACED = 'offline_order_placed';
+
+	/**
 	 * Vendor account decisions: approved, rejected, suspended.
 	 *
 	 * @since 1.7.1
@@ -316,6 +324,109 @@ class EmailService {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Tell everyone a bank-transfer order was placed and is waiting for payment.
+	 *
+	 * The buyer gets the instructions for the method they chose (the same block the checkout screen shows), the admin
+	 * gets the order to watch for, and the seller hears it exists but is not asked to start: work begins once the
+	 * payment is confirmed, which sends the usual new-order email.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public function send_offline_order_placed( int $order_id ): bool {
+		$order = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return false;
+		}
+
+		$buyer  = get_user_by( 'id', $order->customer_id );
+		$vendor = get_user_by( 'id', $order->vendor_id );
+		$admin  = (string) apply_filters( 'wpss_admin_notification_email', get_option( 'admin_email' ) );
+		$title  = wpss_get_order_title( $order );
+		$total  = wpss_format_price( (float) $order->total, (string) $order->currency );
+		$sent   = false;
+
+		if ( $buyer ) {
+			$sent = $this->send(
+				$buyer->user_email,
+				sprintf(
+					/* translators: 1: site name, 2: order number */
+					__( '[%1$s] Order #%2$s: how to pay', 'wp-sell-services' ),
+					wpss_get_platform_name(),
+					$order->order_number
+				),
+				self::TYPE_OFFLINE_ORDER_PLACED,
+				array(
+					'recipient'     => $buyer,
+					'email_heading' => __( 'Your order is waiting for payment', 'wp-sell-services' ),
+					'content'       => sprintf(
+						/* translators: 1: service title, 2: total */
+						__( 'We have your order for %1$s (%2$s). It starts as soon as your payment is confirmed. Pay using the details below.', 'wp-sell-services' ),
+						esc_html( $title ),
+						esc_html( $total )
+					) . ( new \WPSellServices\Integrations\Gateways\OfflineGateway() )->render_buyer_instructions( $order_id ),
+					'button_url'    => wpss_get_order_url( $order_id ),
+					'button_text'   => __( 'View your order', 'wp-sell-services' ),
+					'order'         => $order,
+				)
+			) || $sent;
+		}
+
+		$note = sprintf(
+			/* translators: 1: order number, 2: service title, 3: total */
+			__( 'Order #%1$s for %2$s (%3$s) was placed by bank transfer and is waiting for payment. It starts once the payment is marked as received.', 'wp-sell-services' ),
+			esc_html( $order->order_number ),
+			esc_html( $title ),
+			esc_html( $total )
+		);
+
+		$sent = $this->send(
+			$admin,
+			sprintf(
+				/* translators: 1: site name, 2: order number */
+				__( '[%1$s] Order #%2$s is waiting for payment', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$order->order_number
+			),
+			self::TYPE_OFFLINE_ORDER_PLACED,
+			array(
+				'recipient'     => get_user_by( 'email', $admin ) ?: null,
+				'email_heading' => __( 'A bank-transfer order is waiting for payment', 'wp-sell-services' ),
+				'content'       => $note,
+				'button_url'    => admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order_id ),
+				'button_text'   => __( 'Open the order', 'wp-sell-services' ),
+				'order'         => $order,
+			)
+		) || $sent;
+
+		if ( $vendor ) {
+			$sent = $this->send(
+				$vendor->user_email,
+				sprintf(
+					/* translators: 1: site name, 2: order number */
+					__( '[%1$s] Order #%2$s is waiting for the buyer\'s payment', 'wp-sell-services' ),
+					wpss_get_platform_name(),
+					$order->order_number
+				),
+				self::TYPE_OFFLINE_ORDER_PLACED,
+				array(
+					'recipient'     => $vendor,
+					'email_heading' => __( 'A new order is waiting for payment', 'wp-sell-services' ),
+					'content'       => $note . ' ' . __( 'You do not need to do anything yet; we will email you when work can start.', 'wp-sell-services' ),
+					'button_url'    => wpss_get_order_url( $order_id ),
+					'button_text'   => __( 'View order', 'wp-sell-services' ),
+					'order'         => $order,
+				)
+			) || $sent;
+		}
+
+		return $sent;
 	}
 
 	/**
@@ -2497,6 +2608,7 @@ class EmailService {
 			self::TYPE_RECEIPT_SUBMITTED      => 'orders',
 			self::TYPE_RECEIPT_VERIFIED       => 'orders',
 			self::TYPE_RECEIPT_REJECTED       => 'orders',
+			self::TYPE_OFFLINE_ORDER_PLACED   => 'orders',
 			// Plain (generic-template) types NotificationService sends.
 			'review_reply'                    => 'completion',
 			'dispute_escalated'               => 'disputes',

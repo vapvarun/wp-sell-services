@@ -3116,6 +3116,24 @@ final class Plugin {
 			3
 		);
 
+		// A bank-transfer order placed: instructions to the buyer, a heads-up to the admin and seller (one email set per order).
+		add_action(
+			'wpss_offline_order_created',
+			static function ( int $order_id ): void {
+				( new \WPSellServices\Services\EmailService() )->send_offline_order_placed( $order_id );
+			}
+		);
+
+		add_action(
+			'wpss_offline_multi_orders_created',
+			static function ( array $order_ids ): void {
+				$email = new \WPSellServices\Services\EmailService();
+				foreach ( $order_ids as $order_id ) {
+					$email->send_offline_order_placed( (int) $order_id );
+				}
+			}
+		);
+
 		// Offline payment proof: tell the people who need to act
 		// (Basecamp #10194890682). The service fires these three; the emails
 		// route through EmailService so they honour the member's own
