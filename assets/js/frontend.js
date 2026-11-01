@@ -2186,4 +2186,46 @@
 		window.addEventListener('load', queueStickyTopSync);
 	});
 
+
+	/**
+	 * Keep the unread badges honest without a reload.
+	 *
+	 * One small request every 30 seconds, only while the tab is visible, and one more the moment the tab comes
+	 * back. The server number replaces the badge text (never "+1"), so it cannot drift from the real count.
+	 * Pages with no badge never start the timer.
+	 */
+	$(function() {
+		var restUrl = window.wpss && window.wpss.restUrl;
+		var restNonce = window.wpss && window.wpss.restNonce;
+
+		if (!restUrl || !restNonce || !document.querySelector('[data-wpss-notification-count]')) {
+			return;
+		}
+
+		function refreshBadges() {
+			if (document.visibilityState !== 'visible') {
+				return;
+			}
+
+			window.fetch(restUrl + 'notifications/unread-count', {
+				credentials: 'same-origin',
+				headers: { 'X-WP-Nonce': restNonce }
+			}).then(function(response) {
+				return response.ok ? response.json() : null;
+			}).then(function(data) {
+				if (!data || typeof data.unread_count !== 'number') {
+					return;
+				}
+				document.querySelectorAll('[data-wpss-notification-count]').forEach(function(badge) {
+					badge.textContent = String(data.unread_count);
+					badge.hidden = data.unread_count < 1;
+				});
+			}).catch(function() {
+				// Offline or a blip: the next tick tries again.
+			});
+		}
+
+		setInterval(refreshBadges, 30000);
+		document.addEventListener('visibilitychange', refreshBadges);
+	});
 })(jQuery);

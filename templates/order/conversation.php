@@ -559,8 +559,37 @@ document.addEventListener('DOMContentLoaded', function() {
 	// made the first poll re-append every status note already on the page.
 	var lastMessageId = $messagesContainer.find('[data-message-id]:last').data('message-id') || 0;
 
+	// The conversation row is created by the first message, so a page opened before that has no id. Look it up
+	// (404 until it exists) instead of staying silent for the rest of the visit.
+	var discoverTicks = 0;
+
+	function discoverConversation() {
+		$.ajax({
+			url: restBase + 'orders/' + $conversation.data('order-id') + '/conversation',
+			method: 'GET',
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', wpss.restNonce);
+			},
+			success: function(conversation) {
+				if (conversation && conversation.id) {
+					conversationId = conversation.id;
+					pollMessages();
+				}
+			}
+		});
+	}
+
 	function pollMessages() {
-		if (!$conversation.length || $conversation.is(':hidden') || !conversationId) {
+		// Only while the tab is on screen: a background tab polling every 10 seconds is pure server load.
+		if (!$conversation.length || $conversation.is(':hidden') || document.visibilityState !== 'visible') {
+			return;
+		}
+
+		if (!conversationId) {
+			// A 404 per lookup shows in the console, so look every third tick (30 seconds), not every one.
+			if (discoverTicks++ % 3 === 0) {
+				discoverConversation();
+			}
 			return;
 		}
 
@@ -580,6 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					// Skip our own just-sent message (already appended) and
 					// anything at/under the high-water mark.
 					if (msg.id > lastMessageId) {
+						$messagesContainer.find('.wpss-messaging__empty').remove();
 						$messagesContainer.append(msg.html);
 						lastMessageId = msg.id;
 					}
@@ -593,6 +623,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	// Poll every 10 seconds.
 	if ($conversation.length) {
 		setInterval(pollMessages, 10000);
+		// Catch up the moment the buyer or seller comes back to the tab.
+		document.addEventListener('visibilitychange', pollMessages);
 	}
 
 })(jQuery);
