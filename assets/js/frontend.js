@@ -1107,21 +1107,25 @@
 			return;
 		}
 
+		// One open/close path, so the toggle's aria-expanded always tells a screen reader the truth.
+		const setOpen = function(open) {
+			$sidebar.toggleClass('is-open', open);
+			$('body').toggleClass('wpss-sidebar-open', open);
+			$toggle.attr('aria-expanded', open ? 'true' : 'false');
+		};
+
 		$toggle.on('click', function() {
-			$sidebar.addClass('is-open');
-			$('body').addClass('wpss-sidebar-open');
+			setOpen(true);
 		});
 
 		$close.on('click', function() {
-			$sidebar.removeClass('is-open');
-			$('body').removeClass('wpss-sidebar-open');
+			setOpen(false);
 		});
 
 		// Close on backdrop click.
 		$(document).on('click', function(e) {
 			if ($sidebar.hasClass('is-open') && !$(e.target).closest('#wpss-sidebar, .wpss-filter-toggle').length) {
-				$sidebar.removeClass('is-open');
-				$('body').removeClass('wpss-sidebar-open');
+				setOpen(false);
 			}
 		});
 	};

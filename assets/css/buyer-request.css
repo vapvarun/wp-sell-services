@@ -135,6 +135,15 @@
 	margin-left: auto;
 }
 
+/* Count at the start, sort at the end of the same row. */
+.wpss-requests-archive .wpss-results-info {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem 1rem;
+}
+
 .wpss-category-filter,
 .wpss-sort-filter {
 	padding: 0.5rem 1rem;
@@ -1134,9 +1143,10 @@
 		grid-column: 1 / -1;
 	}
 
-	/* Filters bar spans both columns */
-	.wpss-filters-bar {
-		grid-column: 1 / -1;
+	/* The bar holds only the drawer toggle, hidden here, so the bar goes too; the sort is in the
+	   results row (Basecamp 10450931965). */
+	.wpss-requests-archive .wpss-filters-bar {
+		display: none;
 	}
 
 	/* Sidebar in left column */
@@ -1153,14 +1163,14 @@
 		border: 1px solid var(--wpss-border, #e5e7eb);
 		border-radius: var(--wpss-radius, 8px);
 		grid-column: 1;
-		grid-row: 3;
+		grid-row: 2;
 		align-self: start;
 	}
 
 	/* Content in right column */
 	.wpss-requests-content {
 		grid-column: 2;
-		grid-row: 3;
+		grid-row: 2;
 	}
 
 	/* Hide the drawer toggle while the sidebar is on screen - one filter UI
