@@ -1294,7 +1294,7 @@ class Settings {
 				'default'     => 0,
 				'min'         => 0,
 				'max'         => 120,
-				'description' => __( 'Minutes to wait before sending. When the wait is over the email is sent only if the conversation is still unread. Set to 0 to send immediately.', 'wp-sell-services' ),
+				'description' => __( 'Minutes to wait before sending, up to 120. When the wait is over the email is sent only if the conversation is still unread. Set to 0 to send immediately. A held email needs background jobs (WP-Cron) to run; if they stop, a warning appears at the top of the plugin screens.', 'wp-sell-services' ),
 			)
 		);
 

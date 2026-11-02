@@ -214,4 +214,64 @@ class Scheduler {
 		}
 		return false !== \as_next_scheduled_action( $hook, $args, $group );
 	}
+
+	/**
+	 * When background jobs stopped running, or 0 while they run.
+	 *
+	 * A plugin job left pending well past its time means the queue is not being
+	 * worked: usually DISABLE_WP_CRON with no server cron behind it. Delayed
+	 * message emails, late-order checks and auto-complete then never happen, and
+	 * nothing used to say so (Zoho #41859).
+	 *
+	 * WP-Cron only fires on traffic, so the first admin visit after a quiet spell
+	 * finds jobs overdue that this very visit is about to run. The stall is
+	 * therefore reported only once it has been seen on two visits at least ten
+	 * minutes apart. The option is written only when that state changes.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param int $grace Seconds a job may be late before it counts. Default one hour.
+	 * @return int Scheduled time (UTC timestamp) of the oldest overdue job, or 0.
+	 */
+	public static function stalled_since( int $grace = HOUR_IN_SECONDS ): int {
+		if ( ! self::is_ready() || ! function_exists( 'as_get_scheduled_actions' ) ) {
+			return 0;
+		}
+
+		// One row, oldest first, on Action Scheduler's indexed status + date columns.
+		$ids = \as_get_scheduled_actions(
+			array(
+				'group'        => self::GROUP_FREE,
+				'status'       => \ActionScheduler_Store::STATUS_PENDING,
+				'date'         => gmdate( 'Y-m-d H:i:s', time() - $grace ),
+				'date_compare' => '<=',
+				'orderby'      => 'date',
+				'order'        => 'ASC',
+				'per_page'     => 1,
+			),
+			'ids'
+		);
+
+		$seen = (int) get_option( 'wpss_jobs_stall_seen', 0 );
+
+		if ( empty( $ids ) ) {
+			if ( $seen ) {
+				delete_option( 'wpss_jobs_stall_seen' );
+			}
+			return 0;
+		}
+
+		if ( ! $seen ) {
+			update_option( 'wpss_jobs_stall_seen', time(), false );
+			return 0;
+		}
+
+		if ( $seen > time() - 10 * MINUTE_IN_SECONDS ) {
+			return 0;
+		}
+
+		$date = \ActionScheduler::store()->get_date( (int) reset( $ids ) );
+
+		return $date ? (int) $date->getTimestamp() : 0;
+	}
 }

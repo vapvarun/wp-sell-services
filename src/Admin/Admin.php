@@ -1129,6 +1129,24 @@ class Admin {
 			}
 		}
 
+		// Background jobs: the queue has stopped, so timed work silently never happens.
+		$stalled = \WPSellServices\Services\Scheduler::stalled_since();
+
+		if ( $stalled ) {
+			$problems['jobs'] = array(
+				'text'  => sprintf(
+					/* translators: 1: how long ago, e.g. "3 hours", 2: extra hint about DISABLE_WP_CRON or empty */
+					__( 'Background jobs have not run for %1$s. Delayed message emails, late-order checks and auto-complete wait until they do. %2$s', 'wp-sell-services' ),
+					human_time_diff( $stalled ),
+					( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON )
+						? __( 'WP-Cron is turned off on this site (DISABLE_WP_CRON), so a server cron job must call wp-cron.php. Ask your host to add one.', 'wp-sell-services' )
+						: __( 'WP-Cron runs when people visit the site; if your host blocks it, ask them to add a server cron job that calls wp-cron.php.', 'wp-sell-services' )
+				),
+				'url'   => admin_url( 'tools.php?page=action-scheduler&status=past-due&s=wpss' ),
+				'label' => __( 'View overdue jobs', 'wp-sell-services' ),
+			);
+		}
+
 		return $problems;
 	}
 
