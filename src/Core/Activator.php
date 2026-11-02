@@ -74,6 +74,9 @@ class Activator {
 	 * @return void
 	 */
 	public static function install(): void {
+		// Install and upgrades run before the plugin's own init and on activation, where
+		// it never runs: register the audit listeners first so their rows are not lost.
+		( new \WPSellServices\Services\AuditLogService() )->init();
 		self::create_tables();
 		self::create_roles();
 		self::set_default_options();
@@ -278,7 +281,6 @@ class Activator {
 		);
 
 		$repo     = new \WPSellServices\Database\Repositories\VendorProfileRepository();
-		$audit    = new \WPSellServices\Services\AuditLogService();
 		$migrated = 0;
 
 		foreach ( $candidates as $candidate_id ) {
@@ -318,15 +320,14 @@ class Activator {
 			update_user_meta( $user->ID, '_wpss_is_vendor', true );
 			update_user_meta( $user->ID, self::MIGRATED_SELLER_META, 1 );
 
-			$audit->log(
-				'vendor.migrated',
-				'vendor',
-				$user->ID,
-				array(
-					'action'   => 'migrated',
-					'to_value' => 'active',
-				)
-			);
+			/**
+			 * Fires when the 1.7.1 upgrade gives an existing seller an active vendor profile.
+			 *
+			 * @since 1.9.2
+			 *
+			 * @param int $user_id User ID.
+			 */
+			do_action( 'wpss_vendor_migrated', $user->ID );
 
 			++$migrated;
 		}

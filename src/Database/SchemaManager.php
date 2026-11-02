@@ -296,7 +296,7 @@ class SchemaManager {
 					AND k.user_id = d.user_id AND k.amount = d.amount AND k.id < d.id
 				WHERE d.reference_id IS NOT NULL"
 			);
-			$this->remove_duplicates( $ledger, 'ledger.duplicate_removed', 'wallet_transaction', (array) $exact );
+			$this->remove_duplicates( $ledger, 'wallet_transaction', (array) $exact );
 
 			$conflicts = $this->wpdb->get_results(
 				"SELECT reference_type, reference_id, type, COUNT(*) AS n, GROUP_CONCAT(id) AS ids
@@ -322,7 +322,7 @@ class SchemaManager {
 				FROM {$reviews} d
 				JOIN {$reviews} k ON k.order_id = d.order_id AND k.review_type = d.review_type AND k.id < d.id"
 			);
-			$this->remove_duplicates( $reviews, 'review.duplicate_removed', 'review', (array) $dupes );
+			$this->remove_duplicates( $reviews, 'review', (array) $dupes );
 		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 	}
@@ -333,32 +333,37 @@ class SchemaManager {
 	 * @since 1.7.1
 	 *
 	 * @param string        $table       Full table name.
-	 * @param string        $event       Audit event type.
 	 * @param string        $object_type Audit object type.
 	 * @param array<object> $rows        Rows to delete; each exposes id and kept_id.
 	 * @return void
 	 */
-	private function remove_duplicates( string $table, string $event, string $object_type, array $rows ): void {
+	private function remove_duplicates( string $table, string $object_type, array $rows ): void {
 		if ( empty( $rows ) ) {
 			return;
 		}
 
-		$audit = new \WPSellServices\Services\AuditLogService();
-
 		foreach ( $rows as $row ) {
-			$audit->log(
-				$event,
+			/**
+			 * Fires for each duplicate row an upgrade removes before adding a unique key.
+			 *
+			 * @since 1.9.2
+			 *
+			 * @param string               $object_type wallet_transaction or review.
+			 * @param int                  $row_id      Row removed.
+			 * @param int                  $kept_id     Row kept in its place.
+			 * @param array<string, mixed> $row         The removed row's other columns.
+			 */
+			do_action(
+				'wpss_duplicate_row_removed',
 				$object_type,
 				(int) $row->id,
-				array(
-					'action'  => 'delete',
-					'context' => array( 'kept_id' => (int) $row->kept_id ) + array_diff_key(
-						(array) $row,
-						array(
-							'id'      => 1,
-							'kept_id' => 1,
-						)
-					),
+				(int) $row->kept_id,
+				array_diff_key(
+					(array) $row,
+					array(
+						'id'      => 1,
+						'kept_id' => 1,
+					)
 				)
 			);
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

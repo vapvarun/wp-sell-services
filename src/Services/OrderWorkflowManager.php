@@ -720,28 +720,7 @@ class OrderWorkflowManager {
 			return;
 		}
 
-		// Audit-trail the cancellation itself. Status-change audit rows are
-		// written by OrderService::log_status_change(); this row captures the
-		// richer cancellation context (what earnings/payment state was being
-		// unwound) so downstream forensics has the full picture.
-		$audit = new AuditLogService();
-		$audit->log(
-			'order.cancel',
-			'order',
-			$order_id,
-			array(
-				'action'     => 'cancel',
-				'from_value' => $old_status,
-				'to_value'   => ServiceOrder::STATUS_CANCELLED,
-				'context'    => array(
-					'vendor_id'       => (int) $order->vendor_id,
-					'customer_id'     => (int) $order->customer_id,
-					'vendor_earnings' => null === $order->vendor_earnings ? null : (float) $order->vendor_earnings,
-					'order_total'     => (float) $order->total,
-					'payment_status'  => (string) $order->payment_status,
-				),
-			)
-		);
+		// The cancellation audit row listens on wpss_order_status_cancelled itself (AuditLogService).
 
 		// Reverse earnings if commission was already recorded for this order.
 		if ( null !== $order->vendor_earnings && '' !== $order->vendor_earnings ) {
@@ -754,18 +733,16 @@ class OrderWorkflowManager {
 					),
 					'error'
 				);
-				$audit->log(
-					'order.earnings_reversal_failed',
-					'order',
-					$order_id,
-					array(
-						'action'  => 'rollback',
-						'context' => array(
-							'vendor_id' => (int) $order->vendor_id,
-							'amount'    => (float) $order->vendor_earnings,
-						),
-					)
-				);
+				/**
+				 * Fires when a cancelled order's earnings could not be reversed.
+				 *
+				 * @since 1.9.2
+				 *
+				 * @param int   $order_id  Order ID.
+				 * @param int   $vendor_id Vendor who still holds the earnings.
+				 * @param float $amount    Earnings that were not reversed.
+				 */
+				do_action( 'wpss_order_earnings_reversal_failed', $order_id, (int) $order->vendor_id, (float) $order->vendor_earnings );
 			}
 		}
 
@@ -1614,7 +1591,6 @@ class OrderWorkflowManager {
 		 */
 		do_action( 'wpss_order_refund_processed', (int) $order->id, $refund_result, $order );
 
-		$audit   = new AuditLogService();
 		$context = array(
 			'gateway'        => (string) $order->payment_method,
 			'transaction_id' => (string) $order->transaction_id,
@@ -1630,15 +1606,8 @@ class OrderWorkflowManager {
 
 			wpss_log( "Manual refund required for order {$order->id}: send {$refund_amount} {$order->currency} to the buyer via '{$order->payment_method}'. The buyer has NOT been refunded yet.", 'warning' );
 
-			$audit->log(
-				'order.refund_pending',
-				'order',
-				(int) $order->id,
-				array(
-					'action'  => 'refund',
-					'context' => $context,
-				)
-			);
+			/** This action is documented below, where a refund succeeds. */
+			do_action( 'wpss_order_refund_recorded', (int) $order->id, 'pending', $context, $order, false );
 
 			$this->notification_service->notify_admins(
 				'refund_pending',
@@ -1672,17 +1641,18 @@ class OrderWorkflowManager {
 
 			wpss_log( "Auto-refund successful for order {$order->id}: {$refund_amount} of {$order_total} via '{$order->payment_method}', transaction {$order->transaction_id}, refund {$refund_result['transaction_id']}." );
 
-			$audit->log(
-				'order.refund',
-				'order',
-				(int) $order->id,
-				array(
-					'action'     => 'refund',
-					'from_value' => (string) $order->payment_status,
-					'to_value'   => $is_partial ? 'paid' : 'refunded',
-					'context'    => $context,
-				)
-			);
+			/**
+			 * Fires once a gateway refund attempt has an outcome, for the permanent record.
+			 *
+			 * @since 1.9.2
+			 *
+			 * @param int                  $order_id   Order ID.
+			 * @param string               $outcome    pending (send by hand), refunded or failed.
+			 * @param array<string, mixed> $context    Gateway, transaction, amount and result.
+			 * @param ServiceOrder         $order      Order as it was before the refund.
+			 * @param bool                 $is_partial Whether part of the payment remains.
+			 */
+			do_action( 'wpss_order_refund_recorded', (int) $order->id, 'refunded', $context, $order, $is_partial );
 
 			/**
 			 * Fires when an auto-refund is processed successfully.
@@ -1705,15 +1675,8 @@ class OrderWorkflowManager {
 		wpss_log( "Auto-refund FAILED for order {$order->id}: {$error_msg}. The buyer has NOT been refunded.", 'error' );
 
 		$context['error'] = (string) $error_msg;
-		$audit->log(
-			'order.refund_failed',
-			'order',
-			(int) $order->id,
-			array(
-				'action'  => 'refund',
-				'context' => $context,
-			)
-		);
+		/** This action is documented above, where a refund succeeds. */
+		do_action( 'wpss_order_refund_recorded', (int) $order->id, 'failed', $context, $order, false );
 
 		// Tell every administrator so someone processes it by hand.
 		$this->notification_service->notify_admins(

@@ -30,7 +30,6 @@ use WPSellServices\Admin\Tables\OrdersListTable;
 use WPSellServices\Admin\Tables\DisputesListTable;
 use WPSellServices\Models\Dispute;
 use WPSellServices\Models\ServiceOrder;
-use WPSellServices\Services\AuditLogService;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\OrderService;
 use WPSellServices\Services\PendingRefundService;
@@ -722,23 +721,16 @@ class Admin {
 			$order->update( array( 'payment_status' => 'refunded' ) );
 		}
 
-		( new AuditLogService() )->log(
-			'order.refund',
-			'order',
-			$order_id,
-			array(
-				'action'  => 'refund',
-				'context' => array(
-					'gateway' => (string) $order->payment_method,
-					'amount'  => $pending,
-					'result'  => array(
-						'success' => true,
-						'manual'  => true,
-						'message' => 'Marked as sent by admin.',
-					),
-				),
-			)
-		);
+		/**
+		 * Fires when an admin marks a manual refund as sent to the buyer.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int          $order_id Order ID.
+		 * @param float        $amount   Amount the admin sent back.
+		 * @param ServiceOrder $order    Order.
+		 */
+		do_action( 'wpss_order_refund_marked_sent', $order_id, (float) $pending, $order );
 
 		wpss_log( "Manual refund of {$pending} for order {$order_id} marked as sent by user " . get_current_user_id() . '.' );
 

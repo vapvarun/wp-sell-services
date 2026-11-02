@@ -556,17 +556,6 @@ class ReportsPage {
 			return;
 		}
 
-		( new \WPSellServices\Services\AuditLogService() )->log(
-			'member.account_status',
-			'user',
-			$user_id,
-			array(
-				'action'     => $status,
-				'from_value' => $from,
-				'to_value'   => $status,
-			)
-		);
-
 		if ( 'active' === $status ) {
 			delete_user_meta( $user_id, 'wpss_account_status' );
 		} else {
@@ -580,8 +569,9 @@ class ReportsPage {
 		 *
 		 * @param int    $user_id Member.
 		 * @param string $status  New standing.
+		 * @param string $from    Standing before (since 1.9.2).
 		 */
-		do_action( 'wpss_account_status_changed', $user_id, $status );
+		do_action( 'wpss_account_status_changed', $user_id, $status, $from );
 	}
 
 	/**

@@ -202,19 +202,17 @@ class ReviewService {
 		$this->update_service_rating( $service_id );
 		$this->update_vendor_rating( $vendor_id );
 
-		( new AuditLogService() )->log(
-			'review.imported',
-			'review',
-			(int) $review_id,
-			array(
-				'action'  => 'import',
-				'context' => array(
-					'vendor_id'  => $vendor_id,
-					'service_id' => $service_id,
-					'rating'     => $rating,
-				),
-			)
-		);
+		/**
+		 * Fires after a review is imported (no order behind it).
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int $review_id  Review ID.
+		 * @param int $vendor_id  Vendor reviewed.
+		 * @param int $service_id Service reviewed.
+		 * @param int $rating     Stars.
+		 */
+		do_action( 'wpss_review_imported', (int) $review_id, $vendor_id, $service_id, $rating );
 
 		return $this->get( $review_id );
 	}
@@ -261,21 +259,6 @@ class ReviewService {
 		// - the one writer - rather than in a listener that only loads on admin screens.
 		\WPSellServices\API\ReviewsController::update_rating_cache( (int) $row->service_id, (int) $row->vendor_id );
 
-		( new AuditLogService() )->log(
-			'review.' . $new_status,
-			'review',
-			$review_id,
-			array(
-				'action'     => match ( $new_status ) {
-					Review::STATUS_APPROVED => 'approve',
-					Review::STATUS_REJECTED => 'reject',
-					default                 => 'unapprove',
-				},
-				'from_value' => (string) $old,
-				'to_value'   => $new_status,
-			)
-		);
-
 		/**
 		 * Fires after an admin moderates a review from the queue.
 		 *
@@ -283,8 +266,9 @@ class ReviewService {
 		 *
 		 * @param int    $review_id  Moderated review ID.
 		 * @param string $new_status New review status.
+		 * @param string $old_status Status before (since 1.9.2).
 		 */
-		do_action( 'wpss_review_moderated', $review_id, $new_status );
+		do_action( 'wpss_review_moderated', $review_id, $new_status, (string) $old );
 
 		return true;
 	}

@@ -427,17 +427,17 @@ class DisputeWorkflowManager {
 			);
 		}
 
-		( new \WPSellServices\Services\AuditLogService() )->log(
-			'dispute.assign',
-			'dispute',
-			$dispute_id,
-			array(
-				'action'     => 'assign',
-				'from_value' => (int) ( $dispute->meta['assigned_to'] ?? 0 ),
-				'to_value'   => $admin_id,
-				'context'    => array( 'order_id' => (int) $dispute->order_id ),
-			)
-		);
+		/**
+		 * Fires when a dispute is assigned to an admin.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int $dispute_id Dispute ID.
+		 * @param int $admin_id   Admin now assigned.
+		 * @param int $previous   Admin assigned before (0 for none).
+		 * @param int $order_id   Disputed order.
+		 */
+		do_action( 'wpss_dispute_assigned', $dispute_id, $admin_id, (int) ( $dispute->meta['assigned_to'] ?? 0 ), (int) $dispute->order_id );
 
 		// Notify assigned admin.
 		$this->notification_service->send(

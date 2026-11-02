@@ -2396,20 +2396,16 @@ class EmailService {
 		$data = (array) $error->get_error_data();
 		$to   = implode( ', ', (array) ( $data['to'] ?? array() ) );
 
-		( new AuditLogService() )->log(
-			'email.failed',
-			'email',
-			0,
-			array(
-				'action'  => self::$retrying ? 'retry' : 'send',
-				'context' => array(
-					'recipient' => $to,
-					'type'      => self::$sending_type,
-					'subject'   => (string) ( $data['subject'] ?? '' ),
-					'error'     => $error->get_error_message(),
-				),
-			)
-		);
+		/**
+		 * Fires when wp_mail() fails, with which of our email types it was.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param \WP_Error $error    Error raised by wp_mail().
+		 * @param string    $type     Our email type, or '' for mail that was not ours.
+		 * @param bool      $is_retry Whether this was the scheduled retry.
+		 */
+		do_action( 'wpss_email_failed', $error, self::$sending_type, self::$retrying );
 
 		if ( self::$retrying || '' === $to ) {
 			return;

@@ -32,6 +32,18 @@ class VendorService {
 	public const ROLE = 'wpss_vendor';
 
 	/**
+	 * Vendor statuses an admin may set, mapped to the audit event each records.
+	 *
+	 * @since 1.9.2
+	 */
+	public const STATUS_EVENTS = array(
+		'active'    => 'vendor.approved',
+		'pending'   => 'vendor.pending',
+		'suspended' => 'vendor.suspended',
+		'rejected'  => 'vendor.rejected',
+	);
+
+	/**
 	 * Profile repository.
 	 *
 	 * @var VendorProfileRepository
@@ -368,16 +380,9 @@ class VendorService {
 	 * @return bool True when the profile row was updated.
 	 */
 	public function set_status( int $user_id, string $status ): bool {
-		$events = array(
-			'active'    => 'vendor.approved',
-			'pending'   => 'vendor.pending',
-			'suspended' => 'vendor.suspended',
-			'rejected'  => 'vendor.rejected',
-		);
-
 		$from = $this->get_vendor_status( $user_id );
 
-		if ( ! isset( $events[ $status ] ) || null === $from ) {
+		if ( ! isset( self::STATUS_EVENTS[ $status ] ) || null === $from ) {
 			return false;
 		}
 
@@ -404,24 +409,14 @@ class VendorService {
 			$this->revoke_vendor_access( $user_id );
 		}
 
-		( new AuditLogService() )->log(
-			$events[ $status ],
-			'vendor',
-			$user_id,
-			array(
-				'action'     => $status,
-				'from_value' => $from,
-				'to_value'   => $status,
-			)
-		);
-
 		/**
 		 * Fires when vendor status is updated.
 		 *
 		 * @param int    $vendor_id Vendor user ID.
 		 * @param string $status    New status.
+		 * @param string $from      Status before (since 1.9.2).
 		 */
-		do_action( 'wpss_vendor_status_updated', $user_id, $status );
+		do_action( 'wpss_vendor_status_updated', $user_id, $status, $from );
 
 		return true;
 	}

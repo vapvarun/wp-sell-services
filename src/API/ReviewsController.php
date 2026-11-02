@@ -543,17 +543,17 @@ class ReviewsController extends RestController {
 			// Audited only once stored, and only when the name really changed.
 			$old_name = (string) ( $review->reviewer_name ?? '' );
 			if ( false !== $saved && array_key_exists( 'reviewer_name', $updates ) && (string) $updates['reviewer_name'] !== $old_name ) {
-				( new \WPSellServices\Services\AuditLogService() )->log(
-					'review.edited',
-					'review',
-					$review_id,
-					array(
-						'action'     => 'edit',
-						'from_value' => $old_name,
-						'to_value'   => (string) $updates['reviewer_name'],
-						'context'    => array( 'field' => 'reviewer_name' ),
-					)
-				);
+				/**
+				 * Fires when an admin edits a stored field on a review.
+				 *
+				 * @since 1.9.2
+				 *
+				 * @param int    $review_id Review ID.
+				 * @param string $field     Field changed.
+				 * @param string $before    Previous value.
+				 * @param string $after     New value.
+				 */
+				do_action( 'wpss_review_edited', $review_id, 'reviewer_name', $old_name, (string) $updates['reviewer_name'] );
 			}
 
 			// Update rating cache if rating changed.
@@ -605,20 +605,15 @@ class ReviewsController extends RestController {
 			array( '%d' )
 		);
 
-		( new \WPSellServices\Services\AuditLogService() )->log(
-			'review.deleted',
-			'review',
-			$review_id,
-			array(
-				'action'  => 'delete',
-				'context' => array(
-					'vendor_id'   => $vendor_id,
-					'customer_id' => (int) $review->customer_id,
-					'order_id'    => (int) ( $review->order_id ?? 0 ),
-					'rating'      => (int) ( $review->rating ?? 0 ),
-				),
-			)
-		);
+		/**
+		 * Fires after a review is deleted.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int    $review_id Review ID.
+		 * @param object $review    The row as it was before deletion.
+		 */
+		do_action( 'wpss_review_deleted', $review_id, $review );
 
 		// Update rating cache.
 		self::update_rating_cache( $service_id, $vendor_id );

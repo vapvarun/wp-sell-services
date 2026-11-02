@@ -475,7 +475,7 @@
     },
     {
       "name": "{prefix}wpss_audit_log",
-      "purpose": "Privileged-action audit trail"
+      "purpose": "Privileged-action audit trail. Written ONLY by listeners: Free AuditLogService::init() and Pro Services\\AuditListeners::init() turn documented domain actions into rows; no writer calls log() itself (tests/test-audit-listener-pattern.php). init() is idempotent and also runs at the start of Activator::install() so upgrade rows are kept."
     }
   ],
   "ecommerce_adapter_boundary": {

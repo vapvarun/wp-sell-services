@@ -587,18 +587,16 @@ class OrderService {
 			// around the whole event is the upgrade if this ever shows up in logs.
 			if ( is_array( $gateway ) && ! empty( $gateway['success'] ) && empty( $gateway['manual'] ) ) {
 				wpss_log( sprintf( 'Order %d: the gateway refunded %s but the order could not be moved to "%s". Record the refund by hand.', $order_id, (string) $delta, $status ), 'error' );
-				( new AuditLogService() )->log(
-					'order.refund_unrecorded',
-					'order',
-					$order_id,
-					array(
-						'action'  => 'refund',
-						'context' => array(
-							'amount' => $delta,
-							'status' => $status,
-						),
-					)
-				);
+				/**
+				 * Fires when a gateway refunded money but the order could not record it.
+				 *
+				 * @since 1.9.2
+				 *
+				 * @param int    $order_id Order ID.
+				 * @param float  $amount   Amount the gateway refunded.
+				 * @param string $status   Status the order could not move to.
+				 */
+				do_action( 'wpss_order_refund_unrecorded', $order_id, (float) $delta, $status );
 			}
 
 			return $result( false, 'refused', 0.0, (string) $order->status, $gateway, __( 'The order changed while the refund was being recorded. Reload it and check its status.', 'wp-sell-services' ) );
@@ -1542,23 +1540,19 @@ class OrderService {
 			$actor_id = (int) get_current_user_id();
 		}
 
-		// Write to the permanent audit log — this is the source of truth for
-		// forensic/compliance queries regardless of whether a conversation
-		// thread exists for the order.
-		( new AuditLogService() )->log(
-			'order.status_change',
-			'order',
-			$order_id,
-			array(
-				'action'     => $is_forced ? 'force' : 'update',
-				'from_value' => $old_status,
-				'to_value'   => $new_status,
-				'is_forced'  => $is_forced,
-				'context'    => array(
-					'note' => $note,
-				),
-			)
-		);
+		/**
+		 * Fires once per order status change, after de-duplication, for the permanent record.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int    $order_id   Order ID.
+		 * @param string $old_status Previous status.
+		 * @param string $new_status New status.
+		 * @param string $note       Note recorded with the change.
+		 * @param int    $actor_id   Who made the change.
+		 * @param bool   $is_forced  Whether an admin forced it past the normal rules.
+		 */
+		do_action( 'wpss_order_status_recorded', $order_id, $old_status, $new_status, $note, $actor_id, $is_forced );
 
 		// Create system message in conversation (user-facing history).
 		$conversation_service = new ConversationService();

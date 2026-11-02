@@ -13,7 +13,6 @@ namespace WPSellServices\Services;
 use WPSellServices\Database\Repositories\OrderRepository;
 use WPSellServices\Models\Dispute;
 use WPSellServices\Models\ServiceOrder;
-use WPSellServices\Services\AuditLogService;
 use WPSellServices\Services\OrderService;
 
 defined( 'ABSPATH' ) || exit;
@@ -861,36 +860,32 @@ class DisputeService {
 
 		if ( ! $no_op ) {
 			$fields = (array) ( $context['fields'] ?? array() );
-			( new AuditLogService() )->log(
-				'dispute.transition',
-				'dispute',
-				$dispute_id,
-				array(
-					'action'     => $to,
-					'from_value' => $from,
-					'to_value'   => $to,
-					'context'    => array_filter(
-						array(
-							'order_id'      => (int) $dispute->order_id,
-							'resolution'    => $fields['resolution'] ?? null,
-							'refund_amount' => $fields['refund_amount'] ?? null,
-							'resolved_by'   => $fields['resolved_by'] ?? null,
-							'note'          => '' !== $note ? $note : null,
-						),
-						static fn( $value ) => null !== $value
-					),
-				)
-			);
 
 			/**
 			 * Fires when dispute status changes.
 			 *
 			 * @since 1.0.0
-			 * @param int    $dispute_id Dispute ID.
-			 * @param string $status     New status.
-			 * @param string $old_status Old status.
+			 * @param int                  $dispute_id Dispute ID.
+			 * @param string               $status     New status.
+			 * @param string               $old_status Old status.
+			 * @param array<string, mixed> $details    Order, resolution, refund amount, who resolved and the note; unset keys omitted (since 1.9.2).
 			 */
-			do_action( 'wpss_dispute_status_changed', $dispute_id, $to, $from );
+			do_action(
+				'wpss_dispute_status_changed',
+				$dispute_id,
+				$to,
+				$from,
+				array_filter(
+					array(
+						'order_id'      => (int) $dispute->order_id,
+						'resolution'    => $fields['resolution'] ?? null,
+						'refund_amount' => $fields['refund_amount'] ?? null,
+						'resolved_by'   => $fields['resolved_by'] ?? null,
+						'note'          => '' !== $note ? $note : null,
+					),
+					static fn( $value ) => null !== $value
+				)
+			);
 		}
 
 		return true;

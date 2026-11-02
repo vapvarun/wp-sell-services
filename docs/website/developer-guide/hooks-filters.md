@@ -80,7 +80,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_pre_order_status_change` | `bool $allow, int $order_id, string $new_status, string $old_status` | `OrderService.php` |
 | `wpss_order_started` | `int $order_id` | `src/API/OrdersController.php:1004` |
 | `wpss_order_completed` | `int $order_id, object $order` | `src/Services/OrderWorkflowManager.php:705` |
-| `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `src/Services/OrderWorkflowManager.php:810` |
+| `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `src/Services/OrderWorkflowManager.php:787` |
 | `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:1223` |
 | `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:741` |
 | `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/requirements.php:40` |
@@ -119,8 +119,8 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_delivery_accepted` | `int $order_id` | `src/Services/DeliveryService.php:238` |
 | `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:309` |
 | `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:521` |
-| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:1473` |
-| `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1695` |
+| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:1471` |
+| `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1665` |
 | `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` | `src/Services/ConversationService.php:382` |
 
 ## Payment and Gateway Actions
@@ -229,17 +229,17 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_vendor_registered` | `int $user_id, array $profile_data` | `src/Services/VendorService.php:187` |
-| `wpss_vendor_profile_updated` | `int $user_id, array $filtered_data` | `src/Services/VendorService.php:608` |
-| `wpss_vendor_vacation_mode_changed` | `int $user_id, bool $enabled, string $message` | `src/Services/VendorService.php:659` |
-| `wpss_vendor_tier_changed` | `int $user_id, string $tier` | `src/Services/VendorService.php:700` |
+| `wpss_vendor_registered` | `int $user_id, array $profile_data` | `src/Services/VendorService.php:199` |
+| `wpss_vendor_profile_updated` | `int $user_id, array $filtered_data` | `src/Services/VendorService.php:603` |
+| `wpss_vendor_vacation_mode_changed` | `int $user_id, bool $enabled, string $message` | `src/Services/VendorService.php:654` |
+| `wpss_vendor_tier_changed` | `int $user_id, string $tier` | `src/Services/VendorService.php:695` |
 | `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `src/Services/SellerLevelService.php:375` |
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:272` |
-| `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:423` |
+| `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:418` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1468` |
 | `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2022` |
-| `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:489` |
-| `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:541` |
+| `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:484` |
+| `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:536` |
 
 ## Financial Actions
 
@@ -276,8 +276,8 @@ tip. Tips are excluded from commission by default, so the two usually match.
 |------|-----------|------|
 | `wpss_dispute_opened` | `int $dispute_id, int $order_id, int $opened_by, array $data` | `src/Services/DisputeService.php:407` |
 | `wpss_dispute_evidence_added` | `int $dispute_id, int $user_id` | `src/Services/DisputeService.php:562` |
-| `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `src/Services/DisputeService.php:892` |
-| `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `src/Services/DisputeService.php:1093` |
+| `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `src/Services/DisputeService.php:873` |
+| `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `src/Services/DisputeService.php:1088` |
 | `wpss_dispute_response_submitted` | `int $message_id, int $dispute_id, int $user_id` | `src/Services/DisputeWorkflowManager.php:208` |
 | `wpss_dispute_escalated` | `int $dispute_id, string $reason, int $escalated_by` | `src/Services/DisputeWorkflowManager.php:358` |
 | `wpss_dispute_cancelled` | `int $dispute_id, int $user_id, string $reason` | `src/Services/DisputeWorkflowManager.php:558` |
@@ -293,7 +293,7 @@ tip. Tips are excluded from commission by default, so the two usually match.
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_review_created` | `int $review_id, int $order_id` | `src/Services/ReviewService.php:131` |
-| `wpss_review_reply_created` | `int $review_id` | `src/API/ReviewsController.php:667` |
+| `wpss_review_reply_created` | `int $review_id` | `src/API/ReviewsController.php:662` |
 | `wpss_buyer_request_created` | `int $post_id, array $data` | `src/Services/BuyerRequestService.php:128` |
 | `wpss_buyer_request_updated` | `int $request_id, array $data` | `src/Services/BuyerRequestService.php:181` |
 | `wpss_buyer_request_status_changed` | `int $request_id, string $status, string $old_status` | `src/Services/BuyerRequestService.php:652` |
@@ -346,7 +346,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2996` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2988` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:2062` |
 
 ### Admin Filters
@@ -684,7 +684,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_order_statuses` | `$statuses` | `src/functions/order-status.php:81` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:607` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:429` |
-| `wpss_wallet_manager` | `null` | `src/functions/ledger.php:740` |
+| `wpss_wallet_manager` | `null` | `src/functions/ledger.php:734` |
 
 ### Currency System Filters (1.2.1)
 
@@ -760,7 +760,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1109` |
+| `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1107` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:369` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:1035` |
 | `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:925` |
@@ -777,10 +777,10 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_realtime_settings` | `array $settings` | `RealtimeService.php` |
-| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:626` |
-| `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/Services/ReviewService.php:523` |
+| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:610` |
+| `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/Services/ReviewService.php:507` |
 | `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:654` |
-| `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:117` |
+| `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:129` |
 | `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:373` |
 | `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:383` |
 | `wpss_payout_method_registry` | `$methods` (id => label + fields) | `src/Services/EarningsService.php:1265` |

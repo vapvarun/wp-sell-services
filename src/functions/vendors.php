@@ -1125,7 +1125,6 @@ const WPSS_VENDOR_ROLE_CLEANUP_OPTION = 'wpss_vendor_role_cleanup';
  */
 function wpss_remove_vendor_role( array $user_ids ): int {
 	$allowed = array_intersect( array_map( 'intval', $user_ids ), wpss_get_role_only_vendor_ids() );
-	$audit   = new \WPSellServices\Services\AuditLogService();
 	$default = (string) get_option( 'default_role', 'subscriber' );
 	$batch   = array();
 
@@ -1143,15 +1142,15 @@ function wpss_remove_vendor_role( array $user_ids ): int {
 		}
 
 		$batch[ $user_id ] = $added_default ? $default : '';
-		$audit->log(
-			'vendor.role_removed',
-			'user',
-			$user_id,
-			array(
-				'from_value' => \WPSellServices\Services\VendorService::ROLE,
-				'to_value'   => implode( ',', $user->roles ),
-			)
-		);
+		/**
+		 * Fires when the bulk tool removes the vendor role from a user.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int      $user_id User ID.
+		 * @param string[] $roles   Roles the user holds now.
+		 */
+		do_action( 'wpss_vendor_role_removed', $user_id, $user->roles );
 	}
 
 	if ( $batch ) {
@@ -1183,7 +1182,6 @@ function wpss_restore_vendor_role(): int {
 		return 0;
 	}
 
-	$audit    = new \WPSellServices\Services\AuditLogService();
 	$restored = 0;
 
 	foreach ( $last['users'] as $user_id => $added_default ) {
@@ -1197,12 +1195,15 @@ function wpss_restore_vendor_role(): int {
 			$user->remove_role( (string) $added_default );
 		}
 
-		$audit->log(
-			'vendor.role_restored',
-			'user',
-			(int) $user_id,
-			array( 'to_value' => implode( ',', $user->roles ) )
-		);
+		/**
+		 * Fires when the bulk tool's undo gives a user the vendor role back.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int      $user_id User ID.
+		 * @param string[] $roles   Roles the user holds now.
+		 */
+		do_action( 'wpss_vendor_role_restored', (int) $user_id, $user->roles );
 		++$restored;
 	}
 
