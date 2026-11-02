@@ -229,18 +229,6 @@
 	color: var(--wpss-block-text-light);
 }
 
-.wpss-service-title {
-	margin: 0 0 0.5rem;
-	font-size: 1rem;
-	font-weight: 600;
-	line-height: 1.4;
-	color: var(--wpss-block-text);
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-}
-
 .wpss-service-rating {
 	display: flex;
 	align-items: center;
