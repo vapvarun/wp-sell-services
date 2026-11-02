@@ -242,7 +242,7 @@ add_filter( 'wpss_dashboard_section_titles', function( $titles ) {
 
 ## Full-width Plugin Pages
 
-Since 1.2.0, the plugin's app-like pages - Dashboard, Cart, Checkout, and Become a Vendor - render full-width without a theme sidebar. This prevents marketplace UI from appearing next to widgets such as Recent Posts.
+Since 1.2.0, the plugin's app-like pages - Dashboard, Cart, Checkout, Become a Vendor, Registration and Login - render full-width without a theme sidebar. Since 1.9.2 the Vendors directory does too, matching the Services and Buyer Requests archives. This prevents marketplace UI from appearing next to widgets such as Recent Posts.
 
 ### How it works per theme
 
@@ -272,7 +272,7 @@ Turn off full-width handling entirely - the active theme's normal sidebar layout
 add_filter( 'wpss_use_fullwidth_template', '__return_false' );
 ```
 
-Control which plugin pages receive the full-width treatment (default: `dashboard`, `cart`, `checkout`, `become_vendor`):
+Control which plugin pages receive the full-width treatment (default: `dashboard`, `cart`, `checkout`, `become_vendor`, `registration`, `login`, `vendors_page`):
 
 ```php
 // Remove the dashboard from full-width treatment

@@ -3913,10 +3913,11 @@ a.wpss-back-link:focus {
 	grid-column: 2;
 	min-width: 0;
 	margin: 0;
+	/* Badge always under the name: wrapping put it beside short names and under long ones. */
 	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--wpss-space-2, 8px);
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--wpss-space-1, 4px);
 }
 
 /* A long display name ("wpss_rest_vendor_ZTL6w4qW") ends in an ellipsis inside

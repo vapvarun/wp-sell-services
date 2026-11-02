@@ -820,7 +820,7 @@ add_filter( 'wpss_realtime_settings', function( $settings ) {
 add_filter( 'wpss_use_fullwidth_template', '__return_false' );
 ```
 
-**`wpss_fullwidth_page_keys`** - control which mapped plugin pages render full-width. Default: `['dashboard', 'cart', 'checkout', 'become_vendor', 'registration']`:
+**`wpss_fullwidth_page_keys`** - control which mapped plugin pages render full-width. Default: `['dashboard', 'cart', 'checkout', 'become_vendor', 'registration', 'login', 'vendors_page']`:
 
 ```php
 // Remove the cart page from full-width treatment
