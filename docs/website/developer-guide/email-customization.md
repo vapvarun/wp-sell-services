@@ -123,8 +123,10 @@ Modify email content programmatically without overriding template files. These f
 |--------|-----------|---------|
 | `wpss_email_subject` | `string $subject, string $type, string $to` | Change the email subject line |
 | `wpss_email_from_name` | `string $from_name` | Change the sender display name |
-| `wpss_email_before_send` | `array $email, string $type` | Modify the whole payload (`to`, `subject`, `message`, `headers`, `attachments`) immediately before `wp_mail()` |
+| `wpss_email_before_send` | `array $email, string $type` | Modify the whole payload (`to`, `subject`, `content`, `headers`) before it is sent |
 | `wpss_notification_email_content` | `string $content, string $subject, int $user_id, array $data` | Modify the body of any notification email (the HTML fragment rendered inside `generic.php`) |
+
+**Emails wait for the database.** An email the plugin sends while a database transaction is open (opening, cancelling or ruling on a dispute, for example) is held until that transaction commits, and is never sent if it rolls back. `wpss_email_before_send` still runs at the moment of the send; only the hand-off to `wp_mail()` waits. Mail sent by other plugins is not held.
 
 ### Vendor-Specific Email Filters
 

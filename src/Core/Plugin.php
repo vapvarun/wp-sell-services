@@ -3275,6 +3275,10 @@ final class Plugin {
 
 		// A send that fails is logged to the audit log and retried once.
 		add_action( 'wp_mail_failed', array( \WPSellServices\Services\EmailService::class, 'on_mail_failed' ) );
+
+		// This plugin's mail sent inside a database transaction waits for its COMMIT and is dropped on ROLLBACK.
+		add_filter( 'query', array( \WPSellServices\Services\EmailService::class, 'track_transaction' ) );
+		add_action( 'shutdown', array( \WPSellServices\Services\EmailService::class, 'release_held_mail' ) );
 		add_action( \WPSellServices\Services\EmailService::RETRY_HOOK, array( \WPSellServices\Services\EmailService::class, 'retry' ), 10, 4 );
 
 		// --- DisputeWorkflowManager: lazy-init on first hook fire ---

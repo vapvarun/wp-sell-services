@@ -133,6 +133,28 @@ class EmailService {
 	private static bool $retrying = false;
 
 	/**
+	 * This plugin's mail sent while a database transaction was open, held until it commits.
+	 *
+	 * @var array<int, array{email: array, type: string}>
+	 */
+	private static array $held_mail = array();
+
+	/**
+	 * True between START TRANSACTION and its COMMIT or ROLLBACK.
+	 *
+	 * @var bool
+	 */
+	private static bool $in_transaction = false;
+
+	/**
+	 * True once a COMMIT was issued; the held mail goes out after it has run.
+	 *
+	 * @var bool
+	 */
+	private static bool $release_due = false;
+
+
+	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
 	 *
 	 * @var array|null
@@ -2369,15 +2391,103 @@ class EmailService {
 			$type
 		);
 
+		if ( self::$release_due ) {
+			self::release_held_mail();
+		}
+
+		// Inside a database transaction the change this mail announces can still roll back: hold it for the COMMIT.
+		if ( self::$in_transaction ) {
+			self::$held_mail[] = array(
+				'email' => $email,
+				'type'  => $type,
+			);
+			return true;
+		}
+
+		return self::deliver( $email, $type );
+	}
+
+	/**
+	 * Hand one prepared email to wp_mail().
+	 *
+	 * @param array  $email Email after wpss_email_before_send: to, subject, content, headers.
+	 * @param string $type  Email type, for the failure listener.
+	 * @return bool
+	 */
+	private static function deliver( array $email, string $type ): bool {
 		self::$sending_type = $type;
 		$sent               = wp_mail( $email['to'], $email['subject'], $email['content'], $email['headers'] );
 		self::$sending_type = '';
 
 		if ( ! $sent ) {
-			wpss_log( sprintf( 'Email "%s" (%s) to %s was not sent.', $email['subject'], $type, $email['to'] ), 'error' );
+			wpss_log( sprintf( 'Email "%s" (%s) to %s was not sent.', $email['subject'], $type, implode( ', ', (array) $email['to'] ) ), 'error' );
 		}
 
 		return $sent;
+	}
+
+	/**
+	 * Follow the database transaction state from the SQL itself.
+	 *
+	 * Bound to the `query` filter, so every transaction on the site is seen
+	 * without each START TRANSACTION site having to opt in. A COMMIT releases
+	 * the held mail once it has run (at the next query, mail or shutdown); a
+	 * ROLLBACK drops it, because the change the mail announces never happened.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param string $query SQL about to run.
+	 * @return string The same SQL.
+	 */
+	public static function track_transaction( $query ) {
+		if ( self::$release_due ) {
+			self::release_held_mail();
+		}
+
+		if ( ! is_string( $query ) || strlen( $query ) > 40 ) {
+			return $query;
+		}
+
+		$sql = strtoupper( trim( $query, " \t\n\r;" ) );
+
+		if ( 'START TRANSACTION' === $sql || 'BEGIN' === $sql ) {
+			// A START inside an open transaction commits it implicitly in MySQL.
+			self::$release_due    = self::$in_transaction && self::$held_mail;
+			self::$in_transaction = true;
+		} elseif ( 'COMMIT' === $sql ) {
+			self::$in_transaction = false;
+			self::$release_due    = (bool) self::$held_mail;
+		} elseif ( 'ROLLBACK' === $sql ) {
+			self::$in_transaction = false;
+			self::$held_mail      = array();
+		}
+
+		return $query;
+	}
+
+
+	/**
+	 * Send the mail held for a committed transaction.
+	 *
+	 * Also bound to `shutdown`. Mail still held there, never released by a COMMIT, belongs to a transaction
+	 * that never committed, which MySQL rolls back, so it is not sent.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @return void
+	 */
+	public static function release_held_mail(): void {
+		if ( ! self::$release_due ) {
+			return;
+		}
+
+		$held              = self::$held_mail;
+		self::$held_mail   = array();
+		self::$release_due = false;
+
+		foreach ( $held as $mail ) {
+			self::deliver( $mail['email'], $mail['type'] );
+		}
 	}
 
 	/**
