@@ -203,8 +203,15 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 					});
 
 					// Auto-scroll to bottom of messages.
+					// Images load after this runs and push the newest message back down, so re-pin on each load.
 					var container = document.getElementById('wpss-messages-container');
-					if (container) container.scrollTop = container.scrollHeight;
+					if (container) {
+						var pinToBottom = function() { container.scrollTop = container.scrollHeight; };
+						pinToBottom();
+						container.querySelectorAll('img').forEach(function(img) {
+							if (!img.complete) img.addEventListener('load', pinToBottom, { once: true });
+						});
+					}
 				});
 				</script>
 			<?php endif; ?>

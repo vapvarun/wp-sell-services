@@ -420,6 +420,10 @@ document.addEventListener('DOMContentLoaded', function() {
 		$messagesContainer.scrollTop($messagesContainer[0].scrollHeight);
 	}
 	scrollToBottom();
+	// Images load after this runs and push the newest message back down, so re-pin on each load.
+	$messagesContainer.find('img').each(function() {
+		if (!this.complete) this.addEventListener('load', scrollToBottom, { once: true });
+	});
 
 	// Auto-resize textarea.
 	$messageInput.on('input', function() {

@@ -874,7 +874,9 @@
 .wpss-section--messages .wpss-conversation-thread {
 	display: flex;
 	flex-direction: column;
-	min-height: 620px;
+	/* Bounded so the thread scrolls inside itself and opens on the newest message. */
+	height: min(720px, 80vh);
+	min-height: 420px;
 	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-gray-200);
 	border-radius: 16px;
@@ -910,6 +912,7 @@
 
 .wpss-section--messages .wpss-conversation-thread__messages {
 	flex: 1;
+	min-height: 0;
 	padding: 24px;
 	overflow-y: auto;
 	background: var(--wpss-gray-50, #f8fafc);
@@ -1044,7 +1047,7 @@
 @media (max-width: 767px) {
 
 	.wpss-section--messages .wpss-conversation-thread {
-		min-height: 520px;
+		min-height: 360px;
 		border-radius: 12px;
 	}
 
