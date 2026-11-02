@@ -695,7 +695,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1302` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:205` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:428` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4123` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4148` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:973` |
 
 **`wpss_currency_registry`** is the preferred, single-place override - add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):

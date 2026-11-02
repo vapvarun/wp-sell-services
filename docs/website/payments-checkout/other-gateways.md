@@ -35,6 +35,8 @@ PayPal provides a full sandbox environment for testing without real money.
 
 **To go live:** Switch to the **Live** tab in PayPal Developer Dashboard, create a live app, copy the live credentials, and uncheck Sandbox Mode in WP Sell Services.
 
+**Keeping the secret out of the database:** define `WPSS_PAYPAL_LIVE_CLIENT_SECRET` (and `WPSS_PAYPAL_SANDBOX_CLIENT_SECRET` for testing) in `wp-config.php`. The constant wins over the saved value, its field is locked, and the next save clears the stored copy. The Client ID stays on the settings screen.
+
 ### Setting Up PayPal Webhooks
 
 1. In PayPal Developer Dashboard, go to **Webhooks**

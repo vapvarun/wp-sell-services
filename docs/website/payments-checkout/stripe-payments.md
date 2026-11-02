@@ -155,6 +155,18 @@ For example, on a $100 service, Stripe keeps about $3.20 and you receive $96.80.
 
 Your site never stores or processes card data. Stripe handles all PCI compliance through their secure payment form. Card details go directly to Stripe's servers, and your site only receives a secure payment token.
 
+### Keep Your Stripe Secrets in wp-config.php
+
+Secret keys saved on the settings screen are stored in the database, as WooCommerce does. To keep them out of the database (and out of any database backup or export), define them in `wp-config.php` instead:
+
+```php
+define( 'WPSS_STRIPE_LIVE_SECRET_KEY', 'sk_live_...' );
+define( 'WPSS_STRIPE_TEST_SECRET_KEY', 'sk_test_...' );
+define( 'WPSS_STRIPE_WEBHOOK_SECRET', 'whsec_...' );
+```
+
+A defined constant always wins. Its field on the settings screen is locked and shows which constant supplies it, and the next save clears the copy that was stored in the database. Publishable keys are not secret and stay on the settings screen. To manage a key on the screen again, remove its constant.
+
 ## Troubleshooting
 
 | Problem | Solution |

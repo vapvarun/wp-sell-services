@@ -2908,6 +2908,30 @@ class Settings {
 		$input_name  = (string) ( $args['name'] ?? $option_name . '[' . $field . ']' );
 		$input_id    = (string) ( $args['id'] ?? $field );
 
+		// Supplied by wp-config.php: nothing to type here, and a save never stores it.
+		$constant = wpss_secret_constant( $option_name, $field );
+
+		if ( '' !== $constant ) {
+			printf(
+				'<input type="password" id="%1$s" value="" disabled placeholder="%2$s" aria-label="%3$s" aria-describedby="%1$s-constant" class="regular-text">',
+				esc_attr( $input_id ),
+				esc_attr__( 'Set in wp-config.php', 'wp-sell-services' ),
+				esc_attr( $label )
+			);
+			printf(
+				'<p class="description" id="%1$s-constant">%2$s</p>',
+				esc_attr( $input_id ),
+				esc_html(
+					sprintf(
+						/* translators: %s: constant name, e.g. WPSS_STRIPE_LIVE_SECRET_KEY */
+						__( 'This secret comes from %s and is not stored in the database. Remove the constant to manage it here.', 'wp-sell-services' ),
+						$constant
+					)
+				)
+			);
+			return;
+		}
+
 		$placeholder = $has_secret
 			? __( '••••••••••••  (saved — leave blank to keep)', 'wp-sell-services' )
 			: __( 'Not set', 'wp-sell-services' );

@@ -662,3 +662,98 @@ add_action(
 		);
 	}
 );
+
+/**
+ * Secrets a site can keep in wp-config.php instead of the database.
+ *
+ * Define the constant and it wins over the saved value at every reader, its
+ * settings field locks, and a save never writes it to wp_options. Owner decision
+ * for 1.9.2: match WooCommerce, keep the saved settings as they are, add constants.
+ *
+ * @since 1.9.2
+ *
+ * @return array<string, array<string, string>> Option name => field => constant name.
+ */
+function wpss_secret_constants(): array {
+	/**
+	 * Filters the secret fields that wp-config.php constants can supply.
+	 *
+	 * Add entries before plugins_loaded priority 10, from the plugin's main file,
+	 * so they are in place before any gateway reads its settings.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param array<string, array<string, string>> $map Option name => field => constant name.
+	 */
+	return (array) apply_filters(
+		'wpss_secret_constants',
+		array(
+			'wpss_stripe_settings'   => array(
+				'test_secret_key' => 'WPSS_STRIPE_TEST_SECRET_KEY',
+				'live_secret_key' => 'WPSS_STRIPE_LIVE_SECRET_KEY',
+				'webhook_secret'  => 'WPSS_STRIPE_WEBHOOK_SECRET',
+			),
+			'wpss_paypal_settings'   => array(
+				'sandbox_client_secret' => 'WPSS_PAYPAL_SANDBOX_CLIENT_SECRET',
+				'live_client_secret'    => 'WPSS_PAYPAL_LIVE_CLIENT_SECRET',
+			),
+			'wpss_realtime_settings' => array(
+				'secret' => 'WPSS_REALTIME_SECRET',
+			),
+		)
+	);
+}
+
+/**
+ * The wp-config.php constant supplying a secret field, or '' when none is set.
+ *
+ * @since 1.9.2
+ *
+ * @param string $option Option name.
+ * @param string $field  Field key within the option.
+ * @return string Constant name, only when it is defined as a non-empty string.
+ */
+function wpss_secret_constant( string $option, string $field ): string {
+	$name = (string) ( wpss_secret_constants()[ $option ][ $field ] ?? '' );
+
+	return '' !== $name && defined( $name ) && is_string( constant( $name ) ) && '' !== constant( $name ) ? $name : '';
+}
+
+/*
+ * Read: the constant replaces the saved value for every reader of the option.
+ * Write: a field a constant covers is stored empty, so the secret leaves the database.
+ */
+foreach ( array_keys( wpss_secret_constants() ) as $wpss_secret_option ) {
+	add_filter(
+		'option_' . $wpss_secret_option,
+		static function ( $value, $option ) {
+			$value = is_array( $value ) ? $value : array();
+			foreach ( array_keys( wpss_secret_constants()[ $option ] ?? array() ) as $field ) {
+				$constant = wpss_secret_constant( $option, (string) $field );
+				if ( '' !== $constant ) {
+					$value[ $field ] = (string) constant( $constant );
+				}
+			}
+			return $value;
+		},
+		10,
+		2
+	);
+	add_filter(
+		'pre_update_option_' . $wpss_secret_option,
+		static function ( $value, $old, $option ) {
+			if ( ! is_array( $value ) ) {
+				return $value;
+			}
+			foreach ( array_keys( wpss_secret_constants()[ $option ] ?? array() ) as $field ) {
+				if ( '' !== wpss_secret_constant( $option, (string) $field ) ) {
+					$value[ $field ] = '';
+				}
+			}
+			return $value;
+		},
+		10,
+		3
+	);
+}
+unset( $wpss_secret_option );
