@@ -26,7 +26,8 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 
 $vendor = 0;
 foreach ( get_users( array( 'number' => 50 ) ) as $u ) {
-	if ( wpss_is_vendor( $u->ID ) ) {
+	// Not an admin: an admin may open the dashboard anyway, which would hide the access check below.
+	if ( wpss_is_vendor( $u->ID ) && ! user_can( $u->ID, 'manage_options' ) ) {
 		$vendor = $u->ID;
 		break;
 	}
@@ -37,7 +38,7 @@ $ids = array();
 for ( $i = 1; $i <= 27; $i++ ) {
 	$ids[] = $id = wp_insert_post( array( 'post_type' => 'download', 'post_status' => 'publish', 'post_title' => "QA-RFT edd {$i}", 'post_author' => $vendor ) );
 	if ( $i <= 26 ) {
-		update_post_meta( $id, '_edd_download_type', 'service' );
+		update_post_meta( $id, '_edd_product_type', 'service' );
 	}
 }
 
@@ -68,6 +69,7 @@ $tiles = array();
 preg_match_all( '/<span class="stat-number">(\d+)<\/span>/', $p1, $tiles );
 $check( 'Total Orders tile counts all 22 EDD orders, not the 20 shown', '22' === ( $tiles[1][1] ?? '' ) );
 $check( 'Pending Orders tile counts all 3 pending', '3' === ( $tiles[1][2] ?? '' ) );
+$check( 'the vendor who owns the service downloads may open the EDD dashboard', ( new $class() )->can_access_vendor_dashboard() );
 
 foreach ( $order_ids as $oid ) {
 	$GLOBALS['wpdb']->delete( $orders_t, array( 'id' => $oid ) );

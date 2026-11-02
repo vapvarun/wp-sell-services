@@ -732,19 +732,10 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 		return __( 'This service is not taking new orders right now.', 'wp-sell-services' );
 	}
 
-	// Seller away: the service page says so and disables its button, but a
-	// line already in the cart, a saved checkout link or a REST call still
-	// sold it (Basecamp 10379595852).
-	$seller = \WPSellServices\Models\VendorProfile::get_by_user_id( (int) $service->post_author );
+	$seller_reason = wpss_seller_unavailable_reason( (int) $service->post_author );
 
-	if ( $seller && $seller->is_on_vacation() ) {
-		return __( 'This vendor is away and not taking new orders right now.', 'wp-sell-services' );
-	}
-
-	// Seller suspended, rejected or banned by an owner: the live service stays
-	// out of listings and cannot be bought from a saved link or a REST call.
-	if ( in_array( (int) $service->post_author, wpss_get_unlisted_seller_ids(), true ) ) {
-		return __( 'This vendor is not taking new orders right now.', 'wp-sell-services' );
+	if ( '' !== $seller_reason ) {
+		return $seller_reason;
 	}
 
 	/**
@@ -756,6 +747,36 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 	 * @param int    $service_id Service post ID.
 	 */
 	return (string) apply_filters( 'wpss_service_unavailable_reason', '', $service_id );
+}
+
+/**
+ * Why a seller cannot take a new order right now, or '' when they can.
+ *
+ * The seller half of wpss_service_unavailable_reason(), for a cart whose product
+ * is the service itself (an EDD service download with no linked service post).
+ *
+ * @since 1.9.2
+ *
+ * @param int $seller_id Seller's user ID.
+ * @return string Empty when they can sell; otherwise a sentence for the buyer.
+ */
+function wpss_seller_unavailable_reason( int $seller_id ): string {
+	// Seller away: the service page says so and disables its button, but a
+	// line already in the cart, a saved checkout link or a REST call still
+	// sold it (Basecamp 10379595852).
+	$seller = \WPSellServices\Models\VendorProfile::get_by_user_id( $seller_id );
+
+	if ( $seller && $seller->is_on_vacation() ) {
+		return __( 'This vendor is away and not taking new orders right now.', 'wp-sell-services' );
+	}
+
+	// Seller suspended, rejected or banned by an owner: the live service stays
+	// out of listings and cannot be bought from a saved link or a REST call.
+	if ( in_array( $seller_id, wpss_get_unlisted_seller_ids(), true ) ) {
+		return __( 'This vendor is not taking new orders right now.', 'wp-sell-services' );
+	}
+
+	return '';
 }
 
 /**
