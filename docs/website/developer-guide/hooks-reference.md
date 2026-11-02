@@ -12,7 +12,7 @@ guide; this is the complete index.
 
 **551 hooks** across **769** firing sites.
 
-## Actions (279)
+## Actions (278)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -92,6 +92,7 @@ guide; this is the complete index.
 | `wpss_buyer_request_updated` | 2 | `src/Services/BuyerRequestService.php` | Fires when a buyer request is updated. |
 | `wpss_cancellation_requested` | 4 | `src/Services/OrderService.php` | Fires when a buyer requests order cancellation. |
 | `wpss_commission_recorded` | 3 | `src/Services/CommissionService.php` *(+3 more)* | Fires when commission is recorded for an order. |
+| `wpss_contract_phases_proposed` | 3 | `src/Services/BuyerRequestService.php` | Fires once when an accepted phased proposal has created all of its phases. |
 | `wpss_conversation_form` | 1 | `templates/order/conversation.php` | Hook: wpss_conversation_form |
 | `wpss_conversation_header` | 1 | `templates/order/conversation.php` | Hook: wpss_conversation_header |
 | `wpss_cron_daily` | 0 | `src/Core/Plugin.php` |  |
@@ -123,7 +124,7 @@ guide; this is the complete index.
 | `wpss_enqueue_dashboard_assets` | 0 | `src/Frontend/Shortcodes.php` |  |
 | `wpss_extension_approved` | 7 | `src/Services/ExtensionOrderService.php` | Fires after a paid extension has been credited and the parent order extended. |
 | `wpss_extension_rejected` | 4 | `src/Services/ExtensionOrderService.php` | Fires when a buyer declines a pending extension request. |
-| `wpss_extension_request_created` | 4 | `src/Services/ExtensionOrderService.php` *(+1 more)* | Fires after an extension sub-order has been created and is awaiting the buyer's payment. |
+| `wpss_extension_request_created` | 4 | `src/Services/ExtensionOrderService.php` | Fires after an extension sub-order has been created and is awaiting the buyer's payment. |
 | `wpss_fluentcart_adapter_init` | 1 | `src/Integrations/FluentCart/FluentCartAdapter.php` **[PRO]** | Fires after Fluent Cart adapter is initialized. |
 | `wpss_fluentcart_order_created` | 3 | `src/Integrations/FluentCart/FluentCartOrderProvider.php` **[PRO]** | Fires when a WPSS order is created from Fluent Cart. |
 | `wpss_fluentcart_order_detail` | 1 | `src/Integrations/FluentCart/FluentCartAccountProvider.php` **[PRO]** | Fires after order detail content. |
@@ -190,7 +191,7 @@ guide; this is the complete index.
 | `wpss_proposal_accepted` | 3 | `src/Services/BuyerRequestService.php` | Fires when a proposal is accepted via order conversion. |
 | `wpss_proposal_deleted` | 2 | `src/Services/ProposalService.php` | Fires when a proposal is deleted. |
 | `wpss_proposal_rejected` | 3 | `src/Services/ProposalService.php` *(+1 more)* | Fires when a proposal is rejected. |
-| `wpss_proposal_status_updated` | 2 | `src/Services/BuyerRequestService.php` *(+1 more)* |  |
+| `wpss_proposal_status_updated` | 2 | `src/Services/BuyerRequestService.php` *(+1 more)* | Fires once when an accepted phased proposal has created all of its phases. |
 | `wpss_proposal_submitted` | 4 | `src/Services/ProposalService.php` | Fires when a proposal is submitted. |
 | `wpss_proposal_updated` | 2 | `src/Services/ProposalService.php` | Fires when a proposal is updated. |
 | `wpss_proposal_withdrawn` | 2 | `src/Services/ProposalService.php` | Fires when a proposal is withdrawn. |
@@ -294,7 +295,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (272)
+## Filters (273)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -303,7 +304,7 @@ guide; this is the complete index.
 | `wpss_add_service_to_cart` | 3 | `src/Checkout/ServiceCart.php` | Filter to let e-commerce adapters handle cart addition natively. |
 | `wpss_admin_filing_recipient` | 3 | `src/Services/EmailService.php` *(+1 more)* | Tell the site owner a member filed a report or a dispute. |
 | `wpss_admin_menu_label` | 1 | `src/Admin/Admin.php` | Filter the admin menu label for white-labelling. |
-| `wpss_admin_notification_email` | 1 | `src/Services/EmailService.php` | Tell the site owner a buyer has sent proof of an offline payment. |
+| `wpss_admin_notification_email` | 1 | `src/Services/EmailService.php` *(+1 more)* |  |
 | `wpss_admin_vendor_notification_content` | 2 | `src/Services/NotificationService.php` | Filter admin vendor notification email content. |
 | `wpss_after_become_vendor_redirect` | 2 | `src/Frontend/UnifiedDashboard.php` | Filter the redirect URL after a vendor successfully registers. |
 | `wpss_allow_late_requirements_submission` | 1 | `src/functions/requirements.php` *(+1 more)* | Filter whether late requirements submission is allowed. |
@@ -390,8 +391,8 @@ guide; this is the complete index.
 | `wpss_format_price` | 3 | `src/functions/money.php` |  |
 | `wpss_fullwidth_page_keys` | 1 | `src/Frontend/TemplateLoader.php` | Filter which mapped plugin pages render full-width. |
 | `wpss_gallery_image_size` | 2 | `templates/partials/service-gallery.php` | Filters the gallery image size. |
-| `wpss_gallery_video_first` | 2 | `templates/partials/service-gallery.php` | Filters whether the gallery opens on the video. Default false. |
 | `wpss_gallery_max_upload_size_mb` | 2 | `src/Frontend/ServiceWizard.php` | Filter the maximum size of a service gallery image, in megabytes. |
+| `wpss_gallery_video_first` | 2 | `templates/partials/service-gallery.php` | Filters whether the gallery opens on the video instead of the first image. |
 | `wpss_gateway_checkout_button_label` | 4 | `src/functions/payments.php` | Filter the checkout button label for a gateway. |
 | `wpss_get_template` | 3 | `src/functions/templates.php` *(+1 more)* |  |
 | `wpss_get_template_part` | 3 | `src/functions/templates.php` | Filter the template file path. |

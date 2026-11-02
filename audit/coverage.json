@@ -1340,6 +1340,7 @@
             ],
             "wpss_trusted_proxies": [
                 "tests/test-client-ip-contract.php",
+                "tests/test-trusted-proxies-setting.php",
                 "audit/render-coverage.json"
             ],
             "wpss_updated": [],

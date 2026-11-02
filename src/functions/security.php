@@ -509,10 +509,11 @@ function wpss_client_ip(): string {
 	 * one rate-limit bucket. Cloudflare needs no entry.
 	 *
 	 * @since 1.8.0
+	 * @since 1.9.2 Receives the entries from Settings > System > Trusted proxies.
 	 *
 	 * @param string[] $proxies Trusted proxy IPs / ranges.
 	 */
-	$trusted = (array) apply_filters( 'wpss_trusted_proxies', array() );
+	$trusted = (array) apply_filters( 'wpss_trusted_proxies', wpss_get_trusted_proxies() );
 	$xff     = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '' ) );
 
 	if ( $trusted && '' !== $xff && wpss_ip_in_ranges( $remote, $trusted ) ) {
@@ -568,3 +569,96 @@ function wpss_ip_in_ranges( string $ip, array $ranges ): bool {
 
 	return false;
 }
+
+/**
+ * The proxies the owner listed under Settings > System > Trusted proxies.
+ *
+ * @since 1.9.2
+ *
+ * @return string[] IPs or CIDR ranges, one per entry. Empty by default.
+ */
+function wpss_get_trusted_proxies(): array {
+	return array_values( array_filter( array_map( 'trim', explode( "\n", (string) get_option( 'wpss_trusted_proxies', '' ) ) ) ) );
+}
+
+/**
+ * Whether a string is one IP address or a CIDR range (v4 or v6).
+ *
+ * @since 1.9.2
+ *
+ * @param string $entry Candidate, e.g. 10.0.0.5 or 10.0.0.0/8.
+ * @return bool
+ */
+function wpss_is_ip_or_cidr( string $entry ): bool {
+	list( $ip, $bits ) = array_pad( explode( '/', $entry, 2 ), 2, null );
+
+	if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+		return false;
+	}
+
+	if ( null === $bits ) {
+		return true;
+	}
+
+	return ctype_digit( $bits ) && (int) $bits <= ( str_contains( $ip, ':' ) ? 128 : 32 );
+}
+
+/**
+ * Sanitize the Trusted proxies field: one IP or CIDR range per line.
+ *
+ * Any invalid entry refuses the whole save and keeps the stored list, so a typo
+ * never silently drops a proxy the site depends on. Empty keeps the secure
+ * default (only Cloudflare is trusted).
+ *
+ * @since 1.9.2
+ *
+ * @param mixed $value Submitted value (textarea text).
+ * @return string Newline-separated entries.
+ */
+function wpss_sanitize_trusted_proxies( $value ): string {
+	$entries = array_values( array_unique( array_filter( array_map( 'trim', (array) preg_split( '/[\s,]+/', (string) $value ) ) ) ) );
+	$invalid = array_filter( $entries, static fn( $entry ) => ! wpss_is_ip_or_cidr( (string) $entry ) );
+
+	if ( ! $invalid ) {
+		return implode( "\n", $entries );
+	}
+
+	// Not loaded on REST; core calls this sanitizer twice when the option is new, so report once.
+	static $reported = false;
+
+	if ( ! $reported && function_exists( 'add_settings_error' ) ) {
+		$reported = true;
+		add_settings_error(
+			'wpss_trusted_proxies',
+			'wpss_invalid_trusted_proxies',
+			sprintf(
+				/* translators: %s: the entries that were refused, comma separated */
+				__( 'Trusted proxies were not saved: %s is not an IP address or CIDR range (for example 10.0.0.5 or 10.0.0.0/8). Fix the entry and save again.', 'wp-sell-services' ),
+				implode( ', ', array_map( 'sanitize_text_field', $invalid ) )
+			)
+		);
+	}
+
+	return (string) get_option( 'wpss_trusted_proxies', '' );
+}
+
+/*
+ * Registered on init, not only in the admin, so core's /wp/v2/settings serves it
+ * to administrators (the REST entry point) as well as the System settings form.
+ */
+add_action(
+	'init',
+	static function (): void {
+		register_setting(
+			'wpss_advanced',
+			'wpss_trusted_proxies',
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Proxies allowed to report the visitor IP: one IP address or CIDR range per line. Cloudflare is handled automatically.', 'wp-sell-services' ),
+				'sanitize_callback' => 'wpss_sanitize_trusted_proxies',
+				'default'           => '',
+				'show_in_rest'      => true,
+			)
+		);
+	}
+);

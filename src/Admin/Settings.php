@@ -1488,6 +1488,15 @@ class Settings {
 			)
 		);
 
+		add_settings_field(
+			'wpss_trusted_proxies',
+			__( 'Trusted proxies', 'wp-sell-services' ),
+			array( $this, 'render_trusted_proxies_field' ),
+			'wpss_advanced',
+			'wpss_advanced_section',
+			array( 'label_for' => 'wpss_trusted_proxies' )
+		);
+
 		// Realtime (WebSocket) settings.
 		register_setting(
 			'wpss_realtime',
@@ -2821,7 +2830,25 @@ class Settings {
 
 
 	/**
-	 * Render text field.
+	 * Render the Trusted proxies textarea (its own option, wpss_trusted_proxies).
+	 *
+	 * @since 1.9.2
+	 *
+	 * @return void
+	 */
+	public function render_trusted_proxies_field(): void {
+		printf(
+			'<textarea id="wpss_trusted_proxies" name="wpss_trusted_proxies" rows="4" class="large-text code" aria-describedby="wpss_trusted_proxies_help" placeholder="10.0.0.0/8">%s</textarea>',
+			esc_textarea( (string) get_option( 'wpss_trusted_proxies', '' ) )
+		);
+		printf(
+			'<p class="description" id="wpss_trusted_proxies_help">%s</p>',
+			esc_html__( 'Only needed if your site sits behind a load balancer or proxy other than Cloudflare. List its IP addresses, one per line (a range like 10.0.0.0/8 works too), so visitors are recognised individually. Cloudflare is handled automatically. Leave empty if you are not sure.', 'wp-sell-services' )
+		);
+	}
+
+	/**
+	 * Render a text field.
 	 *
 	 * @param array<string, mixed> $args Field arguments.
 	 * @return void

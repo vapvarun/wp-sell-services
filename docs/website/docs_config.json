@@ -1333,6 +1333,12 @@
           "order": 5
         },
         {
+          "title": "Take Payments Outside the Plugin",
+          "slug": "payments-outside-the-plugin-wpss",
+          "file": "developer-guide/payments-outside-the-plugin.md",
+          "order": 5
+        },
+        {
           "title": "Theme Integration Guide",
           "slug": "theme-integration-wpss",
           "file": "developer-guide/theme-integration.md",

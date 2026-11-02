@@ -1576,11 +1576,23 @@ class Admin {
 		// notice — surface the confirmation as a design-system toast.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only flag from core options.php redirect.
 		if ( isset( $_GET['settings-updated'] ) && 'true' === sanitize_key( wp_unslash( $_GET['settings-updated'] ) ) ) {
+			// What options.php handed back: its own "Settings saved." or the errors a sanitizer added
+			// with add_settings_error(). A fixed "Settings saved." toast hid every refusal.
+			$toasts = array();
+
+			foreach ( get_settings_errors() as $notice ) {
+				$toasts[] = array( wp_strip_all_tags( (string) $notice['message'] ), 'error' === $notice['type'] ? 'error' : 'success' );
+			}
+
+			if ( ! $toasts ) {
+				$toasts[] = array( __( 'Settings saved.', 'wp-sell-services' ), 'success' );
+			}
+
 			wp_add_inline_script(
 				'wpss-ui',
 				sprintf(
-					'(function(){var fire=function(){if(window.wpssToast){wpssToast(%s,"success");}else{setTimeout(fire,200);}};if("loading"===document.readyState){document.addEventListener("DOMContentLoaded",fire);}else{fire();}})();',
-					wp_json_encode( __( 'Settings saved.', 'wp-sell-services' ) )
+					'(function(){var t=%s;var fire=function(){if(window.wpssToast){t.forEach(function(n){wpssToast(n[0],n[1]);});}else{setTimeout(fire,200);}};if("loading"===document.readyState){document.addEventListener("DOMContentLoaded",fire);}else{fire();}})();',
+					wp_json_encode( $toasts )
 				)
 			);
 		}
