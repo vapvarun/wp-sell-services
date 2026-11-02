@@ -41,7 +41,7 @@ global $wpdb;
 $profiles = $wpdb->prefix . 'wpss_vendor_profiles';
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$row = $wpdb->get_row( "SELECT user_id, status FROM {$profiles} WHERE status = 'active' ORDER BY user_id DESC LIMIT 1" );
+$row = $wpdb->get_row( "SELECT p.user_id, p.status FROM {$profiles} p INNER JOIN {$wpdb->users} u ON u.ID = p.user_id WHERE p.status = 'active' ORDER BY p.user_id DESC LIMIT 1" ); // A real member: other tests' stand-in ids have no account.
 if ( ! $row || user_can( (int) $row->user_id, 'manage_options' ) ) {
 	echo "SKIP  no active non-admin vendor; nothing to assert\n";
 	exit( 0 );

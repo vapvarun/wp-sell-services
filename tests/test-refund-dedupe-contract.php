@@ -194,6 +194,7 @@ try {
 		}
 	}
 	$wpdb->delete( $wpdb->prefix . 'wpss_wallet_transactions', array( 'user_id' => $vendor ) );
+	$wpdb->delete( $wpdb->prefix . 'wpss_vendor_profiles', array( 'user_id' => $vendor ) ); // Order code makes a stats row for the stand-in vendor.
 	foreach ( array( $buyer, $vendor ) as $u ) {
 		$wpdb->delete( $wpdb->prefix . 'wpss_notifications', array( 'user_id' => $u ) );
 	}

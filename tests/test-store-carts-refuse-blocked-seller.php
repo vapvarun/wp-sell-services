@@ -4,7 +4,8 @@
  *
  * One rule, wpss_service_unavailable_reason(), and its seller half
  * wpss_seller_unavailable_reason() for an EDD download that is the service itself.
- * EDD is exercised for real when active (run with EDD active); FluentCart's cart
+ * EDD is exercised for real when active (run with EDD active), including the
+ * download page, which shows the reason in place of the Purchase button; FluentCart's cart
  * cannot be faked, so its wiring is checked here and its checkout walked in the
  * browser.
  *
@@ -83,10 +84,13 @@ try {
 		$check( 'EDD refuses a download linked to a suspended seller\'s service', false === $provider->refuse_unbuyable_service( true, new EDD_Download( $linked ) ) );
 		$errors = (array) edd_get_errors();
 		$check( 'EDD tells the buyer why (' . ( $errors['service_unavailable'] ?? 'no message' ) . ')', ( $errors['service_unavailable'] ?? '' ) === $seller_reason );
+		$form = method_exists( $provider, 'replace_unbuyable_purchase_form' ) ? $provider->replace_unbuyable_purchase_form( '<form class="edd_download_purchase_form"></form>', array( 'download_id' => $native ) ) : '';
+		$check( 'the download page shows the reason instead of the Purchase button', str_contains( $form, esc_html( $seller_reason ) ) && ! str_contains( $form, 'edd_download_purchase_form' ) );
 
 		$vendors->set_status( $seller->ID, 'active' );
 		edd_clear_errors();
 		$check( 'EDD sells again once the seller is active', true === $provider->refuse_unbuyable_service( true, new EDD_Download( $native ) ) && true === $provider->refuse_unbuyable_service( true, new EDD_Download( $linked ) ) );
+		$check( 'and the Purchase button is back', method_exists( $provider, 'replace_unbuyable_purchase_form' ) && '<form></form>' === $provider->replace_unbuyable_purchase_form( '<form></form>', array( 'download_id' => $native ) ) );
 	} else {
 		echo "SKIP  EDD inactive: run with Easy Digital Downloads active for the EDD checks\n";
 	}

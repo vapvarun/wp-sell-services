@@ -874,12 +874,12 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_edd_adapter_init` | `EDDAdapter $adapter` | `src/Integrations/EDD/EDDAdapter.php:170` |
+| `wpss_edd_adapter_init` | `EDDAdapter $adapter` | `src/Integrations/EDD/EDDAdapter.php:171` |
 | `wpss_edd_service_purchased` | `ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:119` |
 | `wpss_edd_services_processed` | `int $order_id, ServiceItem[] $items` | `src/Integrations/EDD/EDDOrderProvider.php:149` |
 | `wpss_edd_order_record_created` | `int $record_id, ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:412` |
-| `wpss_edd_service_meta_saved` | `int $product_id` | `src/Integrations/EDD/EDDProductProvider.php:248` |
-| `wpss_edd_service_checkout_processed` | `int $order_id, int $download_id, array $service_data, int $index` | `src/Integrations/EDD/EDDCheckoutProvider.php:266` |
+| `wpss_edd_service_meta_saved` | `int $product_id` | `src/Integrations/EDD/EDDProductProvider.php:253` |
+| `wpss_edd_service_checkout_processed` | `int $order_id, int $download_id, array $service_data, int $index` | `src/Integrations/EDD/EDDCheckoutProvider.php:324` |
 
 ### FluentCart Integration Actions
 
@@ -951,8 +951,8 @@ WooCommerce or standalone checkout.
 |--------|-----------|------|
 | `wpss_edd_cart_item_data` | `$cart_item_data, $product_id, $variation_id` | `EDDCheckoutProvider.php:56` |
 | `wpss_edd_validate_add_to_cart` | `$valid, $product_id, $quantity` | `src/Integrations/EDD/EDDCheckoutProvider.php:102` |
-| `wpss_edd_thankyou_redirect` | `$redirect, $order_id` | `src/Integrations/EDD/EDDCheckoutProvider.php:295` |
-| `wpss_edd_can_access_vendor_dashboard` | `$can_access, $user_id` | `src/Integrations/EDD/EDDAccountProvider.php:448` |
+| `wpss_edd_thankyou_redirect` | `$redirect, $order_id` | `src/Integrations/EDD/EDDCheckoutProvider.php:353` |
+| `wpss_edd_can_access_vendor_dashboard` | `$can_access, $user_id` | `src/Integrations/EDD/EDDAccountProvider.php:276` |
 
 ### WooCommerce Filters
 

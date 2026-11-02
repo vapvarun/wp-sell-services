@@ -621,8 +621,8 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-extension-pending-card-inset.php"
    },
    {
-    "id": "edd-my-services-list",
-    "run": "${WP_CLI:-wp} eval-file tests/test-edd-my-services-list.php"
+    "id": "edd-account-uses-dashboard",
+    "run": "${WP_CLI:-wp} eval-file tests/test-edd-account-uses-dashboard.php"
    },
    {
     "id": "pro-paypal-batch-failure",

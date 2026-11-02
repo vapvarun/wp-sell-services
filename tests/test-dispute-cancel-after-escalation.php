@@ -78,3 +78,4 @@ foreach ( array( $o1, $o2, $o3 ) as $id ) {
 foreach ( array( $buyer, $vendor ) as $u ) {
 	$wpdb->delete( $notes, array( 'user_id' => $u ) );
 }
+$wpdb->delete( $wpdb->prefix . 'wpss_vendor_profiles', array( 'user_id' => $vendor ) ); // Order code makes a stats row for the stand-in vendor.

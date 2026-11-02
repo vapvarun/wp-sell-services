@@ -691,11 +691,11 @@
   },
   {
    "card": "10422089787",
-   "title": "EDD rail My Services lists the vendor's services (24 per page with a pager) and the tile counts the same set",
-   "guard": "static:edd-my-services-list",
+   "title": "EDD rail vendors and buyers reach their services and orders: the dead EDD account pages redirect to the dashboard (superseded the My Services list guard, card 10431833430)",
+   "guard": "static:edd-account-uses-dashboard",
    "added": "2026-10-21",
    "fails_on": "4fd5262 (the get_posts that fed the grid was replaced by a count; the grid read an undefined $services and said no services)",
-   "check": "tests/test-edd-my-services-list.php"
+   "check": "tests/test-edd-account-uses-dashboard.php"
   },
   {
    "card": "visual-audit-2026-10-21",
