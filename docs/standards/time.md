@@ -11,7 +11,7 @@ WP Sell Services follows the Wbcom Time Standard (reference: Learnomy 2.1.2). On
 5. Report days use `wpss_display_time_sql( $column )` or `wpss_site_day_sql( $column )`, never `DATE( column )` on a UTC value.
 6. REST dates use `wpss_rest_date()` (ISO 8601 with offset). One normaliser covers every route.
 7. JavaScript never uses the browser zone. PHP passes `timeZone`; the script formats with it.
-8. Emails show the time for the recipient: pass their user id to `wpss_date_label()`.
+8. Emails show the time for the recipient: pass their user id to `wpss_date_label()`. An email is usually sent by the other party's action, so the current user is the wrong person. `tests/test-email-dates-in-recipient-zone.php` fails on a date label in an email template or `EmailService` that does not name the recipient.
 9. A one-time data conversion uses `wp_timezone()` (the zone the old values were typed in), not the display filter.
 
 ## Display timezone

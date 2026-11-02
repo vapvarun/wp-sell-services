@@ -10,6 +10,7 @@
  *
  * @package WPSellServices
  * @since   1.9.2
+ * @version 1.9.2
  *
  * @var object[] $wpss_extras            Rows from OrderRepository::get_paid_extras().
  * @var bool     $wpss_extras_admin_link Link each line to its admin order screen.
