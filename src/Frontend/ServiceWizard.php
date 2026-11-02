@@ -1841,20 +1841,19 @@ class ServiceWizard {
 
 		$service_id = isset( $_POST['service_id'] ) ? absint( $_POST['service_id'] ) : 0;
 
-		// Server-side duplicate publish prevention.
-		// Uses a short-lived transient lock to prevent concurrent publish requests
-		// from the same user creating multiple services (e.g., double-click race condition).
-		$lock_key = 'wpss_publishing_' . $user_id . '_' . $service_id;
-		if ( get_transient( $lock_key ) ) {
+		// One publish per user and service at a time (a double-click created two services). A named
+		// MySQL lock is atomic, where the old transient check-then-set let two requests both pass;
+		// it is released when this request ends, so no exit path can leave it stuck.
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 0 )', 'wpss_publishing_' . $user_id . '_' . $service_id ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Your service is already being published. Please wait.', 'wp-sell-services' ) ) );
 		}
-		set_transient( $lock_key, true, 30 );
 
 		// A new service or a draft going live counts against the vendor's limit
 		// (Pro plan limits included): one answer for every door.
 		$limit_error = wpss_service_limit_error( (int) $service_id, (int) $user_id );
 		if ( '' !== $limit_error ) {
-			delete_transient( $lock_key );
 			wp_send_json_error( array( 'message' => $limit_error ) );
 		}
 
@@ -1863,14 +1862,12 @@ class ServiceWizard {
 		$data     = ! empty( $raw_data ) ? json_decode( $raw_data, true ) : array();
 
 		if ( empty( $data ) ) {
-			delete_transient( $lock_key );
 			wp_send_json_error( array( 'message' => __( 'Invalid data.', 'wp-sell-services' ) ) );
 		}
 
 		// Validate required fields.
 		$errors = $this->validate_service_data( $data );
 		if ( ! empty( $errors ) ) {
-			delete_transient( $lock_key );
 			wp_send_json_error(
 				array(
 					'message' => __( 'Please complete all required fields.', 'wp-sell-services' ),
@@ -1899,7 +1896,6 @@ class ServiceWizard {
 		if ( $service_id ) {
 			$service = get_post( $service_id );
 			if ( ! wpss_user_can_edit_service( $service, $user_id ) ) {
-				delete_transient( $lock_key );
 				wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this service.', 'wp-sell-services' ) ) );
 			}
 			$post_data['ID']          = $service_id;
@@ -1910,7 +1906,6 @@ class ServiceWizard {
 		}
 
 		if ( is_wp_error( $result ) ) {
-			delete_transient( $lock_key );
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
 
@@ -1939,8 +1934,6 @@ class ServiceWizard {
 		/**
 		 * Fires after a service is saved via the wizard.
 		 *
-		 * Pro uses this to sync to WooCommerce product when WC adapter is active.
-		 *
 		 * @since 1.0.0
 		 *
 		 * @param int   $service_id Service post ID.
@@ -1950,7 +1943,6 @@ class ServiceWizard {
 
 		// Never report "published" for a service that is not.
 		if ( wpss_settle_service_status( $service_id, $post_status ) !== $post_status ) {
-			delete_transient( $lock_key );
 			$publish_errors = wpss_get_service_publish_errors( $service_id );
 			wp_send_json_error(
 				array(
@@ -1973,8 +1965,6 @@ class ServiceWizard {
 			$message      = __( 'Service published successfully!', 'wp-sell-services' );
 			$redirect_url = get_permalink( $service_id );
 		}
-
-		delete_transient( $lock_key );
 
 		wp_send_json_success(
 			array(

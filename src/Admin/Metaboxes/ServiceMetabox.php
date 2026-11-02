@@ -897,34 +897,6 @@ class ServiceMetabox {
 	}
 
 	/**
-	 * Keep a service that fails the marketplace rules out of the marketplace.
-	 *
-	 * The wizard refuses to publish a service with no category, no main image,
-	 * no delivery time or a sub-minimum price. wp-admin enforced none of that,
-	 * so the same service published from the backend and went live - see
-	 * wpss_validate_service_publishable().
-	 *
-	 * An invalid service is taken off the marketplace whatever route put it
-	 * there. Distinguishing "going live now" from "already live" is not
-	 * reliable here: the block editor publishes over REST and posts the
-	 * metaboxes in a SECOND request, so by the time this runs - after the meta
-	 * it must validate has been written - the row already reads `publish` and
-	 * the transition looks like publish -> publish either way. One rule, always
-	 * applied, is both simpler and the one that protects buyers; the notice
-	 * names every reason so the owner can fix and publish again.
-	 *
-	 * This only fires on an explicit editor save, never in bulk: Quick Edit and
-	 * bulk edit post no `wpss_service_nonce`, and the frontend wizard, the REST
-	 * controllers and the moderation Approve action do not either, so each of
-	 * those keeps its own publishing rules.
-	 *
-	 * @since 1.7.1
-	 *
-	 * @param int      $post_id Post ID.
-	 * @param \WP_Post $post    Post object.
-	 * @return void
-	 */
-	/**
 	 * Status as stored before the current request, keyed by post id.
 	 *
 	 * @var array<int, string>
@@ -1007,9 +979,8 @@ class ServiceMetabox {
 	/**
 	 * Keep an incomplete service from GOING live, without taking a live one down.
 	 *
-	 * Runs on an explicit editor save only: Quick Edit, bulk edit, the frontend
-	 * wizard, the REST controllers and the moderation Approve action post no
-	 * `wpss_service_nonce`, so each keeps its own publishing rules.
+	 * Runs on every save path that reaches save_post (classic and block editor,
+	 * Quick Edit, bulk edit, REST, WP-CLI); the capability check decides, not a nonce.
 	 *
 	 * @since 1.7.1
 	 *

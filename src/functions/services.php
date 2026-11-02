@@ -118,13 +118,26 @@ function wpss_can_view_service( int $service_id, ?int $user_id = null ): bool {
 		return false;
 	}
 
-	if ( 'publish' === $service->post_status ) {
-		return true;
-	}
+	return 'publish' === $service->post_status || wpss_can_view_unpublished_service( $service_id, $user_id );
+}
 
+/**
+ * Whether a person may see a service that is not public yet (draft, pending, rejected).
+ *
+ * Its author and site admins only. Shared by wpss_can_view_service() and the moderation
+ * guard that lets the author and the reviewer open a held service's permalink.
+ *
+ * @since 1.9.2
+ *
+ * @param int      $service_id Service post ID.
+ * @param int|null $user_id    Viewer; null for the current user.
+ * @return bool
+ */
+function wpss_can_view_unpublished_service( int $service_id, ?int $user_id = null ): bool {
 	$user_id = null === $user_id ? get_current_user_id() : $user_id;
+	$service = $service_id > 0 ? get_post( $service_id ) : null;
 
-	return $user_id > 0 && ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
+	return $user_id > 0 && $service instanceof \WP_Post && ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
 }
 
 /**

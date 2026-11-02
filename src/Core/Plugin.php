@@ -2273,14 +2273,6 @@ final class Plugin {
 			}
 		);
 
-		// Connect service moderation filter to settings.
-		add_filter(
-			'wpss_require_service_moderation',
-			function ( bool $default_value ): bool {
-				return (bool) wpss_get_option( 'vendor', 'require_service_moderation' );
-			}
-		);
-
 		// Enforce max services per vendor limit for REST API service creation.
 		add_filter(
 			'wpss_vendor_can_create_service',
