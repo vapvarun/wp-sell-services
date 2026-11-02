@@ -94,6 +94,11 @@ Registered by the API bootstrap rather than a dedicated controller.
 `/services/grid` returns the lighter payload used by the catalog grid. Prefer it
 over `/services` when you only need cards.
 
+`PUT /services/{id}` takes `paused` (boolean) to pause or resume a service: it
+stays published and listed but takes no new orders, and every card carries
+`paused`. `status` (`publish` or `draft`) is the separate publish control; a
+draft is not listed.
+
 `/services/limits` returns the ceilings a single service may not exceed, so a
 client can build its create-service form without discovering each one by being
 rejected. Public read; no authentication needed.

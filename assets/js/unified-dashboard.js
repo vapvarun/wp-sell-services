@@ -547,9 +547,12 @@
 			const $button = $(e.currentTarget);
 			const serviceId = $button.data('service-id');
 			const currentStatus = $button.data('current-status');
-			// The REST twin takes an explicit target state, so flip here
-			// (the legacy AJAX handler flipped server-side).
-			const targetStatus = currentStatus === 'publish' ? 'draft' : 'publish';
+			// A published service pauses and resumes (stays listed, stops taking
+			// orders); a draft publishes. The REST twin takes the target state.
+			const isPublished = currentStatus === 'publish';
+			const payload = isPublished
+				? { paused: String($button.data('paused')) !== '1' }
+				: { status: 'publish' };
 
 			$button.prop('disabled', true);
 
@@ -561,11 +564,13 @@
 				beforeSend: function (xhr) {
 					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 				},
-				data: { status: targetStatus },
+				data: payload,
 				success: function (response) {
 					var newStatus = response && response.status;
 					if (newStatus) {
+						var paused = newStatus === 'publish' && !!response.paused;
 						$button.data('current-status', newStatus);
+						$button.data('paused', paused ? '1' : '0');
 
 						// Match the actual card markup in
 						// templates/dashboard/sections/services.php:
@@ -574,12 +579,14 @@
 						const $badge = $card.find('.wpss-service-card__status');
 						const labels = {
 							publish: wpssUnifiedDashboard.i18n.published,
+							paused: wpssUnifiedDashboard.i18n.paused,
 							pending: wpssUnifiedDashboard.i18n.pendingReview,
 							draft: wpssUnifiedDashboard.i18n.draft
 						};
-						const badgeStatus = labels[newStatus] ? newStatus : 'draft';
+						const shown = paused ? 'paused' : newStatus;
+						const badgeStatus = labels[shown] ? shown : 'draft';
 						$badge.text(labels[badgeStatus]);
-						$badge.removeClass('wpss-service-card__status--publish wpss-service-card__status--pending wpss-service-card__status--draft');
+						$badge.removeClass('wpss-service-card__status--publish wpss-service-card__status--paused wpss-service-card__status--pending wpss-service-card__status--draft');
 						$badge.addClass('wpss-service-card__status--' + badgeStatus);
 
 						// With moderation on, Publish sends it to review: the card
@@ -591,7 +598,7 @@
 
 						// Button label is plain text ("Pause" / "Publish"),
 						// matching how the template renders it.
-						$button.text(newStatus === 'publish' ? wpssUnifiedDashboard.i18n.pause : wpssUnifiedDashboard.i18n.publish);
+						$button.text(newStatus !== 'publish' ? wpssUnifiedDashboard.i18n.publish : (paused ? wpssUnifiedDashboard.i18n.resume : wpssUnifiedDashboard.i18n.pause));
 					} else {
 						WPSS.showNotification((response && response.message) || wpssUnifiedDashboard.i18n.errorOccurred, 'error');
 					}

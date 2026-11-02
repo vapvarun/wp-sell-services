@@ -53,6 +53,23 @@ function wpss_get_service_status( int $service_id ): string {
 }
 
 /**
+ * Pause or resume a service: it stays published and listed, but takes no new orders.
+ *
+ * The one writer of _wpss_status for services. The vendor dashboard used to "pause" by
+ * unpublishing, which dropped the listing, while the admin metabox wrote this meta, so
+ * paused meant two things (Basecamp 10432412187).
+ *
+ * @since 1.9.2
+ *
+ * @param int  $service_id Service post ID.
+ * @param bool $paused     True to pause, false to resume.
+ * @return void
+ */
+function wpss_set_service_paused( int $service_id, bool $paused ): void {
+	update_post_meta( $service_id, '_wpss_status', $paused ? 'paused' : 'active' );
+}
+
+/**
  * Get service URL.
  *
  * @param int $service_id Service ID.

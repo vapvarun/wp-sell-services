@@ -242,7 +242,7 @@ silently.
 ### A service card is always the same object
 
 `GET /services` and `GET /favorites` return the same keys for a service: `id`,
-`title`, `slug`, `description`, `excerpt`, `status`, `link`, `vendor`,
+`title`, `slug`, `description`, `excerpt`, `status`, `paused`, `link`, `vendor`,
 `pricing`, `delivery`, `images`, `categories`, `tags`, `rating`, `created_at`,
 `updated_at`.
 

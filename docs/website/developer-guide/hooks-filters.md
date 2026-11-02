@@ -52,9 +52,9 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_pre_create_service` | `array $data` | `ServiceManager.php` |
 | `wpss_pre_update_service` | `array $data, int $service_id` | `ServiceManager.php` |
 | `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:895` |
-| `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:754` |
-| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:946` |
-| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:1000` |
+| `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:758` |
+| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:954` |
+| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:1008` |
 
 ## Moderation Actions
 
@@ -415,7 +415,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1418` |
+| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1426` |
 | `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:640` |
 | `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
 | `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
@@ -485,7 +485,7 @@ add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:990` |
+| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:992` |
 
 ### Dashboard Filters
 
@@ -789,13 +789,13 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:762` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:265` |
-| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1534` |
+| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1542` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
-| `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:492` |
-| `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:603` |
-| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:928` |
+| `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:494` |
+| `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:605` |
+| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:930` |
 
 **`wpss_realtime_settings`** - filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
 

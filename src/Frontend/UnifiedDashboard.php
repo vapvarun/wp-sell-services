@@ -209,6 +209,8 @@ class UnifiedDashboard {
 					'errorOccurred'          => __( 'An error occurred.', 'wp-sell-services' ),
 					'errorTryAgain'          => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'published'              => __( 'Published', 'wp-sell-services' ),
+					'paused'                 => __( 'Paused', 'wp-sell-services' ),
+					'resume'                 => __( 'Resume', 'wp-sell-services' ),
 					'draft'                  => __( 'Draft', 'wp-sell-services' ),
 					'pendingReview'          => __( 'Pending review', 'wp-sell-services' ),
 					'requestClosed'          => __( 'Request closed.', 'wp-sell-services' ),

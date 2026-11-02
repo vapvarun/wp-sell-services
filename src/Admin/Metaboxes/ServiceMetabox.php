@@ -736,7 +736,7 @@ class ServiceMetabox {
 		// Only active / paused: visibility belongs to the post status, so the
 		// old "Draft" choice here was a third status control nothing read.
 		if ( isset( $_POST['wpss_status'] ) ) {
-			update_post_meta( $post_id, '_wpss_status', 'paused' === sanitize_key( $_POST['wpss_status'] ) ? 'paused' : 'active' );
+			wpss_set_service_paused( $post_id, 'paused' === sanitize_key( $_POST['wpss_status'] ) );
 		}
 
 		// Save packages (indexed array format).
@@ -1396,8 +1396,7 @@ class ServiceMetabox {
 	 * @return void
 	 */
 	private function render_overview_content( \WP_Post $post ): void {
-		$status = get_post_meta( $post->ID, '_wpss_status', true );
-		$status = ! empty( $status ) ? $status : 'active';
+		$status = wpss_get_service_status( $post->ID );
 
 		$is_featured = (bool) get_post_meta( $post->ID, '_wpss_featured', true );
 		$can_feature = wpss_user_can_feature_service( $post->ID );

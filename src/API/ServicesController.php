@@ -176,6 +176,10 @@ class ServicesController extends RestController {
 								'type'        => 'string',
 								'enum'        => array( 'publish', 'draft' ),
 							),
+							'paused' => array(
+								'description' => __( 'Pause (true) or resume (false): the service stays listed but takes no new orders.', 'wp-sell-services' ),
+								'type'        => 'boolean',
+							),
 						)
 					),
 				),
@@ -922,6 +926,10 @@ class ServicesController extends RestController {
 
 		if ( $to_review ) {
 			( new ModerationService() )->submit( $service_id );
+		}
+
+		if ( $request->has_param( 'paused' ) ) {
+			wpss_set_service_paused( $service_id, (bool) $request->get_param( 'paused' ) );
 		}
 
 		// Update meta.

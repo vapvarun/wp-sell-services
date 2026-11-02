@@ -578,6 +578,11 @@
 	color: var(--wpss-gray-600);
 }
 
+.wpss-service-card__status--paused {
+	background: var(--wpss-info-light, #eff6ff);
+	color: var(--wpss-info-dark, #1e40af);
+}
+
 .wpss-service-card__status--pending {
 	background: var(--wpss-warning-light);
 	color: var(--wpss-warning-dark, #92400e);
