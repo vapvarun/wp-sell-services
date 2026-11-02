@@ -814,9 +814,28 @@ add_action(
 			wpss_sync_service_order_count( (int) $order->service_id );
 		}
 
+		// The vendor's stored order counters feed the profile, directory, admin and REST; only the
+		// 12-hour sweep refreshed them, so a sale read 0 until then (Basecamp 10431939228).
+		if ( $order && (int) $order->vendor_id > 0 ) {
+			( new \WPSellServices\Services\VendorService() )->update_stats( (int) $order->vendor_id );
+		}
+
 		// A seller's level follows completed orders now, not a week later.
 		if ( $order && 'completed' === $order->status && (int) $order->vendor_id > 0 ) {
 			( new \WPSellServices\Services\SellerLevelService() )->recalculate( (int) $order->vendor_id );
+		}
+	},
+	30
+);
+
+// A new order counts toward "orders placed" straight away, on every rail.
+add_action(
+	'wpss_order_created',
+	static function ( $order_id ) {
+		$order = wpss_get_order( (int) $order_id );
+
+		if ( $order && (int) $order->vendor_id > 0 ) {
+			( new \WPSellServices\Services\VendorService() )->update_stats( (int) $order->vendor_id );
 		}
 	},
 	30
