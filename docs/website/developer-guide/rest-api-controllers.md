@@ -119,6 +119,12 @@ allows, the service is still saved. The response is 200 or 201 and carries a `no
 array naming what was cut, plus a `limits` object with the same ceilings. It no longer
 returns 400 after saving.
 
+With moderation on, a vendor's create or update that lands in the review queue instead
+of going live says so: the response's `status` is `pending` and its `notices` array
+carries "Service submitted for review. You will be notified once it is approved." The
+add-on routes (`/services/{id}/addons`) do the same, because changing an add-on on a
+live service sends it back to review. Sending `paused` alone does not.
+
 `-1` means unlimited. The numbers above are the Free defaults; Pro raises
 `max_gallery`, `max_extras`, `max_faq` and `max_requirements` to `-1` and leaves
 `max_packages` and `max_videos` where they are. Each value passes through its own

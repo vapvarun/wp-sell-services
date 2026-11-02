@@ -304,6 +304,25 @@ class ModerationService {
 	}
 
 	/**
+	 * Send a live service back to review after a member changed it outside the post fields.
+	 *
+	 * For the doors that write only meta (add-on routes): the wp_insert_post_data
+	 * gate cannot see those, so they call this after saving.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param int $service_id Service post ID.
+	 * @return bool True when the service was sent to review.
+	 */
+	public function requeue_live_edit( int $service_id ): bool {
+		if ( ! self::requires_review() || 'publish' !== get_post_status( $service_id ) ) {
+			return false;
+		}
+
+		return $this->set_pending( $service_id );
+	}
+
+	/**
 	 * Set a service as pending moderation.
 	 *
 	 * @param int $service_id Service post ID.

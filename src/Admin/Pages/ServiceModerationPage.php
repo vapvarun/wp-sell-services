@@ -1189,44 +1189,73 @@ class ServiceModerationPage {
 	}
 
 	/**
-	 * Intercept publish action for vendors to set pending status.
+	 * Hold a member's service at pending until it is reviewed: the one gate under every save door.
 	 *
-	 * @param array $data    Post data.
+	 * Runs inside wp_insert_post(), so the wizard, this plugin's REST routes, core
+	 * /wp/v2/wpss-services, the admin editor and Quick Edit all meet it. Three ways
+	 * to go live are held: publishing an unapproved service, scheduling one (cron
+	 * publishes a future post without a save, so the review has to happen now), and
+	 * editing a live approved one. set_default_moderation_status() queues and
+	 * announces it once saved.
+	 *
+	 * @param array $data    Post data (slashed).
 	 * @param array $postarr Post array.
 	 * @return array
 	 */
 	public function intercept_publish( array $data, array $postarr ): array {
-		// Only for services.
-		if ( 'wpss_service' !== $data['post_type'] ) {
+		if ( 'wpss_service' !== $data['post_type'] || current_user_can( 'manage_options' ) ) {
 			return $data;
 		}
 
-		// Admins can publish directly.
-		if ( current_user_can( 'manage_options' ) ) {
+		$post_id = (int) ( $postarr['ID'] ?? 0 );
+
+		if ( 'future' === $data['post_status'] ) {
+			$data['post_status'] = 'pending';
 			return $data;
 		}
 
-		// If being published, check if moderation is approved.
-		if ( 'publish' === $data['post_status'] ) {
-			$post_id = $postarr['ID'] ?? 0;
+		if ( 'publish' !== $data['post_status'] ) {
+			return $data;
+		}
 
-			// For new posts, prevent publish - will be set to pending moderation.
-			if ( ! $post_id ) {
-				$data['post_status'] = 'pending';
-				return $data;
-			}
+		if ( ! $post_id || ModerationService::STATUS_APPROVED !== get_post_meta( $post_id, self::META_KEY, true ) ) {
+			$data['post_status'] = 'pending';
+			return $data;
+		}
 
-			// For existing posts, check current moderation status.
-			$moderation_status = get_post_meta( $post_id, self::META_KEY, true );
-
-			// Only allow publish if moderation status is approved.
-			if ( ModerationService::STATUS_APPROVED !== $moderation_status ) {
-				// Held at pending; set_default_moderation_status() queues and announces it once saved.
-				$data['post_status'] = 'pending';
-			}
+		if ( get_current_user_id() && 'publish' === get_post_status( $post_id ) && self::edits_live_listing( $post_id, $data, $postarr ) ) {
+			$data['post_status'] = 'pending';
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Whether a member's save changes what buyers see on a live service.
+	 *
+	 * The fields buyers read are compared, so a status-only save (pause, settle)
+	 * stays live. A save from the editor form or Quick Edit counts whole, as the
+	 * wizard does, because it also carries the meta boxes this filter cannot see.
+	 *
+	 * @param int   $post_id Service ID.
+	 * @param array $data    Post data being saved (slashed).
+	 * @param array $postarr Post array.
+	 * @return bool
+	 */
+	private static function edits_live_listing( int $post_id, array $data, array $postarr ): bool {
+		if ( in_array( $postarr['action'] ?? '', array( 'editpost', 'inline-save' ), true ) ) {
+			return true;
+		}
+
+		$current = get_post( $post_id );
+
+		foreach ( array( 'post_title', 'post_content', 'post_excerpt' ) as $field ) {
+			if ( isset( $data[ $field ] ) && wp_unslash( $data[ $field ] ) !== $current->$field ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

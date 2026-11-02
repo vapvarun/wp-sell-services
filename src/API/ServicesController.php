@@ -745,7 +745,8 @@ class ServicesController extends RestController {
 			wp_set_object_terms( $service_id, $tags, 'wpss_service_tag' );
 		}
 
-		if ( wpss_settle_service_status( $service_id, $post_status ) === 'pending' ) {
+		$to_review = wpss_settle_service_status( $service_id, $post_status ) === 'pending';
+		if ( $to_review ) {
 			( new ModerationService() )->submit( $service_id );
 		}
 		$service = get_post( $service_id );
@@ -759,7 +760,7 @@ class ServicesController extends RestController {
 		do_action( 'wpss_rest_service_created', $service_id, $request );
 
 		return new WP_REST_Response(
-			$this->with_limit_notices( $this->prepare_item_for_response( $service, $request )->get_data(), $notices ),
+			$this->with_review_notice( $this->with_limit_notices( $this->prepare_item_for_response( $service, $request )->get_data(), $notices ), $to_review ),
 			201
 		);
 	}
@@ -908,7 +909,8 @@ class ServicesController extends RestController {
 		$to_review = false;
 		if ( ModerationService::requires_review() ) {
 			// Any field but the route id counts, as in the wizard: a gallery, add-on or category swap is as reviewable as a title.
-			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'context', '_locale', '_fields', '_embed' ) ) );
+			// Pausing is not: it changes nothing a buyer would buy.
+			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'paused', 'context', '_locale', '_fields', '_embed' ) ) );
 			$goes_live     = 'publish' === ( $update_data['post_status'] ?? '' );
 			$edits_live    = ! isset( $update_data['post_status'] ) && $edits_content && 'publish' === get_post_status( $service_id );
 
@@ -955,7 +957,7 @@ class ServicesController extends RestController {
 		do_action( 'wpss_rest_service_updated', $service_id, $request );
 
 		$response = $this->prepare_item_for_response( get_post( $service_id ), $request );
-		$response->set_data( $this->with_limit_notices( $response->get_data(), $notices ) );
+		$response->set_data( $this->with_review_notice( $this->with_limit_notices( $response->get_data(), $notices ), $to_review ) );
 
 		return $response;
 	}
@@ -1338,7 +1340,9 @@ class ServicesController extends RestController {
 			return new WP_Error( 'addon_create_failed', __( 'Failed to create addon.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		return new WP_REST_Response( $this->format_addon( $service_id, $index, $saved[ $index ] ), 201 );
+		$queued = ( new ModerationService() )->requeue_live_edit( $service_id );
+
+		return new WP_REST_Response( $this->with_review_notice( $this->format_addon( $service_id, $index, $saved[ $index ] ), $queued ), 201 );
 	}
 
 	/**
@@ -1363,9 +1367,10 @@ class ServicesController extends RestController {
 		}
 
 		wpss_save_service_addons( $service_id, $addons );
-		$saved = wpss_get_service_extras( $service_id );
+		$saved  = wpss_get_service_extras( $service_id );
+		$queued = ( new ModerationService() )->requeue_live_edit( $service_id );
 
-		return new WP_REST_Response( $this->format_addon( $service_id, $index, $saved[ $index ] ) );
+		return new WP_REST_Response( $this->with_review_notice( $this->format_addon( $service_id, $index, $saved[ $index ] ), $queued ) );
 	}
 
 	/**
@@ -1389,8 +1394,9 @@ class ServicesController extends RestController {
 
 		unset( $addons[ $index ] );
 		wpss_save_service_addons( $service_id, array_values( $addons ) );
+		$queued = ( new ModerationService() )->requeue_live_edit( $service_id );
 
-		return new WP_REST_Response( array( 'deleted' => true ) );
+		return new WP_REST_Response( $this->with_review_notice( array( 'deleted' => true ), $queued ) );
 	}
 
 	/**
@@ -1654,6 +1660,23 @@ class ServicesController extends RestController {
 		if ( $notices ) {
 			$data['notices'] = $notices;
 			$data['limits']  = wpss_get_service_limits();
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Tell the caller its save went to review instead of live.
+	 *
+	 * The status field alone reads as a silent downgrade to an app that asked for publish.
+	 *
+	 * @param array<string, mixed> $data   Response payload.
+	 * @param bool                 $queued Whether this request sent the service to review.
+	 * @return array<string, mixed> Payload, with the sentence added to `notices` when queued.
+	 */
+	private function with_review_notice( array $data, bool $queued ): array {
+		if ( $queued ) {
+			$data['notices'][] = __( 'Service submitted for review. You will be notified once it is approved.', 'wp-sell-services' );
 		}
 
 		return $data;
