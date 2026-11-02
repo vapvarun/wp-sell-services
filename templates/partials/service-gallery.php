@@ -39,6 +39,19 @@ $gallery_ids = wpss_get_gallery_ids( $gallery_raw );
  */
 $video_url = (string) wpss_get_gallery_video_url( $gallery_raw );
 
+/**
+ * Filters whether the gallery opens on the video instead of the first image.
+ *
+ * Off by default: the image comes first (Basecamp 10208068212). A site that sells
+ * on its video can turn it on, for every service or per service.
+ *
+ * @since 1.9.2
+ *
+ * @param bool $video_first Open on the video. Default false.
+ * @param int  $service_id  Service post ID.
+ */
+$wpss_video_first = '' !== $video_url && (bool) apply_filters( 'wpss_gallery_video_first', false, $service_id );
+
 $has_thumbnail = has_post_thumbnail( $service_id );
 
 // Add featured image to gallery if exists.
@@ -127,6 +140,7 @@ do_action( 'wpss_before_service_gallery', $service_id );
 			?>
 			<button type="button"
 					class="wpss-gallery-zoom"
+					<?php echo $wpss_video_first ? 'hidden' : ''; ?>
 					aria-label="<?php echo esc_attr( sprintf( /* translators: %s: service title. */ __( 'View larger image of %s', 'wp-sell-services' ), $service_title ) ); ?>">
 				<img src="<?php echo esc_url( wp_get_attachment_image_url( $first_image, $image_size ) ); ?>"
 					alt="<?php echo esc_attr( $service_title ); ?>"
@@ -134,7 +148,10 @@ do_action( 'wpss_before_service_gallery', $service_id );
 			</button>
 
 			<?php if ( '' !== $video_url ) : ?>
-				<div class="wpss-gallery-video" hidden></div>
+				<?php // Video first: the embed is printed in place, so the player is there when the page opens. ?>
+				<div class="wpss-gallery-video" <?php echo $wpss_video_first ? '' : 'hidden'; ?>>
+					<?php echo $wpss_video_first ? wp_oembed_get( esc_url( $video_url ) ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_oembed_get() returns provider markup. ?>
+				</div>
 				<?php
 				/*
 				 * The embed sits in a <template>, which browsers do not render
@@ -144,9 +161,11 @@ do_action( 'wpss_before_service_gallery', $service_id );
 				 * not restart the video or re-request the embed.
 				 */
 				?>
-				<template class="wpss-gallery-video-embed">
-					<?php echo wp_oembed_get( esc_url( $video_url ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_oembed_get() returns provider markup. ?>
-				</template>
+				<?php if ( ! $wpss_video_first ) : ?>
+					<template class="wpss-gallery-video-embed">
+						<?php echo wp_oembed_get( esc_url( $video_url ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_oembed_get() returns provider markup. ?>
+					</template>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 	</div>
@@ -184,7 +203,7 @@ do_action( 'wpss_before_service_gallery', $service_id );
 				}
 				?>
 				<button type="button"
-						class="wpss-gallery-thumb wpss-gallery-thumb--video"
+						class="wpss-gallery-thumb wpss-gallery-thumb--video<?php echo $wpss_video_first ? ' active' : ''; ?>"
 						data-video="1"
 						aria-label="<?php esc_attr_e( 'Play the service video', 'wp-sell-services' ); ?>">
 					<img src="<?php echo esc_url( (string) $wpss_video_poster ); ?>" alt="" loading="lazy">
@@ -196,7 +215,7 @@ do_action( 'wpss_before_service_gallery', $service_id );
 
 			<?php foreach ( $gallery_ids as $index => $image_id ) : ?>
 				<button type="button"
-						class="wpss-gallery-thumb <?php echo 0 === $index ? 'active' : ''; ?>"
+						class="wpss-gallery-thumb <?php echo 0 === $index && ! $wpss_video_first ? 'active' : ''; ?>"
 						data-index="<?php echo esc_attr( $index ); ?>"
 						data-src="<?php echo esc_url( wp_get_attachment_image_url( $image_id, $image_size ) ); ?>">
 					<img src="<?php echo esc_url( wp_get_attachment_image_url( $image_id, 'thumbnail' ) ); ?>"

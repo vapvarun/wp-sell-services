@@ -1108,6 +1108,7 @@ The presence behaviour is on by default. Site owners switch it off under **Setti
 |--------|-----------|------|
 | `wpss_video_thumbnail_cache_ttl` | `int $ttl, string $video_url` | `functions/services.php` |
 | `wpss_gallery_image_size` | `string $size, int $service_id` | `partials/service-gallery.php` |
+| `wpss_gallery_video_first` | `bool $video_first, int $service_id` | `partials/service-gallery.php` |
 | `wpss_sticky_top_offset` | `int $offset` | `Frontend/Frontend.php` |
 
 A video thumb uses the embed provider's own poster frame, fetched through oEmbed

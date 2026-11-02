@@ -390,6 +390,7 @@ guide; this is the complete index.
 | `wpss_format_price` | 3 | `src/functions/money.php` |  |
 | `wpss_fullwidth_page_keys` | 1 | `src/Frontend/TemplateLoader.php` | Filter which mapped plugin pages render full-width. |
 | `wpss_gallery_image_size` | 2 | `templates/partials/service-gallery.php` | Filters the gallery image size. |
+| `wpss_gallery_video_first` | 2 | `templates/partials/service-gallery.php` | Filters whether the gallery opens on the video. Default false. |
 | `wpss_gallery_max_upload_size_mb` | 2 | `src/Frontend/ServiceWizard.php` | Filter the maximum size of a service gallery image, in megabytes. |
 | `wpss_gateway_checkout_button_label` | 4 | `src/functions/payments.php` | Filter the checkout button label for a gateway. |
 | `wpss_get_template` | 3 | `src/functions/templates.php` *(+1 more)* |  |

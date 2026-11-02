@@ -291,6 +291,7 @@ Change values without touching markup at all.
 | `wpss_request_card_classes` | `['wpss-request-card']` | CSS classes on a request card |
 | `wpss_service_card_thumbnail_size` | `medium_large` | Card image size |
 | `wpss_gallery_image_size` | `large` | Gallery image size |
+| `wpss_gallery_video_first` | `false` | Return `true` to open the gallery on the video instead of the first image |
 | `wpss_package_price_html` | -- | Rendered package price markup |
 | `wpss_package_button_text` | -- | Package CTA label |
 | `wpss_order_status_label` | -- | Human status label |
