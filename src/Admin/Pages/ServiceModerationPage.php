@@ -117,6 +117,9 @@ class ServiceModerationPage {
 
 		// Hold a vendor's publish at pending until it is approved.
 		add_filter( 'wp_insert_post_data', array( $this, 'intercept_publish' ), 10, 2 );
+
+		// Core /wp/v2 also writes categories, tags and the featured image after the post save, out of that filter's sight.
+		add_action( 'rest_after_insert_wpss_service', array( $this, 'requeue_core_rest_edit' ), 10, 3 );
 	}
 
 	/**
@@ -1193,10 +1196,10 @@ class ServiceModerationPage {
 	 *
 	 * Runs inside wp_insert_post(), so the wizard, this plugin's REST routes, core
 	 * /wp/v2/wpss-services, the admin editor and Quick Edit all meet it. Three ways
-	 * to go live are held: publishing an unapproved service, scheduling one (cron
-	 * publishes a future post without a save, so the review has to happen now), and
-	 * editing a live approved one. set_default_moderation_status() queues and
-	 * announces it once saved.
+	 * to go live are held: publishing an unapproved service or republishing an
+	 * approved one from draft, scheduling one (cron publishes a future post without
+	 * a save, so the review has to happen now), and editing a live approved one.
+	 * set_default_moderation_status() queues and announces it once saved.
 	 *
 	 * @param array $data    Post data (slashed).
 	 * @param array $postarr Post array.
@@ -1223,7 +1226,8 @@ class ServiceModerationPage {
 			return $data;
 		}
 
-		if ( get_current_user_id() && 'publish' === get_post_status( $post_id ) && self::edits_live_listing( $post_id, $data, $postarr ) ) {
+		// Approved once is not approved for ever: a member bringing a draft back, or changing a live one, is reviewed again.
+		if ( get_current_user_id() && ( 'publish' !== get_post_status( $post_id ) || self::edits_live_listing( $post_id, $data, $postarr ) ) ) {
 			$data['post_status'] = 'pending';
 		}
 
@@ -1256,6 +1260,22 @@ class ServiceModerationPage {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Send a live service back to review after a member's core /wp/v2 edit changed more than its status.
+	 *
+	 * @param \WP_Post         $post     Saved service.
+	 * @param \WP_REST_Request $request  Request.
+	 * @param bool             $creating Whether this request created the service.
+	 * @return void
+	 */
+	public function requeue_core_rest_edit( \WP_Post $post, \WP_REST_Request $request, bool $creating ): void {
+		$edits = array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'context', '_locale', '_fields', '_embed' ) ) );
+
+		if ( ! $creating && $edits ) {
+			( new ModerationService() )->requeue_live_edit( $post->ID );
+		}
 	}
 
 	/**

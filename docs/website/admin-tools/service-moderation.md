@@ -28,7 +28,7 @@ If you reject a service, the vendor can edit it and resubmit. The resubmitted se
 
 ### Edits to a live service
 
-An approved service goes back into the queue when its vendor changes it: the title, description, packages, add-ons, gallery or categories. This holds wherever the edit is made, whether in the service wizard, in the vendor dashboard or through the REST API. Pausing or resuming a service is not an edit and keeps it live.
+An approved service goes back into the queue when its vendor changes it: the title, description, packages, add-ons, gallery or categories. This holds wherever the edit is made, whether in the service wizard, in the vendor dashboard or through the REST API. A service the vendor moved to draft is reviewed again when they publish it. Pausing or resuming a service is not an edit and keeps it live.
 
 A vendor cannot schedule a service to go live later on their own. A scheduled publish date is held as "Pending" so you review it first.
 

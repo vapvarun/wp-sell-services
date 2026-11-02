@@ -149,6 +149,19 @@ try {
 	$check( 'REST edit of a live service goes to review (http ' . $res->get_status() . ')', $queued() );
 	$check( 'the REST update response says it went to review', in_array( $review_line, (array) ( $data['notices'] ?? array() ), true ) );
 
+	// 6b. Approved, moved to draft, edited there, published again: reviewed again.
+	$live();
+	$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $sid ) );
+	clean_post_cache( $sid );
+	$res = $rest( 'POST', "/wp/v2/wpss-services/$sid", array( 'status' => 'publish' ) );
+	$check( 'republishing an approved service from draft goes to review (http ' . $res->get_status() . ')', $queued() );
+
+	// 6c. Core /wp/v2 edit of categories only (no post field changes).
+	$live();
+	$cats = wp_get_post_terms( $sid, 'wpss_service_category', array( 'fields' => 'ids' ) );
+	$res  = $rest( 'POST', "/wp/v2/wpss-services/$sid", array( 'service-categories' => $cats ) );
+	$check( 'core /wp/v2 category edit on a live service goes to review (http ' . $res->get_status() . ')', $queued() );
+
 	// 7. An admin's edit is the approval: stays live.
 	wp_set_current_user( 1 );
 	$live();
