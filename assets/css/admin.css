@@ -1931,7 +1931,7 @@ h2.wpss-settings-subhead__title {
 /* Wide enough for "Orders" plus its sort arrows on one line at 820px. */
 .wpss-vendors-table .column-orders { width: 13%; text-align: center; }
 .wpss-vendors-table .column-rating { width: 12%; text-align: center; }
-.wpss-vendors-table .column-earnings { width: 14%; text-align: right; }
+.wpss-vendors-table .column-earnings { width: 14%; text-align: end; }
 .wpss-vendors-table .column-status { width: 14%; }
 
 /* A sortable header is a block link holding floated spans, which ignore the
@@ -2115,6 +2115,11 @@ h2.wpss-settings-subhead__title {
 .wpss-withdrawals-table .column-id { width: 5em; }
 .wpss-withdrawals-table .column-vendor { width: 20%; }
 .wpss-withdrawals-table .column-amount { width: 7.5em; text-align: end; }
+/* Money reads right-aligned so the decimals line up; the header follows its values. Core floats a
+   sortable header's label and arrows to the start, which beat text-align and left "Amount" at the
+   start of the cell while the amounts sat at the end (Basecamp 10384370974). */
+.wpss-withdrawals-table th.column-amount > a { display: flex; justify-content: flex-end; }
+.wpss-withdrawals-table th.column-amount > a > span { float: none; }
 .wpss-withdrawals-table .column-method { width: 12%; }
 .wpss-withdrawals-table .column-status { width: 7.5em; }
 .wpss-withdrawals-table .column-date { width: 15%; }
