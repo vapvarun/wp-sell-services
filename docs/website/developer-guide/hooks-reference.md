@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**577 hooks** across **803** firing sites.
+**578 hooks** across **804** firing sites.
 
 ## Actions (300)
 
@@ -146,7 +146,7 @@ guide; this is the complete index.
 | `wpss_milestone_revision_requested` | 5 | `src/Services/MilestoneService.php` | Fires when a buyer sends a milestone phase back for changes. |
 | `wpss_milestone_submitted` | 4 | `src/Services/MilestoneService.php` |  |
 | `wpss_mycred_balance_changed` | 3 | `src/Integrations/Wallets/MyCredProvider.php` **[PRO]** | Fires after MyCred balance changes for WPSS. |
-| `wpss_new_order_message` | 3 | `src/Services/ConversationService.php` | Fires for email notification on new order message. |
+| `wpss_new_order_message` | 3 | `src/Services/ConversationService.php` | Fires for email notification on a new order chat message. |
 | `wpss_no_requests_content` | 0 | `templates/content-no-requests.php` | Hook: wpss_no_requests_content |
 | `wpss_no_services_content` | 0 | `templates/content-no-services.php` | Hook: wpss_no_services_content |
 | `wpss_notification_created` | 4 | `src/Services/NotificationService.php` | Fires when notification is created. |
@@ -317,7 +317,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (277)
+## Filters (278)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -586,6 +586,7 @@ guide; this is the complete index.
 | `wpss_vendor_profile_allowed_fields` | 1 | `src/Services/VendorService.php` | Filter the list of allowed vendor profile fields for update. |
 | `wpss_vendor_profile_fields` | 2 | `templates/vendor/profile.php` | Filter additional vendor profile fields. |
 | `wpss_vendor_registration_open` | 1 | `src/API/VendorsController.php` |  |
+| `wpss_vendor_reserved_payouts` | 2 | `src/Services/EarningsService.php` | Money a payout rail has sent or committed but not yet debited to the ledger. |
 | `wpss_vendor_slug` | 1 | `src/Core/Plugin.php` *(+1 more)* | Filter the vendor profile URL slug. |
 | `wpss_vendor_vacation_notice` | 2 | `src/functions/vendors.php` | Filter the vendor vacation notice before it renders. |
 | `wpss_vendor_welcome_email_content` | 3 | `src/Services/NotificationService.php` | Filter vendor welcome email content. |

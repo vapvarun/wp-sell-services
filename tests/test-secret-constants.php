@@ -62,6 +62,14 @@ update_option( 'wpss_stripe_settings', $gw->sanitize_settings( array_merge( $bac
 $check( 'a typed value is not stored while the constant rules', '' === ( $raw()['test_secret_key'] ?? 'missing' ) );
 $check( 'readers still get the constant after the save', 'sk_test_from_config' === get_option( 'wpss_stripe_settings' )['test_secret_key'] );
 
+// Never saved: a site whose secrets live only in wp-config.php still reads them.
+delete_option( 'wpss_stripe_settings' );
+$check( 'a never-saved option still reads the constant', 'sk_test_from_config' === ( get_option( 'wpss_stripe_settings' )['test_secret_key'] ?? '' ) );
+remove_filter( 'wpss_secret_constants', $map );
+$check( 'with no constant, a never-saved option keeps its default', false === get_option( 'wpss_stripe_settings' ) && 'dflt' === get_option( 'wpss_stripe_settings', 'dflt' ) );
+add_filter( 'wpss_secret_constants', $map );
+update_option( 'wpss_stripe_settings', $backup );
+
 // The field shows it is locked and never prints the value.
 ob_start();
 ( new \WPSellServices\Admin\Settings() )->render_secret_field( array( 'option_name' => 'wpss_stripe_settings', 'field' => 'test_secret_key', 'label' => 'Test secret' ) );

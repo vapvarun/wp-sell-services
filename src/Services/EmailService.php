@@ -378,15 +378,25 @@ class EmailService {
 		}
 
 		// Once per order: the pay-an-existing-order request can be repeated, and each repeat would mail three people.
-		if ( ! empty( $order->meta['offline_placed_emailed'] ) ) {
+		// One conditional UPDATE claims the send, so two requests at once mail once, and it sets
+		// only this key, so it never writes back a stale copy of the rest of the order's meta.
+		global $wpdb;
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$claimed = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->prefix}wpss_orders
+				SET meta = JSON_SET( CASE WHEN meta IS NULL OR meta IN ('', '[]') THEN '{}' ELSE meta END, '$.offline_placed_emailed', true )
+				WHERE id = %d
+				AND ( meta IS NULL OR meta IN ('', '[]') OR JSON_EXTRACT( meta, '$.offline_placed_emailed' ) IS NULL )",
+				$order_id
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// 0 rows: already sent. A query error (unreadable meta) still sends: the buyer needs the payment details.
+		if ( 0 === $claimed ) {
 			return false;
 		}
-
-		$meta                           = $order->meta;
-		$meta['offline_placed_emailed'] = true;
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update( $wpdb->prefix . 'wpss_orders', array( 'meta' => wp_json_encode( $meta ) ), array( 'id' => $order_id ) );
 
 		$buyer  = get_user_by( 'id', $order->customer_id );
 		$vendor = get_user_by( 'id', $order->vendor_id );

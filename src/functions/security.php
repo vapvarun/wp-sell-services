@@ -720,25 +720,25 @@ function wpss_secret_constant( string $option, string $field ): string {
 }
 
 /*
- * Read: the constant replaces the saved value for every reader of the option.
+ * Read: the constant replaces the saved value for every reader of the option,
+ * also when the option was never saved (default_option_), as on a site whose
+ * secrets live only in wp-config.php.
  * Write: a field a constant covers is stored empty, so the secret leaves the database.
  */
+$wpss_secret_reader = static function ( $value, $option ) {
+	$secrets = array();
+	foreach ( array_keys( wpss_secret_constants()[ $option ] ?? array() ) as $field ) {
+		$constant = wpss_secret_constant( $option, (string) $field );
+		if ( '' !== $constant ) {
+			$secrets[ $field ] = (string) constant( $constant );
+		}
+	}
+	// No constant: leave the value alone, so a missing option still reads as its default.
+	return array() === $secrets ? $value : array_merge( is_array( $value ) ? $value : array(), $secrets );
+};
 foreach ( array_keys( wpss_secret_constants() ) as $wpss_secret_option ) {
-	add_filter(
-		'option_' . $wpss_secret_option,
-		static function ( $value, $option ) {
-			$value = is_array( $value ) ? $value : array();
-			foreach ( array_keys( wpss_secret_constants()[ $option ] ?? array() ) as $field ) {
-				$constant = wpss_secret_constant( $option, (string) $field );
-				if ( '' !== $constant ) {
-					$value[ $field ] = (string) constant( $constant );
-				}
-			}
-			return $value;
-		},
-		10,
-		2
-	);
+	add_filter( 'option_' . $wpss_secret_option, $wpss_secret_reader, 10, 2 );
+	add_filter( 'default_option_' . $wpss_secret_option, $wpss_secret_reader, 10, 2 );
 	add_filter(
 		'pre_update_option_' . $wpss_secret_option,
 		static function ( $value, $old, $option ) {
@@ -756,4 +756,4 @@ foreach ( array_keys( wpss_secret_constants() ) as $wpss_secret_option ) {
 		3
 	);
 }
-unset( $wpss_secret_option );
+unset( $wpss_secret_option, $wpss_secret_reader );

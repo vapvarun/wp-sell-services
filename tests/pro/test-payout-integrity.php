@@ -162,7 +162,7 @@ if ( false === $connect_backup ) {
 }
 
 // ---------------------------------------------------------------------------
-// 2. PayPal Payouts eligibility = EarningsService available - in-flight items.
+// 2. PayPal Payouts: in-flight items are reserved in EarningsService itself.
 // ---------------------------------------------------------------------------
 echo "\n2. PayPal Payouts eligibility\n";
 
@@ -190,8 +190,11 @@ update_option( 'wpss_payouts', array_merge( is_array( $clearance_backup ) ? $cle
 $summary  = ( new \WPSellServices\Services\EarningsService() )->get_summary( $vendor_id );
 $eligible = ( new \WPSellServicesPro\PayPalPayouts\PayoutsBatchService() )->get_pending_payouts( $vendor_id );
 
-wpss_t( abs( $summary['available_balance'] - 86.60 ) < 0.001, 'EarningsService available = 250 - 113.40 pending - 50 clearing = 86.60 (got ' . $summary['available_balance'] . ')' );
-wpss_t( abs( $eligible - ( $summary['available_balance'] - 10 ) ) < 0.001, 'payouts eligible = available - 10 in flight (got ' . $eligible . ')' );
+// The in-flight item is a withdrawal in progress for every path, so a manual or auto
+// withdrawal cannot take the same 10 again; the batch does not subtract it twice.
+wpss_t( abs( $summary['available_balance'] - 76.60 ) < 0.001, 'EarningsService available = 250 - 113.40 pending - 10 in flight - 50 clearing = 76.60 (got ' . $summary['available_balance'] . ')' );
+wpss_t( abs( $summary['pending_withdrawal'] - 123.40 ) < 0.001, 'withdrawal in progress shows the request and the batch item = 123.40 (got ' . $summary['pending_withdrawal'] . ')' );
+wpss_t( abs( $eligible - $summary['available_balance'] ) < 0.001, 'payouts eligible = available, in flight not subtracted twice (got ' . $eligible . ')' );
 
 // record_payout_debit is idempotent and leaves no open transaction.
 $svc = new \WPSellServicesPro\PayPalPayouts\PayoutsBatchService();

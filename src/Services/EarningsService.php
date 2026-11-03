@@ -154,13 +154,31 @@ class EarningsService {
 			)
 		);
 
-		$withdrawn          = (float) $withdrawn;
-		$pending_withdrawal = (float) $pending_withdrawal;
+		$withdrawn = (float) $withdrawn;
+
+		/**
+		 * Money a payout rail has sent or committed but not yet debited to the ledger.
+		 *
+		 * A PayPal batch item in flight is a withdrawal in progress: counted here, a
+		 * vendor cannot ask for the same money again by hand or through the auto run.
+		 *
+		 * shortcut: a payout rail reserves under its own lock, not the withdrawal
+		 * writer's, so a batch and a request in the same instant can both read the full
+		 * balance; the paid debit then shows as a negative balance. Share one lock if
+		 * rails ever pay without an admin starting the batch.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param float $reserved  Amount reserved so far.
+		 * @param int   $vendor_id Vendor user ID.
+		 */
+		$reserved           = max( 0.0, (float) apply_filters( 'wpss_vendor_reserved_payouts', 0.0, $vendor_id ) );
+		$pending_withdrawal = (float) $pending_withdrawal + $reserved;
 
 		// $ledger_balance is ALREADY net of completed withdrawals — subtracting
 		// $withdrawn here would debit them twice. Only still-open requests
-		// (pending / approved) need reserving, because those have not reached
-		// the ledger yet.
+		// (pending / approved, plus payout-rail reservations) need reserving,
+		// because those have not reached the ledger yet.
 		// NOT clamped to zero. A refund reverses the vendor's earnings, and if
 		// they had already withdrawn that money the balance goes NEGATIVE —
 		// which is the correct record of a debt to the platform. Because the
@@ -848,8 +866,10 @@ class EarningsService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$table} WHERE vendor_id = %d AND status = 'pending' FOR UPDATE",
-				$vendor_id
+				"SELECT COALESCE(SUM(amount), 0) FROM {$table} WHERE vendor_id = %d AND status IN (%s, %s) FOR UPDATE",
+				$vendor_id,
+				self::WITHDRAWAL_PENDING,
+				self::WITHDRAWAL_APPROVED
 			)
 		);
 
@@ -868,12 +888,17 @@ class EarningsService {
 		 * living in a caller rather than in the shared writer. Inside the
 		 * transaction it is race-safe rather than advisory, which the
 		 * controller's copy was not.
+		 *
+		 * Open means pending OR approved-but-unpaid: the same two statuses
+		 * get_summary() reserves as "withdrawal in progress".
 		 */
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$open = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND status = 'pending'",
-				$vendor_id
+				"SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND status IN (%s, %s)",
+				$vendor_id,
+				self::WITHDRAWAL_PENDING,
+				self::WITHDRAWAL_APPROVED
 			)
 		);
 
@@ -882,7 +907,7 @@ class EarningsService {
 			return array(
 				'success' => false,
 				'code'    => 'pending_exists',
-				'message' => __( 'You already have a pending withdrawal request.', 'wp-sell-services' ),
+				'message' => __( 'You already have a withdrawal in progress. You can request another once it is paid.', 'wp-sell-services' ),
 			);
 		}
 
@@ -892,6 +917,16 @@ class EarningsService {
 		// its loop began.
 		if ( $is_auto ) {
 			$amount = (float) $summary['available_balance'];
+
+			// The owner's threshold, read under the lock: the balance may have dropped since the run listed this vendor.
+			if ( $amount < self::get_auto_withdrawal_threshold() ) {
+				$wpdb->query( 'ROLLBACK' );
+				return array(
+					'success' => false,
+					'code'    => 'below_threshold',
+					'message' => __( 'The available balance is below the auto-withdrawal threshold.', 'wp-sell-services' ),
+				);
+			}
 		}
 
 		$min_withdrawal = self::get_min_withdrawal_amount();

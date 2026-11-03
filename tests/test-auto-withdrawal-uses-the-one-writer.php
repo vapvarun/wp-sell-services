@@ -8,7 +8,8 @@
  * vendor was still in good standing. The owner's payout queue filled with
  * second requests, sub-minimum requests, requests with no usable destination
  * and requests for suspended vendors. It now writes through the same locked
- * writer as a manual request.
+ * writer as a manual request. An approved request still waiting to be paid
+ * counts as open, and the threshold is re-read under the lock.
  *
  * Run: wp eval-file tests/test-auto-withdrawal-uses-the-one-writer.php
  *
@@ -36,11 +37,12 @@ $vendor      = $f->vendor;
 $service     = new EarningsService();
 
 // Payouts: auto on, threshold 10, minimum 50 unless a case lowers it.
-$min      = 50;
-$settings = static function ( $value ) use ( &$min ) {
+$min       = 50;
+$threshold = 10;
+$settings  = static function ( $value ) use ( &$min, &$threshold ) {
 	return array(
 		'auto_withdrawal_enabled'   => 1,
-		'auto_withdrawal_threshold' => 10,
+		'auto_withdrawal_threshold' => $threshold,
 		'min_withdrawal'            => $min,
 	) + (array) $value;
 };
@@ -82,6 +84,29 @@ $manual = $service->request_withdrawal( $vendor, 60, $method );
 $check( 'the vendor asked for 60 by hand', ! empty( $manual['success'] ), wp_json_encode( $manual ) );
 $rows = $run();
 $check( 'the run adds no second request beside a pending manual one', 1 === count( $rows ), count( $rows ) . ' rows' );
+$reset();
+
+// 1b. An approved request still waiting to be paid is open too: no second request, by hand or by the run.
+$manual = $service->request_withdrawal( $vendor, 60, $method );
+$wpdb->update( $withdrawals, array( 'status' => EarningsService::WITHDRAWAL_APPROVED ), array( 'id' => (int) ( $manual['withdrawal_id'] ?? 0 ) ) );
+$second = $service->request_withdrawal( $vendor, 50, $method );
+$check( 'a manual request beside an approved, unpaid one is refused', empty( $second['success'] ) && 'pending_exists' === ( $second['code'] ?? '' ), wp_json_encode( $second ) );
+$rows = $run();
+$check( 'the run adds no request beside an approved, unpaid one', 1 === count( $rows ), count( $rows ) . ' rows' );
+$reset();
+
+// 1c. The balance drops below the threshold after the run listed the vendor: re-checked under the lock.
+$raise = static function ( $sql ) use ( &$threshold ) {
+	if ( false !== strpos( $sql, 'FOR UPDATE' ) ) {
+		$threshold = 1000;
+	}
+	return $sql;
+};
+add_filter( 'query', $raise );
+$rows = $run();
+remove_filter( 'query', $raise );
+$threshold = 10;
+$check( 'the run does not request a payout that fell below the threshold', array() === $rows, count( $rows ) . ' rows' );
 $reset();
 
 // 2. Below the minimum: 120 available, minimum raised to 500.
