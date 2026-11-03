@@ -3013,6 +3013,8 @@ h2.wpss-settings-subhead__title {
 
 .wpss-secret-field__badge {
 	display: inline-flex;
+	flex-shrink: 0;
+	white-space: nowrap;
 	align-items: center;
 	padding: 2px 8px;
 	border-radius: var(--wpss-admin-radius-sm);
@@ -3241,6 +3243,11 @@ h2.wpss-settings-subhead__title {
 	.wpss-secret-field__input,
 	.wpss-secret-field__toggle {
 		width: 100%;
+	}
+
+	/* In a column the 240px basis is a height: let the input keep its own. */
+	.wpss-secret-field__input {
+		flex: none;
 	}
 
 	.wpss-secret-field__toggle {

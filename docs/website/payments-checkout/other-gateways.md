@@ -90,6 +90,8 @@ Razorpay is the go-to payment gateway for marketplaces serving buyers in India. 
 5. Check **Enable Razorpay** and enter your Key ID and Key Secret
 6. Click **Save Changes**
 
+**Keeping the secrets out of the database:** define `WPSS_RAZORPAY_LIVE_KEY_SECRET`, `WPSS_RAZORPAY_TEST_KEY_SECRET` and `WPSS_RAZORPAY_WEBHOOK_SECRET` in `wp-config.php`. Each constant wins over the saved value, its field is locked, and the next save clears the stored copy. The Key IDs stay on the settings screen.
+
 ### Test Mode
 
 Razorpay provides test mode keys for development.
