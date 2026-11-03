@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-03T20:30:46+00:00\n"
+"POT-Creation-Date: 2026-11-03T21:19:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -358,7 +358,7 @@ msgstr ""
 #: src/Admin/Admin.php:1380
 #: src/Admin/Pages/VendorsPage.php:1319
 #: src/Frontend/AjaxHandlers.php:1397
-#: src/Services/EarningsService.php:1063
+#: src/Services/EarningsService.php:1098
 msgid "Invalid status."
 msgstr ""
 
@@ -1192,7 +1192,7 @@ msgstr ""
 #: src/functions/order-status.php:153
 #: src/Models/ServiceOrder.php:638
 #: src/Services/BuyerRequestService.php:1410
-#: src/Services/EarningsService.php:1476
+#: src/Services/EarningsService.php:1511
 #: templates/emails/order-cancelled.php:67
 #: templates/order/order-view.php:1307
 #: templates/order/timeline.php:85
@@ -1526,7 +1526,7 @@ msgstr ""
 #: src/Admin/RequestListScreen.php:68
 #: src/Admin/Tables/OrdersListTable.php:53
 #: src/Privacy/PersonalData.php:513
-#: src/Services/EmailService.php:2774
+#: src/Services/EmailService.php:2791
 #: src/Services/NotificationService.php:381
 #: src/Services/NotificationService.php:508
 #: templates/emails/dispute-opened.php:98
@@ -1552,7 +1552,7 @@ msgstr ""
 #: src/Blocks/BlocksManager.php:139
 #: src/Frontend/UnifiedDashboard.php:696
 #: src/Privacy/PersonalData.php:514
-#: src/Services/EmailService.php:2785
+#: src/Services/EmailService.php:2802
 #: src/Services/NotificationService.php:383
 #: src/Services/NotificationService.php:510
 #: templates/emails/delivery-ready.php:74
@@ -2822,8 +2822,7 @@ msgstr ""
 #: src/Models/Proposal.php:272
 #: src/Models/Review.php:214
 #: src/Models/ServiceOrder.php:628
-#: src/Services/EarningsService.php:1472
-#: src/Services/ExtensionRequestService.php:123
+#: src/Services/EarningsService.php:1507
 #: src/Services/ProposalService.php:918
 #: templates/dashboard/sections/proposals.php:61
 #: templates/order/timeline.php:166
@@ -2835,7 +2834,7 @@ msgstr ""
 #. translators: %s: payment method, e.g. Stripe.
 #: src/Admin/Pages/ManualOrderPage.php:363
 #: src/functions/order-status.php:314
-#: src/Services/EarningsService.php:1474
+#: src/Services/EarningsService.php:1509
 #: templates/emails/withdrawal-completed.php:59
 msgid "Paid"
 msgstr ""
@@ -2871,7 +2870,7 @@ msgid "Manual"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:374
-#: src/Services/EarningsService.php:1271
+#: src/Services/EarningsService.php:1306
 msgid "Bank Transfer"
 msgstr ""
 
@@ -2927,7 +2926,7 @@ msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:443
 #: src/API/EarningsController.php:420
-#: src/Services/EmailService.php:466
+#: src/Services/EmailService.php:476
 #: templates/dashboard/sections/disputes.php:245
 #: templates/dashboard/sections/proposals.php:151
 #: templates/emails/new-order.php:128
@@ -3274,8 +3273,7 @@ msgstr ""
 #: src/Admin/ServiceListScreen.php:330
 #: src/Models/ExtensionRequest.php:283
 #: src/Models/Review.php:215
-#: src/Services/EarningsService.php:1473
-#: src/Services/ExtensionRequestService.php:124
+#: src/Services/EarningsService.php:1508
 #: src/Services/ModerationService.php:635
 #: templates/emails/moderation-approved.php:57
 #: templates/emails/moderation-response.php:69
@@ -3298,8 +3296,7 @@ msgstr ""
 #: src/Models/Proposal.php:274
 #: src/Models/Review.php:216
 #: src/Models/ServiceOrder.php:630
-#: src/Services/EarningsService.php:1475
-#: src/Services/ExtensionRequestService.php:125
+#: src/Services/EarningsService.php:1510
 #: src/Services/ModerationService.php:636
 #: src/Services/ProposalService.php:920
 #: templates/dashboard/sections/services.php:73
@@ -4280,7 +4277,7 @@ msgid "Negative balance written off. The entry is in the vendor's ledger."
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:583
-#: src/Services/EarningsService.php:431
+#: src/Services/EarningsService.php:449
 msgid "A reason is required to write off a balance."
 msgstr ""
 
@@ -4449,7 +4446,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:1859
 #: src/Frontend/Shortcodes.php:535
 #: src/Frontend/Shortcodes.php:546
-#: src/Services/EarningsService.php:423
+#: src/Services/EarningsService.php:441
 msgid "Vendor not found."
 msgstr ""
 
@@ -6708,7 +6705,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:416
 #: src/functions/notifications.php:597
 #: src/Services/AuditLogService.php:64
-#: src/Services/EmailService.php:1747
+#: src/Services/EmailService.php:1764
 #: src/Services/NotificationService.php:702
 #: src/Services/NotificationService.php:720
 #: src/Services/OrderWorkflowManager.php:620
@@ -6721,7 +6718,7 @@ msgstr ""
 #: src/functions/notifications.php:616
 #: src/functions/order-status.php:68
 #: src/Models/ServiceOrder.php:642
-#: src/Services/EmailService.php:1645
+#: src/Services/EmailService.php:1662
 #: src/Services/NotificationService.php:659
 #: templates/emails/cancellation-requested.php:85
 #: templates/order/timeline.php:96
@@ -6739,8 +6736,8 @@ msgstr ""
 #: src/functions/notifications.php:614
 #: src/functions/order-status.php:69
 #: src/Models/ServiceOrder.php:636
-#: src/Services/EmailService.php:1182
-#: src/Services/EmailService.php:1427
+#: src/Services/EmailService.php:1192
+#: src/Services/EmailService.php:1437
 #: src/Services/NotificationService.php:631
 #: src/Services/NotificationService.php:1368
 #: src/Services/OrderTimelineService.php:185
@@ -6768,7 +6765,7 @@ msgstr ""
 #: src/functions/notifications.php:416
 #: src/functions/notifications.php:622
 #: src/Services/AuditLogService.php:90
-#: src/Services/EmailService.php:1816
+#: src/Services/EmailService.php:1833
 #: src/Services/NotificationService.php:1219
 msgid "Dispute opened"
 msgstr ""
@@ -6784,7 +6781,7 @@ msgstr ""
 #: src/functions/notifications.php:422
 #: src/functions/notifications.php:651
 #: src/Services/AuditLogService.php:70
-#: src/Services/EmailService.php:2096
+#: src/Services/EmailService.php:2113
 msgid "Withdrawal approved"
 msgstr ""
 
@@ -6792,7 +6789,7 @@ msgstr ""
 #: src/functions/notifications.php:423
 #: src/functions/notifications.php:652
 #: src/Services/AuditLogService.php:72
-#: src/Services/EmailService.php:2091
+#: src/Services/EmailService.php:2108
 msgid "Withdrawal paid"
 msgstr ""
 
@@ -6800,7 +6797,7 @@ msgstr ""
 #: src/functions/notifications.php:424
 #: src/functions/notifications.php:653
 #: src/Services/AuditLogService.php:71
-#: src/Services/EmailService.php:2086
+#: src/Services/EmailService.php:2103
 msgid "Withdrawal rejected"
 msgstr ""
 
@@ -6822,26 +6819,26 @@ msgstr ""
 
 #: src/Admin/Settings.php:4250
 #: src/functions/notifications.php:635
-#: src/Services/EmailService.php:926
+#: src/Services/EmailService.php:936
 #: src/Services/NotificationService.php:1330
 msgid "Milestone proposed"
 msgstr ""
 
 #: src/Admin/Settings.php:4251
 #: src/functions/notifications.php:636
-#: src/Services/EmailService.php:1043
+#: src/Services/EmailService.php:1053
 msgid "Milestone paid"
 msgstr ""
 
 #: src/Admin/Settings.php:4252
-#: src/Services/EmailService.php:1098
+#: src/Services/EmailService.php:1108
 #: src/Services/NotificationService.php:1350
 msgid "Milestone delivered"
 msgstr ""
 
 #: src/Admin/Settings.php:4253
 #: src/functions/notifications.php:638
-#: src/Services/EmailService.php:1142
+#: src/Services/EmailService.php:1152
 #: src/Services/NotificationService.php:1377
 msgid "Milestone approved"
 msgstr ""
@@ -7179,7 +7176,7 @@ msgstr ""
 
 #: src/API/API.php:1234
 #: src/API/EarningsController.php:345
-#: src/Services/EarningsService.php:743
+#: src/Services/EarningsService.php:761
 #: templates/dashboard/partials/order-row.php:68
 msgid "Deleted Service"
 msgstr ""
@@ -7668,7 +7665,7 @@ msgid "View Milestone"
 msgstr ""
 
 #: src/API/EarningsController.php:522
-#: src/Services/EarningsService.php:940
+#: src/Services/EarningsService.php:975
 msgid "Failed to create withdrawal request."
 msgstr ""
 
@@ -11545,7 +11542,7 @@ msgid "Select extras"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:142
-#: src/Services/EarningsService.php:1564
+#: src/Services/EarningsService.php:1599
 msgid "Day"
 msgstr ""
 
@@ -14673,7 +14670,7 @@ msgid "Breadcrumb"
 msgstr ""
 
 #: src/functions/templates.php:417
-#: src/Models/Message.php:237
+#: src/Models/Message.php:251
 #: src/Models/Notification.php:175
 msgid "ago"
 msgstr ""
@@ -15136,7 +15133,7 @@ msgstr ""
 
 #: src/Integrations/PayPal/PayPalGateway.php:80
 #: src/Integrations/PayPal/PayPalGateway.php:1574
-#: src/Services/EarningsService.php:1261
+#: src/Services/EarningsService.php:1296
 msgid "PayPal"
 msgstr ""
 
@@ -15413,8 +15410,8 @@ msgid "Thank you. Your payment is confirmed and your order is on its way to the 
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:198
-#: src/Services/EmailService.php:418
-#: src/Services/EmailService.php:821
+#: src/Services/EmailService.php:428
+#: src/Services/EmailService.php:831
 msgid "View your order"
 msgstr ""
 
@@ -16499,7 +16496,7 @@ msgid "Marketplace withdrawals"
 msgstr ""
 
 #: src/Privacy/PersonalData.php:306
-#: src/Services/EarningsService.php:1312
+#: src/Services/EarningsService.php:1347
 msgid "Payout details"
 msgstr ""
 
@@ -17081,188 +17078,192 @@ msgid "Opened this dispute."
 msgstr ""
 
 #. translators: %d: withdrawal ID
-#: src/Services/EarningsService.php:377
+#: src/Services/EarningsService.php:395
 #, php-format
 msgid "Withdrawal #%d paid"
 msgstr ""
 
-#: src/Services/EarningsService.php:444
+#: src/Services/EarningsService.php:462
 msgid "This vendor does not have a negative balance."
 msgstr ""
 
 #. translators: %s: the admin's reason
-#: src/Services/EarningsService.php:465
+#: src/Services/EarningsService.php:483
 #, php-format
 msgid "Negative balance written off: %s"
 msgstr ""
 
-#: src/Services/EarningsService.php:478
+#: src/Services/EarningsService.php:496
 msgid "The write-off could not be recorded."
 msgstr ""
 
-#: src/Services/EarningsService.php:500
+#: src/Services/EarningsService.php:518
 msgid "Negative balance written off."
 msgstr ""
 
-#: src/Services/EarningsService.php:539
-#: src/Services/EarningsService.php:1087
-#: src/Services/EarningsService.php:1528
+#: src/Services/EarningsService.php:557
+#: src/Services/EarningsService.php:1122
+#: src/Services/EarningsService.php:1563
 msgid "Withdrawal not found."
 msgstr ""
 
-#: src/Services/EarningsService.php:551
+#: src/Services/EarningsService.php:569
 msgid "Approve this withdrawal before marking it paid."
 msgstr ""
 
-#: src/Services/EarningsService.php:560
-#: src/Services/EarningsService.php:1101
+#: src/Services/EarningsService.php:578
+#: src/Services/EarningsService.php:1136
 msgid "This withdrawal has already been finalised and can no longer be changed."
 msgstr ""
 
 #. translators: 1: withdrawal amount, 2: vendor's current wallet balance.
-#: src/Services/EarningsService.php:589
+#: src/Services/EarningsService.php:607
 #, php-format
 msgid "This withdrawal is %1$s but the vendor's balance is only %2$s, so paying it would put them in debt. Their balance may have changed since they asked - a refund or dispute can claw earnings back. Reject this request, or wait until they have earned enough to cover it."
 msgstr ""
 
-#: src/Services/EarningsService.php:615
-#: src/Services/EarningsService.php:1135
+#: src/Services/EarningsService.php:633
+#: src/Services/EarningsService.php:1170
 msgid "Failed to update withdrawal."
 msgstr ""
 
-#: src/Services/EarningsService.php:626
+#: src/Services/EarningsService.php:644
 msgid "The wallet ledger debit could not be written, so the withdrawal was left unchanged."
 msgstr ""
 
-#: src/Services/EarningsService.php:645
+#: src/Services/EarningsService.php:663
 msgid "Withdrawal marked as paid."
 msgstr ""
 
-#: src/Services/EarningsService.php:667
+#: src/Services/EarningsService.php:685
 msgid "Withdrawal Update"
 msgstr ""
 
 #. translators: 1: amount, 2: status
-#: src/Services/EarningsService.php:670
+#: src/Services/EarningsService.php:688
 #, php-format
 msgid "Your withdrawal request for %1$s has been %2$s."
 msgstr ""
 
-#: src/Services/EarningsService.php:798
+#: src/Services/EarningsService.php:816
 msgid "Withdrawal request submitted successfully."
 msgstr ""
 
-#: src/Services/EarningsService.php:885
-msgid "You already have a pending withdrawal request."
+#: src/Services/EarningsService.php:910
+msgid "You already have a withdrawal in progress. You can request another once it is paid."
+msgstr ""
+
+#: src/Services/EarningsService.php:927
+msgid "The available balance is below the auto-withdrawal threshold."
 msgstr ""
 
 #. translators: %s: minimum withdrawal amount
-#: src/Services/EarningsService.php:905
+#: src/Services/EarningsService.php:940
 #, php-format
 msgid "Minimum withdrawal amount is %s."
 msgstr ""
 
-#: src/Services/EarningsService.php:917
+#: src/Services/EarningsService.php:952
 msgid "Insufficient balance for this withdrawal."
 msgstr ""
 
-#: src/Services/EarningsService.php:1112
+#: src/Services/EarningsService.php:1147
 msgid "This withdrawal already has that status."
 msgstr ""
 
-#: src/Services/EarningsService.php:1157
+#: src/Services/EarningsService.php:1192
 msgid "Withdrawal updated successfully."
 msgstr ""
 
-#: src/Services/EarningsService.php:1264
+#: src/Services/EarningsService.php:1299
 msgid "PayPal email"
 msgstr ""
 
-#: src/Services/EarningsService.php:1274
+#: src/Services/EarningsService.php:1309
 msgid "Account holder name"
 msgstr ""
 
-#: src/Services/EarningsService.php:1279
+#: src/Services/EarningsService.php:1314
 msgid "Bank name"
 msgstr ""
 
-#: src/Services/EarningsService.php:1284
+#: src/Services/EarningsService.php:1319
 msgid "Account number or IBAN"
 msgstr ""
 
-#: src/Services/EarningsService.php:1289
+#: src/Services/EarningsService.php:1324
 msgid "Routing, SWIFT or IFSC code"
 msgstr ""
 
-#: src/Services/EarningsService.php:1319
+#: src/Services/EarningsService.php:1354
 msgid "A payout method needs a string id and a label."
 msgstr ""
 
-#: src/Services/EarningsService.php:1358
+#: src/Services/EarningsService.php:1393
 msgid "Choose a payout method this marketplace offers."
 msgstr ""
 
 #. translators: %s: field label
-#: src/Services/EarningsService.php:1369
+#: src/Services/EarningsService.php:1404
 #, php-format
 msgid "%s is not a valid email address."
 msgstr ""
 
 #. translators: %s: field label
-#: src/Services/EarningsService.php:1374
+#: src/Services/EarningsService.php:1409
 #, php-format
 msgid "Add your %s to receive payouts."
 msgstr ""
 
-#: src/Services/EarningsService.php:1532
+#: src/Services/EarningsService.php:1567
 msgid "Automatic withdrawals cannot be cancelled."
 msgstr ""
 
-#: src/Services/EarningsService.php:1535
+#: src/Services/EarningsService.php:1570
 msgid "Only a pending withdrawal can be cancelled. This one has already been processed."
 msgstr ""
 
-#: src/Services/EarningsService.php:1565
+#: src/Services/EarningsService.php:1600
 msgid "Week"
 msgstr ""
 
-#: src/Services/EarningsService.php:1566
+#: src/Services/EarningsService.php:1601
 msgid "Month"
 msgstr ""
 
-#: src/Services/EarningsService.php:1567
+#: src/Services/EarningsService.php:1602
 msgid "Year"
 msgstr ""
 
-#: src/Services/EarningsService.php:1696
+#: src/Services/EarningsService.php:1731
 msgid "Auto withdrawal is not enabled."
 msgstr ""
 
-#: src/Services/EarningsService.php:1706
+#: src/Services/EarningsService.php:1741
 msgid "No vendors eligible for auto withdrawal."
 msgstr ""
 
 #. translators: 1: processed count, 2: failed count
-#: src/Services/EarningsService.php:1747
+#: src/Services/EarningsService.php:1782
 #, php-format
 msgid "Auto withdrawal completed. Processed: %1$d, Failed: %2$d."
 msgstr ""
 
-#: src/Services/EarningsService.php:1787
+#: src/Services/EarningsService.php:1822
 msgid "Auto Withdrawal Created"
 msgstr ""
 
 #. translators: %s: amount
-#: src/Services/EarningsService.php:1790
+#: src/Services/EarningsService.php:1825
 #, php-format
 msgid "An automatic withdrawal of %s has been scheduled based on your payout settings."
 msgstr ""
 
-#: src/Services/EarningsService.php:1810
+#: src/Services/EarningsService.php:1845
 msgid "Auto withdrawal request created successfully."
 msgstr ""
 
-#: src/Services/EarningsService.php:1827
+#: src/Services/EarningsService.php:1862
 msgid "Every 14 Days (Bi-weekly)"
 msgstr ""
 
@@ -17294,38 +17295,38 @@ msgid "Order Confirmed!"
 msgstr ""
 
 #. translators: 1: site name, 2: order number
-#: src/Services/EmailService.php:403
+#: src/Services/EmailService.php:413
 #, php-format
 msgid "[%1$s] Order #%2$s: how to pay"
 msgstr ""
 
-#: src/Services/EmailService.php:410
+#: src/Services/EmailService.php:420
 msgid "Your order is waiting for payment"
 msgstr ""
 
 #. translators: 1: service title, 2: total
-#: src/Services/EmailService.php:413
+#: src/Services/EmailService.php:423
 #, php-format
 msgid "We have your order for %1$s (%2$s). It starts as soon as your payment is confirmed. Pay using the details below."
 msgstr ""
 
 #. translators: 1: order number, 2: service title, 3: total
-#: src/Services/EmailService.php:426
+#: src/Services/EmailService.php:436
 #, php-format
 msgid "Order #%1$s for %2$s (%3$s) was placed by bank transfer and is waiting for payment. It starts once the payment is marked as received."
 msgstr ""
 
 #. translators: 1: site name, 2: order number
-#: src/Services/EmailService.php:436
+#: src/Services/EmailService.php:446
 #, php-format
 msgid "[%1$s] Order #%2$s is waiting for payment"
 msgstr ""
 
-#: src/Services/EmailService.php:443
+#: src/Services/EmailService.php:453
 msgid "A bank-transfer order is waiting for payment"
 msgstr ""
 
-#: src/Services/EmailService.php:446
+#: src/Services/EmailService.php:456
 #: templates/emails/extension-approved.php:119
 #: templates/emails/extension-declined.php:72
 #: templates/emails/milestone-revision-requested.php:54
@@ -17333,202 +17334,202 @@ msgid "Open the order"
 msgstr ""
 
 #. translators: 1: site name, 2: order number
-#: src/Services/EmailService.php:456
+#: src/Services/EmailService.php:466
 #, php-format
 msgid "[%1$s] Order #%2$s is waiting for the buyer's payment"
 msgstr ""
 
-#: src/Services/EmailService.php:463
+#: src/Services/EmailService.php:473
 msgid "A new order is waiting for payment"
 msgstr ""
 
-#: src/Services/EmailService.php:464
+#: src/Services/EmailService.php:474
 msgid "You do not need to do anything yet; we will email you when work can start."
 msgstr ""
 
 #. translators: %1$s: site name, %2$s: order number
-#: src/Services/EmailService.php:496
+#: src/Services/EmailService.php:506
 #, php-format
 msgid "[%1$s] Requirements Submitted - Order #%2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:506
+#: src/Services/EmailService.php:516
 msgid "Requirements Received"
 msgstr ""
 
 #. translators: %1$s: site name, %2$s: order number
-#: src/Services/EmailService.php:528
+#: src/Services/EmailService.php:538
 #, php-format
 msgid "[%1$s] Order #%2$s is Now In Progress"
 msgstr ""
 
-#: src/Services/EmailService.php:542
+#: src/Services/EmailService.php:552
 #: src/Services/NotificationService.php:543
 msgid "Your Order is In Progress"
 msgstr ""
 
-#: src/Services/EmailService.php:562
+#: src/Services/EmailService.php:572
 msgid "Requirements Received - Start Working"
 msgstr ""
 
-#: src/Services/EmailService.php:563
+#: src/Services/EmailService.php:573
 msgid "New Order - Start Working"
 msgstr ""
 
 #. translators: %1$s: site name, %2$s: order number
-#: src/Services/EmailService.php:594
+#: src/Services/EmailService.php:604
 #, php-format
 msgid "[%1$s] Delivery Ready - Order #%2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:604
+#: src/Services/EmailService.php:614
 msgid "Your Delivery is Ready!"
 msgstr ""
 
-#: src/Services/EmailService.php:653
+#: src/Services/EmailService.php:663
 #: src/Services/NotificationService.php:943
 msgid "your service"
 msgstr ""
 
 #. translators: 1: site name, 2: stars, 3: buyer name
-#: src/Services/EmailService.php:658
+#: src/Services/EmailService.php:668
 #, php-format
 msgid "[%1$s] %2$s review from %3$s"
 msgstr ""
 
-#: src/Services/EmailService.php:670
+#: src/Services/EmailService.php:680
 msgid "You received a new review"
 msgstr ""
 
-#: src/Services/EmailService.php:702
+#: src/Services/EmailService.php:712
 #: src/Services/NotificationService.php:1035
 #: templates/emails/new-order.php:29
 msgid "A buyer"
 msgstr ""
 
 #. translators: 1: site name, 2: buyer name
-#: src/Services/EmailService.php:708
+#: src/Services/EmailService.php:718
 #, php-format
 msgid "[%1$s] You received a tip from %2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:721
+#: src/Services/EmailService.php:731
 #: src/Services/NotificationService.php:1054
 msgid "You received a tip!"
 msgstr ""
 
 #. translators: 1: site name, 2: order number
-#: src/Services/EmailService.php:760
+#: src/Services/EmailService.php:770
 #, php-format
 msgid "[%1$s] Payment proof submitted for order #%2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:767
+#: src/Services/EmailService.php:777
 msgid "Payment proof is waiting for review"
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/EmailService.php:770
+#: src/Services/EmailService.php:780
 #, php-format
 msgid "A buyer has uploaded proof of payment for order #%s. Review it and approve or reject the payment."
 msgstr ""
 
-#: src/Services/EmailService.php:774
+#: src/Services/EmailService.php:784
 msgid "Review the receipt"
 msgstr ""
 
 #. translators: 1: site name, 2: order number
-#: src/Services/EmailService.php:807
+#: src/Services/EmailService.php:817
 #, php-format
 msgid "[%1$s] Payment confirmed for order #%2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:814
+#: src/Services/EmailService.php:824
 msgid "Your payment has been confirmed"
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/EmailService.php:817
+#: src/Services/EmailService.php:827
 #, php-format
 msgid "We have checked your receipt and confirmed payment for order #%s. Your order is now underway."
 msgstr ""
 
 #. translators: %s: order number
-#: src/Services/EmailService.php:856
+#: src/Services/EmailService.php:866
 #, php-format
 msgid "We could not confirm your payment for order #%s from the receipt you sent."
 msgstr ""
 
-#: src/Services/EmailService.php:864
+#: src/Services/EmailService.php:874
 msgid "Please upload a clearer copy from your order page."
 msgstr ""
 
 #. translators: 1: site name, 2: order number
-#: src/Services/EmailService.php:870
+#: src/Services/EmailService.php:880
 #, php-format
 msgid "[%1$s] We need a clearer receipt for order #%2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:877
+#: src/Services/EmailService.php:887
 msgid "We could not confirm your payment"
 msgstr ""
 
-#: src/Services/EmailService.php:880
+#: src/Services/EmailService.php:890
 msgid "Upload a new receipt"
 msgstr ""
 
-#: src/Services/EmailService.php:904
-#: src/Services/EmailService.php:981
-#: src/Services/EmailService.php:1071
-#: src/Services/EmailService.php:1215
+#: src/Services/EmailService.php:914
+#: src/Services/EmailService.php:991
+#: src/Services/EmailService.php:1081
+#: src/Services/EmailService.php:1225
 #: templates/order/order-requirements.php:145
 msgid "Your vendor"
 msgstr ""
 
 #. translators: 1: site name, 2: phase title
-#: src/Services/EmailService.php:913
+#: src/Services/EmailService.php:923
 #, php-format
 msgid "[%1$s] Milestone proposed: %2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:915
+#: src/Services/EmailService.php:925
 msgid "New phase"
 msgstr ""
 
-#: src/Services/EmailService.php:973
+#: src/Services/EmailService.php:983
 #: templates/order/milestone-view.php:153
 msgid "Phase"
 msgstr ""
 
 #. translators: 1: vendor name, 2: number of phases, 3: contract total
-#: src/Services/EmailService.php:980
+#: src/Services/EmailService.php:990
 #, php-format
 msgid "%1$s accepted your project and split it into %2$d phases, %3$s in total. Phases are paid one at a time, in this order."
 msgstr ""
 
-#: src/Services/EmailService.php:985
+#: src/Services/EmailService.php:995
 msgid "Pay the first phase to start the work."
 msgstr ""
 
 #. translators: 1: site name, 2: order number
-#: src/Services/EmailService.php:991
+#: src/Services/EmailService.php:1001
 #, php-format
 msgid "[%1$s] Your project plan for order #%2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:998
+#: src/Services/EmailService.php:1008
 msgid "Your project is planned"
 msgstr ""
 
-#: src/Services/EmailService.php:1001
+#: src/Services/EmailService.php:1011
 msgid "Pay the first phase"
 msgstr ""
 
-#: src/Services/EmailService.php:1026
-#: src/Services/EmailService.php:1125
-#: src/Services/EmailService.php:1184
-#: src/Services/EmailService.php:1264
-#: src/Services/EmailService.php:1320
+#: src/Services/EmailService.php:1036
+#: src/Services/EmailService.php:1135
+#: src/Services/EmailService.php:1194
+#: src/Services/EmailService.php:1274
+#: src/Services/EmailService.php:1330
 #: templates/emails/cancellation-requested.php:32
 #: templates/emails/order-in-progress.php:33
 #: templates/emails/requirements-submitted.php:30
@@ -17537,55 +17538,55 @@ msgid "The buyer"
 msgstr ""
 
 #. translators: 1: site name, 2: phase title
-#: src/Services/EmailService.php:1031
+#: src/Services/EmailService.php:1041
 #, php-format
 msgid "[%1$s] Milestone paid — start work: %2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:1033
-#: src/Services/EmailService.php:1088
-#: src/Services/EmailService.php:1132
-#: src/Services/EmailService.php:1172
+#: src/Services/EmailService.php:1043
+#: src/Services/EmailService.php:1098
+#: src/Services/EmailService.php:1142
+#: src/Services/EmailService.php:1182
 msgid "your phase"
 msgstr ""
 
 #. translators: 1: site name, 2: phase title
-#: src/Services/EmailService.php:1086
+#: src/Services/EmailService.php:1096
 #, php-format
 msgid "[%1$s] Milestone delivered: %2$s"
 msgstr ""
 
 #. translators: 1: site name, 2: phase title
-#: src/Services/EmailService.php:1130
+#: src/Services/EmailService.php:1140
 #, php-format
 msgid "[%1$s] Milestone approved: %2$s"
 msgstr ""
 
 #. translators: 1: site name, 2: phase title
-#: src/Services/EmailService.php:1170
+#: src/Services/EmailService.php:1180
 #, php-format
 msgid "[%1$s] Revision requested: %2$s"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:1222
+#: src/Services/EmailService.php:1232
 #, php-format
 msgid "[%s] Quote for extra work from your vendor"
 msgstr ""
 
-#: src/Services/EmailService.php:1233
+#: src/Services/EmailService.php:1243
 #: src/Services/NotificationService.php:1300
 #: templates/order/order-view.php:1574
 msgid "Quote for extra work"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:1268
+#: src/Services/EmailService.php:1278
 #, php-format
 msgid "[%s] Extra work paid — continue working"
 msgstr ""
 
-#: src/Services/EmailService.php:1289
+#: src/Services/EmailService.php:1299
 #: src/Services/NotificationService.php:1309
 #: templates/order/extension-view.php:103
 #: templates/order/extension-view.php:113
@@ -17593,12 +17594,12 @@ msgid "Extra work paid"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:1324
+#: src/Services/EmailService.php:1334
 #, php-format
 msgid "[%s] Extension declined"
 msgstr ""
 
-#: src/Services/EmailService.php:1335
+#: src/Services/EmailService.php:1345
 #: src/Services/NotificationService.php:1386
 #: templates/order/extension-view.php:109
 #: templates/order/extension-view.php:119
@@ -17606,231 +17607,231 @@ msgid "Quote declined"
 msgstr ""
 
 #. translators: %1$s: site name, %2$s: order number
-#: src/Services/EmailService.php:1357
+#: src/Services/EmailService.php:1367
 #, php-format
 msgid "[%1$s] Order #%2$s Completed"
 msgstr ""
 
-#: src/Services/EmailService.php:1371
-#: src/Services/EmailService.php:1390
+#: src/Services/EmailService.php:1381
+#: src/Services/EmailService.php:1400
 msgid "Order Completed!"
 msgstr ""
 
 #. translators: %1$s: site name, %2$s: order number
-#: src/Services/EmailService.php:1417
+#: src/Services/EmailService.php:1427
 #, php-format
 msgid "[%1$s] Revision Requested - Order #%2$s"
 msgstr ""
 
 #. translators: %1$s: site name, %2$s: order number
-#: src/Services/EmailService.php:1582
+#: src/Services/EmailService.php:1599
 #, php-format
 msgid "[%1$s] New Message - Order #%2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:1591
-#: src/Services/EmailService.php:2052
+#: src/Services/EmailService.php:1608
+#: src/Services/EmailService.php:2069
 #: src/Services/NotificationService.php:896
 msgid "New Message Received"
 msgstr ""
 
 #. translators: %1$s: site name, %2$s: order number
-#: src/Services/EmailService.php:1633
+#: src/Services/EmailService.php:1650
 #, php-format
 msgid "[%1$s] Cancellation Requested - Order #%2$s"
 msgstr ""
 
 #. translators: %1$s: site name, %2$s: order number
-#: src/Services/EmailService.php:1661
+#: src/Services/EmailService.php:1678
 #, php-format
 msgid "[%1$s] Cancellation Request Submitted - Order #%2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:1673
+#: src/Services/EmailService.php:1690
 #: src/Services/NotificationService.php:680
 msgid "Cancellation Request Submitted"
 msgstr ""
 
 #. translators: %1$s: site name, %2$s: order number
-#: src/Services/EmailService.php:1733
+#: src/Services/EmailService.php:1750
 #, php-format
 msgid "[%1$s] Order #%2$s Cancelled"
 msgstr ""
 
 #. translators: %1$s: site name, %2$s: order number
-#: src/Services/EmailService.php:1777
+#: src/Services/EmailService.php:1794
 #, php-format
 msgid "[%1$s] Dispute Opened - Order #%2$s"
 msgstr ""
 
 #. translators: 1: site name, 2: order number.
-#: src/Services/EmailService.php:1910
+#: src/Services/EmailService.php:1927
 #, php-format
 msgid "[%1$s] Submit Your Requirements - Order #%2$s"
 msgstr ""
 
 #. translators: 1: site name, 2: order number.
-#: src/Services/EmailService.php:1912
+#: src/Services/EmailService.php:1929
 #, php-format
 msgid "[%1$s] Reminder: Requirements Needed - Order #%2$s"
 msgstr ""
 
 #. translators: 1: site name, 2: order number.
-#: src/Services/EmailService.php:1914
+#: src/Services/EmailService.php:1931
 #, php-format
 msgid "[%1$s] Final Reminder: Action Required - Order #%2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:1918
+#: src/Services/EmailService.php:1935
 #: src/Services/OrderWorkflowManager.php:480
 msgid "Submit Your Requirements"
 msgstr ""
 
-#: src/Services/EmailService.php:1919
+#: src/Services/EmailService.php:1936
 #: src/Services/OrderWorkflowManager.php:484
 msgid "Reminder: Requirements Needed"
 msgstr ""
 
-#: src/Services/EmailService.php:1920
+#: src/Services/EmailService.php:1937
 #: src/Services/OrderWorkflowManager.php:488
 msgid "Final Reminder: Action Required"
 msgstr ""
 
 #. translators: %1$s: site name, %2$s: new level
-#: src/Services/EmailService.php:1960
+#: src/Services/EmailService.php:1977
 #, php-format
 msgid "[%1$s] Congratulations! You've been promoted to %2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:1967
+#: src/Services/EmailService.php:1984
 #: src/Services/SellerLevelService.php:358
 msgid "Congratulations! Level Up!"
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/EmailService.php:1994
+#: src/Services/EmailService.php:2011
 #, php-format
 msgid "[%s] Auto Withdrawal Request"
 msgstr ""
 
-#: src/Services/EmailService.php:1997
+#: src/Services/EmailService.php:2014
 msgid "Auto Withdrawal Request"
 msgstr ""
 
 #. translators: %s: platform name
-#: src/Services/EmailService.php:2001
+#: src/Services/EmailService.php:2018
 #, php-format
 msgid "[%s] New Withdrawal Request"
 msgstr ""
 
-#: src/Services/EmailService.php:2004
+#: src/Services/EmailService.php:2021
 msgid "New Withdrawal Request"
 msgstr ""
 
 #. translators: 1: platform name, 2: sender name, 3: service title
-#: src/Services/EmailService.php:2036
+#: src/Services/EmailService.php:2053
 #, php-format
 msgid "[%1$s] New message from %2$s about \"%3$s\""
 msgstr ""
 
 #. translators: 1: platform name, 2: sender name
-#: src/Services/EmailService.php:2043
+#: src/Services/EmailService.php:2060
 #, php-format
 msgid "[%1$s] New message from %2$s"
 msgstr ""
 
 #. translators: 1: platform name, 2: amount
-#: src/Services/EmailService.php:2088
+#: src/Services/EmailService.php:2105
 #, php-format
 msgid "[%1$s] Withdrawal Request for %2$s Rejected"
 msgstr ""
 
 #. translators: 1: platform name, 2: amount
-#: src/Services/EmailService.php:2093
+#: src/Services/EmailService.php:2110
 #, php-format
 msgid "[%1$s] Withdrawal of %2$s Paid"
 msgstr ""
 
 #. translators: 1: platform name, 2: amount
-#: src/Services/EmailService.php:2098
+#: src/Services/EmailService.php:2115
 #, php-format
 msgid "[%1$s] Withdrawal of %2$s Approved"
 msgstr ""
 
 #. translators: 1: platform name, 2: vendor name
-#: src/Services/EmailService.php:2141
+#: src/Services/EmailService.php:2158
 #, php-format
 msgid "[%1$s] New Proposal from %2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:2148
+#: src/Services/EmailService.php:2165
 #: src/Services/NotificationService.php:1410
 msgid "New proposal received"
 msgstr ""
 
 #. translators: 1: vendor name, 2: request title
-#: src/Services/EmailService.php:2151
+#: src/Services/EmailService.php:2168
 #, php-format
 msgid "%1$s has submitted a proposal for your request \"%2$s\". Review it and accept if it meets your needs."
 msgstr ""
 
-#: src/Services/EmailService.php:2156
+#: src/Services/EmailService.php:2173
 msgid "View Proposals"
 msgstr ""
 
 #. translators: 1: platform name, 2: request title
-#: src/Services/EmailService.php:2182
+#: src/Services/EmailService.php:2199
 #, php-format
 msgid "[%1$s] Your Proposal Was Accepted - %2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:2189
+#: src/Services/EmailService.php:2206
 msgid "Proposal Accepted!"
 msgstr ""
 
 #. translators: 1: buyer name, 2: request title
-#: src/Services/EmailService.php:2192
+#: src/Services/EmailService.php:2209
 #, php-format
 msgid "Congratulations! %1$s has accepted your proposal for \"%2$s\". An order will be created automatically."
 msgstr ""
 
-#: src/Services/EmailService.php:2197
+#: src/Services/EmailService.php:2214
 msgid "View Orders"
 msgstr ""
 
-#: src/Services/EmailService.php:2252
+#: src/Services/EmailService.php:2269
 msgid "Buyer request"
 msgstr ""
 
 #. translators: 1: platform name, 2: request title
-#: src/Services/EmailService.php:2256
+#: src/Services/EmailService.php:2273
 #, php-format
 msgid "[%1$s] Your Proposal Was Not Accepted - %2$s"
 msgstr ""
 
 #. translators: %s: request title
-#: src/Services/EmailService.php:2263
+#: src/Services/EmailService.php:2280
 #, php-format
 msgid "Unfortunately, your proposal for \"%s\" was not accepted by the buyer."
 msgstr ""
 
 #. translators: %s: rejection reason
 #. translators: %s: the reason the marketplace gave for rejecting the withdrawal
-#: src/Services/EmailService.php:2270
+#: src/Services/EmailService.php:2287
 #: templates/dashboard/sections/earnings.php:537
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:2275
+#: src/Services/EmailService.php:2292
 msgid "Don't worry — keep submitting proposals to find the right match!"
 msgstr ""
 
-#: src/Services/EmailService.php:2279
+#: src/Services/EmailService.php:2296
 msgid "Proposal Not Accepted"
 msgstr ""
 
-#: src/Services/EmailService.php:2286
+#: src/Services/EmailService.php:2303
 #: templates/dashboard/sections/proposals.php:83
 msgid "Browse Requests"
 msgstr ""
