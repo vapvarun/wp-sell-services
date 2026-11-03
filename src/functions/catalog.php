@@ -596,7 +596,8 @@ function wpss_get_category_service_counts( array $term_ids ): array {
  * @return string Thumbnail URL, or an empty string.
  */
 function wpss_get_video_thumbnail_url( string $video_url ): string {
-	if ( '' === $video_url || ! function_exists( '_wp_oembed_get_object' ) ) {
+	// oEmbed fetches an unknown URL to discover it, so only the two providers we embed are asked.
+	if ( ! wpss_is_supported_video_url( $video_url ) || ! function_exists( '_wp_oembed_get_object' ) ) {
 		return '';
 	}
 

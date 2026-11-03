@@ -249,17 +249,7 @@ class GalleryService {
 	 * @return bool
 	 */
 	private function is_valid_embed_url( string $url ): bool {
-		$allowed_hosts = [
-			'youtube.com',
-			'www.youtube.com',
-			'youtu.be',
-			'vimeo.com',
-			'www.vimeo.com',
-		];
-
-		$host = wp_parse_url( $url, PHP_URL_HOST );
-
-		return in_array( $host, $allowed_hosts, true );
+		return wpss_is_supported_video_url( $url );
 	}
 
 	/**
@@ -338,6 +328,10 @@ class GalleryService {
 				);
 
 			case 'embed':
+				// Same meta the wizard writes, so a row saved by any path is checked here, not only on add_item().
+				if ( ! wpss_is_supported_video_url( (string) ( $item['url'] ?? '' ) ) ) {
+					return '';
+				}
 				$embed = wp_oembed_get( $item['url'] );
 				return $embed ?: sprintf(
 					'<iframe class="wpss-gallery-embed" src="%s" allowfullscreen></iframe>',

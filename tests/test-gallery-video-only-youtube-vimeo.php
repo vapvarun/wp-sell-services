@@ -8,6 +8,7 @@
  * site's server call a host of their choosing on each page view. The field
  * already said "YouTube or Vimeo URL"; the reader now enforces it (covering
  * rows saved before) and the wizard refuses anything else with a message.
+ * GalleryService, which renders the same meta, checks it the same way.
  *
  * Run: wp eval-file tests/test-gallery-video-only-youtube-vimeo.php
  *
@@ -77,6 +78,18 @@ $calls = array();
 $html  = $render( $youtube );
 $check( 'a YouTube video still renders', false !== strpos( $html, 'data-qa="yt"' ) );
 $check( 'and only YouTube is contacted', array() !== $calls && array() === array_filter( $calls, static fn( $u ) => ! preg_match( '#^https://(www\.)?youtube\.com/#', $u ) ), implode( ', ', $calls ) );
+
+// 2b. GalleryService renders the same meta through its own path: a row saved there by any writer.
+$item  = static fn( string $url ) => ( new ReflectionMethod( \WPSellServices\Services\GalleryService::class, 'render_item' ) )->invoke( new \WPSellServices\Services\GalleryService(), array( 'type' => 'embed', 'url' => $url ), 'large' );
+$calls = array();
+$html  = $item( $hostile );
+$check( 'GalleryService makes no outbound call for a hostile embed', array() === $calls, implode( ', ', $calls ) );
+$check( 'and renders nothing for it', '' === $html, $html );
+$calls = array();
+$calls = array();
+$check( 'the poster lookup refuses another host itself', '' === wpss_get_video_thumbnail_url( $hostile ) && array() === $calls, implode( ', ', $calls ) );
+$calls = array();
+$check( 'GalleryService still embeds YouTube', false !== strpos( (string) $item( $youtube ), 'data-qa="yt"' ) );
 
 remove_filter( 'pre_http_request', $spy, 10 );
 delete_transient( 'wpss_video_thumb_' . md5( $youtube ) );
