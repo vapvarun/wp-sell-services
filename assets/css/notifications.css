@@ -47,3 +47,12 @@
 	.wpss-notif-row__mark { width: 44px; height: 44px; }
 	.wpss-notif-mark-all { min-height: 44px; }
 }
+
+/* Pager: Previous, numbered pages, Next. Wraps on a phone. */
+.wpss-notif-center .wpss-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+.wpss-notif-center .wpss-pagination__pages { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; height: auto; min-width: 0; padding: 0; border: 0; background: none; }
+.wpss-notif-center .wpss-pagination__link { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 44px; min-height: 44px; padding: 0 12px; border: 1px solid var( --wpss-border, #e5e7eb ); border-radius: var( --wpss-radius, 8px ); background: var( --wpss-bg, #fff ); color: var( --wpss-text, #1f2937 ); font-size: 13px; text-decoration: none; box-sizing: border-box; }
+.wpss-notif-center a.wpss-pagination__link:hover,
+.wpss-notif-center a.wpss-pagination__link:focus-visible { background: var( --wpss-bg-muted, #f3f4f6 ); color: var( --wpss-text, #1f2937 ); }
+.wpss-notif-center .wpss-pagination__link[aria-current="page"] { background: var( --wpss-primary, #4f46e5 ); border-color: var( --wpss-primary, #4f46e5 ); color: var( --wpss-white, #fff ); font-weight: 600; }
+.wpss-notif-center .wpss-pagination__link.dots { border-color: transparent; background: transparent; min-width: 24px; padding: 0; }

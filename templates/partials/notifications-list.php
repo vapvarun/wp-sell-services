@@ -239,15 +239,25 @@ wpss_enqueue_notifications_style();
 						<?php esc_html_e( 'Previous', 'wp-sell-services' ); ?>
 					</a>
 				<?php endif; ?>
-				<span class="wpss-pagination__current">
-					<?php
-					printf(
-						/* translators: 1: current page, 2: total pages */
-						esc_html__( 'Page %1$d of %2$d', 'wp-sell-services' ),
-						(int) $wpss_notif_page,
-						(int) $wpss_notif_pages
-					);
-					?>
+				<?php
+				// Numbered pages (first, last and the neighbours) so page 80 of 108 is a click, not 79.
+				$wpss_notif_links = paginate_links(
+					array(
+						'base'      => str_replace( '999999999', '%#%', $wpss_notif_page_url( 999999999 ) ),
+						'format'    => '',
+						'current'   => (int) $wpss_notif_page,
+						'total'     => (int) $wpss_notif_pages,
+						'prev_next' => false,
+						'end_size'  => 1,
+						'mid_size'  => 1,
+						'type'      => 'array',
+					)
+				);
+				?>
+				<span class="wpss-pagination__pages">
+					<?php foreach ( (array) $wpss_notif_links as $wpss_notif_link ) : ?>
+						<?php echo wp_kses_post( str_replace( 'class="page-numbers', 'class="wpss-pagination__link page-numbers', $wpss_notif_link ) ); ?>
+					<?php endforeach; ?>
 				</span>
 				<?php if ( $wpss_notif_page < $wpss_notif_pages ) : ?>
 					<a href="<?php echo esc_url( $wpss_notif_page_url( $wpss_notif_page + 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--next">
