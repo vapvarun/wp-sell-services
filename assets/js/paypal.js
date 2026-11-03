@@ -206,6 +206,8 @@
 						pay_order: payOrder,
 						is_multi_checkout: isMulti,
 						addon_ids: addonIds,
+						// Saved to the profile before the order is made, so the order snapshot carries it.
+						...(window.wpssBillingFields ? window.wpssBillingFields() : {}),
 					},
 					success: resolve,
 					error: () => {
