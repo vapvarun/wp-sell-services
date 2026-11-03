@@ -287,7 +287,7 @@ class OrderWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$late_orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, vendor_id, customer_id FROM {$table}
+				"SELECT id, vendor_id, customer_id, status FROM {$table}
 				WHERE status IN (%s, %s)
 				AND delivery_deadline < %s
 				ORDER BY delivery_deadline ASC
@@ -301,11 +301,17 @@ class OrderWorkflowManager {
 		);
 
 		foreach ( $late_orders as $order ) {
-			$this->order_service->update_status(
+			// Each sweep passes the status it selected: by the time a row is
+			// reached it may have been delivered, disputed or cancelled, and
+			// acting on the stale read would move the wrong order.
+			if ( ! $this->order_service->update_status(
 				(int) $order->id,
 				ServiceOrder::STATUS_LATE,
-				__( 'Order marked as late - deadline exceeded', 'wp-sell-services' )
-			);
+				__( 'Order marked as late - deadline exceeded', 'wp-sell-services' ),
+				(string) $order->status
+			) ) {
+				continue;
+			}
 
 			// Notify vendor.
 			$this->notification_service->create(
@@ -349,7 +355,7 @@ class OrderWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$orders_to_complete = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT o.id, o.customer_id, o.vendor_id
+				"SELECT o.id, o.customer_id, o.vendor_id, o.status
 				FROM {$table} o
 				WHERE o.status IN (%s, %s)
 				AND ( SELECT MAX( d.created_at ) FROM {$deliveries_table} d WHERE d.order_id = o.id ) < DATE_SUB(%s, INTERVAL %d DAY)
@@ -364,15 +370,20 @@ class OrderWorkflowManager {
 		);
 
 		foreach ( $orders_to_complete as $order ) {
-			$this->order_service->update_status(
+			// A buyer who disputed or asked for a revision since the select
+			// must not be completed and paid out from under them.
+			if ( ! $this->order_service->update_status(
 				(int) $order->id,
 				ServiceOrder::STATUS_COMPLETED,
 				sprintf(
 					/* translators: %d: number of days */
 					__( 'Order auto-completed after %d days without response', 'wp-sell-services' ),
 					$auto_complete_days
-				)
-			);
+				),
+				(string) $order->status
+			) ) {
+				continue;
+			}
 
 			// Notify customer.
 			$this->notification_service->create(
@@ -550,15 +561,18 @@ class OrderWorkflowManager {
 
 			if ( $auto_start ) {
 				// Auto-start the order without requirements.
-				$this->order_service->update_status(
+				if ( ! $this->order_service->update_status(
 					$order_id,
 					ServiceOrder::STATUS_IN_PROGRESS,
 					sprintf(
 						/* translators: %d: number of days */
 						__( 'Order auto-started after %d days without requirements submission', 'wp-sell-services' ),
 						$timeout_days
-					)
-				);
+					),
+					ServiceOrder::STATUS_PENDING_REQUIREMENTS
+				) ) {
+					continue;
+				}
 
 				$this->notification_service->create(
 					(int) $order->vendor_id,
@@ -585,15 +599,20 @@ class OrderWorkflowManager {
 				);
 			} else {
 				// Cancel the order instead.
-				$this->order_service->update_status(
+				// The buyer may have sent requirements since the select; cancelling
+				// (and refunding) a started order would be wrong.
+				if ( ! $this->order_service->update_status(
 					$order_id,
 					ServiceOrder::STATUS_CANCELLED,
 					sprintf(
 						/* translators: %d: number of days */
 						__( 'Order cancelled - requirements not submitted within %d days', 'wp-sell-services' ),
 						$timeout_days
-					)
-				);
+					),
+					ServiceOrder::STATUS_PENDING_REQUIREMENTS
+				) ) {
+					continue;
+				}
 
 				$this->notification_service->create(
 					(int) $order->customer_id,
@@ -1762,7 +1781,8 @@ class OrderWorkflowManager {
 			$updated = $this->order_service->update_status(
 				$order_id,
 				ServiceOrder::STATUS_CANCELLED,
-				__( 'Order auto-cancelled - vendor did not respond to cancellation request within 48 hours', 'wp-sell-services' )
+				__( 'Order auto-cancelled - vendor did not respond to cancellation request within 48 hours', 'wp-sell-services' ),
+				ServiceOrder::STATUS_CANCELLATION_REQUESTED
 			);
 
 			if ( ! $updated ) {
@@ -1846,7 +1866,8 @@ class OrderWorkflowManager {
 					/* translators: %d: number of hours */
 					__( 'Order auto-cancelled - offline payment not received within %d hours', 'wp-sell-services' ),
 					$auto_hold_hours
-				)
+				),
+				ServiceOrder::STATUS_PENDING_PAYMENT
 			);
 
 			if ( ! $updated ) {
