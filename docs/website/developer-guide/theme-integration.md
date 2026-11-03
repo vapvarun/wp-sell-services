@@ -250,7 +250,7 @@ The plugin detects the active theme and uses its native mechanism rather than hi
 
 | Theme | Method |
 |-------|--------|
-| **Reign** | Sets Reign's native per-page layout meta (`reign_wbcom_metabox_data`), the same mechanism Reign uses for FluentCart. Reign's page wrappers and subheader remain intact. |
+| **Reign** | Sets Reign's native per-page layout meta (`reign_wbcom_metabox_data`), the same mechanism Reign uses for FluentCart. Reign's page wrappers and subheader remain intact. Since 1.9.2 it also hides Reign's Left Panel rail on these pages, so members see one navigation, not two. A page whose "Hide Left Panel Menu" setting is set to No keeps the panel; the `wpss_reign_hide_left_panel` filter turns this off everywhere. |
 | **BuddyX / BuddyX Pro** | Uses the theme's bundled "Page No Sidebar" template (`page-templates/full-width-container.php`). |
 | **Any other theme** | Falls back to `templates/wpss-fullwidth-template.php`, which calls `get_header()` / `get_footer()` and emits a contained full-width wrapper. |
 

@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**574 hooks** across **800** firing sites.
+**575 hooks** across **801** firing sites.
 
 ## Actions (300)
 
@@ -317,7 +317,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (274)
+## Filters (275)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -489,6 +489,7 @@ guide; this is the complete index.
 | `wpss_rail_status_map` | 2 | `src/functions/order-status.php` | Filters the rail status map. |
 | `wpss_rate_limits` | 2 | `src/Core/RateLimiter.php` | Filter rate limits for a specific action. |
 | `wpss_realtime_settings` | 1 | `src/Services/RealtimeService.php` | Filter the realtime (Pusher-protocol) connection settings. |
+| `wpss_reign_hide_left_panel` | 2 | `src/Frontend/TemplateLoader.php` | Filters whether Reign's Left Panel is hidden on plugin pages by default. |
 | `wpss_related_services_args` | 2 | `src/Frontend/SingleServiceView.php` | Filter related services query args. |
 | `wpss_report_reasons` | 1 | `src/functions/moderation.php` | Filter the report reasons offered to members. |
 | `wpss_report_target_types` | 1 | `src/functions/moderation.php` | Filter what members may report. |

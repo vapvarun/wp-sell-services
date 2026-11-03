@@ -738,7 +738,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 |--------|-----------|------|
 | `wpss_get_template_part` | `$template, $slug, $name` | `src/functions/templates.php:125` |
 | `wpss_get_template` | `$template, $template_name, $args` | `src/functions/templates.php:162` |
-| `wpss_locate_template` | `$template, $template_name, $template_path` | `src/Frontend/TemplateLoader.php:572` |
+| `wpss_locate_template` | `$template, $template_name, $template_path` | `src/Frontend/TemplateLoader.php:591` |
 | `wpss_dashboard_section_template` | `$template_path, $section` | `src/functions/urls.php:426` |
 
 ### URL and Taxonomy Filters
@@ -813,6 +813,7 @@ add_filter( 'wpss_realtime_settings', function( $settings ) {
 |--------|-----------|------|
 | `wpss_use_fullwidth_template` | `bool $use` | `src/Frontend/TemplateLoader.php:296` (and `:332`) |
 | `wpss_fullwidth_page_keys` | `string[] $page_keys` | `src/Frontend/TemplateLoader.php:342` |
+| `wpss_reign_hide_left_panel` | `bool $hide, int $page_id` | `src/Frontend/TemplateLoader.php:416` |
 
 **`wpss_use_fullwidth_template`** - return `false` to keep the active theme's normal page template (with sidebar) on the plugin's pages instead of the sidebar-free full-width layout:
 
@@ -827,6 +828,12 @@ add_filter( 'wpss_use_fullwidth_template', '__return_false' );
 add_filter( 'wpss_fullwidth_page_keys', function( $keys ) {
     return array_diff( $keys, [ 'cart' ] );
 } );
+```
+
+**`wpss_reign_hide_left_panel`** - Reign only. On these pages the plugin hides Reign's Left Panel rail when the page's "Hide Left Panel Menu" setting is left at Default, so the dashboard's own navigation is the only one. A page set to show the panel still shows it. Return `false` to keep the panel on every plugin page:
+
+```php
+add_filter( 'wpss_reign_hide_left_panel', '__return_false' );
 ```
 
 ### SEO and Email Filters
