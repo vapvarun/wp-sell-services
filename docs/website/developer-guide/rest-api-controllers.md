@@ -611,7 +611,13 @@ Available only when WP Sell Services Pro is active with a valid license.
 | GET, POST/PUT/PATCH | `/paypal-payouts/profile` |
 
 `/pending` is what an owner exports to pay vendors manually; `sync` reconciles a
-submitted batch back against the wallet ledger.
+submitted batch back against the wallet ledger. `/pending` is paged (`page`,
+`per_page` up to 100, default 100) and ordered by vendor name; read `X-WP-Total`
+and `X-WP-TotalPages` for the rest. Before 1.9.2 it returned at most 500 vendors,
+sorted by pending amount.
+
+Only one batch is created at a time. A `POST /paypal-payouts/batches` that arrives
+while another batch is being written is refused with a message to wait and reload.
 
 ### Commission rules
 

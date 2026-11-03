@@ -70,6 +70,12 @@ Vendors set a payout email on their profile. From the payouts screen you select
 the owed balances and send a single PayPal Payouts batch. Each payout settles on
 the wallet ledger, so a vendor's owed balance is reduced **exactly once**.
 
+The vendor list shows 20 vendors a page, by name, with every vendor who has a
+PayPal payout email reachable through the pager. A batch covers the vendors you
+tick on the page you are on. Only one batch is written at a time: if a second
+admin starts one at the same moment, theirs is refused with a message to wait
+and reload, so the same balance is never sent twice.
+
 A submitted batch can be re-synced against PayPal to reconcile its real status,
 so a batch that partially failed does not leave the ledger disagreeing with
 reality.
