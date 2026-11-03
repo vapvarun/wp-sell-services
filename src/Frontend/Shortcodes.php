@@ -1474,7 +1474,7 @@ class Shortcodes {
 		}
 		.wpss-signup-form .wpss-form-input:focus {
 			outline: none; border-color: var(--wpss-primary, #4f46e5);
-			box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+			box-shadow: 0 0 0 3px var(--wpss-primary-ring, rgba(79, 70, 229, 0.25));
 		}
 		.wpss-signup-form .wpss-form-hint { font-size: 12px; color: var(--wpss-text-muted, #6b7280); margin: 4px 0 0; }
 		.wpss-signup-form .wpss-required { color: var(--wpss-danger, #ef4444); }

@@ -19,7 +19,7 @@ Branding applies immediately. There are no template edits and no CSS to write.
 |---------|----------------|---------|
 | **Brand name** | The admin menu label, and the name shown in emails and the dashboard header | *(empty -- uses the plugin name)* |
 | **Logo** | Shown in the vendor dashboard header and email headers. Recommended 240 x 60 px | *(empty)* |
-| **Primary colour** | Buttons, tabs, highlights and links on every marketplace page, plus the admin and email headers. Wins over your theme's colours. Text and button labels get a shade of it that stays readable, in light and dark mode | `#7f54b3` |
+| **Primary colour** | Buttons, tabs, highlights and links on every marketplace page, plus the admin and email headers. A colour you pick wins over your theme's colours; left at the default, marketplace pages keep your theme's colours and only the admin and email headers use it. Text and button labels get a shade of it that stays readable, in light and dark mode | `#7f54b3` |
 | **Email footer text** | Small-print line at the bottom of every transactional email | *(empty)* |
 | **Email from name** | The sender name on every transactional email | *(empty -- uses your site name)* |
 | **Hide branding** | Keeps the "powered by" credit off the vendor dashboard. The credit is already hidden by default and no email carries it, so this only matters if your theme or a snippet switches it back on | Off |

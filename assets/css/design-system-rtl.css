@@ -667,9 +667,11 @@ textarea.wpss-form-textarea {
    three different buttons (weights 500/600, 44/46/48/50px, borders 0/1/2px),
    so the same "Clear All" looked different on each. Themes restyle bare a and
    button, so the layout properties hold with !important; colours stay with the
-   variants. */
+   variants. display is the exception: the selector already outranks a theme's
+   bare a/button, and !important there beat every hide - the desktop Filters
+   toggle and jQuery's .hide() on Load more reviews. */
 :is(.wpss-services-archive, .wpss-single-service, .wpss-requests-archive, .wpss-single-request) .wpss-btn {
-	display: inline-flex !important;
+	display: inline-flex;
 	align-items: center !important;
 	justify-content: center !important;
 	gap: var(--wpss-space-2);
@@ -680,6 +682,10 @@ textarea.wpss-form-textarea {
 	border-width: 2px !important;
 	border-style: solid !important;
 	border-radius: var(--wpss-radius);
+}
+
+:is(.wpss-services-archive, .wpss-single-service, .wpss-requests-archive, .wpss-single-request) .wpss-btn[hidden] {
+	display: none;
 }
 
 /* Size stays with the size modifiers: --sm and --lg keep theirs. */

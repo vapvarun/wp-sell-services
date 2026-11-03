@@ -76,6 +76,13 @@ foreach ( $sheets as $name => $css ) {
 	}
 }
 $check( 'no sheet hard-codes the indigo in a ring or tint', array() === $bare, implode( ', ', $bare ) );
+$inline = array();
+foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $root . '/src', FilesystemIterator::SKIP_DOTS ) ) as $php ) {
+	if ( preg_match( '/(?<!var\(--wpss-primary-ring, )rgba\(\s*79,\s*70,\s*229/', (string) file_get_contents( (string) $php ) ) ) {
+		$inline[] = basename( (string) $php );
+	}
+}
+$check( 'no inline CSS in PHP hard-codes the indigo in a ring or tint', array() === $inline, implode( ', ', $inline ) );
 $check( 'no rule draws the fill colour as text', array() === $text, implode( '; ', array_slice( $text, 0, 5 ) ) );
 $check( 'no fill hard-codes white text (it uses --wpss-on-primary)', array() === $ink, implode( '; ', array_slice( $ink, 0, 5 ) ) );
 $check( 'text on the brand tint uses the darker shade', array() === $tint, implode( '; ', array_slice( $tint, 0, 5 ) ) );
@@ -129,6 +136,18 @@ if ( file_exists( $pro_file ) ) {
 	$pro = (string) file_get_contents( $pro_file );
 	$check( 'Pro hands its colour to wpss_brand_color', false !== strpos( $pro, "add_filter( 'wpss_brand_color'" ) );
 	$check( 'Pro sets no --wpss-primary copy of its own', false === strpos( $pro, '--wpss-primary:' ) );
+	$check( 'Pro hands over no colour while White Label is left at its default, so the theme still leads', false !== strpos( $pro, 'strcasecmp( $chosen, (string) WhiteLabelManager::DEFAULTS[\'primary_color\'] )' ) );
+	foreach ( array( 'dashboard.css', 'analytics.css' ) as $pro_sheet ) {
+		$pro_css = (string) file_get_contents( WP_PLUGIN_DIR . '/wp-sell-services-pro/assets/css/' . $pro_sheet );
+		$check( "Pro {$pro_sheet} draws no fill colour as text and no indigo literal", ! preg_match( '/(?<![-\w])color:\s*var\(--wpss-primary\)|rgba\(\s*79,\s*70,\s*229/', $pro_css ) );
+		$check( "Pro {$pro_sheet} puts no hard-coded white on a brand fill", ! preg_match( '/background:\s*var\(--wpss-primary\);\s*color:\s*var\(--wpss-white\)/', $pro_css ) );
+	}
+	foreach ( glob( WP_PLUGIN_DIR . '/wp-sell-services-pro/assets/js/*.js' ) as $pro_js ) {
+		if ( ! str_ends_with( $pro_js, '.min.js' ) ) {
+			// A colour only as the fallback of a token read; a bare literal ignores the theme.
+			$check( 'Pro ' . basename( $pro_js ) . ' draws no chart in a hard-coded indigo', ! preg_match( "/(Color|color)\\s*:\\s*'(#4f46e5|rgba\\(79)/i", (string) file_get_contents( $pro_js ) ) );
+		}
+	}
 }
 
 echo $fails ? "\n$fails FAILED\n" : "\nALL PASS\n";
