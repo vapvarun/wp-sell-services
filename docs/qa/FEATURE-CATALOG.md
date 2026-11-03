@@ -38,7 +38,7 @@ Counts from the 2026-10-18 browser walk, Free and Pro active. Guards are scripts
 | Commission & Tax | 12 | `test-checkout-tax-contract`, `test-multi-checkout-tax-label`, `test-money-rules-gateway-independent` | Tax cards (money, held) |
 | Payouts | 10, 12 | `test-payout-method-registry` | schedule card (money, held) |
 | Vendor Settings (limits, moderation, Review Moderation) | 05, 12 | `bin/docs-audit.py` (settings paths in docs) | |
-| Orders & Disputes | 02, 12 | `test-requirements-clock-from-payment` | |
+| Orders & Disputes | 02, 12, 24 | `test-requirements-clock-from-payment`, `test-auto-complete-latest-delivery` | |
 | Emails | 11, 12 | `test-notification-toggle-contract` | Mailpit read of each template |
 
 ## Member: vendor dashboard (14 sections)
@@ -46,7 +46,7 @@ Counts from the 2026-10-18 browser walk, Free and Pro active. Guards are scripts
 | Section | Journey | Guards | Gap |
 |---|---|---|---|
 | My Services, create and edit wizard | 05 | `test-package-ids-on-save`, `test-addon-pricing-contract`, `test-form-state-and-feedback` | wizard image remove cross |
-| Sales Orders, deliveries, revisions | 01, 02 | `test-order-write-integrity`, `test-accept-needs-delivery` | |
+| Sales Orders, deliveries, revisions | 24, 01, 02 | `test-order-write-integrity`, `test-accept-needs-delivery`, `test-revisions-from-snapshot`, `test-delivery-refuses-bad-file` | Skip requirements is API only; `wp_ajax_wpss_skip_requirements` has had no caller since 1.0.x |
 | Buyer Requests, Proposals | 01 | `test-proposal-count-contract`, `test-request-deadline-utc` | |
 | Reviews | 14 | `test-review-status-rest`, `test-review-window-and-reply` | |
 | Earnings & Payouts | 10, 15 | `test-ledger-balance-contract`, `test-negative-balance-contract` | |
@@ -81,15 +81,15 @@ Everything below is off by default except the licence screen and vendor analytic
 | "My licence is active and Pro features are on" | admin, Sell Services > License | 12 | `test-license-gate-and-storage` |
 | "Sellers can see how they are doing" | vendor, `/dashboard/analytics/` | 15 | `test-pro-perf-and-options` |
 | "I can see how the marketplace is doing" | admin, Sell Services > Analytics | 13 | same |
-| "I take a different cut per seller or category" | admin, Settings > Commission & Tax | 12 | `test-rest-partial-update` |
-| "Sellers get paid out automatically" | Stripe Connect, PayPal Payouts | 10 | `test-payout-integrity`, `test-connect-refund-observation` |
-| "Sellers pay me a plan to sell" | vendor `/dashboard/subscription/`, admin Subscriptions | 15 | `test-seams-subscriptions-carrier` |
-| "Deliveries go to my cloud storage" | admin, Settings > Integrations | none | `test-license-gate-and-storage` |
-| "Buyers can pay with site credit" | buyer, checkout and wallet | none | |
-| "The dashboard carries my brand" | admin, White label | 12 | |
-| Razorpay | buyer, checkout | none | `test-razorpay-settle-path` |
+| "I take a different cut per seller or category" | admin, Settings > Commission & Tax | 12, 21 | `test-rest-partial-update` |
+| "Sellers get paid out automatically" | Stripe Connect, PayPal Payouts | 18 | `test-payout-integrity`, `test-connect-refund-observation` |
+| "Sellers pay me a plan to sell" | vendor `/dashboard/subscription/`, Settings > Vendor Settings | 21 | `test-seams-subscriptions-carrier` |
+| "Deliveries go to my cloud storage" | admin, Settings > Integrations | 23 | `test-license-gate-and-storage` |
+| "The vendor wallet balance is right and I can adjust it" | admin, user profile; vendor, Earnings | 19 | `test-wallet-provider-contract`, `test-admin-wallet-adjustment-leaves-trail` |
+| "The dashboard carries my brand" | admin, White label | 12, 23 | |
+| Razorpay | buyer, checkout | 17 | `test-razorpay-settle-path` |
 | WooCommerce rail pay-order, fee-only lines | buyer | 07 | `test-fee-only-pay-order-contract`, `test-woo-line-money-contract` |
-| "I refund a Woo, EDD or FluentCart order in that platform and it shows here" | admin, the platform's order screen, then Sell Services > Orders | none | `test-woo-line-money-contract`, `test-refund-dedupe-contract` |
+| "I refund a Woo, EDD or FluentCart order in that platform and it shows here" | admin, the platform's order screen, then Sell Services > Orders | 07, 20 | `test-woo-line-money-contract`, `test-refund-dedupe-contract` |
 
 Pro checks to add to every Pro walk:
 - **Licence:** with a valid licence Pro features load; with it cleared they stop and the Free marketplace keeps working, no fatal. With Free deactivated, Pro shows an admin notice, not a fatal. Pro loads no second copy of a library Free ships.
@@ -115,7 +115,7 @@ Pro checks to add to every Pro walk:
 
 ## Known gaps (no journey yet)
 
-Wallet providers (TeraWallet, myCred), Razorpay, Stripe Connect and PayPal payouts, EDD and FluentCart rails (beta), vendor subscription plan purchase, seller levels, the blocks and shortcodes, recurring services (switched off). Hook coverage: 103 hooks have no contract test.
+Recurring services (switched off). Every other row has a journey; the walks themselves are recorded in `.qa-results/walks.json`. Product gaps the journeys name, for the owner: no admin list of vendor subscriptions (21), PayPal Payouts status sync has no screen button (18), an EDD refund does not reach WPSS (20), push has no automated test (23), and there is no "pay with wallet credit" gateway (19). Hook coverage: 103 hooks have no contract test.
 
 ## Keeping this current
 
