@@ -70,6 +70,14 @@ $render = static function ( string $section ) {
 $sales = $render( 'sales' );
 $check( 'suspended vendor opens Sales Orders, not the access wall', false === strpos( $sales, 'Vendor Access Required' ), substr( wp_strip_all_tags( $sales ), 0, 120 ) );
 $check( 'Sales Orders actually renders', '' !== trim( $sales ) );
+$check( 'Sales Orders tells the vendor they are suspended', false !== strpos( $sales, 'Your vendor account is suspended.' ) );
+
+// Control: an active vendor's Sales Orders carries no suspension notice.
+$wpdb->update( $profiles, array( 'status' => 'active' ), array( 'user_id' => $vendor_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+wp_cache_flush();
+$check( 'an active vendor sees no suspension notice', false === strpos( $render( 'sales' ), 'Your vendor account is suspended.' ) );
+$wpdb->update( $profiles, array( 'status' => 'suspended' ), array( 'user_id' => $vendor_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+wp_cache_flush();
 
 foreach ( array( 'services', 'earnings', 'proposals', 'create' ) as $section ) {
 	$check( "suspended vendor is still refused {$section}", false !== strpos( $render( $section ), 'Vendor Access Required' ) || '' === trim( $render( $section ) ) );

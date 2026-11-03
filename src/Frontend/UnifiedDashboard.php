@@ -992,6 +992,14 @@ class UnifiedDashboard {
 			 */
 			do_action( 'wpss_dashboard_section_before_content', $section, $user_id );
 
+			// The menu shrinks to Sales Orders for a suspended vendor; say why on the one page left.
+			if ( 'sales' === $section && $this->is_suspended_vendor( $user_id ) ) {
+				printf(
+					'<p class="wpss-notice wpss-notice--warning" role="status">%s</p>',
+					esc_html__( 'Your vendor account is suspended. You can finish the orders below, but you cannot take new work. Contact the site team to find out more.', 'wp-sell-services' )
+				);
+			}
+
 			include $template_path;
 		} else {
 			$this->render_section_fallback( $section );
