@@ -1898,7 +1898,9 @@ class Settings {
 	private function render_payments_tab(): void {
 		echo '<div class="wpss-settings-subhead">';
 		echo '<h2 class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</h2>';
-		echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
+		if ( wpss_uses_standalone_payments() ) {
+			echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
+		}
 		echo '</div>';
 
 		$this->render_gateway_cards();
@@ -2018,7 +2020,7 @@ class Settings {
 			printf(
 				'<div class="notice notice-info inline wpss-gateway-notice"><p><strong>%s</strong> %s</p><p>%s</p></div>',
 				esc_html__( 'Payments are handled by', 'wp-sell-services' ) . ' ' . esc_html( $rail ) . '.',
-				esc_html__( 'The gateways below belong to this plugin and are not used while a store plugin is taking payment.', 'wp-sell-services' ),
+				esc_html__( 'The payment gateways built into this plugin are not used while a store plugin is taking payment, so they are not shown here.', 'wp-sell-services' ),
 				esc_html__( 'Configure your payment methods in that plugin instead. Switch Ecommerce Platform to Standalone under General if you want this plugin to take payment directly.', 'wp-sell-services' )
 			);
 
