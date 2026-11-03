@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**573 hooks** across **793** firing sites.
+**573 hooks** across **794** firing sites.
 
 ## Actions (299)
 
@@ -214,7 +214,7 @@ guide; this is the complete index.
 | `wpss_recurring_renewal_order_created` | 3 | `src/RecurringServices/RecurringOrderFactory.php` **[PRO]** | Fires after a recurring renewal order is created. |
 | `wpss_recurring_subscription_cancelled` | 2 | `src/RecurringServices/RecurringWebhookHandler.php` **[PRO]** | Fires after a recurring subscription is cancelled via Stripe webhook. |
 | `wpss_register_tipping_settings` | 0 | `src/Admin/Settings.php` | Register fields that belong directly above the tip commission rate. |
-| `wpss_render_secret_field` | 1 | `src/Admin/Settings.php` *(+7 more)* |  |
+| `wpss_render_secret_field` | 1 | `src/Admin/Settings.php` *(+8 more)* |  |
 | `wpss_report_filed` | 4 | `src/API/ReportsController.php` | Fires when a member files a report. |
 | `wpss_report_resolved` | 2 | `src/API/ReportsController.php` | Fires when an admin resolves an open report. |
 | `wpss_request_archive_header` | 0 | `templates/archive-request.php` | Hook: wpss_request_archive_header |
