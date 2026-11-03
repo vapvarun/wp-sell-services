@@ -103,23 +103,6 @@
 	padding: 0;
 }
 
-/* Theme Compatibility - Override common theme conflicts */
-.wpss-single-service .wpss-btn,
-.wpss-single-service .wpss-btn:visited,
-.wpss-single-service .wpss-btn:focus {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	padding: 0.75rem 1.5rem;
-	font-size: 0.875rem;
-	font-weight: 500;
-	text-decoration: none;
-	border-radius: var(--wpss-radius);
-	cursor: pointer;
-	transition: all var(--wpss-transition);
-	border: none;
-}
 
 .wpss-single-service .wpss-btn--primary,
 .wpss-single-service .wpss-btn--primary:visited {
@@ -137,14 +120,16 @@
 .wpss-single-service .wpss-btn--outline:visited {
 	background-color: transparent;
 	color: var(--wpss-text);
-	border: 1px solid var(--wpss-border);
+	/* Full shorthand: the theme zeroes button borders, so colour alone left none.
+	   2px is the design system's width for every button. */
+	border: 2px solid var(--wpss-border-control, #878e98);
 }
 
 .wpss-single-service .wpss-btn--outline:hover,
 .wpss-single-service .wpss-btn--outline:focus {
-	background-color: var(--wpss-bg);
+	background-color: var(--wpss-bg-subtle, #f9fafb);
 	color: var(--wpss-text);
-	border-color: var(--wpss-border);
+	border-color: var(--wpss-text-secondary, #374151);
 }
 
 /* ==========================================================================

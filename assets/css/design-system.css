@@ -74,6 +74,10 @@
 	--wpss-background: #f9fafb;
 	--wpss-border: #e5e7eb;
 	--wpss-border-light: #f3f4f6;
+	/* The edge of a control (outline button), not a divider. It has to read
+	   3:1 against the surface (WCAG 1.4.11); --wpss-border is 1.2:1 and was
+	   the edge of every outline button, so the button all but vanished. */
+	--wpss-border-control: #878e98;
 	--wpss-secondary: #1e293b;
 	/* Secondary as TEXT (prices, emphasis). Same dark slate in light; flips to a
 	   light slate in dark so it stays readable on dark surfaces. --wpss-secondary
@@ -438,6 +442,7 @@ textarea.wpss-form-textarea {
 	--wpss-surface: #1f2937;
 	--wpss-border: #374151;
 	--wpss-border-light: #1f2937;
+	--wpss-border-control: #6b7280;
 
 	--wpss-primary-light: #312e81;
 	--wpss-primary-50: rgba(129, 140, 248, 0.16);
@@ -635,6 +640,32 @@ textarea.wpss-form-textarea {
 }
 
 .wpss-btn:hover { text-decoration: none; }
+
+/* One theme-proof button for every public page. The services archive, single
+   service and request pages each carried their own reset and had drifted into
+   three different buttons (weights 500/600, 44/46/48/50px, borders 0/1/2px),
+   so the same "Clear All" looked different on each. Themes restyle bare a and
+   button, so the layout properties hold with !important; colours stay with the
+   variants. */
+:is(.wpss-services-archive, .wpss-single-service, .wpss-requests-archive, .wpss-single-request) .wpss-btn {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: var(--wpss-space-2);
+	font-family: inherit !important;
+	font-weight: 600;
+	line-height: 1.4;
+	text-decoration: none !important;
+	border-width: 2px !important;
+	border-style: solid !important;
+	border-radius: var(--wpss-radius);
+}
+
+/* Size stays with the size modifiers: --sm and --lg keep theirs. */
+:is(.wpss-services-archive, .wpss-single-service, .wpss-requests-archive, .wpss-single-request) .wpss-btn:not(.wpss-btn--sm, .wpss-btn--lg) {
+	padding: calc(var(--wpss-space-3) - 2px) var(--wpss-space-5);
+	font-size: var(--wpss-text-base);
+}
 .wpss-btn:active:not(:disabled) { transform: scale(0.97); }
 .wpss-btn:focus-visible { outline: var(--wpss-ring-width) solid var(--wpss-ring-color); outline-offset: var(--wpss-ring-offset); }
 .wpss-btn:disabled, .wpss-btn[aria-disabled="true"], .wpss-btn--loading { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
@@ -647,13 +678,13 @@ textarea.wpss-form-textarea {
 /* Two classes, and the full border shorthand, on purpose: a theme's bare `button` or `a`
    rule would otherwise beat a one-class modifier and strip the border. `.wpss-btn` is
    declared here only; bin/check-ux-conformance.php fails if another sheet redeclares it. */
-.wpss-btn.wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
+.wpss-btn.wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border-control); }
 /* The background matters as much as the colour here. Declaring only border and
    text left the background to whatever the theme gives a hovered control, and
    BuddyX styles button[type="submit"]:hover with its accent red - the order
    search button flashed red with dark text at 3.94:1 on hover. Our own subtle
    surface, so hover looks the same on every theme. */
-.wpss-btn.wpss-btn--outline:hover { background: var(--wpss-bg-subtle); border-color: var(--wpss-text-muted); color: var(--wpss-text); }
+.wpss-btn.wpss-btn--outline:hover { background: var(--wpss-bg-subtle); border-color: var(--wpss-text-secondary); color: var(--wpss-text); }
 
 /* Ghost, with the same two-class weight as outline above: the one-class rule loses to a
    theme's anchor colour, so an <a class="wpss-btn wpss-btn--ghost"> would take the theme

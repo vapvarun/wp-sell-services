@@ -93,4 +93,18 @@ $check( 'vendor tile name has its own size and weight', 1 === preg_match( '/\.wp
 $check( 'vendor tile figures do not inherit the 24px sidebar headline', 1 === preg_match( '/\.wpss-vendors-grid \.wpss-vendor-stats \.wpss-stat-value\s*\{[^}]*font-size:\s*0\.9375rem/s', $fe ) );
 $check( 'vendor tile facts sit in their own divided group', 1 === preg_match( '/\.wpss-vendors-grid \.wpss-vendor-details\s*\{[^}]*border-block-start:/s', $fe ) );
 
+// 8. Buttons: one theme-proof button for every public page, and an outline edge that reads.
+$on = static fn( string $fg, string $bg ): float => ( max( $luminance( $fg ), $luminance( $bg ) ) + 0.05 ) / ( min( $luminance( $fg ), $luminance( $bg ) ) + 0.05 );
+$edge_light = $light['--wpss-border-control'] ?? '';
+$edge_dark  = $dark['--wpss-border-control'] ?? '';
+$check( 'outline edge reads 3:1 on the light surfaces', '' !== $edge_light && $on( $edge_light, '#ffffff' ) >= 3 && $on( $edge_light, '#f9fafb' ) >= 3, $edge_light );
+$check( 'outline edge reads 3:1 on the dark surfaces', '' !== $edge_dark && $on( $edge_dark, '#0b1220' ) >= 3 && $on( $edge_dark, '#1f2937' ) >= 3, $edge_dark );
+$check( 'the outline button draws its edge with the control token', 1 === preg_match( '/\.wpss-btn\.wpss-btn--outline\s*\{[^}]*border:\s*2px solid var\(--wpss-border-control\)/', $ds ) );
+$check( 'the design system holds the one public-page button reset', false !== strpos( $ds, ':is(.wpss-services-archive, .wpss-single-service, .wpss-requests-archive, .wpss-single-request) .wpss-btn {' ) );
+foreach ( array( 'archive-service.css', 'single-service.css', 'buyer-request.css' ) as $sheet ) {
+	$page_css = $read( $sheet );
+	$check( "{$sheet} carries no button reset of its own", 0 === preg_match( '/^\.wpss-[a-z-]+ \.wpss-btn,\s*$/m', $page_css ) );
+	$check( "{$sheet} outline edge uses the control token", false !== strpos( $page_css, '--wpss-border-control' ) );
+}
+
 echo $fails ? "\n$fails FAILED\n" : "\nALL PASS\n";

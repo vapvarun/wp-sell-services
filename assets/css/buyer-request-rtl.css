@@ -326,28 +326,6 @@
 	margin-bottom: 0;
 } */
 
-/* Fix button styling for all themes */
-.wpss-requests-archive .wpss-btn,
-.wpss-requests-archive .wpss-btn:visited,
-.wpss-requests-archive .wpss-btn:focus,
-.wpss-single-request .wpss-btn,
-.wpss-single-request .wpss-btn:visited,
-.wpss-single-request .wpss-btn:focus {
-	display: inline-flex !important;
-	align-items: center !important;
-	justify-content: center !important;
-	gap: 0.5rem;
-	padding: 0.75rem 1.5rem;
-	font-family: inherit !important;
-	font-size: 0.875rem;
-	font-weight: 500;
-	text-decoration: none !important;
-	border-width: 1px !important;
-	border-style: solid !important;
-	border-radius: var(--wpss-radius, 8px);
-	cursor: pointer;
-	transition: all 0.2s ease;
-}
 
 .wpss-requests-archive .wpss-btn--primary,
 .wpss-requests-archive .wpss-btn--primary:visited,
@@ -374,16 +352,16 @@
 .wpss-single-request .wpss-btn--outline:visited {
 	background: transparent !important;
 	color: var(--wpss-text, #1f2937) !important;
-	border-color: var(--wpss-border, #e5e7eb) !important;
+	border-color: var(--wpss-border-control, #878e98) !important;
 }
 
 .wpss-requests-archive .wpss-btn--outline:hover,
 .wpss-requests-archive .wpss-btn--outline:focus,
 .wpss-single-request .wpss-btn--outline:hover,
 .wpss-single-request .wpss-btn--outline:focus {
-	background: var(--wpss-bg, #f9fafb) !important;
+	background: var(--wpss-bg-subtle, #f9fafb) !important;
 	color: var(--wpss-text, #1f2937) !important;
-	border-color: var(--wpss-border, #e5e7eb) !important;
+	border-color: var(--wpss-text-secondary, #374151) !important;
 }
 
 /* Fix article display in themes */

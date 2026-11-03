@@ -66,23 +66,6 @@
 	padding: 0;
 }
 
-/* Theme Compatibility - Override common theme conflicts */
-.wpss-services-archive .wpss-btn,
-.wpss-services-archive .wpss-btn:visited,
-.wpss-services-archive .wpss-btn:focus {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	padding: 0.75rem 1.5rem;
-	font-size: 0.875rem;
-	font-weight: 500;
-	text-decoration: none;
-	border-radius: var(--wpss-radius, 8px);
-	cursor: pointer;
-	transition: all 0.2s ease;
-	border: none;
-}
 
 .wpss-services-archive .wpss-btn--primary,
 .wpss-services-archive .wpss-btn--primary:visited {
@@ -100,14 +83,16 @@
 .wpss-services-archive .wpss-btn--outline:visited {
 	background-color: transparent;
 	color: var(--wpss-text);
-	border: 1px solid var(--wpss-border);
+	/* Full shorthand: the theme zeroes button borders, so colour alone left none.
+	   2px is the design system's width for every button. */
+	border: 2px solid var(--wpss-border-control, #878e98);
 }
 
 .wpss-services-archive .wpss-btn--outline:hover,
 .wpss-services-archive .wpss-btn--outline:focus {
 	background-color: var(--wpss-bg-subtle);
 	color: var(--wpss-text);
-	border-color: var(--wpss-secondary);
+	border-color: var(--wpss-text-secondary, #374151);
 }
 
 /* Filter actions (submit <button> + clear <a>). Reign restyles bare form
