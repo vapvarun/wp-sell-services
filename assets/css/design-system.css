@@ -1005,6 +1005,24 @@ select.wpss-form-input::-ms-expand {
 .wpss-field__error { font-size: var(--wpss-text-sm); color: var(--wpss-danger); margin-top: var(--wpss-space-1); }
 .wpss-field--error .wpss-field__input, .wpss-field--error .wpss-field__select { border-color: var(--wpss-danger); }
 
+/* Inline controls: a dropdown in a filter or toolbar row sizes to its content.
+   The plugin declares the width itself, because themes differ - Reign 8 gives
+   every unstyled field width: 100%, which stacked these rows one control per
+   line, while BuddyX leaves the browser default. Form fields are not listed:
+   they fill their column on purpose. A row stacks to full width under 640px in
+   its own sheet. Add a new filter row here, not a width in its own sheet. */
+:is(
+	.wpss-vendors-toolbar__controls,
+	.wpss-ledger-controls,
+	.wpss-currency-switcher,
+	.wpss-filters-bar-controls,
+	.wpss-sales-filter__form,
+	.wpss-notif-filter
+) select {
+	inline-size: auto;
+	max-inline-size: 100%;
+}
+
 /* ==========================================================================
    7. NOTICES & ALERTS
    ========================================================================== */
