@@ -87,4 +87,10 @@ foreach ( array( 'unified-dashboard.min.css', 'unified-dashboard-rtl.min.css' ) 
 	$check( "{$copy} carries the flat phone section", false !== strpos( $read( $copy ), '.wpss-dashboard__body>.wpss-section.wpss-card' ) );
 }
 
+// 7. Vendors grid tile: the name leads, figures are body size, facts are their own group.
+$fe = $read( 'frontend.css' );
+$check( 'vendor tile name has its own size and weight', 1 === preg_match( '/\.wpss-vendors-grid \.wpss-vendor-name\s*\{[^}]*font-size:\s*1rem[^}]*font-weight:\s*600/s', $fe ) );
+$check( 'vendor tile figures do not inherit the 24px sidebar headline', 1 === preg_match( '/\.wpss-vendors-grid \.wpss-vendor-stats \.wpss-stat-value\s*\{[^}]*font-size:\s*0\.9375rem/s', $fe ) );
+$check( 'vendor tile facts sit in their own divided group', 1 === preg_match( '/\.wpss-vendors-grid \.wpss-vendor-details\s*\{[^}]*border-block-start:/s', $fe ) );
+
 echo $fails ? "\n$fails FAILED\n" : "\nALL PASS\n";

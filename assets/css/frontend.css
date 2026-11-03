@@ -3838,9 +3838,12 @@ a.wpss-back-link:focus {
 .wpss-vendors-grid .wpss-vendor-card {
 	display: flex;
 	flex-direction: column;
-	gap: var(--wpss-space-3, 12px);
+	/* Space separates the groups (who, numbers, facts, action); each group
+	   keeps its own tighter rhythm inside. Even 12px everywhere read as one
+	   dense block. */
+	gap: var(--wpss-space-4, 16px);
 	height: 100%;
-	padding: var(--wpss-space-4, 16px);
+	padding: var(--wpss-space-5, 20px);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius-lg, 12px);
 	background: var(--wpss-background, #fff);
@@ -3873,6 +3876,11 @@ a.wpss-back-link:focus {
 	flex-direction: column;
 	align-items: flex-start;
 	gap: var(--wpss-space-1, 4px);
+	/* The name leads the card. It inherited 13px from the sidebar rule and sat
+	   below the tagline in size, so nothing led the eye. */
+	font-size: 1rem;
+	font-weight: 600;
+	line-height: 1.3;
 }
 
 /* A long display name ("wpss_rest_vendor_ZTL6w4qW") ends in an ellipsis inside
@@ -3970,14 +3978,37 @@ a.wpss-back-link:focus {
 }
 
 .wpss-vendors-grid .wpss-vendor-stats .wpss-stat-value {
+	/* The global .wpss-stat-value is a 24px sidebar headline; in a tile it was
+	   the loudest thing on the card. Body size, ink colour, one weight up. */
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-1, 4px);
+	font-size: 0.9375rem;
 	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-vendors-grid .wpss-vendor-stats .wpss-stat-count,
+.wpss-vendors-grid .wpss-vendor-stats .wpss-stat-label {
+	font-size: 0.8125rem;
+	font-weight: 400;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-vendors-grid .wpss-vendor-stats .wpss-star {
+	width: 16px;
+	height: 16px;
 }
 
 .wpss-vendors-grid .wpss-vendor-details {
+	display: grid;
+	gap: var(--wpss-space-2, 8px);
 	margin: 0;
-	padding: 0;
+	padding: var(--wpss-space-4, 16px) 0 0;
+	border-block-start: 1px solid var(--wpss-border, #e5e7eb);
 	list-style: none;
 	font-size: 0.8125rem;
+	color: var(--wpss-text-secondary, #4b5563);
 }
 
 /* One row = icon | label | value, on a grid so the three columns line up
