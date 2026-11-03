@@ -81,7 +81,9 @@
 	   text, so text and fill need separate tokens (as with --wpss-primary). */
 	--wpss-secondary-accent: #1e293b;
 
-	--wpss-success: #10b981;
+	/* emerald-700: it is ink as often as fill (prices, earnings, ticks), and
+	   #10b981 read 2.5:1 on white. White on this is 5.5:1 too. */
+	--wpss-success: #047857;
 	--wpss-success-light: #ecfdf5;
 	--wpss-success-dark: #065f46;
 	/* Fill behind white text (filled buttons, toasts). --wpss-success is 2.5:1 with white; this is 5.5:1 in both modes. */
@@ -496,6 +498,56 @@ textarea.wpss-form-textarea {
 	   #4338ca indigo sat on the dark indigo ground at 1.45. The accent is the
 	   readable-on-dark member of the ramp. */
 	--wpss-primary-dark: var( --wpss-primary-accent );
+
+	/* Status pills. The light pastels stayed on dark pages, a bright patch on a
+	   dark card. Each pill gets a translucent tint of its own hue over the
+	   surface with the light member of the ramp as ink (about 7:1 or better). */
+	--wpss-status-pending-bg: rgba(245, 158, 11, 0.18);
+	--wpss-status-pending-fg: #fcd34d;
+	--wpss-status-completed-bg: rgba(34, 197, 94, 0.18);
+	--wpss-status-completed-fg: #86efac;
+	--wpss-status-pending-approval-bg: rgba(132, 204, 22, 0.18);
+	--wpss-status-pending-approval-fg: #bef264;
+	--wpss-status-in-progress-bg: rgba(99, 102, 241, 0.24);
+	--wpss-status-in-progress-fg: #c7d2fe;
+	--wpss-status-revision-bg: rgba(14, 165, 233, 0.18);
+	--wpss-status-revision-fg: #7dd3fc;
+	--wpss-status-delivered-bg: rgba(59, 130, 246, 0.2);
+	--wpss-status-delivered-fg: #93c5fd;
+	--wpss-status-disputed-bg: rgba(249, 115, 22, 0.2);
+	--wpss-status-disputed-fg: #fdba74;
+	--wpss-status-refunded-bg: rgba(168, 85, 247, 0.2);
+	--wpss-status-refunded-fg: #d8b4fe;
+	--wpss-status-partially-refunded-bg: rgba(6, 182, 212, 0.18);
+	--wpss-status-partially-refunded-fg: #67e8f9;
+	--wpss-status-late-bg: rgba(234, 179, 8, 0.18);
+	--wpss-status-late-fg: #fde047;
+	--wpss-status-rejected-bg: rgba(239, 68, 68, 0.2);
+	--wpss-status-rejected-fg: #fca5a5;
+	--wpss-status-on-hold-bg: rgba(156, 163, 175, 0.2);
+	--wpss-status-on-hold-fg: #e5e7eb;
+
+	/* Danger had no dark tint or ink, and the wp-admin grey and the sub-order
+	   badge family kept their pastels: cancelled and escalated pills, closed
+	   disputes and the analytics tip / milestone tiles were light patches.
+	   Success keeps its lighter shade here, where it reads 7:1 on the surface. */
+	--wpss-success: #10b981;
+	--wpss-danger-light: rgba(239, 68, 68, 0.2);
+	--wpss-danger-dark: #fca5a5;
+	--wpss-wp-admin-bg: rgba(156, 163, 175, 0.2);
+	--wpss-wp-admin-text-muted: #d1d5db;
+	--wpss-badge-tip-bg: rgba(239, 68, 68, 0.2);
+	--wpss-badge-tip-fg: #fca5a5;
+	--wpss-badge-tip-icon-bg: rgba(244, 63, 94, 0.2);
+	--wpss-badge-tip-icon-fg: #fda4af;
+	--wpss-badge-extension-bg: rgba(245, 158, 11, 0.18);
+	--wpss-badge-extension-fg: #fcd34d;
+	--wpss-badge-extension-icon-bg: rgba(245, 158, 11, 0.18);
+	--wpss-badge-extension-icon-fg: #fcd34d;
+	--wpss-badge-milestone-bg: rgba(20, 184, 166, 0.2);
+	--wpss-badge-milestone-fg: #5eead4;
+	--wpss-badge-milestone-icon-bg: rgba(20, 184, 166, 0.2);
+	--wpss-badge-milestone-icon-fg: #5eead4;
 }
 
 /* ==========================================================================

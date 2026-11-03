@@ -9,51 +9,14 @@
    CSS Variables
    ========================================================================== */
 
-/* Token fallbacks.
-   design-system.css is the canonical token source and always loads first
-   (wpss-frontend depends on wpss-design-system). These declarations only
-   provide concrete fallbacks for the handful of legacy aliases this file
-   consumes, so a theme that fails to load design-system.css — or one (like
-   Reign 8.0.0) that re-declares neutral vars — can never resolve a frontend
-   token to an empty string and blow out card colours/borders.
-
-   Note: these are NOT self-referential (the old `var(--wpss-x, #fff)` form
-   resolved to itself and silently inherited a theme value of the same name).
-   Each alias now points at its design-system source with a hard hex fallback. */
+/* Tokens.
+   design-system.css owns every shared token and always loads first
+   (wpss-frontend depends on wpss-design-system), so this file declares only
+   the tokens it alone uses. It used to re-declare 23 shared ones, and since it
+   loads later any stale copy silently won: the danger and success contrast
+   fixes in the design system did nothing on the frontend until the copies
+   here were found. Never re-declare a design-system token here. */
 :root {
-	/* Primary - Indigo */
-	--wpss-primary: #4f46e5;
-	--wpss-primary-dark: #4338ca;
-	--wpss-primary-hover: #4338ca;
-	--wpss-primary-light: #eef2ff;
-
-	/* Secondary & Text */
-	--wpss-secondary: #1e293b;
-	--wpss-text: #1f2937;
-	--wpss-text-light: #6b7280;
-	--wpss-text-muted: #6b7280;
-
-	/* UI Colors */
-	--wpss-border: #e5e7eb;
-	--wpss-bg: #ffffff;
-	--wpss-background: #f9fafb;
-	--wpss-white: #ffffff;
-	--wpss-black: #111827;
-	--wpss-gray-100: #f3f4f6;
-	--wpss-gray-400: #9ca3af;
-
-	/* Semantic Colors */
-	--wpss-success: #10b981;
-	--wpss-warning: #f59e0b;
-	/* Kept in step with design-system.css, which owns this token. red-500 gives
-	   3.76 against the white label on a filled danger button, under the 4.5 AA
-	   floor. This sheet loads after the design system, so a stale value here
-	   silently wins - which is why the token change there had no effect until
-	   this one moved too. */
-	--wpss-danger: #dc2626;
-	--wpss-info: #3b82f6;
-	--wpss-star: #fbbf24;
-
 	/* Seller-tier badge palette.
 	   Tiers were previously coloured via inline style="" with raw hex in three
 	   templates (service card, vendor card, vendor profile). Tokenised here so a
@@ -71,16 +34,8 @@
 	--wpss-tier-pro-bg: #faf5ff;
 	--wpss-tier-pro-text: #7c3aed;
 
-	/* Border Radius */
-	--wpss-radius: 8px;
-	--wpss-radius-lg: 12px;
-
 	/* Shadows */
 	--wpss-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-	--wpss-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-
-	/* Transitions */
-	--wpss-transition: 0.2s ease;
 
 	/* Layout */
 	--wpss-sticky-top: 32px;

@@ -869,7 +869,7 @@
 
 .wpss-conversation-card__order {
 	font-size: 11px;
-	color: var(--wpss-gray-400);
+	color: var(--wpss-text-muted);
 }
 
 /* ==========================================================================
@@ -2036,6 +2036,22 @@ select.wpss-input option,
 		border-bottom: 1px solid var(--wpss-gray-200);
 	}
 
+	/* The bar beside Menu already names the section, so the header does not say
+	   it again; the heading stays for screen readers. A header left with nothing
+	   to show (an open order has no actions) is not drawn. */
+	.wpss-dashboard__header .wpss-dashboard__title {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
+
+	.wpss-dashboard__header:not(:has(> :not(.wpss-dashboard__title))) {
+		display: none;
+	}
+
 	.wpss-dashboard__nav-bar {
 		display: flex;
 		align-items: center;
@@ -2147,16 +2163,25 @@ select.wpss-input option,
 	}
 }
 
-/* On a phone the shell and theme already give 27px of gutter; the body's own
-   padding and the messages card's stacked on top left a message 165px of a
-   390px screen (Basecamp 10345275760). */
+/* On a phone the dashboard frame is the only card. The body keeps the
+   header's 16px inset so content lines up with it and nothing meets the edge;
+   a section drawn as a second card inside it (with cards of its own inside
+   that) left 236px of a 390px screen and three borders at the left edge.
+   Messages had the same stack: 165px for a message (Basecamp 10345275760). */
 @media (max-width: 640px) {
-	.wpss-dashboard__body {
-		padding-inline: 0;
+	.wpss-dashboard__body > .wpss-section.wpss-card {
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
 	}
 
-	.wpss-section--messages {
-		padding-inline: 8px;
+	/* 40px touch targets, the design system's floor. */
+	.wpss-dashboard__tour-replay,
+	.wpss-favorites__remove {
+		min-height: 40px;
+		min-width: 40px;
 	}
 
 	.wpss-section--messages .wpss-conversation-thread__messages {
@@ -3406,8 +3431,8 @@ select.wpss-input option,
 }
 
 .wpss-status-pending {
-	background: var(--wpss-warning, #fdcb6e);
-	color: var(--wpss-gray-800, #333);
+	background: var(--wpss-status-pending-bg, #fff3cd);
+	color: var(--wpss-status-pending-fg, #856404);
 }
 
 .wpss-status-draft {
@@ -3637,7 +3662,7 @@ select.wpss-input option,
 }
 
 .wpss-required {
-	color: var(--wpss-danger);
+	color: var(--wpss-danger-text, var(--wpss-danger));
 }
 
 .wpss-input-group {

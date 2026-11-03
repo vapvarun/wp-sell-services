@@ -1183,6 +1183,9 @@
  * at 2.21:1 on Reign dark mode.
  */
 .wpss-contact-link {
+	display: inline-flex;
+	align-items: center;
+	min-height: 40px;
 	color: var(--wpss-text-muted);
 	text-decoration: none;
 	font-size: 0.875rem;
