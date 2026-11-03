@@ -133,6 +133,28 @@ class RenderSurfaceAuthorityTest extends TestCase {
 	}
 
 	/**
+	 * Pro's manifest has no surface that Pro no longer registers.
+	 *
+	 * Free's guard defers to Pro's file for Pro's surfaces, so a stale Pro entry
+	 * would quietly excuse a Free surface of the same name.
+	 */
+	public function test_the_pro_manifest_has_no_surface_that_no_longer_exists(): void {
+		$paired = dirname( __DIR__, 3 ) . '/wp-sell-services-pro/audit/render-authority.json';
+
+		if ( ! class_exists( 'WPSellServicesPro\\Core\\Pro' ) || ! file_exists( $paired ) ) {
+			$this->markTestSkipped( 'Pro is not active.' );
+		}
+
+		$pro   = (array) json_decode( (string) file_get_contents( $paired ), true );
+		$stale = array_merge(
+			array_diff( array_keys( (array) ( $pro['shortcodes'] ?? array() ) ), $this->live_shortcodes() ),
+			array_diff( array_keys( (array) ( $pro['blocks'] ?? array() ) ), $this->live_blocks() )
+		);
+
+		$this->assertSame( array(), array_values( $stale ), implode( "\n", $stale ) );
+	}
+
+	/**
 	 * A declared surface that no longer exists is a manifest that has rotted.
 	 *
 	 * Entries carrying `conditional_on` are exempt, and only those - the field

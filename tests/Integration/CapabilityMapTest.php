@@ -261,6 +261,42 @@ class CapabilityMapTest extends TestCase {
 		);
 	}
 
+	/**
+	 * TRIPWIRE - Pro grants no capability, so a first grant must be declared here.
+	 *
+	 * Pro has no role or capability of its own: every check it makes is a Free
+	 * capability or manage_options. A grant added later - add_cap/add_role at
+	 * activation, or a user_has_cap/map_meta_cap filter at runtime - would hand a
+	 * member authority this map never described. A runtime filter leaves no trace
+	 * in wp_roles(), so the live-role tests above cannot see it; only the source can.
+	 */
+	public function test_pro_grants_no_capability(): void {
+		$pro = dirname( __DIR__, 3 ) . '/wp-sell-services-pro/src';
+
+		if ( ! is_dir( $pro ) ) {
+			$this->markTestSkipped( 'Pro is not installed beside Free.' );
+		}
+
+		$grants = array();
+		$files  = $this->php_files( $pro );
+
+		foreach ( $files as $file ) {
+			foreach ( (array) file( $file ) as $n => $line ) {
+				if ( preg_match( "/(?<![\\w$])(add_cap|add_role)\\s*\\(|['\"](user_has_cap|map_meta_cap)['\"]/", (string) $line ) ) {
+					$grants[] = basename( $file ) . ':' . ( $n + 1 ) . ' ' . trim( (string) $line );
+				}
+			}
+		}
+
+		$this->assertGreaterThan( 50, count( $files ), 'The Pro source sweep read almost nothing, so it proved nothing.' );
+		$this->assertSame(
+			array(),
+			$grants,
+			"Pro now grants a capability. Declare it in audit/capability-map.json (who holds it, what it means) and update this tripwire.\n"
+			. implode( "\n", $grants )
+		);
+	}
+
 	/** @return array<int, string> */
 	private function php_files( string $dir ): array {
 		$out = array();
