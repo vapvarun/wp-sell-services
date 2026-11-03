@@ -38,6 +38,7 @@ site.
 2. The subscription is created **only after payment succeeds**, and its status comes from the real Stripe status -- never forced to active.
 3. Access is granted while the subscription is `active` or `trialing`, and revoked otherwise.
 4. Switching plans cancels the previous subscription, so the vendor is not double-billed.
+5. When a vendor cancels a paid plan, it keeps working until the end of the period they paid for. Their Subscription page shows **Ending** and the end date, and the plan is not billed again. A free plan ends as soon as it is cancelled.
 
 Because the subscription is finalised from Stripe's own return and webhook, a
 plan is never marked active before money actually moves.
