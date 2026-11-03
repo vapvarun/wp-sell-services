@@ -581,7 +581,7 @@ class ExtensionOrderService {
 
 		if ( ! empty( $row->pay_order_id ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
+			$closed = $wpdb->update(
 				$orders_table,
 				array(
 					'status'     => 'cancelled',
@@ -592,6 +592,11 @@ class ExtensionOrderService {
 					'status' => 'pending_payment',
 				)
 			);
+
+			if ( $closed ) {
+				/** This action is documented in src/Services/TippingService.php */
+				do_action( 'wpss_unpaid_sub_order_closed', (int) $row->pay_order_id );
+			}
 		}
 
 		/**
@@ -663,6 +668,9 @@ class ExtensionOrderService {
 			);
 
 			if ( $affected ) {
+				/** This action is documented in src/Services/TippingService.php */
+				do_action( 'wpss_unpaid_sub_order_closed', $sub_id );
+
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->update(
 					$extensions_table,

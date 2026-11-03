@@ -119,23 +119,55 @@ class TippingService {
 	public function cleanup_abandoned_tips(): int {
 		global $wpdb;
 
+		$orders = $wpdb->prefix . 'wpss_orders';
+
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$affected = $wpdb->query(
+		$ids = $wpdb->get_col(
 			$wpdb->prepare(
-				"UPDATE {$wpdb->prefix}wpss_orders
-				SET status = 'cancelled', updated_at = %s
+				"SELECT id FROM {$orders}
 				WHERE platform = %s
 				AND status = 'pending_payment'
 				AND ( payment_method IS NULL OR payment_method <> 'offline' )
 				AND created_at < %s",
-				current_time( 'mysql', true ),
 				self::ORDER_TYPE,
 				gmdate( 'Y-m-d H:i:s', time() - ( self::ABANDON_AFTER_HOURS * HOUR_IN_SECONDS ) )
 			)
 		);
+
+		$count = 0;
+		foreach ( $ids as $id ) {
+			$affected = $wpdb->update(
+				$orders,
+				array(
+					'status'     => 'cancelled',
+					'updated_at' => current_time( 'mysql', true ),
+				),
+				array(
+					'id'     => (int) $id,
+					'status' => 'pending_payment',
+				)
+			);
+
+			if ( $affected ) {
+				/**
+				 * Fires when an unpaid sub-order (tip, extension or milestone phase) is closed.
+				 *
+				 * A rail that minted a store order for it listens here and cancels
+				 * that order, so an old pay link cannot take money for something
+				 * that no longer exists: a buyer paying it was charged and nobody
+				 * credited, because a closed order refuses payment.
+				 *
+				 * @since 1.9.2
+				 *
+				 * @param int $sub_order_id Closed sub-order ID.
+				 */
+				do_action( 'wpss_unpaid_sub_order_closed', (int) $id );
+				++$count;
+			}
+		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		return (int) $affected;
+		return $count;
 	}
 
 	/**

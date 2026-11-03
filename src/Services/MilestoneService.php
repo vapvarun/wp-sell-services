@@ -782,6 +782,8 @@ class MilestoneService {
 		);
 
 		do_action( 'wpss_milestone_declined', $milestone_id, (int) $sub->platform_order_id, $customer_id );
+		/** This action is documented in src/Services/TippingService.php */
+		do_action( 'wpss_unpaid_sub_order_closed', $milestone_id );
 
 		return array(
 			'success' => true,
@@ -850,6 +852,8 @@ class MilestoneService {
 		 * @param int $parent_order_id Parent order ID.
 		 */
 		do_action( 'wpss_milestone_cancelled', $milestone_id, (int) $sub->platform_order_id );
+		/** This action is documented in src/Services/TippingService.php */
+		do_action( 'wpss_unpaid_sub_order_closed', $milestone_id );
 
 		return array(
 			'success' => true,
@@ -929,6 +933,8 @@ class MilestoneService {
 		foreach ( $doomed as $row ) {
 			/** This action is documented in src/Services/MilestoneService.php */
 			do_action( 'wpss_milestone_cancelled', (int) $row->id, (int) $row->platform_order_id );
+			/** This action is documented in src/Services/TippingService.php */
+			do_action( 'wpss_unpaid_sub_order_closed', (int) $row->id );
 		}
 
 		return $count;

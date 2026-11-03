@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**573 hooks** across **794** firing sites.
+**574 hooks** across **800** firing sites.
 
-## Actions (299)
+## Actions (300)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -278,6 +278,7 @@ guide; this is the complete index.
 | `wpss_terawallet_recharged` | 2 | `src/Integrations/Wallets/TeraWalletProvider.php` **[PRO]** | Fires when TeraWallet recharge is complete. |
 | `wpss_tip_order_created` | 4 | `src/Services/TippingService.php` | Fires when a pending-payment tip order is created and awaits the buyer's gateway charge. |
 | `wpss_tip_sent` | 6 | `src/Services/TippingService.php` | Fires after a paid tip has been credited to the vendor's wallet. |
+| `wpss_unpaid_sub_order_closed` | 1 | `src/Services/ExtensionOrderService.php` *(+5 more)* |  |
 | `wpss_updated` | 2 | `src/Core/Plugin.php` | Fires after the plugin has been installed or upgraded. |
 | `wpss_user_blocked` | 2 | `src/API/BlocksController.php` | Fires when one member blocks another. |
 | `wpss_user_unblocked` | 2 | `src/API/BlocksController.php` | Fires when one member unblocks another. |
