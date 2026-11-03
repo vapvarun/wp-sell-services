@@ -44,6 +44,11 @@ off and leaves its name, price and limits alone. Send a field to change it, and
 send `null` or an empty value to clear one that can be cleared (a plan's
 `commission_override`). Defaults apply on create only.
 
+The plan GETs are public, but not every field is. A signed-out caller gets
+neither `commission_override` nor `stripe_price_id`; a signed-in member also
+gets `commission_override` (the rate a plan offers); only an administrator gets
+`stripe_price_id`.
+
 ## Route presence is conditional
 
 Two things change which routes exist on a given site, so enumerate rather than

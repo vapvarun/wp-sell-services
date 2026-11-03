@@ -144,7 +144,7 @@ class EmailService {
 	/**
 	 * This plugin's mail sent while a database transaction was open, held until it commits.
 	 *
-	 * @var array<int, array{email: array, type: string}>
+	 * @var array<int, array{email: array<string, mixed>, type: string}>
 	 */
 	private static array $held_mail = array();
 
@@ -418,7 +418,7 @@ class EmailService {
 					'button_text'   => __( 'View your order', 'wp-sell-services' ),
 					'order'         => $order,
 				)
-			) || $sent;
+			);
 		}
 
 		$note = sprintf(
@@ -2424,8 +2424,8 @@ class EmailService {
 	/**
 	 * Hand one prepared email to wp_mail().
 	 *
-	 * @param array  $email Email after wpss_email_before_send: to, subject, content, headers.
-	 * @param string $type  Email type, for the failure listener.
+	 * @param array<string, mixed> $email Email after wpss_email_before_send: to, subject, content, headers.
+	 * @param string               $type  Email type, for the failure listener.
 	 * @return bool
 	 */
 	private static function deliver( array $email, string $type ): bool {
@@ -2560,7 +2560,7 @@ class EmailService {
 	 * Stored as a transient (shortcut: a persistent object cache that evicts
 	 * it loses that one job; move to a table if retries ever need a guarantee).
 	 *
-	 * @param array $payload Job payload.
+	 * @param array<int, mixed> $payload Job payload (positional).
 	 * @return string Key to pass as the job's argument.
 	 */
 	private static function stash_payload( array $payload ): string {
@@ -2574,7 +2574,7 @@ class EmailService {
 	 * Take a stashed payload, once.
 	 *
 	 * @param string $key Key from stash_payload().
-	 * @return array|null Payload, or null when it is gone.
+	 * @return array<int, mixed>|null Payload, or null when it is gone.
 	 */
 	private static function take_payload( string $key ): ?array {
 		$payload = get_transient( self::PAYLOAD_PREFIX . $key );

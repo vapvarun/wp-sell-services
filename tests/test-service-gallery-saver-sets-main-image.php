@@ -69,7 +69,7 @@ $restore    = static function () use ( &$service_id ) {
 	}
 };
 
-update_post_meta( $service_id, '_wpss_gallery', array( 'images' => array(), 'video' => 'https://example.com/v.mp4' ) );
+update_post_meta( $service_id, '_wpss_gallery', array( 'images' => array(), 'video' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' ) );
 
 wp_set_current_user( $vendor );
 $request = new WP_REST_Request( 'PUT', '/wpss/v1/services/' . $service_id );
@@ -80,4 +80,4 @@ $check( 'the REST save succeeds', 200 === $response->get_status(), (string) $res
 $gallery = get_post_meta( $service_id, '_wpss_gallery', true );
 $check( 'the main image is set', (int) get_post_thumbnail_id( $service_id ) === $image, (string) get_post_thumbnail_id( $service_id ) );
 $check( 'the gallery keeps only usable images', array( $image ) === array_map( 'intval', (array) ( $gallery['images'] ?? array() ) ), wp_json_encode( $gallery ) );
-$check( 'the stored video is kept', 'https://example.com/v.mp4' === ( $gallery['video'] ?? '' ), wp_json_encode( $gallery ) );
+$check( 'the stored video is kept', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' === ( $gallery['video'] ?? '' ), wp_json_encode( $gallery ) );

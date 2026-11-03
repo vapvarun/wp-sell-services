@@ -1241,9 +1241,9 @@ class ServiceModerationPage {
 	 * stays live. A save from the editor form or Quick Edit counts whole, as the
 	 * wizard does, because it also carries the meta boxes this filter cannot see.
 	 *
-	 * @param int   $post_id Service ID.
-	 * @param array $data    Post data being saved (slashed).
-	 * @param array $postarr Post array.
+	 * @param int                  $post_id Service ID.
+	 * @param array<string, mixed> $data    Post data being saved (slashed).
+	 * @param array<string, mixed> $postarr Post array.
 	 * @return bool
 	 */
 	private static function edits_live_listing( int $post_id, array $data, array $postarr ): bool {

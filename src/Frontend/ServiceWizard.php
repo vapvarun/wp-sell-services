@@ -2145,7 +2145,7 @@ class ServiceWizard {
 	 * The field promises YouTube or Vimeo, and the reader drops anything else,
 	 * so saving it would lose the vendor's link without a word.
 	 *
-	 * @param array $data Raw wizard data.
+	 * @param array<string, mixed> $data Raw wizard data.
 	 * @return void
 	 */
 	private function refuse_unsupported_video( array $data ): void {

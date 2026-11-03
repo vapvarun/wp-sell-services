@@ -809,11 +809,11 @@ class EarningsService {
 	 * no lock, an amount read before its loop, no minimum, unvalidated details,
 	 * and a "one open request" rule that ignored manual requests.
 	 *
-	 * @param int    $vendor_id Vendor user ID.
-	 * @param float  $amount    Amount; ignored for an auto run, which takes the balance read under the lock.
-	 * @param string $method    Withdrawal method ('' = the saved profile's).
-	 * @param array  $details   Method details; empty = the saved profile's.
-	 * @param bool   $is_auto   Whether the auto-withdrawal run is asking.
+	 * @param int                  $vendor_id Vendor user ID.
+	 * @param float                $amount    Amount; ignored for an auto run, which takes the balance read under the lock.
+	 * @param string               $method    Withdrawal method ('' = the saved profile's).
+	 * @param array<string, mixed> $details Method details; empty = the saved profile's.
+	 * @param bool                 $is_auto   Whether the auto-withdrawal run is asking.
 	 * @return array{success: bool, message?: string, code?: string, withdrawal_id?: int, amount?: float}
 	 */
 	private function write_withdrawal( int $vendor_id, float $amount, string $method, array $details, bool $is_auto ): array {
