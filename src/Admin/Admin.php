@@ -2033,7 +2033,7 @@ class Admin {
 					<div class="wpss-admin-stat-card">
 						<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->total ); ?></span>
+							<a class="wpss-stat-number" href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&suborder_type=main' ) ); ?>"><?php echo esc_html( (string) $order_stats->total ); ?></a>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
@@ -2041,7 +2041,7 @@ class Admin {
 					<div class="wpss-admin-stat-card">
 						<i data-lucide="clock" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->in_progress ); ?></span>
+							<a class="wpss-stat-number" href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&suborder_type=main&status=in_progress' ) ); ?>"><?php echo esc_html( (string) $order_stats->in_progress ); ?></a>
 							<span class="wpss-stat-label"><?php esc_html_e( 'In Progress', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
@@ -2049,7 +2049,7 @@ class Admin {
 					<div class="wpss-admin-stat-card">
 						<i data-lucide="check-circle-2" class="wpss-icon wpss-stat-icon wpss-stat-icon--success" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->completed ); ?></span>
+							<a class="wpss-stat-number" href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&suborder_type=main&status=completed' ) ); ?>"><?php echo esc_html( (string) $order_stats->completed ); ?></a>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>

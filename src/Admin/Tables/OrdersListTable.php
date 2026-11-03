@@ -342,8 +342,10 @@ class OrdersListTable extends \WP_List_Table {
 	protected function get_views(): array {
 		$counts  = $this->get_status_counts();
 		$current = $this->get_current_group();
-		$base    = admin_url( 'admin.php?page=wpss-orders' );
-		$views   = array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filter.
+		$type  = isset( $_GET['suborder_type'] ) ? sanitize_key( wp_unslash( $_GET['suborder_type'] ) ) : '';
+		$base  = admin_url( 'admin.php?page=wpss-orders' . ( $type ? '&suborder_type=' . $type : '' ) ); // Tabs keep the type their counts describe.
+		$views = array();
 
 		foreach ( wpss_get_order_filter_groups( $counts ) as $key => $group ) {
 			$count = 'all' === $key ? array_sum( $counts ) : array_sum( array_intersect_key( $counts, array_flip( $group['statuses'] ) ) );
@@ -375,7 +377,9 @@ class OrdersListTable extends \WP_List_Table {
 
 		$counts  = $this->get_status_counts();
 		$current = $this->get_current_group();
-		$base    = admin_url( 'admin.php?page=wpss-orders' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filter.
+		$type = isset( $_GET['suborder_type'] ) ? sanitize_key( wp_unslash( $_GET['suborder_type'] ) ) : '';
+		$base = admin_url( 'admin.php?page=wpss-orders' . ( $type ? '&suborder_type=' . $type : '' ) ); // Tabs keep the type their counts describe.
 		?>
 		<label class="screen-reader-text" for="wpss-orders-group-select"><?php esc_html_e( 'Show orders', 'wp-sell-services' ); ?></label>
 		<select id="wpss-orders-group-select" class="wpss-orders-group-select" data-wpss-nav>
@@ -407,10 +411,12 @@ class OrdersListTable extends \WP_List_Table {
 			$table = $wpdb->prefix . 'wpss_orders';
 
 			// Vendor filter for non-admin vendors.
-			$vendor_where = '';
+			$vendor_where = ' WHERE 1=1';
 			if ( ! current_user_can( 'manage_options' ) && wpss_is_vendor() ) {
 				$vendor_where = $wpdb->prepare( ' WHERE vendor_id = %d', get_current_user_id() );
 			}
+			// The tab counts describe the rows the type filter shows.
+			$vendor_where .= $this->order_type_sql();
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$rows   = $wpdb->get_results( "SELECT status, COUNT(*) AS count FROM {$table}{$vendor_where} GROUP BY status" );
@@ -498,6 +504,7 @@ class OrdersListTable extends \WP_List_Table {
 				<label for="wpss-orders-suborder-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by sub-order type', 'wp-sell-services' ); ?></label>
 				<select name="suborder_type" id="wpss-orders-suborder-filter">
 					<option value=""><?php esc_html_e( 'All order types', 'wp-sell-services' ); ?></option>
+					<option value="main" <?php selected( $selected_type, 'main' ); ?>><?php esc_html_e( 'Service orders only', 'wp-sell-services' ); ?></option>
 					<?php foreach ( $present_subtypes as $type ) : ?>
 						<option value="<?php echo esc_attr( $type ); ?>" <?php selected( $selected_type, $type ); ?>>
 							<?php echo esc_html( $sub_order_types[ $type ] ?? ucfirst( $type ) ); ?>
@@ -553,6 +560,30 @@ class OrdersListTable extends \WP_List_Table {
 			?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * SQL for the order-type filter, shared by the rows and the tab counts.
+	 *
+	 * @return string ' AND …' fragment, or '' for all types.
+	 */
+	private function order_type_sql(): string {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filter.
+		$type = isset( $_GET['suborder_type'] ) ? sanitize_key( wp_unslash( $_GET['suborder_type'] ) ) : '';
+
+		// Service orders only: the same definition the dashboard counts with.
+		if ( 'main' === $type ) {
+			return ' AND ' . wpss_order_rows_sql();
+		}
+
+		// Restricted to canonical sub-order types so an arbitrary platform value is never injected.
+		if ( array_key_exists( $type, ServiceOrder::get_sub_order_types() ) ) {
+			return $wpdb->prepare( ' AND platform = %s', $type );
+		}
+
+		return '';
 	}
 
 	/**
@@ -666,17 +697,7 @@ class OrdersListTable extends \WP_List_Table {
 			$params[] = sanitize_text_field( wp_unslash( $_GET['m'] ) );
 		}
 
-		// Sub-order type filter. Restricted to canonical sub-order types so an
-		// arbitrary `platform` value can never be injected through the query arg.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! empty( $_GET['suborder_type'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$requested_type = sanitize_key( wp_unslash( $_GET['suborder_type'] ) );
-			if ( array_key_exists( $requested_type, ServiceOrder::get_sub_order_types() ) ) {
-				$where   .= ' AND platform = %s';
-				$params[] = $requested_type;
-			}
-		}
+		$where .= $this->order_type_sql();
 
 		// Search.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -694,8 +715,9 @@ class OrdersListTable extends \WP_List_Table {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$total_items = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$where}", $params ) );
 		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$total_items = $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+			// No bound values, but $where may still carry a filter (Service orders only).
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$total_items = $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE {$where}" );
 		}
 
 		// Sorting.
@@ -726,7 +748,7 @@ class OrdersListTable extends \WP_List_Table {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$this->items = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT * FROM {$table} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d",
+					"SELECT * FROM {$table} WHERE {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d",
 					$per_page,
 					$offset
 				)
