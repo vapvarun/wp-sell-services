@@ -1077,6 +1077,15 @@ class ServicesController extends RestController {
 			return $line;
 		}
 
+		// On a store rail the store taxes a catalog order with its own rules, so quote what it charges.
+		if ( ! wpss_uses_standalone_payments() ) {
+			$line = array(
+				'tax'      => 0.0,
+				'tax_rate' => 0.0,
+				'total'    => (float) $line['subtotal'] + (float) $line['addons_total'],
+			) + $line;
+		}
+
 		$currency = wpss_get_currency();
 		$addons   = array();
 

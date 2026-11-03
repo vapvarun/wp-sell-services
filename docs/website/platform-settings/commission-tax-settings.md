@@ -85,11 +85,16 @@ See [Tiered Commission](../earnings-wallet/tiered-commission.md).
 | Tax Rate (%) | Number, 0-50, step 0.01 | `0` | Applied to all services |
 | Prices Include Tax | Checkbox | Off | Whether listed prices already contain tax |
 
-### These settings apply to the standalone checkout only
+### When WooCommerce, EDD or FluentCart runs your checkout
 
-If WooCommerce, EDD or FluentCart runs your checkout, **that platform
-calculates tax** using its own tax configuration, and everything in this card is
-ignored. On WooCommerce, configure tax under **WooCommerce > Settings > Tax**.
+**The store taxes catalog orders** with its own tax configuration, and the
+order popup on a service page shows the price without this card's tax, so the
+buyer is quoted what the store charges. On WooCommerce, configure that tax under
+**WooCommerce > Settings > Tax**.
+
+**Milestone phases and paid extensions still carry this card's tax** on every
+store, because the marketplace creates and prices them. Tips carry it only when
+**Tax Tips** is on.
 
 ### Prices Include Tax
 

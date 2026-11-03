@@ -928,7 +928,7 @@ class Settings {
 				'field'       => 'enable_tax',
 				'label'       => __( 'Enable tax calculation on service orders', 'wp-sell-services' ),
 				'default'     => false,
-				'description' => __( 'Add tax to service orders at checkout. Only applies to standalone checkout — WooCommerce uses its own tax settings.', 'wp-sell-services' ),
+				'description' => __( 'Add tax to service orders at checkout. Milestone phases and extensions carry it on every store. On WooCommerce, Easy Digital Downloads or FluentCart, the store taxes catalog orders with its own tax settings.', 'wp-sell-services' ),
 			)
 		);
 
