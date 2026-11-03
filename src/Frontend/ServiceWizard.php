@@ -15,6 +15,7 @@ namespace WPSellServices\Frontend;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Assets\ScriptRegistry;
 use WPSellServices\Services\VendorService;
 use WPSellServices\Services\ServiceManager;
 use WPSellServices\Services\ModerationService;
@@ -1568,10 +1569,11 @@ class ServiceWizard {
 
 		// Enqueue without alpinejs dependency so it loads BEFORE Alpine.
 		// This ensures wpssServiceWizard is defined when Alpine auto-starts.
+		ScriptRegistry::register_ui();
 		wp_enqueue_script(
 			'wpss-service-wizard',
 			WPSS_PLUGIN_URL . 'assets/js/service-wizard.js',
-			array(),
+			array( ScriptRegistry::HANDLE_UI ),
 			WPSS_VERSION,
 			true
 		);
@@ -1726,6 +1728,8 @@ class ServiceWizard {
 			wp_send_json_error( array( 'message' => __( 'Invalid data.', 'wp-sell-services' ) ) );
 		}
 
+		$this->refuse_unsupported_video( $data );
+
 		// Verify ownership if editing.
 		$author_id = $user_id;
 		if ( $service_id ) {
@@ -1864,6 +1868,8 @@ class ServiceWizard {
 		if ( empty( $data ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid data.', 'wp-sell-services' ) ) );
 		}
+
+		$this->refuse_unsupported_video( $data );
 
 		// Validate required fields.
 		$errors = $this->validate_service_data( $data );
@@ -2131,6 +2137,24 @@ class ServiceWizard {
 		}
 
 		return $sanitized;
+	}
+
+	/**
+	 * Stop a save whose gallery video is not a YouTube or Vimeo URL.
+	 *
+	 * The field promises YouTube or Vimeo, and the reader drops anything else,
+	 * so saving it would lose the vendor's link without a word.
+	 *
+	 * @param array $data Raw wizard data.
+	 * @return void
+	 */
+	private function refuse_unsupported_video( array $data ): void {
+		$video = $data['gallery']['video'] ?? '';
+		$video = is_string( $video ) ? trim( $video ) : '';
+
+		if ( '' !== $video && ! wpss_is_supported_video_url( $video ) ) {
+			wp_send_json_error( array( 'message' => __( 'The video must be a YouTube or Vimeo link.', 'wp-sell-services' ) ) );
+		}
 	}
 
 	/**

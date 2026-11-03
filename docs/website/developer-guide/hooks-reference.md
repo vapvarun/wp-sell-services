@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**573 hooks** across **795** firing sites.
+**573 hooks** across **794** firing sites.
 
 ## Actions (299)
 
@@ -459,7 +459,7 @@ guide; this is the complete index.
 | `wpss_pay_order_url_lookup` | 3 | `src/functions/urls.php` | Filter the pay URL with one the rail already knows. |
 | `wpss_payment_action_required_message` | 3 | `src/Integrations/Stripe/StripeGateway.php` | Filters the message shown when a payment still needs a buyer step (typically 3D Secure authentication). |
 | `wpss_payment_declined_message` | 3 | `src/Integrations/Stripe/StripeGateway.php` | Filters the message shown to a buyer whose card was declined. |
-| `wpss_payment_gateways` | 1 | `src/Core/Plugin.php` *(+4 more)* | Filter the registered payment gateways. |
+| `wpss_payment_gateways` | 1 | `src/Core/Plugin.php` *(+3 more)* | Filter the registered payment gateways. |
 | `wpss_payout_banner_state` | 4 | `templates/dashboard/sections/earnings.php` | Filters the payout banner state shown on the earnings section. |
 | `wpss_payout_method_registry` | 1 | `src/Services/EarningsService.php` | Filter the payout methods. Replaces wpss_withdrawal_methods and wpss_payout_fields. |
 | `wpss_person_schema` | 2 | `src/SEO/SchemaMarkup.php` |  |

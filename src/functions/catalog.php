@@ -52,6 +52,12 @@ function wpss_get_gallery_ids( $raw ): array {
 /**
  * Get the video URL from gallery meta.
  *
+ * Only a YouTube or Vimeo URL is returned. The page renders the video through
+ * oEmbed on every view, and oEmbed fetches any other URL to discover an
+ * embed, so a vendor-entered host would have the site's server call wherever
+ * the vendor chose. Applied here, on read, so rows saved before the wizard
+ * enforced it are covered too.
+ *
  * @since 1.1.0
  *
  * @param mixed $raw Raw gallery meta value (from get_post_meta).
@@ -62,23 +68,24 @@ function wpss_get_gallery_video_url( $raw ): string {
 		return '';
 	}
 
+	$url = '';
+
 	// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Documents the meta shape this branch handles; not dead code.
 	// ServiceWizard format: ['images' => [...], 'video' => '...'].
 	if ( isset( $raw['video'] ) && is_string( $raw['video'] ) ) {
-		return $raw['video'];
-	}
-
-	// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Documents the meta shape this branch handles; not dead code.
-	// GalleryService format: [['type' => 'video', 'url' => '...'], ...].
-	if ( isset( $raw[0] ) && is_array( $raw[0] ) ) {
+		$url = $raw['video'];
+	} elseif ( isset( $raw[0] ) && is_array( $raw[0] ) ) {
+		// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Documents the meta shape this branch handles; not dead code.
+		// GalleryService format: [['type' => 'video', 'url' => '...'], ...].
 		foreach ( $raw as $item ) {
 			if ( 'video' === ( $item['type'] ?? '' ) && ! empty( $item['url'] ) ) {
-				return $item['url'];
+				$url = (string) $item['url'];
+				break;
 			}
 		}
 	}
 
-	return '';
+	return wpss_is_supported_video_url( $url ) ? $url : '';
 }
 
 /**
