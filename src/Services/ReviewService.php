@@ -33,36 +33,12 @@ class ReviewService {
 	 * @return Review|null
 	 */
 	public function create( int $order_id, int $reviewer_id, array $data ): ?Review {
+		// One eligibility rule for every door (REST, AJAX, direct calls): can_review().
+		if ( ! $this->can_review( $order_id, $reviewer_id )['can_review'] ) {
+			return null;
+		}
+
 		$order = wpss_get_order( $order_id );
-
-		if ( ! $order ) {
-			return null;
-		}
-
-		// Verify order is completed.
-		if ( ServiceOrder::STATUS_COMPLETED !== $order->status ) {
-			return null;
-		}
-
-		// Verify reviewer is the customer.
-		if ( $order->customer_id !== $reviewer_id ) {
-			return null;
-		}
-
-		// A suspended or closed member leaves no new review.
-		if ( wpss_account_status_block( $reviewer_id ) ) {
-			return null;
-		}
-
-		// Check if review already exists.
-		if ( $this->has_review( $order_id ) ) {
-			return null;
-		}
-
-		// Check review time window.
-		if ( ! $this->is_within_review_window( $order ) ) {
-			return null;
-		}
 
 		// Validate rating.
 		$rating = (int) ( $data['rating'] ?? 0 );
@@ -663,6 +639,14 @@ class ReviewService {
 			return array(
 				'can_review' => false,
 				'reason'     => __( 'Order not found.', 'wp-sell-services' ),
+			);
+		}
+
+		// A tip, extension or milestone phase belongs to its main order, which takes the one review.
+		if ( in_array( (string) $order->platform, wpss_get_sub_order_platforms(), true ) ) {
+			return array(
+				'can_review' => false,
+				'reason'     => __( 'Reviews are left on the main order, not on its tips, extensions or milestone phases.', 'wp-sell-services' ),
 			);
 		}
 

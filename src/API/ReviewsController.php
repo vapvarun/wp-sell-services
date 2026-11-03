@@ -443,6 +443,12 @@ class ReviewsController extends RestController {
 			return $standing;
 		}
 
+		// The one eligibility rule, which also refuses a tip, extension or milestone phase.
+		$eligible = $review_service->can_review( $order_id, $user_id );
+		if ( ! $eligible['can_review'] ) {
+			return new WP_Error( 'wpss_review_not_allowed', $eligible['reason'], array( 'status' => 400 ) );
+		}
+
 		// The service is the one writer: moderation, rating caches, the
 		// one-review-per-order guard and the sub-ratings live there.
 		$created = $review_service->create(

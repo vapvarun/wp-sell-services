@@ -5,7 +5,7 @@ Reviews are the backbone of trust on your marketplace. After a buyer completes a
 ## How Reviews Work
 
 - Only buyers can leave reviews, and only on orders they have completed.
-- Each order gets one review.
+- Each order gets one review. Tips, paid extensions and milestone phases belong to their main order and are not reviewed on their own, so extra payments never add extra ratings.
 - Reviews include an overall star rating (1-5) plus optional sub-ratings.
 - Vendors can reply to reviews publicly.
 - Buyers must submit their review within the review window (default: 30 days after completion).
