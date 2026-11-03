@@ -50,7 +50,9 @@ foreach ( array( $free . '/templates', $free . '/src', $pro . '/src', $pro . '/t
 		}
 	}
 }
-foreach ( $rows as $row ) {
+// Pro renders the ledger and currency rows; a Free-only checkout (CI) cannot see them.
+$pro_rows = is_dir( $pro ) ? array() : array( '.wpss-ledger-controls', '.wpss-currency-switcher' );
+foreach ( array_diff( $rows, $pro_rows ) as $row ) {
 	$check( "{$row} is still rendered somewhere", false !== strpos( $markup, substr( $row, 1 ) ) );
 }
 

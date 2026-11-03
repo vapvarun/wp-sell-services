@@ -15,6 +15,7 @@
  */
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 use WPSellServices\Services\VendorService;
 
@@ -24,22 +25,11 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 	$fails += $ok ? 0 : 1;
 };
 
-$seller = get_user_by( 'login', 'wpss_vendor_maya' );
-$buyer  = get_user_by( 'login', 'wpss_buyer_ava' );
-if ( ! $seller || ! $buyer ) {
-	echo "FAIL  fixture: wpss_vendor_maya and wpss_buyer_ava\n";
-	exit( 1 );
-}
-
-$service_id = (int) ( get_posts(
-	array(
-		'post_type'   => 'wpss_service',
-		'author'      => $seller->ID,
-		'post_status' => 'publish',
-		'numberposts' => 1,
-		'fields'      => 'ids',
-	)
-)[0] ?? 0 );
+// Throwaway seller, buyer and published service: the rule is proven on a fresh site too.
+$fx         = wpss_test_fixtures();
+$seller     = get_userdata( (int) $fx->vendor );
+$buyer      = get_userdata( (int) $fx->buyer );
+$service_id = (int) ( $fx->service )( 'publish' );
 $made       = array();
 $vendors    = new VendorService();
 $status_was = (string) ( \WPSellServices\Models\VendorProfile::get_by_user_id( $seller->ID )->status ?? 'active' );
@@ -96,8 +86,12 @@ try {
 	}
 
 	// 3. FluentCart: its checkout validator asks the same rule for every service line.
-	$fluent = (string) file_get_contents( WP_PLUGIN_DIR . '/wp-sell-services-pro/src/Integrations/FluentCart/FluentCartCheckoutProvider.php' );
-	$check( 'FluentCart checkout validation asks wpss_service_unavailable_reason() per service line', 1 === preg_match( '/function validate_service_requirements\(.*?resolve_service_id\( \$item \);\s*\$reason\s*=\s*\$service_id \? wpss_service_unavailable_reason\( \$service_id \)/s', $fluent ) );
+	$fluent_file = WP_PLUGIN_DIR . '/wp-sell-services-pro/src/Integrations/FluentCart/FluentCartCheckoutProvider.php';
+	$fluent      = is_readable( $fluent_file ) ? (string) file_get_contents( $fluent_file ) : '';
+	if ( '' === $fluent ) {
+		echo "SKIP  Pro not installed: run beside wp-sell-services-pro for the FluentCart check\n";
+	}
+	'' === $fluent || $check( 'FluentCart checkout validation asks wpss_service_unavailable_reason() per service line', 1 === preg_match( '/function validate_service_requirements\(.*?resolve_service_id\( \$item \);\s*\$reason\s*=\s*\$service_id \? wpss_service_unavailable_reason\( \$service_id \)/s', $fluent ) );
 } finally {
 	$vendors->set_status( $seller->ID, '' !== $status_was ? $status_was : 'active' );
 	foreach ( $made as $id ) {

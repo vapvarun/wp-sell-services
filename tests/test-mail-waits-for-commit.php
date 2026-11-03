@@ -14,6 +14,7 @@
  */
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 use WPSellServices\Services\EmailService;
 use WPSellServices\Services\OrderService;
@@ -38,7 +39,8 @@ $counter = static function ( $short_circuit, $atts ) use ( &$sent ) {
 add_filter( 'pre_wp_mail', $counter, 20, 2 );
 
 $orders = $wpdb->prefix . 'wpss_orders';
-$order  = $wpdb->get_row( "SELECT id, status, meta FROM {$orders} WHERE status = 'in_progress' ORDER BY id LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+// A throwaway order (removed at shutdown), so the check runs on a fresh site too, not only on seeded data.
+$order  = $wpdb->get_row( $wpdb->prepare( "SELECT id, status, meta FROM {$orders} WHERE id = %d", ( wpss_test_fixtures()->order )() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $since  = current_time( 'mysql', true );
 $emails = new EmailService();
 $mail   = static function ( string $subject ) use ( $emails ): bool {

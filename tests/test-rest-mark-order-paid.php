@@ -8,6 +8,7 @@
  */
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 global $wpdb;
 $fails = 0;
@@ -17,17 +18,20 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 };
 
 $table  = $wpdb->prefix . 'wpss_orders';
-$buyer  = (int) get_user_by( 'login', 'wpss_buyer_ava' )->ID;
-$vendor = 7834;
+// Throwaway members and service, so the gate is proven on a fresh site, not on this site's seeded ids.
+$fx      = wpss_test_fixtures();
+$buyer   = (int) $fx->buyer;
+$vendor  = (int) $fx->vendor;
+$service = (int) ( $fx->service )();
 $ids    = array();
-$make   = static function ( string $platform, string $status, int $parent = 0 ) use ( $wpdb, $table, $buyer, $vendor, &$ids ): int {
+$make   = static function ( string $platform, string $status, int $parent = 0 ) use ( $wpdb, $table, $buyer, $vendor, $service, &$ids ): int {
 	$wpdb->insert(
 		$table,
 		array(
 			'order_number'      => 'TEST-' . strtoupper( wp_generate_password( 6, false ) ),
 			'customer_id'       => $buyer,
 			'vendor_id'         => $vendor,
-			'service_id'        => 11461,
+			'service_id'        => $service,
 			'platform'          => $platform,
 			'platform_order_id' => $parent,
 			'status'            => $status,
