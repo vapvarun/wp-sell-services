@@ -98,8 +98,6 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 * Built-in checkout system - no WooCommerce or other e-commerce plugin required
 * Offline payment gateway with admin confirmation workflow
-* Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce, EDD and FluentCart checkout integrations.
-* Milestone, tip and extension payments are supported on Standalone, WooCommerce and FluentCart
 * Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce checkout; the EDD and FluentCart rails are beta and cannot take a catalog purchase yet.
 * Milestone, tip and extension payments are supported on Standalone and WooCommerce
 

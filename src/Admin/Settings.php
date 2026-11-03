@@ -3637,7 +3637,7 @@ class Settings {
 		 */
 		$description = apply_filters(
 			'wpss_ecommerce_platform_description',
-			__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD and FluentCart.', 'wp-sell-services' )
+			__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce.', 'wp-sell-services' )
 		);
 
 		printf( '<p class="description">%s</p>', esc_html( $description ) );
