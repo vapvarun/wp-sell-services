@@ -219,10 +219,10 @@ class TemplateLoader {
 				nocache_headers();
 				return get_query_template( '404' );
 			}
-			// An unknown slug on the directory page falls through to the
+			// An unknown or non-vendor slug on the directory page falls through to the
 			// directory: a stale link should show the list, not an error page.
 			// Keep the junk URL out of search indexes.
-			if ( ! $user && $from_directory ) {
+			if ( $from_directory && ! ( $user && wpss_is_vendor( $user->ID ) ) ) {
 				add_filter( 'wp_robots', 'wp_robots_no_robots' );
 			}
 		}
