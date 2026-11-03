@@ -110,15 +110,26 @@ do_action( 'wpss_email_content_before', 'order_completed', $order, $recipient );
 	?>
 </p>
 <?php else : ?>
-<p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php
-	printf(
-		/* translators: %s: formatted price */
-		esc_html__( 'Payment of %s will be released to your earnings.', 'wp-sell-services' ),
-		wp_kses_post( wpss_format_price( $order->vendor_earnings ?? $order->total ) )
-	);
+	$wpss_release = (float) ( $order->vendor_earnings ?? $order->total );
+	// A phased project carries no money on the main order: each phase was paid out as it was approved.
+	$wpss_phased = 'milestone' === ( $order->meta['contract_type'] ?? '' );
 	?>
+	<?php if ( $wpss_release > 0 || $wpss_phased ) : ?>
+<p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
+		<?php
+		if ( $wpss_release > 0 ) {
+			printf(
+				/* translators: %s: formatted price */
+				esc_html__( 'Payment of %s will be released to your earnings.', 'wp-sell-services' ),
+				wp_kses_post( wpss_format_price( $wpss_release ) )
+			);
+		} else {
+			esc_html_e( 'Each phase of this project was added to your earnings when the buyer approved it.', 'wp-sell-services' );
+		}
+		?>
 </p>
+	<?php endif; ?>
 <?php endif; ?>
 
 <p style="text-align: center; margin: 30px 0;">
