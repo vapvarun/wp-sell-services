@@ -50,14 +50,20 @@ Drop it in a header, sidebar, or the top of your services page.
 
 ## Exchange rates
 
-Rates come from openexchangerates.org and are cached for **12 hours**. If a
-fetch fails (bad key, API down, network error), the failure is cached for only
-**15 minutes** so a temporary outage does not leave you with stale rates for
-half a day, and a broken key does not hammer the API on every page load.
+Rates come from openexchangerates.org and are refreshed in the background
+every **12 hours** by a scheduled job, so no shopper's page waits on the rates
+API. If a refresh fails (bad key, API down, network error), the last good rates
+stay in use and the job tries again after **15 minutes**.
 
-If rates cannot be fetched at all, the hint simply does not render -- shoppers
-still see correct base-currency prices. The feature degrades quietly rather than
-showing a wrong number.
+Shoppers never trigger a fetch themselves. Until the first refresh has run, and
+whenever the stored rates are more than a week old, the hint does not render:
+shoppers still see correct base-currency prices. The feature degrades quietly
+rather than showing a wrong number. The settings preview is the one place that
+fetches on the spot, when nothing is stored yet.
+
+The job runs through Action Scheduler (**Tools > Scheduled Actions**, hook
+`wpss_pro_refresh_rates`), so a site with WP-Cron disabled needs a real cron
+job calling `wp-cron.php`, as for every other scheduled task.
 
 ## Where the hint appears
 
@@ -77,7 +83,7 @@ checking what they were paid.
 
 ## Things to know
 
-- Changing the currency list or App ID flushes the rate cache immediately.
+- Changing the currency list or App ID clears the stored rates; the next page view queues a fresh fetch.
 - The hint is frontend-only. Admin screens, invoices, and exports stay in base currency.
 - This is not multi-currency **pricing**. Vendors set one price, in your base currency. If you need genuinely separate per-currency price points, that is not what this feature does.
 
