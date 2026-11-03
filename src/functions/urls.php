@@ -1063,6 +1063,7 @@ function wpss_ensure_pay_order( int $order_id ): string {
 		$wpss_pay_order
 		&& (
 			in_array( $wpss_pay_order->status ?? '', array( 'cancelled', 'refunded' ), true )
+			|| wpss_is_extension_on_hold( $wpss_pay_order )
 			|| (
 				\WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $wpss_pay_order->platform ?? '' )
 				&& ( new \WPSellServices\Services\MilestoneService() )->is_locked( $order_id )

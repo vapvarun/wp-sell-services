@@ -98,6 +98,8 @@ with:
 - How many days the deadline extends if you accept.
 - **Accept & Pay** and **Decline** buttons.
 
+If the order is disputed, delivered or otherwise no longer in progress, the quote stays on the order but is on hold: only **Decline** is offered, and no pay link works until the order is back in progress.
+
 ![Buyer accepting or declining an extension quote](../images/order-management/extension-review-wpss.webp)
 
 ### Accepting

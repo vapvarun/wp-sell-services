@@ -1730,12 +1730,9 @@ class OrdersController extends RestController {
 			);
 		}
 
-		if ( 'pending_payment' !== ( $order->status ?? '' ) ) {
-			return new WP_Error(
-				'wpss_order_not_payable',
-				__( 'This order is not awaiting payment.', 'wp-sell-services' ),
-				array( 'status' => 409 )
-			);
+		$refusal = wpss_get_order_payment_refusal( $order );
+		if ( '' !== $refusal ) {
+			return new WP_Error( 'wpss_order_not_payable', $refusal, array( 'status' => 409 ) );
 		}
 
 		// Lock-step guard on milestone sub-orders — HTTP 409 with the same
@@ -1933,7 +1930,14 @@ class OrdersController extends RestController {
 		// mark_as_paid() treats a second call as success, so an integration that retries is safe. Answer it
 		// here too: the settle check below would call a paid order "not awaiting payment".
 		if ( $order && 'paid' === ( $order->payment_status ?? '' ) ) {
-			return rest_ensure_response( array( 'order_id' => $order_id, 'status' => (string) $order->status, 'payment_status' => 'paid', 'already_paid' => true ) );
+			return rest_ensure_response(
+				array(
+					'order_id'       => $order_id,
+					'status'         => (string) $order->status,
+					'payment_status' => 'paid',
+					'already_paid'   => true,
+				)
+			);
 		}
 
 		$result = ( new \WPSellServices\Integrations\Gateways\OfflineGateway() )->settle_manually(
@@ -1946,7 +1950,14 @@ class OrdersController extends RestController {
 			return $result;
 		}
 
-		return rest_ensure_response( array( 'order_id' => $order_id, 'status' => $result['status'], 'payment_status' => 'paid', 'already_paid' => false ) );
+		return rest_ensure_response(
+			array(
+				'order_id'       => $order_id,
+				'status'         => $result['status'],
+				'payment_status' => 'paid',
+				'already_paid'   => false,
+			)
+		);
 	}
 
 	/**

@@ -65,6 +65,20 @@ class ExtensionOrderService {
 	public const ABANDON_AFTER_HOURS = 48;
 
 	/**
+	 * Parent statuses an extension can be quoted and paid in. Completed,
+	 * cancelled and disputed orders go through refunds, reviews or the
+	 * dispute, not extra paid work.
+	 *
+	 * @var string[]
+	 */
+	public const ACTIVE_PARENT_STATUSES = array(
+		ServiceOrder::STATUS_IN_PROGRESS,
+		ServiceOrder::STATUS_LATE,
+		ServiceOrder::STATUS_REVISION_REQUESTED,
+		ServiceOrder::STATUS_PENDING_APPROVAL,
+	);
+
+	/**
 	 * Wire hooks. Called from the plugin bootstrap.
 	 *
 	 * @return void
@@ -181,15 +195,8 @@ class ExtensionOrderService {
 			return $fail( __( 'Extensions are for fixed-price service orders. For custom-project orders, propose a phase instead.', 'wp-sell-services' ) );
 		}
 
-		// Only ongoing orders can be extended. Completed / cancelled / disputed
-		// orders go through refunds or reviews, not extensions.
-		$allowed_parent_statuses = array(
-			ServiceOrder::STATUS_IN_PROGRESS,
-			ServiceOrder::STATUS_LATE,
-			ServiceOrder::STATUS_REVISION_REQUESTED,
-			ServiceOrder::STATUS_PENDING_APPROVAL,
-		);
-		if ( ! in_array( $parent->status, $allowed_parent_statuses, true ) ) {
+		// Only ongoing orders can be extended.
+		if ( ! in_array( $parent->status, self::ACTIVE_PARENT_STATUSES, true ) ) {
 			return $fail( __( 'Extensions can only be requested on active orders.', 'wp-sell-services' ) );
 		}
 

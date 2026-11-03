@@ -82,11 +82,14 @@ class CheckoutIntentService {
 			return new \WP_Error( 'wpss_invalid_order', __( 'Invalid order.', 'wp-sell-services' ) );
 		}
 
-		if ( 'pending_payment' !== $order->status ) {
-			return new \WP_Error(
-				in_array( $order->status, array( 'cancelled', 'refunded' ), true ) ? 'wpss_order_closed' : 'wpss_already_paid',
-				wpss_get_order_not_payable_message( $order )
-			);
+		$refusal = wpss_get_order_payment_refusal( $order );
+		if ( '' !== $refusal ) {
+			if ( 'pending_payment' === $order->status ) {
+				$code = 'wpss_order_on_hold';
+			} else {
+				$code = in_array( $order->status, array( 'cancelled', 'refunded' ), true ) ? 'wpss_order_closed' : 'wpss_already_paid';
+			}
+			return new \WP_Error( $code, $refusal );
 		}
 
 		// A locked milestone phase cannot be funded before the previous phase is

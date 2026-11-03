@@ -1550,12 +1550,7 @@ do_action( 'wpss_before_order_view', $order );
 	<?php
 	$extension_service         = new \WPSellServices\Services\ExtensionOrderService();
 	$pending_extension         = $extension_service->get_pending_request( (int) $order_id );
-	$extension_active_statuses = array(
-		\WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS,
-		\WPSellServices\Models\ServiceOrder::STATUS_LATE,
-		\WPSellServices\Models\ServiceOrder::STATUS_REVISION_REQUESTED,
-		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL,
-	);
+	$extension_active_statuses = \WPSellServices\Services\ExtensionOrderService::ACTIVE_PARENT_STATUSES;
 	// Extensions are for fixed-price catalog orders only. Request-mode
 	// orders run on the milestone payment model instead, so the two CTAs
 	// never appear on the same order.
@@ -1566,7 +1561,8 @@ do_action( 'wpss_before_order_view', $order );
 	$buyer_sees_pending_extension = $is_customer && ! $is_request_order && null !== $pending_extension;
 
 	if ( $buyer_sees_pending_extension ) :
-		$ext_pay_url  = $pending_extension->pay_order_id
+		$ext_on_hold  = ! in_array( $order->status, $extension_active_statuses, true );
+		$ext_pay_url  = $pending_extension->pay_order_id && ! $ext_on_hold
 			? wpss_get_pay_order_url( (int) $pending_extension->pay_order_id )
 			: '';
 		$ext_currency = $order->currency ?? wpss_get_currency();
@@ -1577,9 +1573,13 @@ do_action( 'wpss_before_order_view', $order );
 					<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Quote for extra work', 'wp-sell-services' ); ?>
 				</h3>
-				<p class="wpss-extension-pending-card__body">
-					<?php esc_html_e( 'Your vendor sent a quote for additional work on this order. Review the details — pay to approve and they will continue with the expanded scope, or decline and discuss first in chat.', 'wp-sell-services' ); ?>
-				</p>
+				<?php if ( $ext_on_hold ) : ?>
+					<p class="wpss-notice wpss-notice--warning" role="status"><?php esc_html_e( 'Your vendor sent a quote for additional work. It is on hold while the order is not active: you can pay it once the order is back in progress, or decline it now.', 'wp-sell-services' ); ?></p>
+				<?php else : ?>
+					<p class="wpss-extension-pending-card__body">
+						<?php esc_html_e( 'Your vendor sent a quote for additional work on this order. Review the details — pay to approve and they will continue with the expanded scope, or decline and discuss first in chat.', 'wp-sell-services' ); ?>
+					</p>
+				<?php endif; ?>
 				<div class="wpss-extension-pending-card__meta">
 					<div>
 						<strong><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></strong>

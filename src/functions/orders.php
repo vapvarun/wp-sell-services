@@ -37,6 +37,49 @@ function wpss_get_order_not_payable_message( $order ): string {
 }
 
 /**
+ * Why this order cannot be paid right now, or '' when it can.
+ *
+ * The one answer every pay door gives (checkout intent, the standalone pay page,
+ * the offline and test gateways, and the store-rail seam wpss_ensure_pay_order()).
+ * An extension quote is on hold while its order is not active: an order that went
+ * into dispute still offered "Accept & Pay" for extra work.
+ *
+ * @since 1.9.2
+ *
+ * @param object $order ServiceOrder or order row.
+ * @return string Message for the buyer, '' when payable.
+ */
+function wpss_get_order_payment_refusal( $order ): string {
+	if ( 'pending_payment' !== (string) ( $order->status ?? '' ) ) {
+		return wpss_get_order_not_payable_message( $order );
+	}
+
+	if ( wpss_is_extension_on_hold( $order ) ) {
+		return __( 'This quote for extra work is on hold while the order is not active, so it cannot be paid now.', 'wp-sell-services' );
+	}
+
+	return '';
+}
+
+/**
+ * Whether an extension sub-order waits on its parent order becoming active again.
+ *
+ * @since 1.9.2
+ *
+ * @param object $order ServiceOrder or order row.
+ * @return bool
+ */
+function wpss_is_extension_on_hold( $order ): bool {
+	if ( \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE !== (string) ( $order->platform ?? '' ) ) {
+		return false;
+	}
+
+	$parent = wpss_get_order( (int) ( $order->platform_order_id ?? 0 ) );
+
+	return $parent && ! in_array( (string) $parent->status, \WPSellServices\Services\ExtensionOrderService::ACTIVE_PARENT_STATUSES, true );
+}
+
+/**
  * The title an order is shown under.
  *
  * A service order is its service's title. A request order has no service post
