@@ -39,11 +39,7 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 };
 
 // Actions that may answer success with no nonce, each for a stated reason.
-$nonce_free = array(
-	// A guest's search is a public read (a WP_Query over published services);
-	// the handler checks the nonce for members and writes nothing.
-	'wpss_live_search' => true,
-);
+$nonce_free = array();
 
 // Every action registered in src/, split by who may call it.
 $src = '';

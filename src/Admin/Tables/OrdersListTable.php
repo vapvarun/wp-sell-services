@@ -702,12 +702,12 @@ class OrdersListTable extends \WP_List_Table {
 		// Search.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! empty( $_GET['s'] ) ) {
-			$where .= ' AND (order_number LIKE %s OR id = %d)';
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$search   = '%' . $wpdb->esc_like( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) . '%';
-			$params[] = $search;
+			list( $search_sql, $search_params ) = wpss_order_number_search_sql( sanitize_text_field( wp_unslash( $_GET['s'] ) ) );
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$params[] = absint( $_GET['s'] );
+			$search_id = absint( ltrim( sanitize_text_field( wp_unslash( $_GET['s'] ) ), '#' ) );
+			$where    .= ' AND (' . ( '' !== $search_sql ? $search_sql . ' OR ' : '' ) . 'id = %d)';
+			$params    = array_merge( $params, $search_params, array( $search_id ) );
 		}
 
 		// Count total.

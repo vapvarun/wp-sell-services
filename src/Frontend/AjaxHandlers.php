@@ -67,10 +67,10 @@ use WPSellServices\Models\ServiceOrder;
  *   get_current_user_id(). No object id from the client widens the scope.
  *
  * Pattern D — intentionally public.
- *   Read-only, non-sensitive, `nopriv`-exposed endpoints (live_search,
- *   load_reviews, load_services) and the guest helpful-vote (mark_review_helpful,
- *   deduped per user/IP). These have no ownership concept by design and are
- *   rate-limited instead.
+ *   Read-only, non-sensitive, `nopriv`-exposed endpoints (load_reviews,
+ *   load_services). These have no ownership concept by design and are
+ *   rate-limited instead. Every public action needs a caller
+ *   (tests/test-public-ajax-has-a-caller.php).
  *
  * Admin-only / cross-user actions are the exception: those DO require an
  * explicit current_user_can( 'manage_options' ) check (see order_action,
@@ -162,8 +162,6 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_upload_file', array( $this, 'upload_file' ) );
 
 		// Search.
-		add_action( 'wp_ajax_wpss_live_search', array( $this, 'live_search' ) );
-		add_action( 'wp_ajax_nopriv_wpss_live_search', array( $this, 'live_search' ) );
 
 		// Contact vendor.
 		add_action( 'wp_ajax_wpss_contact_vendor', array( $this, 'contact_vendor' ) );
@@ -1801,60 +1799,6 @@ class AjaxHandlers {
 				'filename'      => basename( get_attached_file( $attachment_id ) ?: '' ),
 			)
 		);
-	}
-
-	/**
-	 * Live search.
-	 *
-	 * @return void
-	 */
-	public function live_search(): void {
-		// Verify nonce for logged-in users, skip for guests (public search).
-		if ( is_user_logged_in() ) {
-			check_ajax_referer( 'wpss_search_nonce', 'nonce' );
-		}
-
-		// Rate-limit guests by IP (logged-in users by user ID). Live search is
-		// `nopriv`-exposed, so without an IP-scoped limit a single guest can
-		// hammer this endpoint and walk the wpss_service post type at speed.
-		$current_user_id = get_current_user_id();
-		$rate_limit_user = $current_user_id > 0 ? $current_user_id : null;
-		if ( RateLimiter::check_and_track( 'live_search', $rate_limit_user ) ) {
-			RateLimiter::send_error( 'live_search' );
-		}
-
-		$query = sanitize_text_field( wp_unslash( $_POST['query'] ?? '' ) );
-
-		if ( strlen( $query ) < 2 ) {
-			wp_send_json_success( array( 'results' => array() ) );
-		}
-
-		// Only show approved services in search results.
-		$services = new \WP_Query(
-			array(
-				'post_type'             => 'wpss_service',
-				'post_status'           => 'publish',
-				's'                     => $query,
-				'posts_per_page'        => 5,
-				'author__not_in'        => wpss_get_unlisted_seller_ids(),
-				// Effective state: a live service with no moderation meta is approved.
-				'wpss_moderation_state' => 'approved',
-			)
-		);
-
-		$results = array();
-		foreach ( $services->posts as $post ) {
-			$thumb_url = get_the_post_thumbnail_url( $post->ID, 'thumbnail' );
-			$results[] = array(
-				'id'        => $post->ID,
-				'title'     => $post->post_title,
-				'url'       => get_permalink( $post->ID ),
-				'thumbnail' => $thumb_url ? $thumb_url : '',
-				'price'     => get_post_meta( $post->ID, '_wpss_starting_price', true ),
-			);
-		}
-
-		wp_send_json_success( array( 'results' => $results ) );
 	}
 
 	/**

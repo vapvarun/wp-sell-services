@@ -135,6 +135,41 @@ function wpss_get_order( int $order_id ): ?\WPSellServices\Models\ServiceOrder {
 }
 
 /**
+ * The one order-number search rule: a starts-with match, typed with or
+ * without the prefix, and with or without a leading '#'.
+ *
+ * A contains match ('%term%') cannot use the unique order_number index, so it
+ * read every order row on each admin search. Order numbers are random, so a
+ * person searches by the number they were given, never by a fragment from its
+ * middle.
+ *
+ * @since 1.9.2
+ *
+ * @param string $term   Search text as typed.
+ * @param string $column Column to match, qualified when the query joins (o.order_number).
+ * @return array{0: string, 1: array<int, string>} SQL with %s placeholders and its params; empty SQL for an empty term.
+ */
+function wpss_order_number_search_sql( string $term, string $column = 'order_number' ): array {
+	global $wpdb;
+
+	$term = ltrim( trim( $term ), '#' );
+	if ( '' === $term ) {
+		return array( '', array() );
+	}
+
+	$prefix = (string) apply_filters( 'wpss_order_number_prefix', 'WPSS-' );
+	$params = array( $wpdb->esc_like( $term ) . '%' );
+	// Also try the prefixed form so "AB12CD34" finds WPSS-AB12CD34; both are index range scans.
+	if ( '' !== $prefix && 0 !== stripos( $term, $prefix ) ) {
+		$params[] = $wpdb->esc_like( $prefix . $term ) . '%';
+	}
+
+	$sql = implode( ' OR ', array_fill( 0, count( $params ), "{$column} LIKE %s" ) );
+
+	return array( "({$sql})", $params );
+}
+
+/**
  * Generate a unique, human-quotable order number.
  *
  * THE single generator. Every rail calls this so one install never mixes

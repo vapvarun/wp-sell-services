@@ -14,6 +14,8 @@
                 "audit/render-coverage.json"
             ],
             "wpss-orders": [
+                "tests/test-dashboard-counts-match-orders-list.php",
+                "tests/test-order-page-lists-paid-extras.php",
                 "tests/test-render-matrix.php",
                 "audit/render-coverage.json"
             ],
@@ -102,6 +104,8 @@
             ],
             "wpss_create_manual_order": [
                 "tests/test-manual-order-package-contract.php",
+                "tests/test-manual-order-payment-status.php",
+                "tests/test-manual-order-unpaid-is-not-credited.php",
                 "audit/render-coverage.json"
             ],
             "wpss_create_page": [
@@ -167,16 +171,14 @@
             ],
             "wpss_get_service_packages": [
                 "tests/test-order-again.php",
+                "tests/test-store-rails-start-orders-with-delivery-terms.php",
                 "audit/render-coverage.json"
             ],
             "wpss_import_demo_content": [
                 "audit/render-coverage.json"
             ],
-            "wpss_live_search": [
-                "tests/test-ajax-matrix.php",
-                "audit/render-coverage.json"
-            ],
             "wpss_load_reviews": [
+                "tests/test-load-reviews-vendor.php",
                 "audit/render-coverage.json"
             ],
             "wpss_load_services": [
@@ -391,7 +393,9 @@
                 "audit/render-coverage.json"
             ],
             "wpss demo": [
+                "tests/exit-on-fail.php",
                 "tests/test-cli-guards.php",
+                "tests/test-owner-decisions-audited.php",
                 "audit/journeys/05-vendor-creates-a-service.md",
                 "audit/render-coverage.json"
             ],
@@ -434,11 +438,23 @@
                 "audit/render-coverage.json"
             ],
             "wpss_account_status": [
+                "tests/exit-on-fail.php",
+                "tests/test-accepting-a-proposal-checks-both-standings.php",
                 "tests/test-account-standing.php",
                 "tests/test-ajax-standing-gate.php",
+                "tests/test-banned-member-cannot-start-new-activity.php",
+                "tests/test-new-money-checks-both-standings.php",
+                "tests/test-same-state-repeat-is-noop.php",
+                "tests/test-standing-blocks-buying-doors.php",
+                "tests/test-standing-refusals-are-403.php",
+                "tests/test-vendor-reapply-keeps-owner-decision.php",
+                "tests/test-wizard-owner-or-admin-and-upload-gate.php",
                 "audit/render-coverage.json"
             ],
-            "wpss_account_status_changed": [],
+            "wpss_account_status_changed": [
+                "tests/test-audit-listener-pattern.php",
+                "tests/test-same-state-repeat-is-noop.php"
+            ],
             "wpss_adapter_initialized": [
                 "audit/render-coverage.json"
             ],
@@ -446,11 +462,16 @@
                 "tests/pro/test-beta-rails.php",
                 "tests/test-order-again.php"
             ],
+            "wpss_admin_filing_recipient": [
+                "tests/test-admin-told-of-filing.php"
+            ],
             "wpss_admin_menu_label": [
                 "tests/Integration/ProExtensionHooksTest.php",
                 "audit/render-coverage.json"
             ],
-            "wpss_admin_notification_email": [],
+            "wpss_admin_notification_email": [
+                "tests/test-offline-order-placed-emails.php"
+            ],
             "wpss_admin_order_actions": [
                 "audit/render-coverage.json"
             ],
@@ -518,12 +539,16 @@
             ],
             "wpss_auth_login_challenge": [],
             "wpss_auto_approve_reviews": [
+                "tests/test-review-sub-ratings.php",
                 "audit/render-coverage.json"
             ],
             "wpss_auto_approve_vendors": [
                 "audit/render-coverage.json"
             ],
             "wpss_auto_withdrawal_created": [],
+            "wpss_balance_written_off": [
+                "tests/test-negative-balance-writeoff.php"
+            ],
             "wpss_batch_max_requests": [
                 "audit/render-coverage.json"
             ],
@@ -627,6 +652,7 @@
             "wpss_commission_recorded": [
                 "audit/render-coverage.json"
             ],
+            "wpss_contract_phases_proposed": [],
             "wpss_countries": [
                 "audit/render-coverage.json"
             ],
@@ -635,6 +661,7 @@
                 "audit/render-coverage.json"
             ],
             "wpss_currency": [
+                "tests/test-sub-order-rounds-to-currency.php",
                 "audit/render-coverage.json"
             ],
             "wpss_currency_decimals": [
@@ -686,7 +713,11 @@
             ],
             "wpss_delivery_submitted": [],
             "wpss_display_timezone": [
-                "tests/test-time-helpers.php"
+                "tests/test-time-helpers.php",
+                "tests/test-vendor-timezone.php"
+            ],
+            "wpss_dispute_assigned": [
+                "tests/test-audit-listener-pattern.php"
             ],
             "wpss_dispute_cancelled": [
                 "audit/render-coverage.json"
@@ -698,6 +729,7 @@
                 "audit/render-coverage.json"
             ],
             "wpss_dispute_opened": [
+                "tests/test-owner-decisions-leave-audit-rows.php",
                 "audit/render-coverage.json"
             ],
             "wpss_dispute_reasons": [
@@ -710,9 +742,13 @@
                 "audit/render-coverage.json"
             ],
             "wpss_dispute_status_changed": [
+                "tests/test-audit-listener-pattern.php",
                 "audit/render-coverage.json"
             ],
             "wpss_docs_url": [],
+            "wpss_duplicate_row_removed": [
+                "tests/test-audit-listener-pattern.php"
+            ],
             "wpss_ecommerce_adapters": [
                 "tests/pro/test-beta-rails.php",
                 "tests/test-integration-seam-contract.php",
@@ -726,6 +762,9 @@
             ],
             "wpss_email_before_send": [
                 "audit/render-coverage.json"
+            ],
+            "wpss_email_failed": [
+                "tests/test-audit-listener-pattern.php"
             ],
             "wpss_email_from_name": [
                 "tests/Integration/ProExtensionHooksTest.php",
@@ -745,7 +784,10 @@
                 "audit/render-coverage.json"
             ],
             "wpss_ensure_pay_order": [
-                "tests/pro/test-pay-order-read-only.php"
+                "tests/pro/test-pay-order-read-only.php",
+                "tests/test-closed-order-cannot-be-paid.php",
+                "tests/test-extension-on-hold-while-order-inactive.php",
+                "tests/test-locked-phase-pay-seam.php"
             ],
             "wpss_extension_approved": [],
             "wpss_extension_rejected": [],
@@ -754,13 +796,17 @@
                 "audit/render-coverage.json"
             ],
             "wpss_format_price": [
+                "tests/test-contract-accept-sends-one-email.php",
                 "tests/test-display-currency-surfaces-contract.php",
+                "tests/test-line-items-explain-the-difference.php",
                 "tests/test-milestone-parent-total-contract.php",
                 "tests/test-order-again.php",
+                "tests/test-order-page-lists-paid-extras.php",
                 "tests/test-settings-defaults.php",
                 "audit/render-coverage.json"
             ],
             "wpss_fullwidth_page_keys": [
+                "tests/test-vendors-directory-layout.php",
                 "audit/render-coverage.json"
             ],
             "wpss_gallery_max_upload_size_mb": [],
@@ -779,12 +825,18 @@
             ],
             "wpss_gateway_settings_owned_by_rail": [],
             "wpss_get_template": [
+                "tests/test-completed-email-phased-project.php",
+                "tests/test-extension-on-hold-while-order-inactive.php",
                 "tests/test-template-contract.php",
                 "audit/render-coverage.json"
             ],
             "wpss_get_template_part": [
+                "tests/test-category-card-icon.php",
                 "tests/test-demo-seeds-briefs.php",
+                "tests/test-line-items-explain-the-difference.php",
+                "tests/test-order-page-lists-paid-extras.php",
                 "tests/test-requirement-attachment-records.php",
+                "tests/test-service-reviews-empty-section.php",
                 "tests/test-title-suppression-scope.php",
                 "audit/render-coverage.json"
             ],
@@ -793,12 +845,21 @@
             ],
             "wpss_is_vendor": [
                 "tests/Factories/UserFactory.php",
+                "tests/test-breadcrumb-helper.php",
                 "tests/test-copy-sweep.php",
+                "tests/test-edd-account-uses-dashboard.php",
+                "tests/test-imported-reviews.php",
+                "tests/test-load-reviews-vendor.php",
+                "tests/test-manual-order-form-posts-no-price.php",
+                "tests/test-manual-order-payment-status.php",
                 "tests/test-order-action-gates.php",
+                "tests/test-rating-single-source.php",
                 "tests/test-seller-migration.php",
                 "tests/test-vendor-identity-queries.php",
                 "tests/test-vendor-profile-contract.php",
+                "tests/test-vendor-stats-hides-non-vendor-registration.php",
                 "tests/test-walk-regressions.php",
+                "tests/test-wc-my-services-paged.php",
                 "audit/journeys/04-visitor-browses-and-views-service.md",
                 "audit/render-coverage.json"
             ],
@@ -808,10 +869,18 @@
             "wpss_ledger_debit_types": [
                 "audit/render-coverage.json"
             ],
+            "wpss_ledger_non_earning_types": [
+                "tests/test-negative-balance-writeoff.php"
+            ],
+            "wpss_ledger_row_inserted": [
+                "tests/test-audit-listener-pattern.php"
+            ],
             "wpss_loaded": [
+                "tests/test-stale-pro-is-held-back.php",
                 "audit/render-coverage.json"
             ],
             "wpss_locate_template": [
+                "tests/test-notifications-numbered-pages.php",
                 "tests/test-template-contract.php",
                 "tests/test-template-override.php",
                 "audit/render-coverage.json"
@@ -828,6 +897,7 @@
                 "audit/render-coverage.json"
             ],
             "wpss_member_bypasses_limits": [
+                "tests/test-service-gallery-and-limit-owner.php",
                 "audit/render-coverage.json"
             ],
             "wpss_member_display_name": [
@@ -847,12 +917,16 @@
             "wpss_milestone_paid": [
                 "audit/render-coverage.json"
             ],
-            "wpss_milestone_proposed": [],
+            "wpss_milestone_proposed": [
+                "tests/test-contract-accept-sends-one-email.php"
+            ],
             "wpss_milestone_revision_requested": [
                 "tests/test-milestone-revision-contract.php",
+                "tests/test-smoke-1-9-1-contracts.php",
                 "audit/render-coverage.json"
             ],
             "wpss_milestone_submitted": [
+                "tests/test-smoke-1-9-1-contracts.php",
                 "audit/render-coverage.json"
             ],
             "wpss_min_service_price": [
@@ -871,6 +945,7 @@
                 "audit/journeys/11-member-notifications.md"
             ],
             "wpss_notification_types": [
+                "tests/test-lucide-icons-exist.php",
                 "tests/test-notification-types-registry.php",
                 "audit/render-coverage.json"
             ],
@@ -880,9 +955,12 @@
             "wpss_offline_methods": [
                 "audit/render-coverage.json"
             ],
-            "wpss_offline_multi_orders_created": [],
+            "wpss_offline_multi_orders_created": [
+                "tests/test-offline-order-placed-emails.php"
+            ],
             "wpss_offline_order_created": [
-                "tests/test-offline-methods-contract.php"
+                "tests/test-offline-methods-contract.php",
+                "tests/test-offline-order-placed-emails.php"
             ],
             "wpss_offline_order_paid": [],
             "wpss_open_graph_data": [
@@ -895,14 +973,19 @@
                 "audit/render-coverage.json"
             ],
             "wpss_order_completed": [
+                "tests/test-dispute-ruling-on-completed-order-fires-once.php",
                 "audit/render-coverage.json"
             ],
             "wpss_order_created": [
                 "tests/Integration/ProExtensionHooksTest.php",
+                "tests/test-vendor-counters-follow-orders.php",
                 "audit/render-coverage.json"
             ],
             "wpss_order_disputed": [
                 "audit/render-coverage.json"
+            ],
+            "wpss_order_earnings_reversal_failed": [
+                "tests/test-audit-listener-pattern.php"
             ],
             "wpss_order_is_refundable": [
                 "tests/test-partial-refund-contract.php",
@@ -921,6 +1004,9 @@
                 "tests/Rest/MilestonesUpworkFlowTest.php",
                 "tests/pro/test-pro-perf-and-options.php",
                 "tests/test-mark-as-paid-idempotent.php",
+                "tests/test-mark-as-paid-loses-race-quietly.php",
+                "tests/test-mark-paid-null-payment-status.php",
+                "tests/test-paid-sub-order-skips-service-transition.php",
                 "tests/test-rest-pay-order-confirm-contract.php",
                 "tests/test-scale-surfaces.php",
                 "tests/test-wallet-provider-contract.php",
@@ -932,24 +1018,42 @@
             "wpss_order_payment_reference": [
                 "audit/render-coverage.json"
             ],
+            "wpss_order_refund_marked_sent": [],
             "wpss_order_refund_processed": [
                 "audit/render-coverage.json"
+            ],
+            "wpss_order_refund_recorded": [
+                "tests/test-audit-listener-pattern.php"
+            ],
+            "wpss_order_refund_unrecorded": [
+                "tests/test-audit-listener-pattern.php"
             ],
             "wpss_order_refunded": [
                 "audit/render-coverage.json"
             ],
+            "wpss_order_repaired": [
+                "tests/test-audit-listener-pattern.php"
+            ],
             "wpss_order_started": [],
             "wpss_order_status_changed": [
+                "tests/test-mark-as-paid-loses-race-quietly.php",
+                "tests/test-paid-sub-order-skips-service-transition.php",
+                "tests/test-vendor-counters-follow-orders.php",
                 "audit/render-coverage.json"
             ],
             "wpss_order_status_groups": [
                 "audit/render-coverage.json"
             ],
             "wpss_order_status_in_progress": [
+                "tests/test-mark-as-paid-loses-race-quietly.php",
                 "audit/render-coverage.json"
             ],
             "wpss_order_status_pending_requirements": [
+                "tests/test-mark-as-paid-loses-race-quietly.php",
                 "audit/render-coverage.json"
+            ],
+            "wpss_order_status_recorded": [
+                "tests/test-audit-listener-pattern.php"
             ],
             "wpss_order_status_transitions": [
                 "audit/render-coverage.json"
@@ -971,6 +1075,10 @@
             "wpss_payment_action_required_message": [],
             "wpss_payment_callback": [],
             "wpss_payment_declined_message": [],
+            "wpss_payment_for_closed_order": [
+                "tests/test-closed-order-cannot-be-paid.php",
+                "tests/test-settle-confirms-order-paid.php"
+            ],
             "wpss_payment_gateways": [
                 "tests/test-integration-seam-contract.php",
                 "audit/render-coverage.json"
@@ -985,6 +1093,9 @@
                 "audit/render-coverage.json"
             ],
             "wpss_paypal_refund_processed": [],
+            "wpss_pending_refund_assigned": [
+                "tests/test-audit-listener-pattern.php"
+            ],
             "wpss_person_schema": [
                 "audit/render-coverage.json"
             ],
@@ -1062,6 +1173,7 @@
                 "audit/render-coverage.json"
             ],
             "wpss_realtime_settings": [
+                "tests/test-secret-constants.php",
                 "audit/render-coverage.json"
             ],
             "wpss_register_tipping_settings": [
@@ -1071,9 +1183,15 @@
             "wpss_render_secret_field": [
                 "audit/render-coverage.json"
             ],
-            "wpss_report_filed": [],
+            "wpss_report_filed": [
+                "tests/test-admin-told-of-filing.php",
+                "tests/test-review-lists-and-quiet-writes.php"
+            ],
             "wpss_report_reasons": [
                 "audit/render-coverage.json"
+            ],
+            "wpss_report_resolved": [
+                "tests/test-audit-listener-pattern.php"
             ],
             "wpss_report_target_types": [
                 "audit/render-coverage.json"
@@ -1082,6 +1200,9 @@
                 "audit/render-coverage.json"
             ],
             "wpss_require_service_moderation": [
+                "tests/test-moderation-migration-is-silent.php",
+                "tests/test-moderation-single-source.php",
+                "tests/test-moderation-submit-is-one-door.php",
                 "tests/test-service-moderation-admin-publish.php",
                 "audit/render-coverage.json"
             ],
@@ -1122,11 +1243,24 @@
                 "audit/render-coverage.json"
             ],
             "wpss_review_created": [
+                "tests/test-imported-reviews.php",
                 "tests/test-notification-matrix.php",
+                "tests/test-smoke-1-9-1-contracts.php",
                 "audit/render-coverage.json"
             ],
+            "wpss_review_deleted": [
+                "tests/test-audit-listener-pattern.php"
+            ],
+            "wpss_review_edited": [
+                "tests/test-audit-listener-pattern.php"
+            ],
+            "wpss_review_imported": [
+                "tests/test-audit-listener-pattern.php"
+            ],
             "wpss_review_moderated": [
+                "tests/test-audit-listener-pattern.php",
                 "tests/test-review-status-rest.php",
+                "tests/test-smoke-1-9-1-contracts.php",
                 "audit/render-coverage.json"
             ],
             "wpss_review_reply_created": [
@@ -1136,6 +1270,9 @@
             "wpss_review_window_days": [
                 "tests/test-review-window-and-reply.php",
                 "audit/render-coverage.json"
+            ],
+            "wpss_reviews_per_page": [
+                "tests/test-review-lists-and-quiet-writes.php"
             ],
             "wpss_revision_requested": [
                 "tests/test-auto-complete-latest-delivery.php",
@@ -1147,6 +1284,9 @@
             "wpss_search_query_args": [],
             "wpss_search_results": [],
             "wpss_search_suggestions": [],
+            "wpss_secret_constants": [
+                "tests/test-secret-constants.php"
+            ],
             "wpss_seller_levels": [
                 "audit/render-coverage.json"
             ],
@@ -1158,6 +1298,7 @@
             ],
             "wpss_service_approved": [
                 "tests/test-notification-matrix.php",
+                "tests/test-smoke-1-9-1-contracts.php",
                 "audit/render-coverage.json"
             ],
             "wpss_service_card_display": [
@@ -1209,6 +1350,9 @@
                 "audit/render-coverage.json"
             ],
             "wpss_service_pending_moderation": [
+                "tests/test-moderation-migration-is-silent.php",
+                "tests/test-moderation-pending-admin-mail.php",
+                "tests/test-moderation-submit-is-one-door.php",
                 "tests/test-scale-surfaces.php",
                 "audit/render-coverage.json"
             ],
@@ -1236,6 +1380,9 @@
                 "audit/render-coverage.json"
             ],
             "wpss_service_unavailable_reason": [
+                "tests/test-service-pause-state.php",
+                "tests/test-standing-blocks-buying-doors.php",
+                "tests/test-store-carts-refuse-blocked-seller.php",
                 "audit/render-coverage.json"
             ],
             "wpss_service_updated": [],
@@ -1328,7 +1475,10 @@
                 "audit/render-coverage.json"
             ],
             "wpss_tipping_enabled": [
+                "tests/test-banned-member-cannot-start-new-activity.php",
+                "tests/test-new-money-checks-both-standings.php",
                 "tests/test-notification-matrix.php",
+                "tests/test-sub-order-tax.php",
                 "audit/render-coverage.json"
             ],
             "wpss_token_recovery_routes": [],
@@ -1361,8 +1511,14 @@
             ],
             "wpss_vendor_can_create_service": [
                 "tests/Integration/ProExtensionHooksTest.php",
+                "tests/test-moderation-submit-is-one-door.php",
+                "tests/test-service-gallery-and-limit-owner.php",
+                "tests/test-wizard-owner-or-admin-and-upload-gate.php",
                 "audit/journeys/05-vendor-creates-a-service.md",
                 "audit/render-coverage.json"
+            ],
+            "wpss_vendor_commission_rate_changed": [
+                "tests/test-audit-listener-pattern.php"
             ],
             "wpss_vendor_commission_updated": [],
             "wpss_vendor_contacted": [],
@@ -1371,10 +1527,16 @@
             ],
             "wpss_vendor_level_promoted": [],
             "wpss_vendor_level_updated": [
+                "tests/test-owner-decisions-leave-audit-rows.php",
+                "tests/test-review-lists-and-quiet-writes.php",
                 "audit/render-coverage.json"
             ],
             "wpss_vendor_max_services": [
+                "tests/test-vendor-max-services-filter.php",
                 "audit/render-coverage.json"
+            ],
+            "wpss_vendor_migrated": [
+                "tests/test-audit-listener-pattern.php"
             ],
             "wpss_vendor_page_schema": [],
             "wpss_vendor_pending_email_content": [],
@@ -1395,11 +1557,19 @@
             "wpss_vendor_registration_open": [
                 "audit/render-coverage.json"
             ],
+            "wpss_vendor_role_removed": [
+                "tests/test-audit-listener-pattern.php"
+            ],
+            "wpss_vendor_role_restored": [
+                "tests/test-audit-listener-pattern.php"
+            ],
             "wpss_vendor_slug": [
                 "audit/render-coverage.json"
             ],
             "wpss_vendor_status_updated": [
+                "tests/test-audit-listener-pattern.php",
                 "tests/test-notification-matrix.php",
+                "tests/test-same-state-repeat-is-noop.php",
                 "audit/render-coverage.json"
             ],
             "wpss_vendor_tier_changed": [],
@@ -1430,6 +1600,8 @@
                 "audit/render-coverage.json"
             ],
             "wpss_withdrawal_processed": [
+                "tests/test-same-state-repeat-is-noop.php",
+                "tests/test-withdrawal-processed-carries-note.php",
                 "audit/render-coverage.json"
             ],
             "wpss_withdrawal_requested": [
@@ -1471,6 +1643,7 @@
             "/wpss/v1/auth/login": [
                 "tests/test-login-lockout.php",
                 "tests/test-rest-app-surface.php",
+                "tests/test-token-cannot-mint.php",
                 "audit/journeys/08-api-client-acts-as-each-role.md",
                 "audit/render-coverage.json"
             ],
@@ -1482,6 +1655,8 @@
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/auth/register": [
+                "tests/test-signup-reports-the-new-vendors-caps.php",
+                "tests/test-signup-vendor-intent.php",
                 "audit/journeys/08-api-client-acts-as-each-role.md"
             ],
             "/wpss/v1/auth/sessions": [
@@ -1517,7 +1692,9 @@
             "/wpss/v1/buyer-requests/(?P<id>[\\d]+)/proposals": [
                 "audit/journeys/08-api-client-acts-as-each-role.md"
             ],
-            "/wpss/v1/buyer-requests/(?P<id>[\\d]+)/proposals/(?P<proposal_id>[\\d]+)/accept": [],
+            "/wpss/v1/buyer-requests/(?P<id>[\\d]+)/proposals/(?P<proposal_id>[\\d]+)/accept": [
+                "tests/test-standing-refusals-are-403.php"
+            ],
             "/wpss/v1/buyer-requests/(?P<id>[\\d]+)/proposals/(?P<proposal_id>[\\d]+)/reject": [],
             "/wpss/v1/buyer-requests/mine": [
                 "audit/render-coverage.json"
@@ -1560,6 +1737,7 @@
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/dashboard": [
+                "tests/test-order-counts-skip-sub-orders.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/disputes": [
@@ -1600,6 +1778,7 @@
             ],
             "/wpss/v1/earnings/summary": [
                 "tests/test-money-route-gates.php",
+                "tests/test-negative-balance-writeoff.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/extensions/(?P<id>[\\d]+)/decline": [
@@ -1613,6 +1792,7 @@
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/me": [
+                "tests/test-vendor-timezone.php",
                 "audit/journeys/08-api-client-acts-as-each-role.md",
                 "audit/render-coverage.json"
             ],
@@ -1658,6 +1838,8 @@
                 "tests/test-notification-center-retention.php",
                 "tests/test-notification-list-style.php",
                 "tests/test-notification-types-registry.php",
+                "tests/test-notifications-numbered-pages.php",
+                "tests/test-release-hardening-1-9-0.php",
                 "audit/journeys/08-api-client-acts-as-each-role.md",
                 "audit/journeys/11-member-notifications.md",
                 "audit/render-coverage.json"
@@ -1685,6 +1867,7 @@
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/orders/(?P<id>[\\d]+)": [
+                "tests/test-order-payload-exposes-tax.php",
                 "tests/test-order-write-integrity.php",
                 "tests/test-revisions-from-snapshot.php",
                 "audit/render-coverage.json"
@@ -1695,12 +1878,12 @@
             "/wpss/v1/orders/(?P<id>[\\d]+)/deliverables": [
                 "audit/render-coverage.json"
             ],
-            "/wpss/v1/orders/(?P<id>[\\d]+)/mark-paid": [
-                "tests/test-rest-mark-order-paid.php"
-            ],
             "/wpss/v1/orders/(?P<id>[\\d]+)/files/(?P<file_id>[A-Za-z0-9\\-]+)": [
                 "audit/journeys/09-request-files-to-order.md",
                 "audit/render-coverage.json"
+            ],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/mark-paid": [
+                "tests/test-rest-mark-order-paid.php"
             ],
             "/wpss/v1/orders/(?P<id>[\\d]+)/messages": [
                 "tests/test-orders-schema-contract.php",
@@ -1742,6 +1925,7 @@
             ],
             "/wpss/v1/orders/(?P<order_id>[\\d]+)/dispute": [
                 "tests/test-hold-and-revision-clock.php",
+                "audit/journeys/02-dispute.md",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/orders/(?P<order_id>[\\d]+)/extension": [
@@ -1757,6 +1941,17 @@
                 "audit/journeys/08-api-client-acts-as-each-role.md"
             ],
             "/wpss/v1/orders/(?P<order_id>[\\d]+)/tip": [
+                "audit/render-coverage.json"
+            ],
+            "/wpss/v1/payments/confirm": [
+                "tests/test-rest-pay-order-confirm-contract.php"
+            ],
+            "/wpss/v1/payments/create-intent": [
+                "tests/test-product-neutral-payment.php",
+                "audit/journeys/08-api-client-acts-as-each-role.md"
+            ],
+            "/wpss/v1/payments/methods": [
+                "tests/test-license-gate-and-storage.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/portfolio": [
@@ -1775,6 +1970,7 @@
             ],
             "/wpss/v1/proposals": [
                 "tests/Rest/MilestonesUpworkFlowTest.php",
+                "tests/test-proposal-gate-vendor-standing.php",
                 "audit/journeys/05-vendor-creates-a-service.md",
                 "audit/journeys/08-api-client-acts-as-each-role.md",
                 "audit/render-coverage.json"
@@ -1800,12 +1996,17 @@
             ],
             "/wpss/v1/reviews": [
                 "tests/Integration/RouteAuthorityTest.php",
+                "tests/test-review-main-order-only.php",
+                "tests/test-review-sub-ratings.php",
                 "tests/test-review-window-and-reply.php",
+                "tests/test-standing-refusals-are-403.php",
                 "audit/journeys/08-api-client-acts-as-each-role.md",
                 "audit/journeys/14-member-reviews-favorites-messages.md",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/reviews/(?P<id>[\\d]+)": [
+                "tests/test-owner-decisions-leave-audit-rows.php",
+                "tests/test-review-lists-and-quiet-writes.php",
                 "tests/test-review-status-rest.php",
                 "audit/journeys/08-api-client-acts-as-each-role.md",
                 "audit/render-coverage.json"
@@ -1826,12 +2027,17 @@
             ],
             "/wpss/v1/services": [
                 "tests/test-scale-surfaces.php",
+                "tests/test-service-limit-every-publish-door.php",
                 "tests/test-service-limits-and-accept-lock.php",
                 "tests/test-vendor-services-status-filter.php",
                 "audit/journeys/05-vendor-creates-a-service.md",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/services/(?P<id>[\\d]+)": [
+                "tests/test-moderation-submit-is-one-door.php",
+                "tests/test-service-gallery-saver-sets-main-image.php",
+                "tests/test-service-limit-every-publish-door.php",
+                "tests/test-service-pause-state.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/services/(?P<id>[\\d]+)/addons": [
@@ -1849,6 +2055,7 @@
             ],
             "/wpss/v1/services/(?P<id>[\\d]+)/quote": [
                 "tests/test-cart-pricing-contract.php",
+                "tests/test-quote-tax-follows-rail.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/services/(?P<id>[\\d]+)/reviews": [
@@ -1885,6 +2092,9 @@
             "/wpss/v1/vendors/(?P<id>[\\d]+)": [
                 "audit/render-coverage.json"
             ],
+            "/wpss/v1/vendors/(?P<id>[\\d]+)/balance/write-off": [
+                "tests/test-negative-balance-writeoff.php"
+            ],
             "/wpss/v1/vendors/(?P<id>[\\d]+)/reviews": [
                 "audit/render-coverage.json"
             ],
@@ -1892,6 +2102,7 @@
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/vendors/(?P<id>[\\d]+)/stats": [
+                "tests/test-order-counts-skip-sub-orders.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/vendors/(?P<vendor_id>[\\d]+)/level": [
@@ -1910,9 +2121,11 @@
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/vendors/me": [
+                "tests/test-vendor-timezone.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/vendors/me/level": [
+                "tests/test-seller-levels-rest-earnings.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/vendors/me/vacation": [
@@ -1920,11 +2133,13 @@
             ],
             "/wpss/v1/vendors/register": [
                 "tests/test-rest-matrix.php",
+                "tests/test-vendor-reapply-keeps-owner-decision.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/wallet/transactions": [
                 "tests/test-license-gate-and-storage.php",
                 "tests/test-money-route-gates.php",
+                "tests/test-smoke-1-9-1-contracts.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/withdrawals": [
@@ -1944,6 +2159,9 @@
             ]
         },
         "shortcode": {
+            "wpss_account": [
+                "audit/render-coverage.json"
+            ],
             "wpss_buyer_requests": [
                 "tests/test-retired-tables-contract.php",
                 "audit/render-coverage.json"
@@ -1967,6 +2185,7 @@
                 "audit/render-coverage.json"
             ],
             "wpss_my_orders": [
+                "tests/test-order-counts-skip-sub-orders.php",
                 "audit/render-coverage.json"
             ],
             "wpss_order_details": [
@@ -1991,6 +2210,7 @@
             ],
             "wpss_service_wizard": [
                 "tests/test-wizard-button-label.php",
+                "tests/test-wizard-owner-or-admin-and-upload-gate.php",
                 "audit/render-coverage.json"
             ],
             "wpss_services": [
@@ -2032,6 +2252,7 @@
                 "audit/journeys/06-standalone-checkout.md"
             ],
             "content-no-requests": [
+                "tests/test-empty-state-loads-icon-runtime.php",
                 "audit/journeys/04-visitor-browses-and-views-service.md"
             ],
             "content-no-services": [
@@ -2051,7 +2272,9 @@
             "dashboard/partials/order-row": [
                 "audit/render-coverage.json"
             ],
-            "dashboard/sections/create": [],
+            "dashboard/sections/create": [
+                "tests/test-wizard-owner-or-admin-and-upload-gate.php"
+            ],
             "dashboard/sections/create-request": [
                 "audit/render-coverage.json"
             ],
@@ -2062,6 +2285,7 @@
             "dashboard/sections/earnings": [
                 "tests/test-display-currency-surfaces-contract.php",
                 "tests/test-negative-balance-contract.php",
+                "tests/test-negative-tile-contract.php",
                 "audit/render-coverage.json"
             ],
             "dashboard/sections/edit-request": [
@@ -2073,6 +2297,7 @@
                 "audit/render-coverage.json"
             ],
             "dashboard/sections/messages": [
+                "tests/test-message-thread-opens-at-latest.php",
                 "audit/render-coverage.json"
             ],
             "dashboard/sections/notifications": [
@@ -2085,6 +2310,7 @@
                 "audit/render-coverage.json"
             ],
             "dashboard/sections/profile": [
+                "tests/test-smoke-1-9-1-contracts.php",
                 "audit/render-coverage.json"
             ],
             "dashboard/sections/proposals": [
@@ -2146,6 +2372,7 @@
             "emails/milestone-proposed": [
                 "audit/journeys/16-milestones-extensions-and-tips.md"
             ],
+            "emails/milestone-revision-requested": [],
             "emails/milestone-submitted": [
                 "audit/render-coverage.json"
             ],
@@ -2165,6 +2392,7 @@
                 "audit/render-coverage.json"
             ],
             "emails/new-order": [
+                "tests/test-request-order-reads-as-project.php",
                 "tests/test-template-contract.php",
                 "audit/render-coverage.json"
             ],
@@ -2172,6 +2400,7 @@
                 "audit/render-coverage.json"
             ],
             "emails/order-completed": [
+                "tests/test-completed-email-phased-project.php",
                 "tests/test-display-currency-surfaces-contract.php",
                 "tests/test-template-contract.php",
                 "audit/render-coverage.json"
@@ -2246,33 +2475,47 @@
             "order/conversation": [
                 "tests/test-conversation-states-contract.php",
                 "tests/test-dark-mode-and-icon-hooks.php",
+                "tests/test-live-updates-wiring.php",
+                "tests/test-message-thread-opens-at-latest.php",
                 "audit/render-coverage.json"
             ],
             "order/deliveries": [
                 "audit/render-coverage.json"
             ],
             "order/extension-view": [
+                "tests/test-extension-awaiting-view.php",
                 "audit/journeys/16-milestones-extensions-and-tips.md"
             ],
             "order/line-items": [
+                "tests/test-line-items-explain-the-difference.php",
+                "tests/test-order-page-lists-paid-extras.php",
+                "tests/test-order-tax-label-stored.php",
                 "audit/render-coverage.json"
             ],
+            "order/line-items-extras": [],
             "order/milestone-view": [
                 "audit/journeys/16-milestones-extensions-and-tips.md"
             ],
             "order/order-requirements": [
-                "tests/test-requirements-one-store.php"
+                "tests/test-requirements-one-store.php",
+                "tests/test-requirements-title-request-order.php"
             ],
             "order/order-view": [
                 "tests/pro/test-pay-order-read-only.php",
                 "tests/test-copy-sweep.php",
+                "tests/test-extension-on-hold-while-order-inactive.php",
+                "tests/test-extension-pending-card-inset.php",
                 "tests/test-milestone-parent-total-contract.php",
+                "tests/test-request-order-reads-as-project.php",
                 "tests/test-requirements-display-contract.php",
                 "tests/test-requirements-one-store.php",
+                "tests/test-review-sub-ratings.php",
+                "tests/test-smoke-1-9-1-contracts.php",
                 "tests/test-walk-regressions.php",
                 "audit/render-coverage.json"
             ],
             "order/payment": [
+                "tests/test-release-hardening-1-9-0.php",
                 "audit/render-coverage.json"
             ],
             "order/requirements": [
@@ -2299,6 +2542,7 @@
                 "audit/render-coverage.json"
             ],
             "partials/category-card": [
+                "tests/test-category-card-icon.php",
                 "audit/render-coverage.json"
             ],
             "partials/dispute-evidence-item": [
@@ -2313,6 +2557,7 @@
             "partials/notifications-list": [
                 "tests/test-notification-list-style.php",
                 "tests/test-notification-types-registry.php",
+                "tests/test-notifications-numbered-pages.php",
                 "audit/render-coverage.json"
             ],
             "partials/report-modal": [
@@ -2326,6 +2571,7 @@
                 "audit/render-coverage.json"
             ],
             "partials/review-body": [
+                "tests/test-review-verified-purchase-badge.php",
                 "audit/render-coverage.json"
             ],
             "partials/service-faqs": [
@@ -2333,6 +2579,7 @@
             ],
             "partials/service-gallery": [
                 "tests/test-gallery-lightbox.php",
+                "tests/test-gallery-video-first-filter.php",
                 "tests/test-title-suppression-scope.php",
                 "audit/render-coverage.json"
             ],
@@ -2365,6 +2612,8 @@
                 "tests/test-gallery-lightbox.php",
                 "tests/test-guest-checkout-contract.php",
                 "tests/test-layout-surface-css.php",
+                "tests/test-order-modal-and-selects-presentation.php",
+                "tests/test-service-gallery-mobile-width.php",
                 "tests/test-title-suppression-scope.php",
                 "tests/test-wizard-package-description.php",
                 "audit/journeys/04-visitor-browses-and-views-service.md"

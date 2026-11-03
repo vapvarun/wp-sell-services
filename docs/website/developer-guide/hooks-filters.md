@@ -70,7 +70,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:751` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:726` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:761` |
 
 ### Order Filters
 
@@ -237,7 +237,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:272` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:418` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1468` |
-| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2022` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:1966` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:484` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:536` |
 
@@ -770,7 +770,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1466` |
 | `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:239` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
-| `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:289` |
+| `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:285` |
 
 ### Miscellaneous Filters
 

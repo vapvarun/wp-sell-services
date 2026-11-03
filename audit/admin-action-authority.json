@@ -40,14 +40,6 @@
       "anonymous": true,
       "reason": "Account-at-checkout for a signed-out buyer. Gated on wpss_checkout_creates_accounts() - the owner's switch - and rate limited at 20/hour by IP."
     },
-    "wp_ajax_nopriv_wpss_live_search": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::live_search",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": true,
-      "anonymous": true,
-      "reason": "Public catalogue search, the same data GET /search serves. Rate limited via the live_search action."
-    },
     "wp_ajax_nopriv_wpss_load_reviews": {
       "callback": "WPSellServices\\Frontend\\AjaxHandlers::load_reviews",
       "nonce": true,
@@ -259,13 +251,6 @@
       "nonce": true,
       "capability": false,
       "rate_limited": false,
-      "anonymous": false
-    },
-    "wp_ajax_wpss_live_search": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::live_search",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": true,
       "anonymous": false
     },
     "wp_ajax_wpss_load_reviews": {

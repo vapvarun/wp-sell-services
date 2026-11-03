@@ -296,8 +296,11 @@ class OrderRepository extends AbstractRepository {
 		}
 
 		if ( ! empty( $args['search'] ) ) {
-			$sql     .= ' AND order_number LIKE %s';
-			$params[] = '%' . $this->wpdb->esc_like( (string) $args['search'] ) . '%';
+			list( $search_sql, $search_params ) = wpss_order_number_search_sql( (string) $args['search'] );
+			if ( '' !== $search_sql ) {
+				$sql   .= ' AND ' . $search_sql;
+				$params = array_merge( $params, $search_params );
+			}
 		}
 
 		return $this->exclude_sub_orders( $sql, $params, $args );
@@ -935,18 +938,22 @@ class OrderRepository extends AbstractRepository {
 			'offset' => 0,
 		);
 
-		$args        = wp_parse_args( $args, $defaults );
-		$search_like = '%' . $this->wpdb->esc_like( $search ) . '%';
+		$args = wp_parse_args( $args, $defaults );
+
+		list( $search_sql, $params ) = wpss_order_number_search_sql( $search );
+		if ( '' === $search_sql ) {
+			return array();
+		}
+		$params[] = (int) $args['limit'];
+		$params[] = (int) $args['offset'];
 
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table}
-				WHERE order_number LIKE %s
+				WHERE {$search_sql}
 				ORDER BY created_at DESC
 				LIMIT %d OFFSET %d",
-				$search_like,
-				$args['limit'],
-				$args['offset']
+				$params
 			)
 		);
 	}

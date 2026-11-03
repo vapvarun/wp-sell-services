@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**573 hooks** across **794** firing sites.
+**573 hooks** across **795** firing sites.
 
 ## Actions (299)
 
@@ -445,7 +445,7 @@ guide; this is the complete index.
 | `wpss_order_actions` | 2 | `templates/order/order-view.php` | Filter: wpss_order_actions |
 | `wpss_order_is_refundable` | 2 | `src/functions/ledger.php` | Filter whether an order may be refunded. |
 | `wpss_order_money_rail` | 2 | `src/functions/orders.php` | Filters the platform that owns an order's money. |
-| `wpss_order_number_prefix` | 1 | `src/Database/Repositories/OrderRepository.php` *(+1 more)* | Generate a unique order number. |
+| `wpss_order_number_prefix` | 1 | `src/Database/Repositories/OrderRepository.php` *(+2 more)* | Generate a unique order number. |
 | `wpss_order_payment_reference` | 2 | `src/functions/orders.php` | Filter the payment-rail receipt reference shown on an order. |
 | `wpss_order_status_groups` | 1 | `src/functions/order-status.php` | Filter the order status groups used by the dashboard filter chips. |
 | `wpss_order_status_label` | 3 | `templates/order/order-view.php` | Filter: wpss_order_status_label |
