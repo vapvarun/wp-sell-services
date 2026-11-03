@@ -1405,7 +1405,7 @@ class Shortcodes {
 			margin: 0 auto 16px;
 			border-radius: 16px;
 			background: var(--wpss-primary-light, #eef2ff);
-			color: var(--wpss-primary, #4f46e5);
+			color: var(--wpss-primary-accent, #4f46e5);
 		}
 		.wpss-vr__hero-icon .wpss-icon { width: 32px; height: 32px; }
 		.wpss-vr__hero-icon--success { background: var(--wpss-success-border, #dcfce7); color: var(--wpss-success, #16a34a); }
@@ -1432,7 +1432,7 @@ class Shortcodes {
 			flex-shrink: 0; margin-top: 2px;
 			border-radius: 8px;
 			background: var(--wpss-primary-light, #eef2ff);
-			color: var(--wpss-primary, #4f46e5);
+			color: var(--wpss-primary-accent, #4f46e5);
 		}
 		.wpss-vr__feature-icon .wpss-icon { width: 18px; height: 18px; }
 		.wpss-vr__feature strong {
@@ -1452,9 +1452,9 @@ class Shortcodes {
 			transition: all 0.15s ease; border: 2px solid transparent;
 		}
 		.wpss-vr__btn--primary {
-			background: var(--wpss-primary, #4f46e5); color: var(--wpss-white, #fff); border-color: var(--wpss-primary, #4f46e5);
+			background: var(--wpss-primary, #4f46e5); color: var(--wpss-on-primary, #fff); border-color: var(--wpss-primary, #4f46e5);
 		}
-		.wpss-vr__btn--primary:hover { background: var(--wpss-primary-dark, #4338ca); border-color: var(--wpss-primary-dark, #4338ca); color: var(--wpss-white, #fff); }
+		.wpss-vr__btn--primary:hover { background: var(--wpss-primary-hover, #4338ca); border-color: var(--wpss-primary-hover, #4338ca); color: var(--wpss-on-primary, #fff); }
 		.wpss-vr__btn--outline {
 			background: transparent; color: var(--wpss-text-secondary, #374151); border-color: var(--wpss-gray-300, #d1d5db);
 		}
@@ -1481,12 +1481,12 @@ class Shortcodes {
 		.wpss-signup-form__submit {
 			display: block; width: 100%; padding: 14px 24px;
 			font-size: 15px; font-weight: 600;
-			background: var(--wpss-primary, #4f46e5); color: var(--wpss-white, #fff);
+			background: var(--wpss-primary, #4f46e5); color: var(--wpss-on-primary, #fff);
 			border: 0; border-radius: 10px; cursor: pointer;
 			transition: background-color 0.15s ease;
 			margin-top: 8px;
 		}
-		.wpss-signup-form__submit:hover:not(:disabled) { background: var(--wpss-primary-dark, #4338ca); }
+		.wpss-signup-form__submit:hover:not(:disabled) { background: var(--wpss-primary-hover, #4338ca); }
 		.wpss-signup-form__submit:disabled { opacity: 0.6; cursor: not-allowed; }
 		.wpss-signup-form__signin {
 			text-align: center; font-size: 13px; color: var(--wpss-text-muted, #6b7280);
@@ -1504,7 +1504,7 @@ class Shortcodes {
 		.wpss-vr__hero { text-align: center; margin-bottom: 40px; }
 		.wpss-vr__eyebrow {
 			font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-			color: var(--wpss-primary, #4f46e5); margin: 0 0 12px;
+			color: var(--wpss-primary-accent, #4f46e5); margin: 0 0 12px;
 		}
 		.wpss-vr__hero-title {
 			font-size: clamp(28px, 4vw, 42px); font-weight: 700; line-height: 1.15;
@@ -1544,7 +1544,7 @@ class Shortcodes {
 			display: inline-flex; align-items: center; justify-content: center;
 			width: 32px; height: 32px; flex-shrink: 0;
 			border-radius: 50%; font-size: 14px; font-weight: 700;
-			background: var(--wpss-primary-light, #eef2ff); color: var(--wpss-primary, #4f46e5);
+			background: var(--wpss-primary-light, #eef2ff); color: var(--wpss-primary-accent, #4f46e5);
 			font-variant-numeric: tabular-nums;
 		}
 		.wpss-vr__step-body { display: flex; flex-direction: column; gap: 2px; }

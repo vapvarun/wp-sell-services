@@ -164,7 +164,7 @@ select:invalid {
 	width: 56px;
 	height: 56px;
 	background: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 	border-radius: 50%;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 	text-decoration: none;
@@ -348,7 +348,7 @@ article.wpss-service-card:hover {
 .wpss-no-rating {
 	padding: 2px 8px;
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 	border-radius: var(--wpss-radius);
 	font-size: 11px;
 	font-weight: 600;
@@ -592,7 +592,7 @@ article.wpss-service-card:hover {
 .wpss-service-card__rating-new {
 	padding: 2px 8px;
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 	border-radius: var(--wpss-radius);
 	font-size: 11px;
 	font-weight: 600;
@@ -1000,7 +1000,7 @@ article.wpss-service-card:hover {
 .wpss-contact-form textarea:focus {
 	outline: none;
 	border-color: var(--wpss-primary);
-	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 15%);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-contact-form input[type="file"] {
@@ -1355,7 +1355,7 @@ article.wpss-service-card:hover {
 .wpss-dashboard-nav a:hover,
 .wpss-dashboard-nav li.active a {
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 }
 
 .wpss-dashboard-content {
@@ -1440,7 +1440,7 @@ article.wpss-service-card:hover {
 
 .wpss-badge-vendor {
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 }
 
 .wpss-badge-customer {
@@ -1716,7 +1716,7 @@ a.wpss-back-link:focus {
 
 .wpss-requirement-view__expand-btn:hover {
 	background: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 	border-color: var(--wpss-primary);
 }
 
@@ -1754,7 +1754,7 @@ a.wpss-back-link:focus {
 
 .wpss-requirement-view__copy-btn:hover {
 	background: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 	border-color: var(--wpss-primary);
 }
 
@@ -1804,7 +1804,7 @@ a.wpss-back-link:focus {
 
 .wpss-file-link:hover {
 	background: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 	border-color: var(--wpss-primary);
 }
 
@@ -2215,7 +2215,7 @@ a.wpss-back-link:focus {
 
 .wpss-profile-cover {
 	height: 200px;
-	background: linear-gradient(135deg, var(--wpss-primary) 0%, var(--wpss-primary-dark) 100%);
+	background: linear-gradient(135deg, var(--wpss-primary) 0%, var(--wpss-primary-hover) 100%);
 	border-radius: var(--wpss-radius-lg);
 	overflow: hidden;
 }
@@ -2436,7 +2436,7 @@ a.wpss-back-link:focus {
 
 .wpss-social-link:hover {
 	background: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 }
 
 /* ==========================================================================
@@ -2581,7 +2581,7 @@ a.wpss-back-link:focus {
 .wpss-pagination .current {
 	background: var(--wpss-primary);
 	border-color: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 }
 
 /* ==========================================================================
@@ -2723,10 +2723,6 @@ a.wpss-back-link:focus {
 	color: var(--wpss-secondary-accent);
 }
 
-.wpss-required {
-	color: var(--wpss-danger);
-}
-
 .wpss-requirement-field input[type="text"],
 .wpss-requirement-field textarea,
 .wpss-requirement-field select {
@@ -2744,7 +2740,7 @@ a.wpss-back-link:focus {
 .wpss-requirement-field select:focus {
 	outline: none;
 	border-color: var(--wpss-primary);
-	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-requirement-field textarea {
@@ -2958,7 +2954,7 @@ a.wpss-back-link:focus {
 .wpss-file-download:hover {
 	background: var(--wpss-primary-light);
 	border-color: var(--wpss-primary);
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 }
 
 .wpss-file-icon::before {
@@ -3122,7 +3118,7 @@ a.wpss-back-link:focus {
 .wpss-form-group input:focus {
 	outline: none;
 	border-color: var(--wpss-primary);
-	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-form-group textarea {
@@ -3162,7 +3158,7 @@ a.wpss-back-link:focus {
 .wpss-form-group__textarea:focus {
 	outline: none;
 	border-color: var(--wpss-primary);
-	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-form-group__textarea {
@@ -3246,7 +3242,7 @@ a.wpss-back-link:focus {
 
 .wpss-file-label:hover {
 	border-color: var(--wpss-primary);
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 	background: var(--wpss-primary-light);
 }
 
@@ -3714,7 +3710,7 @@ a.wpss-back-link:focus {
 }
 
 .wpss-tip-form__preset:focus-visible {
-	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-tip-form__preset.is-selected {
@@ -4205,7 +4201,7 @@ a.wpss-back-link:focus {
 .wpss-pagination a:focus-visible {
 	border-color: var(--wpss-primary, #4f46e5);
 	background: var(--wpss-primary, #4f46e5);
-	color: #fff;
+	color: var(--wpss-on-primary);
 }
 
 /* Add-ons availability note on the package panel. Says extras exist before the
@@ -4262,7 +4258,7 @@ a.wpss-back-link:focus {
 .wpss-order-filter:hover,
 .wpss-order-filter:focus-visible {
 	border-color: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent);
 	text-decoration: none;
 }
 
@@ -4276,7 +4272,7 @@ a.wpss-back-link:focus {
 .wpss-order-filter.is-active:hover {
 	border-color: var(--wpss-primary, #4f46e5);
 	background: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 }
 
 /* Link-state foreground, pinned - the same treatment, for the same reason, as
@@ -4298,7 +4294,7 @@ a.wpss-order-filter.is-active:link,
 a.wpss-order-filter.is-active:visited,
 a.wpss-order-filter.is-active:hover,
 a.wpss-order-filter.is-active:focus {
-	color: var(--wpss-white, #fff) !important;
+	color: var(--wpss-on-primary, #fff) !important;
 }
 
 .wpss-order-filter__count {
@@ -4315,19 +4311,14 @@ a.wpss-order-filter.is-active:focus {
 	text-align: center;
 }
 
-/* Darken the fill under the badge, never lighten it.
-   A white veil raised the backdrop towards the white numeral: over the indigo
-   fill it composited to #766feb and the count measured 4.02:1 at 12.75px,
-   under the 4.5 AA floor - on the one element that says how many orders the
-   filter holds (Basecamp 10320906024). The sibling comment below records the
-   inactive badge being measured at the time; the active one never was.
-
-   A black veil moves the backdrop away from the numeral instead, so this
-   passes for any --wpss-primary a site owner sets rather than only for the
-   default indigo, and the badge keeps reading as a distinct pill. */
+/* The count on the active chip is the chip inverted: ink ground, fill numeral.
+   A veil over the fill only works for one ink: a white veil under a white
+   numeral measured 4.02:1 (Basecamp 10320906024), and a black veil under a
+   theme's dark ink on a light fill fails the same way. The inverted pair reads
+   at whatever the fill and its ink read at, for any theme or brand colour. */
 .wpss-order-filter.is-active .wpss-order-filter__count {
-	background: rgba(0, 0, 0, 0.22);
-	color: #fff;
+	background: var(--wpss-on-primary, #fff);
+	color: var(--wpss-primary, #4f46e5);
 }
 
 /* Order-number search sits beside the chips; both come from the shared

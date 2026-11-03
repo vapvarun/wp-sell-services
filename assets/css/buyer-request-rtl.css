@@ -332,7 +332,7 @@
 .wpss-single-request .wpss-btn--primary,
 .wpss-single-request .wpss-btn--primary:visited {
 	background: var(--wpss-primary, #4f46e5) !important;
-	color: var(--wpss-white, #ffffff) !important;
+	color: var(--wpss-on-primary) !important;
 	border-color: var(--wpss-primary, #4f46e5) !important;
 }
 
@@ -340,9 +340,9 @@
 .wpss-requests-archive .wpss-btn--primary:focus,
 .wpss-single-request .wpss-btn--primary:hover,
 .wpss-single-request .wpss-btn--primary:focus {
-	background: var(--wpss-primary-dark, #4338ca) !important;
-	color: var(--wpss-white, #ffffff) !important;
-	border-color: var(--wpss-primary-dark, #4338ca) !important;
+	background: var(--wpss-primary-hover) !important;
+	color: var(--wpss-on-primary) !important;
+	border-color: var(--wpss-primary-hover) !important;
 }
 
 /* Outline button variant */
@@ -406,7 +406,7 @@
 .wpss-single-request select:focus {
 	outline: none;
 	border-color: var(--wpss-primary, #4f46e5);
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 /* ==========================================================================
@@ -568,7 +568,7 @@
 	display: inline-block;
 	padding: 0.25rem 0.625rem;
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary-accent, #4f46e5);
+	color: var(--wpss-primary-dark);
 	font-size: 0.75rem;
 	border-radius: var(--wpss-radius-sm, 4px);
 }

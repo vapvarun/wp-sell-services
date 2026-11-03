@@ -16,29 +16,31 @@
 .wpss-notif-row:has( .wpss-notif-row__link ) { cursor: pointer; }
 .wpss-notif-row--unread { border-color: var( --wpss-primary, #4f46e5 ); }
 /* A softer tint than the saturated primary-light token: muted message and time text stays 4.5:1 on it in dark mode too. */
-.wpss-notif-row--unread { background: #eef2ff; background: color-mix( in srgb, var( --wpss-primary, #4f46e5 ) 10%, var( --wpss-bg, #fff ) ); }
+.wpss-notif-row--unread { background: #eef2ff; background: color-mix( in srgb, var( --wpss-primary-tint, #4f46e5 ) 10%, var( --wpss-bg, #fff ) ); }
 /* Icon, title and the mark-read control share ONE first-line band so they sit
 	on the same optical line. The icon is a replaced SVG whose box does not match
 	the title's line box, so flex-start alone left it floating above the text on
 	every multi-line row. Sizing the icon to the title's line-height and centring
 	the glyph inside it is what actually aligns them. */
-.wpss-notif-row__icon { flex: 0 0 auto; color: var( --wpss-primary, #4f46e5 ); display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 24px; }
+.wpss-notif-row__icon { flex: 0 0 auto; color: var(--wpss-primary-accent, #4f46e5); display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 24px; }
 .wpss-notif-row__icon svg { width: 18px; height: 18px; }
 .wpss-notif-row__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .wpss-notif-row__title { line-height: 24px; }
 .wpss-notif-row__message { line-height: 1.5; }
 .wpss-notif-row__title { font-weight: 600; color: var( --wpss-text, #1f2937 ); }
-.wpss-notif-row__message { color: var( --wpss-text-light, #6b7280 ); }
+.wpss-notif-row__message { color: var( --wpss-text-secondary, #374151 ); }
 /* Themes routinely restyle bare <a>; pin the states so a linked notification
 	title still reads as the heading it is, in dark mode too. */
 .wpss-notif-row__link,
 .wpss-notif-row__link:visited { color: inherit; text-decoration: none; }
 .wpss-notif-row__link:hover,
-.wpss-notif-row__link:focus-visible { color: var( --wpss-primary, #4f46e5 ); text-decoration: underline; }
+.wpss-notif-row__link:focus-visible { color: var(--wpss-primary-accent, #4f46e5); text-decoration: underline; }
 .wpss-notif-row__time { font-size: 12px; color: var( --wpss-text-muted, #6b7280 ); }
+/* Muted on the unread tint read 4.33:1. */
+.wpss-notif-row--unread .wpss-notif-row__time { color: var( --wpss-text-secondary, #374151 ); }
 .wpss-notif-row__mark { flex: 0 0 auto; background: none; border: none; cursor: pointer; color: var( --wpss-text-light, #6b7280 ); padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
 .wpss-notif-row__mark svg { width: 18px; height: 18px; }
-.wpss-notif-row__mark:hover { color: var( --wpss-primary, #4f46e5 ); }
+.wpss-notif-row__mark:hover { color: var(--wpss-primary-accent, #4f46e5); }
 
 @media (max-width: 640px) {
 	.wpss-notif-filter select { flex: 1 1 100%; }
@@ -54,5 +56,5 @@
 .wpss-notif-center .wpss-pagination__link { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 44px; min-height: 44px; padding: 0 12px; border: 1px solid var( --wpss-border, #e5e7eb ); border-radius: var( --wpss-radius, 8px ); background: var( --wpss-bg, #fff ); color: var( --wpss-text, #1f2937 ); font-size: 13px; text-decoration: none; box-sizing: border-box; }
 .wpss-notif-center a.wpss-pagination__link:hover,
 .wpss-notif-center a.wpss-pagination__link:focus-visible { background: var( --wpss-bg-muted, #f3f4f6 ); color: var( --wpss-text, #1f2937 ); }
-.wpss-notif-center .wpss-pagination__link[aria-current="page"] { background: var( --wpss-primary, #4f46e5 ); border-color: var( --wpss-primary, #4f46e5 ); color: var( --wpss-white, #fff ); font-weight: 600; }
+.wpss-notif-center .wpss-pagination__link[aria-current="page"] { background: var( --wpss-primary, #4f46e5 ); border-color: var( --wpss-primary, #4f46e5 ); color: var(--wpss-on-primary); font-weight: 600; }
 .wpss-notif-center .wpss-pagination__link.dots { border-color: transparent; background: transparent; min-width: 24px; padding: 0; }

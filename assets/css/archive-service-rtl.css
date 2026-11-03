@@ -70,13 +70,13 @@
 .wpss-services-archive .wpss-btn--primary,
 .wpss-services-archive .wpss-btn--primary:visited {
 	background-color: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-services-archive .wpss-btn--primary:hover,
 .wpss-services-archive .wpss-btn--primary:focus {
 	background-color: var(--wpss-primary-hover);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-services-archive .wpss-btn--outline,
@@ -102,7 +102,7 @@
 .wpss-services-archive button.wpss-btn--primary,
 .wpss-services-archive input[type="submit"].wpss-btn--primary {
 	background-color: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 	border-color: var(--wpss-primary);
 }
 
@@ -111,7 +111,7 @@
 .wpss-services-archive input[type="submit"].wpss-btn--primary:hover,
 .wpss-services-archive input[type="submit"].wpss-btn--primary:focus {
 	background-color: var(--wpss-primary-hover);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 	border-color: var(--wpss-primary-hover);
 }
 
@@ -243,7 +243,7 @@
 	/* Ring must track the brand primary (indigo), not a hard-coded green that
 	   pre-dated the indigo palette switch. color-mix() tints the primary; the
 	   hex fallback covers browsers without color-mix support. */
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 1800%, transparent);
 	outline: none;
 }
@@ -278,7 +278,7 @@
 	/* Visible keyboard focus ring tracking the brand primary; hex fallback
 	   covers browsers without color-mix(). Replaces the bare outline:none so a
 	   keyboard user always sees where focus is (WCAG 2.4.7). */
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 1800%, transparent);
 }
 
@@ -347,7 +347,7 @@
 .wpss-pagination .current {
 	background: var(--wpss-primary);
 	border-color: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 }
 
 /* ==========================================================================
@@ -497,7 +497,7 @@ body.wpss-sidebar-open::after {
 /* A colour-only hover was invisible against Reign's section background; add a
    tinted row so the hovered / selected category is unmistakable. */
 .wpss-category-link:hover {
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 	background: var(--wpss-primary-light);
 }
 
@@ -509,7 +509,7 @@ body.wpss-sidebar-open::after {
 }
 
 .wpss-category-link.is-active {
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 	background: var(--wpss-primary-light);
 	font-weight: 600;
 }
@@ -581,7 +581,7 @@ body.wpss-sidebar-open::after {
 	border-color: var(--wpss-primary);
 	/* Match the search/filter focus ring so keyboard focus is unmistakable on
 	   the price-range fields too (WCAG 2.4.7). */
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 1800%, transparent);
 }
 

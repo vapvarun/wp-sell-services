@@ -31,7 +31,7 @@
 }
 
 .wpss-order-view__back:hover {
-	color: var(--wpss-primary, #3b82f6);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-order-view__title-bar {
@@ -211,7 +211,7 @@
 }
 
 .wpss-service-info__title a:hover {
-	color: var(--wpss-primary, #3b82f6);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-service-info__price {
@@ -396,7 +396,7 @@
 	background: var(--wpss-bg, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;
-	color: var(--wpss-primary, #3b82f6);
+	color: var(--wpss-primary-accent);
 	text-decoration: none;
 	font-size: 0.875rem;
 	transition: all 0.2s;
@@ -404,7 +404,7 @@
 
 .wpss-file-link:hover {
 	background: var(--wpss-primary, #3b82f6);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	border-color: var(--wpss-primary, #3b82f6);
 }
 
@@ -447,10 +447,6 @@
 	margin-bottom: 0.5rem;
 	font-weight: 600;
 	color: var(--wpss-text, #111827);
-}
-
-.wpss-requirements-form .wpss-required {
-	color: var(--wpss-danger, #ef4444);
 }
 
 .wpss-requirements-form .wpss-input,
@@ -519,7 +515,7 @@
 	display: block;
 	margin-top: 0.5rem;
 	font-size: 0.875rem;
-	color: var(--wpss-primary, #3b82f6);
+	color: var(--wpss-primary-accent);
 	font-weight: 500;
 }
 
@@ -602,7 +598,7 @@
 	padding: 0;
 	background: none;
 	border: none;
-	color: var(--wpss-primary, #3b82f6);
+	color: var(--wpss-primary-accent);
 	font-size: 0.875rem;
 	cursor: pointer;
 	transition: color 0.2s;
@@ -641,7 +637,7 @@
 .wpss-requirement-view__copy-btn:hover {
 	background: var(--wpss-primary, #3b82f6);
 	border-color: var(--wpss-primary, #3b82f6);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-requirement-view__copy-btn.wpss-copied {
@@ -698,7 +694,7 @@
 	background: rgba(59, 130, 246, 0.1);
 	border: 1px solid rgba(59, 130, 246, 0.2);
 	border-radius: 8px;
-	color: var(--wpss-primary, #3b82f6);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-alert--info svg {

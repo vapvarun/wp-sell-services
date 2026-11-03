@@ -721,7 +721,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				text-decoration: none;
 				transition: color var(--wpss-ease);
 			}
-			.wpss-co-header__back:hover { color: var(--wpss-primary); text-decoration: none; }
+			.wpss-co-header__back:hover { color: var(--wpss-primary-accent, #4f46e5); text-decoration: none; }
 			.wpss-co-header__secure {
 				display: inline-flex;
 				align-items: center;
@@ -862,7 +862,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			}
 			.wpss-co-guarantee > span:first-child {
 				font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 2px;
-				color: var(--wpss-primary);
+				color: var(--wpss-primary-accent, #4f46e5);
 			}
 			.wpss-co-guarantee strong {
 				display: block; font-size: var(--wpss-text-sm); font-weight: 600;
@@ -895,7 +895,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				position: relative; z-index: 1;
 			}
 			.wpss-co-step:first-child .wpss-co-step__dot {
-				background: var(--wpss-primary); border-color: var(--wpss-primary); color: var(--wpss-white, #fff);
+				background: var(--wpss-primary); border-color: var(--wpss-primary); color: var(--wpss-on-primary, #fff);
 			}
 			.wpss-co-step__label { font-size: var(--wpss-text-xs); color: var(--wpss-text-muted); font-weight: 500; }
 
@@ -1504,7 +1504,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				text-decoration: none;
 				transition: color var(--wpss-ease);
 			}
-			.wpss-co-header__back:hover { color: var(--wpss-primary); text-decoration: none; }
+			.wpss-co-header__back:hover { color: var(--wpss-primary-accent, #4f46e5); text-decoration: none; }
 			.wpss-co-header__secure {
 				display: inline-flex;
 				align-items: center;

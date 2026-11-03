@@ -11,7 +11,7 @@
 
 :root {
 	--wpss-block-primary: var(--wpss-vendor-green, var(--wpss-primary, #4f46e5));
-	--wpss-block-primary-dark: var(--wpss-vendor-green-dark, var(--wpss-primary-dark, #4338ca));
+	--wpss-block-primary-dark: var(--wpss-primary-hover, #4338ca);
 	--wpss-block-text: var(--wpss-gray-700, #404145);
 	--wpss-block-text-light: var(--wpss-gray-500, #74767e);
 	--wpss-block-border: var(--wpss-border, #e4e5e7);
@@ -332,7 +332,7 @@
    users always get a visible focus indicator (WCAG 2.4.7). */
 .wpss-search-fields:focus-within {
 	border-color: var(--wpss-primary, #4f46e5);
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-category-select-wrap {
@@ -361,7 +361,7 @@
 
 .wpss-category-select:focus {
 	outline: none;
-	box-shadow: 0 0 0 3px rgb(var(--wpss-primary-rgb, 99 102 241) / 25%);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-search-fields .wpss-search-button {

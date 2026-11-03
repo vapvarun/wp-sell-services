@@ -506,7 +506,7 @@ h2.wpss-settings-subhead__title {
 }
 
 .wpss-stat-icon--revenue {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-stat-info {

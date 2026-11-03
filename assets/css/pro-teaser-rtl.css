@@ -84,7 +84,7 @@
 .wpss-pro-teaser__cta {
 	display: inline-block;
 	background: var(--wpss-primary, #7c3aed);
-	color: var(--wpss-white, #fff) !important;
+	color: var(--wpss-on-primary) !important;
 	font-size: 12px;
 	font-weight: 600;
 	padding: 6px 16px;
@@ -95,6 +95,6 @@
 
 .wpss-pro-teaser__cta:hover,
 .wpss-pro-teaser__cta:focus {
-	background: var(--wpss-primary-dark, #6d28d9);
-	color: var(--wpss-white, #fff) !important;
+	background: var(--wpss-primary-hover);
+	color: var(--wpss-on-primary) !important;
 }

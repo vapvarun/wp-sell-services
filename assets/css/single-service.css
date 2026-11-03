@@ -107,13 +107,13 @@
 .wpss-single-service .wpss-btn--primary,
 .wpss-single-service .wpss-btn--primary:visited {
 	background-color: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-single-service .wpss-btn--primary:hover,
 .wpss-single-service .wpss-btn--primary:focus {
 	background-color: var(--wpss-primary-hover);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-single-service .wpss-btn--outline,
@@ -1603,7 +1603,7 @@
 	/* Add a visible focus ring so keyboard focus on the contact-form fields is
 	   unmistakable, not just a subtle border-colour shift (WCAG 2.4.7). Hex
 	   fallback first, color-mix() progressive enhancement second. */
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 1800%, transparent);
 }
 
@@ -1673,7 +1673,7 @@
 
 .wpss-share-btn:hover {
 	background: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-favorite-btn {

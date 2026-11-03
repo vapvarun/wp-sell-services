@@ -409,7 +409,7 @@
 
 .wpss-order-requirements__file:hover {
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary-accent, #4f46e5);
+	color: var(--wpss-primary-dark);
 }
 
 /* ==========================================================================
@@ -603,7 +603,7 @@
 .wpss-order-stepper__step--current .wpss-order-stepper__icon {
 	background: var(--wpss-primary, #4f46e5);
 	border-color: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-order-stepper__label {
@@ -800,7 +800,7 @@
 .wpss-requirements-form__select:focus {
 	outline: none;
 	border-color: var(--wpss-primary, #4f46e5);
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-requirements-form__textarea {
@@ -877,7 +877,7 @@
 .wpss-requirements-form__upload:hover,
 .wpss-requirements-form__upload--dragover {
 	border-color: var(--wpss-primary, #4f46e5);
-	background: rgba(79, 70, 229, 0.03);
+	background: color-mix(in srgb, var(--wpss-primary-tint) 3%, transparent);
 }
 
 .wpss-requirements-form__upload-input {
@@ -1012,12 +1012,12 @@
 	border-radius: var(--wpss-radius, 8px);
 	cursor: pointer;
 	background: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	transition: background 0.2s;
 }
 
 .wpss-requirements-form__submit-btn:hover {
-	background: var(--wpss-primary-dark, #4338ca);
+	background: var(--wpss-primary-hover);
 }
 
 .wpss-requirements-form__submit-btn:disabled {
@@ -1312,7 +1312,7 @@ button.wpss-write-review-btn,
 	padding: 0.875rem 2rem !important;
 	font-size: 1rem !important;
 	font-weight: 600 !important;
-	color: var(--wpss-white, #fff) !important;
+	color: var(--wpss-on-primary) !important;
 	background: var(--wpss-primary, #1e40af) !important;
 	background-color: var(--wpss-primary, #1e40af) !important;
 	border: none !important;
@@ -1329,7 +1329,7 @@ button.wpss-write-review-btn:hover,
 .wpss-review-cta .wpss-btn:hover {
 	background: var(--wpss-primary-hover, #1e3a8a) !important;
 	background-color: var(--wpss-primary-hover, #1e3a8a) !important;
-	color: var(--wpss-white, #fff) !important;
+	color: var(--wpss-on-primary) !important;
 	transform: translateY(-1px);
 	box-shadow: 0 4px 8px rgba(30, 64, 175, 0.4) !important;
 }

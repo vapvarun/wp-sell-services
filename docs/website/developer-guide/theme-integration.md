@@ -345,15 +345,45 @@ Components consume semantic and scale tokens, never raw hex. In dark mode the wh
 | `--wpss-surface` | `#ffffff` | `#1f2937` | Card / panel backgrounds |
 | `--wpss-text` / `--wpss-text-muted` | dark | light | Body + muted copy |
 | `--wpss-gray-*` ramp | light ramp | inverted ramp | Raw text + hairlines (ink end resolves light, paper end dark) |
-| `--wpss-primary` | `#4f46e5` | `#4f46e5` | Button/badge **fills** (stays dark enough for white text) |
-| `--wpss-primary-accent` | `#4f46e5` | `#a5b4fc` | Primary as **text/links/icons** (lightens on dark) |
+| `--wpss-primary` | theme button colour, or `#4f46e5` | theme dark button colour, or `#4f46e5` | Button, chip and tile **fills** |
+| `--wpss-on-primary` | theme button text, or `#ffffff` | theme dark button text, or `#ffffff` | Text and icons **on** a `--wpss-primary` fill |
+| `--wpss-primary-accent` | theme text colour, or `#4f46e5` | theme dark text colour, or `#a5b4fc` | Primary as **text/links/icons** |
+| `--wpss-primary-light` | 10% tint of the theme colour | 24% tint | Selected and highlighted grounds |
+| `--wpss-primary-dark` | darker accent | accent | Text **on** a `--wpss-primary-light` ground |
 | `--wpss-secondary-accent` | `#1e293b` | `#e2e8f0` | Emphasis text (prices) |
 | `--wpss-block-surface` | `var(--wpss-surface)` | flips | Gutenberg block card backgrounds |
 
 Two rules matter when extending the UI:
 
-1. **Use `--wpss-primary-accent` / `--wpss-secondary-accent` for text, `--wpss-primary` / `--wpss-secondary` for fills.** The accent tokens lighten in dark mode so links stay readable on dark surfaces; the fill tokens stay dark so white button text keeps its contrast.
+1. **Use `--wpss-primary-accent` / `--wpss-secondary-accent` for text, `--wpss-primary` / `--wpss-secondary` for fills, and `--wpss-on-primary` for anything drawn on a fill.** A theme's button colour can be light (with dark text), so never put `--wpss-white` on a `--wpss-primary` fill, and never use `--wpss-primary` as text.
 2. **Never hard-code hex for text or surfaces** - reach for the tokens above so your addition flips with the rest of the plugin. Lucide icons inherit `currentColor`, so they follow the text token automatically.
+
+### Brand colour: theme, brand, or the plugin's own
+
+_Since 1.9.2._ The marketplace colour follows your site. The first of these that is set wins:
+
+1. **Your own CSS.** Setting `--wpss-primary` (for example in Customizer > Additional CSS) recolours every button, chip and tint, because the other shades are derived from it:
+
+    ```css
+    html:root { --wpss-primary: #15803d; }
+    ```
+
+2. **A brand colour** from the `wpss_brand_color` filter. Pro White Label uses it for its Primary colour. The plugin works out readable text and button-label shades for light and dark mode.
+
+    ```php
+    add_filter( 'wpss_brand_color', fn() => '#c2185b' );
+    ```
+
+3. **Your theme.** On Reign and BuddyX, buttons take the theme's button colour and the text colour the theme chose for it, while links, tints and focus rings take the theme colour (on Reign, Customizer > Color Options > Color Palette). Another theme can join in by setting `--wpss-theme-fill`, `--wpss-theme-ink`, `--wpss-theme-accent` and `--wpss-theme-accent-text` on `:root`.
+4. **The plugin's indigo** on any other theme.
+
+To keep the plugin's own colour on Reign or BuddyX:
+
+```php
+add_filter( 'wpss_use_theme_colors', '__return_false' );
+```
+
+A theme colour brings its own contrast with it: if your theme pairs a light button colour with white text, the plugin's buttons will match it. Set a darker button colour in the theme, or override `--wpss-primary` as above.
 
 ### Overriding tokens per theme
 

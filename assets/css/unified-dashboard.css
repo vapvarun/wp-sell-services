@@ -86,7 +86,7 @@
 	display: inline-flex;
 	align-items: center;
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 	font-size: 11px;
 	font-weight: 600;
 	padding: 2px 8px;
@@ -148,7 +148,7 @@
 }
 
 .wpss-dashboard__nav-item--active {
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 	background: var(--wpss-primary-light);
 	/* Active accent is an inset left bar via box-shadow, NOT a border-right.
 	   The old border-right landed exactly on the sidebar/content seam and
@@ -159,7 +159,7 @@
 }
 
 .wpss-dashboard__nav-item--active:hover {
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 	background: var(--wpss-primary-light);
 }
 
@@ -176,7 +176,7 @@
 	padding: 0 6px;
 	border-radius: 10px;
 	background: var(--wpss-primary);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	font-size: 12px;
 	font-weight: 600;
 	line-height: 20px;
@@ -682,11 +682,18 @@
 	/* Footer action row: a hairline separates it from the content above; the
 	   status badge pins to the start and the icon buttons flow to the end. */
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
 	width: 100%;
 	padding-top: 12px;
 	border-top: 1px solid var(--wpss-gray-100);
+}
+
+/* A labelled action keeps its label on one line; the row wraps instead
+   (a proposal's "View Request" broke onto two lines at 390px). */
+.wpss-dashboard .wpss-request-card__actions > .wpss-btn {
+	white-space: nowrap;
 }
 
 /* Status is state, not an action — hold the left edge so the icon buttons
@@ -806,7 +813,7 @@
 	background: var(--wpss-primary);
 	border: 2px solid var(--wpss-white, #fff);
 	border-radius: 9px;
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	font-size: 11px;
 	font-weight: 600;
 	line-height: 1;
@@ -981,7 +988,7 @@
 }
 
 .wpss-section--messages .wpss-message--mine .wpss-message__content {
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	background: var(--wpss-primary);
 	border-radius: 16px 16px 4px 16px;
 }
@@ -1041,7 +1048,7 @@
 
 .wpss-section--messages .wpss-conversation-thread__reply .wpss-textarea:focus {
 	border-color: var(--wpss-primary);
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-section--messages .wpss-conversation-thread__reply .wpss-textarea:focus-visible {
@@ -1548,7 +1555,7 @@
 
 /* Profile Completion Banner (F7 part a from baseline-2026-04-25.md) */
 .wpss-dashboard__profile-banner {
-	background: linear-gradient(135deg, var(--wpss-primary-light, #eef2ff) 0%, var(--wpss-primary-50, rgba(79, 70, 229, 0.05)) 100%);
+	background: linear-gradient(135deg, var(--wpss-primary-light, #eef2ff) 0%, var(--wpss-primary-50) 100%);
 	border: 1px solid var(--wpss-primary, #4f46e5);
 	border-radius: var(--wpss-radius-lg, 12px);
 	padding: 16px 20px;
@@ -1568,7 +1575,7 @@
 	flex-shrink: 0;
 	border-radius: 50%;
 	background: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-profile-banner__icon .wpss-icon {
@@ -1610,7 +1617,7 @@
 	flex-shrink: 0;
 	background: var(--wpss-primary);
 	border-color: var(--wpss-primary);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-profile-banner__btn:hover,
@@ -1619,7 +1626,7 @@
 .wpss-payout-banner__btn:focus {
 	background: var(--wpss-primary-hover);
 	border-color: var(--wpss-primary-hover);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-profile-banner__dismiss {
@@ -1779,7 +1786,7 @@
 .wpss-input:focus,
 .wpss-textarea:focus {
 	border-color: var(--wpss-primary);
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-input:focus-visible,
@@ -2630,7 +2637,7 @@ select.wpss-input option,
 
 .wpss-category-chip:hover {
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary-accent, #4f46e5);
+	color: var(--wpss-primary-dark);
 }
 
 .wpss-tip-view__card {
@@ -2913,7 +2920,8 @@ select.wpss-input option,
 	align-items: center;
 	gap: var(--wpss-space-2, 8px);
 	background: var(--wpss-gray-100, #f3f4f6);
-	color: var(--wpss-text-muted, #6b7280);
+	/* Secondary, not muted: muted on this grey read 4.39:1. */
+	color: var(--wpss-text-secondary, #374151);
 	border: 1px dashed var(--wpss-gray-300, #d1d5db);
 	cursor: not-allowed;
 	font-weight: 500;
@@ -3216,7 +3224,7 @@ select.wpss-input option,
 
 .wpss-dispute-link {
 	font-weight: 600;
-	color: var(--wpss-primary, #2271b1);
+	color: var(--wpss-primary-accent);
 	text-decoration: none;
 }
 
@@ -3659,10 +3667,6 @@ select.wpss-input option,
 
 .wpss-request-wizard .wpss-profile-form {
 	max-width: 100%;
-}
-
-.wpss-required {
-	color: var(--wpss-danger-text, var(--wpss-danger));
 }
 
 .wpss-input-group {

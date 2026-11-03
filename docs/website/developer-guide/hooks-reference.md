@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**575 hooks** across **801** firing sites.
+**577 hooks** across **803** firing sites.
 
 ## Actions (300)
 
@@ -317,7 +317,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (275)
+## Filters (277)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -351,6 +351,7 @@ guide; this is the complete index.
 | `wpss_billing_address` | 2 | `src/functions/billing.php` | Filter a user's billing address after it is read. |
 | `wpss_billing_fields` | 1 | `src/functions/billing.php` | Filter the billing address fields. |
 | `wpss_blocks` | 1 | `src/Blocks/BlocksManager.php` | Filter registered blocks. |
+| `wpss_brand_color` | 1 | `src/functions/templates.php` | Filters the marketplace brand colour. |
 | `wpss_breadcrumbs` | 2 | `src/SEO/SEO.php` |  |
 | `wpss_buyer_request_post_type_args` | 1 | `src/PostTypes/BuyerRequestPostType.php` | Filter buyer request post type arguments. |
 | `wpss_buyer_request_slug` | 1 | `src/PostTypes/BuyerRequestPostType.php` | Filter the buyer request post type slug. |
@@ -571,6 +572,7 @@ guide; this is the complete index.
 | `wpss_tour_steps` | 1 | `src/Frontend/Tour.php` | Filter the steps array handed to Shepherd. |
 | `wpss_trusted_proxies` | 1 | `src/functions/security.php` | Filters the proxies allowed to set X-Forwarded-For (IPs or CIDR ranges). |
 | `wpss_use_fullwidth_template` | 1 | `src/Frontend/TemplateLoader.php` *(+1 more)* | Filter whether plugin pages use the full-width template. |
+| `wpss_use_theme_colors` | 1 | `src/functions/templates.php` | Filters whether marketplace colours follow the host theme. |
 | `wpss_user_can_feature_service` | 2 | `src/functions/services.php` | Filter who may mark a service as Featured. |
 | `wpss_validate_add_to_cart` | 4 | `src/API/CartController.php` | Validates whether a service can be added to the cart. |
 | `wpss_vendor_benefit_listings_copy` | 2 | `templates/partials/vendor-benefits.php` | Filter the service-count promise on the Become a Vendor page. |
