@@ -1471,6 +1471,11 @@ final class Plugin {
 		$this->loader->add_action(
 			'wpss_message_sent',
 			function ( $message, $conversation ) use ( $notification_service ): void {
+				// A revision request already rings its own bell (revision_requested, milestone_revision_requested).
+				if ( $message instanceof \WPSellServices\Models\Message && $message->is_revision_request() ) {
+					return;
+				}
+
 				// Notify other participants.
 				foreach ( $conversation->participants as $participant_id ) {
 					if ( $participant_id !== $message->sender_id ) {

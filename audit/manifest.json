@@ -1282,5 +1282,6 @@
     "edit_fields": "wpss_datetime_input_to_utc() and wpss_datetime_local_input() are an exact pair.",
     "reports": "wpss_display_time_sql() and wpss_site_day_sql() group report days in the display timezone.",
     "rest": "Use the existing wpss_rest_date(); no second REST date helper."
-  }
+  },
+  "refresh_note": " 1.9.2: a revision request (order or milestone) rings only its dedicated bell; the wpss_message_sent listener in Core/Plugin.php skips Message::TYPE_REVISION."
 }
