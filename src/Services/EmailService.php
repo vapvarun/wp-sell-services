@@ -1487,7 +1487,14 @@ class EmailService {
 	 */
 	public function send_delayed_message_email( int $order_id, int $sender_id, string $message, string $payload_key = '' ): void {
 		if ( '' !== $payload_key ) {
-			$message = (string) ( self::take_payload( $payload_key )[0] ?? '' );
+			$payload = self::take_payload( $payload_key );
+
+			// Already sent (the job ran twice) or the cache lost it: never mail an empty message.
+			if ( null === $payload ) {
+				return;
+			}
+
+			$message = (string) ( $payload[0] ?? '' );
 		}
 
 		$order = wpss_get_order( $order_id );

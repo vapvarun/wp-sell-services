@@ -2791,36 +2791,6 @@ parameters:
 			path: src/Services/EmailService.php
 
 		-
-			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:format_request\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/ExtensionRequestService.php
-
-		-
-			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:get\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/ExtensionRequestService.php
-
-		-
-			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:get_by_order\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/ExtensionRequestService.php
-
-		-
-			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:get_pending\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/ExtensionRequestService.php
-
-		-
-			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:get_statuses\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/ExtensionRequestService.php
-
-		-
 			message: '#^Method WPSellServices\\Services\\GalleryService\:\:add_item\(\) has parameter \$item with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

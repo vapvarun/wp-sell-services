@@ -1,9 +1,11 @@
 <?php
 /**
- * ExtensionRequestService keeps its readers and constants, and no longer carries create/approve/reject.
+ * ExtensionRequestService holds the status constants only: no create/approve/reject, no second reader.
  *
  * Those three called NotificationService::send() with the old 5-argument shape and threw a TypeError. Nothing
  * called them (extensions run through ExtensionOrderService), so they are removed rather than repaired.
+ * Its readers were a second, partial copy of ExtensionRequestsController's queries (no amount or
+ * payment fields) that nothing called, so they went too.
  *
  * Run: wp eval-file tests/test-extension-request-service-has-no-dead-paths.php
  *
@@ -25,7 +27,8 @@ foreach ( array( 'create', 'approve', 'reject' ) as $method ) {
 }
 $check( 'status constants are still there for the REST controller and ExtensionOrderService', 'pending' === $class::STATUS_PENDING && 'approved' === $class::STATUS_APPROVED && 'rejected' === $class::STATUS_REJECTED );
 
-$svc = new $class();
-$check( 'readers still work', null === $svc->get( 999999999 ) && array() === $svc->get_by_order( 999999999 ) && null === $svc->get_pending( 999999999 ) );
+foreach ( array( 'get', 'get_by_order', 'get_pending', 'format_request', 'get_statuses' ) as $method ) {
+	$check( "no second reader {$method}() beside the REST controller", ! method_exists( $class, $method ) );
+}
 
 echo $fails ? "FAILED: {$fails}\n" : "OK\n";

@@ -9,7 +9,7 @@
  * the code reported it queued. The retry also fired for every failed mail on
  * the site - password resets included - copying it into the actions table.
  * Both jobs now carry only a key to a stashed payload, and only our own mail
- * is retried.
+ * is retried. A held job whose payload is gone sends nothing.
  *
  * Run: wp eval-file tests/test-mail-jobs-carry-no-mail-in-args.php
  *
@@ -106,5 +106,14 @@ if ( $held ) {
 }
 $check( 'and is emailed with the whole message', 1 === count( $sent ) && false !== strpos( (string) $sent[0]['message'], $marker ), count( $sent ) . ' sent' );
 delete_transient( $cooldown );
+
+// 5. The same job firing again (its payload already taken) sends nothing, not an empty message.
+$sent = array();
+if ( $held_args ) {
+	do_action_ref_array( 'wpss_send_delayed_message_email', $held_args );
+}
+$check( 'a held job that runs twice does not send a second, empty email', array() === $sent, count( $sent ) . ' sent' );
+delete_transient( $cooldown );
+remove_filter( 'wpss_should_skip_message_email', '__return_false' );
 
 echo $fails ? "\n$fails FAILED\n" : "\nALL PASS\n";

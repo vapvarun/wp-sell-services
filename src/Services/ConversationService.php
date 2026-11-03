@@ -373,14 +373,19 @@ class ConversationService {
 			 */
 			do_action( 'wpss_message_sent', $message, $conversation );
 
-			/**
-			 * Fires for email notification on new order message.
-			 *
-			 * @param int    $order_id  Order ID.
-			 * @param int    $sender_id Sender user ID.
-			 * @param string $content   Message content.
-			 */
-			do_action( 'wpss_new_order_message', $conversation->order_id, $message->sender_id, $message->content );
+			// A delivery or revision request already has its own email; only chat is a "new message".
+			if ( $message->is_chat() ) {
+				/**
+				 * Fires for email notification on a new order chat message.
+				 *
+				 * Not fired for deliveries or revision requests, which send their own email.
+				 *
+				 * @param int    $order_id  Order ID.
+				 * @param int    $sender_id Sender user ID.
+				 * @param string $content   Message content.
+				 */
+				do_action( 'wpss_new_order_message', $conversation->order_id, $message->sender_id, $message->content );
+			}
 		}
 
 		return $message;
