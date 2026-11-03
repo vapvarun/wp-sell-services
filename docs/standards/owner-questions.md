@@ -214,3 +214,9 @@ When a card is bounced, reopened, or a customer finds what QA did not:
 | T-85 | When a card is supposed to sit **inset from the section**, is the coloured box itself inset, or only the text inside it? *(card 10417579719)* | Measure the pending Extra Work card's left/right inset from its section at 1440/1024/390 against the Extra Work CTA section | Inset px of the coloured box |
 | C-78 | When a buyer is **waiting for offline payment confirmation**, does the extra-work heading still say the quote was declined? | Pay an extension offline; open the extension page while status is `pending_payment` | Heading + waiting notice on the same screen |
 | C-79 | Does **page 2 of Woo My Services** show the next rows, or repeat page 1? *(card 10422089720)* | Vendor with 26+ services; My Account → My Services; click 2 | First-card title changes; count < 24 |
+
+## Added 2026-11-03 — WP Sell Services 1.9.2 card-QA (Reign Left Panel)
+
+| Id | Question | How to check | Evidence |
+|---|---|---|---|
+| T-86 | When a theme ships a **second, optional chrome rail** (Reign Left Panel), did I assign the menu the reporter assigned before calling the two-nav layout unreproduced? *(card 10469984984 — `panel-menu` at 0 hid the rail; assigning Primary menu 17 painted `#reign-menu-panel` 80px beside `.wpss-dashboard__sidebar`)* | Read `get_nav_menu_locations()['panel-menu']`. Assign the reporter's menu, reload Dashboard at 1440, measure both rails, then restore the location | Panel width + dashboard sidebar `left`, before and after assign |
