@@ -764,6 +764,59 @@ class EarningsService {
 	 * @return array Result with success status.
 	 */
 	public function request_withdrawal( int $vendor_id, float $amount, string $method, array $details = array() ): array {
+		$written = $this->write_withdrawal( $vendor_id, $amount, $method, $details, false );
+
+		if ( empty( $written['success'] ) ) {
+			return $written;
+		}
+
+		$withdrawal_id = (int) $written['withdrawal_id'];
+
+		// Notify admin (respects email settings) and give the vendor a row.
+		( new EmailService() )->send_withdrawal_notification( $vendor_id, $amount, $withdrawal_id );
+		( new NotificationService() )->send(
+			$vendor_id,
+			'withdrawal_requested',
+			array(
+				'withdrawal_id' => $withdrawal_id,
+				'amount'        => $amount,
+				'action_url'    => wpss_get_dashboard_url( 'earnings' ),
+			)
+		);
+
+		/**
+		 * Fires when withdrawal is requested.
+		 *
+		 * @param int   $withdrawal_id Withdrawal ID.
+		 * @param int   $vendor_id     Vendor user ID.
+		 * @param float $amount        Amount.
+		 */
+		do_action( 'wpss_withdrawal_requested', $withdrawal_id, $vendor_id, $amount );
+
+		return array(
+			'success'       => true,
+			'message'       => __( 'Withdrawal request submitted successfully.', 'wp-sell-services' ),
+			'withdrawal_id' => $withdrawal_id,
+		);
+	}
+
+	/**
+	 * The one withdrawal writer: payout destination, minimum, one open request
+	 * and balance, all checked inside the same lock as the insert.
+	 *
+	 * Manual requests and the auto-withdrawal run both write through here. The
+	 * auto run used to insert on its own and skipped every one of these rules:
+	 * no lock, an amount read before its loop, no minimum, unvalidated details,
+	 * and a "one open request" rule that ignored manual requests.
+	 *
+	 * @param int    $vendor_id Vendor user ID.
+	 * @param float  $amount    Amount; ignored for an auto run, which takes the balance read under the lock.
+	 * @param string $method    Withdrawal method ('' = the saved profile's).
+	 * @param array  $details   Method details; empty = the saved profile's.
+	 * @param bool   $is_auto   Whether the auto-withdrawal run is asking.
+	 * @return array{success: bool, message?: string, code?: string, withdrawal_id?: int, amount?: float}
+	 */
+	private function write_withdrawal( int $vendor_id, float $amount, string $method, array $details, bool $is_auto ): array {
 		// Where the money goes. Details sent with the request are checked and
 		// become the payout profile; otherwise the saved profile is used. A
 		// request with neither is refused, so the admin is never handed a
@@ -783,19 +836,6 @@ class EarningsService {
 				'success' => false,
 				'code'    => $details->get_error_code(),
 				'message' => $details->get_error_message(),
-			);
-		}
-
-		// Check minimum withdrawal.
-		$min_withdrawal = self::get_min_withdrawal_amount();
-		if ( $amount < $min_withdrawal ) {
-			return array(
-				'success' => false,
-				'message' => sprintf(
-					/* translators: %s: minimum withdrawal amount */
-					__( 'Minimum withdrawal amount is %s.', 'wp-sell-services' ),
-					wpss_format_price( $min_withdrawal )
-				),
 			);
 		}
 
@@ -848,6 +888,26 @@ class EarningsService {
 
 		$summary = $this->get_summary( $vendor_id );
 
+		// The auto run withdraws what is available now, not what it read before
+		// its loop began.
+		if ( $is_auto ) {
+			$amount = (float) $summary['available_balance'];
+		}
+
+		$min_withdrawal = self::get_min_withdrawal_amount();
+		if ( $amount < $min_withdrawal ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'code'    => 'below_minimum',
+				'message' => sprintf(
+					/* translators: %s: minimum withdrawal amount */
+					__( 'Minimum withdrawal amount is %s.', 'wp-sell-services' ),
+					wpss_format_price( $min_withdrawal )
+				),
+			);
+		}
+
 		// Check available balance.
 		if ( $amount > $summary['available_balance'] ) {
 			$wpdb->query( 'ROLLBACK' );
@@ -867,9 +927,10 @@ class EarningsService {
 				'method'     => sanitize_key( $method ),
 				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
 				'status'     => self::WITHDRAWAL_PENDING,
+				'is_auto'    => $is_auto ? 1 : 0,
 				'created_at' => current_time( 'mysql', true ),
 			),
-			array( '%d', '%f', '%s', '%s', '%s', '%s' )
+			array( '%d', '%f', '%s', '%s', '%s', '%d', '%s' )
 		);
 
 		if ( ! $result ) {
@@ -882,33 +943,10 @@ class EarningsService {
 
 		$wpdb->query( 'COMMIT' );
 
-		$withdrawal_id = (int) $wpdb->insert_id;
-
-		// Notify admin (respects email settings) and give the vendor a row.
-		( new EmailService() )->send_withdrawal_notification( $vendor_id, $amount, $withdrawal_id );
-		( new NotificationService() )->send(
-			$vendor_id,
-			'withdrawal_requested',
-			array(
-				'withdrawal_id' => $withdrawal_id,
-				'amount'        => $amount,
-				'action_url'    => wpss_get_dashboard_url( 'earnings' ),
-			)
-		);
-
-		/**
-		 * Fires when withdrawal is requested.
-		 *
-		 * @param int   $withdrawal_id Withdrawal ID.
-		 * @param int   $vendor_id     Vendor user ID.
-		 * @param float $amount        Amount.
-		 */
-		do_action( 'wpss_withdrawal_requested', $withdrawal_id, $vendor_id, $amount );
-
 		return array(
 			'success'       => true,
-			'message'       => __( 'Withdrawal request submitted successfully.', 'wp-sell-services' ),
-			'withdrawal_id' => $withdrawal_id,
+			'withdrawal_id' => (int) $wpdb->insert_id,
+			'amount'        => $amount,
 		);
 	}
 
@@ -1676,12 +1714,7 @@ class EarningsService {
 
 		foreach ( $eligible as $vendor ) {
 			// Create automatic withdrawal request.
-			$result = $this->create_auto_withdrawal(
-				$vendor['vendor_id'],
-				$vendor['available_balance'],
-				$vendor['payout_method'],
-				$vendor['payout_details']
-			);
+			$result = $this->create_auto_withdrawal( $vendor['vendor_id'] );
 
 			if ( $result['success'] ) {
 				++$processed;
@@ -1691,7 +1724,7 @@ class EarningsService {
 
 			$results[] = array(
 				'vendor_id' => $vendor['vendor_id'],
-				'amount'    => $vendor['available_balance'],
+				'amount'    => $result['amount'] ?? $vendor['available_balance'],
 				'success'   => $result['success'],
 				'message'   => $result['message'],
 			);
@@ -1724,58 +1757,27 @@ class EarningsService {
 	/**
 	 * Create automatic withdrawal request.
 	 *
-	 * @param int    $vendor_id Vendor user ID.
-	 * @param float  $amount    Amount to withdraw.
-	 * @param string $method    Withdrawal method.
-	 * @param array  $details   Method details (account info).
+	 * @param int $vendor_id Vendor user ID.
 	 * @return array Result with success status.
 	 */
-	private function create_auto_withdrawal( int $vendor_id, float $amount, string $method, array $details = array() ): array {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_withdrawals';
-
-		// Check for any pending auto withdrawal for this vendor.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$existing = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table}
-				WHERE vendor_id = %d AND status IN (%s, %s) AND is_auto = 1",
-				$vendor_id,
-				self::WITHDRAWAL_PENDING,
-				self::WITHDRAWAL_APPROVED
-			)
-		);
-
-		if ( $existing > 0 ) {
+	private function create_auto_withdrawal( int $vendor_id ): array {
+		// A suspended or banned vendor's balance waits for the owner, not the schedule.
+		$blocked = wpss_vendor_status_block( $vendor_id );
+		if ( $blocked ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Vendor already has a pending auto withdrawal.', 'wp-sell-services' ),
+				'message' => $blocked->get_error_message(),
 			);
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$result = $wpdb->insert(
-			$table,
-			array(
-				'vendor_id'  => $vendor_id,
-				'amount'     => $amount,
-				'method'     => sanitize_key( $method ),
-				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
-				'status'     => self::WITHDRAWAL_PENDING,
-				'is_auto'    => 1,
-				'created_at' => current_time( 'mysql', true ),
-			),
-			array( '%d', '%f', '%s', '%s', '%s', '%d', '%s' )
-		);
+		$written = $this->write_withdrawal( $vendor_id, 0.0, '', array(), true );
 
-		if ( ! $result ) {
-			return array(
-				'success' => false,
-				'message' => __( 'Failed to create auto withdrawal request.', 'wp-sell-services' ),
-			);
+		if ( empty( $written['success'] ) ) {
+			return $written;
 		}
 
-		$withdrawal_id = (int) $wpdb->insert_id;
+		$withdrawal_id = (int) $written['withdrawal_id'];
+		$amount        = (float) $written['amount'];
 
 		// Notify vendor.
 		$notification_service = new NotificationService();
@@ -1807,6 +1809,7 @@ class EarningsService {
 			'success'       => true,
 			'message'       => __( 'Auto withdrawal request created successfully.', 'wp-sell-services' ),
 			'withdrawal_id' => $withdrawal_id,
+			'amount'        => $amount,
 		);
 	}
 
