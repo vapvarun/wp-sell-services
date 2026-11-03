@@ -118,6 +118,15 @@ class EmailService {
 	public const RETRY_HOOK = 'wpss_email_retry';
 
 	/**
+	 * Transient prefix for a scheduled job's mail payload.
+	 *
+	 * Action Scheduler drops (logs and returns 0 for) any action whose args
+	 * encode to more than 8000 characters, so a job that carried the mail
+	 * body itself was silently never queued for a long message.
+	 */
+	private const PAYLOAD_PREFIX = 'wpss_mail_job_';
+
+	/**
 	 * Type of the mail currently inside wp_mail(), for the failure listener.
 	 *
 	 * @var string
@@ -1470,12 +1479,17 @@ class EmailService {
 	 *
 	 * @since 1.7.0
 	 *
-	 * @param int    $order_id  Order ID.
-	 * @param int    $sender_id Sender user ID.
-	 * @param string $message   Message body.
+	 * @param int    $order_id    Order ID.
+	 * @param int    $sender_id   Sender user ID.
+	 * @param string $message     Message body, on a job queued before 1.9.2.
+	 * @param string $payload_key Key of the stashed message body.
 	 * @return void
 	 */
-	public function send_delayed_message_email( int $order_id, int $sender_id, string $message ): void {
+	public function send_delayed_message_email( int $order_id, int $sender_id, string $message, string $payload_key = '' ): void {
+		if ( '' !== $payload_key ) {
+			$message = (string) ( self::take_payload( $payload_key )[0] ?? '' );
+		}
+
 		$order = wpss_get_order( $order_id );
 
 		if ( ! $order ) {
@@ -1543,7 +1557,7 @@ class EmailService {
 			\WPSellServices\Services\Scheduler::schedule_single(
 				'wpss_send_delayed_message_email',
 				time() + ( $delay * MINUTE_IN_SECONDS ),
-				array( $order_id, $sender_id, $message )
+				array( $order_id, $sender_id, '', self::stash_payload( array( $message ) ) )
 			);
 
 			return true;
@@ -2517,7 +2531,10 @@ class EmailService {
 		 */
 		do_action( 'wpss_email_failed', $error, self::$sending_type, self::$retrying );
 
-		if ( self::$retrying || '' === $to ) {
+		// Only our own mail is retried. Another plugin's mail (a password
+		// reset, a shop receipt) is that plugin's to retry, and queuing it
+		// copied its contents into the actions table.
+		if ( self::$retrying || '' === $to || '' === self::$sending_type ) {
 			return;
 		}
 
@@ -2525,12 +2542,45 @@ class EmailService {
 			self::RETRY_HOOK,
 			time() + 10 * MINUTE_IN_SECONDS,
 			array(
-				$data['to'] ?? '',
-				(string) ( $data['subject'] ?? '' ),
-				(string) ( $data['message'] ?? '' ),
-				$data['headers'] ?? array(),
+				self::stash_payload(
+					array(
+						$data['to'] ?? '',
+						(string) ( $data['subject'] ?? '' ),
+						(string) ( $data['message'] ?? '' ),
+						$data['headers'] ?? array(),
+					)
+				),
 			)
 		);
+	}
+
+	/**
+	 * Keep a scheduled job's payload out of its args.
+	 *
+	 * Stored as a transient (shortcut: a persistent object cache that evicts
+	 * it loses that one job; move to a table if retries ever need a guarantee).
+	 *
+	 * @param array $payload Job payload.
+	 * @return string Key to pass as the job's argument.
+	 */
+	private static function stash_payload( array $payload ): string {
+		$key = wp_generate_uuid4();
+		set_transient( self::PAYLOAD_PREFIX . $key, $payload, DAY_IN_SECONDS );
+
+		return $key;
+	}
+
+	/**
+	 * Take a stashed payload, once.
+	 *
+	 * @param string $key Key from stash_payload().
+	 * @return array|null Payload, or null when it is gone.
+	 */
+	private static function take_payload( string $key ): ?array {
+		$payload = get_transient( self::PAYLOAD_PREFIX . $key );
+		delete_transient( self::PAYLOAD_PREFIX . $key );
+
+		return is_array( $payload ) ? $payload : null;
 	}
 
 	/**
@@ -2538,13 +2588,26 @@ class EmailService {
 	 *
 	 * @since 1.7.1
 	 *
-	 * @param string|string[] $to      Recipient(s).
-	 * @param string          $subject Subject.
-	 * @param string          $message Body.
-	 * @param string|string[] $headers Headers.
+	 * Queued with one argument, the payload key. Jobs queued before 1.9.2
+	 * carry the four mail arguments themselves.
+	 *
+	 * @param string|string[] $to      Payload key, or recipient(s) on a pre-1.9.2 job.
+	 * @param string          $subject Subject (pre-1.9.2 job).
+	 * @param string          $message Body (pre-1.9.2 job).
+	 * @param string|string[] $headers Headers (pre-1.9.2 job).
 	 * @return void
 	 */
-	public static function retry( $to, string $subject, string $message, $headers = array() ): void {
+	public static function retry( $to, string $subject = '', string $message = '', $headers = array() ): void {
+		if ( 1 === func_num_args() ) {
+			$payload = self::take_payload( (string) $to );
+
+			if ( null === $payload ) {
+				return;
+			}
+
+			list( $to, $subject, $message, $headers ) = $payload;
+		}
+
 		self::$retrying = true;
 		wp_mail( $to, $subject, $message, $headers );
 		self::$retrying = false;

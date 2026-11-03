@@ -3086,15 +3086,16 @@ final class Plugin {
 		// handlers above.
 		add_action(
 			'wpss_send_delayed_message_email',
-			static function ( $order_id = 0, $sender_id = 0, $message = '' ): void {
+			static function ( $order_id = 0, $sender_id = 0, $message = '', $payload_key = '' ): void {
 				( new \WPSellServices\Services\EmailService() )->send_delayed_message_email(
 					(int) $order_id,
 					(int) $sender_id,
-					(string) $message
+					(string) $message,
+					(string) $payload_key
 				);
 			},
 			10,
-			3
+			4
 		);
 
 		// Status change hooks.
