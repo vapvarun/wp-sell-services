@@ -35,7 +35,7 @@ Pages → All Pages.
 | `services_page` | Services | `services` |
 | `vendors_page` | Vendors | `vendors` |
 | `dashboard` | Dashboard | `dashboard` |
-| `become_vendor` | Become a Vendor | `become-vendor` |
+| `become_vendor` | Become a Vendor | `become-a-vendor` (the router also accepts `become-vendor`) |
 | `cart` | Service Cart | `service-cart` |
 | `checkout` | Service Checkout | `service-checkout` |
 
