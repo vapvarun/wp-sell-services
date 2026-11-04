@@ -168,6 +168,12 @@ $check( 'suspended vendor receives one mail', 1 === count( $suspended ) );
 $check( '  whose subject says suspended', ! empty( $suspended ) && false !== stripos( $suspended[0]['subject'], 'suspend' ) );
 $check( '  and an in-app row of its own type', 1 === $rows( $vendor, 'vendor_suspended' ) );
 
+// A notification's mail carries the site name in its subject, like every mail EmailService composes itself.
+$mails = array();
+$ns->create( $vendor, NotificationService::TYPE_DISPUTE_RESOLVED, 'Dispute resolved', 'Matrix subject check.' );
+$resolved_mail = $mails_to( $vendor_email );
+$check( 'a notification mail subject starts with the site name, once', ! empty( $resolved_mail ) && str_starts_with( $resolved_mail[0]['subject'], '[' . wpss_get_platform_name() . '] Dispute resolved' ) && 1 === substr_count( $resolved_mail[0]['subject'], '[' . wpss_get_platform_name() . ']' ) );
+
 // --- 5. events that used to produce nothing -----------------------------------
 do_action( 'wpss_review_reply_created', $review_id );
 $check( 'review reply notifies the reviewer', 1 === $rows( $buyer, 'review_reply' ) );

@@ -29,8 +29,8 @@ require_once __DIR__ . '/exit-on-fail.php';
 
 $fails  = 0;
 $passes = 0;
-$check  = static function ( string $label, bool $ok ) use ( &$fails, &$passes ) {
-	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . "\n";
+$check  = static function ( string $label, bool $ok, string $detail = '' ) use ( &$fails, &$passes ) {
+	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . ( $ok || '' === $detail ? '' : ' - ' . $detail ) . "\n";
 	$ok ? $passes++ : $fails++;
 };
 
@@ -146,6 +146,34 @@ foreach ( $files as $path ) {
 }
 sort( $btn_owners );
 $check( '.wpss-btn base rule is declared only in design-system.css and the admin sheet', array( 'admin.css', 'design-system.css' ) === $btn_owners );
+
+// --- 5. public pages draw buttons with .wpss-btn, and an outline reads the same on each ---
+// Become a Vendor carried its own .wpss-vr__btn (10px radius, 15px type) beside the shared button, and
+// three page sheets gave the outline a darker rest colour than design-system.css, while the archive's
+// link reset outranked them all and painted Clear All in the theme link colour.
+$private_buttons = array();
+$outline_drift   = array();
+foreach ( $files as $path ) {
+	$rel  = str_replace( array( WPSS_PLUGIN_DIR, defined( 'WPSS_PRO_PLUGIN_DIR' ) ? WPSS_PRO_PLUGIN_DIR : WPSS_PLUGIN_DIR ), '', $path );
+	$code = (string) preg_replace( '#/\*.*?\*/#s', '', (string) file_get_contents( $path ) );
+	// wp-admin screens and the dashboard banners (unified-dashboard.css) are not public pages.
+	$public = ! str_starts_with( basename( $path ), 'admin' ) && ! str_contains( $rel, '/Admin/' ) && 'assets/css/unified-dashboard.css' !== $rel;
+	if ( $public && preg_match_all( '/\.wpss-[a-z0-9-]+__btn(?:--[a-z]+)?\s*\{/', $code, $m ) ) {
+		$private_buttons[] = $rel . ': ' . implode( ', ', array_unique( $m[0] ) );
+	}
+	if ( str_ends_with( $path, '.css' ) && preg_match_all( '/\.wpss-btn--outline(?::visited)?\s*\{[^}]*?[^-]color:\s*([^;]+);/', $code, $m ) ) {
+		foreach ( $m[1] as $value ) {
+			if ( ! str_starts_with( trim( str_replace( '!important', '', $value ) ), 'var(--wpss-text-secondary' ) ) {
+				$outline_drift[] = $rel . ': ' . trim( $value );
+			}
+		}
+	}
+	if ( str_ends_with( $path, '.css' ) && preg_match( '/a:not\((?![^{]*\.wpss-btn)[^{]*\)\s*\{[^}]*color:/', $code ) && str_contains( $code, '.wpss-btn--outline' ) ) {
+		$outline_drift[] = $rel . ': a plain-link colour rule that does not exclude .wpss-btn';
+	}
+}
+$check( 'no public page defines a button component of its own', empty( $private_buttons ), implode( ' | ', $private_buttons ) );
+$check( 'an outline button at rest is --wpss-text-secondary on every page sheet', empty( $outline_drift ), implode( ' | ', $outline_drift ) );
 
 $check( '.wpss-btn--outline is defined in exactly one stylesheet', 1 === count( $owners ) );
 $check( '  and that stylesheet is design-system.css', array( 'design-system.css' ) === $owners );

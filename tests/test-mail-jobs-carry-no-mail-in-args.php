@@ -82,7 +82,8 @@ $check( "another plugin's failed mail is not queued", array() === array_diff( $j
 $refuse = false;
 $sent   = array();
 global $wpdb;
-$order_id = (int) $wpdb->get_var( "SELECT o.id FROM {$wpdb->prefix}wpss_orders o JOIN {$wpdb->users} c ON c.ID = o.customer_id JOIN {$wpdb->users} v ON v.ID = o.vendor_id WHERE o.customer_id <> o.vendor_id ORDER BY o.id DESC LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// An order with no thread yet: a thread the vendor has read rightly holds the mail back.
+$order_id = (int) $wpdb->get_var( "SELECT o.id FROM {$wpdb->prefix}wpss_orders o JOIN {$wpdb->users} c ON c.ID = o.customer_id JOIN {$wpdb->users} v ON v.ID = o.vendor_id WHERE o.customer_id <> o.vendor_id AND NOT EXISTS ( SELECT 1 FROM {$wpdb->prefix}wpss_conversations cv WHERE cv.order_id = o.id ) ORDER BY o.id DESC LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $order    = wpss_get_order( $order_id );
 $check( 'found an order between two people', null !== $order );
 $to       = get_userdata( (int) $order->vendor_id )->user_email;

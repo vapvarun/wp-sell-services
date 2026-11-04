@@ -362,11 +362,13 @@ Two rules matter when extending the UI:
 
 _Since 1.9.2._ The marketplace colour follows your site. The first of these that is set wins:
 
-1. **Your own CSS.** Setting `--wpss-primary` (for example in Customizer > Additional CSS) recolours every button, chip and tint, because the other shades are derived from it:
+1. **Your own CSS.** Setting `--wpss-primary` (for example in Customizer > Additional CSS) recolours every button, chip and tint, because the other shades are derived from it. Set `--wpss-on-primary` with it, to the text colour that reads on your fill. Otherwise the button text keeps following your theme, and a theme whose dark mode uses dark button text puts that dark text on your fill:
 
     ```css
-    html:root { --wpss-primary: #15803d; }
+    html:root { --wpss-primary: #15803d; --wpss-on-primary: #ffffff; }
     ```
+
+    For a colour that works in both modes without this, use the `wpss_brand_color` filter below, which works out the text shades itself.
 
 2. **A brand colour** from the `wpss_brand_color` filter. Pro White Label uses it for its Primary colour. The plugin works out readable text and button-label shades for light and dark mode.
 

@@ -351,7 +351,8 @@
 .wpss-single-request .wpss-btn--outline,
 .wpss-single-request .wpss-btn--outline:visited {
 	background: transparent !important;
-	color: var(--wpss-text, #1f2937) !important;
+	/* Same rest colour as .wpss-btn--outline in design-system.css. */
+	color: var(--wpss-text-secondary, #374151) !important;
 	border-color: var(--wpss-border-control, #878e98) !important;
 }
 

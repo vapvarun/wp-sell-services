@@ -73,4 +73,21 @@ $two   = array( $make_order(), $make_order() );
 do_action( 'wpss_offline_multi_orders_created', $two, $buyer );
 $check( 'multi-order checkout: buyer gets one email per order', 2 === count( $to( get_userdata( $buyer )->user_email ) ), (string) count( $to( get_userdata( $buyer )->user_email ) ) );
 
+// An owner who left the instructions blank: the email says how the buyer will hear, like the order page, not an empty section.
+$blank = static function ( $value ) {
+	$value                 = is_array( $value ) ? $value : array();
+	$value['instructions'] = '';
+	unset( $value['methods'] );
+	return $value;
+};
+add_filter( 'option_wpss_offline_settings', $blank );
+add_filter( 'default_option_wpss_offline_settings', $blank );
+$mails = array();
+$three = $make_order();
+do_action( 'wpss_offline_order_created', $three, wpss_get_order( $three ) );
+$b = $to( get_userdata( $buyer )->user_email );
+$check( 'blank instructions: the buyer email says the owner will send them', isset( $b[0] ) && str_contains( $b[0]['message'], 'The site owner will send you payment instructions by email.' ) );
+remove_filter( 'option_wpss_offline_settings', $blank );
+remove_filter( 'default_option_wpss_offline_settings', $blank );
+
 echo $fails ? "FAILED: {$fails}\n" : "OK\n";

@@ -40,15 +40,15 @@
 
 /* Reset theme link styles.
    Scoped to plain links inside the archive chrome (header, results bar). The
-   service-card link is deliberately excluded — its colour is owned by the card
+   service-card link and buttons are deliberately excluded — its colour is owned by the card
    component (frontend.css) so card text never turns link-blue / Reign-white. */
-.wpss-services-archive a:not(.wpss-service-card__link):not(.wpss-service-card__link *) {
+.wpss-services-archive a:not(.wpss-btn):not(.wpss-service-card__link):not(.wpss-service-card__link *) {
 	color: var(--wpss-primary-accent);
 	text-decoration: none;
 	transition: color 0.2s ease;
 }
 
-.wpss-services-archive a:not(.wpss-service-card__link):not(.wpss-service-card__link *):hover {
+.wpss-services-archive a:not(.wpss-btn):not(.wpss-service-card__link):not(.wpss-service-card__link *):hover {
 	color: var(--wpss-primary-hover);
 }
 
@@ -82,7 +82,8 @@
 .wpss-services-archive .wpss-btn--outline,
 .wpss-services-archive .wpss-btn--outline:visited {
 	background-color: transparent;
-	color: var(--wpss-text);
+	/* Same rest colour as .wpss-btn--outline in design-system.css. */
+	color: var(--wpss-text-secondary);
 	/* Full shorthand: the theme zeroes button borders, so colour alone left none.
 	   2px is the design system's width for every button. */
 	border: 2px solid var(--wpss-border-control, #878e98);

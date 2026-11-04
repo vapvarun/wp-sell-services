@@ -119,7 +119,8 @@
 .wpss-single-service .wpss-btn--outline,
 .wpss-single-service .wpss-btn--outline:visited {
 	background-color: transparent;
-	color: var(--wpss-text);
+	/* Same rest colour as .wpss-btn--outline in design-system.css. */
+	color: var(--wpss-text-secondary);
 	/* Full shorthand: the theme zeroes button borders, so colour alone left none.
 	   2px is the design system's width for every button. */
 	border: 2px solid var(--wpss-border-control, #878e98);

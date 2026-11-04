@@ -1172,7 +1172,7 @@ class Shortcodes {
 					<h2 class="wpss-vr__title"><?php esc_html_e( 'You\'re already a vendor', 'wp-sell-services' ); ?></h2>
 					<p class="wpss-vr__desc"><?php esc_html_e( 'Your vendor account is active. Head to your dashboard to manage services, view orders, and track earnings.', 'wp-sell-services' ); ?></p>
 					<div class="wpss-vr__actions">
-						<a href="<?php echo esc_url( $dashboard_url ); ?>" class="wpss-vr__btn wpss-vr__btn--primary">
+						<a href="<?php echo esc_url( $dashboard_url ); ?>" class="wpss-btn wpss-btn--primary">
 							<?php esc_html_e( 'Go to Dashboard', 'wp-sell-services' ); ?>
 						</a>
 					</div>
@@ -1216,7 +1216,7 @@ class Shortcodes {
 						</p>
 
 						<div class="wpss-vr__actions">
-							<button type="button" class="wpss-vr__btn wpss-vr__btn--primary wpss-vr__btn--lg" data-action="become-vendor">
+							<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg" data-action="become-vendor">
 								<?php esc_html_e( 'Register as Vendor', 'wp-sell-services' ); ?>
 							</button>
 						</div>
@@ -1444,22 +1444,7 @@ class Shortcodes {
 			border-radius: 8px; font-size: 13px; margin-bottom: 24px;
 		}
 		.wpss-vr__actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-		.wpss-vr__btn {
-			box-sizing: border-box; max-width: 100%; text-align: center;
-			display: inline-flex; align-items: center; justify-content: center;
-			padding: 12px 28px; font-size: 15px; font-weight: 600;
-			border-radius: 10px; text-decoration: none; cursor: pointer;
-			transition: all 0.15s ease; border: 2px solid transparent;
-		}
-		.wpss-vr__btn--primary {
-			background: var(--wpss-primary, #4f46e5); color: var(--wpss-on-primary, #fff); border-color: var(--wpss-primary, #4f46e5);
-		}
-		.wpss-vr__btn--primary:hover { background: var(--wpss-primary-hover, #4338ca); border-color: var(--wpss-primary-hover, #4338ca); color: var(--wpss-on-primary, #fff); }
-		.wpss-vr__btn--outline {
-			background: transparent; color: var(--wpss-text-secondary, #374151); border-color: var(--wpss-gray-300, #d1d5db);
-		}
-		.wpss-vr__btn--outline:hover { border-color: var(--wpss-text-hint, #9ca3af); color: var(--wpss-text, #111827); }
-		.wpss-vr__btn--lg { padding: 14px 36px; font-size: 16px; }
+		/* Buttons are the shared .wpss-btn from design-system.css, so this page matches every other one. */
 
 		/* Inline public signup form (B1 from baseline-2026-04-25.md). */
 		.wpss-signup-form { text-align: left; max-width: 440px; margin: 0 auto; }
@@ -1557,7 +1542,7 @@ class Shortcodes {
 		.wpss-vr__card-sub { font-size: 14px; color: var(--wpss-text-muted, #6b7280); line-height: 1.5; margin: 0 0 24px; }
 		.wpss-vr--pitch .wpss-signup-form { max-width: none; }
 		.wpss-vr--pitch .wpss-vr__actions { justify-content: stretch; }
-		.wpss-vr--pitch .wpss-vr__actions .wpss-vr__btn { width: 100%; }
+		.wpss-vr--pitch .wpss-vr__actions .wpss-btn { width: 100%; }
 
 		@media (max-width: 900px) {
 			.wpss-vr__body { grid-template-columns: minmax(0, 1fr); }
@@ -1570,7 +1555,7 @@ class Shortcodes {
 		@media (max-width: 480px) {
 			.wpss-vr__card { padding: 32px 24px; }
 			.wpss-vr__actions { flex-direction: column; }
-			.wpss-vr__btn { width: 100%; }
+			.wpss-vr__actions .wpss-btn { width: 100%; }
 			.wpss-vr__stat { flex-basis: 100%; max-width: none; }
 		}
 		</style>

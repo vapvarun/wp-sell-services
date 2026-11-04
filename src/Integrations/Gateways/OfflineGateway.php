@@ -503,6 +503,55 @@ class OfflineGateway extends AbstractPaymentGateway {
 	}
 
 	/**
+	 * The instructions a buyer pays an offline order with, placeholders filled.
+	 *
+	 * One lookup for the order page, the checkout answer and the how-to-pay email: the method the
+	 * buyer chose (snapshot on the order), then the global block for orders placed before named
+	 * methods existed, then the configured method of the same id.
+	 *
+	 * @param object $order Order object.
+	 * @return array{method: ?array, text: string} Text is '' when the owner wrote none.
+	 */
+	private function resolve_buyer_instructions( object $order ): array {
+		$method       = self::get_order_method( $order );
+		$instructions = (string) ( $method['instructions'] ?? '' );
+
+		if ( '' === $instructions ) {
+			$instructions = (string) ( $this->settings['instructions'] ?? '' );
+		}
+
+		if ( '' === $instructions && isset( $method['id'] ) ) {
+			foreach ( self::get_methods( false ) as $configured ) {
+				if ( $configured['id'] === $method['id'] ) {
+					$instructions = (string) $configured['instructions'];
+					break;
+				}
+			}
+		}
+
+		$replacements = array(
+			'{order_number}' => $order->order_number,
+			'{order_id}'     => (string) $order->id,
+			'{total}'        => wpss_format_price( (float) $order->total, $order->currency ),
+			'{currency}'     => $order->currency,
+		);
+
+		return array(
+			'method' => $method,
+			'text'   => str_replace( array_keys( $replacements ), array_values( $replacements ), $instructions ),
+		);
+	}
+
+	/**
+	 * What the buyer reads when the owner wrote no payment instructions.
+	 *
+	 * @return string
+	 */
+	private static function no_instructions_text(): string {
+		return __( 'The site owner will send you payment instructions by email.', 'wp-sell-services' );
+	}
+
+	/**
 	 * Render payment instructions after order is placed.
 	 *
 	 * @param int $order_id Order ID.
@@ -515,27 +564,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			return '';
 		}
 
-		// The buyer gets the instructions for the method they actually picked,
-		// not the one generic block. Falls back to the global instructions for
-		// orders placed before named methods existed.
-		$order_method = self::get_order_method( $order );
-		$instructions = ( $order_method && '' !== $order_method['instructions'] )
-			? $order_method['instructions']
-			: ( $this->settings['instructions'] ?? '' );
-
-		// Replace placeholders in instructions.
-		$replacements = array(
-			'{order_number}' => $order->order_number,
-			'{order_id}'     => (string) $order->id,
-			'{total}'        => wpss_format_price( (float) $order->total, $order->currency ),
-			'{currency}'     => $order->currency,
-		);
-
-		$instructions = str_replace(
-			array_keys( $replacements ),
-			array_values( $replacements ),
-			$instructions
-		);
+		$instructions = $this->resolve_buyer_instructions( $order )['text'];
 
 		ob_start();
 		?>
@@ -544,7 +573,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 				<?php esc_html_e( 'Payment instructions', 'wp-sell-services' ); ?>
 			</h3>
 			<div class="wpss-offline-instructions-content">
-				<?php echo wp_kses_post( wpautop( $instructions ) ); ?>
+				<?php echo '' === $instructions ? '<p>' . esc_html( self::no_instructions_text() ) . '</p>' : wp_kses_post( wpautop( $instructions ) ); ?>
 			</div>
 			<p style="margin-bottom: 0; color: #856404;">
 				<strong><?php esc_html_e( 'Order Reference:', 'wp-sell-services' ); ?></strong>
@@ -1326,48 +1355,17 @@ class OfflineGateway extends AbstractPaymentGateway {
 		 * get_order_method() existed for exactly this and had no callers - the
 		 * snapshot was being written and never read.
 		 */
-		$method       = self::get_order_method( $order );
-		$instructions = $method['instructions'] ?? '';
+		$resolved     = $this->resolve_buyer_instructions( $order );
+		$method       = $resolved['method'];
+		$instructions = $resolved['text'];
 
 		if ( '' === $instructions ) {
-			// Orders placed before named methods existed, and sites that never
-			// opened the editor.
-			$instructions = $this->settings['instructions'] ?? '';
-		}
-
-		if ( '' === $instructions ) {
-			// Nothing on the order and nothing global - but the owner may still
-			// have named methods, in which case show the one the order is on.
-			foreach ( self::get_methods( false ) as $configured ) {
-				if ( isset( $method['id'] ) && $configured['id'] === $method['id'] ) {
-					$instructions = $configured['instructions'];
-					break;
-				}
-			}
-		}
-
-		if ( empty( $instructions ) ) {
-			// No instructions written anywhere (the owner never filled them
-			// in): say how the buyer will find out, rather than nothing.
+			// No instructions written anywhere: say how the buyer will find out, rather than nothing.
 			?>
-			<p class="wpss-offline-instructions-fallback"><?php esc_html_e( 'The site owner will send you payment instructions by email.', 'wp-sell-services' ); ?></p>
+			<p class="wpss-offline-instructions-fallback"><?php echo esc_html( self::no_instructions_text() ); ?></p>
 			<?php
 			return;
 		}
-
-		// Replace placeholders in instructions
-		$replacements = array(
-			'{order_number}' => $order->order_number,
-			'{order_id}'     => (string) $order->id,
-			'{total}'        => wpss_format_price( (float) $order->total, $order->currency ),
-			'{currency}'     => $order->currency,
-		);
-
-		$instructions = str_replace(
-			array_keys( $replacements ),
-			array_values( $replacements ),
-			$instructions
-		);
 
 		// Display the instructions
 		?>
