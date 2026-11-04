@@ -41,7 +41,19 @@ $check( 'rating_low: lowest first, unrated still last', $order( 'rating_low' ) =
 $check( 'popular: most sold first', $order( 'popular' ) === array( $a, $b, $c, $u ) );
 $check( 'popular_low: least sold first, unsold still last', $order( 'popular_low' ) === array( $c, $b, $a, $u ) );
 
-$html = (string) ( wpss_render_services_grid( array( 'orderBy' => 'rating', 'order' => 'ASC', 'limit' => 50, 'columns' => 3 ) )['html'] ?? '' );
+// A service nobody has reviewed may store 0; it is unrated, not the lowest rated (and 0 sold is unsold).
+$z = ( $f->service )( 'publish' );
+update_post_meta( $z, '_wpss_rating_average', 0 );
+update_post_meta( $z, '_wpss_order_count', 0 );
+$mine[] = $z;
+$order  = static function ( string $sort ) use ( $mine ): array {
+	$q = new WP_Query( wpss_apply_service_sort( array( 'post_type' => 'wpss_service', 'post_status' => 'publish', 'post__in' => $mine, 'posts_per_page' => 10, 'fields' => 'ids', 'no_found_rows' => true ), $sort ) );
+	return array_map( 'intval', $q->posts );
+};
+$check( 'rating_low: a stored 0 sorts with the unrated, last', array( $c, $b, $a ) === array_slice( $order( 'rating_low' ), 0, 3 ) );
+$check( 'popular_low: a stored 0 sorts with the unsold, last', array( $c, $b, $a ) === array_slice( $order( 'popular_low' ), 0, 3 ) );
+
+$html = (string) ( wpss_render_services_grid( array( 'orderBy' => 'rating', 'order' => 'ASC', 'postsPerPage' => 500, 'columns' => 3 ) )['html'] ?? '' );
 $pos  = static fn( int $id ): int|false => strpos( $html, 'post-' . $id ) ?: strpos( $html, 'data-service-id="' . $id . '"' );
 $check( 'the grid honours Order = Ascending for Rating', false !== $pos( $c ) && false !== $pos( $a ) && $pos( $c ) < $pos( $a ) );
 

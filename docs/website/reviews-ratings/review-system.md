@@ -114,7 +114,7 @@ Ratings update automatically whenever a review is added, edited, or its status c
 - **Search results** -- Star rating and review count on each service card.
 - **Vendor cards** -- Average rating displayed alongside the vendor's name.
 
-Reviews can be sorted by most recent, highest rated, lowest rated, or most helpful.
+On the site, reviews always list newest first. Through the REST API, `GET /reviews` can sort by date or by rating, highest or lowest first.
 
 ## Review Impact on Vendors
 

@@ -93,7 +93,10 @@ function wpss_get_gallery_video_url( $raw ): string {
  *
  * @since 1.8.0
  *
- * @return array<string,array{key:string,order:string}> Sort slug => meta key and direction.
+ * A rating or sales count of 0 means none yet (`zero_is_none`), so it sorts with the
+ * services that have no value at all; a price of 0 is a real price.
+ *
+ * @return array<string,array{key:string,order:string,zero_is_none?:bool}> Sort slug => meta key and direction.
  */
 function wpss_service_meta_sorts(): array {
 	return array(
@@ -106,20 +109,24 @@ function wpss_service_meta_sorts(): array {
 			'order' => 'DESC',
 		),
 		'rating'      => array(
-			'key'   => '_wpss_rating_average',
-			'order' => 'DESC',
+			'key'          => '_wpss_rating_average',
+			'order'        => 'DESC',
+			'zero_is_none' => true,
 		),
 		'rating_low'  => array(
-			'key'   => '_wpss_rating_average',
-			'order' => 'ASC',
+			'key'          => '_wpss_rating_average',
+			'order'        => 'ASC',
+			'zero_is_none' => true,
 		),
 		'popular'     => array(
-			'key'   => '_wpss_order_count',
-			'order' => 'DESC',
+			'key'          => '_wpss_order_count',
+			'order'        => 'DESC',
+			'zero_is_none' => true,
 		),
 		'popular_low' => array(
-			'key'   => '_wpss_order_count',
-			'order' => 'ASC',
+			'key'          => '_wpss_order_count',
+			'order'        => 'ASC',
+			'zero_is_none' => true,
 		),
 	);
 }
@@ -188,7 +195,9 @@ function wpss_service_sort_clauses( array $clauses, \WP_Query $query ): array {
 	if ( false === strpos( $clauses['groupby'], 'ID' ) ) {
 		$clauses['groupby'] = trim( "{$wpdb->posts}.ID " . ( '' !== $clauses['groupby'] ? ', ' . $clauses['groupby'] : '' ) );
 	}
-	$clauses['orderby'] = 'wpss_sort.meta_value IS NULL, CAST( wpss_sort.meta_value AS DECIMAL( 12, 2 ) ) ' . $sorts[ $sort ]['order'] . ", {$wpdb->posts}.post_date DESC, {$wpdb->posts}.ID DESC";
+	// No value sorts last both ways; for a rating or a sales count, 0 is no value (a service nobody has reviewed is not the lowest rated).
+	$none               = empty( $sorts[ $sort ]['zero_is_none'] ) ? 'wpss_sort.meta_value IS NULL' : '( wpss_sort.meta_value IS NULL OR CAST( wpss_sort.meta_value AS DECIMAL( 12, 2 ) ) = 0 )';
+	$clauses['orderby'] = $none . ', CAST( wpss_sort.meta_value AS DECIMAL( 12, 2 ) ) ' . $sorts[ $sort ]['order'] . ", {$wpdb->posts}.post_date DESC, {$wpdb->posts}.ID DESC";
 
 	return $clauses;
 }
