@@ -1283,5 +1283,14 @@
     "reports": "wpss_display_time_sql() and wpss_site_day_sql() group report days in the display timezone.",
     "rest": "Use the existing wpss_rest_date(); no second REST date helper."
   },
-  "refresh_note": " 1.9.2: a revision request (order or milestone) rings only its dedicated bell; the wpss_message_sent listener in Core/Plugin.php skips Message::TYPE_REVISION. 1.9.2: window.wpssBillingFields() in checkout.js is the one billing collector; Stripe, PayPal and Pro Razorpay post it and save via wpss_save_billing_from_request() before the order exists. 1.9.2: wpss_get_order_payment_refusal() is the one payability answer for every pay door (checkout intent, pay page, offline/test gateways, wpss_ensure_pay_order, REST /orders/{id}/pay, extension checkout_url); an extension is on hold while its parent is outside ExtensionOrderService::ACTIVE_PARENT_STATUSES. 1.9.2: admin Orders list type filter gains suborder_type=main (wpss_order_rows_sql), shared by rows and tab counts; dashboard order tiles link to it."
+  "refresh_note": " 1.9.2: a revision request (order or milestone) rings only its dedicated bell; the wpss_message_sent listener in Core/Plugin.php skips Message::TYPE_REVISION. 1.9.2: window.wpssBillingFields() in checkout.js is the one billing collector; Stripe, PayPal and Pro Razorpay post it and save via wpss_save_billing_from_request() before the order exists. 1.9.2: wpss_get_order_payment_refusal() is the one payability answer for every pay door (checkout intent, pay page, offline/test gateways, wpss_ensure_pay_order, REST /orders/{id}/pay, extension checkout_url); an extension is on hold while its parent is outside ExtensionOrderService::ACTIVE_PARENT_STATUSES. 1.9.2: admin Orders list type filter gains suborder_type=main (wpss_order_rows_sql), shared by rows and tab counts; dashboard order tiles link to it.",
+  "licensing_signed_updates_1_9_2": {
+    "_note": "Signed update flow (wbcom-services signed-updates checklist, Batch 2). Every licence and update request for Free and Pro goes through these; never call the store with wp_remote_post.",
+    "host": "WPSS_LICENCE_HOST = https://updates.wbcomdesigns.com; the SDK falls back to https://wbcomdesigns.com (fallback_url on both registrations).",
+    "helper": "\\WPSellServices\\wpss_licence_request( array $params ): object|false, in wp-sell-services.php. Pass edd_action, license, item_id only. false = no host answered.",
+    "sdk": "libs/edd-sl-sdk = vapvarun/edd-sl-sdk tag 1.0.4-wbcom.3 (registers 1.0.4.3). Never patch it here; see libs/edd-sl-sdk/WBCOM-PATCHES.md.",
+    "package_signatures": "libs/package-signatures 1.0.1, registered from wp-sell-services.php for wp-sell-services and wp-sell-services-pro; key wbcom-2026-1, mode warn, log option package_signatures_log.",
+    "preset_activation": "admin_init, through the helper; options wpss_license_key + wpss_preset_activated; 12h backoff transient wpss_preset_activation_retry; owner opt-out constant WPSS_NO_LICENSE_PHONE_HOME.",
+    "tests_never_call_store": "tests/no-live-store.php (both bootstraps + CI mu-plugin), asserted by tests/Integration/NoLiveStoreTest.php and the CI install step."
+  }
 }

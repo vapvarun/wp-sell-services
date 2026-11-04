@@ -195,6 +195,12 @@ jobs:
           wp config create --path=wp --dbname=wp_tests --dbuser=root --dbpass=root --dbhost=127.0.0.1
           wp core install --path=wp --url=http://localhost --title=CI --admin_user=admin --admin_password=admin --admin_email=admin@example.com --skip-email
           mv plugin "$PLUGIN_DIR"
+          # No licence or update request from this install reaches the live store
+          # (the contract scripts and the coverage map run admin code). Installed
+          # before activation; the eval below fails the job if it is not loading.
+          mkdir -p wp/wp-content/mu-plugins
+          cp "$PLUGIN_DIR/tests/no-live-store.php" wp/wp-content/mu-plugins/wpss-no-live-store.php
+          wp eval 'exit( defined( "WPSS_NO_LICENSE_PHONE_HOME" ) && is_wp_error( wp_remote_get( "https://updates.wbcomdesigns.com/" ) ) ? 0 : 1 );' --path=wp
           wp plugin activate wp-sell-services --path=wp
 
       # Three receipt-privacy assertions are HTTP round trips against the site's
