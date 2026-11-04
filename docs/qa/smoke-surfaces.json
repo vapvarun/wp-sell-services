@@ -28,7 +28,8 @@
   "checkout": {
    "free": [
     "src/Checkout/**",
-    "templates/checkout/**"
+    "templates/checkout/**",
+    "src/Integrations/Standalone/StandaloneCheckoutProvider.php"
    ],
    "pro": [
     "src/Integrations/*/*Checkout*"
@@ -189,6 +190,19 @@
     "assets/js/blocks*.js"
    ],
    "pro": []
+  },
+  "request-page": {
+   "free": [
+    "templates/single-request.php"
+   ],
+   "pro": []
+  },
+  "pro-admin-settings": {
+   "free": [],
+   "pro": [
+    "assets/js/admin.js",
+    "assets/js/admin.min.js"
+   ]
   }
  }
 }
