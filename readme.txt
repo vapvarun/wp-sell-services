@@ -291,6 +291,7 @@ Payments recorded from outside the plugin, secrets in wp-config.php, and one loo
 * Improve  - EDD and FluentCart checkout are labelled beta and off by default everywhere.
 * Improve  - Reign shows one navigation on plugin pages.
 * Improve  - Category cards show the saved icon, and a service title shows in full on its page.
+* Improve  - Licence and update checks use updates.wbcomdesigns.com and fall back to wbcomdesigns.com when it cannot be reached.
 * Fix      - Lowest rated and least sold sorts keep unreviewed and unsold services last.
 * Fix      - PayPal checkout saves the billing details the buyer typed.
 * Fix      - A revision request notifies the vendor once, and each delivery and revision sends one notice.
@@ -318,6 +319,7 @@ Payments recorded from outside the plugin, secrets in wp-config.php, and one loo
 * Security - The unused public live search endpoint is removed.
 * Security - mark-paid refuses a payment method that names a gateway the plugin runs itself.
 * Security - Database lock names carry the site's table prefix, so sites sharing a database server do not block each other.
+* Security - Updates for WP Sell Services and Pro are checked against the release signature before they install.
 * Dev      - Audit log rows are written only by listeners on documented actions.
 * Compat   - Aligned with WP Sell Services Pro 1.9.2. Install both updates together.
 

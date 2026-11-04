@@ -555,13 +555,39 @@ register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\wpss_deactivate' );
 // the product family: WP Sell Services Pro registers its own product on the
 // same registry hook and requires this same file (require_once makes the double
 // load safe). It is NOT a Composer dependency — see
-// libs/edd-sl-sdk/WBCOM-PATCHES.md for the three patches we carry and the rule
-// that keeps it out of vendor/.
+// libs/edd-sl-sdk/WBCOM-PATCHES.md for where the copy comes from.
 //
 // The free product ships with a preset, unlimited-activation key so updates
 // work with zero customer setup. License state never gates functionality — it
 // only authorises update downloads.
+//
+// Every licence and update request for the pair goes to WPSS_LICENCE_HOST; the
+// SDK falls back to https://wbcomdesigns.com when that host cannot be reached.
 // ---------------------------------------------------------------------------
+
+/**
+ * Licence and update host for WP Sell Services and WP Sell Services Pro.
+ */
+define( 'WPSS_LICENCE_HOST', 'https://updates.wbcomdesigns.com' );
+
+/**
+ * One licence-server request (activate, deactivate or check) for the free plugin
+ * and Pro. Goes through the bundled SDK, so it uses the same host as update
+ * checks and falls back to the old host when the new one cannot be reached.
+ *
+ * @param array $params EDD Software Licensing parameters (edd_action, license, item_id).
+ * @return object|false Decoded reply, or false when no host answered.
+ */
+function wpss_licence_request( array $params ) {
+	if ( ! class_exists( '\EasyDigitalDownloads\Updater\Requests\API' ) ) {
+		return false;
+	}
+	// Name the fallback here as well: on an early request the SDK registry has not run yet.
+	if ( method_exists( '\EasyDigitalDownloads\Updater\Requests\API', 'set_fallback' ) ) {
+		\EasyDigitalDownloads\Updater\Requests\API::set_fallback( WPSS_LICENCE_HOST, 'https://wbcomdesigns.com' );
+	}
+	return ( new \EasyDigitalDownloads\Updater\Requests\API( WPSS_LICENCE_HOST ) )->make_request( $params );
+}
 
 /**
  * Preset license key for the free plugin (unlimited activations).
@@ -581,13 +607,14 @@ add_action(
 	function ( $registry ) {
 		$registry->register(
 			array(
-				'id'          => 'wp-sell-services',
-				'url'         => 'https://wbcomdesigns.com',
-				'item_id'     => WPSS_EDD_ITEM_ID,
-				'version'     => WPSS_VERSION,
-				'file'        => WPSS_PLUGIN_FILE,
-				'license'     => WPSS_PRESET_LICENSE_KEY,
-				'option_name' => 'wpss_license_key',
+				'id'           => 'wp-sell-services',
+				'url'          => WPSS_LICENCE_HOST,
+				'fallback_url' => 'https://wbcomdesigns.com',
+				'item_id'      => WPSS_EDD_ITEM_ID,
+				'version'      => WPSS_VERSION,
+				'file'         => WPSS_PLUGIN_FILE,
+				'license'      => WPSS_PRESET_LICENSE_KEY,
+				'option_name'  => 'wpss_license_key',
 			)
 		);
 	}
@@ -617,14 +644,45 @@ if ( file_exists( WPSS_PLUGIN_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php' )
 	);
 }
 
+// Package Signatures (libs/package-signatures, vapvarun/package-signatures):
+// checks that each WP Sell Services and Pro update package carries the release
+// signature before WordPress installs it. Warn mode: the result is logged
+// (option package_signatures_log) and the update installs either way. Free
+// registers Pro as well, so one copy of the module covers the pair.
+if ( file_exists( WPSS_PLUGIN_DIR . 'libs/package-signatures/package-signatures.php' ) ) {
+	require_once WPSS_PLUGIN_DIR . 'libs/package-signatures/package-signatures.php';
+	$wpss_signed_products = array(
+		'wp-sell-services'     => plugin_basename( WPSS_PLUGIN_FILE ),
+		'wp-sell-services-pro' => 'wp-sell-services-pro/wp-sell-services-pro.php',
+	);
+	foreach ( $wpss_signed_products as $wpss_signed_product => $wpss_signed_plugin ) {
+		package_signatures_register(
+			array(
+				'product'  => $wpss_signed_product,
+				'plugin'   => $wpss_signed_plugin,
+				'hosts'    => array( 'wbcomdesigns.com', 'updates.wbcomdesigns.com' ),
+				'keys'     => array( 'wbcom-2026-1' => 'kr+2P1WqRbENpZw0BXZmwFnA2tMLi6MlHbBa6jB13U4=' ),
+				'mode'     => 'warn',
+				'fallback' => 'https://wbcomdesigns.com/package-signatures/{product}/{version}/',
+			)
+		);
+	}
+	unset( $wpss_signed_products, $wpss_signed_product, $wpss_signed_plugin );
+}
+
 // Activate the preset key once so the store recognises this site for updates.
 //
-// Runs at most once per day until it succeeds: without the backoff an
-// unreachable store meant a blocking 15-second POST on EVERY admin page load,
-// forever.
+// At most one attempt per 12 hours until the store answers "valid": without the
+// backoff an unreachable store meant a blocking request on EVERY admin page
+// load. An attempt made before the SDK loaded returns false and is retried later.
 add_action(
 	'admin_init',
 	function () {
+		// Owner opt-out (air-gapped / privacy-strict installs); the test suite sets it too.
+		if ( defined( 'WPSS_NO_LICENSE_PHONE_HOME' ) && WPSS_NO_LICENSE_PHONE_HOME ) {
+			return;
+		}
+
 		$activated = 'wpss_preset_activated';
 		$attempted = 'wpss_preset_activation_retry';
 
@@ -634,29 +692,19 @@ add_action(
 
 		// Claim the window up front so a failure (or a fatal mid-request)
 		// cannot produce a retry storm across concurrent admin requests.
-		set_transient( $attempted, 1, DAY_IN_SECONDS );
+		set_transient( $attempted, 1, 12 * HOUR_IN_SECONDS );
 
 		update_option( 'wpss_license_key', WPSS_PRESET_LICENSE_KEY, false );
 
-		$response = wp_remote_post(
-			'https://wbcomdesigns.com',
+		$body = wpss_licence_request(
 			array(
-				'timeout' => 15,
-				'body'    => array(
-					'edd_action' => 'activate_license',
-					'license'    => WPSS_PRESET_LICENSE_KEY,
-					'item_id'    => WPSS_EDD_ITEM_ID,
-					'url'        => home_url(),
-				),
+				'edd_action' => 'activate_license',
+				'license'    => WPSS_PRESET_LICENSE_KEY,
+				'item_id'    => WPSS_EDD_ITEM_ID,
 			)
 		);
 
-		if ( is_wp_error( $response ) ) {
-			return;
-		}
-
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
-		if ( 'valid' !== ( $body['license'] ?? '' ) ) {
+		if ( ! $body || 'valid' !== ( $body->license ?? '' ) ) {
 			return;
 		}
 
