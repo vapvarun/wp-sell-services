@@ -81,4 +81,4 @@ longer be used as the account password to mint more tokens. `GET` and
 ---
 
 Full detail in each plugin's `readme.txt` changelog. For what is in each tier,
-see [Free vs Pro](free-vs-pro.md) and the [Feature catalog](../feature-catalog.md).
+see [Free vs Pro](free-vs-pro.md) and the [Feature catalog](feature-catalog.md).

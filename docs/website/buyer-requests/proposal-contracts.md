@@ -98,7 +98,7 @@ get the standard order-completed email and the Rate Your Experience
 prompt.
 
 See the full lock-step behaviour in the
-[Milestone Contracts](../order-management/milestones-wpss.md) doc.
+[Milestone Contracts](../order-management/milestones.md) doc.
 
 ## What happens at acceptance
 
@@ -121,7 +121,7 @@ Once the buyer accepts:
   individually, just like the predefined phases.
 - Extensions are **not** available on a milestone contract - that flow
   is reserved for catalog orders (see
-  [Paid Extensions](../order-management/extensions-wpss.md)).
+  [Paid Extensions](../order-management/extensions.md)).
 
 ## Tips
 
@@ -148,7 +148,7 @@ Once the buyer accepts:
 
 ## Related documentation
 
-- [Milestone Contracts](../order-management/milestones-wpss.md)
-- [Paid Extensions](../order-management/extensions-wpss.md)
+- [Milestone Contracts](../order-management/milestones.md)
+- [Paid Extensions](../order-management/extensions.md)
 - [Submitting Proposals (Vendors)](submitting-proposals.md)
 - [Managing Requests & Converting to Orders](managing-requests.md)

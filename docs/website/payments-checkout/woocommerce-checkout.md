@@ -212,7 +212,7 @@ Two consequences worth planning around:
   WooCommerce that nobody has paid yet. That is expected, not a bug.
 - **The lock-step guard does not apply here.** The resolver checks only that the
   row is unpaid. See
-  [Milestone Contracts](../order-management/milestones-wpss.md#the-lock-step-rule-and-where-it-actually-holds).
+  [Milestone Contracts](../order-management/milestones.md#the-lock-step-rule-and-where-it-actually-holds).
 
 ### The two link keys
 

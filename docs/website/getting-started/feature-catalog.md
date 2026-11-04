@@ -91,7 +91,7 @@ local copy is removed. If an upload fails, the local copy is kept and served.
 
 | Feature | Status |
 |---|---|
-| Recurring / subscription billing for services | **Not yet.** The code is in Pro but every surface is switched off and there is no setting to turn it on. Do not buy Pro for recurring billing. See [Recurring Services](order-management/recurring-services.md). |
+| Recurring / subscription billing for services | **Not yet.** The code is in Pro but every surface is switched off and there is no setting to turn it on. Do not buy Pro for recurring billing. See [Recurring Services](../order-management/recurring-services.md). |
 
 ---
 
@@ -100,6 +100,6 @@ local copy is removed. If an upload fails, the local copy is kept and served.
 Entries are added only after the feature has been exercised, not when the code
 lands. A row here is a promise; an owner reads it before buying.
 
-Related: [Free vs Pro](getting-started/free-vs-pro.md) ·
+Related: [Free vs Pro](free-vs-pro.md) ·
 [Capabilities](https://github.com/vapvarun/wp-sell-services/blob/main/CAPABILITIES.md) · `audit/FEATURE_AUDIT.md` for the
 developer-side inventory.
