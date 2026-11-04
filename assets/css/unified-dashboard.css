@@ -3278,8 +3278,9 @@ select.wpss-input option,
 }
 
 .wpss-status-closed {
-	background: var(--wpss-wp-admin-bg, #f0f0f1);
-	color: var(--wpss-wp-admin-text-muted, #50575e);
+	/* Frontend chip: the design-system greys flip in dark mode; the wp-admin ones did not. */
+	background: var(--wpss-bg-muted, #f3f4f6);
+	color: var(--wpss-text-muted, #6b7280);
 }
 
 /* ==========================================================================

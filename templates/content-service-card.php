@@ -166,32 +166,10 @@ do_action( 'wpss_before_service_card', $service_id );
 				<?php endif; ?>
 				<?php
 				if ( $card_vendor_profile ) :
-					$card_tier = $card_vendor_profile->tier;
-
-					if ( \WPSellServices\Models\VendorProfile::TIER_NEW !== $card_tier ) {
-						// Earned-tier badge — Rising / Top Rated / Pro.
-						$card_tier_label  = $card_vendor_profile->get_tier_label();
-						$card_known_tiers = array( 'rising', 'top_rated', 'pro' );
-						if ( in_array( $card_tier, $card_known_tiers, true ) ) {
-							// Colour comes from the .wpss-seller-badge--{tier} modifier in
-							// frontend.css (token-driven), not an inline style attribute.
-							?>
-							<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $card_tier ); ?>" title="<?php echo esc_attr( wpss_seller_level_note( (int) $card_vendor_profile->user_id, $card_tier ) ); ?>">
-								<?php echo esc_html( $card_tier_label ); ?>
-							</span>
-							<?php
-						}
-					} elseif ( ! $card_vendor_profile->is_profile_complete() ) {
-						// F7b (baseline-2026-04-25.md): "New seller" badge for
-						// TIER_NEW vendors who haven't filled tagline / bio /
-						// country. Soft signal — vendor is still listed; buyer
-						// just sees the badge as a "ask more questions" hint.
-						?>
-						<span class="wpss-seller-badge wpss-seller-badge--new">
-							<?php esc_html_e( 'New vendor', 'wp-sell-services' ); ?>
-						</span>
-						<?php
-					}
+					$wpss_badge_profile = $card_vendor_profile;
+					$wpss_badge_size    = '';
+					$wpss_badge_full    = false;
+					include wpss_locate_template( 'partials/vendor-level-badge.php' );
 
 					// Vacation badge — only when on vacation AND a return date is set.
 					// Vacationing vendors are excluded from the archive query by

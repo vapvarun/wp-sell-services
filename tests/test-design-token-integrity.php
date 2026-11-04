@@ -264,6 +264,22 @@ foreach ( $files as $path ) {
 }
 $check( 'every .wpss-btn carries a variant', empty( $bare ), implode( ' | ', array_unique( $bare ) ) );
 
+// --- 9. frontend sheets never paint with a wp-admin ink ---------------------------------
+// --wpss-wp-admin-* are wp-admin's fixed greys and never flip. pro-teaser.css also styles the
+// frontend service wizard, and its text stayed #646970 on a dark dashboard (3.38:1); the dashboard's
+// "closed" chip stayed a light panel. wpss-tour.css is exempt: its frontend skin overrides each one.
+$admin_ink = array();
+foreach ( $files as $path ) {
+	$base = basename( $path );
+	if ( ! str_ends_with( $path, '.css' ) || str_starts_with( $base, 'admin' ) || in_array( $base, array( 'design-system.css', 'service-edit.css', 'wpss-tour.css' ), true ) ) {
+		continue;
+	}
+	if ( preg_match_all( '/var\(\s*--wpss-wp-admin-[a-z-]+/', (string) preg_replace( '#/\*.*?\*/#s', '', (string) file_get_contents( $path ) ), $m ) ) {
+		$admin_ink[] = $base . ': ' . implode( ', ', array_unique( $m[0] ) );
+	}
+}
+$check( 'no frontend sheet uses a --wpss-wp-admin-* colour', empty( $admin_ink ), implode( ' | ', $admin_ink ) );
+
 $check( 'an outline button at rest is --wpss-text-secondary on every page sheet', empty( $outline_drift ), implode( ' | ', $outline_drift ) );
 
 $check( '.wpss-btn--outline is defined in exactly one stylesheet', 1 === count( $owners ) );

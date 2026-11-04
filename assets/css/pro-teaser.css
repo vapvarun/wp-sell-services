@@ -75,7 +75,9 @@
 }
 
 .wpss-pro-teaser__text {
-	color: var(--wpss-wp-admin-text-secondary, #646970);
+	/* The teaser also shows on the frontend service wizard: a wp-admin ink stayed grey on a
+	   dark dashboard (3.38:1). --wpss-text-secondary flips with the mode. */
+	color: var(--wpss-text-secondary, #374151);
 	font-size: 13px;
 	margin: 0 0 12px;
 	line-height: 1.5;
