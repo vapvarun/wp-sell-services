@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.9.1
+Stable tag: 1.9.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -264,6 +264,59 @@ Three auto-calculated levels plus one admin-granted: New Vendor (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.9.2 - November 2026 =
+
+Payments recorded from outside the plugin, secrets in wp-config.php, and one look on every page.
+
+* New      - POST /orders/{id}/mark-paid lets an administrator's automation record a payment taken outside the plugin, with a developer guide for Flutterwave, Mobile Money and payment links.
+* New      - Stripe, PayPal and realtime secrets can be set as wp-config.php constants; the constant wins and its settings field locks.
+* New      - Settings > System > Trusted proxies tells the plugin which proxies or CDNs pass on the visitor's real address.
+* New      - Placing a bank-transfer order emails the buyer the payment instructions and tells the admin and the seller.
+* New      - The site owner is warned when the plugin's background jobs are more than an hour overdue.
+* New      - The wpss_gallery_video_first filter opens the service gallery on the video.
+* Improve  - Marketplace colours follow the site's theme, and every public page uses one button style.
+* Improve  - Pausing a service keeps it listed and stops new orders everywhere.
+* Improve  - The Vendors directory looks like the other discovery pages, and each vendor tile leads with the name.
+* Improve  - Filter and toolbar dropdowns size to their content on every theme, and dashboard sections line up on a phone and read in dark mode.
+* Improve  - Notification lists page by number on the dashboard, My Account and admin.
+* Improve  - The order page lists the tips and extensions paid on top, and shows a Discount or Price adjustment line when the lines do not add up to the total.
+* Improve  - A buyer-request order reads as a Project, and accepting a phased proposal sends one project-plan email instead of one per phase.
+* Improve  - Order chat picks up a conversation started after the page opened, checks for messages only while the tab is visible, and unread badges refresh without a reload.
+* Improve  - Message threads open on the newest message.
+* Improve  - Dashboard order counts open an Orders view that shows the same number.
+* Improve  - Sales Orders tells a suspended vendor why the menu shrank.
+* Improve  - On a store rail, the Payment Gateways tab links to the store's own payment settings.
+* Improve  - EDD and FluentCart checkout are labelled beta and off by default everywhere.
+* Improve  - Reign shows one navigation on plugin pages.
+* Improve  - Category cards show the saved icon, and a service title shows in full on its page.
+* Fix      - Lowest rated and least sold sorts keep unreviewed and unsold services last.
+* Fix      - PayPal checkout saves the billing details the buyer typed.
+* Fix      - A revision request notifies the vendor once, and each delivery and revision sends one notice.
+* Fix      - Completing a phased project no longer tells the vendor that a payment of zero will be released.
+* Fix      - An extension quote cannot be paid while its order is disputed or otherwise not active.
+* Fix      - A tip, extension or milestone phase no longer takes a review of its own.
+* Fix      - On WooCommerce, EDD or FluentCart the order popup quotes what the store charges.
+* Fix      - Closing an unpaid sub-order in any way cancels its store order.
+* Fix      - Scheduled order sweeps change only the orders whose status they checked.
+* Fix      - Long emails are retried after a failure, and long held messages are sent.
+* Fix      - Email sent while an order is being saved waits until the save completes.
+* Fix      - The extension-paid email shows the new deadline in the vendor's time zone.
+* Fix      - Order counters and flags no longer make a member a vendor.
+* Fix      - The bank-transfer placement email goes out once per order.
+* Fix      - Mark as Paid is offered for an unpaid phase, extension or tip with no payment method chosen.
+* Fix      - Automatic withdrawals pass the same checks as a vendor's own request.
+* Fix      - Vendor order counts refresh when an order is placed or changes status.
+* Fix      - Buyer Requests sort and the Filters drawer work on the archive.
+* Fix      - The settings page shows validation errors instead of always saying Settings saved.
+* Fix      - A ?vendor= link to a member who is not a vendor is kept out of search indexes.
+* Security - A service gallery video must be on YouTube or Vimeo, so a page view never contacts a host the vendor chose.
+* Security - Every way of saving a service meets the same moderation check, including republishing a draft and editing categories.
+* Security - The unused public live search endpoint is removed.
+* Security - mark-paid refuses a payment method that names a gateway the plugin runs itself.
+* Security - Database lock names carry the site's table prefix, so sites sharing a database server do not block each other.
+* Dev      - Audit log rows are written only by listeners on documented actions.
+* Compat   - Aligned with WP Sell Services Pro 1.9.2. Install both updates together.
 
 = 1.9.1 - October 2026 =
 
@@ -1069,6 +1122,9 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * WP 6.7+ compatible (lazy-loaded translations)
 
 == Upgrade Notice ==
+
+= 1.9.2 =
+Update Free and Pro together. No database change. Gateway and realtime secrets can now be set as wp-config.php constants.
 
 = 1.9.1 =
 Update Free and Pro together. The reviews table now allows reviews without an order, and Pro encrypts stored gateway and storage secrets on first load.
