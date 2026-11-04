@@ -20,7 +20,7 @@ Stripe, PayPal and realtime secrets can be set as constants in `wp-config.php`, 
 
 ## One look on every page
 
-Marketplace colours follow the site's theme, and every public page and dashboard form uses one button style. The Vendors directory looks like the other discovery pages, and each vendor tile leads with the name. Filter and toolbar dropdowns size to their content on every theme, and dashboard sections line up on a phone and read in dark mode. Category cards show the saved icon, and a service title shows in full on its page. Reign shows one navigation on plugin pages.
+Marketplace colours follow the site's theme, and every public page and dashboard form uses one button style. The Vendors directory looks like the other discovery pages, and each vendor tile leads with the name. A vendor's level badge, New vendor included, looks the same on service cards, the directory and the profile. Filter and toolbar dropdowns size to their content on every theme, and dashboard sections line up on a phone and read in dark mode. Category cards show the saved icon, and a service title shows in full on its page. Reign shows one navigation on plugin pages.
 
 ## Orders and messages
 

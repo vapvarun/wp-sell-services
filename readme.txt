@@ -278,6 +278,7 @@ Payments recorded from outside the plugin, secrets in wp-config.php, and one loo
 * Improve  - Marketplace colours follow the site's theme, and every public page and dashboard form uses one button style.
 * Improve  - Pausing a service keeps it listed and stops new orders everywhere.
 * Improve  - The Vendors directory looks like the other discovery pages, and each vendor tile leads with the name.
+* Improve  - A vendor's level badge, New vendor included, looks the same on service cards, the Vendors directory and the profile.
 * Improve  - Filter and toolbar dropdowns size to their content on every theme, and dashboard sections line up on a phone and read in dark mode.
 * Improve  - Notification lists page by number on the dashboard, My Account and admin.
 * Improve  - The order page lists the tips and extensions paid on top, and shows a Discount or Price adjustment line when the lines do not add up to the total.

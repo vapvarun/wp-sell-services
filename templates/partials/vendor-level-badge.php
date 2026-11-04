@@ -11,7 +11,12 @@
  * - $wpss_badge_size    string        '' (card), 'md' or 'lg'. Optional.
  * - $wpss_badge_full    bool          Long next-level note in the tooltip (profile page). Optional.
  *
- * @package WPSellServices
+ * This template can be overridden in your theme:
+ * yourtheme/wp-sell-services/partials/vendor-level-badge.php
+ *
+ * @package WPSellServices\Templates
+ * @since   1.9.2
+ * @version 1.9.2
  */
 
 defined( 'ABSPATH' ) || exit;

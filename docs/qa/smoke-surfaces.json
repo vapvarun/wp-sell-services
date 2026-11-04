@@ -133,7 +133,8 @@
     "templates/dashboard/sections/requests.php",
     "templates/dashboard/sections/reviews.php",
     "templates/dashboard/sections/sales.php",
-    "templates/dashboard/sections/services.php"
+    "templates/dashboard/sections/services.php",
+    "assets/css/pro-teaser*.css"
    ],
    "pro": []
   },
@@ -203,6 +204,15 @@
     "assets/js/admin.js",
     "assets/js/admin.min.js"
    ]
+  },
+  "vendor-badge": {
+   "free": [
+    "templates/partials/vendor-level-badge.php",
+    "templates/content-service-card.php",
+    "templates/partials/vendor-card.php",
+    "templates/vendor/profile.php"
+   ],
+   "pro": []
   }
  }
 }

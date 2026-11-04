@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var array $portfolio_items Array of portfolio item arrays.
  * @var int   $vendor_id       Vendor user ID.

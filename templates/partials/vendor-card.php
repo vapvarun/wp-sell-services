@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var int    $vendor_id         Vendor user ID.
  * @var object $vendor            Vendor WP_User object.
