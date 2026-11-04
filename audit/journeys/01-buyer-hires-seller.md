@@ -92,8 +92,9 @@ this point is correct.
 ### 8. Admin sees the order
 wp-admin → Orders → the new order.
 
-**Expect** the Service row reads `Request: {title}` and links to the buyer
-request post. **Not** "Deleted" — that is what `service_id = 0` produced before
+**Expect** the Service row reads the request title as a plain project name (no
+`Request:` prefix since 1.9.2, commit f466df71) and, in wp-admin, links to the
+buyer request post. **Not** "Deleted" — that is what `service_id = 0` produced before
 `get_service()` guarded the ID (card 10208199238, same root cause as 7).
 
 Same check on the admin **Recent Orders** table and the admin Orders list: every
