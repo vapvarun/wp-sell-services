@@ -91,5 +91,5 @@ If your selector doesn't match anything on the page, the step renders centered -
 
 ## Related
 
-- [Admin Guided Tour](../admin-tools/guided-tour.md) - the sister walkthrough on the WP admin side
+- [Admin Guided Tour](../admin-tools/admin-guided-tour.md) - the sister walkthrough on the WP admin side
 - [Buyer Dashboard Overview](../buyer-guide/buyer-dashboard.md) - reference for every section the tour covers

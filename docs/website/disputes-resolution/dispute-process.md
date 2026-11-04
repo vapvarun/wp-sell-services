@@ -117,5 +117,5 @@ Once a dispute is resolved and closed:
 ## Related Documentation
 
 - [Opening a Dispute](opening-a-dispute.md)
-- [Admin Dispute Mediation](admin-dispute-mediation.md)
+- [Admin Dispute Mediation](admin-mediation.md)
 - [Order Lifecycle](../order-management/order-lifecycle.md)

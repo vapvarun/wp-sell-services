@@ -13,7 +13,7 @@ up front.
 Milestone contracts live on **buyer-request orders only** - projects
 that started with a buyer posting a brief and a vendor responding with a
 custom proposal. For a fixed-price catalog service, use a
-[Paid Extension](extensions-wpss.md) instead. The two features are
+[Paid Extension](extensions.md) instead. The two features are
 mutually exclusive - a single order will only ever show one or the other.
 
 Milestone contracts work well when:
@@ -385,8 +385,8 @@ holds.
 
 ## Related documentation
 
-- [Paid Extensions](extensions-wpss.md)
+- [Paid Extensions](extensions.md)
 - [WooCommerce Checkout - paying a milestone, tip or extension](../payments-checkout/woocommerce-checkout.md#paying-a-milestone-tip-or-extension) - which platforms can take a phase payment at all
-- [Proposal Contracts (Fixed vs Milestone)](../buyer-requests/proposal-contracts-wpss.md)
+- [Proposal Contracts (Fixed vs Milestone)](../buyer-requests/proposal-contracts.md)
 - [Order Lifecycle & 11 Statuses](order-lifecycle.md)
 - [Deliveries & Revisions](deliveries-revisions.md)

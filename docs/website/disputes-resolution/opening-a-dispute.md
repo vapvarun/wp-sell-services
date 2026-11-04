@@ -122,6 +122,6 @@ You can only open one dispute per order. If new issues come up, add them as evid
 ## Related Documentation
 
 - [Dispute Process](dispute-process.md)
-- [Admin Dispute Mediation](admin-dispute-mediation.md)
+- [Admin Dispute Mediation](admin-mediation.md)
 - [Order Lifecycle](../order-management/order-lifecycle.md)
 - [Order Messaging](../order-management/order-messaging.md)
