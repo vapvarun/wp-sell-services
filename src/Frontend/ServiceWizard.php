@@ -1850,7 +1850,7 @@ class ServiceWizard {
 		// it is released when this request ends, so no exit path can leave it stuck.
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 0 )', 'wpss_publishing_' . $user_id . '_' . $service_id ) ) ) {
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 0 )', wpss_lock_name( 'wpss_publishing_' . $user_id . '_' . $service_id ) ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Your service is already being published. Please wait.', 'wp-sell-services' ) ) );
 		}
 

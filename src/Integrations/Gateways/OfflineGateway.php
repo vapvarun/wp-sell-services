@@ -939,6 +939,18 @@ class OfflineGateway extends AbstractPaymentGateway {
 
 		$payment_method = sanitize_key( $payment_method );
 		$payment_method = '' === $payment_method ? 'offline' : $payment_method;
+
+		// A registered gateway records its own charges, and a refund calls that gateway with the stored id,
+		// so a hand-typed "stripe" plus an invented id would send the refund to Stripe and fail.
+		if ( 'offline' !== $payment_method && isset( wpss()->get_payment_gateways()[ $payment_method ] ) ) {
+			return new \WP_Error(
+				'wpss_method_is_a_gateway',
+				/* translators: %s: payment method slug, for example stripe. */
+				sprintf( __( 'Payments through %s are recorded by that gateway itself. Name the method the money actually came through, or leave it empty for offline.', 'wp-sell-services' ), $payment_method ),
+				array( 'status' => 400 )
+			);
+		}
+
 		$transaction_id = '' === $transaction_id ? 'offline_manual_' . time() : $transaction_id;
 
 		if ( ! wpss_get_order_provider()->mark_as_paid( $order_id, $transaction_id, $payment_method ) ) {

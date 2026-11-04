@@ -89,6 +89,12 @@ $default = $make( 'standalone', 'pending_payment' );
 $call( $default );
 $check( 'method defaults to offline', 'offline' === $row( $default )->payment_method );
 
+// A gateway the plugin runs records its own charges; a refund would call it with an invented id.
+$claimed = $make( 'standalone', 'pending_payment' );
+$res     = $call( $claimed, array( 'transaction_id' => 'made-up', 'payment_method' => 'stripe' ) );
+$check( 'a registered gateway name is refused with 400', 400 === $res->get_status() && 'wpss_method_is_a_gateway' === ( $res->as_error() ? $res->as_error()->get_error_code() : '' ) );
+$check( 'and the order stays unpaid', 'pending' === $row( $claimed )->payment_status );
+
 remove_filter( 'pre_wp_mail', '__return_true' );
 $wpdb->query( "DELETE FROM {$table} WHERE id IN (" . implode( ',', array_map( 'intval', $ids ) ) . ')' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 

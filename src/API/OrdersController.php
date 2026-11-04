@@ -219,7 +219,7 @@ class OrdersController extends RestController {
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'payment_method' => array(
-							'description'       => __( 'Slug stored on the order, for example flutterwave. Defaults to offline.', 'wp-sell-services' ),
+							'description'       => __( 'Slug stored on the order, for example flutterwave. Defaults to offline. A gateway the plugin runs itself is refused.', 'wp-sell-services' ),
 							'type'              => 'string',
 							'default'           => 'offline',
 							'sanitize_callback' => 'sanitize_key',

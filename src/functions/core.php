@@ -109,6 +109,27 @@ function wpss_log( $message, string $level = 'info' ): void {
 }
 
 /**
+ * A MySQL named-lock name that belongs to this site.
+ *
+ * GET_LOCK names are server-wide, so two sites on one database server (or two
+ * subsites of a network) shared every lock: one site's payout batch or publish
+ * refused the other's. The table prefix makes the name the site's own. MySQL
+ * refuses a name over 64 characters, so a long one is hashed.
+ *
+ * @since 1.9.2
+ *
+ * @param string $key Lock key, for example wpss_publishing_12_34.
+ * @return string Lock name, at most 64 characters.
+ */
+function wpss_lock_name( string $key ): string {
+	global $wpdb;
+
+	$name = $wpdb->prefix . $key;
+
+	return strlen( $name ) > 64 ? 'wpss_' . md5( $name ) : $name;
+}
+
+/**
  * Sanitize a date string to a strict Y-m-d value or null.
  *
  * Accepts only a calendar-valid Y-m-d date that round-trips exactly; anything

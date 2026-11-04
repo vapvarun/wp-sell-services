@@ -63,7 +63,7 @@ $check( 'made a plan', $plan > 0 );
 
 $seed = static function ( string $stripe_id, string $period_end, ?string $cancelled_at = null ) use ( $wpdb, $table, $vendor, $plan, $service ) {
 	$wpdb->delete( $table, array( 'vendor_id' => $vendor ) );
-	$wpdb->insert( $table, array( 'vendor_id' => $vendor, 'plan_id' => $plan, 'stripe_subscription_id' => $stripe_id ?: null, 'status' => 'active', 'current_period_start' => gmdate( 'Y-m-d H:i:s', time() - 10 * DAY_IN_SECONDS ), 'current_period_end' => $period_end, 'cancelled_at' => $cancelled_at ) );
+	$wpdb->insert( $table, array( 'vendor_id' => $vendor, 'plan_id' => $plan, 'stripe_subscription_id' => $stripe_id ?: null, 'status' => 'active', 'current_period_start' => gmdate( 'Y-m-d H:i:s', time() - 10 * DAY_IN_SECONDS ), 'current_period_end' => '' === $period_end ? null : $period_end, 'cancelled_at' => $cancelled_at ) );
 	( new ReflectionMethod( $service, 'bust_vendor_cache' ) )->invoke( $service, $vendor );
 };
 $can_create = static fn() => (bool) apply_filters( 'wpss_vendor_can_create_service', true, $vendor );
@@ -95,6 +95,10 @@ $check( "Stripe's subscription.deleted ends it", ! $can_create() && 'cancelled' 
 $seed( '', $future );
 $service->cancel( $vendor );
 $check( 'a local plan ends when cancelled', ! $can_create() );
+
+// 5b. A cancel with no recorded period end has no paid time to honour: it ends at once.
+$seed( 'sub_qa', '', gmdate( 'Y-m-d H:i:s' ) );
+$check( 'a cancelled plan with no period end no longer lets the vendor create', ! $can_create() && ! VendorSubscriptionService::is_live( $service->get_vendor_subscription( $vendor ) ) );
 
 // 6. An active plan with no cancel and a period end in the past (renewal pending) stays live.
 $seed( 'sub_qa', gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) );

@@ -634,7 +634,7 @@ class CheckoutIntentService {
 		 * (Basecamp 10375173905). A named lock per transaction makes the second
 		 * caller wait, then find the first one's order.
 		 */
-		$lock = 'wpss_settle_' . md5( $gateway_id . '|' . $transaction_id );
+		$lock = wpss_lock_name( 'wpss_settle_' . md5( $gateway_id . '|' . $transaction_id ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$locked = '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 15 )', $lock ) );
 

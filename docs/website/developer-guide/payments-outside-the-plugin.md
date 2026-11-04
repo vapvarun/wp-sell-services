@@ -39,7 +39,7 @@ POST /wp-json/wpss/v1/orders/{id}/mark-paid
 | Field | Required | Meaning |
 |---|---|---|
 | `transaction_id` | No | The provider's reference. Stored on the order. Generated when empty. |
-| `payment_method` | No | A slug such as `flutterwave`. Stored on the order. Defaults to `offline`. |
+| `payment_method` | No | A slug such as `flutterwave`. Stored on the order. Defaults to `offline`. A gateway the plugin runs itself (`stripe`, `paypal`) is refused, because that gateway records its own payments. |
 
 Only an administrator can call it. Use an [application password](rest-api-overview.md) and HTTP Basic authentication, which Make and Zapier both support.
 
@@ -59,6 +59,7 @@ This does exactly what the **Mark as Paid** button on the admin order screen doe
 |---|---|
 | `200` | The order is now paid. |
 | `200` with `already_paid: true` | It was paid already. A retry changes nothing, so your automation can repeat the call safely. |
+| `400` | `payment_method` names a gateway the plugin runs itself. |
 | `401` / `403` | Not signed in, or not an administrator. |
 | `404` | No such order. |
 | `409` | The order is not waiting for payment, for example it was cancelled. |
