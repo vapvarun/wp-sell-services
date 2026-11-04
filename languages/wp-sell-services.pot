@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-04T05:49:17+00:00\n"
+"POT-Creation-Date: 2026-11-04T09:05:08+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -43,6 +43,84 @@ msgstr ""
 #. Author URI of the plugin
 #: wp-sell-services.php
 msgid "https://wbcomdesigns.com"
+msgstr ""
+
+#: content-service-card.php:126
+#: src/Frontend/Frontend.php:355
+#: templates/content-service-card.php:126
+#: templates/dashboard/sections/favorites.php:137
+msgid "Remove from favorites"
+msgstr ""
+
+#: content-service-card.php:127
+#: src/Frontend/Frontend.php:354
+#: templates/content-service-card.php:127
+msgid "Add to favorites"
+msgstr ""
+
+#. translators: %s: seller name
+#: content-service-card.php:154
+#: src/Admin/Admin.php:2758
+#: src/Admin/Admin.php:2769
+#: src/Admin/Admin.php:3472
+#: src/Admin/Metaboxes/BuyerRequestMetabox.php:193
+#: src/Admin/Pages/ServiceModerationPage.php:562
+#: src/Admin/Pages/WithdrawalsPage.php:599
+#: src/API/EarningsController.php:639
+#: src/Models/Message.php:174
+#: src/Services/ModerationService.php:606
+#: src/Services/ModerationService.php:620
+#: templates/content-service-card.php:154
+#: templates/dashboard/partials/order-row.php:125
+#: templates/emails/withdrawal-auto.php:40
+#: templates/emails/withdrawal-requested.php:40
+#: templates/single-request.php:323
+msgid "Unknown"
+msgstr ""
+
+#: content-service-card.php:163
+#: templates/content-service-card.php:163
+#: templates/partials/vendor-card.php:74
+msgid "Verified Vendor"
+msgstr ""
+
+#. translators: %s: formatted return date
+#: content-service-card.php:186
+#: templates/content-service-card.php:186
+#, php-format
+msgid "Back on %s"
+msgstr ""
+
+#. translators: %d: number of reviews
+#: content-service-card.php:236
+#: templates/content-service-card.php:236
+#, php-format
+msgid "(%d)"
+msgid_plural "(%d)"
+msgstr[0] ""
+msgstr[1] ""
+
+#: content-service-card.php:242
+#: templates/content-service-card.php:242
+msgid "New"
+msgstr ""
+
+#. translators: %d: delivery time in days
+#. translators: %d: number of days
+#: content-service-card.php:250
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1122
+#: templates/content-service-card.php:250
+#, php-format
+msgid "%d-day delivery"
+msgid_plural "%d-day delivery"
+msgstr[0] ""
+msgstr[1] ""
+
+#: content-service-card.php:273
+#: src/Blocks/FeaturedServices.php:281
+#: src/Frontend/ServiceWizard.php:1239
+#: templates/content-service-card.php:273
+msgid "Starting at"
 msgstr ""
 
 #: src/Admin/Admin.php:490
@@ -559,7 +637,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1709
 #: src/Frontend/Tour.php:432
 #: templates/myaccount/vendor-dashboard.php:196
-#: templates/partials/vendor-card.php:117
+#: templates/partials/vendor-card.php:111
 msgid "Orders"
 msgstr ""
 
@@ -1147,25 +1225,6 @@ msgstr ""
 
 #: src/Admin/Admin.php:2751
 msgid "Buyer:"
-msgstr ""
-
-#. translators: %s: seller name
-#: src/Admin/Admin.php:2758
-#: src/Admin/Admin.php:2769
-#: src/Admin/Admin.php:3472
-#: src/Admin/Metaboxes/BuyerRequestMetabox.php:193
-#: src/Admin/Pages/ServiceModerationPage.php:562
-#: src/Admin/Pages/WithdrawalsPage.php:599
-#: src/API/EarningsController.php:639
-#: src/Models/Message.php:174
-#: src/Services/ModerationService.php:606
-#: src/Services/ModerationService.php:620
-#: templates/content-service-card.php:154
-#: templates/dashboard/partials/order-row.php:125
-#: templates/emails/withdrawal-auto.php:40
-#: templates/emails/withdrawal-requested.php:40
-#: templates/single-request.php:323
-msgid "Unknown"
 msgstr ""
 
 #: src/Admin/Admin.php:2762
@@ -4460,7 +4519,7 @@ msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1168
 #: src/Blocks/SellerCard.php:220
-#: templates/partials/vendor-card.php:177
+#: templates/partials/vendor-card.php:171
 #: templates/single-request.php:433
 msgid "View Profile"
 msgstr ""
@@ -8899,12 +8958,6 @@ msgstr ""
 msgid "No featured services found."
 msgstr ""
 
-#: src/Blocks/FeaturedServices.php:281
-#: src/Frontend/ServiceWizard.php:1239
-#: templates/content-service-card.php:295
-msgid "Starting at"
-msgstr ""
-
 #: src/Blocks/SellerCard.php:40
 #: assets/js/blocks.js:465
 #: assets/js/blocks.js:542
@@ -10259,17 +10312,6 @@ msgstr ""
 #: src/Frontend/Frontend.php:352
 #: templates/partials/service-packages.php:356
 msgid "Save to favorites"
-msgstr ""
-
-#: src/Frontend/Frontend.php:354
-#: templates/content-service-card.php:127
-msgid "Add to favorites"
-msgstr ""
-
-#: src/Frontend/Frontend.php:355
-#: templates/content-service-card.php:126
-#: templates/dashboard/sections/favorites.php:137
-msgid "Remove from favorites"
 msgstr ""
 
 #: src/Frontend/Frontend.php:442
@@ -11640,13 +11682,13 @@ msgstr ""
 #: templates/order/extension-view.php:152
 #: templates/order/milestone-view.php:175
 #: templates/order/tip-view.php:127
-#: templates/partials/vendor-card.php:140
+#: templates/partials/vendor-card.php:134
 msgid "From"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:511
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1240
-#: templates/partials/vendor-card.php:149
+#: templates/partials/vendor-card.php:143
 msgid "Member since"
 msgstr ""
 
@@ -11655,7 +11697,7 @@ msgid "Avg. Response Time"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:532
-#: templates/partials/vendor-card.php:168
+#: templates/partials/vendor-card.php:162
 msgid "Last Delivery"
 msgstr ""
 
@@ -15508,16 +15550,6 @@ msgstr[1] ""
 msgid "Service Details"
 msgstr ""
 
-#. translators: %d: number of days
-#. translators: %d: delivery time in days
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1122
-#: templates/content-service-card.php:272
-#, php-format
-msgid "%d-day delivery"
-msgid_plural "%d-day delivery"
-msgstr[0] ""
-msgstr[1] ""
-
 #. translators: %d: number of revisions
 #. translators: %d: number of revisions.
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1132
@@ -16034,7 +16066,6 @@ msgstr ""
 
 #: src/Models/VendorProfile.php:439
 #: src/Services/SellerLevelService.php:231
-#: templates/content-service-card.php:191
 msgid "New vendor"
 msgstr ""
 
@@ -19752,29 +19783,6 @@ msgstr ""
 msgid "Log in to send a proposal"
 msgstr ""
 
-#: templates/content-service-card.php:163
-#: templates/partials/vendor-card.php:74
-msgid "Verified Vendor"
-msgstr ""
-
-#. translators: %s: formatted return date
-#: templates/content-service-card.php:208
-#, php-format
-msgid "Back on %s"
-msgstr ""
-
-#. translators: %d: number of reviews
-#: templates/content-service-card.php:258
-#, php-format
-msgid "(%d)"
-msgid_plural "(%d)"
-msgstr[0] ""
-msgstr[1] ""
-
-#: templates/content-service-card.php:264
-msgid "New"
-msgstr ""
-
 #: templates/dashboard/partials/order-filters.php:85
 msgid "Search by order number"
 msgstr ""
@@ -22993,7 +23001,7 @@ msgstr ""
 msgid "Track your orders, earnings and reviews from one dashboard"
 msgstr ""
 
-#: templates/partials/vendor-card.php:158
+#: templates/partials/vendor-card.php:152
 msgid "Avg. Response"
 msgstr ""
 
