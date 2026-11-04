@@ -1808,7 +1808,7 @@ do_action( 'wpss_before_order_view', $order );
 				<div class="wpss-tip-form__error" hidden></div>
 			</div>
 			<div class="wpss-modal__footer">
-				<button type="button" class="wpss-btn wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+				<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
 				<button type="submit" class="wpss-btn wpss-btn--primary wpss-tip-form__submit">
 					<?php esc_html_e( 'Send tip', 'wp-sell-services' ); ?>
 				</button>

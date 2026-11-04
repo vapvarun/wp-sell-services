@@ -65,7 +65,7 @@ $marker     = 'NOTE-MARKER-' . wp_rand();
 $service->transition( $dispute_id, 'pending_review', array( 'note' => $marker ) );
 $thread = array_column( $service->get_evidence( $dispute_id ), 'content' );
 $check( 'a decision note saved with a status change is on the dispute thread', in_array( $marker, $thread, true ) );
-$wpdb->delete( $wpdb->prefix . 'wpss_messages', array( 'dispute_id' => $dispute_id ) );
+$wpdb->delete( $wpdb->prefix . 'wpss_dispute_messages', array( 'dispute_id' => $dispute_id ) );
 $wpdb->delete( $disputes, array( 'id' => $dispute_id ) );
 $wpdb->delete( $orders, array( 'id' => $order_id ) );
 $wpdb->delete( $wpdb->prefix . 'wpss_order_meta', array( 'order_id' => $order_id ) );

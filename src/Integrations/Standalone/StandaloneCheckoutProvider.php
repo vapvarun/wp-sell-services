@@ -206,7 +206,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				<h2><?php esc_html_e( 'Confirming your payment', 'wp-sell-services' ); ?></h2>
 				<p><?php echo esc_html( $result['message'] ); ?></p>
 				<p><strong><?php esc_html_e( 'Please do not pay again.', 'wp-sell-services' ); ?></strong></p>
-				<p><a class="wpss-btn" href="<?php echo esc_url( $orders ); ?>"><?php esc_html_e( 'Go to your orders', 'wp-sell-services' ); ?></a></p>
+				<p><a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( $orders ); ?>"><?php esc_html_e( 'Go to your orders', 'wp-sell-services' ); ?></a></p>
 			</div>
 			<script>setTimeout(function(){ window.location.reload(); }, 5000);</script>
 			<?php

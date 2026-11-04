@@ -17,7 +17,7 @@ Seed a vendor to just under Rising, then complete one more order and leave a rev
 ### 2. Where it shows
 As a visitor open the vendor's service card, vendor card and profile.
 
-**Expect** a badge on each (none for New), and the profile's note says what the next level needs.
+**Expect** a badge on each. A New vendor shows a "New vendor" badge only while their profile is incomplete (no tagline, bio or country), as a hint to buyers; with a complete profile, New shows none. The profile's note says what the next level needs.
 
 ### 3. Admin override
 Sell Services > Vendors: set the vendor to Pro.

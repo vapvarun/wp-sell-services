@@ -245,6 +245,25 @@ foreach ( $files as $path ) {
 }
 $check( 'no sheet resizes or reshapes .wpss-btn inside one section', empty( $reshaped ), implode( ' | ', array_unique( $reshaped ) ) );
 
+// --- 8. every .wpss-btn names its variant ------------------------------------------
+// The base rule sets size and shape, not a fill, so a bare .wpss-btn drew the browser's own grey
+// button face: the tip modal Cancel, "Go to your orders" after checkout, and View Profile, whose
+// wpss-btn-text class existed nowhere. --locked is the disabled phase-pay chip, styled on its own.
+$bare = array();
+foreach ( $files as $path ) {
+	if ( ! str_ends_with( $path, '.php' ) || str_contains( $path, '/tests/' ) ) {
+		continue;
+	}
+	if ( preg_match_all( '/class="([^"]*(?<![\w-])wpss-btn(?![\w-])[^"]*)"/', (string) file_get_contents( $path ), $m ) ) {
+		foreach ( $m[1] as $list ) {
+			if ( ! preg_match( '/\bwpss-btn--(primary|secondary|outline|ghost|danger|success|link|icon|locked)\b/', $list ) ) {
+				$bare[] = str_replace( array( WPSS_PLUGIN_DIR, defined( 'WPSS_PRO_PLUGIN_DIR' ) ? WPSS_PRO_PLUGIN_DIR : WPSS_PLUGIN_DIR ), '', $path ) . ': ' . $list;
+			}
+		}
+	}
+}
+$check( 'every .wpss-btn carries a variant', empty( $bare ), implode( ' | ', array_unique( $bare ) ) );
+
 $check( 'an outline button at rest is --wpss-text-secondary on every page sheet', empty( $outline_drift ), implode( ' | ', $outline_drift ) );
 
 $check( '.wpss-btn--outline is defined in exactly one stylesheet', 1 === count( $owners ) );

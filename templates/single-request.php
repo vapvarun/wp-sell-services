@@ -429,7 +429,7 @@ do_action( 'wpss_before_single_request', $request_id );
 												<button type="button" class="wpss-btn wpss-btn--outline wpss-reject-proposal" data-proposal="<?php echo esc_attr( $proposal->id ); ?>">
 													<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
 												</button>
-												<a href="<?php echo esc_url( wpss_get_vendor_url( $proposal->vendor_id ) ); ?>" class="wpss-btn wpss-btn-text">
+												<a href="<?php echo esc_url( wpss_get_vendor_url( $proposal->vendor_id ) ); ?>" class="wpss-btn wpss-btn--ghost">
 													<?php esc_html_e( 'View Profile', 'wp-sell-services' ); ?>
 												</a>
 											</div>
@@ -693,7 +693,7 @@ do_action( 'wpss_before_single_request', $request_id );
 				</template>
 
 				<div class="wpss-modal__footer">
-					<button type="button" class="wpss-btn wpss-btn--outline wpss-modal__close-btn">
+					<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">
 						<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
 					</button>
 					<button type="submit" class="wpss-btn wpss-btn--primary">
