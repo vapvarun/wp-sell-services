@@ -17,7 +17,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.6.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var WPSellServices\Models\Review $wpss_review Review to render.
  */
@@ -40,6 +40,8 @@ $wpss_reviewer_name = $wpss_review->get_reviewer_name();
 		</strong>
 		<?php if ( $wpss_review->is_imported() ) : ?>
 			<span class="wpss-review-imported"><?php esc_html_e( 'Imported review', 'wp-sell-services' ); ?></span>
+		<?php else : ?>
+			<span class="wpss-review-verified"><?php esc_html_e( 'Verified Purchase', 'wp-sell-services' ); ?></span>
 		<?php endif; ?>
 		<div class="wpss-review-rating">
 			<?php echo wpss_star_rating( (float) $wpss_review->rating ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper. ?>
@@ -59,6 +61,23 @@ $wpss_review_service = ! empty( $wpss_review_show_service ) && $wpss_review->ser
 if ( $wpss_review_service && 'publish' === $wpss_review_service->post_status ) :
 	?>
 	<p class="wpss-review-service"><a href="<?php echo esc_url( get_permalink( $wpss_review_service ) ); ?>"><?php echo esc_html( $wpss_review_service->post_title ); ?></a></p>
+<?php endif; ?>
+
+<?php
+$wpss_review_subs = array_filter(
+	array(
+		__( 'Communication', 'wp-sell-services' ) => $wpss_review->rating_communication,
+		__( 'Quality', 'wp-sell-services' )       => $wpss_review->rating_quality,
+		__( 'Value', 'wp-sell-services' )         => $wpss_review->rating_value,
+	)
+);
+if ( $wpss_review_subs ) :
+	?>
+	<ul class="wpss-review-subratings-list">
+		<?php foreach ( $wpss_review_subs as $wpss_sub_label => $wpss_sub_value ) : ?>
+			<li><?php echo esc_html( $wpss_sub_label ); ?> <strong><?php echo esc_html( (string) $wpss_sub_value ); ?>/5</strong></li>
+		<?php endforeach; ?>
+	</ul>
 <?php endif; ?>
 
 <?php if ( '' !== $wpss_review->content ) : ?>

@@ -494,7 +494,8 @@ function wpss_csv_cell( $value ): string {
  * @return void
  */
 function wpss_fputcsv( $handle, array $row ): void {
-	fputcsv( $handle, array_map( 'wpss_csv_cell', $row ) );
+	// Empty escape: same dialect as the Review import reader, and PHP 8.4+ deprecates leaving it out.
+	fputcsv( $handle, array_map( 'wpss_csv_cell', $row ), ',', '"', '' );
 }
 
 /**

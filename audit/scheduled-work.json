@@ -1,0 +1,169 @@
+{
+  "_doc": [
+    "Every scheduled job this plugin queues, what it touches, whether it moves money, and the method(s) that do the work.",
+    "",
+    "A scheduled run has no user it chose: no nonce, no capability, and on the Action Scheduler async runner",
+    "possibly the cookie of whichever admin loaded the page that kicked the queue. So a job decides with no",
+    "identity, or actor_reason says why the identity it reads is safe.",
+    "",
+    "ScheduledWorkAuthorityTest finds jobs in the Action Scheduler store and WP-Cron (not in this file), and",
+    "fails when one is undeclared, when runs names a method that is gone, when nothing listens, when a",
+    "listener or runs method reads the current user without actor_reason, and when a retired hook is still queued."
+  ],
+  "jobs": {
+    "wpss_audit_log_cleanup": {
+      "touches": "Deletes audit rows older than the retention setting.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\AuditLogService::cleanup_expired"
+      ]
+    },
+    "wpss_auto_complete_orders": {
+      "touches": "Completes delivered orders the buyer did not answer within the review window, which credits the vendor's earnings.",
+      "moves_money": true,
+      "runs": [
+        "WPSellServices\\Services\\OrderWorkflowManager::auto_complete_orders"
+      ]
+    },
+    "wpss_check_late_orders": {
+      "touches": "Marks in-progress orders past their delivery deadline as late; notifies both sides.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\OrderWorkflowManager::check_late_orders"
+      ]
+    },
+    "wpss_check_requirements_timeout": {
+      "touches": "Starts or cancels paid orders whose requirements never arrived; a cancel refunds the buyer.",
+      "moves_money": true,
+      "runs": [
+        "WPSellServices\\Services\\OrderWorkflowManager::check_requirements_timeout"
+      ]
+    },
+    "wpss_cleanup_abandoned_extensions": {
+      "touches": "Closes unpaid extension sub-orders left past the abandon window. Nothing was paid.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\ExtensionOrderService::cleanup_abandoned_extensions"
+      ]
+    },
+    "wpss_cleanup_abandoned_milestones": {
+      "touches": "Closes unpaid milestone phases left past the abandon window. Nothing was paid.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\MilestoneService::cleanup_abandoned_milestones"
+      ]
+    },
+    "wpss_cleanup_abandoned_tips": {
+      "touches": "Closes unpaid tip sub-orders left past the abandon window. Nothing was paid.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\TippingService::cleanup_abandoned_tips"
+      ]
+    },
+    "wpss_cleanup_expired_requests": {
+      "touches": "Expires buyer requests past their end date.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\OrderWorkflowManager::cleanup_expired_requests"
+      ]
+    },
+    "wpss_cron_daily": {
+      "touches": "Dispute deadlines: reminders, escalation, and opening disputes on long-late orders.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\DisputeWorkflowManager::check_response_deadlines",
+        "WPSellServices\\Services\\DisputeWorkflowManager::auto_escalate_disputes",
+        "WPSellServices\\Services\\DisputeWorkflowManager::send_reminder_notifications",
+        "WPSellServices\\Services\\DisputeWorkflowManager::auto_open_disputes_for_late_orders"
+      ]
+    },
+    "wpss_email_retry": {
+      "touches": "Resends one of this plugin's emails that failed, from a stashed payload.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\EmailService::retry"
+      ]
+    },
+    "wpss_gateway_refund_received": {
+      "touches": "Records a refund the payment rail reported, re-queued while this site is sending a refund on the same order.",
+      "moves_money": true,
+      "runs": [
+        "WPSellServices\\Services\\OrderWorkflowManager::handle_gateway_refund"
+      ]
+    },
+    "wpss_notification_cleanup": {
+      "touches": "Deletes read notifications older than 90 days.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\NotificationService::cleanup_expired"
+      ]
+    },
+    "wpss_process_auto_withdrawals": {
+      "touches": "Creates automatic withdrawal requests for eligible vendors through the one locked writer.",
+      "moves_money": true,
+      "runs": [
+        "WPSellServices\\Services\\EarningsService::run_scheduled_auto_withdrawals"
+      ],
+      "conditional_on": "Queued only while automatic withdrawals are enabled under Payouts."
+    },
+    "wpss_process_cancellation_timeouts": {
+      "touches": "Applies cancellation requests the vendor did not answer in time, which refunds the buyer.",
+      "moves_money": true,
+      "runs": [
+        "WPSellServices\\Services\\OrderWorkflowManager::process_cancellation_timeouts"
+      ]
+    },
+    "wpss_process_offline_auto_cancel": {
+      "touches": "Cancels offline-payment orders never paid within the hold window. No money was taken.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\OrderWorkflowManager::process_offline_auto_cancel"
+      ]
+    },
+    "wpss_recalculate_seller_levels": {
+      "touches": "Recomputes each vendor's seller level from their stats.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\OrderWorkflowManager::recalculate_seller_levels"
+      ]
+    },
+    "wpss_send_deadline_reminders": {
+      "touches": "Emails vendors about orders nearing their deadline.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\OrderWorkflowManager::send_deadline_reminders"
+      ]
+    },
+    "wpss_send_delayed_message_email": {
+      "touches": "Sends a held new-message email if the recipient has not read the message meanwhile.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\EmailService::send_delayed_message_email"
+      ]
+    },
+    "wpss_send_requirements_reminders": {
+      "touches": "Emails buyers who have not sent order requirements.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\OrderWorkflowManager::send_requirements_reminders"
+      ]
+    },
+    "wpss_update_vendor_stats": {
+      "touches": "Refreshes cached vendor statistics.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Services\\OrderWorkflowManager::update_vendor_stats"
+      ]
+    },
+    "wpss_utc_migrate_batch": {
+      "touches": "Converts one batch of stored local times to UTC during the one-time migration.",
+      "moves_money": false,
+      "runs": [
+        "WPSellServices\\Database\\UtcMigration::run_chunk"
+      ]
+    }
+  },
+  "retired": {
+    "wpss_cleanup_review_votes": "Review-vote cleanup was removed; Plugin::maybe_run_install() unschedules it on upgrade. Completed rows may remain in the store."
+  }
+}

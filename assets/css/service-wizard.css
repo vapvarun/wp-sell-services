@@ -111,7 +111,7 @@
 .wpss-wizard__progress-item--active .wpss-wizard__progress-icon {
 	background: var(--wpss-primary, #4f46e5);
 	border-color: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-wizard__progress-item--active .wpss-wizard__progress-label {
@@ -190,10 +190,6 @@
 
 .wpss-form-group--toggle {
 	margin-bottom: 16px;
-}
-
-.wpss-required {
-	color: var(--wpss-danger, #ef4444);
 }
 
 /* .wpss-form-input / -select / -textarea live in design-system.css: they are used on the request, dispute and signup forms, which never load this sheet. */
@@ -589,7 +585,7 @@
 	height: 28px;
 	font-size: 12px;
 	font-weight: 700;
-	color: var(--wpss-primary-accent, #4f46e5);
+	color: var(--wpss-primary-dark);
 	background: var(--wpss-primary-light, #eef2ff);
 	border-radius: var(--wpss-radius-full, 9999px);
 }
@@ -828,62 +824,12 @@
 	justify-content: flex-end;
 }
 
-/* Buttons - scoped to the wizard. Unscoped, these restyled every button on
-   the page it loads on: the dashboard's Menu button lost its border and went
-   full width on Create / Update Service (Basecamp 10337227125). */
-.wpss-wizard .wpss-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	padding: 12px 24px;
-	font-size: 14px;
-	font-weight: 600;
-	border: none !important;
-	border-radius: var(--wpss-radius, 8px);
-	cursor: pointer;
-	transition: all var(--wpss-transition, 0.2s ease);
-}
-
+/* The wizard's buttons are the shared .wpss-btn variants; design-system.css owns their look.
+   A scoped copy here re-declared their padding and size and removed the border with !important. */
 .wpss-wizard .wpss-btn .dashicons {
 	font-size: 16px;
 	width: 16px;
 	height: 16px;
-}
-
-.wpss-wizard .wpss-btn:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-
-/* .wpss-btn--primary: see design-system.css (single owner) */
-.wpss-wizard .wpss-btn--success {
-	color: var(--wpss-white, #fff);
-	background: var(--wpss-success, #10b981);
-}
-
-.wpss-wizard .wpss-btn--success:hover:not(:disabled) {
-	/* A shade of the button's own fill, not --wpss-success-dark: that token is
-	   an ink and turns light in dark mode, under white text. */
-	background: color-mix(in srgb, var(--wpss-success, #10b981) 82%, #000);
-}
-
-/* .wpss-btn--outline: see design-system.css (single owner). The copy removed
-   from here carried !important on its border, so it also outranked the owner
-   anywhere both loaded. */
-
-.wpss-wizard .wpss-btn--ghost {
-	color: var(--wpss-text-muted, #6b7280);
-	background: transparent;
-}
-
-.wpss-wizard .wpss-btn--ghost:hover:not(:disabled) {
-	background: var(--wpss-gray-100, #f1f5f9);
-	color: var(--wpss-text, #1f2937);
-}
-
-.wpss-wizard .wpss-btn--sm {
-	padding: 8px 16px;
-	font-size: 13px;
 }
 
 /* Spinner */
@@ -1009,62 +955,6 @@
 	flex-direction: column;
 }
 
-.wpss-wizard__btn-prev,
-.wpss-wizard__btn-next,
-.wpss-wizard__btn-save,
-.wpss-wizard__btn-publish {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	padding: 0.75rem 1.5rem;
-	font-size: 0.9375rem;
-	font-weight: 500;
-	border-radius: var(--wpss-radius, 8px);
-	border: none !important;
-	cursor: pointer;
-	text-decoration: none;
-	transition: all 0.2s ease;
-}
-
-.wpss-wizard__btn-prev {
-	background: transparent;
-	border: 1px solid var(--wpss-border, #e5e7eb) !important;
-	color: var(--wpss-text, #1f2937);
-}
-
-.wpss-wizard__btn-prev:hover {
-	border-color: var(--wpss-primary, #4f46e5) !important;
-	color: var(--wpss-primary-accent, #4f46e5);
-}
-
-.wpss-wizard__btn-next {
-	background: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-wizard__btn-next:hover {
-	background: var(--wpss-primary-dark, #4338ca);
-}
-
-.wpss-wizard__btn-save {
-	background: var(--wpss-gray-100, #f3f4f6);
-	color: var(--wpss-text, #1f2937);
-}
-
-.wpss-wizard__btn-save:hover {
-	background: var(--wpss-gray-200, #e5e7eb);
-}
-
-.wpss-wizard__btn-publish {
-	background: var(--wpss-success, #10b981);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-wizard__btn-publish:hover {
-	background: var(--wpss-success, #059669);
-}
-
 /* ==========================================================================
    Pricing — opt-in tier buttons (F1 from baseline-2026-04-25.md)
    ----------------------------------------------------------------------------
@@ -1080,25 +970,7 @@
 	margin: var(--wpss-space-4, 16px) 0 var(--wpss-space-6, 24px);
 }
 
-.wpss-pricing-add-tier {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--wpss-space-2, 8px);
-	padding: var(--wpss-space-2, 8px) var(--wpss-space-4, 16px);
-	background: transparent;
-	color: var(--wpss-primary-accent, #4f46e5);
-	border: 1px dashed var(--wpss-primary, #4f46e5);
-	border-radius: var(--wpss-radius, 8px);
-	font-size: var(--wpss-text-sm, 14px);
-	font-weight: 500;
-	cursor: pointer;
-	transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.wpss-pricing-add-tier:hover {
-	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary-dark, #4338ca);
-}
+/* .wpss-pricing-add-tier carries .wpss-btn--outline, the same as Add Requirement, Add Extra and Add FAQ. */
 
 .wpss-pricing-tier-actions {
 	display: flex;

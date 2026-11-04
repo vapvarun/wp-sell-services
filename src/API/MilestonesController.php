@@ -406,7 +406,8 @@ class MilestonesController extends RestController {
 		// State-conflict: milestone is already paid (or beyond). Returning
 		// 409 here signals the client to push the buyer into the dispute
 		// flow instead of surfacing a generic 400.
-		if ( 'pending_payment' !== $sub->status ) {
+		// A cancelled phase falls through: decline() answers it with "already declined".
+		if ( ! in_array( $sub->status, array( 'pending_payment', 'cancelled' ), true ) ) {
 			return $this->error(
 				'wpss_milestone_not_declinable',
 				__( 'This milestone has already been paid and cannot be declined here. Open a dispute if there is a problem.', 'wp-sell-services' ),

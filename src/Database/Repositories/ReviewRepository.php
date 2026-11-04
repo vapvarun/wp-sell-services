@@ -126,7 +126,7 @@ class ReviewRepository extends AbstractRepository {
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table}
 				WHERE service_id = %d AND status = %s
-				ORDER BY {$orderby} {$order}
+				ORDER BY {$orderby} {$order}, id {$order}
 				LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$service_id,
 				$args['status'],
@@ -162,7 +162,7 @@ class ReviewRepository extends AbstractRepository {
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table}
 				WHERE vendor_id = %d AND status = %s AND review_type = 'customer_to_vendor'
-				ORDER BY {$orderby} {$order}
+				ORDER BY {$orderby} {$order}, id {$order}
 				LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$vendor_id,
 				$args['status'],

@@ -296,8 +296,11 @@ class OrderRepository extends AbstractRepository {
 		}
 
 		if ( ! empty( $args['search'] ) ) {
-			$sql     .= ' AND order_number LIKE %s';
-			$params[] = '%' . $this->wpdb->esc_like( (string) $args['search'] ) . '%';
+			list( $search_sql, $search_params ) = wpss_order_number_search_sql( (string) $args['search'] );
+			if ( '' !== $search_sql ) {
+				$sql   .= ' AND ' . $search_sql;
+				$params = array_merge( $params, $search_params );
+			}
 		}
 
 		return $this->exclude_sub_orders( $sql, $params, $args );
@@ -935,18 +938,22 @@ class OrderRepository extends AbstractRepository {
 			'offset' => 0,
 		);
 
-		$args        = wp_parse_args( $args, $defaults );
-		$search_like = '%' . $this->wpdb->esc_like( $search ) . '%';
+		$args = wp_parse_args( $args, $defaults );
+
+		list( $search_sql, $params ) = wpss_order_number_search_sql( $search );
+		if ( '' === $search_sql ) {
+			return array();
+		}
+		$params[] = (int) $args['limit'];
+		$params[] = (int) $args['offset'];
 
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table}
-				WHERE order_number LIKE %s
+				WHERE {$search_sql}
 				ORDER BY created_at DESC
 				LIMIT %d OFFSET %d",
-				$search_like,
-				$args['limit'],
-				$args['offset']
+				$params
 			)
 		);
 	}
@@ -1064,7 +1071,8 @@ class OrderRepository extends AbstractRepository {
 				SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress,
 				SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
 				SUM(CASE WHEN status IN ('pending_payment', 'pending_requirements') THEN 1 ELSE 0 END) AS pending
-			FROM {$this->table}"
+			FROM {$this->table}
+			WHERE " . wpss_order_rows_sql()
 		);
 
 		$revenue = $this->get_revenue()[0] ?? null;
@@ -1184,8 +1192,10 @@ class OrderRepository extends AbstractRepository {
 		);
 		$key    = $groups[ (string) $args['group_by'] ] ?? "''";
 
+		// Revenue sums every paid row, tips and extensions included: that money
+		// was taken. The order count counts orders, not their sub-orders.
 		$sql = "SELECT {$key} AS group_key,
-				COUNT(*) AS orders,
+				SUM( CASE WHEN " . wpss_order_rows_sql() . " THEN 1 ELSE 0 END ) AS orders,
 				COALESCE( SUM( total ), 0 ) AS gross,
 				COALESCE( SUM( {$refund} ), 0 ) AS refunded,
 				COALESCE( SUM( total - {$refund} ), 0 ) AS revenue,

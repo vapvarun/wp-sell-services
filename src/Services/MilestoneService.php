@@ -177,6 +177,17 @@ class MilestoneService {
 			return $fail( __( 'Only the vendor can propose milestones on this order.', 'wp-sell-services' ) );
 		}
 
+		// A phase is new paid work for both sides, so both must be in good
+		// standing, whichever door (AJAX, REST, contract acceptance) calls this.
+		$standing = wpss_vendor_status_block( $vendor_id );
+		if ( $standing ) {
+			return $fail( $standing->get_error_message() );
+		}
+
+		if ( wpss_account_status_block( (int) $parent->customer_id ) ) {
+			return $fail( __( 'This buyer cannot take on new purchases right now, so a phase cannot be proposed.', 'wp-sell-services' ) );
+		}
+
 		// Milestones are the payment model for custom, buyer-posted projects
 		// (platform='request'). Fixed-price catalog orders top up via
 		// Extensions instead, so there is one payment story per order and
@@ -208,6 +219,8 @@ class MilestoneService {
 			$due_date = gmdate( 'Y-m-d H:i:s', time() + ( $days_to_deliver * DAY_IN_SECONDS ) );
 		}
 
+		$priced = \WPSellServices\Checkout\CheckoutIntentService::price_sub_order( 'milestone', $amount, (int) $parent->service_id, (int) $parent->vendor_id );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$inserted = $wpdb->insert(
 			$orders_table,
@@ -218,22 +231,25 @@ class MilestoneService {
 				'service_id'        => (int) $parent->service_id,
 				'platform'          => self::ORDER_TYPE,
 				'platform_order_id' => $parent_order_id,
-				'subtotal'          => $amount,
-				'total'             => $amount,
+				'subtotal'          => $priced['subtotal'],
+				'total'             => $priced['total'],
 				'currency'          => $currency,
 				'status'            => 'pending_payment',
 				'payment_status'    => 'pending',
 				'delivery_deadline' => $due_date,
 				'vendor_notes'      => $description,
 				'meta'              => wp_json_encode(
-					array(
-						'milestone'             => true,
-						'parent_order_id'       => $parent_order_id,
-						'title'                 => $title,
-						'description'           => $description,
-						'deliverables'          => $deliverables,
-						'sort_order'            => $sort_order,
-						'is_contract_milestone' => $is_contract,
+					array_merge(
+						$priced['tax_meta'],
+						array(
+							'milestone'             => true,
+							'parent_order_id'       => $parent_order_id,
+							'title'                 => $title,
+							'description'           => $description,
+							'deliverables'          => $deliverables,
+							'sort_order'            => $sort_order,
+							'is_contract_milestone' => $is_contract,
+						)
 					)
 				),
 				'created_at'        => current_time( 'mysql', true ),
@@ -297,6 +313,12 @@ class MilestoneService {
 
 		if ( 'paid' !== ( $sub->payment_status ?? '' ) && empty( $sub->paid_at ) ) {
 			return false;
+		}
+
+		// An admin completed this phase before its payment was confirmed: credit
+		// it now (credit_phase() is idempotent) instead of reopening it.
+		if ( ServiceOrder::STATUS_COMPLETED === $sub->status ) {
+			return $this->credit_phase( $milestone_id );
 		}
 
 		// Started once: a webhook retry finds started_at already set.
@@ -760,6 +782,8 @@ class MilestoneService {
 		);
 
 		do_action( 'wpss_milestone_declined', $milestone_id, (int) $sub->platform_order_id, $customer_id );
+		/** This action is documented in src/Services/TippingService.php */
+		do_action( 'wpss_unpaid_sub_order_closed', $milestone_id );
 
 		return array(
 			'success' => true,
@@ -828,6 +852,8 @@ class MilestoneService {
 		 * @param int $parent_order_id Parent order ID.
 		 */
 		do_action( 'wpss_milestone_cancelled', $milestone_id, (int) $sub->platform_order_id );
+		/** This action is documented in src/Services/TippingService.php */
+		do_action( 'wpss_unpaid_sub_order_closed', $milestone_id );
 
 		return array(
 			'success' => true,
@@ -907,6 +933,8 @@ class MilestoneService {
 		foreach ( $doomed as $row ) {
 			/** This action is documented in src/Services/MilestoneService.php */
 			do_action( 'wpss_milestone_cancelled', (int) $row->id, (int) $row->platform_order_id );
+			/** This action is documented in src/Services/TippingService.php */
+			do_action( 'wpss_unpaid_sub_order_closed', (int) $row->id );
 		}
 
 		return $count;

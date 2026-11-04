@@ -135,6 +135,15 @@
 	margin-right: auto;
 }
 
+/* Count at the start, sort at the end of the same row. */
+.wpss-requests-archive .wpss-results-info {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem 1rem;
+}
+
 .wpss-category-filter,
 .wpss-sort-filter {
 	padding: 0.5rem 1rem;
@@ -317,35 +326,13 @@
 	margin-bottom: 0;
 } */
 
-/* Fix button styling for all themes */
-.wpss-requests-archive .wpss-btn,
-.wpss-requests-archive .wpss-btn:visited,
-.wpss-requests-archive .wpss-btn:focus,
-.wpss-single-request .wpss-btn,
-.wpss-single-request .wpss-btn:visited,
-.wpss-single-request .wpss-btn:focus {
-	display: inline-flex !important;
-	align-items: center !important;
-	justify-content: center !important;
-	gap: 0.5rem;
-	padding: 0.75rem 1.5rem;
-	font-family: inherit !important;
-	font-size: 0.875rem;
-	font-weight: 500;
-	text-decoration: none !important;
-	border-width: 1px !important;
-	border-style: solid !important;
-	border-radius: var(--wpss-radius, 8px);
-	cursor: pointer;
-	transition: all 0.2s ease;
-}
 
 .wpss-requests-archive .wpss-btn--primary,
 .wpss-requests-archive .wpss-btn--primary:visited,
 .wpss-single-request .wpss-btn--primary,
 .wpss-single-request .wpss-btn--primary:visited {
 	background: var(--wpss-primary, #4f46e5) !important;
-	color: var(--wpss-white, #ffffff) !important;
+	color: var(--wpss-on-primary) !important;
 	border-color: var(--wpss-primary, #4f46e5) !important;
 }
 
@@ -353,9 +340,9 @@
 .wpss-requests-archive .wpss-btn--primary:focus,
 .wpss-single-request .wpss-btn--primary:hover,
 .wpss-single-request .wpss-btn--primary:focus {
-	background: var(--wpss-primary-dark, #4338ca) !important;
-	color: var(--wpss-white, #ffffff) !important;
-	border-color: var(--wpss-primary-dark, #4338ca) !important;
+	background: var(--wpss-primary-hover) !important;
+	color: var(--wpss-on-primary) !important;
+	border-color: var(--wpss-primary-hover) !important;
 }
 
 /* Outline button variant */
@@ -364,17 +351,18 @@
 .wpss-single-request .wpss-btn--outline,
 .wpss-single-request .wpss-btn--outline:visited {
 	background: transparent !important;
-	color: var(--wpss-text, #1f2937) !important;
-	border-color: var(--wpss-border, #e5e7eb) !important;
+	/* Same rest colour as .wpss-btn--outline in design-system.css. */
+	color: var(--wpss-text-secondary, #374151) !important;
+	border-color: var(--wpss-border-control, #878e98) !important;
 }
 
 .wpss-requests-archive .wpss-btn--outline:hover,
 .wpss-requests-archive .wpss-btn--outline:focus,
 .wpss-single-request .wpss-btn--outline:hover,
 .wpss-single-request .wpss-btn--outline:focus {
-	background: var(--wpss-bg, #f9fafb) !important;
+	background: var(--wpss-bg-subtle, #f9fafb) !important;
 	color: var(--wpss-text, #1f2937) !important;
-	border-color: var(--wpss-border, #e5e7eb) !important;
+	border-color: var(--wpss-text-secondary, #374151) !important;
 }
 
 /* Fix article display in themes */
@@ -419,7 +407,7 @@
 .wpss-single-request select:focus {
 	outline: none;
 	border-color: var(--wpss-primary, #4f46e5);
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 /* ==========================================================================
@@ -581,7 +569,7 @@
 	display: inline-block;
 	padding: 0.25rem 0.625rem;
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary-accent, #4f46e5);
+	color: var(--wpss-primary-dark);
 	font-size: 0.75rem;
 	border-radius: var(--wpss-radius-sm, 4px);
 }
@@ -1134,9 +1122,10 @@
 		grid-column: 1 / -1;
 	}
 
-	/* Filters bar spans both columns */
-	.wpss-filters-bar {
-		grid-column: 1 / -1;
+	/* The bar holds only the drawer toggle, hidden here, so the bar goes too; the sort is in the
+	   results row (Basecamp 10450931965). */
+	.wpss-requests-archive .wpss-filters-bar {
+		display: none;
 	}
 
 	/* Sidebar in left column */
@@ -1153,14 +1142,14 @@
 		border: 1px solid var(--wpss-border, #e5e7eb);
 		border-radius: var(--wpss-radius, 8px);
 		grid-column: 1;
-		grid-row: 3;
+		grid-row: 2;
 		align-self: start;
 	}
 
 	/* Content in right column */
 	.wpss-requests-content {
 		grid-column: 2;
-		grid-row: 3;
+		grid-row: 2;
 	}
 
 	/* Hide the drawer toggle while the sidebar is on screen - one filter UI

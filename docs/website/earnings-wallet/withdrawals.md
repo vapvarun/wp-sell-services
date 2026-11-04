@@ -116,7 +116,7 @@ The notice states how much a previous payout exceeded your earnings. If a withdr
 
 ## Common Questions
 
-**"Why can't I withdraw?"** Check that your available balance meets the minimum threshold and that you do not already have a pending withdrawal request.
+**"Why can't I withdraw?"** Check that your available balance meets the minimum threshold and that you do not already have a withdrawal in progress (pending, or approved and waiting to be paid).
 
 **"My request was rejected -- what now?"** Check the rejection reason (visible in your withdrawal history), fix the issue (usually incomplete payment details), and submit a new request.
 

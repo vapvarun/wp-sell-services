@@ -1,31 +1,111 @@
 {
   "journey": "01",
-  "sha_free": "c21a7c05",
-  "sha_pro": "e4ac7141",
-  "env": {"site": "http://wp-sell-services.local", "theme": "reign-theme", "rail": "standalone", "wp": "7.1.3"},
-  "ran_at": "2026-10-20T23:20:00Z",
+  "sha_free": "e742c62b",
+  "sha_pro": "251dea0",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme",
+    "rail": "standalone (ecommerce_platform set to standalone for this walk, restored to auto); Free + Pro both active, WooCommerce active",
+    "wp": "7.1.3"
+  },
+  "ran_at": "2026-10-21T19:20:00Z",
   "checks": [
-    {"id": "s1-proposal-created-pending", "result": "pass", "evidence": "Maya POST /buyer-requests/13591/proposals -> 201 proposal 249; Sofia -> 201 proposal 250 (Ella's open request 'Shopify-to-WooCommerce product migration')."},
-    {"id": "s1-exactly-one-email", "result": "untested", "evidence": "No mail catcher on this site. Static: proposal_received / proposal_accepted / proposal_rejected are in NotificationService::is_email_service_handling() covered_types, so no duplicate plain mail."},
-    {"id": "s2-notification-row", "result": "pass", "evidence": "Ella's inbox: 'New proposal received' 'Maya Chen sent a proposal on your request ... Their price: $320.00' (and Sofia); briefcase icon; no 'You have a new notification' in these rows; 1440 and 390 no overflow. A first-visit 'Welcome to your dashboard' tour modal sits over the page until Skip."},
-    {"id": "s3-notification-deep-link", "result": "pass", "evidence": "Title is an <a> to /buyer-request/need-a-shopify-to-woocommerce-product-migration-about-300-products/; page lists both Maya Chen and Sofia Rossi proposals with Accept Proposal / Decline."},
-    {"id": "s4-second-proposal-second-notification", "result": "pass", "evidence": "Two proposal_received rows (ids 10956, 10957) for the buyer."},
-    {"id": "s5-hire-creates-order-and-notifies", "result": "pass", "evidence": "Accept (Maya): order 3888 platform=request status=pending_payment total 384.00 (320 + VAT); proposal 249 accepted, 250 rejected; Maya got proposal_accepted 'The buyer accepted your proposal on ...', Sofia got proposal_rejected 'The buyer went with another seller on ...'."},
-    {"id": "s6-order-detail-title", "result": "pass", "evidence": "Pay page and order page title the line with the request title 'Need a Shopify-to-WooCommerce product migration ...', not 'Service Checkout'."},
-    {"id": "s7-pay-offline-and-mark-paid", "result": "pass", "evidence": "Pay form posts service_id=0 (hidden input); Offline selected -> payment_method=offline, status pending_payment, buyer page shows 'How to pay by Bank transfer' instructions. wp-admin order shows 'Offline Payment - Awaiting Confirmation' + Mark as Paid -> status pending_requirements, payment_status paid."},
-    {"id": "s7-seller-earnings-not-credited-yet", "result": "pass", "evidence": "No wallet transaction for order 3888 after mark-paid (credited on completion)."},
-    {"id": "s8-admin-order-and-list-name-source", "result": "pass", "evidence": "Admin order view links 'Request: Need a Shopify-to-WooCommerce ...' to post 13591; Orders list row reads the same; no 'Deleted' rows in the list page."},
-    {"id": "s8-admin-recent-orders-widget", "result": "untested", "evidence": "No Recent Orders table found on wp-admin Dashboard (index.php); plugin dashboard Recent Orders not walked."},
-    {"id": "modals-above-theme-deliver-dispute", "result": "pass", "evidence": "Maya, in-progress order 3888, Reign at 1440 and 390: Deliver Work and Open Dispute modals are children of body; title, close and primary button all receive elementFromPoint; Esc closes."},
-    {"id": "modals-quote-extra-work", "result": "untested", "evidence": "'Send quote to buyer' control not exposed as an accessible button on the in-progress order page; modal not opened."},
-    {"id": "reg-seller-proposes-own-request-notifies-nobody", "result": "untested", "evidence": "Not exercised (a non-vendor owner is refused with 403 wpss_not_vendor, a different case)."},
-    {"id": "reg-one-completion-email", "result": "untested", "evidence": "Needs Mailpit; completion by acceptance walked in journey 14 (order 3887: delivery_accepted + order_completed_vendor notifications once each)."},
-    {"id": "reg-order-again", "result": "pass", "evidence": "Tomas on completed order 3887: Order again -> /service-checkout/11411/?package=0 with the same Basic package, $35.00 + VAT 20% $7.00 = $42.00. Request-bought order 3888 shows no Need-this-again section. The section's price-changed and removed-option paths not exercised."},
-    {"id": "reg-order-thread-attachment-notice", "result": "pass", "evidence": "Ella on in-progress order 3888 messages Maya with migration-notes.exe: notice 'migration-notes.exe: File type could not be verified.'; text message stored (id 668) with attachments []."}
+    {
+      "id": "s1-proposal-created-pending",
+      "result": "pass",
+      "evidence": "Maya submitted the Submit Proposal form on request 15453 (QA-SMOKE bakery logo): wpss_proposals#288 status=pending price 280.00; Aisha via REST -> 201 proposal 289."
+    },
+    {
+      "id": "s1-exactly-one-email",
+      "result": "untested",
+      "evidence": "No mail catcher on this site (localhost:8025 closed, no mail log table). Needs Mailpit. Static only: not re-read this walk."
+    },
+    {
+      "id": "s2-notification-row",
+      "result": "pass",
+      "evidence": "Ella /dashboard/notifications/: 'New proposal received' rows 'Maya Chen sent a proposal ... Their price: $280.00' and the Aisha $340.00 one; icon svg data-lucide=briefcase; 'You have a new notification' absent; 1440 and 390 scrollWidth==clientWidth."
+    },
+    {
+      "id": "s3-notification-deep-link",
+      "result": "pass",
+      "evidence": "Title is an <a> to /buyer-request/qa-smoke-logo-refresh-.../ ; clicking it landed there showing Maya Chen and Aisha Khan proposals with Accept Proposal / Decline buttons."
+    },
+    {
+      "id": "s4-second-proposal-second-notification",
+      "result": "pass",
+      "evidence": "Two proposal_received rows for user 7848 (ids 14491, 14492), one per vendor."
+    },
+    {
+      "id": "s5-hire-creates-order-and-notifies",
+      "result": "pass",
+      "evidence": "Accept (modal Accept) on proposal 288 -> order 5449 platform=request status=pending_payment total 336.00 (280 + 20% tax), proposal 288 accepted, 289 rejected. Maya got proposal_accepted 'Your proposal was accepted' naming the request and WPSS-WCIBJBG3; Aisha got proposal_rejected 'Proposal not selected'. Wording nit: accepted text says 'the order is now open' while the order is pending_payment."
+    },
+    {
+      "id": "s6-order-detail-title",
+      "result": "pass",
+      "evidence": "Buyer order page Service Details reads 'Request: QA-SMOKE Logo refresh ...' and the pay page Order Details names the request, not 'Service Checkout'."
+    },
+    {
+      "id": "s7-pay-offline-and-mark-paid",
+      "result": "pass",
+      "evidence": "Pay page hidden service_id=0; chose Offline -> wpss_orders.payment_method=offline, status pending_payment; buyer order page shows 'How to pay by Offline payment' + instructions + proof upload (after setting offline instructions and receipt toggle, restored). Admin order box 'Offline Payment - Awaiting Confirmation' + Mark as paid -> confirm dialog -> status pending_requirements, payment_status paid; repeat ajax call -> 'Order is not awaiting payment.'. Note the confirm dialog uses a red danger-styled Confirm button."
+    },
+    {
+      "id": "s7-seller-earnings-not-credited-yet",
+      "result": "pass",
+      "evidence": "wpss_wallet_transactions rows with reference_id=5449 = 0 after Mark as paid."
+    },
+    {
+      "id": "s8-admin-order-and-list-name-source",
+      "result": "pass",
+      "evidence": "Admin order view: 'Request: QA-SMOKE Logo refresh...' links to post.php?post=15453; admin Orders list row 'Request: ...'; no 'Deleted'."
+    },
+    {
+      "id": "s8-admin-recent-orders-widget",
+      "result": "pass",
+      "evidence": "Sell Services dashboard (page=wp-sell-services) Recent Orders row '#WPSS-WCIBJBG3 Request: QA-SMOKE Logo refresh ... $336.00 Pending Requirements'; no 'Deleted service' text."
+    },
+    {
+      "id": "modals-above-theme-deliver-dispute",
+      "result": "pass",
+      "evidence": "Reign, order 5449 as Maya: Deliver Work (#wpss-deliver-modal) and Open dispute (#wpss-dispute-modal) are children of body while open; elementFromPoint on title, close and primary returns the modal at 1440 and 390; header is covered; Esc closes and the modal returns to .wpss-dashboard__body hidden. (390 Esc was dispatched as a synthetic key event.)"
+    },
+    {
+      "id": "modals-quote-extra-work",
+      "result": "pass",
+      "evidence": "Request orders deliberately offer no Quote Extra Work (template: not for request orders). On catalog order 2267 as Maya: 'Quote Extra Work' modal at 1440 and 390 title/close/primary hit the modal, header covered, Esc returns it to .wpss-dashboard__body."
+    },
+    {
+      "id": "modals-block-theme",
+      "result": "untested",
+      "evidence": "Block theme (twentytwentyfour) not walked: switching the active theme was denied by the environment's permission classifier (wp theme activate). Needs a theme switch and restore."
+    },
+    {
+      "id": "reg-seller-proposes-own-request-notifies-nobody",
+      "result": "pass",
+      "evidence": "Maya created request 15454 and POSTed a proposal on it -> 400 wpss_proposal_own_request 'You cannot submit a proposal on your own request.'; no proposal row, no notification rows created."
+    },
+    {
+      "id": "reg-one-completion-email",
+      "result": "untested",
+      "evidence": "Needs Mailpit. Order 5449 was completed (via admin dispute resolve) and 2291 likewise, but no mail capture exists."
+    },
+    {
+      "id": "reg-order-again",
+      "result": "pass",
+      "evidence": "Ella on completed order 2301 (Basic package): section 'Need this again? Same package (Basic) and options as this order, for $255.00 at today's price.'; Order again -> /service-checkout/11461/?package=0&quantity=3, checkout shows 'Basic x 3 $255.00 VAT (20%) $51.00 Total $306.00'. Order 2315 (not hers) shows no section. Paused service, custom-quote and removed-option negatives were not exercised."
+    },
+    {
+      "id": "reg-order-again-store-rail",
+      "result": "untested",
+      "evidence": "Needs the WooCommerce rail and a completed store order of quantity 2; rail was not switched and no such order exists."
+    }
   ],
   "proposed_checks": [
-    "Dashboard welcome tour modal should not cover a deep-linked destination (notifications) on first visit.",
-    "Order page for request orders shows '2 of 2 revisions left' under Requirements even though the proposal sets none."
-  ],
-  "verdict": "UNTESTED"
+    "Requirements page for a request order (/dashboard/orders/{id}/requirements/) titles the summary card 'Dashboard' (the page title) instead of the request title: templates/order/order-requirements.php get_post(0) falls through to the current page when service_id=0. Observed on order 5449.",
+    "Pay page for a request order prints 'Tax (20%)' while the site tax label is 'VAT': the request order meta stores tax_rate and tax_amount but no tax_label (order 5449 meta keys: proposal_snapshot, contract_type, tax_rate, tax_amount, offline_method).",
+    "proposal_accepted notification text says 'the order is now open' although the order is pending_payment.",
+    "Order page for request orders shows '2 of 2 revisions left' although the proposal sets none (carried from previous walk, still present).",
+    "Floating 'View cart, items: 1' link and header cart ('No products in the cart', href /cart-2/) disagree about the same cart on the dashboard requirements page (standalone rail, Ella had no cart items)."
+  ]
 }

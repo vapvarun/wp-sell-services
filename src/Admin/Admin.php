@@ -30,7 +30,6 @@ use WPSellServices\Admin\Tables\OrdersListTable;
 use WPSellServices\Admin\Tables\DisputesListTable;
 use WPSellServices\Models\Dispute;
 use WPSellServices\Models\ServiceOrder;
-use WPSellServices\Services\AuditLogService;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\OrderService;
 use WPSellServices\Services\PendingRefundService;
@@ -722,23 +721,16 @@ class Admin {
 			$order->update( array( 'payment_status' => 'refunded' ) );
 		}
 
-		( new AuditLogService() )->log(
-			'order.refund',
-			'order',
-			$order_id,
-			array(
-				'action'  => 'refund',
-				'context' => array(
-					'gateway' => (string) $order->payment_method,
-					'amount'  => $pending,
-					'result'  => array(
-						'success' => true,
-						'manual'  => true,
-						'message' => 'Marked as sent by admin.',
-					),
-				),
-			)
-		);
+		/**
+		 * Fires when an admin marks a manual refund as sent to the buyer.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int          $order_id Order ID.
+		 * @param float        $amount   Amount the admin sent back.
+		 * @param ServiceOrder $order    Order.
+		 */
+		do_action( 'wpss_order_refund_marked_sent', $order_id, (float) $pending, $order );
 
 		wpss_log( "Manual refund of {$pending} for order {$order_id} marked as sent by user " . get_current_user_id() . '.' );
 
@@ -1129,6 +1121,24 @@ class Admin {
 			}
 		}
 
+		// Background jobs: the queue has stopped, so timed work silently never happens.
+		$stalled = \WPSellServices\Services\Scheduler::stalled_since();
+
+		if ( $stalled ) {
+			$problems['jobs'] = array(
+				'text'  => sprintf(
+					/* translators: 1: how long ago, e.g. "3 hours", 2: extra hint about DISABLE_WP_CRON or empty */
+					__( 'Background jobs have not run for %1$s. Delayed message emails, late-order checks and auto-complete wait until they do. %2$s', 'wp-sell-services' ),
+					human_time_diff( $stalled ),
+					( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON )
+						? __( 'WP-Cron is turned off on this site (DISABLE_WP_CRON), so a server cron job must call wp-cron.php. Ask your host to add one.', 'wp-sell-services' )
+						: __( 'WP-Cron runs when people visit the site; if your host blocks it, ask them to add a server cron job that calls wp-cron.php.', 'wp-sell-services' )
+				),
+				'url'   => admin_url( 'tools.php?page=action-scheduler&status=past-due&s=wpss' ),
+				'label' => __( 'View overdue jobs', 'wp-sell-services' ),
+			);
+		}
+
 		return $problems;
 	}
 
@@ -1434,20 +1444,19 @@ class Admin {
 
 			$result = $dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id(), $refund_amount );
 			$error  = $result ? '' : $dispute_service->last_error();
+		} elseif ( DisputeService::STATUS_ESCALATED === $status ) {
+			// Escalating tells both parties and the other admins and records the
+			// reason, so every door goes through the one workflow method.
+			$escalated = ( new \WPSellServices\Services\DisputeWorkflowManager() )->escalate( $dispute_id, $notes, get_current_user_id() );
+			$result    = ! empty( $escalated['success'] );
+			$error     = $result ? '' : (string) $escalated['message'];
 		} elseif ( DisputeService::STATUS_CLOSED === $status ) {
 			$closed = ( new \WPSellServices\Services\DisputeWorkflowManager() )->cancel( $dispute_id, get_current_user_id(), $notes );
 			$result = ! empty( $closed['success'] );
 			$error  = $result ? '' : (string) $closed['message'];
 		} else {
-			$fields = $resolution ? array( 'resolution' => $resolution ) : array();
-			$result = $dispute_service->transition(
-				$dispute_id,
-				$status,
-				array(
-					'note'   => $notes,
-					'fields' => $fields,
-				)
-			);
+			// A resolution type belongs to a resolved dispute only; resolve() writes it.
+			$result = $dispute_service->transition( $dispute_id, $status, array( 'note' => $notes ) );
 			$error  = $result ? '' : $dispute_service->last_error();
 		}
 
@@ -1559,11 +1568,23 @@ class Admin {
 		// notice — surface the confirmation as a design-system toast.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only flag from core options.php redirect.
 		if ( isset( $_GET['settings-updated'] ) && 'true' === sanitize_key( wp_unslash( $_GET['settings-updated'] ) ) ) {
+			// What options.php handed back: its own "Settings saved." or the errors a sanitizer added
+			// with add_settings_error(). A fixed "Settings saved." toast hid every refusal.
+			$toasts = array();
+
+			foreach ( get_settings_errors() as $notice ) {
+				$toasts[] = array( wp_strip_all_tags( (string) $notice['message'] ), 'error' === $notice['type'] ? 'error' : 'success' );
+			}
+
+			if ( ! $toasts ) {
+				$toasts[] = array( __( 'Settings saved.', 'wp-sell-services' ), 'success' );
+			}
+
 			wp_add_inline_script(
 				'wpss-ui',
 				sprintf(
-					'(function(){var fire=function(){if(window.wpssToast){wpssToast(%s,"success");}else{setTimeout(fire,200);}};if("loading"===document.readyState){document.addEventListener("DOMContentLoaded",fire);}else{fire();}})();',
-					wp_json_encode( __( 'Settings saved.', 'wp-sell-services' ) )
+					'(function(){var t=%s;var fire=function(){if(window.wpssToast){t.forEach(function(n){wpssToast(n[0],n[1]);});}else{setTimeout(fire,200);}};if("loading"===document.readyState){document.addEventListener("DOMContentLoaded",fire);}else{fire();}})();',
+					wp_json_encode( $toasts )
 				)
 			);
 		}
@@ -2012,7 +2033,7 @@ class Admin {
 					<div class="wpss-admin-stat-card">
 						<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->total ); ?></span>
+							<a class="wpss-stat-number" href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&suborder_type=main' ) ); ?>"><?php echo esc_html( (string) $order_stats->total ); ?></a>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
@@ -2020,7 +2041,7 @@ class Admin {
 					<div class="wpss-admin-stat-card">
 						<i data-lucide="clock" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->in_progress ); ?></span>
+							<a class="wpss-stat-number" href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&suborder_type=main&status=in_progress' ) ); ?>"><?php echo esc_html( (string) $order_stats->in_progress ); ?></a>
 							<span class="wpss-stat-label"><?php esc_html_e( 'In Progress', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
@@ -2028,7 +2049,7 @@ class Admin {
 					<div class="wpss-admin-stat-card">
 						<i data-lucide="check-circle-2" class="wpss-icon wpss-stat-icon wpss-stat-icon--success" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->completed ); ?></span>
+							<a class="wpss-stat-number" href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&suborder_type=main&status=completed' ) ); ?>"><?php echo esc_html( (string) $order_stats->completed ); ?></a>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
@@ -2281,10 +2302,16 @@ class Admin {
 		$updated         = 0;
 
 		foreach ( $dispute_ids as $dispute_id ) {
-			// Close restores the order, so it goes through the workflow.
-			$ok = DisputeService::STATUS_CLOSED === $new_status
-				? ! empty( ( new \WPSellServices\Services\DisputeWorkflowManager() )->cancel( $dispute_id, get_current_user_id() )['success'] )
-				: $dispute_service->transition( $dispute_id, $new_status );
+			// Closing restores the order and escalating notifies everyone, so both
+			// go through the workflow; only the plain review state is a transition.
+			$workflow = new \WPSellServices\Services\DisputeWorkflowManager();
+			if ( DisputeService::STATUS_CLOSED === $new_status ) {
+				$ok = ! empty( $workflow->cancel( $dispute_id, get_current_user_id() )['success'] );
+			} elseif ( DisputeService::STATUS_ESCALATED === $new_status ) {
+				$ok = ! empty( $workflow->escalate( $dispute_id, '', get_current_user_id() )['success'] );
+			} else {
+				$ok = $dispute_service->transition( $dispute_id, $new_status );
+			}
 
 			if ( $ok ) {
 				++$updated;
@@ -2510,7 +2537,7 @@ class Admin {
 									</span>
 								</div>
 								<div class="wpss-order-detail-item">
-									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></span>
+									<span class="wpss-order-detail-item__label"><?php echo 'project' === $subject['kind'] ? esc_html__( 'Project', 'wp-sell-services' ) : esc_html__( 'Service', 'wp-sell-services' ); ?></span>
 									<span class="wpss-order-detail-item__value">
 										<?php if ( '' !== $subject['url'] ) : ?>
 											<a href="<?php echo esc_url( $subject['url'] ); ?>"><?php echo esc_html( $subject['label'] ); ?></a>
@@ -2520,7 +2547,7 @@ class Admin {
 									</span>
 								</div>
 								<?php $wpss_package_name = $order->get_package_name(); ?>
-								<?php if ( '' !== $wpss_package_name ) : ?>
+								<?php if ( '' !== $wpss_package_name && 'project' !== $subject['kind'] ) : ?>
 									<div class="wpss-order-detail-item">
 										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></span>
 										<span class="wpss-order-detail-item__value"><?php echo esc_html( $wpss_package_name ); ?></span>
@@ -2565,13 +2592,30 @@ class Admin {
 							$wpss_contract = ( new \WPSellServices\Services\MilestoneService() )->get_contract_totals( $order_id );
 
 							if ( ! $wpss_contract['count'] ) {
-								// The same line items the buyer sees: package, add-ons, tax, total.
-								wpss_get_template_part( 'order/line-items', '', array( 'wpss_order' => $order ) );
+								// The same line items the buyer sees: package, add-ons, tax, total, and the tips and extensions paid on top.
+								wpss_get_template_part(
+									'order/line-items',
+									'',
+									array(
+										'wpss_order' => $order,
+										'wpss_extras_admin_link' => true,
+									)
+								);
+							} else {
+								// A contract keeps its money on the phases; its tips are still listed.
+								echo '<table class="wpss-line-items"><tfoot>';
+								wpss_get_template_part(
+									'order/line-items-extras',
+									'',
+									array(
+										'wpss_extras' => ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_paid_extras( $order_id ),
+										'wpss_extras_admin_link' => true,
+									)
+								);
+								echo '</tfoot></table>';
 							}
-
-							$wpss_extras = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_paid_extras( $order_id );
 							?>
-							<?php if ( in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_MILESTONE, ServiceOrder::SUB_ORDER_TYPE_EXTENSION ), true ) && 'paid' !== ( $order->payment_status ?? '' ) && empty( $order->paid_at ) ) : ?>
+							<?php if ( 'offline' === ( $order->payment_method ?? '' ) && in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_MILESTONE, ServiceOrder::SUB_ORDER_TYPE_EXTENSION ), true ) && 'paid' !== ( $order->payment_status ?? '' ) && empty( $order->paid_at ) ) : ?>
 								<p class="description"><?php esc_html_e( 'Payment not received. Nothing is credited to the vendor until it is confirmed with Mark as Paid, whatever status this order is given.', 'wp-sell-services' ); ?></p>
 							<?php endif; ?>
 							<table class="wpss-admin-order__figures">
@@ -2598,27 +2642,6 @@ class Admin {
 										<td><?php echo esc_html( wpss_format_price( $wpss_contract['earnings'], $order->currency ) ); ?></td>
 									</tr>
 								<?php endif; ?>
-								<?php foreach ( $wpss_extras as $wpss_extra ) : ?>
-									<tr>
-										<td>
-											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . (int) $wpss_extra->id ) ); ?>">
-												<?php
-												echo esc_html(
-													ServiceOrder::SUB_ORDER_TYPE_TIP === $wpss_extra->platform
-														/* translators: %s: sub-order number */
-														? sprintf( __( 'Tip #%s', 'wp-sell-services' ), $wpss_extra->order_number )
-														/* translators: %s: sub-order number */
-														: sprintf( __( 'Extension #%s', 'wp-sell-services' ), $wpss_extra->order_number )
-												);
-												?>
-											</a>
-											<?php if ( in_array( $wpss_extra->status, array( 'refunded', 'partially_refunded' ), true ) ) : ?>
-												<small>(<?php echo esc_html( wpss_get_order_status_label( (string) $wpss_extra->status ) ); ?>)</small>
-											<?php endif; ?>
-										</td>
-										<td><?php echo esc_html( wpss_format_price( (float) $wpss_extra->total, (string) $wpss_extra->currency ) ); ?></td>
-									</tr>
-								<?php endforeach; ?>
 								<?php if ( isset( $order->vendor_earnings ) && $order->vendor_earnings > 0 ) : ?>
 									<tr>
 										<td><?php esc_html_e( 'Vendor Earning', 'wp-sell-services' ); ?></td>

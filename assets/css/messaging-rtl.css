@@ -68,7 +68,7 @@
 	width: 32px;
 	height: 32px;
 	background: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	border: none;
 	border-radius: var(--wpss-radius, 8px);
 	cursor: pointer;
@@ -76,7 +76,7 @@
 }
 
 .wpss-messaging__new-btn:hover {
-	background: var(--wpss-primary-dark, #4338ca);
+	background: var(--wpss-primary-hover);
 }
 
 /* Search */
@@ -215,7 +215,7 @@
 	padding: 0 6px;
 	font-size: 11px;
 	font-weight: 600;
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	background: var(--wpss-primary, #4f46e5);
 	border-radius: var(--wpss-radius-full, 9999px);
 }
@@ -448,7 +448,7 @@
 }
 
 .wpss-messaging__message--sent .wpss-messaging__bubble {
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	background: var(--wpss-primary, #4f46e5);
 	border-radius: 16px 16px 16px 4px;
 }
@@ -723,7 +723,7 @@
 	width: 44px;
 	height: 44px;
 	padding: 0 !important;
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	background: var(--wpss-primary, #4f46e5);
 	border: none;
 	border-radius: var(--wpss-radius-full, 9999px);
@@ -732,7 +732,7 @@
 }
 
 .wpss-messaging__send-btn:hover {
-	background: var(--wpss-primary-dark, #4338ca);
+	background: var(--wpss-primary-hover);
 }
 
 .wpss-messaging__send-btn:active {
@@ -824,7 +824,7 @@
 }
 
 .wpss-messaging__quick-btn:hover {
-	color: var(--wpss-primary-accent, #4f46e5);
+	color: var(--wpss-primary-dark);
 	border-color: var(--wpss-primary, #4f46e5);
 	background: var(--wpss-primary-light, #eef2ff);
 }

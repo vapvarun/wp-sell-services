@@ -538,17 +538,16 @@ class CommissionService {
 		}
 
 		if ( false !== $result && $old !== $rate ) {
-			( new AuditLogService() )->log(
-				'commission.rate_changed',
-				'vendor',
-				$vendor_id,
-				array(
-					'action'     => 'update',
-					'from_value' => null === $old ? 'global' : (string) $old,
-					'to_value'   => null === $rate ? 'global' : (string) $rate,
-					'context'    => array( 'scope' => 'vendor' ),
-				)
-			);
+			/**
+			 * Fires when a vendor's own commission rate changes.
+			 *
+			 * @since 1.9.2
+			 *
+			 * @param int        $vendor_id Vendor user ID.
+			 * @param float|null $old       Previous rate; null means the global rate.
+			 * @param float|null $rate      New rate; null means the global rate.
+			 */
+			do_action( 'wpss_vendor_commission_rate_changed', $vendor_id, $old, $rate );
 		}
 
 		return false !== $result;

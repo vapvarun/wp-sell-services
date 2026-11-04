@@ -50,6 +50,10 @@ class RateLimiter {
 			'requests' => 3,
 			'window'   => 86400,
 		), // 3 attempts per day.
+		'report_alert'         => array(
+			'requests' => 5,
+			'window'   => 3600,
+		), // 5 owner report alerts per member per hour; every report is still stored.
 		// Account creation during checkout. Unauthenticated and it creates users,
 		// so it has to have a ceiling — but the key is the IP, and behind CGNAT
 		// or an office NAT that IP can be a whole town, which is exactly the
@@ -80,10 +84,6 @@ class RateLimiter {
 			'requests' => 50,
 			'window'   => 3600,
 		), // 50 uploads per hour.
-		'live_search'          => array(
-			'requests' => 30,
-			'window'   => 60,
-		), // 30 live-search queries per minute (per IP for guests, per user for logged-in).
 		'contact'              => array(
 			'requests' => 5,
 			'window'   => 300,

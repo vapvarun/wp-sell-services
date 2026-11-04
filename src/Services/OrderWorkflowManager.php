@@ -287,7 +287,7 @@ class OrderWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$late_orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, vendor_id, customer_id FROM {$table}
+				"SELECT id, vendor_id, customer_id, status FROM {$table}
 				WHERE status IN (%s, %s)
 				AND delivery_deadline < %s
 				ORDER BY delivery_deadline ASC
@@ -301,11 +301,17 @@ class OrderWorkflowManager {
 		);
 
 		foreach ( $late_orders as $order ) {
-			$this->order_service->update_status(
+			// Each sweep passes the status it selected: by the time a row is
+			// reached it may have been delivered, disputed or cancelled, and
+			// acting on the stale read would move the wrong order.
+			if ( ! $this->order_service->update_status(
 				(int) $order->id,
 				ServiceOrder::STATUS_LATE,
-				__( 'Order marked as late - deadline exceeded', 'wp-sell-services' )
-			);
+				__( 'Order marked as late - deadline exceeded', 'wp-sell-services' ),
+				(string) $order->status
+			) ) {
+				continue;
+			}
 
 			// Notify vendor.
 			$this->notification_service->create(
@@ -349,7 +355,7 @@ class OrderWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$orders_to_complete = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT o.id, o.customer_id, o.vendor_id
+				"SELECT o.id, o.customer_id, o.vendor_id, o.status
 				FROM {$table} o
 				WHERE o.status IN (%s, %s)
 				AND ( SELECT MAX( d.created_at ) FROM {$deliveries_table} d WHERE d.order_id = o.id ) < DATE_SUB(%s, INTERVAL %d DAY)
@@ -364,15 +370,20 @@ class OrderWorkflowManager {
 		);
 
 		foreach ( $orders_to_complete as $order ) {
-			$this->order_service->update_status(
+			// A buyer who disputed or asked for a revision since the select
+			// must not be completed and paid out from under them.
+			if ( ! $this->order_service->update_status(
 				(int) $order->id,
 				ServiceOrder::STATUS_COMPLETED,
 				sprintf(
 					/* translators: %d: number of days */
 					__( 'Order auto-completed after %d days without response', 'wp-sell-services' ),
 					$auto_complete_days
-				)
-			);
+				),
+				(string) $order->status
+			) ) {
+				continue;
+			}
 
 			// Notify customer.
 			$this->notification_service->create(
@@ -550,15 +561,18 @@ class OrderWorkflowManager {
 
 			if ( $auto_start ) {
 				// Auto-start the order without requirements.
-				$this->order_service->update_status(
+				if ( ! $this->order_service->update_status(
 					$order_id,
 					ServiceOrder::STATUS_IN_PROGRESS,
 					sprintf(
 						/* translators: %d: number of days */
 						__( 'Order auto-started after %d days without requirements submission', 'wp-sell-services' ),
 						$timeout_days
-					)
-				);
+					),
+					ServiceOrder::STATUS_PENDING_REQUIREMENTS
+				) ) {
+					continue;
+				}
 
 				$this->notification_service->create(
 					(int) $order->vendor_id,
@@ -585,15 +599,20 @@ class OrderWorkflowManager {
 				);
 			} else {
 				// Cancel the order instead.
-				$this->order_service->update_status(
+				// The buyer may have sent requirements since the select; cancelling
+				// (and refunding) a started order would be wrong.
+				if ( ! $this->order_service->update_status(
 					$order_id,
 					ServiceOrder::STATUS_CANCELLED,
 					sprintf(
 						/* translators: %d: number of days */
 						__( 'Order cancelled - requirements not submitted within %d days', 'wp-sell-services' ),
 						$timeout_days
-					)
-				);
+					),
+					ServiceOrder::STATUS_PENDING_REQUIREMENTS
+				) ) {
+					continue;
+				}
 
 				$this->notification_service->create(
 					(int) $order->customer_id,
@@ -720,28 +739,7 @@ class OrderWorkflowManager {
 			return;
 		}
 
-		// Audit-trail the cancellation itself. Status-change audit rows are
-		// written by OrderService::log_status_change(); this row captures the
-		// richer cancellation context (what earnings/payment state was being
-		// unwound) so downstream forensics has the full picture.
-		$audit = new AuditLogService();
-		$audit->log(
-			'order.cancel',
-			'order',
-			$order_id,
-			array(
-				'action'     => 'cancel',
-				'from_value' => $old_status,
-				'to_value'   => ServiceOrder::STATUS_CANCELLED,
-				'context'    => array(
-					'vendor_id'       => (int) $order->vendor_id,
-					'customer_id'     => (int) $order->customer_id,
-					'vendor_earnings' => null === $order->vendor_earnings ? null : (float) $order->vendor_earnings,
-					'order_total'     => (float) $order->total,
-					'payment_status'  => (string) $order->payment_status,
-				),
-			)
-		);
+		// The cancellation audit row listens on wpss_order_status_cancelled itself (AuditLogService).
 
 		// Reverse earnings if commission was already recorded for this order.
 		if ( null !== $order->vendor_earnings && '' !== $order->vendor_earnings ) {
@@ -754,18 +752,16 @@ class OrderWorkflowManager {
 					),
 					'error'
 				);
-				$audit->log(
-					'order.earnings_reversal_failed',
-					'order',
-					$order_id,
-					array(
-						'action'  => 'rollback',
-						'context' => array(
-							'vendor_id' => (int) $order->vendor_id,
-							'amount'    => (float) $order->vendor_earnings,
-						),
-					)
-				);
+				/**
+				 * Fires when a cancelled order's earnings could not be reversed.
+				 *
+				 * @since 1.9.2
+				 *
+				 * @param int   $order_id  Order ID.
+				 * @param int   $vendor_id Vendor who still holds the earnings.
+				 * @param float $amount    Earnings that were not reversed.
+				 */
+				do_action( 'wpss_order_earnings_reversal_failed', $order_id, (int) $order->vendor_id, (float) $order->vendor_earnings );
 			}
 		}
 
@@ -1614,7 +1610,6 @@ class OrderWorkflowManager {
 		 */
 		do_action( 'wpss_order_refund_processed', (int) $order->id, $refund_result, $order );
 
-		$audit   = new AuditLogService();
 		$context = array(
 			'gateway'        => (string) $order->payment_method,
 			'transaction_id' => (string) $order->transaction_id,
@@ -1630,15 +1625,8 @@ class OrderWorkflowManager {
 
 			wpss_log( "Manual refund required for order {$order->id}: send {$refund_amount} {$order->currency} to the buyer via '{$order->payment_method}'. The buyer has NOT been refunded yet.", 'warning' );
 
-			$audit->log(
-				'order.refund_pending',
-				'order',
-				(int) $order->id,
-				array(
-					'action'  => 'refund',
-					'context' => $context,
-				)
-			);
+			/** This action is documented below, where a refund succeeds. */
+			do_action( 'wpss_order_refund_recorded', (int) $order->id, 'pending', $context, $order, false );
 
 			$this->notification_service->notify_admins(
 				'refund_pending',
@@ -1672,17 +1660,18 @@ class OrderWorkflowManager {
 
 			wpss_log( "Auto-refund successful for order {$order->id}: {$refund_amount} of {$order_total} via '{$order->payment_method}', transaction {$order->transaction_id}, refund {$refund_result['transaction_id']}." );
 
-			$audit->log(
-				'order.refund',
-				'order',
-				(int) $order->id,
-				array(
-					'action'     => 'refund',
-					'from_value' => (string) $order->payment_status,
-					'to_value'   => $is_partial ? 'paid' : 'refunded',
-					'context'    => $context,
-				)
-			);
+			/**
+			 * Fires once a gateway refund attempt has an outcome, for the permanent record.
+			 *
+			 * @since 1.9.2
+			 *
+			 * @param int                  $order_id   Order ID.
+			 * @param string               $outcome    pending (send by hand), refunded or failed.
+			 * @param array<string, mixed> $context    Gateway, transaction, amount and result.
+			 * @param ServiceOrder         $order      Order as it was before the refund.
+			 * @param bool                 $is_partial Whether part of the payment remains.
+			 */
+			do_action( 'wpss_order_refund_recorded', (int) $order->id, 'refunded', $context, $order, $is_partial );
 
 			/**
 			 * Fires when an auto-refund is processed successfully.
@@ -1705,15 +1694,8 @@ class OrderWorkflowManager {
 		wpss_log( "Auto-refund FAILED for order {$order->id}: {$error_msg}. The buyer has NOT been refunded.", 'error' );
 
 		$context['error'] = (string) $error_msg;
-		$audit->log(
-			'order.refund_failed',
-			'order',
-			(int) $order->id,
-			array(
-				'action'  => 'refund',
-				'context' => $context,
-			)
-		);
+		/** This action is documented above, where a refund succeeds. */
+		do_action( 'wpss_order_refund_recorded', (int) $order->id, 'failed', $context, $order, false );
 
 		// Tell every administrator so someone processes it by hand.
 		$this->notification_service->notify_admins(
@@ -1799,7 +1781,8 @@ class OrderWorkflowManager {
 			$updated = $this->order_service->update_status(
 				$order_id,
 				ServiceOrder::STATUS_CANCELLED,
-				__( 'Order auto-cancelled - vendor did not respond to cancellation request within 48 hours', 'wp-sell-services' )
+				__( 'Order auto-cancelled - vendor did not respond to cancellation request within 48 hours', 'wp-sell-services' ),
+				ServiceOrder::STATUS_CANCELLATION_REQUESTED
 			);
 
 			if ( ! $updated ) {
@@ -1847,13 +1830,17 @@ class OrderWorkflowManager {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		// Find offline orders stuck in pending_payment beyond the threshold.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// Find offline orders stuck in pending_payment beyond the threshold. Phases, tips and extensions are left
+		// alone: the contract they belong to is still running, and the owner settles or cancels them by hand.
+		$real_orders = wpss_order_rows_sql();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$pending_orders = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, customer_id, vendor_id, created_at FROM {$table}
 				WHERE status = %s
 				AND payment_method = %s
+				AND {$real_orders}
 				AND created_at <= %s",
 				ServiceOrder::STATUS_PENDING_PAYMENT,
 				'offline',
@@ -1879,7 +1866,8 @@ class OrderWorkflowManager {
 					/* translators: %d: number of hours */
 					__( 'Order auto-cancelled - offline payment not received within %d hours', 'wp-sell-services' ),
 					$auto_hold_hours
-				)
+				),
+				ServiceOrder::STATUS_PENDING_PAYMENT
 			);
 
 			if ( ! $updated ) {
@@ -1973,6 +1961,13 @@ class OrderWorkflowManager {
 			return;
 		}
 
+		// A tip, extension or milestone phase owns its lifecycle through its own
+		// wpss_order_paid handler; moving it here first only flickers its status
+		// and writes extra history rows (mark_as_paid skips the same step).
+		if ( in_array( (string) $order->platform, wpss_get_sub_order_platforms(), true ) ) {
+			return;
+		}
+
 		// Transition to pending requirements, or straight to in progress when the service asks for none.
 		// This fires wpss_order_status_changed → Plugin.php handles notifications.
 		$this->order_service->update_status(
@@ -2001,7 +1996,7 @@ class OrderWorkflowManager {
 		$completed_orders = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$orders_table}
-				WHERE vendor_id = %d AND status = %s",
+				WHERE vendor_id = %d AND status = %s AND " . wpss_order_rows_sql(),
 				$vendor_id,
 				ServiceOrder::STATUS_COMPLETED
 			)
@@ -2010,7 +2005,7 @@ class OrderWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$total_orders = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d",
+				"SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND " . wpss_order_rows_sql(),
 				$vendor_id
 			)
 		);

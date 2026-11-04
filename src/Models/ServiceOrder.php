@@ -1078,6 +1078,17 @@ class ServiceOrder {
 	}
 
 	/**
+	 * Whether this order was hired from a buyer request (a custom project), not bought from the catalogue.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @return bool
+	 */
+	public function is_request_order(): bool {
+		return 'request' === $this->platform;
+	}
+
+	/**
 	 * Get package name.
 	 *
 	 * Uses the package snapshot first (frozen at order creation), then falls back to live data.

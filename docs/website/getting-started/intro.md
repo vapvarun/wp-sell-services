@@ -43,7 +43,7 @@ Here are some real-world examples of what people are building:
 | Service add-ons | Up to 3 | Unlimited **[PRO]** |
 | FAQs per service | Up to 5 | Unlimited **[PRO]** |
 | Video embeds | 1 | 1 |
-| WooCommerce, EDD, FluentCart | -- | **[PRO]** |
+| WooCommerce checkout (EDD and FluentCart in beta, off by default) | -- | **[PRO]** |
 | Razorpay payment gateway | -- | **[PRO]** |
 | Analytics dashboards (CSV export on the admin screen) | -- | **[PRO]** |
 | Cloud storage (Amazon S3, Google Cloud, DO) | -- | **[PRO]** |

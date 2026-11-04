@@ -219,10 +219,10 @@ class TemplateLoader {
 				nocache_headers();
 				return get_query_template( '404' );
 			}
-			// An unknown slug on the directory page falls through to the
+			// An unknown or non-vendor slug on the directory page falls through to the
 			// directory: a stale link should show the list, not an error page.
 			// Keep the junk URL out of search indexes.
-			if ( ! $user && $from_directory ) {
+			if ( $from_directory && ! ( $user && wpss_is_vendor( $user->ID ) ) ) {
 				add_filter( 'wp_robots', 'wp_robots_no_robots' );
 			}
 		}
@@ -341,7 +341,7 @@ class TemplateLoader {
 			 */
 			$page_keys = apply_filters(
 				'wpss_fullwidth_page_keys',
-				array( 'dashboard', 'cart', 'checkout', 'become_vendor', 'registration', 'login' )
+				array( 'dashboard', 'cart', 'checkout', 'become_vendor', 'registration', 'login', 'vendors_page' )
 			);
 
 			$page_ids = array();
@@ -362,8 +362,10 @@ class TemplateLoader {
 	 * Mirrors Reign's own FluentCart integration: intercepts reads of
 	 * `reign_wbcom_metabox_data` for mapped plugin pages and sets
 	 * `layout.site_layout = full_width` when no explicit layout was chosen,
-	 * so the theme's blog sidebar never renders next to marketplace UI.
-	 * An explicitly configured per-page layout always wins.
+	 * so the theme's blog sidebar never renders next to marketplace UI, and
+	 * `layout.display_left_panel_menu = yes` so Reign's Left Panel rail does not
+	 * sit beside the dashboard's own navigation (filter: wpss_reign_hide_left_panel).
+	 * An explicitly configured per-page value always wins.
 	 *
 	 * @param mixed  $metadata  Pre-filtered meta value (null = use DB).
 	 * @param int    $object_id Post ID being read.
@@ -396,6 +398,23 @@ class TemplateLoader {
 		// Only force when the page owner hasn't chosen a layout.
 		if ( empty( $actual_meta['layout']['site_layout'] ) ) {
 			$actual_meta['layout']['site_layout'] = 'full_width';
+		}
+
+		/**
+		 * Filters whether Reign's Left Panel is hidden on plugin pages by default.
+		 *
+		 * The panel is a second navigation rail beside the dashboard's own, which
+		 * squeezed the work area for every buyer and vendor. Reign's per-page field
+		 * is "Hide Left Panel Menu": 'yes' hides, 'no' forces it on, '0' is Default.
+		 * Only Default is changed, so a page set to show the panel still shows it.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param bool $hide      True to hide the panel on a page left at Default.
+		 * @param int  $object_id The plugin page being rendered.
+		 */
+		if ( empty( $actual_meta['layout']['display_left_panel_menu'] ) && apply_filters( 'wpss_reign_hide_left_panel', true, (int) $object_id ) ) {
+			$actual_meta['layout']['display_left_panel_menu'] = 'yes';
 		}
 
 		return $single ? array( $actual_meta ) : array( array( $actual_meta ) );

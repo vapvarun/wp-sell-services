@@ -65,6 +65,20 @@ class ExtensionOrderService {
 	public const ABANDON_AFTER_HOURS = 48;
 
 	/**
+	 * Parent statuses an extension can be quoted and paid in. Completed,
+	 * cancelled and disputed orders go through refunds, reviews or the
+	 * dispute, not extra paid work.
+	 *
+	 * @var string[]
+	 */
+	public const ACTIVE_PARENT_STATUSES = array(
+		ServiceOrder::STATUS_IN_PROGRESS,
+		ServiceOrder::STATUS_LATE,
+		ServiceOrder::STATUS_REVISION_REQUESTED,
+		ServiceOrder::STATUS_PENDING_APPROVAL,
+	);
+
+	/**
 	 * Wire hooks. Called from the plugin bootstrap.
 	 *
 	 * @return void
@@ -161,6 +175,17 @@ class ExtensionOrderService {
 			return $fail( __( 'Only the vendor can request an extension on this order.', 'wp-sell-services' ) );
 		}
 
+		// An extension is new paid work for both sides, so both must be in good
+		// standing, whichever door (AJAX, REST) calls this.
+		$standing = wpss_vendor_status_block( $vendor_id );
+		if ( $standing ) {
+			return $fail( $standing->get_error_message() );
+		}
+
+		if ( wpss_account_status_block( (int) $parent->customer_id ) ) {
+			return $fail( __( 'This buyer cannot take on new purchases right now, so an extension cannot be requested.', 'wp-sell-services' ) );
+		}
+
 		// Extensions are for small ad-hoc top-ups on fixed-price catalog
 		// orders where the buyer already paid the full price. Custom
 		// buyer-request projects use Milestones for their phased payment
@@ -170,15 +195,8 @@ class ExtensionOrderService {
 			return $fail( __( 'Extensions are for fixed-price service orders. For custom-project orders, propose a phase instead.', 'wp-sell-services' ) );
 		}
 
-		// Only ongoing orders can be extended. Completed / cancelled / disputed
-		// orders go through refunds or reviews, not extensions.
-		$allowed_parent_statuses = array(
-			ServiceOrder::STATUS_IN_PROGRESS,
-			ServiceOrder::STATUS_LATE,
-			ServiceOrder::STATUS_REVISION_REQUESTED,
-			ServiceOrder::STATUS_PENDING_APPROVAL,
-		);
-		if ( ! in_array( $parent->status, $allowed_parent_statuses, true ) ) {
+		// Only ongoing orders can be extended.
+		if ( ! in_array( $parent->status, self::ACTIVE_PARENT_STATUSES, true ) ) {
 			return $fail( __( 'Extensions can only be requested on active orders.', 'wp-sell-services' ) );
 		}
 
@@ -194,6 +212,8 @@ class ExtensionOrderService {
 		$order_number     = 'EXT-' . strtoupper( wp_generate_password( 8, false, false ) );
 		$currency         = $parent->currency ?? 'USD';
 
+		$priced = \WPSellServices\Checkout\CheckoutIntentService::price_sub_order( 'extension', $amount, (int) $parent->service_id, (int) $parent->vendor_id );
+
 		$wpdb->query( 'START TRANSACTION' );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -206,18 +226,21 @@ class ExtensionOrderService {
 				'service_id'        => (int) $parent->service_id,
 				'platform'          => self::ORDER_TYPE,
 				'platform_order_id' => $parent_order_id,
-				'subtotal'          => $amount,
-				'total'             => $amount,
+				'subtotal'          => $priced['subtotal'],
+				'total'             => $priced['total'],
 				'currency'          => $currency,
 				'status'            => 'pending_payment',
 				'payment_status'    => 'pending',
 				'vendor_notes'      => $reason,
 				'meta'              => wp_json_encode(
-					array(
-						'extension'       => true,
-						'parent_order_id' => $parent_order_id,
-						'extra_days'      => $extra_days,
-						'reason'          => $reason,
+					array_merge(
+						$priced['tax_meta'],
+						array(
+							'extension'       => true,
+							'parent_order_id' => $parent_order_id,
+							'extra_days'      => $extra_days,
+							'reason'          => $reason,
+						)
 					)
 				),
 				'created_at'        => current_time( 'mysql', true ),
@@ -558,7 +581,7 @@ class ExtensionOrderService {
 
 		if ( ! empty( $row->pay_order_id ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
+			$closed = $wpdb->update(
 				$orders_table,
 				array(
 					'status'     => 'cancelled',
@@ -569,6 +592,11 @@ class ExtensionOrderService {
 					'status' => 'pending_payment',
 				)
 			);
+
+			if ( $closed ) {
+				/** This action is documented in src/Services/TippingService.php */
+				do_action( 'wpss_unpaid_sub_order_closed', (int) $row->pay_order_id );
+			}
 		}
 
 		/**
@@ -640,6 +668,9 @@ class ExtensionOrderService {
 			);
 
 			if ( $affected ) {
+				/** This action is documented in src/Services/TippingService.php */
+				do_action( 'wpss_unpaid_sub_order_closed', $sub_id );
+
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->update(
 					$extensions_table,

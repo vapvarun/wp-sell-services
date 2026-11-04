@@ -9,13 +9,24 @@ One page, in the order QA works. Everything QA needs is linked from here; nothin
 | [`../../audit/journeys/`](../../audit/journeys/) | developer | one role walking one flow, with `Expect` lines |
 | [`../../audit/gate-parameters.md`](../../audit/gate-parameters.md) | developer | the conditions every flow is walked under (rail, theme, dark, 390, RTL, upgraded site, time zone) |
 | [`TESTING-GUIDELINE.md`](TESTING-GUIDELINE.md) | developer | how to judge what you see (expectation first) |
+| [`CHECKLIST.md`](CHECKLIST.md) | developer | the per-surface walk: one row per check, with its role, URL and measurable assertion; this is what a release walk runs |
 | [`CORE_PATHS.md`](CORE_PATHS.md) | developer | the flows that matter most; a bug there outranks one on an edge |
 | [`smoke-surfaces.json`](smoke-surfaces.json) | developer | which files belong to which walked surface; the release gate re-walks only a changed surface (an unmapped file re-walks everything) |
 | `qa-config.json`, `.qa-results/walks.json` (untracked, local to the tester), `../../audit/escapes.json` | QA | gate config, walk ledger, regression-guard rows |
-| `QA-HANDOFF-1.9.0.md` | developer | what changed this release, by fix group (replaced each release) |
+| `QA-HANDOFF-1.9.1.md` | developer | what changed this release, by fix group (replaced each release; older ones go to `archive/`) |
 | `OWNER_INVENTORY.md` | generated | what the site owner can see; regenerate, never edit |
 
 Tests all live in Free: `tests/` for the core and `tests/pro/` for Pro features (each skips with a message when Pro is not active). Run any of them with `wp eval-file tests/<file>.php` from the WordPress root.
+
+## Fast flow (run this first)
+
+Verification time follows the diff, not the plugin.
+
+1. `node bin/qa-plan.cjs [<sha>]` lists the surfaces the diff touched and how many checks each persona must run. It reports `runAll: true` and the unmapped files when a change touches a file no surface owns.
+2. Static: `php vendor/bin/phpcs --standard=phpcs.xml` on the changed files, and the guards.
+3. Browser: for each persona the plan names, log in (`?autologin=`), then paste `checks/runner.fn.js` plus that persona's `checks/<persona>.json` into one Playwright `browser_evaluate`. It returns pass or fail per row (status, PHP notice, text present or absent, horizontal overflow at the stated width).
+4. Anything a check cannot express (a double click, an approve-twice, a visual judgement) stays a row in `CHECKLIST.md` for a human or a targeted walk.
+5. A fix is not ready for testing until its check row exists in `checks/` or `CHECKLIST.md`.
 
 ## 1. Set up (every session)
 
@@ -27,9 +38,12 @@ Tests all live in Free: `tests/` for the core and `tests/pro/` for Pro features 
 ## 2. Run the gate
 
 ```
-node <qa-mcp>/bin/wppqa-run.mjs --plugin <plugin dir> --only static --allow-static
-python3 <claude-backup>/skills/wp-qa-gate/scripts/ready-check.py <plugin dir>
+bin/run-guards.sh                  # every checks.static guard in qa-config.json; ends "guards done, red=N"
+php vendor/bin/phpcs --standard=phpcs.xml <changed php files>
+node <qa-mcp>/bin/wppqa-run.mjs --plugin <plugin dir> --only <class>   # roundtrip, parity, states, presentation, crawl, release
 ```
+
+The wp-plugin-qa MCP replays `checks.static` as the `static` class (`--only static`, or `static:<id>` for one guard), so each `static:` row in `audit/escapes.json` is replayed with the rest. `bin/run-guards.sh` runs the same guards without the MCP. Static code standards (WPCS, PHPStan, PHP compatibility) belong to the `wpcs` MCP, which reads this repo's `phpcs.xml` from the path it is given.
 
 Before a release, `grunt verify:smoke-gate` dates both smoke reports against Free and Pro. A changed file that `smoke-surfaces.json` maps to a surface is covered once that surface is re-walked and recorded under `surfaces` in the report (`ran_against`, and `pro_ran_against` for Pro files); a file it does not map invalidates the whole walk. `node tests/smoke-gate-surfaces.test.cjs` proves both.
 
@@ -56,7 +70,7 @@ Each flow that renders UI is walked under the parameters in `audit/gate-paramete
 
 ## 6. Check the cards
 
-From Ready for Testing, by fix group in `QA-HANDOFF-1.9.0.md`.
+From Ready for Testing, by fix group in `QA-HANDOFF-1.9.1.md`.
 
 1. Run the card's acceptance bar literally, as the stated role, then the negative case.
 2. Check every door the handoff lists as fixed, unaffected or not covered. An unlisted door is a question for the developer.

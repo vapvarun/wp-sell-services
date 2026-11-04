@@ -12,6 +12,12 @@ The dashboard's Notifications menu item shows an unread count badge. When someth
 
 ---
 
+## Notifications in WooCommerce My Account
+
+When WooCommerce handles checkout and WP Sell Services Pro is active, buyers and vendors also get a **Service notifications** tab in My Account (`/my-account/service-notifications/`). It shows the same list, filters and *Mark all as read* as the dashboard.
+
+---
+
 ## What Triggers Notifications
 
 Notifications are created for all major marketplace events:

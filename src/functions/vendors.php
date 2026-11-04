@@ -175,18 +175,28 @@ function wpss_get_active_vendor_ids( int $limit = 0, int $offset = 0 ): array {
 }
 
 /**
- * User IDs of vendors who are on vacation today.
+ * The one list every service listing excludes (catalog, search, REST).
  *
- * The one list every service listing excludes (catalog, search, REST). A
- * vendor is away while vacation mode is on and the return date is empty or not
- * yet past - once the date passes the vacation is over with nothing stored.
+ * A seller is unlisted while away (vacation mode on and the return date empty
+ * or not yet past), while an owner has suspended or rejected their vendor
+ * account, or while their member standing is suspended or banned. Buying is
+ * refused for the same sellers by wpss_service_unavailable_reason().
  *
- * @since 1.8.0
+ * @since 1.9.1
  *
  * @return array<int> Vendor user IDs.
  */
-function wpss_get_vacation_vendor_ids(): array {
-	return ( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->get_on_vacation_user_ids();
+function wpss_get_unlisted_seller_ids(): array {
+	$repo  = new \WPSellServices\Database\Repositories\VendorProfileRepository();
+	$moved = get_users(
+		array(
+			'meta_key'   => 'wpss_account_status', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			'meta_value' => array( 'suspended', 'banned' ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			'fields'     => 'ID',
+		)
+	);
+
+	return array_values( array_unique( array_merge( $repo->get_on_vacation_user_ids(), $repo->get_blocked_user_ids(), array_map( 'intval', $moved ) ) ) );
 }
 
 /**
@@ -464,6 +474,28 @@ function wpss_vendor_status_block( int $user_id = 0 ) {
 }
 
 /**
+ * Why a user cannot submit a proposal, or null when they can.
+ *
+ * One gate for the form, POST /proposals and POST /requests/{id}/proposals. Asking
+ * wpss_is_vendor() first answered a suspended or pending vendor with "You must be
+ * a vendor", which is wrong for someone who is one; their standing says why.
+ *
+ * @since 1.9.1
+ *
+ * @param int $user_id User ID. Defaults to the current user.
+ * @return WP_Error|null
+ */
+function wpss_proposal_vendor_block( int $user_id = 0 ): ?WP_Error {
+	$block = wpss_vendor_status_block( $user_id );
+
+	if ( $block || wpss_is_vendor( $user_id ?: null ) ) {
+		return $block;
+	}
+
+	return new WP_Error( 'wpss_not_vendor', __( 'You must be a vendor to submit proposals.', 'wp-sell-services' ), array( 'status' => 403 ) );
+}
+
+/**
  * Get services for a vendor.
  *
  * @since 1.2.0
@@ -542,6 +574,11 @@ function wpss_build_vendor_profile_update( array $src, int $avatar_id, int $cove
 	}
 	if ( array_key_exists( 'website', $src ) ) {
 		$data['website'] = esc_url_raw( (string) $src['website'] );
+	}
+	if ( array_key_exists( 'timezone', $src ) ) {
+		// An IANA name or empty (the site's zone); anything else would make wp_date() throw.
+		$zone             = sanitize_text_field( (string) $src['timezone'] );
+		$data['timezone'] = in_array( $zone, timezone_identifiers_list(), true ) ? $zone : '';
 	}
 	if ( array_key_exists( 'intro_video_url', $src ) ) {
 		// Accept only YouTube/Vimeo origins - stored verbatim, rendered through
@@ -1088,7 +1125,6 @@ const WPSS_VENDOR_ROLE_CLEANUP_OPTION = 'wpss_vendor_role_cleanup';
  */
 function wpss_remove_vendor_role( array $user_ids ): int {
 	$allowed = array_intersect( array_map( 'intval', $user_ids ), wpss_get_role_only_vendor_ids() );
-	$audit   = new \WPSellServices\Services\AuditLogService();
 	$default = (string) get_option( 'default_role', 'subscriber' );
 	$batch   = array();
 
@@ -1106,15 +1142,15 @@ function wpss_remove_vendor_role( array $user_ids ): int {
 		}
 
 		$batch[ $user_id ] = $added_default ? $default : '';
-		$audit->log(
-			'vendor.role_removed',
-			'user',
-			$user_id,
-			array(
-				'from_value' => \WPSellServices\Services\VendorService::ROLE,
-				'to_value'   => implode( ',', $user->roles ),
-			)
-		);
+		/**
+		 * Fires when the bulk tool removes the vendor role from a user.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int      $user_id User ID.
+		 * @param string[] $roles   Roles the user holds now.
+		 */
+		do_action( 'wpss_vendor_role_removed', $user_id, $user->roles );
 	}
 
 	if ( $batch ) {
@@ -1146,7 +1182,6 @@ function wpss_restore_vendor_role(): int {
 		return 0;
 	}
 
-	$audit    = new \WPSellServices\Services\AuditLogService();
 	$restored = 0;
 
 	foreach ( $last['users'] as $user_id => $added_default ) {
@@ -1160,12 +1195,15 @@ function wpss_restore_vendor_role(): int {
 			$user->remove_role( (string) $added_default );
 		}
 
-		$audit->log(
-			'vendor.role_restored',
-			'user',
-			(int) $user_id,
-			array( 'to_value' => implode( ',', $user->roles ) )
-		);
+		/**
+		 * Fires when the bulk tool's undo gives a user the vendor role back.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int      $user_id User ID.
+		 * @param string[] $roles   Roles the user holds now.
+		 */
+		do_action( 'wpss_vendor_role_restored', (int) $user_id, $user->roles );
 		++$restored;
 	}
 

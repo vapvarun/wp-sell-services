@@ -109,14 +109,15 @@ wpss_t( 100.0 === $r['paid'], 'a refunded phase is not counted as money the buye
 $r = wpss_phase_totals( array() );
 wpss_t( 0 === $r['count'], 'an order with no phases shows nothing extra' );
 
-// 5. Against the live data, so this cannot drift from the template.
+// 5. Against a real contract read through the service, so this cannot drift from the template.
 if ( class_exists( '\WPSellServices\Services\MilestoneService' ) ) {
 	global $wpdb;
-	$parent = (int) $wpdb->get_var(
-		"SELECT platform_order_id FROM {$wpdb->prefix}wpss_orders
-		 WHERE platform = 'milestone' GROUP BY platform_order_id
-		 HAVING COUNT(*) > 1 ORDER BY platform_order_id DESC LIMIT 1"
-	);
+	$parent = wpss_test_milestone_contract(
+		array(
+			array( 'total' => 150, 'subtotal' => 150 ),
+			array( 'total' => 250, 'subtotal' => 250 ),
+		)
+	)['parent'];
 
 	if ( $parent ) {
 		$phases = ( new \WPSellServices\Services\MilestoneService() )->get_for_parent( $parent );

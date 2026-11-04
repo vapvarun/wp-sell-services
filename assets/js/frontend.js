@@ -1107,21 +1107,25 @@
 			return;
 		}
 
+		// One open/close path, so the toggle's aria-expanded always tells a screen reader the truth.
+		const setOpen = function(open) {
+			$sidebar.toggleClass('is-open', open);
+			$('body').toggleClass('wpss-sidebar-open', open);
+			$toggle.attr('aria-expanded', open ? 'true' : 'false');
+		};
+
 		$toggle.on('click', function() {
-			$sidebar.addClass('is-open');
-			$('body').addClass('wpss-sidebar-open');
+			setOpen(true);
 		});
 
 		$close.on('click', function() {
-			$sidebar.removeClass('is-open');
-			$('body').removeClass('wpss-sidebar-open');
+			setOpen(false);
 		});
 
 		// Close on backdrop click.
 		$(document).on('click', function(e) {
 			if ($sidebar.hasClass('is-open') && !$(e.target).closest('#wpss-sidebar, .wpss-filter-toggle').length) {
-				$sidebar.removeClass('is-open');
-				$('body').removeClass('wpss-sidebar-open');
+				setOpen(false);
 			}
 		});
 	};
@@ -2186,4 +2190,46 @@
 		window.addEventListener('load', queueStickyTopSync);
 	});
 
+
+	/**
+	 * Keep the unread badges honest without a reload.
+	 *
+	 * One small request every 30 seconds, only while the tab is visible, and one more the moment the tab comes
+	 * back. The server number replaces the badge text (never "+1"), so it cannot drift from the real count.
+	 * Pages with no badge never start the timer.
+	 */
+	$(function() {
+		var restUrl = window.wpss && window.wpss.restUrl;
+		var restNonce = window.wpss && window.wpss.restNonce;
+
+		if (!restUrl || !restNonce || !document.querySelector('[data-wpss-notification-count]')) {
+			return;
+		}
+
+		function refreshBadges() {
+			if (document.visibilityState !== 'visible') {
+				return;
+			}
+
+			window.fetch(restUrl + 'notifications/unread-count', {
+				credentials: 'same-origin',
+				headers: { 'X-WP-Nonce': restNonce }
+			}).then(function(response) {
+				return response.ok ? response.json() : null;
+			}).then(function(data) {
+				if (!data || typeof data.unread_count !== 'number') {
+					return;
+				}
+				document.querySelectorAll('[data-wpss-notification-count]').forEach(function(badge) {
+					badge.textContent = String(data.unread_count);
+					badge.hidden = data.unread_count < 1;
+				});
+			}).catch(function() {
+				// Offline or a blip: the next tick tries again.
+			});
+		}
+
+		setInterval(refreshBadges, 30000);
+		document.addEventListener('visibilitychange', refreshBadges);
+	});
 })(jQuery);

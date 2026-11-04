@@ -151,6 +151,10 @@ class SingleServiceView {
 					'revisions'          => __( 'Revisions', 'wp-sell-services' ),
 					'copied'             => __( 'Copied!', 'wp-sell-services' ),
 					'continueToCheckout' => __( 'Continue to Checkout', 'wp-sell-services' ),
+					/* translators: %s: tax name, for example VAT */
+					'taxIncluded'        => __( 'Includes %s', 'wp-sell-services' ),
+					/* translators: 1: tax name, for example VAT, 2: tax rate number. %% prints a percent sign. */
+					'taxRateLabel'       => __( '%1$s (%2$s%%):', 'wp-sell-services' ),
 					'errorGeneric'       => __( 'An error occurred.', 'wp-sell-services' ),
 				),
 			)
@@ -214,63 +218,33 @@ class SingleServiceView {
 	public function render_breadcrumb( Service $service ): void {
 		$service_id = $service->id;
 		$categories = get_the_terms( $service_id, 'wpss_service_category' );
-		?>
-		<nav class="wpss-breadcrumb" aria-label="<?php esc_attr_e( 'Breadcrumb', 'wp-sell-services' ); ?>">
-			<ol class="wpss-breadcrumb-list">
-				<li class="wpss-breadcrumb-item">
-					<a href="<?php echo esc_url( home_url() ); ?>">
-						<?php esc_html_e( 'Home', 'wp-sell-services' ); ?>
-					</a>
-				</li>
-				<li class="wpss-breadcrumb-item">
-					<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_service' ) ); ?>">
-						<?php esc_html_e( 'Services', 'wp-sell-services' ); ?>
-					</a>
-				</li>
-				<?php if ( $categories && ! is_wp_error( $categories ) ) : ?>
-					<?php
-					$category = $categories[0];
-					$parent   = $category->parent;
+		$crumbs     = array( array( __( 'Services', 'wp-sell-services' ), (string) get_post_type_archive_link( 'wpss_service' ) ) );
 
-					// Build parent hierarchy.
-					$parents = array();
-					while ( $parent > 0 ) {
-						$parent_term = get_term( $parent, 'wpss_service_category' );
-						if ( $parent_term && ! is_wp_error( $parent_term ) ) {
-							$parents[] = $parent_term;
-							$parent    = $parent_term->parent;
-						} else {
-							break;
-						}
-					}
+		if ( $categories && ! is_wp_error( $categories ) ) {
+			$category = $categories[0];
+			$parent   = $category->parent;
 
-					// Display parents first.
-					foreach ( array_reverse( $parents ) as $parent_term ) :
-						?>
-						<li class="wpss-breadcrumb-item">
-							<a href="<?php echo esc_url( get_term_link( $parent_term ) ); ?>">
-								<?php echo esc_html( $parent_term->name ); ?>
-							</a>
-						</li>
-						<?php
-					endforeach;
-					?>
-					<li class="wpss-breadcrumb-item">
-						<a href="<?php echo esc_url( get_term_link( $category ) ); ?>">
-							<?php echo esc_html( $category->name ); ?>
-						</a>
-					</li>
-				<?php endif; ?>
-				<li class="wpss-breadcrumb-item wpss-breadcrumb-current" aria-current="page">
-					<?php
-					// Raw title: `the_title` is blanked for the queried object on
-					// shell surfaces, which left this crumb visibly empty.
-					echo esc_html( (string) get_post_field( 'post_title', $service_id ) );
-					?>
-				</li>
-			</ol>
-		</nav>
-		<?php
+			// Parent hierarchy, nearest last.
+			$parents = array();
+			while ( $parent > 0 ) {
+				$parent_term = get_term( $parent, 'wpss_service_category' );
+				if ( ! $parent_term || is_wp_error( $parent_term ) ) {
+					break;
+				}
+				$parents[] = $parent_term;
+				$parent    = $parent_term->parent;
+			}
+
+			foreach ( array_reverse( $parents ) as $parent_term ) {
+				$crumbs[] = array( $parent_term->name, (string) get_term_link( $parent_term ) );
+			}
+			$crumbs[] = array( $category->name, (string) get_term_link( $category ) );
+		}
+
+		// Raw title: `the_title` is blanked for the queried object on shell surfaces, which left this crumb visibly empty.
+		$crumbs[] = array( (string) get_post_field( 'post_title', $service_id ), '' );
+
+		wpss_render_breadcrumb( $crumbs );
 	}
 
 	/**
@@ -775,7 +749,7 @@ class SingleServiceView {
 			'posts_per_page' => 4,
 			'post__not_in'   => array( $service_id ),
 			// Same rule as the catalog: a seller who is away is not offered.
-			'author__not_in' => wpss_get_vacation_vendor_ids(),
+			'author__not_in' => wpss_get_unlisted_seller_ids(),
 			'orderby'        => 'rand',
 			'tax_query'      => $tax_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 		);
@@ -982,6 +956,10 @@ class SingleServiceView {
 							<span class="wpss-summary-label"><?php esc_html_e( 'Delivery:', 'wp-sell-services' ); ?></span>
 							<span class="wpss-summary-value wpss-delivery-time"></span>
 						</div>
+						<div class="wpss-summary-row wpss-summary-tax" hidden>
+							<span class="wpss-summary-label"></span>
+							<span class="wpss-summary-value"></span>
+						</div>
 						<div class="wpss-summary-row wpss-summary-total">
 							<span class="wpss-summary-label"><?php esc_html_e( 'Total:', 'wp-sell-services' ); ?></span>
 							<span class="wpss-summary-value wpss-total-price"></span>
@@ -1123,7 +1101,7 @@ class SingleServiceView {
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$table}
-				WHERE vendor_id = %d AND status IN ('pending', 'in_progress')",
+				WHERE vendor_id = %d AND status IN ('pending', 'in_progress') AND " . wpss_order_rows_sql(),
 				$vendor_id
 			)
 		);

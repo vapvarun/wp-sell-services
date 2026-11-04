@@ -15,6 +15,7 @@ namespace WPSellServices\Frontend;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Assets\ScriptRegistry;
 use WPSellServices\Services\VendorService;
 use WPSellServices\Services\ServiceManager;
 use WPSellServices\Services\ModerationService;
@@ -171,7 +172,6 @@ class ServiceWizard {
 		add_action( 'wp_ajax_wpss_wizard_save_draft', array( $this, 'ajax_save_draft' ) );
 		add_action( 'wp_ajax_wpss_wizard_publish', array( $this, 'ajax_publish_service' ) );
 		add_action( 'wp_ajax_wpss_wizard_upload_gallery', array( $this, 'ajax_upload_gallery' ) );
-		add_action( 'wp_ajax_wpss_wizard_remove_gallery', array( $this, 'ajax_remove_gallery' ) );
 	}
 
 	/**
@@ -245,7 +245,7 @@ class ServiceWizard {
 				return '<div class="wpss-notice wpss-notice-error">' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</div>';
 			}
 
-			if ( (int) $service->post_author !== $user_id && ! current_user_can( 'manage_options' ) ) {
+			if ( ! wpss_user_can_edit_service( $service, $user_id ) ) {
 				return '<div class="wpss-notice wpss-notice-error">' . esc_html__( 'You do not have permission to edit this service.', 'wp-sell-services' ) . '</div>';
 			}
 		}
@@ -608,14 +608,14 @@ class ServiceWizard {
 				x-show="!data.packages.standard.enabled || !data.packages.premium.enabled"
 				x-cloak>
 				<button type="button"
-					class="wpss-pricing-add-tier"
+					class="wpss-btn wpss-btn--outline wpss-pricing-add-tier"
 					x-show="!data.packages.standard.enabled"
 					@click="addTier('standard')">
 					<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Add Standard tier', 'wp-sell-services' ); ?>
 				</button>
 				<button type="button"
-					class="wpss-pricing-add-tier"
+					class="wpss-btn wpss-btn--outline wpss-pricing-add-tier"
 					x-show="!data.packages.premium.enabled"
 					@click="addTier('premium')">
 					<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
@@ -1396,9 +1396,10 @@ class ServiceWizard {
 		}
 
 		$packages = get_post_meta( $service_id, '_wpss_packages', true );
-		$packages = ! empty( $packages ) ? $packages : array();
+		// Meta written by an import or an older release can be a string or a bare ID.
+		$packages = is_array( $packages ) ? $packages : array();
 		$gallery  = get_post_meta( $service_id, '_wpss_gallery', true );
-		$gallery  = ! empty( $gallery ) ? $gallery : array();
+		$gallery  = ! empty( $gallery ) ? (array) $gallery : array();
 		// The Alpine model edits options as one comma-separated string.
 		$requirements = array_map(
 			static fn( array $req ) => array_merge( $req, array( 'options' => implode( ', ', $req['options'] ) ) ),
@@ -1406,7 +1407,7 @@ class ServiceWizard {
 		);
 		$extras       = wpss_get_service_extras( $service_id );
 		$faqs         = get_post_meta( $service_id, '_wpss_faqs', true );
-		$faqs         = ! empty( $faqs ) ? $faqs : array();
+		$faqs         = is_array( $faqs ) ? $faqs : array();
 		$categories   = wp_get_post_terms( $service_id, 'wpss_service_category', array( 'fields' => 'ids' ) );
 		$categories   = is_wp_error( $categories ) ? array() : $categories;
 		$tags         = wp_get_post_terms( $service_id, 'wpss_service_tag', array( 'fields' => 'names' ) );
@@ -1568,10 +1569,11 @@ class ServiceWizard {
 
 		// Enqueue without alpinejs dependency so it loads BEFORE Alpine.
 		// This ensures wpssServiceWizard is defined when Alpine auto-starts.
+		ScriptRegistry::register_ui();
 		wp_enqueue_script(
 			'wpss-service-wizard',
 			WPSS_PLUGIN_URL . 'assets/js/service-wizard.js',
-			array(),
+			array( ScriptRegistry::HANDLE_UI ),
 			WPSS_VERSION,
 			true
 		);
@@ -1726,12 +1728,18 @@ class ServiceWizard {
 			wp_send_json_error( array( 'message' => __( 'Invalid data.', 'wp-sell-services' ) ) );
 		}
 
+		$this->refuse_unsupported_video( $data );
+
 		// Verify ownership if editing.
+		$author_id = $user_id;
 		if ( $service_id ) {
 			$service = get_post( $service_id );
-			if ( ! $service || $user_id !== (int) $service->post_author ) {
+			if ( ! wpss_user_can_edit_service( $service, $user_id ) ) {
 				wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this service.', 'wp-sell-services' ) ) );
 			}
+
+			// An admin editing a seller's service does not take it over.
+			$author_id = (int) $service->post_author;
 
 			// Saving a draft would take a live listing offline (Basecamp
 			// 10342028458); a live or pending service is saved by Update Service,
@@ -1754,8 +1762,9 @@ class ServiceWizard {
 		);
 
 		if ( $service_id ) {
-			$post_data['ID'] = $service_id;
-			$result          = wp_update_post( $post_data, true );
+			$post_data['ID']          = $service_id;
+			$post_data['post_author'] = $author_id;
+			$result                   = wp_update_post( $post_data, true );
 		} else {
 			$result = wp_insert_post( $post_data, true );
 		}
@@ -1836,45 +1845,20 @@ class ServiceWizard {
 
 		$service_id = isset( $_POST['service_id'] ) ? absint( $_POST['service_id'] ) : 0;
 
-		// Server-side duplicate publish prevention.
-		// Uses a short-lived transient lock to prevent concurrent publish requests
-		// from the same user creating multiple services (e.g., double-click race condition).
-		$lock_key = 'wpss_publishing_' . $user_id . '_' . $service_id;
-		if ( get_transient( $lock_key ) ) {
+		// One publish per user and service at a time (a double-click created two services). A named
+		// MySQL lock is atomic, where the old transient check-then-set let two requests both pass;
+		// it is released when this request ends, so no exit path can leave it stuck.
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 0 )', wpss_lock_name( 'wpss_publishing_' . $user_id . '_' . $service_id ) ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Your service is already being published. Please wait.', 'wp-sell-services' ) ) );
 		}
-		set_transient( $lock_key, true, 30 );
 
-		// Check if vendor can create/publish a new service.
-		// This applies to: new services (no service_id) or drafts being published for the first time.
-		// Uses the wpss_vendor_can_create_service filter so Pro subscription limits
-		// and the free max-services-per-vendor limit are enforced consistently.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			$is_new_to_count = false;
-			if ( ! $service_id ) {
-				$is_new_to_count = true;
-			} else {
-				$existing = get_post( $service_id );
-				if ( $existing && 'draft' === $existing->post_status ) {
-					$is_new_to_count = true;
-				}
-			}
-
-			if ( $is_new_to_count ) {
-				/** This filter is documented in src/API/ServicesController.php */
-				$can_create = apply_filters( 'wpss_vendor_can_create_service', true, $user_id );
-
-				if ( ! $can_create ) {
-					/** This filter is documented in src/API/ServicesController.php */
-					$error_message = apply_filters(
-						'wpss_service_limit_error_message',
-						__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
-					);
-
-					delete_transient( $lock_key );
-					wp_send_json_error( array( 'message' => wp_strip_all_tags( $error_message ) ) );
-				}
-			}
+		// A new service or a draft going live counts against the vendor's limit
+		// (Pro plan limits included): one answer for every door.
+		$limit_error = wpss_service_limit_error( (int) $service_id, (int) $user_id );
+		if ( '' !== $limit_error ) {
+			wp_send_json_error( array( 'message' => $limit_error ) );
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string sanitized after decode.
@@ -1882,14 +1866,14 @@ class ServiceWizard {
 		$data     = ! empty( $raw_data ) ? json_decode( $raw_data, true ) : array();
 
 		if ( empty( $data ) ) {
-			delete_transient( $lock_key );
 			wp_send_json_error( array( 'message' => __( 'Invalid data.', 'wp-sell-services' ) ) );
 		}
+
+		$this->refuse_unsupported_video( $data );
 
 		// Validate required fields.
 		$errors = $this->validate_service_data( $data );
 		if ( ! empty( $errors ) ) {
-			delete_transient( $lock_key );
 			wp_send_json_error(
 				array(
 					'message' => __( 'Please complete all required fields.', 'wp-sell-services' ),
@@ -1902,7 +1886,7 @@ class ServiceWizard {
 		$sanitized = $this->sanitize_service_data( $data );
 
 		// Determine post status based on moderation setting.
-		$post_status = ModerationService::is_enabled() ? 'pending' : 'publish';
+		$post_status = ModerationService::requires_review( (int) $user_id ) ? 'pending' : 'publish';
 
 		// Create or update post. A new service starts as a draft and an existing
 		// one keeps its status until its meta is written; the status is settled
@@ -1917,18 +1901,17 @@ class ServiceWizard {
 
 		if ( $service_id ) {
 			$service = get_post( $service_id );
-			if ( ! $service || (int) $service->post_author !== $user_id ) {
-				delete_transient( $lock_key );
+			if ( ! wpss_user_can_edit_service( $service, $user_id ) ) {
 				wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this service.', 'wp-sell-services' ) ) );
 			}
-			$post_data['ID'] = $service_id;
-			$result          = wp_update_post( $post_data, true );
+			$post_data['ID']          = $service_id;
+			$post_data['post_author'] = (int) $service->post_author; // An admin editing a seller's service does not take it over.
+			$result                   = wp_update_post( $post_data, true );
 		} else {
 			$result = wp_insert_post( $post_data, true );
 		}
 
 		if ( is_wp_error( $result ) ) {
-			delete_transient( $lock_key );
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
 
@@ -1957,8 +1940,6 @@ class ServiceWizard {
 		/**
 		 * Fires after a service is saved via the wizard.
 		 *
-		 * Pro uses this to sync to WooCommerce product when WC adapter is active.
-		 *
 		 * @since 1.0.0
 		 *
 		 * @param int   $service_id Service post ID.
@@ -1968,7 +1949,6 @@ class ServiceWizard {
 
 		// Never report "published" for a service that is not.
 		if ( wpss_settle_service_status( $service_id, $post_status ) !== $post_status ) {
-			delete_transient( $lock_key );
 			$publish_errors = wpss_get_service_publish_errors( $service_id );
 			wp_send_json_error(
 				array(
@@ -1983,15 +1963,7 @@ class ServiceWizard {
 
 		// Prepare success response based on post status.
 		if ( 'pending' === $post_status ) {
-			// Re-queue for moderation: the post_status is pending, but the
-			// admin queue filters on _wpss_moderation_status. A resubmitted
-			// (previously rejected) service must flip its moderation meta to
-			// 'pending' and shed its stale rejection reason, or it stays
-			// invisible to reviewers. Fire the pending hook so notifications +
-			// audit log run, matching ModerationService::set_pending().
-			update_post_meta( $service_id, \WPSellServices\Services\ModerationService::META_MODERATION_STATUS, \WPSellServices\Services\ModerationService::STATUS_PENDING );
-			delete_post_meta( $service_id, \WPSellServices\Services\ModerationService::META_REJECTION_REASON );
-			do_action( 'wpss_service_pending_moderation', $service_id );
+			( new ModerationService() )->submit( $service_id );
 
 			$message      = __( 'Service submitted for review. You will be notified once it is approved.', 'wp-sell-services' );
 			$redirect_url = wpss_get_dashboard_url( 'services' );
@@ -1999,8 +1971,6 @@ class ServiceWizard {
 			$message      = __( 'Service published successfully!', 'wp-sell-services' );
 			$redirect_url = get_permalink( $service_id );
 		}
-
-		delete_transient( $lock_key );
 
 		wp_send_json_success(
 			array(
@@ -2021,6 +1991,12 @@ class ServiceWizard {
 
 		if ( ! is_user_logged_in() || empty( $_FILES['file'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		// Only a seller in good standing (or an admin) uploads here, as for every wizard save.
+		$standing = wpss_vendor_status_block();
+		if ( $standing || ! ( wpss_is_vendor( get_current_user_id() ) || current_user_can( 'manage_options' ) ) ) {
+			wp_send_json_error( array( 'message' => $standing ? $standing->get_error_message() : __( 'Only sellers can upload service images.', 'wp-sell-services' ) ) );
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
@@ -2099,29 +2075,6 @@ class ServiceWizard {
 	}
 
 	/**
-	 * AJAX: Remove gallery image.
-	 *
-	 * @return void
-	 */
-	public function ajax_remove_gallery(): void {
-		check_ajax_referer( 'wpss_service_wizard', 'nonce' );
-
-		$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
-
-		if ( ! $attachment_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid attachment.', 'wp-sell-services' ) ) );
-		}
-
-		// Only allow deleting own attachments.
-		$attachment = get_post( $attachment_id );
-		if ( ! $attachment || get_current_user_id() !== (int) $attachment->post_author ) {
-			wp_send_json_error( array( 'message' => __( 'You cannot delete this attachment.', 'wp-sell-services' ) ) );
-		}
-
-		wp_send_json_success();
-	}
-
-	/**
 	 * Sanitize service data.
 	 *
 	 * @param array $data Raw data.
@@ -2187,6 +2140,24 @@ class ServiceWizard {
 	}
 
 	/**
+	 * Stop a save whose gallery video is not a YouTube or Vimeo URL.
+	 *
+	 * The field promises YouTube or Vimeo, and the reader drops anything else,
+	 * so saving it would lose the vendor's link without a word.
+	 *
+	 * @param array<string, mixed> $data Raw wizard data.
+	 * @return void
+	 */
+	private function refuse_unsupported_video( array $data ): void {
+		$video = $data['gallery']['video'] ?? '';
+		$video = is_string( $video ) ? trim( $video ) : '';
+
+		if ( '' !== $video && ! wpss_is_supported_video_url( $video ) ) {
+			wp_send_json_error( array( 'message' => __( 'The video must be a YouTube or Vimeo link.', 'wp-sell-services' ) ) );
+		}
+	}
+
+	/**
 	 * Sanitize gallery data.
 	 *
 	 * @param array $gallery Raw gallery.
@@ -2202,7 +2173,7 @@ class ServiceWizard {
 		// Verify main image ownership before accepting.
 		if ( ! empty( $gallery['main']['id'] ) ) {
 			$main_id = absint( $gallery['main']['id'] );
-			if ( $this->user_can_use_attachment( $main_id ) ) {
+			if ( wpss_user_can_use_attachment( $main_id ) ) {
 				$sanitized['main'] = array(
 					'id'  => $main_id,
 					'url' => esc_url( $gallery['main']['url'] ?? '' ),
@@ -2215,7 +2186,7 @@ class ServiceWizard {
 			foreach ( $gallery['images'] as $image ) {
 				if ( ! empty( $image['id'] ) ) {
 					$image_id = absint( $image['id'] );
-					if ( $this->user_can_use_attachment( $image_id ) ) {
+					if ( wpss_user_can_use_attachment( $image_id ) ) {
 						$sanitized['images'][] = array(
 							'id'  => $image_id,
 							'url' => esc_url( $image['url'] ?? '' ),
@@ -2371,55 +2342,23 @@ class ServiceWizard {
 		$revision_values = array_map( 'intval', wp_list_pluck( $numeric_packages, 'revisions' ) );
 		update_post_meta( $service_id, '_wpss_max_revisions', ! empty( $revision_values ) ? max( $revision_values ) : (int) ( $basic['revisions'] ?? 0 ) );
 
-		// Save gallery images.
-		// Collect additional gallery image IDs, filtering out invalid attachments.
+		// Gallery, main image and video go through the one writer REST also uses.
 		$gallery_ids = array();
 		foreach ( $data['gallery']['images'] as $image ) {
-			$id = absint( $image['id'] ?? 0 );
-			if ( $id && get_post( $id ) ) {
-				$gallery_ids[] = $id;
-			}
+			$gallery_ids[] = absint( $image['id'] ?? 0 );
 		}
 
-		// Determine the featured image ID (main image, or first gallery image as fallback).
-		$thumbnail_id = 0;
-		if ( ! empty( $data['gallery']['main']['id'] ) ) {
-			$main_id = absint( $data['gallery']['main']['id'] );
-			if ( $main_id && get_post( $main_id ) ) {
-				$thumbnail_id = $main_id;
-			}
-		}
-		$has_explicit_main = ! empty( $data['gallery']['main']['id'] );
-		if ( ! $has_explicit_main && ! $thumbnail_id && ! empty( $gallery_ids[0] ) ) {
-			$thumbnail_id = $gallery_ids[0];
-		}
-
-		// Include main image in gallery IDs so templates always have at least one
-		// image to display, even if set_post_thumbnail() were to fail silently.
-		$all_gallery_ids = $gallery_ids;
-		if ( $thumbnail_id && ! in_array( $thumbnail_id, $all_gallery_ids, true ) ) {
-			array_unshift( $all_gallery_ids, $thumbnail_id );
+		// The main image is part of the gallery, so a template always has one to show.
+		$thumbnail_id = wpss_pick_service_main_image( absint( $data['gallery']['main']['id'] ?? 0 ), $gallery_ids );
+		if ( $thumbnail_id && ! in_array( $thumbnail_id, $gallery_ids, true ) ) {
+			array_unshift( $gallery_ids, $thumbnail_id );
 		}
 
 		// The client hides the add buttons at the cap; the server is the enforcer.
-		$video = $data['gallery']['video'] ?? '';
-		$data  = wpss_enforce_service_limits( array_merge( $data, array( 'gallery' => $all_gallery_ids ) ) )['meta'];
+		$video = (string) ( $data['gallery']['video'] ?? '' );
+		$data  = wpss_enforce_service_limits( array_merge( $data, array( 'gallery' => $gallery_ids ) ) )['meta'];
 
-		update_post_meta(
-			$service_id,
-			'_wpss_gallery',
-			array(
-				'images' => $data['gallery'],
-				'video'  => $video,
-			)
-		);
-
-		// Set featured image directly via update_post_meta to avoid
-		// set_post_thumbnail()'s silent deletion when attachment metadata
-		// is incomplete (e.g., async thumbnail generation).
-		if ( $thumbnail_id ) {
-			update_post_meta( $service_id, '_thumbnail_id', $thumbnail_id );
-		}
+		wpss_save_service_gallery( $service_id, (array) $data['gallery'], $thumbnail_id, $video );
 
 		wpss_save_service_requirements( $service_id, $data['requirements'] );
 		wpss_save_service_addons( $service_id, $data['extras'] );
@@ -2530,62 +2469,5 @@ class ServiceWizard {
 	private function get_dashboard_url(): string {
 		$url = wpss_get_page_url( 'dashboard' );
 		return $url ? $url : home_url();
-	}
-
-	/**
-	 * Verify current user can use an attachment.
-	 *
-	 * Checks if the attachment exists and belongs to the current user,
-	 * or if the current user is an administrator.
-	 *
-	 * @param int $attachment_id Attachment ID to verify.
-	 * @return bool True if user can use this attachment.
-	 */
-	private function user_can_use_attachment( int $attachment_id ): bool {
-		if ( $attachment_id <= 0 ) {
-			return false;
-		}
-
-		$attachment = get_post( $attachment_id );
-
-		// Attachment must exist and be an attachment post type.
-		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
-			return false;
-		}
-
-		// Only allow image attachments in the gallery.
-		if ( ! wp_attachment_is_image( $attachment_id ) ) {
-			return false;
-		}
-
-		// Admins can use any attachment.
-		if ( current_user_can( 'manage_options' ) ) {
-			return true;
-		}
-
-		$current_user_id = get_current_user_id();
-
-		// Check if current user is the attachment author.
-		if ( $current_user_id === (int) $attachment->post_author ) {
-			return true;
-		}
-
-		// Allow attachments already attached to the user's own service
-		// (e.g., images imported/migrated with different post_author).
-		if ( $attachment->post_parent > 0 ) {
-			$parent = get_post( $attachment->post_parent );
-			if ( $parent && 'wpss_service' === $parent->post_type && $current_user_id === (int) $parent->post_author ) {
-				return true;
-			}
-		}
-
-		// For wizard-selected media, allow image attachments when the user has
-		// standard upload capability (covers environments where attachment authors
-		// are rewritten by media/offload plugins).
-		if ( current_user_can( 'upload_files' ) ) {
-			return true;
-		}
-
-		return false;
 	}
 }

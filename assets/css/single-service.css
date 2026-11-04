@@ -103,48 +103,34 @@
 	padding: 0;
 }
 
-/* Theme Compatibility - Override common theme conflicts */
-.wpss-single-service .wpss-btn,
-.wpss-single-service .wpss-btn:visited,
-.wpss-single-service .wpss-btn:focus {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	padding: 0.75rem 1.5rem;
-	font-size: 0.875rem;
-	font-weight: 500;
-	text-decoration: none;
-	border-radius: var(--wpss-radius);
-	cursor: pointer;
-	transition: all var(--wpss-transition);
-	border: none;
-}
 
 .wpss-single-service .wpss-btn--primary,
 .wpss-single-service .wpss-btn--primary:visited {
 	background-color: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-single-service .wpss-btn--primary:hover,
 .wpss-single-service .wpss-btn--primary:focus {
 	background-color: var(--wpss-primary-hover);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-single-service .wpss-btn--outline,
 .wpss-single-service .wpss-btn--outline:visited {
 	background-color: transparent;
-	color: var(--wpss-text);
-	border: 1px solid var(--wpss-border);
+	/* Same rest colour as .wpss-btn--outline in design-system.css. */
+	color: var(--wpss-text-secondary);
+	/* Full shorthand: the theme zeroes button borders, so colour alone left none.
+	   2px is the design system's width for every button. */
+	border: 2px solid var(--wpss-border-control, #878e98);
 }
 
 .wpss-single-service .wpss-btn--outline:hover,
 .wpss-single-service .wpss-btn--outline:focus {
-	background-color: var(--wpss-bg);
+	background-color: var(--wpss-bg-subtle, #f9fafb);
 	color: var(--wpss-text);
-	border-color: var(--wpss-border);
+	border-color: var(--wpss-text-secondary, #374151);
 }
 
 /* ==========================================================================
@@ -217,8 +203,13 @@
 		display: contents;
 	}
 
+	/* display:contents hands each child to the column layout, which aligns
+	   to start: without a cap a long thumbnail strip sizes the gallery to
+	   its full row and pushes the page past the viewport. */
 	.wpss-service-main > * {
 		order: 3;
+		min-width: 0;
+		max-width: 100%;
 	}
 
 	.wpss-service-main > .wpss-breadcrumb,
@@ -943,6 +934,52 @@
 	line-height: 1.6;
 }
 
+.wpss-review-subratings-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 1rem;
+	margin: 0 0 0.75rem;
+	padding: 0;
+	list-style: none;
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted);
+}
+
+.wpss-review-subratings-list strong {
+	color: var(--wpss-text);
+}
+
+.wpss-review-subratings {
+	border: 0;
+	padding: 0;
+	margin-inline: 0;
+}
+
+.wpss-review-subrating {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 0.5rem;
+}
+
+.wpss-review-subrating .wpss-select {
+	width: auto;
+	min-width: 9rem;
+}
+
+@media (max-width: 480px) {
+	.wpss-review-subrating {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 0.25rem;
+	}
+
+	.wpss-review-subrating .wpss-select {
+		width: 100%;
+	}
+}
+
 .wpss-review-content p:last-child {
 	margin-bottom: 0;
 }
@@ -963,19 +1000,6 @@
 .wpss-reply-date {
 	font-size: 0.75rem;
 	color: var(--wpss-text-muted);
-}
-
-.wpss-no-reviews {
-	display: block !important;
-	visibility: visible !important;
-	text-align: center;
-	padding: 2rem;
-	color: var(--wpss-text-muted);
-}
-
-.wpss-no-reviews p {
-	margin: 0 !important;
-	padding: 0 !important;
 }
 
 .wpss-reviews-pagination {
@@ -1145,6 +1169,9 @@
  * at 2.21:1 on Reign dark mode.
  */
 .wpss-contact-link {
+	display: inline-flex;
+	align-items: center;
+	min-height: 40px;
 	color: var(--wpss-text-muted);
 	text-decoration: none;
 	font-size: 0.875rem;
@@ -1453,6 +1480,10 @@
 	margin-bottom: 1rem;
 }
 
+.wpss-summary-row[hidden] {
+	display: none;
+}
+
 .wpss-summary-row {
 	display: flex;
 	justify-content: space-between;
@@ -1573,7 +1604,7 @@
 	/* Add a visible focus ring so keyboard focus on the contact-form fields is
 	   unmistakable, not just a subtle border-colour shift (WCAG 2.4.7). Hex
 	   fallback first, color-mix() progressive enhancement second. */
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 1800%, transparent);
 }
 
@@ -1643,7 +1674,7 @@
 
 .wpss-share-btn:hover {
 	background: var(--wpss-primary);
-	color: var(--wpss-white);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-favorite-btn {

@@ -38,6 +38,24 @@ foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $root, 
 $check( 'every template declares @version' . ( $no_version ? ' (' . implode( ', ', array_slice( $no_version, 0, 3 ) ) . ')' : '' ), ! $no_version );
 $check( 'every template header says it can be overridden' . ( $no_note ? ' (' . implode( ', ', array_slice( $no_note, 0, 3 ) ) . ')' : '' ), ! $no_note );
 
+// 1b. A template changed since the last release carries this release's @version, or a theme
+// override of the old copy is never reported outdated (1.9.2 shipped 13 such templates).
+// shortcut: needs git history and tags; a shallow CI checkout skips it, so it bites locally and at release.
+$git_dir  = escapeshellarg( WPSS_PLUGIN_DIR );
+$last_tag = trim( (string) shell_exec( "git -C {$git_dir} describe --tags --abbrev=0 HEAD 2>/dev/null" ) );
+if ( '' === $last_tag ) {
+	echo "SKIP  templates changed since the last tag carry this @version (no tags in this checkout)\n";
+} else {
+	$unbumped = array();
+	foreach ( array_filter( explode( "\n", (string) shell_exec( "git -C {$git_dir} diff --name-only " . escapeshellarg( $last_tag ) . '..HEAD -- templates' ) ) ) as $rel ) {
+		$path = WPSS_PLUGIN_DIR . $rel;
+		if ( str_ends_with( $rel, '.php' ) && is_file( $path ) && WPSS_VERSION !== wpss_template_version( $path ) ) {
+			$unbumped[] = substr( $rel, strlen( 'templates/' ) ) . ' (' . wpss_template_version( $path ) . ')';
+		}
+	}
+	$check( "templates changed since {$last_tag} carry @version " . WPSS_VERSION . ( $unbumped ? ' (' . implode( ', ', $unbumped ) . ')' : '' ), ! $unbumped );
+}
+
 // 2. Emails go through wpss_locate_template(), so the wpss_get_template filter reaches them.
 $src = (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/Services/EmailService.php' );
 $check( 'EmailService never calls locate_template() itself', 1 !== preg_match( '/(?<![_>:\\\\])locate_template\s*\(/', $src ) );

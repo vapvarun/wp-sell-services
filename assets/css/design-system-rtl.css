@@ -35,21 +35,42 @@
 :root {
 	--wpss-modal-offset: 0px; /* set by WPSS.offsetModalFromHeader() when a sticky header covers the top */
 	/* ---- Colors ---- */
-	--wpss-primary: #4f46e5;
-	--wpss-primary-hover: #4338ca;
-	--wpss-primary-dark: #4338ca;
-	--wpss-primary-light: #eef2ff;
-	/* --wpss-primary as space-separated channels, for `rgb(var(--wpss-primary-rgb)
-	   / 15%)` focus rings. Keep in step with --wpss-primary above; it does not
-	   change in dark mode, so this does not either. A var() with no definition
-	   makes the whole declaration invalid, so the ring simply did not draw. */
+	/* Brand colour. One base, every shade derived from it, so a site's own
+	   colour reaches every button, tab, tint and ring (Basecamp 10470005743).
+	   Sources, first that is set wins:
+	   1. An owner's own CSS setting --wpss-primary (it is derived from below).
+	   2. A brand colour from the wpss_brand_color filter (Pro White Label),
+	      emitted inline by wpss_brand_color_css() into the four slots below.
+	   3. The host theme: fills take its BUTTON pair (fill + the ink it chose
+	      for it), text, tints and rings take its theme colour. Reign and BuddyX
+	      are read here; wpss_use_theme_colors returns false to opt out.
+	   4. The plugin's indigo.
+	   A fill and its ink always come from the same source, so a theme with a
+	   light button colour keeps the dark ink it paired with it. */
+	--wpss-theme-fill: var(--reign-site-button-bg-color, var(--bx-color-button-bg));
+	--wpss-theme-ink: var(--reign-site-button-text-color, var(--bx-color-button-fg));
+	--wpss-theme-accent: var(--reign-colors-theme, var(--bx-color-accent));
+	--wpss-theme-accent-text: var(--reign-colors-theme-text, var(--bx-color-accent));
+
+	--wpss-primary: var(--wpss-theme-fill, #4f46e5);
+	/* Ink on a --wpss-primary fill. Use it, never --wpss-white, on any fill. */
+	--wpss-on-primary: var(--wpss-theme-ink, #ffffff);
+	--wpss-primary-hover: color-mix(in srgb, var(--wpss-primary) 85%, black);
+	/* Hue for tints and rings: the theme colour, or the fill when there is none. */
+	--wpss-primary-tint: var(--wpss-theme-accent, var(--wpss-primary));
+	/* Translucent, so one value reads on white, grey and dark surfaces. */
+	--wpss-primary-light: color-mix(in srgb, var(--wpss-primary-tint) 10%, transparent);
+	--wpss-primary-50: color-mix(in srgb, var(--wpss-primary-tint) 8%, transparent);
+	--wpss-primary-ring: color-mix(in srgb, var(--wpss-primary-tint) 25%, transparent);
+	/* The plugin indigo as channels. Kept for owners' CSS that reads it; it does
+	   not follow a theme colour, so plugin sheets use --wpss-primary-ring. */
 	--wpss-primary-rgb: 79 70 229;
-	--wpss-primary-50: rgba(79, 70, 229, 0.08);
-	/* Accent = primary used as TEXT/links/icons. Same brand indigo in light, but
-	   a lighter indigo in dark mode so it stays readable on dark surfaces
-	   (--wpss-primary itself must stay dark enough for white-on-fill buttons, so
-	   text and fill need separate tokens). */
-	--wpss-primary-accent: #4f46e5;
+	/* Accent = brand colour used as TEXT, links and icons: the theme's text-safe
+	   shade, which is not the fill (a light button colour is not readable text).
+	   Lighter in dark mode, below. */
+	--wpss-primary-accent: var(--wpss-theme-accent-text, #4f46e5);
+	/* A foreground on a --wpss-primary-light ground (.wpss-alert--info, badges). */
+	--wpss-primary-dark: color-mix(in srgb, var(--wpss-primary-accent) 80%, black);
 
 	--wpss-white: #ffffff;
 	--wpss-black: #111827;
@@ -74,6 +95,10 @@
 	--wpss-background: #f9fafb;
 	--wpss-border: #e5e7eb;
 	--wpss-border-light: #f3f4f6;
+	/* The edge of a control (outline button), not a divider. It has to read
+	   3:1 against the surface (WCAG 1.4.11); --wpss-border is 1.2:1 and was
+	   the edge of every outline button, so the button all but vanished. */
+	--wpss-border-control: #878e98;
 	--wpss-secondary: #1e293b;
 	/* Secondary as TEXT (prices, emphasis). Same dark slate in light; flips to a
 	   light slate in dark so it stays readable on dark surfaces. --wpss-secondary
@@ -81,7 +106,9 @@
 	   text, so text and fill need separate tokens (as with --wpss-primary). */
 	--wpss-secondary-accent: #1e293b;
 
-	--wpss-success: #10b981;
+	/* emerald-700: it is ink as often as fill (prices, earnings, ticks), and
+	   #10b981 read 2.5:1 on white. White on this is 5.5:1 too. */
+	--wpss-success: #047857;
 	--wpss-success-light: #ecfdf5;
 	--wpss-success-dark: #065f46;
 	/* Fill behind white text (filled buttons, toasts). --wpss-success is 2.5:1 with white; this is 5.5:1 in both modes. */
@@ -301,7 +328,7 @@
 	   referencing them keeps working - they simply resolve to the one accent
 	   now. Do not reintroduce a second literal accent here. */
 	--wpss-vendor-green: var( --wpss-primary );
-	--wpss-vendor-green-dark: var( --wpss-primary-dark, var( --wpss-primary ) );
+	--wpss-vendor-green-dark: var( --wpss-primary-hover );
 
 	/* ---- Bootstrap-style Alert Palette ----
 	   Used by older alert / status-pill components. Each pair is tinted
@@ -436,13 +463,14 @@ textarea.wpss-form-textarea {
 	--wpss-surface: #1f2937;
 	--wpss-border: #374151;
 	--wpss-border-light: #1f2937;
+	--wpss-border-control: #6b7280;
 
-	--wpss-primary-light: #312e81;
-	--wpss-primary-50: rgba(129, 140, 248, 0.16);
-	/* Lighter indigo for primary-as-text on dark surfaces: #a5b4fc on #1f2937 is
-	   ~7:1 (clears AA). --wpss-primary stays #4f46e5 so white-on-fill buttons keep
-	   their contrast. */
-	--wpss-primary-accent: #a5b4fc;
+	--wpss-primary-light: color-mix(in srgb, var(--wpss-primary-tint) 24%, transparent);
+	--wpss-primary-50: color-mix(in srgb, var(--wpss-primary-tint) 16%, transparent);
+	--wpss-primary-ring: color-mix(in srgb, var(--wpss-primary-tint) 40%, transparent);
+	/* Primary as text on dark surfaces: the theme's dark-mode text shade, or a
+	   lighter indigo (#a5b4fc on #1f2937 is ~7:1). The fill keeps its ink. */
+	--wpss-primary-accent: var(--wpss-theme-accent-text, #a5b4fc);
 	/* Light slate for secondary-as-text (prices, emphasis) on dark surfaces. */
 	--wpss-secondary-accent: #e2e8f0;
 
@@ -496,6 +524,56 @@ textarea.wpss-form-textarea {
 	   #4338ca indigo sat on the dark indigo ground at 1.45. The accent is the
 	   readable-on-dark member of the ramp. */
 	--wpss-primary-dark: var( --wpss-primary-accent );
+
+	/* Status pills. The light pastels stayed on dark pages, a bright patch on a
+	   dark card. Each pill gets a translucent tint of its own hue over the
+	   surface with the light member of the ramp as ink (about 7:1 or better). */
+	--wpss-status-pending-bg: rgba(245, 158, 11, 0.18);
+	--wpss-status-pending-fg: #fcd34d;
+	--wpss-status-completed-bg: rgba(34, 197, 94, 0.18);
+	--wpss-status-completed-fg: #86efac;
+	--wpss-status-pending-approval-bg: rgba(132, 204, 22, 0.18);
+	--wpss-status-pending-approval-fg: #bef264;
+	--wpss-status-in-progress-bg: rgba(99, 102, 241, 0.24);
+	--wpss-status-in-progress-fg: #c7d2fe;
+	--wpss-status-revision-bg: rgba(14, 165, 233, 0.18);
+	--wpss-status-revision-fg: #7dd3fc;
+	--wpss-status-delivered-bg: rgba(59, 130, 246, 0.2);
+	--wpss-status-delivered-fg: #93c5fd;
+	--wpss-status-disputed-bg: rgba(249, 115, 22, 0.2);
+	--wpss-status-disputed-fg: #fdba74;
+	--wpss-status-refunded-bg: rgba(168, 85, 247, 0.2);
+	--wpss-status-refunded-fg: #d8b4fe;
+	--wpss-status-partially-refunded-bg: rgba(6, 182, 212, 0.18);
+	--wpss-status-partially-refunded-fg: #67e8f9;
+	--wpss-status-late-bg: rgba(234, 179, 8, 0.18);
+	--wpss-status-late-fg: #fde047;
+	--wpss-status-rejected-bg: rgba(239, 68, 68, 0.2);
+	--wpss-status-rejected-fg: #fca5a5;
+	--wpss-status-on-hold-bg: rgba(156, 163, 175, 0.2);
+	--wpss-status-on-hold-fg: #e5e7eb;
+
+	/* Danger had no dark tint or ink, and the wp-admin grey and the sub-order
+	   badge family kept their pastels: cancelled and escalated pills, closed
+	   disputes and the analytics tip / milestone tiles were light patches.
+	   Success keeps its lighter shade here, where it reads 7:1 on the surface. */
+	--wpss-success: #10b981;
+	--wpss-danger-light: rgba(239, 68, 68, 0.2);
+	--wpss-danger-dark: #fca5a5;
+	--wpss-wp-admin-bg: rgba(156, 163, 175, 0.2);
+	--wpss-wp-admin-text-muted: #d1d5db;
+	--wpss-badge-tip-bg: rgba(239, 68, 68, 0.2);
+	--wpss-badge-tip-fg: #fca5a5;
+	--wpss-badge-tip-icon-bg: rgba(244, 63, 94, 0.2);
+	--wpss-badge-tip-icon-fg: #fda4af;
+	--wpss-badge-extension-bg: rgba(245, 158, 11, 0.18);
+	--wpss-badge-extension-fg: #fcd34d;
+	--wpss-badge-extension-icon-bg: rgba(245, 158, 11, 0.18);
+	--wpss-badge-extension-icon-fg: #fcd34d;
+	--wpss-badge-milestone-bg: rgba(20, 184, 166, 0.2);
+	--wpss-badge-milestone-fg: #5eead4;
+	--wpss-badge-milestone-icon-bg: rgba(20, 184, 166, 0.2);
+	--wpss-badge-milestone-icon-fg: #5eead4;
 }
 
 /* ==========================================================================
@@ -583,31 +661,64 @@ textarea.wpss-form-textarea {
 }
 
 .wpss-btn:hover { text-decoration: none; }
+
+/* One theme-proof button for every public page. The services archive, single
+   service and request pages each carried their own reset and had drifted into
+   three different buttons (weights 500/600, 44/46/48/50px, borders 0/1/2px),
+   so the same "Clear All" looked different on each. Themes restyle bare a and
+   button, so the layout properties hold with !important; colours stay with the
+   variants. display is the exception: the selector already outranks a theme's
+   bare a/button, and !important there beat every hide - the desktop Filters
+   toggle and jQuery's .hide() on Load more reviews. */
+:is(.wpss-services-archive, .wpss-single-service, .wpss-requests-archive, .wpss-single-request) .wpss-btn {
+	display: inline-flex;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: var(--wpss-space-2);
+	font-family: inherit !important;
+	font-weight: 600;
+	line-height: 1.4;
+	text-decoration: none !important;
+	border-width: 2px !important;
+	border-style: solid !important;
+	border-radius: var(--wpss-radius);
+}
+
+:is(.wpss-services-archive, .wpss-single-service, .wpss-requests-archive, .wpss-single-request) .wpss-btn[hidden] {
+	display: none;
+}
+
+/* Size stays with the size modifiers: --sm and --lg keep theirs. */
+:is(.wpss-services-archive, .wpss-single-service, .wpss-requests-archive, .wpss-single-request) .wpss-btn:not(.wpss-btn--sm, .wpss-btn--lg) {
+	padding: calc(var(--wpss-space-3) - 2px) var(--wpss-space-5);
+	font-size: var(--wpss-text-base);
+}
 .wpss-btn:active:not(:disabled) { transform: scale(0.97); }
 .wpss-btn:focus-visible { outline: var(--wpss-ring-width) solid var(--wpss-ring-color); outline-offset: var(--wpss-ring-offset); }
 .wpss-btn:disabled, .wpss-btn[aria-disabled="true"], .wpss-btn--loading { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
 /* .wpss-btn--primary base declarations live in the theme-proof block below
    (a./button./.wpss-btn--primary) to avoid a duplicate same-body rule. */
-.wpss-btn--primary:hover { background: var(--wpss-primary-hover); border-color: var(--wpss-primary-hover); color: var(--wpss-white, #fff); }
+.wpss-btn--primary:hover { background: var(--wpss-primary-hover); border-color: var(--wpss-primary-hover); color: var(--wpss-on-primary); }
 .wpss-btn--secondary { background: var(--wpss-bg-muted); color: var(--wpss-text-secondary); }
 .wpss-btn--secondary:hover { background: var(--wpss-border); color: var(--wpss-text); }
 /* Two classes, and the full border shorthand, on purpose: a theme's bare `button` or `a`
    rule would otherwise beat a one-class modifier and strip the border. `.wpss-btn` is
    declared here only; bin/check-ux-conformance.php fails if another sheet redeclares it. */
-.wpss-btn.wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
+.wpss-btn.wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border-control); }
 /* The background matters as much as the colour here. Declaring only border and
    text left the background to whatever the theme gives a hovered control, and
    BuddyX styles button[type="submit"]:hover with its accent red - the order
    search button flashed red with dark text at 3.94:1 on hover. Our own subtle
    surface, so hover looks the same on every theme. */
-.wpss-btn.wpss-btn--outline:hover { background: var(--wpss-bg-subtle); border-color: var(--wpss-text-muted); color: var(--wpss-text); }
+.wpss-btn.wpss-btn--outline:hover { background: var(--wpss-bg-subtle); border-color: var(--wpss-text-secondary); color: var(--wpss-text); }
 
 /* Ghost, with the same two-class weight as outline above: the one-class rule loses to a
    theme's anchor colour, so an <a class="wpss-btn wpss-btn--ghost"> would take the theme
    link colour. The old one-dash modifier names are gone: every template, script and Pro
    screen uses the double-dash BEM modifier. */
-.wpss-btn.wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
+/* No padding of its own: a ghost beside a full button matches its height, and --sm sizes it down. */
+.wpss-btn.wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); }
 .wpss-btn.wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
 
 /* Ghost + danger = a low-emphasis destructive action: transparent like a ghost,
@@ -658,7 +769,7 @@ button.wpss-btn--ghost.wpss-btn--danger:hover {
    `--wpss-*` tokens these rules read, which still works. */
 a.wpss-btn--primary, a.wpss-btn--primary:link, a.wpss-btn--primary:visited,
 button.wpss-btn--primary,
-.wpss-btn--primary { background: var(--wpss-primary); border-color: var(--wpss-primary); color: var(--wpss-white, #fff); }
+.wpss-btn--primary { background: var(--wpss-primary); border-color: var(--wpss-primary); color: var(--wpss-on-primary); }
 a.wpss-btn--danger, a.wpss-btn--danger:link, a.wpss-btn--danger:visited,
 button.wpss-btn--danger,
 .wpss-btn--danger { background: var(--wpss-danger); border-color: var(--wpss-danger); color: var(--wpss-white, #fff); }
@@ -689,7 +800,10 @@ button.wpss-btn--success,
 a.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline),
 a.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline):link,
 a.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline):visited,
-a.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
+a.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
+	color: var(--wpss-on-primary, #fff) !important;
+}
+
 a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline),
 a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):link,
 a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):visited,
@@ -732,6 +846,9 @@ a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
 }
 
 .wpss-btn--sm { min-height: 34px; padding: var(--wpss-space-2) var(--wpss-space-4); font-size: var(--wpss-text-sm); }
+/* On a touch screen the small button keeps the 40px tap floor (a link-style
+   Cancel measured 34px). */
+@media (max-width: 640px) { .wpss-btn--sm { min-height: var(--wpss-space-10, 40px); } }
 .wpss-btn--lg { padding: var(--wpss-space-4) var(--wpss-space-8); font-size: var(--wpss-text-lg); }
 .wpss-btn--block { display: flex; width: 100%; }
 .wpss-btn--disabled, .wpss-btn.wpss-btn--disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
@@ -786,7 +903,7 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 	padding: 3px var(--wpss-space-3); font-size: var(--wpss-text-xs); font-weight: 600;
 	border-radius: var(--wpss-radius-full); text-transform: uppercase; letter-spacing: 0.03em; line-height: 1.5;
 }
-.wpss-badge--primary { background: var(--wpss-primary-light); color: var(--wpss-primary-accent); }
+.wpss-badge--primary { background: var(--wpss-primary-light); color: var(--wpss-primary-dark); }
 .wpss-badge--success { background: var(--wpss-success-light); color: var(--wpss-success-dark, #065f46); }
 .wpss-badge--warning { background: var(--wpss-warning-light); color: var(--wpss-warning-dark, #92400e); }
 .wpss-badge--danger  { background: var(--wpss-danger-light); color: var(--wpss-danger-dark, #991b1b); }
@@ -961,7 +1078,8 @@ select.wpss-form-input {
 	appearance: none;
 	-webkit-appearance: none;
 	-moz-appearance: none;
-	height: 48px;
+	height: auto;
+	min-height: 48px;
 	line-height: 1.5;
 	padding-left: 44px;
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
@@ -980,7 +1098,9 @@ select.wpss-form-input::-ms-expand {
 
 .wpss-field { margin-bottom: var(--wpss-space-5); }
 .wpss-field__label { display: block; font-size: var(--wpss-text-base); font-weight: 500; color: var(--wpss-text); margin-bottom: var(--wpss-space-2); }
-.wpss-field__label .wpss-required { color: var(--wpss-danger-text, var(--wpss-danger)); }
+/* The required star, everywhere. danger-text lightens in dark mode; plain
+   --wpss-danger read 3.7:1 there. Page sheets keep no copy of this rule. */
+.wpss-required { color: var(--wpss-danger-text, var(--wpss-danger)); }
 
 .wpss-field__input, .wpss-field__select, .wpss-field__textarea {
 	width: 100%; min-height: var(--wpss-space-10); padding: var(--wpss-space-3) var(--wpss-space-4); font-size: var(--wpss-text-base); font-family: inherit;
@@ -1003,6 +1123,24 @@ select.wpss-form-input::-ms-expand {
 .wpss-field__hint { font-size: var(--wpss-text-sm); color: var(--wpss-text-muted); margin-top: var(--wpss-space-1); }
 .wpss-field__error { font-size: var(--wpss-text-sm); color: var(--wpss-danger); margin-top: var(--wpss-space-1); }
 .wpss-field--error .wpss-field__input, .wpss-field--error .wpss-field__select { border-color: var(--wpss-danger); }
+
+/* Inline controls: a dropdown in a filter or toolbar row sizes to its content.
+   The plugin declares the width itself, because themes differ - Reign 8 gives
+   every unstyled field width: 100%, which stacked these rows one control per
+   line, while BuddyX leaves the browser default. Form fields are not listed:
+   they fill their column on purpose. A row stacks to full width under 640px in
+   its own sheet. Add a new filter row here, not a width in its own sheet. */
+:is(
+	.wpss-vendors-toolbar__controls,
+	.wpss-ledger-controls,
+	.wpss-currency-switcher,
+	.wpss-filters-bar-controls,
+	.wpss-sales-filter__form,
+	.wpss-notif-filter
+) select {
+	inline-size: auto;
+	max-inline-size: 100%;
+}
 
 /* ==========================================================================
    7. NOTICES & ALERTS
@@ -1144,6 +1282,7 @@ select.wpss-form-input::-ms-expand {
 .wpss-modal__feedback { margin-bottom: var(--wpss-space-4); font-size: var(--wpss-text-sm); }
 .wpss-modal__feedback--error { color: var(--wpss-danger-dark, var(--wpss-danger)); }
 .wpss-modal__feedback--success { color: var(--wpss-success-dark, var(--wpss-success)); }
+.wpss-modal__dialog > .wpss-modal__feedback { margin: 0; padding: var(--wpss-space-3) var(--wpss-space-6); }
 .wpss-modal__footer { display: flex; flex-wrap: wrap; gap: var(--wpss-space-3); justify-content: flex-end; padding: var(--wpss-space-4) var(--wpss-space-6) var(--wpss-space-6); border-top: 1px solid var(--wpss-border); }
 /* A footer that holds a summary above one full-width action. */
 .wpss-modal__footer--stack { flex-direction: column; align-items: stretch; }
@@ -1364,6 +1503,11 @@ body.wpss-modal-active { overflow: hidden; }
 	background: var(--wpss-primary-light);
 }
 
+/* The muted label read 4.1:1 on the selected tile's tint. */
+.wpss-stat-card--link[aria-current="true"] .wpss-stat-card__label {
+	color: var(--wpss-text-secondary);
+}
+
 @media (hover: hover) {
 	.wpss-stat-card--link:hover {
 		border-color: var(--wpss-primary);
@@ -1380,7 +1524,7 @@ body.wpss-modal-active { overflow: hidden; }
 	height: 44px;
 	border-radius: var(--wpss-radius);
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 }
 .wpss-stat-card__icon--success { background: var(--wpss-success-light); color: var(--wpss-success); }
 .wpss-stat-card__icon--warning { background: var(--wpss-warning-light); color: var(--wpss-warning-dark); }
@@ -1434,7 +1578,7 @@ body.wpss-modal-active { overflow: hidden; }
 }
 .wpss-stat-card--highlight .wpss-stat-card__value,
 .wpss-stat-card--highlight .wpss-stat-card__label,
-.wpss-stat-card--highlight .wpss-stat-card__meta { color: var(--wpss-white, #fff); }
+.wpss-stat-card--highlight .wpss-stat-card__meta { color: var(--wpss-on-primary, #fff); }
 /* A debt is not the accent tile: red on the indigo fill read 1.3:1. Surface fill, danger border,
    --wpss-danger-text (which lightens in dark mode) for the figure. */
 .wpss-stats-grid .wpss-stat-card--negative,
@@ -1687,7 +1831,8 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	.wpss-banner { flex-direction: column; text-align: center; gap: var(--wpss-space-3); }
 	.wpss-banner__action { width: 100%; }
 	.wpss-card { padding: var(--wpss-space-4); }
-	.wpss-btn--lg { width: 100%; }
+	/* Full width here, so the desktop side padding would only wrap the label. */
+	.wpss-btn--lg { width: 100%; padding-inline: var(--wpss-space-5); }
 }
 
 /* Billing summary — the read-only "Billed to" block on an order / invoice.
@@ -1736,7 +1881,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-report-form__intro { margin: 0 0 var(--wpss-space-4); color: var(--wpss-text-secondary); font-size: var(--wpss-text-sm); }
 .wpss-report-form__error { margin: var(--wpss-space-3) 0 0; color: var(--wpss-danger-dark, #991b1b); font-size: var(--wpss-text-sm); }
 .wpss-order-detail-item__sub a:hover,
-.wpss-order-detail-item__sub a:focus { color: var(--wpss-primary); }
+.wpss-order-detail-item__sub a:focus { color: var(--wpss-primary-accent, #4f46e5); }
 
 /* Phones: one column. In two ~116px columns dates and totals wrapped to two
    or three lines (Basecamp 10345275760); a full row keeps every value on one. */
@@ -1881,6 +2026,15 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	border-block-end: 0;
 	font-weight: 600;
 	color: var(--wpss-text-secondary);
+}
+/* Tips and extensions paid on top of the order: a quiet group heading, amounts as in the lines above. */
+.wpss-line-items .wpss-line-items__extras-title {
+	padding-block-start: var(--wpss-space-4);
+	font-size: var(--wpss-text-xs);
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--wpss-text-muted);
 }
 
 /* Checkout: the second Pay button under the payment methods sat against the

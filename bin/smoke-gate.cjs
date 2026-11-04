@@ -42,13 +42,29 @@ const PRO_RENDERED = [ 'src/', 'templates/', 'assets/', 'wp-sell-services-pro.ph
  * @return {string[]|null} Changed rendered files, or null when the SHA is not in that history.
  */
 function staleSince( dir, sha, rendered ) {
+	const git = ( args ) => execFileSync( 'git', args, { cwd: dir, encoding: 'utf8', stdio: [ 'ignore', 'pipe', 'pipe' ] } );
 	try {
-		return execFileSync( 'git', [ 'diff', '--name-only', sha + '..HEAD' ], { cwd: dir, encoding: 'utf8', stdio: [ 'ignore', 'pipe', 'pipe' ] } )
+		return git( [ 'diff', '--name-only', sha + '..HEAD' ] )
 			.split( '\n' )
-			.filter( ( f ) => f && rendered.some( ( p ) => f.startsWith( p ) ) );
+			.filter( ( f ) => f && rendered.some( ( p ) => f.startsWith( p ) ) )
+			.filter( ( f ) => ! versionLineOnly( git( [ 'diff', '-U0', sha + '..HEAD', '--', f ] ) ) );
 	} catch ( e ) {
 		return null;
 	}
+}
+
+/**
+ * True when a file's diff changes nothing but its docblock `@version` line.
+ *
+ * Bumping a template's @version so theme overrides are reported outdated
+ * cannot change what renders; any other changed line keeps the file stale.
+ *
+ * @param {string} diff Output of `git diff -U0` for one file.
+ * @return {boolean} Whether only @version lines changed.
+ */
+function versionLineOnly( diff ) {
+	const lines = diff.split( '\n' ).filter( ( l ) => /^[+-]/.test( l ) && ! /^(\+\+\+|---) /.test( l ) );
+	return lines.length > 0 && lines.every( ( l ) => /^[+-]\s*\*\s*@version\s+[\d.]+\s*$/.test( l ) );
 }
 
 /**

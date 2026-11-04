@@ -13,7 +13,6 @@ defined( 'ABSPATH' ) || exit;
 use WP_CLI;
 use WP_CLI_Command;
 use WPSellServices\Integrations\Stripe\StripeGateway;
-use WPSellServices\Services\AuditLogService;
 use WPSellServices\Services\CommissionService;
 
 /**
@@ -313,18 +312,26 @@ class RepairCommand extends WP_CLI_Command {
 
 		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		( new AuditLogService() )->log(
-			'order.repair',
-			'order',
+		/**
+		 * Fires after a repair command corrects an order's stored totals.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int                  $order_id   Order ID.
+		 * @param string               $repair     Which repair ran, e.g. stripe_double_tax.
+		 * @param string               $from_total Total before the repair.
+		 * @param string               $to_total   Total after the repair.
+		 * @param array<string, mixed> $details    What else changed.
+		 */
+		do_action(
+			'wpss_order_repaired',
 			(int) $order->id,
+			'stripe_double_tax',
+			(string) $order->total,
+			(string) $charged,
 			array(
-				'from_value' => (string) $order->total,
-				'to_value'   => (string) $charged,
-				'context'    => array(
-					'repair'   => 'stripe_double_tax',
-					'payment'  => (string) $order->transaction_id,
-					'subtotal' => array( (float) $order->subtotal, $subtotal ),
-				),
+				'payment'  => (string) $order->transaction_id,
+				'subtotal' => array( (float) $order->subtotal, $subtotal ),
 			)
 		);
 

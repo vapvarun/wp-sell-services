@@ -72,6 +72,18 @@ Add or remove file extensions to match your marketplace needs.
 
 ---
 
+## Trusted Proxies
+
+Only needed if your site sits behind a load balancer or reverse proxy other than Cloudflare. Cloudflare is recognised automatically.
+
+Behind such a proxy, every request seems to come from the proxy's address, so all guests share one rate limit (for example 30 live searches a minute for the whole site). List the proxy's IP addresses here, one per line, and visitors are recognised individually again. A range such as `10.0.0.0/8` works too.
+
+- Leave it empty if you are not sure. Empty keeps the safe default: the forwarded address is believed only from Cloudflare.
+- If any line is not an IP address or range, nothing is saved and a message names the line to fix.
+- Developers can also add proxies with the `wpss_trusted_proxies` filter, which receives this list. The setting is available to administrators through the WordPress REST API at `/wp/v2/settings` as `wpss_trusted_proxies`.
+
+---
+
 ## Currency Symbol Position
 
 Choose where the currency symbol appears relative to the amount. Options include:
@@ -154,6 +166,8 @@ Configure the auto-complete delay at **Settings > Orders & Disputes**.
 ### If Background Tasks Are Not Running
 
 WordPress scheduled tasks rely on site traffic to trigger. On low-traffic sites, tasks may run late. If you notice orders not auto-completing or vendor stats being outdated, set up a real server cron job through your hosting control panel to ping your site every 15 minutes.
+
+When background jobs have been more than an hour overdue on two visits at least ten minutes apart, a warning appears at the top of the plugin's admin screens. It says how long they have been stuck and links to **Tools > Scheduled Actions**, filtered to the overdue jobs. It clears on its own once they run again.
 
 ### Additional Background Tasks **[PRO]**
 

@@ -5,7 +5,7 @@ Reviews are the backbone of trust on your marketplace. After a buyer completes a
 ## How Reviews Work
 
 - Only buyers can leave reviews, and only on orders they have completed.
-- Each order gets one review.
+- Each order gets one review. Tips, paid extensions and milestone phases belong to their main order and are not reviewed on their own, so extra payments never add extra ratings.
 - Reviews include an overall star rating (1-5) plus optional sub-ratings.
 - Vendors can reply to reviews publicly.
 - Buyers must submit their review within the review window (default: 30 days after completion).
@@ -34,7 +34,9 @@ Buyers can also rate three specific areas:
 | **Quality** | The quality and attention to detail in the delivered work |
 | **Value** | Whether the service was worth the price paid |
 
-Sub-ratings are displayed for buyer information but do not change the overall rating calculation. Only the main star rating counts toward the vendor's average.
+On the review form each one is a dropdown (Not rated, then 5 to 1 stars); leave it on Not rated to skip it. The ones a buyer gave appear under the stars on the review card. Sub-ratings are displayed for buyer information but do not change the overall rating calculation. Only the main star rating counts toward the vendor's average.
+
+The REST API takes them as optional `rating_communication`, `rating_quality` and `rating_value` (1-5) on `POST /reviews` and returns them on every review. A value outside 1-5 is rejected.
 
 ### Written Review (Required)
 
@@ -112,7 +114,7 @@ Ratings update automatically whenever a review is added, edited, or its status c
 - **Search results** -- Star rating and review count on each service card.
 - **Vendor cards** -- Average rating displayed alongside the vendor's name.
 
-Reviews can be sorted by most recent, highest rated, lowest rated, or most helpful.
+On the site, reviews always list newest first. Through the REST API, `GET /reviews` can sort by date or by rating, highest or lowest first.
 
 ## Review Impact on Vendors
 

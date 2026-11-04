@@ -21,7 +21,8 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 $read = static fn( string $rel ): string => (string) file_get_contents( WPSS_PLUGIN_DIR . $rel );
 
 $ud = $read( 'assets/css/unified-dashboard.css' );
-preg_match( '/\.wpss-favorites__remove \{(.*?)\}/s', $ud, $fav );
+// The base rule sits at column 0; the phone tap-target copy is indented inside a media query.
+preg_match( '/^\.wpss-favorites__remove \{(.*?)\}/ms', $ud, $fav );
 $check( 'favorites remove button background is the surface token, not literal white', ! empty( $fav[1] ) && false !== strpos( $fav[1], 'var(--wpss-surface' ) && false === strpos( $fav[1], 'rgba(255, 255, 255' ) );
 preg_match( '/\.wpss-dashboard \.wpss-pagination__link:hover,[^{]*\{(.*?)\}/s', $ud, $pg );
 $check( 'dashboard pager hover and focus set a text colour', ! empty( $pg[1] ) && false !== strpos( $pg[1], 'color: var(--wpss-text' ) );

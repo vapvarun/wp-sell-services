@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace WPSellServices\Integrations\Gateways;
 
+use WPSellServices\Models\ServiceOrder;
+
 defined( 'ABSPATH' ) || exit;
 
 
@@ -501,6 +503,55 @@ class OfflineGateway extends AbstractPaymentGateway {
 	}
 
 	/**
+	 * The instructions a buyer pays an offline order with, placeholders filled.
+	 *
+	 * One lookup for the order page, the checkout answer and the how-to-pay email: the method the
+	 * buyer chose (snapshot on the order), then the global block for orders placed before named
+	 * methods existed, then the configured method of the same id.
+	 *
+	 * @param object $order Order object.
+	 * @return array{method: array{id:string,label:string,instructions:string}|null, text: string} Text is '' when the owner wrote none.
+	 */
+	private function resolve_buyer_instructions( object $order ): array {
+		$method       = self::get_order_method( $order );
+		$instructions = (string) ( $method['instructions'] ?? '' );
+
+		if ( '' === $instructions ) {
+			$instructions = (string) ( $this->settings['instructions'] ?? '' );
+		}
+
+		if ( '' === $instructions && isset( $method['id'] ) ) {
+			foreach ( self::get_methods( false ) as $configured ) {
+				if ( $configured['id'] === $method['id'] ) {
+					$instructions = (string) $configured['instructions'];
+					break;
+				}
+			}
+		}
+
+		$replacements = array(
+			'{order_number}' => $order->order_number,
+			'{order_id}'     => (string) $order->id,
+			'{total}'        => wpss_format_price( (float) $order->total, $order->currency ),
+			'{currency}'     => $order->currency,
+		);
+
+		return array(
+			'method' => $method,
+			'text'   => str_replace( array_keys( $replacements ), array_values( $replacements ), $instructions ),
+		);
+	}
+
+	/**
+	 * What the buyer reads when the owner wrote no payment instructions.
+	 *
+	 * @return string
+	 */
+	private static function no_instructions_text(): string {
+		return __( 'The site owner will send you payment instructions by email.', 'wp-sell-services' );
+	}
+
+	/**
 	 * Render payment instructions after order is placed.
 	 *
 	 * @param int $order_id Order ID.
@@ -513,27 +564,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			return '';
 		}
 
-		// The buyer gets the instructions for the method they actually picked,
-		// not the one generic block. Falls back to the global instructions for
-		// orders placed before named methods existed.
-		$order_method = self::get_order_method( $order );
-		$instructions = ( $order_method && '' !== $order_method['instructions'] )
-			? $order_method['instructions']
-			: ( $this->settings['instructions'] ?? '' );
-
-		// Replace placeholders in instructions.
-		$replacements = array(
-			'{order_number}' => $order->order_number,
-			'{order_id}'     => (string) $order->id,
-			'{total}'        => wpss_format_price( (float) $order->total, $order->currency ),
-			'{currency}'     => $order->currency,
-		);
-
-		$instructions = str_replace(
-			array_keys( $replacements ),
-			array_values( $replacements ),
-			$instructions
-		);
+		$instructions = $this->resolve_buyer_instructions( $order )['text'];
 
 		ob_start();
 		?>
@@ -542,7 +573,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 				<?php esc_html_e( 'Payment instructions', 'wp-sell-services' ); ?>
 			</h3>
 			<div class="wpss-offline-instructions-content">
-				<?php echo wp_kses_post( wpautop( $instructions ) ); ?>
+				<?php echo '' === $instructions ? '<p>' . esc_html( self::no_instructions_text() ) . '</p>' : wp_kses_post( wpautop( $instructions ) ); ?>
 			</div>
 			<p style="margin-bottom: 0; color: #856404;">
 				<strong><?php esc_html_e( 'Order Reference:', 'wp-sell-services' ); ?></strong>
@@ -606,8 +637,9 @@ class OfflineGateway extends AbstractPaymentGateway {
 				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
 				return;
 			}
-			if ( 'pending_payment' !== $order->status ) {
-				wp_send_json_error( array( 'message' => wpss_get_order_not_payable_message( $order ) ) );
+			$refusal = wpss_get_order_payment_refusal( $order );
+			if ( '' !== $refusal ) {
+				wp_send_json_error( array( 'message' => $refusal ) );
 				return;
 			}
 
@@ -676,6 +708,13 @@ class OfflineGateway extends AbstractPaymentGateway {
 			$order_provider = wpss_get_order_provider();
 
 			$customer_id = get_current_user_id();
+
+			// A new purchase: the same standing rule CheckoutIntentService::resolve() applies.
+			$standing = wpss_account_status_block( $customer_id );
+			if ( $standing ) {
+				wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
+				return;
+			}
 
 			// The one cart reader. Read raw, this charged for services the
 			// seller had paused or deleted - the cart screen said they could
@@ -828,6 +867,13 @@ class OfflineGateway extends AbstractPaymentGateway {
 			return new \WP_Error( 'wpss_own_service', __( 'You cannot purchase your own service.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
+		// A new purchase on every offline door (checkout form, REST create-intent,
+		// Pro /payments/offline/submit): the standing rule resolve() applies.
+		$standing = wpss_account_status_block( get_current_user_id() );
+		if ( $standing ) {
+			return $standing;
+		}
+
 		// Priced by the one line pricer, from ids alone - package (stable id or
 		// index), quantity and the add-ons as the vendor set them.
 		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, $package_id, max( 1, $quantity ), $selection );
@@ -879,52 +925,102 @@ class OfflineGateway extends AbstractPaymentGateway {
 		$order_id       = isset( $_POST['order_id'] ) ? (int) wp_unslash( $_POST['order_id'] ) : 0;
 		$transaction_id = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
 
-		if ( ! $order_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-			return;
+		$result = $this->settle_manually( $order_id, $transaction_id );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
-
-		$order = wpss_get_order( $order_id );
-
-		if ( ! $order ) {
-			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Verify order is pending payment.
-		if ( 'pending_payment' !== $order->status ) {
-			// wp_send_json_error() exits, so no return is needed here.
-			wp_send_json_error( array( 'message' => __( 'Order is not awaiting payment.', 'wp-sell-services' ) ) );
-		}
-
-		// Generate transaction ID if not provided.
-		if ( empty( $transaction_id ) ) {
-			$transaction_id = 'offline_manual_' . time();
-		}
-
-		// Get order provider and mark as paid.
-		$order_provider = wpss_get_order_provider();
-
-		$result = $order_provider->mark_as_paid( $order_id, $transaction_id, 'offline' );
-
-		if ( ! $result ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to mark order as paid.', 'wp-sell-services' ) ) );
-		}
-
-		/**
-		 * Fires when an offline order is marked as paid.
-		 *
-		 * @param int    $order_id       Order ID.
-		 * @param string $transaction_id Transaction ID.
-		 */
-		do_action( 'wpss_offline_order_paid', $order_id, $transaction_id );
 
 		wp_send_json_success(
 			array(
 				'message'    => __( 'Order marked as paid successfully.', 'wp-sell-services' ),
-				'new_status' => (string) ( wpss_get_order( $order_id )->status ?? 'pending_requirements' ),
+				'new_status' => $result['status'],
 			)
 		);
+	}
+
+	/**
+	 * Record a payment that was made outside the plugin and settle the order.
+	 *
+	 * The one door for the admin "Mark as Paid" box and the REST route, so an
+	 * integration (Make, Zapier, a custom gateway's webhook) settles an order
+	 * exactly the way the admin does. The caller checks the capability.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param int    $order_id       Order ID.
+	 * @param string $transaction_id Reference from the payment provider; generated when empty.
+	 * @param string $payment_method Slug stored on the order, e.g. flutterwave. Defaults to offline.
+	 * @return array{status: string}|\WP_Error The order's new status, or why it was refused.
+	 */
+	public function settle_manually( int $order_id, string $transaction_id = '', string $payment_method = 'offline' ) {
+		$order = $order_id > 0 ? wpss_get_order( $order_id ) : null;
+
+		if ( ! $order ) {
+			return new \WP_Error( 'wpss_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		// A whole order must be awaiting payment. A tip, extension or phase may be in any state an admin moved
+		// it to, as long as its payment was never confirmed (it is credited only once this confirms it).
+		if ( 'pending_payment' !== $order->status && ! $this->is_unpaid_offline_sub_order( $order ) ) {
+			return new \WP_Error( 'wpss_order_not_awaiting_payment', __( 'Order is not awaiting payment.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
+		$payment_method = sanitize_key( $payment_method );
+		$payment_method = '' === $payment_method ? 'offline' : $payment_method;
+
+		// A registered gateway records its own charges, and a refund calls that gateway with the stored id,
+		// so a hand-typed "stripe" plus an invented id would send the refund to Stripe and fail.
+		if ( 'offline' !== $payment_method && isset( wpss()->get_payment_gateways()[ $payment_method ] ) ) {
+			return new \WP_Error(
+				'wpss_method_is_a_gateway',
+				/* translators: %s: payment method slug, for example stripe. */
+				sprintf( __( 'Payments through %s are recorded by that gateway itself. Name the method the money actually came through, or leave it empty for offline.', 'wp-sell-services' ), $payment_method ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$transaction_id = '' === $transaction_id ? 'offline_manual_' . time() : $transaction_id;
+
+		if ( ! wpss_get_order_provider()->mark_as_paid( $order_id, $transaction_id, $payment_method ) ) {
+			return new \WP_Error( 'wpss_mark_paid_failed', __( 'Failed to mark order as paid.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
+		if ( 'offline' === $payment_method ) {
+			/**
+			 * Fires when an offline order is marked as paid.
+			 *
+			 * @param int    $order_id       Order ID.
+			 * @param string $transaction_id Transaction ID.
+			 */
+			do_action( 'wpss_offline_order_paid', $order_id, $transaction_id );
+		}
+
+		return array( 'status' => (string) ( wpss_get_order( $order_id )->status ?? 'pending_requirements' ) );
+	}
+
+	/**
+	 * Is this an offline tip, extension or phase whose payment is still unconfirmed?
+	 *
+	 * An admin can move such a sub-order to any status, Completed included, and
+	 * CommissionService::record() / MilestoneService::credit_phase() then credit
+	 * nothing until the payment is confirmed. Mark as Paid is that confirmation,
+	 * so it has to stay available whatever the status (except a closed order,
+	 * which mark_as_paid() refuses anyway).
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param object $order Order object.
+	 * @return bool
+	 */
+	private function is_unpaid_offline_sub_order( object $order ): bool {
+		// Offline, or no method chosen at all: the buyer never opened the pay page, or the
+		// owner was paid outside the site. A card or store rail confirms itself, so it is no door.
+		return in_array( (string) ( $order->payment_method ?? '' ), array( self::GATEWAY_ID, '' ), true )
+			&& in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_EXTENSION, ServiceOrder::SUB_ORDER_TYPE_MILESTONE ), true )
+			&& ! in_array( (string) ( $order->payment_status ?? '' ), array( 'paid', 'refunded', 'partially_refunded' ), true )
+			&& empty( $order->paid_at )
+			&& ! in_array( (string) ( $order->status ?? '' ), array( ServiceOrder::STATUS_CANCELLED, ServiceOrder::STATUS_REFUNDED ), true );
 	}
 
 	/**
@@ -935,8 +1031,10 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 * @return void
 	 */
 	public function render_admin_order_actions( object $order, string $status ): void {
-		// Only show for offline orders in pending_payment status.
-		if ( 'offline' !== $order->payment_method || 'pending_payment' !== $status ) {
+		// Offline orders awaiting payment, and unpaid offline sub-orders whatever their status.
+		$is_sub_order_door = $this->is_unpaid_offline_sub_order( $order );
+
+		if ( ! $is_sub_order_door && ( 'offline' !== $order->payment_method || 'pending_payment' !== $status ) ) {
 			return;
 		}
 
@@ -1212,23 +1310,34 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 * @return void
 	 */
 	public function display_order_payment_instructions( $order ): void {
-		// Only show for offline orders in pending_payment status
-		if ( 'pending_payment' !== $order->status ) {
+		// Only the buyer, and only while a submitted payment waits on the owner.
+		if ( (int) $order->customer_id !== get_current_user_id() || ! wpss_order_awaits_payment_confirmation( $order ) ) {
 			return;
 		}
 
-		// Check if this order was paid with offline gateway
-		if ( 'offline' !== $order->payment_method ) {
-			return;
-		}
+		/*
+		 * Acknowledge the submission FIRST, and unconditionally.
+		 *
+		 * Reaching this point means the buyer already submitted a payment the
+		 * owner has to confirm; until now nothing on any screen said so, and
+		 * they were shown the same Pay button they had just used (Basecamp
+		 * 10305169436).
+		 *
+		 * This deliberately sits ABOVE the gateway checks and the instructions
+		 * lookup. The lookup returns early when the owner has written no
+		 * instructions - the default on a fresh install - and the gateway check
+		 * returns early once the owner disables Offline after the buyer paid.
+		 * The notice is about the ORDER, so neither may silence it; the order,
+		 * phase, extension and tip views all print it through this hook only.
+		 */
+		?>
+		<p class="wpss-notice wpss-notice--info wpss-offline-awaiting">
+			<?php echo esc_html( wpss_offline_payment_notice( $order ) ); ?>
+		</p>
+		<?php
 
-		// Only show to the customer
-		if ( (int) $order->customer_id !== get_current_user_id() ) {
-			return;
-		}
-
-		// Check if gateway is enabled and has instructions
-		if ( ! $this->is_enabled() ) {
+		// Instructions: offline orders, while the gateway is enabled.
+		if ( self::GATEWAY_ID !== ( $order->payment_method ?? '' ) || ! $this->is_enabled() ) {
 			return;
 		}
 
@@ -1246,69 +1355,17 @@ class OfflineGateway extends AbstractPaymentGateway {
 		 * get_order_method() existed for exactly this and had no callers - the
 		 * snapshot was being written and never read.
 		 */
-
-		/*
-		 * Acknowledge the submission FIRST, and unconditionally.
-		 *
-		 * Reaching this point means the buyer already chose offline and
-		 * submitted; until now nothing on any screen said so, and they were
-		 * shown the same Pay button they had just used (Basecamp 10305169436).
-		 *
-		 * This deliberately sits ABOVE the instructions lookup. The lookup
-		 * returns early when the owner has written no instructions - which is
-		 * the default on a fresh install - and an acknowledgement nested inside
-		 * it inherited that silence. The first version of this fix did exactly
-		 * that: the Pay button was correctly withdrawn and the explanation
-		 * never rendered, which left the buyer with less than before.
-		 */
-		?>
-		<p class="wpss-notice wpss-notice--info wpss-offline-awaiting">
-			<?php echo esc_html( wpss_offline_payment_notice( $order ) ); ?>
-		</p>
-		<?php
-
-		$method       = self::get_order_method( $order );
-		$instructions = $method['instructions'] ?? '';
+		$resolved     = $this->resolve_buyer_instructions( $order );
+		$method       = $resolved['method'];
+		$instructions = $resolved['text'];
 
 		if ( '' === $instructions ) {
-			// Orders placed before named methods existed, and sites that never
-			// opened the editor.
-			$instructions = $this->settings['instructions'] ?? '';
-		}
-
-		if ( '' === $instructions ) {
-			// Nothing on the order and nothing global - but the owner may still
-			// have named methods, in which case show the one the order is on.
-			foreach ( self::get_methods( false ) as $configured ) {
-				if ( isset( $method['id'] ) && $configured['id'] === $method['id'] ) {
-					$instructions = $configured['instructions'];
-					break;
-				}
-			}
-		}
-
-		if ( empty( $instructions ) ) {
-			// No instructions written anywhere (the owner never filled them
-			// in): say how the buyer will find out, rather than nothing.
+			// No instructions written anywhere: say how the buyer will find out, rather than nothing.
 			?>
-			<p class="wpss-offline-instructions-fallback"><?php esc_html_e( 'The site owner will send you payment instructions by email.', 'wp-sell-services' ); ?></p>
+			<p class="wpss-offline-instructions-fallback"><?php echo esc_html( self::no_instructions_text() ); ?></p>
 			<?php
 			return;
 		}
-
-		// Replace placeholders in instructions
-		$replacements = array(
-			'{order_number}' => $order->order_number,
-			'{order_id}'     => (string) $order->id,
-			'{total}'        => wpss_format_price( (float) $order->total, $order->currency ),
-			'{currency}'     => $order->currency,
-		);
-
-		$instructions = str_replace(
-			array_keys( $replacements ),
-			array_values( $replacements ),
-			$instructions
-		);
 
 		// Display the instructions
 		?>

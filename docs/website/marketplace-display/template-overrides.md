@@ -3,7 +3,7 @@
 Change how service cards, vendor profiles, dashboards, and order screens look --
 through your theme, without touching plugin files.
 
-The plugin ships **107 templates**: 67 frontend templates plus 40 email
+The plugin ships **109 templates**: 69 frontend templates plus 40 email
 templates. Any of them can be overridden, and most of them also expose hooks so
 you can add markup without overriding at all.
 
@@ -76,6 +76,7 @@ Subfolders are preserved: `templates/order/order-view.php` becomes
 | `partials/service-faqs.php` | FAQ accordion |
 | `partials/service-reviews.php` | Review list and summary |
 | `partials/vendor-card.php` | Vendor summary card |
+| `partials/vendor-level-badge.php` | Vendor level badge (service card, vendor card, profile) |
 | `partials/vendor-portfolio.php` | Portfolio grid |
 | `partials/notifications-list.php` | Notification list markup |
 | `partials/billing-fields.php` | Billing form fields |
@@ -291,6 +292,7 @@ Change values without touching markup at all.
 | `wpss_request_card_classes` | `['wpss-request-card']` | CSS classes on a request card |
 | `wpss_service_card_thumbnail_size` | `medium_large` | Card image size |
 | `wpss_gallery_image_size` | `large` | Gallery image size |
+| `wpss_gallery_video_first` | `false` | Return `true` to open the gallery on the video instead of the first image |
 | `wpss_package_price_html` | -- | Rendered package price markup |
 | `wpss_package_button_text` | -- | Package CTA label |
 | `wpss_order_status_label` | -- | Human status label |

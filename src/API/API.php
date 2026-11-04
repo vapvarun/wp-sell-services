@@ -1173,7 +1173,7 @@ class API {
 					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
 					SUM(CASE WHEN status IN ('pending', 'accepted', 'in_progress', 'delivered') THEN 1 ELSE 0 END) as active
 				FROM {$orders_table}
-				WHERE customer_id = %d",
+				WHERE customer_id = %d AND " . wpss_order_rows_sql(),
 				$user_id
 			)
 		);
@@ -1194,7 +1194,7 @@ class API {
 						SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
 						SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress
 					FROM {$orders_table}
-					WHERE vendor_id = %d",
+					WHERE vendor_id = %d AND " . wpss_order_rows_sql(),
 					$user_id
 				)
 			);
@@ -1228,11 +1228,10 @@ class API {
 
 			$data['pending_orders'] = array_map(
 				function ( $order ) {
-					$service = get_post( $order->service_id );
 					return [
 						'id'           => (int) $order->id,
 						'order_number' => $order->order_number,
-						'service'      => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
+						'service'      => wpss_get_order_title( $order ) ?: __( 'Deleted Service', 'wp-sell-services' ),
 						'total'        => wpss_format_currency( (float) $order->total, $order->currency ),
 						'created_at'   => wpss_rest_date( $order->created_at ),
 					];
@@ -1275,7 +1274,7 @@ class API {
 					'posts_per_page' => $per_page,
 					'offset'         => $offset,
 					// Vendors on vacation are not listed, as in the storefront.
-					'author__not_in' => wpss_get_vacation_vendor_ids(),
+					'author__not_in' => wpss_get_unlisted_seller_ids(),
 				]
 			);
 

@@ -44,6 +44,9 @@ if ( file_exists( $wp_load ) ) {
 	// Load WordPress.
 	require_once $wp_load;
 
+	// No test mail leaves the machine; last priority so a test that captures mail still sees it.
+	add_filter( 'pre_wp_mail', static fn( $sent ) => $sent ?? true, PHP_INT_MAX );
+
 	echo "WordPress loaded from: " . ABSPATH . "\n";
 	echo "WordPress version: " . get_bloginfo( 'version' ) . "\n";
 	echo "Plugin: WP Sell Services\n";

@@ -82,7 +82,7 @@ class EarningsService {
 			$wpdb->prepare(
 				"SELECT COUNT(*) as order_count
 				FROM {$orders_table}
-				WHERE vendor_id = %d AND status = %s",
+				WHERE vendor_id = %d AND status = %s AND " . wpss_order_rows_sql(),
 				$vendor_id,
 				ServiceOrder::STATUS_COMPLETED
 			)
@@ -154,13 +154,31 @@ class EarningsService {
 			)
 		);
 
-		$withdrawn          = (float) $withdrawn;
-		$pending_withdrawal = (float) $pending_withdrawal;
+		$withdrawn = (float) $withdrawn;
+
+		/**
+		 * Money a payout rail has sent or committed but not yet debited to the ledger.
+		 *
+		 * A PayPal batch item in flight is a withdrawal in progress: counted here, a
+		 * vendor cannot ask for the same money again by hand or through the auto run.
+		 *
+		 * shortcut: a payout rail reserves under its own lock, not the withdrawal
+		 * writer's, so a batch and a request in the same instant can both read the full
+		 * balance; the paid debit then shows as a negative balance. Share one lock if
+		 * rails ever pay without an admin starting the batch.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param float $reserved  Amount reserved so far.
+		 * @param int   $vendor_id Vendor user ID.
+		 */
+		$reserved           = max( 0.0, (float) apply_filters( 'wpss_vendor_reserved_payouts', 0.0, $vendor_id ) );
+		$pending_withdrawal = (float) $pending_withdrawal + $reserved;
 
 		// $ledger_balance is ALREADY net of completed withdrawals — subtracting
 		// $withdrawn here would debit them twice. Only still-open requests
-		// (pending / approved) need reserving, because those have not reached
-		// the ledger yet.
+		// (pending / approved, plus payout-rail reservations) need reserving,
+		// because those have not reached the ledger yet.
 		// NOT clamped to zero. A refund reverses the vendor's earnings, and if
 		// they had already withdrawn that money the balance goes NEGATIVE —
 		// which is the correct record of a debt to the platform. Because the
@@ -764,125 +782,13 @@ class EarningsService {
 	 * @return array Result with success status.
 	 */
 	public function request_withdrawal( int $vendor_id, float $amount, string $method, array $details = array() ): array {
-		// Where the money goes. Details sent with the request are checked and
-		// become the payout profile; otherwise the saved profile is used. A
-		// request with neither is refused, so the admin is never handed a
-		// payout with no destination (Basecamp 10336467884).
-		if ( $details ) {
-			$details = self::save_payout_profile( $vendor_id, $method, $details );
-		} else {
-			$profile = self::get_payout_profile( $vendor_id );
-			$method  = '' !== $method ? $method : $profile['method'];
-			$details = $profile['method'] === $method
-				? self::validate_payout_details( $method, $profile['details'] )
-				: self::validate_payout_details( $method, array() );
+		$written = $this->write_withdrawal( $vendor_id, $amount, $method, $details, false );
+
+		if ( empty( $written['success'] ) ) {
+			return $written;
 		}
 
-		if ( is_wp_error( $details ) ) {
-			return array(
-				'success' => false,
-				'code'    => $details->get_error_code(),
-				'message' => $details->get_error_message(),
-			);
-		}
-
-		// Check minimum withdrawal.
-		$min_withdrawal = self::get_min_withdrawal_amount();
-		if ( $amount < $min_withdrawal ) {
-			return array(
-				'success' => false,
-				'message' => sprintf(
-					/* translators: %s: minimum withdrawal amount */
-					__( 'Minimum withdrawal amount is %s.', 'wp-sell-services' ),
-					wpss_format_price( $min_withdrawal )
-				),
-			);
-		}
-
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_withdrawals';
-
-		// Lock vendor's pending withdrawals to prevent double-withdrawal race conditions.
-		$wpdb->query( 'START TRANSACTION' );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$table} WHERE vendor_id = %d AND status = 'pending' FOR UPDATE",
-				$vendor_id
-			)
-		);
-
-		/*
-		 * One open request at a time - checked INSIDE the lock taken above.
-		 *
-		 * This rule lived in EarningsController, not here, so when Pro's
-		 * /wallet/withdraw was consolidated onto this service it inherited the
-		 * balance lock and not the queue rule: five concurrent requests from one
-		 * vendor left two pending rows through Pro and would have left one
-		 * through Free (Basecamp 10322374689). No overdraw - the balance lock
-		 * held - but the owner's payout queue behaved differently depending on
-		 * which client the vendor used.
-		 *
-		 * It is the same shape that made the original overdraw possible: a rule
-		 * living in a caller rather than in the shared writer. Inside the
-		 * transaction it is race-safe rather than advisory, which the
-		 * controller's copy was not.
-		 */
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$open = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND status = 'pending'",
-				$vendor_id
-			)
-		);
-
-		if ( $open > 0 ) {
-			$wpdb->query( 'ROLLBACK' );
-			return array(
-				'success' => false,
-				'code'    => 'pending_exists',
-				'message' => __( 'You already have a pending withdrawal request.', 'wp-sell-services' ),
-			);
-		}
-
-		$summary = $this->get_summary( $vendor_id );
-
-		// Check available balance.
-		if ( $amount > $summary['available_balance'] ) {
-			$wpdb->query( 'ROLLBACK' );
-			return array(
-				'success' => false,
-				'code'    => 'insufficient_balance',
-				'message' => __( 'Insufficient balance for this withdrawal.', 'wp-sell-services' ),
-			);
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$result = $wpdb->insert(
-			$table,
-			array(
-				'vendor_id'  => $vendor_id,
-				'amount'     => $amount,
-				'method'     => sanitize_key( $method ),
-				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
-				'status'     => self::WITHDRAWAL_PENDING,
-				'created_at' => current_time( 'mysql', true ),
-			),
-			array( '%d', '%f', '%s', '%s', '%s', '%s' )
-		);
-
-		if ( ! $result ) {
-			$wpdb->query( 'ROLLBACK' );
-			return array(
-				'success' => false,
-				'message' => __( 'Failed to create withdrawal request.', 'wp-sell-services' ),
-			);
-		}
-
-		$wpdb->query( 'COMMIT' );
-
-		$withdrawal_id = (int) $wpdb->insert_id;
+		$withdrawal_id = (int) $written['withdrawal_id'];
 
 		// Notify admin (respects email settings) and give the vendor a row.
 		( new EmailService() )->send_withdrawal_notification( $vendor_id, $amount, $withdrawal_id );
@@ -909,6 +815,173 @@ class EarningsService {
 			'success'       => true,
 			'message'       => __( 'Withdrawal request submitted successfully.', 'wp-sell-services' ),
 			'withdrawal_id' => $withdrawal_id,
+		);
+	}
+
+	/**
+	 * The one withdrawal writer: payout destination, minimum, one open request
+	 * and balance, all checked inside the same lock as the insert.
+	 *
+	 * Manual requests and the auto-withdrawal run both write through here. The
+	 * auto run used to insert on its own and skipped every one of these rules:
+	 * no lock, an amount read before its loop, no minimum, unvalidated details,
+	 * and a "one open request" rule that ignored manual requests.
+	 *
+	 * @param int                  $vendor_id Vendor user ID.
+	 * @param float                $amount    Amount; ignored for an auto run, which takes the balance read under the lock.
+	 * @param string               $method    Withdrawal method ('' = the saved profile's).
+	 * @param array<string, mixed> $details Method details; empty = the saved profile's.
+	 * @param bool                 $is_auto   Whether the auto-withdrawal run is asking.
+	 * @return array{success: bool, message?: string, code?: string, withdrawal_id?: int, amount?: float}
+	 */
+	private function write_withdrawal( int $vendor_id, float $amount, string $method, array $details, bool $is_auto ): array {
+		// Where the money goes. Details sent with the request are checked and
+		// become the payout profile; otherwise the saved profile is used. A
+		// request with neither is refused, so the admin is never handed a
+		// payout with no destination (Basecamp 10336467884).
+		if ( $details ) {
+			$details = self::save_payout_profile( $vendor_id, $method, $details );
+		} else {
+			$profile = self::get_payout_profile( $vendor_id );
+			$method  = '' !== $method ? $method : $profile['method'];
+			$details = $profile['method'] === $method
+				? self::validate_payout_details( $method, $profile['details'] )
+				: self::validate_payout_details( $method, array() );
+		}
+
+		if ( is_wp_error( $details ) ) {
+			return array(
+				'success' => false,
+				'code'    => $details->get_error_code(),
+				'message' => $details->get_error_message(),
+			);
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_withdrawals';
+
+		// Lock vendor's pending withdrawals to prevent double-withdrawal race conditions.
+		$wpdb->query( 'START TRANSACTION' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(amount), 0) FROM {$table} WHERE vendor_id = %d AND status IN (%s, %s) FOR UPDATE",
+				$vendor_id,
+				self::WITHDRAWAL_PENDING,
+				self::WITHDRAWAL_APPROVED
+			)
+		);
+
+		/*
+		 * One open request at a time - checked INSIDE the lock taken above.
+		 *
+		 * This rule lived in EarningsController, not here, so when Pro's
+		 * /wallet/withdraw was consolidated onto this service it inherited the
+		 * balance lock and not the queue rule: five concurrent requests from one
+		 * vendor left two pending rows through Pro and would have left one
+		 * through Free (Basecamp 10322374689). No overdraw - the balance lock
+		 * held - but the owner's payout queue behaved differently depending on
+		 * which client the vendor used.
+		 *
+		 * It is the same shape that made the original overdraw possible: a rule
+		 * living in a caller rather than in the shared writer. Inside the
+		 * transaction it is race-safe rather than advisory, which the
+		 * controller's copy was not.
+		 *
+		 * Open means pending OR approved-but-unpaid: the same two statuses
+		 * get_summary() reserves as "withdrawal in progress".
+		 */
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$open = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND status IN (%s, %s)",
+				$vendor_id,
+				self::WITHDRAWAL_PENDING,
+				self::WITHDRAWAL_APPROVED
+			)
+		);
+
+		if ( $open > 0 ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'code'    => 'pending_exists',
+				'message' => __( 'You already have a withdrawal in progress. You can request another once it is paid.', 'wp-sell-services' ),
+			);
+		}
+
+		$summary = $this->get_summary( $vendor_id );
+
+		// The auto run withdraws what is available now, not what it read before
+		// its loop began.
+		if ( $is_auto ) {
+			$amount = (float) $summary['available_balance'];
+
+			// The owner's threshold, read under the lock: the balance may have dropped since the run listed this vendor.
+			if ( $amount < self::get_auto_withdrawal_threshold() ) {
+				$wpdb->query( 'ROLLBACK' );
+				return array(
+					'success' => false,
+					'code'    => 'below_threshold',
+					'message' => __( 'The available balance is below the auto-withdrawal threshold.', 'wp-sell-services' ),
+				);
+			}
+		}
+
+		$min_withdrawal = self::get_min_withdrawal_amount();
+		if ( $amount < $min_withdrawal ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'code'    => 'below_minimum',
+				'message' => sprintf(
+					/* translators: %s: minimum withdrawal amount */
+					__( 'Minimum withdrawal amount is %s.', 'wp-sell-services' ),
+					wpss_format_price( $min_withdrawal )
+				),
+			);
+		}
+
+		// Check available balance.
+		if ( $amount > $summary['available_balance'] ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'code'    => 'insufficient_balance',
+				'message' => __( 'Insufficient balance for this withdrawal.', 'wp-sell-services' ),
+			);
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = $wpdb->insert(
+			$table,
+			array(
+				'vendor_id'  => $vendor_id,
+				'amount'     => $amount,
+				'method'     => sanitize_key( $method ),
+				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
+				'status'     => self::WITHDRAWAL_PENDING,
+				'is_auto'    => $is_auto ? 1 : 0,
+				'created_at' => current_time( 'mysql', true ),
+			),
+			array( '%d', '%f', '%s', '%s', '%s', '%d', '%s' )
+		);
+
+		if ( ! $result ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to create withdrawal request.', 'wp-sell-services' ),
+			);
+		}
+
+		$wpdb->query( 'COMMIT' );
+
+		return array(
+			'success'       => true,
+			'withdrawal_id' => (int) $wpdb->insert_id,
+			'amount'        => $amount,
 		);
 	}
 
@@ -1062,6 +1135,17 @@ class EarningsService {
 				'success' => false,
 				'message' => __( 'This withdrawal has already been finalised and can no longer be changed.', 'wp-sell-services' ),
 				'code'    => 'already_finalised',
+			);
+		}
+
+		// Same decision again (double click, two admins, bulk replay): nothing
+		// to change, so no second mail, notification or audit row.
+		if ( $withdrawal->status === $status ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => true,
+				'message' => __( 'This withdrawal already has that status.', 'wp-sell-services' ),
+				'code'    => 'unchanged',
 			);
 		}
 
@@ -1665,12 +1749,7 @@ class EarningsService {
 
 		foreach ( $eligible as $vendor ) {
 			// Create automatic withdrawal request.
-			$result = $this->create_auto_withdrawal(
-				$vendor['vendor_id'],
-				$vendor['available_balance'],
-				$vendor['payout_method'],
-				$vendor['payout_details']
-			);
+			$result = $this->create_auto_withdrawal( $vendor['vendor_id'] );
 
 			if ( $result['success'] ) {
 				++$processed;
@@ -1680,7 +1759,7 @@ class EarningsService {
 
 			$results[] = array(
 				'vendor_id' => $vendor['vendor_id'],
-				'amount'    => $vendor['available_balance'],
+				'amount'    => $result['amount'] ?? $vendor['available_balance'],
 				'success'   => $result['success'],
 				'message'   => $result['message'],
 			);
@@ -1713,58 +1792,27 @@ class EarningsService {
 	/**
 	 * Create automatic withdrawal request.
 	 *
-	 * @param int    $vendor_id Vendor user ID.
-	 * @param float  $amount    Amount to withdraw.
-	 * @param string $method    Withdrawal method.
-	 * @param array  $details   Method details (account info).
+	 * @param int $vendor_id Vendor user ID.
 	 * @return array Result with success status.
 	 */
-	private function create_auto_withdrawal( int $vendor_id, float $amount, string $method, array $details = array() ): array {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_withdrawals';
-
-		// Check for any pending auto withdrawal for this vendor.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$existing = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table}
-				WHERE vendor_id = %d AND status IN (%s, %s) AND is_auto = 1",
-				$vendor_id,
-				self::WITHDRAWAL_PENDING,
-				self::WITHDRAWAL_APPROVED
-			)
-		);
-
-		if ( $existing > 0 ) {
+	private function create_auto_withdrawal( int $vendor_id ): array {
+		// A suspended or banned vendor's balance waits for the owner, not the schedule.
+		$blocked = wpss_vendor_status_block( $vendor_id );
+		if ( $blocked ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Vendor already has a pending auto withdrawal.', 'wp-sell-services' ),
+				'message' => $blocked->get_error_message(),
 			);
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$result = $wpdb->insert(
-			$table,
-			array(
-				'vendor_id'  => $vendor_id,
-				'amount'     => $amount,
-				'method'     => sanitize_key( $method ),
-				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
-				'status'     => self::WITHDRAWAL_PENDING,
-				'is_auto'    => 1,
-				'created_at' => current_time( 'mysql', true ),
-			),
-			array( '%d', '%f', '%s', '%s', '%s', '%d', '%s' )
-		);
+		$written = $this->write_withdrawal( $vendor_id, 0.0, '', array(), true );
 
-		if ( ! $result ) {
-			return array(
-				'success' => false,
-				'message' => __( 'Failed to create auto withdrawal request.', 'wp-sell-services' ),
-			);
+		if ( empty( $written['success'] ) ) {
+			return $written;
 		}
 
-		$withdrawal_id = (int) $wpdb->insert_id;
+		$withdrawal_id = (int) $written['withdrawal_id'];
+		$amount        = (float) $written['amount'];
 
 		// Notify vendor.
 		$notification_service = new NotificationService();
@@ -1796,6 +1844,7 @@ class EarningsService {
 			'success'       => true,
 			'message'       => __( 'Auto withdrawal request created successfully.', 'wp-sell-services' ),
 			'withdrawal_id' => $withdrawal_id,
+			'amount'        => $amount,
 		);
 	}
 

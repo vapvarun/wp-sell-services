@@ -67,6 +67,9 @@ class BuyerRequestArchiveView {
 			return;
 		}
 
+		// The archive owns its bundle, as the services archive does: without it WPSS (frontend.js)
+		// was undefined here, so the sort dropdown and the mobile Filters toggle did nothing.
+		wpss_enqueue_frontend_assets();
 		self::enqueue_style();
 	}
 
@@ -210,33 +213,45 @@ class BuyerRequestArchiveView {
 	 * @return void
 	 */
 	public function render_filters_bar(): void {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current_sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : 'newest';
+		// Only the drawer toggle lives here, and it shows only where the filters are a drawer. The sort
+		// sits in the results row: alone in this bar it left a bordered card two-thirds empty on
+		// desktop (Basecamp 10450931965).
 		?>
 		<div class="wpss-filters-bar">
 			<button type="button" class="wpss-btn wpss-btn--outline wpss-filter-toggle" aria-expanded="false" aria-controls="wpss-sidebar">
 				<span class="wpss-icon-filter"></span>
 				<?php esc_html_e( 'Filters', 'wp-sell-services' ); ?>
 			</button>
-
-			<div class="wpss-filters-bar-controls">
-				<?php // Categories are chosen in the filters list only, as on the services archive (Basecamp 10337197376). ?>
-				<select class="wpss-sort-filter wpss-url-select">
-					<option value="<?php echo esc_url( add_query_arg( 'sort', 'newest' ) ); ?>" <?php selected( $current_sort, 'newest' ); ?>>
-						<?php esc_html_e( 'Sort: Newest', 'wp-sell-services' ); ?>
-					</option>
-					<option value="<?php echo esc_url( add_query_arg( 'sort', 'oldest' ) ); ?>" <?php selected( $current_sort, 'oldest' ); ?>>
-						<?php esc_html_e( 'Sort: Oldest', 'wp-sell-services' ); ?>
-					</option>
-					<option value="<?php echo esc_url( add_query_arg( 'sort', 'budget_high' ) ); ?>" <?php selected( $current_sort, 'budget_high' ); ?>>
-						<?php esc_html_e( 'Sort: Budget High to Low', 'wp-sell-services' ); ?>
-					</option>
-					<option value="<?php echo esc_url( add_query_arg( 'sort', 'budget_low' ) ); ?>" <?php selected( $current_sort, 'budget_low' ); ?>>
-						<?php esc_html_e( 'Sort: Budget Low to High', 'wp-sell-services' ); ?>
-					</option>
-				</select>
-			</div>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render the sort select.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @return void
+	 */
+	private function render_sort_select(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$current_sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : 'newest';
+		?>
+		<?php // Categories are chosen in the filters list only, as on the services archive (Basecamp 10337197376). ?>
+		<select class="wpss-sort-filter wpss-url-select" aria-label="<?php esc_attr_e( 'Sort requests', 'wp-sell-services' ); ?>">
+			<option value="<?php echo esc_url( add_query_arg( 'sort', 'newest' ) ); ?>" <?php selected( $current_sort, 'newest' ); ?>>
+				<?php esc_html_e( 'Sort: Newest', 'wp-sell-services' ); ?>
+			</option>
+			<option value="<?php echo esc_url( add_query_arg( 'sort', 'oldest' ) ); ?>" <?php selected( $current_sort, 'oldest' ); ?>>
+				<?php esc_html_e( 'Sort: Oldest', 'wp-sell-services' ); ?>
+			</option>
+			<option value="<?php echo esc_url( add_query_arg( 'sort', 'budget_high' ) ); ?>" <?php selected( $current_sort, 'budget_high' ); ?>>
+				<?php esc_html_e( 'Sort: Budget High to Low', 'wp-sell-services' ); ?>
+			</option>
+			<option value="<?php echo esc_url( add_query_arg( 'sort', 'budget_low' ) ); ?>" <?php selected( $current_sort, 'budget_low' ); ?>>
+				<?php esc_html_e( 'Sort: Budget Low to High', 'wp-sell-services' ); ?>
+			</option>
+		</select>
 		<?php
 	}
 
@@ -250,15 +265,18 @@ class BuyerRequestArchiveView {
 		$total = $wp_query->found_posts;
 		?>
 		<div class="wpss-results-info">
-			<?php
-			// "Open": closed, hired and expired requests are not listed, which is
-			// why the count is lower than the admin list (Basecamp 10337197376).
-			printf(
-				/* translators: %s: number of open requests */
-				esc_html( _n( '%s open request', '%s open requests', $total, 'wp-sell-services' ) ),
-				esc_html( number_format_i18n( $total ) )
-			);
-			?>
+			<span class="wpss-results-info__count">
+				<?php
+				// "Open": closed, hired and expired requests are not listed, which is
+				// why the count is lower than the admin list (Basecamp 10337197376).
+				printf(
+					/* translators: %s: number of open requests */
+					esc_html( _n( '%s open request', '%s open requests', $total, 'wp-sell-services' ) ),
+					esc_html( number_format_i18n( $total ) )
+				);
+				?>
+			</span>
+			<?php $this->render_sort_select(); ?>
 		</div>
 		<?php
 	}

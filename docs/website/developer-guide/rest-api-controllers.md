@@ -44,6 +44,11 @@ off and leaves its name, price and limits alone. Send a field to change it, and
 send `null` or an empty value to clear one that can be cleared (a plan's
 `commission_override`). Defaults apply on create only.
 
+The plan GETs are public, but not every field is. A signed-out caller gets
+neither `commission_override` nor `stripe_price_id`; a signed-in member also
+gets `commission_override` (the rate a plan offers); only an administrator gets
+`stripe_price_id`.
+
 ## Route presence is conditional
 
 Two things change which routes exist on a given site, so enumerate rather than
@@ -94,6 +99,11 @@ Registered by the API bootstrap rather than a dedicated controller.
 `/services/grid` returns the lighter payload used by the catalog grid. Prefer it
 over `/services` when you only need cards.
 
+`PUT /services/{id}` takes `paused` (boolean) to pause or resume a service: it
+stays published and listed but takes no new orders, and every card carries
+`paused`. `status` (`publish` or `draft`) is the separate publish control; a
+draft is not listed.
+
 `/services/limits` returns the ceilings a single service may not exceed, so a
 client can build its create-service form without discovering each one by being
 rejected. Public read; no authentication needed.
@@ -108,6 +118,17 @@ rejected. Public read; no authentication needed.
   "max_requirements": 5
 }
 ```
+
+When a create or update (`POST`, `PUT`, `PATCH` on `/services`) sends more than a limit
+allows, the service is still saved. The response is 200 or 201 and carries a `notices`
+array naming what was cut, plus a `limits` object with the same ceilings. It no longer
+returns 400 after saving.
+
+With moderation on, a vendor's create or update that lands in the review queue instead
+of going live says so: the response's `status` is `pending` and its `notices` array
+carries "Service submitted for review. You will be notified once it is approved." The
+add-on routes (`/services/{id}/addons`) do the same, because changing an add-on on a
+live service sends it back to review. Sending `paused` alone does not.
 
 `-1` means unlimited. The numbers above are the Free defaults; Pro raises
 `max_gallery`, `max_extras`, `max_faq` and `max_requirements` to `-1` and leaves
@@ -125,6 +146,7 @@ rather than hard-coding these numbers.
 | GET, POST | `/orders/(?P<id>[\d]+)/deliverables` |
 | GET | `/orders/(?P<id>[\d]+)/files/(?P<file_id>[A-Za-z0-9\-]+)` |
 | POST | `/orders/(?P<id>[\d]+)/(?P<action>…)` |
+| POST | `/orders/(?P<id>[\d]+)/mark-paid` |
 | GET, POST | `/orders/(?P<id>[\d]+)/requirements` |
 | POST | `/orders/(?P<id>[\d]+)/requirements/skip` |
 | DELETE | `/orders/(?P<id>[\d]+)/requirements/files/(?P<file_id>[\d]+)` |
@@ -594,7 +616,13 @@ Available only when WP Sell Services Pro is active with a valid license.
 | GET, POST/PUT/PATCH | `/paypal-payouts/profile` |
 
 `/pending` is what an owner exports to pay vendors manually; `sync` reconciles a
-submitted batch back against the wallet ledger.
+submitted batch back against the wallet ledger. `/pending` is paged (`page`,
+`per_page` up to 100, default 100) and ordered by vendor name; read `X-WP-Total`
+and `X-WP-TotalPages` for the rest. Before 1.9.2 it returned at most 500 vendors,
+sorted by pending amount.
+
+Only one batch is created at a time. A `POST /paypal-payouts/batches` that arrives
+while another batch is being written is refused with a message to wait and reload.
 
 ### Commission rules
 

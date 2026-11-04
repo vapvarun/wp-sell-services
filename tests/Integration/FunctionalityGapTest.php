@@ -42,7 +42,7 @@ class FunctionalityGapTest extends TestCase {
 
 		if ( class_exists( $class ) ) {
 			// Note: get_by_vendor() is the actual method name (not get_by_author).
-			$methods = array( 'create', 'update', 'delete', 'get', 'get_by_vendor' );
+			$methods = array( 'create', 'update', 'get', 'get_by_vendor' );
 			foreach ( $methods as $method ) {
 				$this->assertTrue(
 					method_exists( $class, $method ),

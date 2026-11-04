@@ -95,6 +95,18 @@ class VendorProfileRepository extends AbstractRepository {
 	}
 
 	/**
+	 * User IDs of vendors an owner has suspended or rejected.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @return array<int>
+	 */
+	public function get_blocked_user_ids(): array {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return array_map( 'intval', (array) $this->wpdb->get_col( "SELECT user_id FROM {$this->table} WHERE status IN ('suspended','rejected')" ) );
+	}
+
+	/**
 	 * Get profile by user ID.
 	 *
 	 * @param int $user_id User ID.
@@ -139,6 +151,23 @@ class VendorProfileRepository extends AbstractRepository {
 		}
 
 		return $inserted;
+	}
+
+	/**
+	 * Write to a vendor profile that already exists, never create one.
+	 *
+	 * A new profile row defaults to status 'active', and an active row is what
+	 * makes a member a vendor (wpss_is_vendor()). Counters and flags are written
+	 * for whoever an order or review names, so creating the row here turned any
+	 * member named on an order into an active vendor. Vendors are created only by
+	 * the application and approval paths, which set the status themselves.
+	 *
+	 * @param int                  $user_id User ID.
+	 * @param array<string, mixed> $data    Columns to update.
+	 * @return int|false Profile ID, or false when the member has no profile.
+	 */
+	private function update_existing( int $user_id, array $data ): int|false {
+		return $this->get_by_user( $user_id ) ? $this->upsert( $user_id, $data ) : false;
 	}
 
 	/**
@@ -449,7 +478,7 @@ class VendorProfileRepository extends AbstractRepository {
 			$on_time_rate = ( (int) $delivery_stats['on_time_count'] / (int) $delivery_stats['total_completed'] ) * 100;
 		}
 
-		return $this->upsert(
+		return $this->update_existing(
 			$user_id,
 			$this->ledger_totals( $user_id ) + array(
 				'total_orders'          => $counts['total_orders'],
@@ -522,7 +551,7 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @return bool True on success.
 	 */
 	public function set_vacation_mode( int $user_id, bool $enabled, string $message = '', ?string $return_date = null ): bool {
-		return $this->upsert(
+		return $this->update_existing(
 			$user_id,
 			array(
 				'vacation_mode'        => $enabled ? 1 : 0,
@@ -541,7 +570,7 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @return bool True on success.
 	 */
 	public function set_availability( int $user_id, bool $available ): bool {
-		return $this->upsert(
+		return $this->update_existing(
 			$user_id,
 			array( 'is_available' => $available ? 1 : 0 )
 		) !== false;
@@ -561,7 +590,7 @@ class VendorProfileRepository extends AbstractRepository {
 			$data['verified_at'] = current_time( 'mysql', true );
 		}
 
-		return $this->upsert( $user_id, $data ) !== false;
+		return $this->update_existing( $user_id, $data ) !== false;
 	}
 
 	/**

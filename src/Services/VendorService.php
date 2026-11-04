@@ -32,6 +32,18 @@ class VendorService {
 	public const ROLE = 'wpss_vendor';
 
 	/**
+	 * Vendor statuses an admin may set, mapped to the audit event each records.
+	 *
+	 * @since 1.9.2
+	 */
+	public const STATUS_EVENTS = array(
+		'active'    => 'vendor.approved',
+		'pending'   => 'vendor.pending',
+		'suspended' => 'vendor.suspended',
+		'rejected'  => 'vendor.rejected',
+	);
+
+	/**
 	 * Profile repository.
 	 *
 	 * @var VendorProfileRepository
@@ -87,6 +99,12 @@ class VendorService {
 
 		// Check if user already has a pending application.
 		if ( $this->has_pending_application( $user_id ) ) {
+			return false;
+		}
+
+		// A suspended or rejected seller, or a member whose account is blocked,
+		// must not reinstate themselves: upsert() below would reset the status.
+		if ( $this->registration_block( $user_id ) ) {
 			return false;
 		}
 
@@ -232,6 +250,15 @@ class VendorService {
 			);
 		}
 
+		$block = $this->registration_block( $user_id );
+
+		if ( $block ) {
+			return array(
+				'success' => false,
+				'message' => $block->get_error_message(),
+			);
+		}
+
 		$success = $this->register( $user_id, $data );
 
 		if ( $success ) {
@@ -296,6 +323,33 @@ class VendorService {
 	}
 
 	/**
+	 * Why this user may not apply to sell, or null when they may.
+	 *
+	 * An application only ever starts or resumes a vendor: a profile the owner
+	 * suspended or rejected (or any other non-active, non-pending state) is the
+	 * owner's decision, and applying again must not overwrite it. The member's
+	 * account standing is checked first, as on every other door.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param int $user_id User ID.
+	 * @return \WP_Error|null WP_Error (status 403) when refused, null when allowed.
+	 */
+	public function registration_block( int $user_id ): ?\WP_Error {
+		$block = wpss_account_status_block( $user_id );
+
+		if ( $block ) {
+			return $block;
+		}
+
+		if ( in_array( (string) $this->get_vendor_status( $user_id ), array( '', 'active', 'pending' ), true ) ) {
+			return null;
+		}
+
+		return wpss_vendor_status_block( $user_id );
+	}
+
+	/**
 	 * Get vendor profile status.
 	 *
 	 * Returns the vendor profile status from the database, or null if no profile exists.
@@ -326,17 +380,15 @@ class VendorService {
 	 * @return bool True when the profile row was updated.
 	 */
 	public function set_status( int $user_id, string $status ): bool {
-		$events = array(
-			'active'    => 'vendor.approved',
-			'pending'   => 'vendor.pending',
-			'suspended' => 'vendor.suspended',
-			'rejected'  => 'vendor.rejected',
-		);
-
 		$from = $this->get_vendor_status( $user_id );
 
-		if ( ! isset( $events[ $status ] ) || null === $from ) {
+		if ( ! isset( self::STATUS_EVENTS[ $status ] ) || null === $from ) {
 			return false;
+		}
+
+		// Repeating the same decision must not re-mail or re-audit.
+		if ( $from === $status ) {
+			return true;
 		}
 
 		$updated = $this->profile_repo->upsert(
@@ -357,24 +409,14 @@ class VendorService {
 			$this->revoke_vendor_access( $user_id );
 		}
 
-		( new AuditLogService() )->log(
-			$events[ $status ],
-			'vendor',
-			$user_id,
-			array(
-				'action'     => $status,
-				'from_value' => $from,
-				'to_value'   => $status,
-			)
-		);
-
 		/**
 		 * Fires when vendor status is updated.
 		 *
 		 * @param int    $vendor_id Vendor user ID.
 		 * @param string $status    New status.
+		 * @param string $from      Status before (since 1.9.2).
 		 */
-		do_action( 'wpss_vendor_status_updated', $user_id, $status );
+		do_action( 'wpss_vendor_status_updated', $user_id, $status, $from );
 
 		return true;
 	}

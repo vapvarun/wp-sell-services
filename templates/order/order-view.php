@@ -10,7 +10,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var int $order_id Order ID passed from parent template.
  *
@@ -818,7 +818,7 @@ do_action( 'wpss_before_order_view', $order );
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
 				<i data-lucide="image" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Service Details', 'wp-sell-services' ); ?>
+				<?php echo 'project' === $wpss_subject['kind'] ? esc_html__( 'Project', 'wp-sell-services' ) : esc_html__( 'Service Details', 'wp-sell-services' ); ?>
 			</h2>
 		</div>
 		<div class="wpss-order-section__body">
@@ -1550,12 +1550,7 @@ do_action( 'wpss_before_order_view', $order );
 	<?php
 	$extension_service         = new \WPSellServices\Services\ExtensionOrderService();
 	$pending_extension         = $extension_service->get_pending_request( (int) $order_id );
-	$extension_active_statuses = array(
-		\WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS,
-		\WPSellServices\Models\ServiceOrder::STATUS_LATE,
-		\WPSellServices\Models\ServiceOrder::STATUS_REVISION_REQUESTED,
-		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL,
-	);
+	$extension_active_statuses = \WPSellServices\Services\ExtensionOrderService::ACTIVE_PARENT_STATUSES;
 	// Extensions are for fixed-price catalog orders only. Request-mode
 	// orders run on the milestone payment model instead, so the two CTAs
 	// never appear on the same order.
@@ -1566,7 +1561,8 @@ do_action( 'wpss_before_order_view', $order );
 	$buyer_sees_pending_extension = $is_customer && ! $is_request_order && null !== $pending_extension;
 
 	if ( $buyer_sees_pending_extension ) :
-		$ext_pay_url  = $pending_extension->pay_order_id
+		$ext_on_hold  = ! in_array( $order->status, $extension_active_statuses, true );
+		$ext_pay_url  = $pending_extension->pay_order_id && ! $ext_on_hold
 			? wpss_get_pay_order_url( (int) $pending_extension->pay_order_id )
 			: '';
 		$ext_currency = $order->currency ?? wpss_get_currency();
@@ -1577,9 +1573,13 @@ do_action( 'wpss_before_order_view', $order );
 					<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Quote for extra work', 'wp-sell-services' ); ?>
 				</h3>
-				<p class="wpss-extension-pending-card__body">
-					<?php esc_html_e( 'Your vendor sent a quote for additional work on this order. Review the details — pay to approve and they will continue with the expanded scope, or decline and discuss first in chat.', 'wp-sell-services' ); ?>
-				</p>
+				<?php if ( $ext_on_hold ) : ?>
+					<p class="wpss-notice wpss-notice--warning" role="status"><?php esc_html_e( 'Your vendor sent a quote for additional work. It is on hold while the order is not active: you can pay it once the order is back in progress, or decline it now.', 'wp-sell-services' ); ?></p>
+				<?php else : ?>
+					<p class="wpss-extension-pending-card__body">
+						<?php esc_html_e( 'Your vendor sent a quote for additional work on this order. Review the details — pay to approve and they will continue with the expanded scope, or decline and discuss first in chat.', 'wp-sell-services' ); ?>
+					</p>
+				<?php endif; ?>
 				<div class="wpss-extension-pending-card__meta">
 					<div>
 						<strong><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></strong>
@@ -1808,7 +1808,7 @@ do_action( 'wpss_before_order_view', $order );
 				<div class="wpss-tip-form__error" hidden></div>
 			</div>
 			<div class="wpss-modal__footer">
-				<button type="button" class="wpss-btn wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+				<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
 				<button type="submit" class="wpss-btn wpss-btn--primary wpss-tip-form__submit">
 					<?php esc_html_e( 'Send tip', 'wp-sell-services' ); ?>
 				</button>
@@ -1952,6 +1952,28 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 						<?php endfor; ?>
 					</div>
 				</div>
+
+				<fieldset class="wpss-form-group wpss-review-subratings">
+					<legend class="wpss-label"><?php esc_html_e( 'Rate the details (optional)', 'wp-sell-services' ); ?></legend>
+					<?php
+					$wpss_sub_fields = array(
+						'rating_communication' => __( 'Communication', 'wp-sell-services' ),
+						'rating_quality'       => __( 'Quality', 'wp-sell-services' ),
+						'rating_value'         => __( 'Value', 'wp-sell-services' ),
+					);
+					foreach ( $wpss_sub_fields as $wpss_sub_name => $wpss_sub_label ) :
+						?>
+						<div class="wpss-review-subrating">
+							<label for="review-<?php echo esc_attr( $wpss_sub_name ); ?>"><?php echo esc_html( $wpss_sub_label ); ?></label>
+							<select name="<?php echo esc_attr( $wpss_sub_name ); ?>" id="review-<?php echo esc_attr( $wpss_sub_name ); ?>" class="wpss-select">
+								<option value=""><?php esc_html_e( 'Not rated', 'wp-sell-services' ); ?></option>
+								<?php for ( $i = 5; $i >= 1; $i-- ) : ?>
+									<option value="<?php echo esc_attr( $i ); ?>"><?php echo esc_html( sprintf( /* translators: %d: star count */ _n( '%d star', '%d stars', $i, 'wp-sell-services' ), $i ) ); ?></option>
+								<?php endfor; ?>
+							</select>
+						</div>
+					<?php endforeach; ?>
+				</fieldset>
 
 				<div class="wpss-form-group">
 					<label for="review-comment" class="wpss-label"><?php esc_html_e( 'Your Review', 'wp-sell-services' ); ?> <span class="wpss-required">*</span></label>

@@ -89,6 +89,13 @@ class BuyerRequestService {
 			return false;
 		}
 
+		// A suspended or closed member posts no new request.
+		$standing = wpss_account_status_block( get_current_user_id() );
+
+		if ( $standing ) {
+			return $standing;
+		}
+
 		$post_data = array(
 			'post_type'    => BuyerRequestPostType::POST_TYPE,
 			'post_title'   => sanitize_text_field( $data['title'] ),
@@ -886,6 +893,28 @@ class BuyerRequestService {
 			);
 		}
 
+		// Both sides must be in good standing: an accepted proposal is a new
+		// purchase and new work, whichever door (AJAX, REST, CLI) it came through.
+		$standing = wpss_account_status_block( (int) $request->author_id );
+
+		if ( $standing ) {
+			return array(
+				'success' => false,
+				'message' => $standing->get_error_message(),
+				'status'  => 403,
+			);
+		}
+
+		// The vendor's own wording says "Your vendor account", which the buyer who
+		// clicked Accept must not be told about themselves.
+		if ( wpss_vendor_status_block( (int) $proposal->vendor_id ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This seller cannot take new work right now, so the proposal cannot be accepted.', 'wp-sell-services' ),
+				'status'  => 403,
+			);
+		}
+
 		global $wpdb;
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 
@@ -1013,9 +1042,7 @@ class BuyerRequestService {
 						[
 							'proposal_snapshot' => $proposal_snapshot,
 							'contract_type'     => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
-							'tax_rate'          => $line['tax_rate'],
-							'tax_amount'        => $line['tax'],
-							'tax_included'      => $line['tax_included'],
+							...wpss_order_tax_meta( (float) $line['tax_rate'], (float) $line['tax'], (bool) $line['tax_included'], (string) ( $line['tax_label'] ?? '' ) ),
 						]
 					)
 				),
@@ -1096,6 +1123,20 @@ class BuyerRequestService {
 			foreach ( $created_milestone_ids as $ms_id ) {
 				do_action( 'wpss_milestone_proposed', $ms_id, $order_id, (int) $proposal->vendor_id );
 			}
+
+			/**
+			 * Fires once when an accepted phased proposal has created all of its phases.
+			 *
+			 * The built-in buyer email and notification hang off this, not off the per-phase hook above, so a
+			 * 17-phase contract sends one message instead of seventeen.
+			 *
+			 * @since 1.9.2
+			 *
+			 * @param int   $order_id      Parent order ID.
+			 * @param int[] $milestone_ids Phase order IDs, in plan order.
+			 * @param int   $vendor_id     Seller user ID.
+			 */
+			do_action( 'wpss_contract_phases_proposed', $order_id, $created_milestone_ids, (int) $proposal->vendor_id );
 		}
 
 		// The proposal was claimed inside the transaction; announce it now that

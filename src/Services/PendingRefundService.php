@@ -245,18 +245,16 @@ class PendingRefundService {
 			$record['remaining'] = round( (float) $record['remaining'] - $apply, $decimals );
 			self::store( $record );
 
-			( new AuditLogService() )->log(
-				'order.pending_refund_assigned',
-				'order',
-				$order_id,
-				array(
-					'action'  => 'refund',
-					'context' => array(
-						'key'    => $record['key'],
-						'amount' => $apply,
-					),
-				)
-			);
+			/**
+			 * Fires when part of a rail refund that named no gig is assigned to an order.
+			 *
+			 * @since 1.9.2
+			 *
+			 * @param int    $order_id Order ID.
+			 * @param string $key      Pending refund key.
+			 * @param float  $amount   Amount applied to this order.
+			 */
+			do_action( 'wpss_pending_refund_assigned', $order_id, (string) $record['key'], (float) $apply );
 
 			return array(
 				'ok'      => true,

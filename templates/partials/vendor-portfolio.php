@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var array $portfolio_items Array of portfolio item arrays.
  * @var int   $vendor_id       Vendor user ID.
@@ -237,13 +237,13 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 }
 
 .wpss-portfolio-public--list .wpss-portfolio-public__ext-link {
-	color: var( --wpss-primary, #4f46e5 );
+	color: var(--wpss-primary-accent, #4f46e5);
 	border-color: var( --wpss-border, #e5e7eb );
 }
 
 .wpss-portfolio-public--list .wpss-portfolio-public__ext-link:hover {
 	background: var( --wpss-bg-muted, #f3f4f6 );
-	color: var( --wpss-primary, #4f46e5 );
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 /* Responsive */

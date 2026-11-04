@@ -168,6 +168,15 @@ $check( 'suspended vendor receives one mail', 1 === count( $suspended ) );
 $check( '  whose subject says suspended', ! empty( $suspended ) && false !== stripos( $suspended[0]['subject'], 'suspend' ) );
 $check( '  and an in-app row of its own type', 1 === $rows( $vendor, 'vendor_suspended' ) );
 
+// A notification's mail carries the site name in its subject, like every mail EmailService composes itself.
+// Called on the one mail path directly with a type no toggle maps, so a site's mail settings cannot skip it.
+$mails     = array();
+$send_mail = new ReflectionMethod( NotificationService::class, 'send_email' );
+$send_mail->setAccessible( true );
+$send_mail->invoke( $ns, $vendor, 'Dispute resolved', 'Matrix subject check.', array(), 'qa_subject_check' );
+$resolved_mail = $mails_to( $vendor_email );
+$check( 'a notification mail subject starts with the site name, once (' . ( $resolved_mail[0]['subject'] ?? count( $mails ) . ' mails, none to the vendor' ) . ')', ! empty( $resolved_mail ) && str_starts_with( $resolved_mail[0]['subject'], '[' . wpss_get_platform_name() . '] Dispute resolved' ) && 1 === substr_count( $resolved_mail[0]['subject'], '[' . wpss_get_platform_name() . ']' ) );
+
 // --- 5. events that used to produce nothing -----------------------------------
 do_action( 'wpss_review_reply_created', $review_id );
 $check( 'review reply notifies the reviewer', 1 === $rows( $buyer, 'review_reply' ) );
@@ -234,7 +243,11 @@ remove_filter( 'wpss_tipping_enabled', $wpss_tipping_on, 99 );
 $earn_src = (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/Services/EarningsService.php' );
 $check( 'withdrawal request writes the vendor an in-app row', false !== strpos( $earn_src, "'withdrawal_requested'" ) );
 
-// --- 6. a failed send is logged and retried ------------------------------------
+// --- 6. a failed send is logged; only our own mail is retried --------------------
+// This mail did not go through EmailService, so it is another plugin's: logged, not
+// queued (its contents would be copied into the actions table). Our own mail's
+// retry is covered by tests/test-mail-jobs-carry-no-mail-in-args.php.
+$retries_before = function_exists( 'as_get_scheduled_actions' ) ? count( as_get_scheduled_actions( array( 'hook' => 'wpss_email_retry', 'status' => 'pending', 'per_page' => -1 ), 'ids' ) ) : -1;
 do_action(
 	'wp_mail_failed',
 	new WP_Error(
@@ -251,7 +264,7 @@ do_action(
 $failed = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$p}wpss_audit_log WHERE event_type = 'email.failed' AND created_at >= %s ORDER BY id DESC LIMIT 1", $t0 ) );
 $check( 'wp_mail_failed writes an email.failed audit row', null !== $failed );
 $check( '  carrying the recipient and the error', $failed && false !== strpos( (string) $failed->context, 'nobody@example.test' ) && false !== strpos( (string) $failed->context, 'SMTP down' ) );
-$check( '  and schedules one retry', function_exists( 'as_next_scheduled_action' ) && false !== as_next_scheduled_action( 'wpss_email_retry' ) );
+$check( '  and queues no retry for mail that was not ours', $retries_before >= 0 && count( as_get_scheduled_actions( array( 'hook' => 'wpss_email_retry', 'status' => 'pending', 'per_page' => -1 ), 'ids' ) ) === $retries_before );
 
 // --- cleanup ---------------------------------------------------------------------
 update_option( 'wpss_orders', $saved_orders_option );

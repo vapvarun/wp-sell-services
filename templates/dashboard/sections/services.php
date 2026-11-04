@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -161,6 +161,12 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 					$item_status = 'rejected';
 					$is_rejected = true;
 				}
+
+				// Paused: still published and listed, just not taking orders.
+				$wpss_is_paused = 'publish' === $item_status && 'paused' === wpss_get_service_status( $service_id );
+				if ( $wpss_is_paused ) {
+					$item_status = 'paused';
+				}
 				?>
 				<div class="wpss-service-card wpss-service-card--dashboard<?php echo $is_rejected ? ' wpss-service-card--rejected' : ''; ?>">
 					<div class="wpss-service-card__image">
@@ -190,6 +196,10 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 							<?php
 							if ( 'rejected' === $item_status ) {
 								esc_html_e( 'Rejected', 'wp-sell-services' );
+							} elseif ( 'pending' === $item_status ) {
+								esc_html_e( 'Pending review', 'wp-sell-services' );
+							} elseif ( 'paused' === $item_status ) {
+								esc_html_e( 'Paused', 'wp-sell-services' );
 							} else {
 								$status_obj = get_post_status_object( $item_status );
 								echo esc_html( $status_obj ? $status_obj->label : ucfirst( $item_status ) );
@@ -268,20 +278,25 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 							<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 						</a>
 						<?php
-						// Pause/Publish toggle - only for the two vendor-controllable
-						// states. Pending + rejected services route through moderation
-						// (use the Resubmit flow), so no direct toggle for those.
+						// Pause/Resume on a published service (stays listed, stops taking
+						// orders); Publish on a draft. Pending + rejected services route
+						// through moderation (use the Resubmit flow), so no toggle for those.
 						$wpss_real_status = get_post_status( $service_id );
 						if ( in_array( $wpss_real_status, array( 'publish', 'draft' ), true ) && 'rejected' !== $item_status ) :
 							?>
 							<button type="button"
 								class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-toggle-status"
 								data-service-id="<?php echo esc_attr( $service_id ); ?>"
-								data-current-status="<?php echo esc_attr( $wpss_real_status ); ?>">
+								data-current-status="<?php echo esc_attr( $wpss_real_status ); ?>"
+								data-paused="<?php echo $wpss_is_paused ? '1' : '0'; ?>">
 								<?php
-								echo 'publish' === $wpss_real_status
-									? esc_html__( 'Pause', 'wp-sell-services' )
-									: esc_html__( 'Publish', 'wp-sell-services' );
+								if ( 'publish' !== $wpss_real_status ) {
+									esc_html_e( 'Publish', 'wp-sell-services' );
+								} elseif ( $wpss_is_paused ) {
+									esc_html_e( 'Resume', 'wp-sell-services' );
+								} else {
+									esc_html_e( 'Pause', 'wp-sell-services' );
+								}
 								?>
 							</button>
 						<?php endif; ?>

@@ -1,0 +1,400 @@
+{
+  "journey": "F2",
+  "mode": "free",
+  "sha_free": "ref: refs/heads/1.9.1 @ 96adedd8",
+  "ran_at": "2026-10-22T04:35:00Z",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme",
+    "plugin": "wp-sell-services 1.9.1 (Pro deactivated)",
+    "woocommerce": "11.0.0 active",
+    "wp": "7.1.3",
+    "rail": "as installed, not toggled",
+    "mailpit": "http://localhost:10040"
+  },
+  "checks": [
+    {
+      "id": "j04-s1-directory-renders",
+      "result": "pass",
+      "evidence": "Logged-out /vendors/: 12 vendor cards, no raw shortcode, breadcrumb 'Home / Vendors', scrollWidth 1280/390 equals viewport."
+    },
+    {
+      "id": "j04-s2-vendor-link-to-profile",
+      "result": "pass",
+      "evidence": "Card link goes to /vendors/?vendor=wpss_vendor_maya; profile H1 'Maya Chen Pro Vendor', zero .wpss-vendor-card grid elements."
+    },
+    {
+      "id": "j04-s3-vendor-no-services",
+      "result": "pass",
+      "evidence": "priya_nair_designs (0 services) renders profile with 'hasn't published any services' and 'No reviews yet', no 'Vendor not found'."
+    },
+    {
+      "id": "j04-s4-s5-stale-and-nonvendor-slug",
+      "result": "pass",
+      "evidence": "?vendor=does-not-exist-xyz and ?vendor=wpss_buyer_amelia both render the 12-card directory with no error text."
+    },
+    {
+      "id": "j04-s6-s7-vendor-links-from-service",
+      "result": "pass",
+      "evidence": "Service page vendor link is /vendors/?vendor=wpss_vendor_sofia (shared resolver); profile of wpss_vendor_maya opens."
+    },
+    {
+      "id": "j04-p2-video-gallery",
+      "result": "pass",
+      "evidence": "Services 13578 (3 images+video) and 12715 (1 image+video): video thumb first with i.ytimg.com poster, main area shows image, .wpss-gallery-video[hidden] empty, 0 requests to youtube.com on load; click video shows iframe, click image hides it but iframe node stays, click video again restores it; single-image+video shows 2 thumbs; 390px scrollWidth 390."
+    },
+    {
+      "id": "S7-empty-state-icon",
+      "result": "pass",
+      "evidence": "/buyer-request/?s=zzzz renders .wpss-no-results.wpss-no-requests with lucide clipboard-check svg (24px) and 'No buyer requests found.'"
+    },
+    {
+      "id": "j04-s8-empty-states",
+      "result": "pass",
+      "evidence": "/services/?s=zzzzqq shows .wpss-no-services with svg icon and search-specific text; /buyer-request/?s=zzzz shows .wpss-no-requests with svg."
+    },
+    {
+      "id": "S1-classic-publish-complete-draft",
+      "result": "pass",
+      "evidence": "Admin, classic editor: QA-WALK draft 15612 Save Draft then Publish -> 'Service published', post_status publish."
+    },
+    {
+      "id": "S1-revisions-minus-one",
+      "result": "pass",
+      "evidence": "Package revisions input is type=number min=-1; set pkg[0] to -1, Save Draft, reload shows -1 and DB _wpss_packages[0].revisions=-1 after publish."
+    },
+    {
+      "id": "S1-admin-publish-pending-approves",
+      "result": "pass",
+      "evidence": "With require_service_moderation=true, pending complete service 15614 (maya) published by admin in editor: status publish, _wpss_moderation_status approved, audit row service.approved id 7484, vendor mail 'Your service ... has been approved' in Mailpit."
+    },
+    {
+      "id": "S8-services-list-thumbs-no-warning",
+      "result": "pass",
+      "evidence": "Services admin list 20 rows: thumb column shows img for services with images and .wpss-list-thumb--empty placeholder otherwise; no PHP warning text, zero console errors, debug.log unchanged."
+    },
+    {
+      "id": "S8-quick-edit-changes-nothing",
+      "result": "pass",
+      "evidence": "Quick Edit on approved/published 15614: Status dropdown visible, no moderation dropdown, title-only Update leaves Published + Approved; wpss_audit_log count 4009 before and after, newest row unchanged."
+    },
+    {
+      "id": "M1-quick-edit-never-changes-moderation",
+      "result": "pass",
+      "evidence": "See S8: Quick Edit keeps live service approved, Moderation column 'Approved', no Moderation dropdown, Status dropdown visible."
+    },
+    {
+      "id": "M2-admin-publish-is-approval",
+      "result": "pass",
+      "evidence": "Pending 15614 published from the editor: Moderation column Approved, audit service.approved, vendor approved mail. Quick Edit status path and /services/ listing not separately walked."
+    },
+    {
+      "id": "j13-s1-moderation-queue-columns",
+      "result": "pass",
+      "evidence": "Moderation screen lists pending QA-WALK service with Image, Service, Vendor, Category, Price, Submitted, Status, Actions columns and Approve/Reject buttons. Hidden from buyers not separately checked."
+    },
+    {
+      "id": "j13-s1-approve-reject-decisions",
+      "result": "untested",
+      "evidence": "Click on Reject in the Moderation queue was denied by the permission classifier (External System Writes); not worked around. Approve via editor Publish passed (M2)."
+    },
+    {
+      "id": "S1c-limit-refuses-draft-publish",
+      "result": "pass",
+      "evidence": "max_services_per_vendor=1, maya (3+ live): dashboard Publish on draft 15618 returned 403 with 'You have reached your service limit (5 of 1). Remove an existing service to create a new one.'; DB status stays draft. Pause of a live service works."
+    },
+    {
+      "id": "S1c-republish-live-works",
+      "result": "pass",
+      "evidence": "PUT /services/15614 {status:publish} on already-live QA-WALK service at the cap returns 200. Note: a service the vendor Paused (now draft) is refused on Publish at the cap, as for any draft; the card wording 'republish a live one' was read as an already-published service. A write to a real demo service was blocked by the classifier, so a QA-WALK service was used."
+    },
+    {
+      "id": "j05-s1-wizard-opens",
+      "result": "pass",
+      "evidence": "maya at /dashboard/create/: #wpss-service-wizard present, basic step visible, no service-limit text (max 20)."
+    },
+    {
+      "id": "j05-s2-s3-category-parents-subcategory",
+      "result": "pass",
+      "evidence": "Category select lists 7 top-level options, 0 dash-prefixed children; wpssCategories holds 4 children; choosing Graphics & Design enables Subcategory with Banner Design/Logo Design; a childless parent leaves it with only the placeholder."
+    },
+    {
+      "id": "j05-s4-s5-review-checklist-live",
+      "result": "pass",
+      "evidence": "Review rows use visible lucide check-circle-2 for title/category/description; Basic pricing shows circle when price empty and check-circle-2 after entering 30, no reload; main image row shows circle until image selected, check-circle-2 after (earlier run)."
+    },
+    {
+      "id": "j05-p2-s5-tier-description",
+      "result": "pass",
+      "evidence": "Wizard Pricing step has a description textarea for each of Basic, Standard, Premium (#wpss-pkg-*-description); empty allowed (Basic saved without issue). Display on the service page not walked."
+    },
+    {
+      "id": "j05-p2-s7-my-services-tiles",
+      "result": "pass",
+      "evidence": "maya My Services tiles All/Active/Drafts/Pending review are <a> links (?services_status=publish|draft|pending); filtered lists show 4/1/2 cards matching tile counts; 390px scrollWidth 390."
+    },
+    {
+      "id": "S9-withdrawal-flash",
+      "result": "pass",
+      "evidence": "maya /dashboard/earnings/: #wpss-withdrawal-message hidden at load with role=status; after sessionStorage wpssWithdrawalFlash='Withdrawal request submitted.' and reload it is visible with that text and the key is consumed. No withdrawal submitted."
+    },
+    {
+      "id": "j15-s3-earnings-figures",
+      "result": "pass",
+      "evidence": "Earnings & Payouts: Available 724.50, Clearing 355.50, In progress 135.00, Paid out 0.00, Total earned 859.50 (=724.50+135.00); explanatory copy shown; no horizontal scroll. Period selector, CSV export (Pro) and ledger tie-out not exercised."
+    },
+    {
+      "id": "dark-dashboard-390",
+      "result": "pass",
+      "evidence": "maya Earnings at 390 with theme toggle on dark: body rgb(35,38,47), cards rgb(31,41,55) with light text, hero tile green with white label, scrollWidth 390. Screenshot qa-artifacts/f2-dark-earnings-390.png."
+    },
+    {
+      "id": "free-mode-analytics-section-not-available",
+      "result": "pass",
+      "evidence": "Vendor /dashboard/analytics/ in Free renders a designed 'Section Not Available - This section is part of WP Sell Services Pro' notice with Back to Dashboard, no error or PHP warning. There is no upgrade link on that notice (observation)."
+    },
+    {
+      "id": "j15-dashboard-pages-open",
+      "result": "pass",
+      "evidence": "maya dashboard profile, portfolio, reviews, notifications, messages, favorites, orders, disputes, proposals all 200 with own H1, no PHP warning text, no horizontal scroll at 1280."
+    },
+    {
+      "id": "j11-s1-badge-matches-list",
+      "result": "pass",
+      "evidence": "maya sidebar badge 326 equals DB unread count for user 7831 (326) and Unread only filter pages 17. Mark-as-read click and Mark all not exercised (would change fixture data); real-time raise not tested."
+    },
+    {
+      "id": "j11-s2-filter-keeps-place",
+      "result": "pass",
+      "evidence": "Unread only + type=order_started: pager 'Page 1 of 2' with next link keeping both params; Clear link returns /dashboard/notifications/; at 390px scrollWidth 390 and both selects and button are 44px tall. Empty-filter message not hit."
+    },
+    {
+      "id": "j11-registry-check",
+      "result": "pass",
+      "evidence": "Type dropdown has 22 types plus All types, equal to count(distinct type)=22 for maya in the DB."
+    },
+    {
+      "id": "j11-s3-s4-pagination-retention",
+      "result": "untested",
+      "evidence": "Same-second seed (60 rows) and the 90-day retention cleanup need writing notification rows and running action-scheduler; skipped to avoid altering fixture data."
+    },
+    {
+      "id": "S4-suspended-vendor-sales-orders",
+      "result": "pass",
+      "evidence": "aisha (profile set suspended, original active, restored): sidebar Selling shows only Sales Orders; /dashboard/sales/ opens 'Sales Orders' with order stats and list; /dashboard/services|earnings|portfolio|proposals|reviews|create all fall back to My Orders (not reachable)."
+    },
+    {
+      "id": "S4-contact-vendor-refused",
+      "result": "pass",
+      "evidence": "ella clicked Contact Me on aisha's service, sent message: inline error 'This vendor is not taking new messages right now.' and modal closed; no message row containing the probe text in the messages tables."
+    },
+    {
+      "id": "j05-p2-s2-suspended-vendor-open-order",
+      "result": "untested",
+      "evidence": "Delivering and messaging inside an open paid order as the suspended vendor not exercised (would mutate real order fixtures)."
+    },
+    {
+      "id": "j14-s3-favourites",
+      "result": "pass",
+      "evidence": "ella hearted a service (button aria-pressed false->true, 'Saved to favorites'), Dashboard > Favorites listed it among 5, Remove button (aria-label 'Remove <title> from favorites') worked by keyboard Enter at 390 (count 5->4, restored); no horizontal scroll. Observation: remove button is 30x30px at 390. Deleted-service card not tested."
+    },
+    {
+      "id": "j14-s5-s6-service-reviews",
+      "result": "pass",
+      "evidence": "Service 11461: 15 reviews (10 shown, Load More Reviews button), Verified Purchase badge on the real order review, 'Imported review' label on 9, no Helpful button anywhere, no horizontal scroll at 1280 and 390."
+    },
+    {
+      "id": "j14-s1-s2-s4-review-reply-messages",
+      "result": "untested",
+      "evidence": "Leaving a review, vendor reply and a real two-way message thread not exercised: would create real review/message rows on fixtures. Only the suspended-vendor pre-sale refusal (S4) was walked."
+    },
+    {
+      "id": "S2-wizard-pending-one-mail",
+      "result": "pass",
+      "evidence": "maya, moderation on: front-end wizard to Publish Service created 15619 as pending (_wpss_moderation_status pending); Mailpit 'New service pending review: QA-WALK wizard service for moderation' to admin count went 10->11 (exactly one); service listed in admin Moderation queue (Pending 2)."
+    },
+    {
+      "id": "S3-report-uphold-and-suspend",
+      "result": "pass",
+      "evidence": "Created QA-WALK user 10761 and 2 reports. Uphold from queue: 'Report closed', Audit Log row 'Report resolve Open -> Upheld' (7485). Suspend member from queue (confirm modal): audit member.account_status Active->Suspended (7486), row shows SUSPENDED badge. Restore member (7487). Suspend from user profile standing select (wpss_account_status): audit Active->Suspended (7488). Dismiss of 2nd report logs 'Report resolve Open -> Dismissed'. Admin Audit Log page lists all rows with actor/time."
+    },
+    {
+      "id": "j13-s4-member-reports",
+      "result": "pass",
+      "evidence": "Member reports screen lists reporter, target, reason; Uphold and Dismiss each close the report; Suspend member takes effect (badge, wpss_account_status=suspended). Public Report this service/vendor entry points not walked here."
+    },
+    {
+      "id": "j12-s1-every-screen-opens",
+      "result": "pass",
+      "evidence": "Free mode, admin: 15 Sell Services screens (Services, Requests, Categories, Tags, Moderation, Review Moderation, Disputes, Vendors, Orders, Withdrawals, Audit Log, My Notifications, Settings, Upgrade to Pro, Member reports) all 200, exactly one visible H1, no PHP warning text, zero console errors, scrollWidth equals viewport at 1440 and 390. Analytics and License screens are absent in Free (expected)."
+    },
+    {
+      "id": "j12-s2-settings-tab-saves",
+      "result": "pass",
+      "evidence": "Vendor Settings tab: max_services_per_vendor 20 -> 21 saved (DB confirmed 21, field shows 21 after reload), restored to 20 (DB confirmed). A -5 value is blocked by the input's native min=0 so the server clamp was not reachable from the browser. Other tabs not saved in this free pass (covered in walk 12 Pro mode). Saving while another card is dirty shows a confirm modal."
+    },
+    {
+      "id": "j12-s3-pro-options-marked-inert",
+      "result": "pass",
+      "evidence": "Settings tabs General..System (12 tabs, no Branding tab in Free) carry PRO badges; Analytics tab shows PRO badge + 'Detailed Analytics Dashboard' card with an 'Upgrade to Pro' button instead of a working field; no License UI anywhere."
+    },
+    {
+      "id": "j12-s4-headings-in-order",
+      "result": "pass",
+      "evidence": "Every Settings tab panel: one H1, h2/h3 nesting with no skipped level (outlines such as 122, 1222323233 for Payment Gateways)."
+    },
+    {
+      "id": "free-mode-upgrade-page",
+      "result": "pass",
+      "evidence": "Admin menu has 'Upgrade to Pro'; /wp-admin/admin.php?page=wpss-upgrade 200, H1 'Upgrade to WP Sell Services Pro', feature copy, no 'Manage License' or license key text. The page has no outbound upgrade link matched by wbcom/pricing/buy patterns (observation)."
+    },
+    {
+      "id": "j12-s5-payment-gateways-follows-rail",
+      "result": "untested",
+      "evidence": "Rail toggling (standalone vs Woo) is F1 scope and was not changed."
+    },
+    {
+      "id": "j08-s1-login",
+      "result": "pass",
+      "evidence": "curl over HTTP, throwaway user qa_walk_api: POST /auth/login 200 with token and expires 2026-11-21T04:32:06+00:00 (ISO-8601, not null). 6th login in the window returned 429 rate_limit_exceeded (observed, then cleared the IP transient)."
+    },
+    {
+      "id": "j08-s2-token-cannot-mint",
+      "result": "pass",
+      "evidence": "Token used as password: 401 invalid_credentials, no new token."
+    },
+    {
+      "id": "j08-s3-token-works",
+      "result": "pass",
+      "evidence": "GET /me with Basic token: 200 with id, email, capabilities."
+    },
+    {
+      "id": "j08-s4-sessions-list",
+      "result": "pass",
+      "evidence": "GET /auth/sessions returns uuid, device, created, last_used, last_ip, expires, expired, is_current with is_current true for exactly the calling session."
+    },
+    {
+      "id": "j08-s5-revoke-one-device",
+      "result": "pass",
+      "evidence": "DELETE /auth/sessions/{other uuid}: 200 revoked true, list shrinks 3->2, replay 404 wpss_session_not_found, a second member with a valid token got 404 for the first member's current session and tok1 still returned 200 on /me."
+    },
+    {
+      "id": "j08-s6-expiry-real",
+      "result": "pass",
+      "evidence": "Backdated the throwaway user's WPSS application passwords 100 days: GET /me 401 wpss_token_expired."
+    },
+    {
+      "id": "j08-s7-expiry-no-lockout",
+      "result": "pass",
+      "evidence": "Dead token still in header: POST /auth/login with correct password 200 and fresh token; with wrong password 401 invalid_credentials."
+    },
+    {
+      "id": "j08-s8-carveout-narrow",
+      "result": "pass",
+      "evidence": "Dead token: GET /me, /orders, /notifications, /auth/sessions and POST /auth/logout, /auth/change-password all 401 wpss_token_expired; /auth/forgot-password reachable (200 generic message)."
+    },
+    {
+      "id": "j08-s9-handmade-app-password",
+      "result": "pass",
+      "evidence": "Hand-made application password 'QA hand made' backdated 365 days still authenticates GET /me 200."
+    },
+    {
+      "id": "j08-s10-api-shapes",
+      "result": "untested",
+      "evidence": "wp wpss api:shapes was not run: the task forbids running scripts outside plain eval and the journey names a CLI command; not attempted."
+    },
+    {
+      "id": "j08-p2-s3-audit-log-object-filter",
+      "result": "pass",
+      "evidence": "Admin GET /audit-log?object_id=15614 returns 1 row (service:15614 only); ?object_type=user&object_id=10761 returns 3 rows all user:10761; unfiltered returns mixed objects."
+    },
+    {
+      "id": "j08-p2-fields-payload",
+      "result": "pass",
+      "evidence": "GET /reviews?per_page=5 is 5902 bytes, with _fields=id,rating,review,created_at 717 bytes (88% smaller) over HTTP."
+    },
+    {
+      "id": "j08-p2-negative-guards-free",
+      "result": "pass",
+      "evidence": "Throwaway buyer/visitor over HTTP: POST /portfolio/reorder 403 wpss_not_vendor, POST /vendors/me/vacation 403 (buyer) and 401 (visitor), POST /disputes/999999/assign and /resolve 403 wpss_not_admin, GET /audit-log 403, POST /moderation/999999/approve 403, /me visitor 401. Realtime auth 501 realtime disabled; /seller-levels and /cart/{key} return 404 no_route in Free (Pro/standalone route absent). Probes used nonexistent ids only."
+    },
+    {
+      "id": "j02-rest-doors-negatives",
+      "result": "pass",
+      "evidence": "POST /disputes/999999/resolve as buyer 403 wpss_not_admin; /escalate without reason 400 param validation (ids nonexistent, no real dispute touched)."
+    },
+    {
+      "id": "j02-dispute-flow",
+      "result": "untested",
+      "evidence": "Opening, replying, evidence, admin resolve and the order-header View Dispute link need a fresh order and dispute; F1 owns orders and the brief forbids touching real fixtures, so none walked. Admin Disputes screen opens (j12-s1)."
+    },
+    {
+      "id": "j08-p2-s1-s2-s4-s5-s6",
+      "result": "untested",
+      "evidence": "Review approve/reject both ways, notification read via REST, portfolio tags and proposal/cart routes were not walked: they mutate real fixtures or need Pro/standalone data."
+    },
+    {
+      "id": "rtl-service-page",
+      "result": "pass",
+      "evidence": "WPSS WPLANG temporarily set to ar (Arabic language files already installed; original '' restored): service page html dir=rtl lang=ar, body.rtl, sidebar pricing card moved to the left, gallery/title right-aligned, thumbnails mirrored, no horizontal scroll at 1280 and 390. Strings stay English (no plugin translation). Screenshot qa-artifacts/f2-rtl-service-1280.png."
+    },
+    {
+      "id": "dark-admin-page-390",
+      "result": "pass",
+      "evidence": "Admin Service Moderation at 390 with prefers-color-scheme dark: wp-admin has no dark mode, page stays light (body rgb(240,240,240), text rgb(60,67,74)), readable, scrollWidth 390. No plugin dark theme to verify for admin screens."
+    },
+    {
+      "id": "j15-s2-portfolio-add-edit-remove",
+      "result": "pass",
+      "evidence": "maya Portfolio: added QA-WALK item with tags 'logo, branding' (count 2->3 of 50), edit form showed tags kept, clearing tags saved and reopened empty, Delete asked 'Are you sure you want to delete this portfolio item?' and removed it (back to 2 of 50, originals ids 79/80 intact); 390px no horizontal scroll. Public profile match, featured toggle and limit message not checked."
+    },
+    {
+      "id": "j15-s1-profile-fields",
+      "result": "untested",
+      "evidence": "Profile field saves not exercised (would edit fixture vendor profile); page opens 200."
+    },
+    {
+      "id": "j15-s4-s5-s6-analytics-plans-rest",
+      "result": "untested",
+      "evidence": "Analytics and plans are Pro-only (Free shows Section Not Available notice, see free-mode-analytics-section-not-available); portfolio/vacation REST own-vendor positive calls not run against real vendors; negatives recorded in j08-p2-negative-guards-free."
+    },
+    {
+      "id": "j03-read-only-pages-mapping",
+      "result": "pass",
+      "evidence": "Read-only: wpss_pages option maps services_page 4, dashboard 5, become_vendor 6, checkout 7, cart 8, registration 494, login 6217, vendors_page 493, all published. Observation: legacy pages cart-2 (17) and checkout-2 (13049) exist on this long-lived site; no service-cart slug, not a fresh install."
+    },
+    {
+      "id": "j03-activation-upgrade-cycles",
+      "result": "untested",
+      "evidence": "Fresh activation, re-activation duplicates, upgrade-from-previous and setup wizard need plugin deactivate/activate cycles; skipped as instructed."
+    },
+    {
+      "id": "j13-s2-review-moderation",
+      "result": "untested",
+      "evidence": "Review Moderation screen opens (All 22, Pending 0, Approved 22, Rejected 0) and says moderation is disabled so reviews auto-approve; enabling moderation and walking a buyer review not done."
+    },
+    {
+      "id": "j13-s3-vendor-management",
+      "result": "pass",
+      "evidence": "Vendors screen: All 17, Active 15, Pending 1, Suspended 1; each filter shows the matching row count (17/15/1/1) and the All count equals the 17 vendor profile rows in the DB. Approving a pending vendor (Require Verification) not done."
+    },
+    {
+      "id": "j13-s5-s6-lists-at-scale-and-mails",
+      "result": "untested",
+      "evidence": "2000+ row paging and decision mails (reject, vendor-approved/rejected, contact) not exercised; Reject click was blocked by the classifier."
+    },
+    {
+      "id": "M3-skip-to-full-editor",
+      "result": "untested",
+      "evidence": "Not walked this pass."
+    }
+  ],
+  "proposed_checks": [
+    "Free mode: Vendor dashboard Analytics 'Section Not Available' notice carries no upgrade link; consider asserting an upsell CTA (observation, not a defect by the brief).",
+    "Wizard/Dashboard: add a check that a service Paused by the vendor (draft) cannot be re-published at the service cap, so the S1c 're-publish a live one' wording is unambiguous.",
+    "Favourites: remove button is 30x30px at 390; add a 40px tap-target check to journey 14 step 3.",
+    "Settings: number fields with min attribute block negative submit in the browser; add a REST/POST-level check for the server clamp (card 10403454753)."
+  ],
+  "restored": "wpss_vendor option back to {vendor_registration:open,max_services_per_vendor:20,require_service_moderation:false,moderate_reviews:false}; aisha vendor profile status back to active; WPLANG back to empty (was ar during RTL check only); ella favourites back to original 4; maya portfolio back to items 79 and 80; deleted users qa_walk_user, qa_walk_api, qa_walk_api2; deleted reports 85 and 86; deleted QA-WALK services 15612, 15614, 15617, 15618, 15619; browser theme toggle returned to light; login rate-limit transient for 127.0.0.1 cleared once (test infra). Not restored by design: audit log rows 7484-7488+ and Mailpit messages created by the walk; wp_options transients from rate limiting. Screenshots and playwright logs moved to /Users/vapvarun/Local Sites/wp-sell-services/app/qa-artifacts/.",
+  "debug_log_issues": []
+}

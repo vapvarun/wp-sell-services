@@ -107,6 +107,11 @@ limit and repeat step 7.
 **Expect** the block. The exemption is for site owners; if this step passes, the
 limits are off for everybody and that is a worse bug than the one being guarded.
 
+### 9. Content limits per service (added 2026-11-03)
+As a non-admin vendor with Free only, fill the wizard to its limits: 3 packages, a main image plus 4 gallery images, 1 video, 3 add-ons, 5 FAQs, 5 requirement questions. Try one more of each. Then send the same over-limit service through `PUT /services/{id}` and save it from wp-admin.
+
+**Expect** the wizard stops at each limit and says so; REST saves the service capped to the same numbers and answers 201 with a `notices` entry naming each limit; wp-admin stores no more either. No door stores more than the wizard allows (guard: `tests/test-service-limits-and-accept-lock.php`). With Pro active, gallery, add-ons, FAQs and requirements have no limit, and packages (3) and video (1) stay where they were.
+
 ## Notes for whoever runs this
 
 - Test the **filter**, not the class. `wpss_vendor_can_create_service` has two

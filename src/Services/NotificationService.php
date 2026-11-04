@@ -376,8 +376,7 @@ class NotificationService {
 
 		// Get service and user details (null-safe to prevent PHP 8.1+ deprecation
 		// notices in string functions, which would corrupt AJAX JSON responses).
-		$service      = get_post( $order->service_id );
-		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
+		$service_name = wpss_get_order_title( $order ) ?: __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
 		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
@@ -476,6 +475,12 @@ class NotificationService {
 	 * @return void
 	 */
 	public function notify_order_status( int $order_id, string $new_status, string $old_status ): void {
+		// A dispute closed without a ruling puts the order back where it was; the dispute
+		// notice already tells both sides, so a status notice would repeat an old event.
+		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) ) {
+			return;
+		}
+
 		$order = wpss_get_order( $order_id );
 
 		if ( ! $order ) {
@@ -498,8 +503,7 @@ class NotificationService {
 		}
 
 		// Get service and user details (null-safe for PHP 8.1+ compat).
-		$service      = get_post( $order->service_id );
-		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
+		$service_name = wpss_get_order_title( $order ) ?: __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
 		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
@@ -935,8 +939,8 @@ class NotificationService {
 		$reviewer_name = \WPSellServices\Models\Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null );
 
 		// Get service info.
-		$service      = get_post( $review->service_id );
-		$service_name = $service ? $service->post_title : __( 'your service', 'wp-sell-services' );
+		$reviewed_order = $review->service_id > 0 || ! $review->order_id ? null : wpss_get_order( (int) $review->order_id );
+		$service_name   = ( $review->service_id > 0 ? (string) get_the_title( (int) $review->service_id ) : ( $reviewed_order ? wpss_get_order_title( $reviewed_order ) : '' ) ) ?: __( 'your service', 'wp-sell-services' );
 
 		// Format rating display.
 		$rating       = (int) $review->rating;
@@ -1114,8 +1118,7 @@ class NotificationService {
 		}
 
 		// Get service name.
-		$service      = get_post( $order->service_id );
-		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
+		$service_name = wpss_get_order_title( $order ) ?: __( 'Service', 'wp-sell-services' );
 
 		// Get resolution label.
 		$resolution_labels = array(
@@ -1314,6 +1317,16 @@ class NotificationService {
 				break;
 
 			case 'milestone_proposed':
+				if ( (int) ( $data['phase_count'] ?? 0 ) > 1 ) {
+					$title = __( 'Contract phases ready', 'wp-sell-services' );
+					$message->line(
+						/* translators: 1: number of phases, 2: parent order number */
+						__( 'Your vendor set up %1$d phases on Order #%2$s. Open the order and pay the first phase to start.', 'wp-sell-services' ),
+						(int) $data['phase_count'],
+						$this->order_ref( $data['order_id'] ?? 0 )
+					);
+					break;
+				}
 				$title = __( 'Milestone proposed', 'wp-sell-services' );
 				$message->line(
 					/* translators: 1: phase name and amount, 2: parent order number */
@@ -1473,6 +1486,15 @@ class NotificationService {
 					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), $this->dispute_reason_label( (string) $data['reason'] ) );
 				}
 				$message->paragraph( __( 'A member of the team will review the case and both parties will be told the outcome.', 'wp-sell-services' ) );
+				break;
+
+			case 'dispute_assigned':
+				$title = __( 'Dispute assigned', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: order number */
+					__( 'You have been assigned the dispute for Order #%s.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
+				);
 				break;
 
 			case 'dispute_cancelled':
@@ -1661,6 +1683,59 @@ class NotificationService {
 				'recipient'     => $user,
 				'email_heading' => __( 'Application received', 'wp-sell-services' ),
 				'content'       => $content,
+				'template'      => 'generic',
+			)
+		);
+	}
+
+	/**
+	 * Tell the site owner a member filed a report or a dispute.
+	 *
+	 * Bound to `wpss_report_filed` (the owner's dispute email is
+	 * EmailService::send_dispute_opened(), same recipient and filter). The
+	 * owner is the only person who can act on a report. The recipient is the
+	 * dispute admin email when set, else the site admin email, and can be
+	 * changed with the `wpss_admin_filing_recipient` filter.
+	 *
+	 * @since 1.9.1
+	 * @param string $kind    'report' or 'dispute'.
+	 * @param int    $id      Report or dispute ID.
+	 * @param int    $user_id Member who filed it.
+	 * @param string $detail  What it is about, already plain text.
+	 * @return void
+	 */
+	public function notify_admin_of_filing( string $kind, int $id, int $user_id, string $detail ): void {
+		$recipient = (string) apply_filters(
+			'wpss_admin_filing_recipient',
+			get_option( 'wpss_dispute_admin_email' ) ?: get_option( 'admin_email' ),
+			$kind,
+			$id
+		);
+
+		if ( ! is_email( $recipient ) ) {
+			return;
+		}
+
+		$member  = get_userdata( $user_id );
+		$is_case = 'dispute' === $kind;
+		$heading = $is_case ? __( 'New dispute opened', 'wp-sell-services' ) : __( 'New member report', 'wp-sell-services' );
+		$content = sprintf(
+			/* translators: 1: member display name, 2: what it is about */
+			$is_case ? __( '%1$s opened a dispute: %2$s', 'wp-sell-services' ) : __( '%1$s filed a report: %2$s', 'wp-sell-services' ),
+			$member ? $member->display_name : __( 'A member', 'wp-sell-services' ),
+			$detail
+		);
+
+		( new EmailService() )->send(
+			$recipient,
+			sprintf( '%s #%d', $heading, $id ),
+			EmailService::TYPE_ADMIN_FILING,
+			array(
+				'recipient'     => get_user_by( 'email', $recipient ),
+				'email_heading' => $heading,
+				'content'       => esc_html( $content ),
+				'button_url'    => admin_url( $is_case ? 'admin.php?page=wpss-disputes' : 'admin.php?page=wpss-reports' ),
+				'button_text'   => $is_case ? __( 'View disputes', 'wp-sell-services' ) : __( 'View reports', 'wp-sell-services' ),
 				'template'      => 'generic',
 			)
 		);
@@ -2100,9 +2175,12 @@ class NotificationService {
 		$button_url  = wpss_get_notification_url( $data );
 		$button_text = '' === $button_url ? '' : ( ! empty( $data['order_id'] ) && empty( $data['action_url'] ) ? __( 'View Order Details', 'wp-sell-services' ) : __( 'View Details', 'wp-sell-services' ) );
 
+		// The in-app title is the heading; the subject carries the site name like every EmailService mail.
+		$prefix = '[' . wpss_get_platform_name() . ']';
+
 		return ( new EmailService() )->send(
 			$user->user_email,
-			$subject,
+			str_starts_with( $subject, $prefix ) ? $subject : $prefix . ' ' . $subject,
 			$type,
 			array(
 				'recipient'     => $user,

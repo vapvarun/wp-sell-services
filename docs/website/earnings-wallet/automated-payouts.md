@@ -36,6 +36,8 @@ This is the minimum available balance a vendor must have for an auto-payout to t
 - Vendor A has $750 available -- auto-payout created for $750
 - Vendor B has $450 available -- skipped (below threshold)
 
+An automatic request follows the same rules as one a vendor makes by hand. A vendor is skipped when they already have a pending request, when the amount is below your **Minimum Withdrawal**, when their saved payout details are incomplete or invalid, or when their account is suspended. The amount is the balance available at the moment the request is written.
+
 ### Schedule Options
 
 | Schedule | Runs at 02:00 site time on |

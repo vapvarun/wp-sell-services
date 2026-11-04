@@ -1,37 +1,134 @@
 {
   "journey": "05",
-  "sha_free": "c21a7c05",
-  "sha_pro": "e4ac7141",
-  "env": {"site": "http://wp-sell-services.local", "theme": "reign-theme", "rail": "standalone", "wp": "7.1.3"},
-  "ran_at": "2026-10-20T22:50:00Z",
+  "sha_free": "e742c62b",
+  "sha_pro": "251dea0",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme",
+    "rail": "woocommerce (auto)",
+    "wp": "7.1.3"
+  },
+  "ran_at": "2026-10-21T20:15:00Z",
   "checks": [
-    {"id": "p1-s1-wizard-opens-for-vendor", "result": "pass", "evidence": "Maya /dashboard/create/ renders #wpss-service-wizard step basic; no service-limit text (1440+390)."},
-    {"id": "p1-s2-category-parents-only", "result": "pass", "evidence": "Category select has only top-level terms, zero '—' options; window.wpssCategories still has parent>0 entries."},
-    {"id": "p1-s3-subcategory-follows-parent", "result": "pass", "evidence": "Programming & Tech lists its children only; Business leaves Subcategory disabled/empty, no error."},
-    {"id": "p1-s4-review-checklist-live", "result": "pass", "evidence": "Title, category, description rows rendered svg check-circle-2 on Review."},
-    {"id": "p1-s5-review-price-image-rows", "result": "pass", "evidence": "Basic pricing and Main image rows render check-circle-2 (svg class read)."},
-    {"id": "p1-s5-clear-price-reverts-live", "result": "untested", "evidence": "Continue is blocked by validation with an empty price, so Review cannot be reached to watch the row revert; icon still check-circle-2 while hidden. Not conclusive."},
-    {"id": "p1-s6-publish-and-category-optgroup", "result": "pass", "evidence": "Published service persisted and appears under 'WordPress Development' nested beneath 'Programming & Tech' in /services/ filter. Filter is a nested list, not <optgroup> (spec text is stale); filter lists only child-category services."},
-    {"id": "p1-s7-admin-not-metered", "result": "pass", "evidence": "Admin renders wizard and POST /wpss/v1/services is not 403 wpss_service_limit_reached."},
-    {"id": "p1-s8-vendor-still-metered", "result": "pass", "evidence": "Maya over a temporary limit of 1: wizard refuses. Sofia (28 published, limit 20): /dashboard/create/ shows 'You have reached your service limit.' and POST /wpss/v1/services -> 403 wpss_service_limit_reached."},
-    {"id": "p2-s1-seller-cannot-hold-order", "result": "pass", "evidence": "No Hold button on Maya's order 3887; POST /orders/3887/hold -> 400 'Only an administrator can put an order on hold'; status stays in_progress."},
-    {"id": "p2-s2-suspended-seller-nav", "result": "fail", "evidence": "With wpss_vendor_profiles.status=suspended the dashboard still shows the full Selling nav (My Services, Proposals, Reviews, Earnings, Portfolio, Analytics) and no restricted Sales-Orders-only nav. UnifiedDashboard::is_suspended_vendor() always evaluates false (static read). Screenshot 05-suspended-dashboard-1440.png."},
-    {"id": "p2-s3-suspended-seller-starts-nothing", "result": "fail", "evidence": "Suspended Maya: POST /wpss/v1/buyer-requests/11507/proposals -> 403 'You must be a vendor to submit proposals.' (refused, but not the specified 'Your vendor account is suspended' wording). AJAX wpss_contact_vendor on Diego's service -> 200 success 'Your message has been sent successfully!'; created conversation 291, message 664, notifications contact_message + new_message to Diego (7832). The REST door and AJAX door disagree. wpss_account_status_block() reads member standing only, not the vendor profile status. Test rows were deleted afterwards."},
-    {"id": "p2-s4-no-plugin-menu-for-edit-posts-seller", "result": "pass", "evidence": "Sofia with contributor role: admin menu = Dashboard, Posts, Media, Comments, Services, Buyer Requests, Profile, Tools; no WP Sell Services top-level item; direct admin.php?page=wpss-orders -> 403. Role removed afterwards."},
-    {"id": "p2-s5-tier-description", "result": "pass", "evidence": "Service page shows saved tier description text 'Copyedit of one readme.txt up to 1,500 words' under its tier."},
-    {"id": "p2-s6-refused-publish-names-what-is-missing", "result": "untested", "evidence": "Incomplete draft published from My Services list stayed draft, but the only message seen after 2s was the page's static service-limit notice, not one naming what is missing; the editor path was not walked. Observation, not confirmed defect. Related: a complete draft (Sofia, 28 of 20) published successfully from the list while at the limit and the same limit notice stayed on screen."},
-    {"id": "p2-s7-my-services-tiles", "result": "pass", "evidence": "Tiles are links: 28 Active / 1 Drafts / 0 Pending Review (All 29) match DB counts; Drafts link lists only the draft; 390px scrollWidth 390 = innerWidth."},
-    {"id": "p2-refused-file-stops-delivery", "result": "pass", "evidence": "Delivering with brand-pack-installer.exe -> notice 'brand-pack-installer.exe: File type could not be verified.'; 0 rows in wpss_deliveries, order stays in_progress."},
-    {"id": "p2-refused-attachment-in-message-notice", "result": "untested", "evidence": "Message attachment refusal notice not exercised."},
-    {"id": "m1-quick-edit-never-changes-moderation", "result": "pass", "evidence": "Quick Edit on approved service: no moderation select; Status dropdown visible (Published/Pending Review/Draft); title saved; stays publish; column still Approved. Buyer Requests Quick Edit status dropdown not opened."},
-    {"id": "m2-admin-publish-is-approval", "result": "pass", "evidence": "Pending service 11406 Quick Edit > Published: post_status publish, _wpss_moderation_status approved, Pending (1) count gone, service_approved notification to vendor. Editor-button path not walked."},
-    {"id": "m3-skip-to-full-editor-saves-draft", "result": "pass", "evidence": "Wizard title filled, Skip to full editor -> post.php?post=13588 status draft in tabbed editor; absent from /services/. Scratch post deleted."}
+    {
+      "id": "p1-s1-wizard-opens-for-vendor",
+      "result": "pass",
+      "evidence": "#wpss-service-wizard renders for Maya on step basic with no limit text."
+    },
+    {
+      "id": "p1-s2-category-parents-only",
+      "result": "pass",
+      "evidence": "Category select lists 7 top-level options only; wpssCategories holds 11 entries incl. 4 children."
+    },
+    {
+      "id": "p1-s3-subcategory-follows-parent",
+      "result": "pass",
+      "evidence": "Graphics shows Banner Design / Logo Design; Business shows none."
+    },
+    {
+      "id": "p1-s4-review-checklist-live",
+      "result": "pass",
+      "evidence": "All 5 review rows show check-circle-2; the wizard requires price, delivery and a main image before Continue so Review cannot be reached earlier."
+    },
+    {
+      "id": "p1-s5-review-price-image-rows",
+      "result": "pass",
+      "evidence": "Price row li toggles .completed."
+    },
+    {
+      "id": "p1-s5-clear-price-reverts-live",
+      "result": "pass",
+      "evidence": "Clearing the price flips the row icon via Alpine x-show and re-entering restores it."
+    },
+    {
+      "id": "p1-s6-publish-and-category-optgroup",
+      "result": "fail",
+      "evidence": "Sidebar half passes: .wpss-subcategory-list nested under its parent (left 196.5 vs 185.9, font 14.875 vs 15.946); WordPress Development filter lists my service. But the buyer-request form select #request_category uses space-indented options (e.g. '   Banner Design') with no optgroup, which does not match the journey. Service Grid block filter not checked. Soft."
+    },
+    {
+      "id": "p1-s7-admin-not-metered",
+      "result": "pass",
+      "evidence": "With max_services=1 and admin owning 2 services the wizard renders and POST /services {} gives 400 'Missing parameter(s): title', not 403."
+    },
+    {
+      "id": "p1-s8-vendor-still-metered",
+      "result": "fail",
+      "evidence": "Sofia (28 of 20) sees 'You have reached your service limit.' and POST /services gives 403 wpss_service_limit_reached, BUT clicking Publish on draft 11456 in the My Services dashboard published it (door bypasses the limit). Restored to draft. Hard, origin from."
+    },
+    {
+      "id": "p2-s1-seller-cannot-hold-order",
+      "result": "untested",
+      "evidence": "UI: Sofia's order 5296 page has no Hold/Pause button. REST POST /orders/5296/hold from the vendor session was denied by the permission classifier, so the 403 was not observed. Needs a re-run with that call allowed. Admin On Hold then In Progress on order 5064 worked."
+    },
+    {
+      "id": "p2-s2-suspended-seller-nav",
+      "result": "fail",
+      "evidence": "Suspending Maya via Admin Vendors left Selling showing only 'Sales Orders', but /dashboard/sales/, /dashboard/sales/5064/ and /dashboard/orders/5064/ (her open paid woo order, buyer Ella) all render 'Vendor Access Required ... Start selling'. She cannot open, deliver or message on it; other /dashboard/{services,proposals,portfolio,earnings,analytics,reviews,create}/ fall back to My Orders. Hard (open order unreachable), origin for."
+    },
+    {
+      "id": "p2-s3-suspended-seller-starts-nothing",
+      "result": "pass",
+      "evidence": "Suspended Maya: POST /buyer-requests/11507/proposals gives 403 wpss_vendor_suspended 'Your vendor account is suspended.'; same message on contact_vendor AJAX; proposals count stays 3, conversations stay 97. Pre-sale thread sub-check untested (no pre-sale conversation exists). Request page shows a 'Become a Vendor' CTA to a suspended vendor (soft)."
+    },
+    {
+      "id": "p2-s4-no-plugin-menu-for-edit-posts-seller",
+      "result": "untested",
+      "evidence": "Granting edit_posts to a vendor was denied by the classifier. Observation only: a plain vendor visiting /wp-admin/ is redirected to /my-account/ with no admin menu. Needs a user with edit_posts."
+    },
+    {
+      "id": "p2-s5-tier-description",
+      "result": "pass",
+      "evidence": "Basic tier description 'One booking form with email confirmation.' saved and shows on the service page."
+    },
+    {
+      "id": "p2-s6-refused-publish-names-what-is-missing",
+      "result": "pass",
+      "evidence": "Editor Publish on incomplete draft 15465 stays Draft with a notice listing category, description 120+ chars, Basic price at least $5, Standard delivery time, main image; same from Quick Edit status Published. Admin-only visibility not testable."
+    },
+    {
+      "id": "p2-s7-my-services-tiles",
+      "result": "pass",
+      "evidence": "Tiles are links (29 All / 28 Active / 1 Drafts / 0 Pending); Drafts link lists 1 draft; at 390 tiles wrap 2x2, sw 390."
+    },
+    {
+      "id": "p2-refused-file-stops-delivery",
+      "result": "pass",
+      "evidence": "Sofia order 3632 with a faked installer.exe returned 400 rest_deliverable_file_refused 'installer.exe: File type could not be verified.'; order still In Progress. Wording says 'could not be verified' not 'not allowed' (soft wording note)."
+    },
+    {
+      "id": "p2-refused-attachment-in-message-notice",
+      "result": "pass",
+      "evidence": "Message with tool.exe returned 201 (text only, message 716) and the notice 'tool.exe: File type could not be verified.'"
+    },
+    {
+      "id": "m1-quick-edit-never-changes-moderation",
+      "result": "pass",
+      "evidence": "Quick Edit of approved service 15458 changing only the title left it publish and 'Approved'; there is no moderation select; Status select shows Published / Pending Review / Draft."
+    },
+    {
+      "id": "m2-admin-publish-is-approval",
+      "result": "fail",
+      "evidence": "Editor path: admin clicks Publish on pending service 15460 -> POST 302 to message=8 'Service submitted', post stays pending, _wpss_moderation_status=pending (reproduced twice, no error notice). Quick Edit Status -> Published on 15461 does approve (Approved, publish, pending 2 to 1, notification service_approved id 14523 to Maya, shows on /services/). Email not observable. Hard, origin from."
+    },
+    {
+      "id": "m3-skip-to-full-editor-saves-draft",
+      "result": "pass",
+      "evidence": "Admin New Service wizard: title + .wpss-wizard-skip produced draft 15465 in the full editor."
+    },
+    {
+      "id": "editor-unlimited-revisions-save",
+      "result": "fail",
+      "evidence": "NEW. A service whose third package has revisions -1 (unlimited, the stored value in the seeded demo data, confirmed on 11431) cannot be saved or published from the admin editor: input wpss_packages[2][revisions] has value -1 but min=0, HTML5 validation blocks submit silently (console: 'An invalid form control ... is not focusable'). Hard, origin from."
+    }
   ],
   "proposed_checks": [
-    "Suspended vendor: wpss_contact_vendor AJAX must refuse and create nothing (REST and AJAX doors agree).",
-    "Dashboard publish of a draft by a vendor at their service limit must be refused (or documented as allowed).",
-    "A brand-new service with zero orders shows '1 order in queue' on its page; check the queue count logic.",
-    "Journey 05 step 6 text refers to an optgroup; the archive filter is a nested list."
+    "Dashboard Publish toggle respects max_services_per_vendor (same gate as REST POST /services).",
+    "Admin editor Publish on a pending service approves it, identical to Quick Edit.",
+    "Editor save of a service with revisions=-1 succeeds (min on the input allows -1 or the stored value is normalised).",
+    "A suspended vendor can still open, message and deliver their open paid orders.",
+    "No PHP warnings from Quick Edit row render (ServiceListScreen.php:259 update_post_thumbnail_cache with null posts).",
+    "Proposal REST route should not require price and delivery_days for milestone contracts.",
+    "Brand-new service shows no '2 orders in queue' (stale proposed check, observed on 15458)."
   ],
-  "verdict": "FAIL"
+  "verdict": "4 hard fails (dashboard Publish bypasses limit, suspended seller locked out of open order, admin editor Publish does not approve, -1 revisions block editor save), 1 soft (category select not optgroup); 2 checks untested (classifier denials)."
 }

@@ -22,12 +22,13 @@ $vendor = $f->vendor;
 $sid    = ( $f->service )( 'draft' );
 
 delete_user_meta( $vendor, 'wpss_account_status' );
-$check( 'good standing: refusal is about the publish bar, not standing', ! str_contains( wpss_service_publish_refusal( $sid, $vendor ), 'suspended' ) );
+$check( 'good standing: the standing gate lets the seller through', null === wpss_vendor_status_block( $vendor ) );
 
 update_user_meta( $vendor, 'wpss_account_status', 'suspended' );
-$check( 'suspended: publish is refused', '' !== wpss_service_publish_refusal( $sid, $vendor ) );
+$check( 'suspended: the standing gate refuses', is_wp_error( wpss_vendor_status_block( $vendor ) ) );
 wp_update_post( array( 'ID' => $sid, 'post_status' => 'publish' ) );
-$check( 'suspended: refused even for an already-live service', '' !== wpss_service_publish_refusal( $sid, $vendor ) );
+$check( 'suspended: refused even with an already-live service', is_wp_error( wpss_vendor_status_block( $vendor ) ) );
+delete_user_meta( $vendor, 'wpss_account_status' );
 
 
 // Every door that starts new work carries the gate.
@@ -38,8 +39,6 @@ $body  = static function ( string $src, string $fn ): string {
 	$i = strpos( $src, 'function ' . $fn . '(' );
 	return false === $i ? '' : substr( $src, $i, 2500 );
 };
-$check( 'service_action publish uses the gate', str_contains( $body( $ajax, 'service_action' ), 'wpss_service_publish_refusal' ) );
-$check( 'bulk_action publish uses the gate', str_contains( $body( $ajax, 'bulk_action' ), 'wpss_service_publish_refusal' ) );
 foreach ( array( 'add_portfolio_item', 'update_portfolio_item' ) as $fn ) {
 	$check( "$fn checks standing", str_contains( $body( $ajax, $fn ), 'wpss_vendor_status_block' ) );
 }

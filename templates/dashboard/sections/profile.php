@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -184,6 +184,23 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 						<label for="city"><?php esc_html_e( 'City', 'wp-sell-services' ); ?></label>
 						<input type="text" id="city" name="city" value="<?php echo esc_attr( $vendor_profile->city ?? '' ); ?>" class="wpss-input">
 					</div>
+				</div>
+
+				<div class="wpss-form-row">
+					<label for="timezone"><?php esc_html_e( 'Time zone', 'wp-sell-services' ); ?></label>
+					<?php $wpss_zone = (string) ( $vendor_profile->timezone ?? '' ); ?>
+					<select id="timezone" name="timezone" class="wpss-input" aria-describedby="timezone-help">
+						<option value="">
+							<?php
+							/* translators: %s: the site's time zone, e.g. Europe/Berlin. */
+							echo esc_html( sprintf( __( 'Site default (%s)', 'wp-sell-services' ), wp_timezone_string() ) );
+							?>
+						</option>
+						<?php foreach ( timezone_identifiers_list() as $wpss_tz ) : ?>
+							<option value="<?php echo esc_attr( $wpss_tz ); ?>" <?php selected( $wpss_zone, $wpss_tz ); ?>><?php echo esc_html( str_replace( '_', ' ', $wpss_tz ) ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<p id="timezone-help" class="wpss-form-hint"><?php esc_html_e( 'Deadlines, messages and emails show times in this zone.', 'wp-sell-services' ); ?></p>
 				</div>
 
 				<div class="wpss-form-row">

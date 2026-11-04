@@ -119,23 +119,55 @@ class TippingService {
 	public function cleanup_abandoned_tips(): int {
 		global $wpdb;
 
+		$orders = $wpdb->prefix . 'wpss_orders';
+
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$affected = $wpdb->query(
+		$ids = $wpdb->get_col(
 			$wpdb->prepare(
-				"UPDATE {$wpdb->prefix}wpss_orders
-				SET status = 'cancelled', updated_at = %s
+				"SELECT id FROM {$orders}
 				WHERE platform = %s
 				AND status = 'pending_payment'
 				AND ( payment_method IS NULL OR payment_method <> 'offline' )
 				AND created_at < %s",
-				current_time( 'mysql', true ),
 				self::ORDER_TYPE,
 				gmdate( 'Y-m-d H:i:s', time() - ( self::ABANDON_AFTER_HOURS * HOUR_IN_SECONDS ) )
 			)
 		);
+
+		$count = 0;
+		foreach ( $ids as $id ) {
+			$affected = $wpdb->update(
+				$orders,
+				array(
+					'status'     => 'cancelled',
+					'updated_at' => current_time( 'mysql', true ),
+				),
+				array(
+					'id'     => (int) $id,
+					'status' => 'pending_payment',
+				)
+			);
+
+			if ( $affected ) {
+				/**
+				 * Fires when an unpaid sub-order (tip, extension or milestone phase) is closed.
+				 *
+				 * A rail that minted a store order for it listens here and cancels
+				 * that order, so an old pay link cannot take money for something
+				 * that no longer exists: a buyer paying it was charged and nobody
+				 * credited, because a closed order refuses payment.
+				 *
+				 * @since 1.9.2
+				 *
+				 * @param int $sub_order_id Closed sub-order ID.
+				 */
+				do_action( 'wpss_unpaid_sub_order_closed', (int) $id );
+				++$count;
+			}
+		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		return (int) $affected;
+		return $count;
 	}
 
 	/**
@@ -183,6 +215,18 @@ class TippingService {
 			);
 		}
 
+		// A suspended or closed member starts no new payment, a tip included.
+		$standing = wpss_account_status_block( $customer_id );
+
+		if ( $standing ) {
+			return array(
+				'success'      => false,
+				'tip_order_id' => null,
+				'checkout_url' => null,
+				'message'      => $standing->get_error_message(),
+			);
+		}
+
 		if ( $amount <= 0 ) {
 			return array(
 				'success'      => false,
@@ -220,6 +264,16 @@ class TippingService {
 			);
 		}
 
+		// The seller's standing too: a suspended or banned vendor takes no new money.
+		if ( wpss_vendor_status_block( (int) $parent->vendor_id ) ) {
+			return array(
+				'success'      => false,
+				'tip_order_id' => null,
+				'checkout_url' => null,
+				'message'      => __( 'This seller cannot receive tips right now.', 'wp-sell-services' ),
+			);
+		}
+
 		if ( $this->has_tipped( $parent_order_id, $customer_id ) ) {
 			return array(
 				'success'      => false,
@@ -234,6 +288,8 @@ class TippingService {
 		$currency     = $parent->currency ?? 'USD';
 		$tip_message  = sanitize_textarea_field( $message );
 
+		$priced = \WPSellServices\Checkout\CheckoutIntentService::price_sub_order( 'tip', $amount, (int) $parent->service_id, (int) $parent->vendor_id );
+
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$inserted = $wpdb->insert(
 			$orders_table,
@@ -244,17 +300,20 @@ class TippingService {
 				'service_id'        => (int) $parent->service_id,
 				'platform'          => self::ORDER_TYPE, // 'tip' — routes checkout like 'request' does.
 				'platform_order_id' => $parent_order_id,
-				'subtotal'          => $amount,
-				'total'             => $amount,
+				'subtotal'          => $priced['subtotal'],
+				'total'             => $priced['total'],
 				'currency'          => $currency,
 				'status'            => 'pending_payment',
 				'payment_status'    => 'pending',
 				'vendor_notes'      => $tip_message,
 				'meta'              => wp_json_encode(
-					array(
-						'tip'             => true,
-						'parent_order_id' => $parent_order_id,
-						'buyer_note'      => $tip_message,
+					array_merge(
+						$priced['tax_meta'],
+						array(
+							'tip'             => true,
+							'parent_order_id' => $parent_order_id,
+							'buyer_note'      => $tip_message,
+						)
 					)
 				),
 				'created_at'        => current_time( 'mysql', true ),
@@ -384,9 +443,14 @@ class TippingService {
 		$tip_rate_override = apply_filters( 'wpss_tip_commission_rate', $tip_rate_override, $tip_order, $commission_rate );
 
 		if ( null !== $tip_rate_override && is_numeric( $tip_rate_override ) ) {
+			// Tax is the platform's pass-through to the tax authority, never
+			// earnings: the cut is taken on the same net base the default path uses.
+			$base            = wpss_order_commission_base( $tip_order );
+			$base            = $base > 0 ? $base : $amount;
+			$decimals        = wpss_get_currency_decimals( (string) ( $tip_order->currency ?? '' ) );
 			$commission_rate = min( 100.0, max( 0.0, (float) $tip_rate_override ) );
-			$platform_fee    = round( $amount * ( $commission_rate / 100 ), 2 );
-			$vendor_earnings = round( $amount - $platform_fee, 2 );
+			$platform_fee    = round( $base * ( $commission_rate / 100 ), $decimals );
+			$vendor_earnings = round( $base - $platform_fee, $decimals );
 		}
 
 		if ( $vendor_earnings <= 0 ) {

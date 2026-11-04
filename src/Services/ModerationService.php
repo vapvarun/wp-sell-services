@@ -105,6 +105,23 @@ class ModerationService {
 	}
 
 	/**
+	 * Whether a service this member saves goes to review instead of live.
+	 *
+	 * The one rule for the wizard and REST: an admin's save is the approval, so
+	 * an admin editing a vendor's live service does not queue it or mail themselves.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param int $user_id Acting member. Defaults to the current user.
+	 * @return bool
+	 */
+	public static function requires_review( int $user_id = 0 ): bool {
+		$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+
+		return self::is_enabled() && ! user_can( $user_id, 'manage_options' );
+	}
+
+	/**
 	 * Get services pending moderation.
 	 *
 	 * @param array $args Optional query arguments.
@@ -287,6 +304,25 @@ class ModerationService {
 	}
 
 	/**
+	 * Send a live service back to review after a member changed it outside the post fields.
+	 *
+	 * For the doors that write only meta (add-on routes): the wp_insert_post_data
+	 * gate cannot see those, so they call this after saving.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param int $service_id Service post ID.
+	 * @return bool True when the service was sent to review.
+	 */
+	public function requeue_live_edit( int $service_id ): bool {
+		if ( ! self::requires_review() || 'publish' !== get_post_status( $service_id ) ) {
+			return false;
+		}
+
+		return $this->set_pending( $service_id );
+	}
+
+	/**
 	 * Set a service as pending moderation.
 	 *
 	 * @param int $service_id Service post ID.
@@ -311,7 +347,31 @@ class ModerationService {
 			return false;
 		}
 
+		$this->submit( $service_id );
+
+		return true;
+	}
+
+	/**
+	 * Put a service in the review queue: the one door every submit path uses.
+	 *
+	 * Sets the queue meta, drops a stale rejection reason and fires the pending
+	 * hook (owner notice, audit row). Submitting a service already in the queue
+	 * is a no-op, so a second save does not mail or log it again. The caller
+	 * owns the post status.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param int $service_id Service post ID.
+	 * @return bool True when the service was newly queued, false when it already was.
+	 */
+	public function submit( int $service_id ): bool {
+		if ( self::STATUS_PENDING === get_post_meta( $service_id, self::META_MODERATION_STATUS, true ) ) {
+			return false;
+		}
+
 		update_post_meta( $service_id, self::META_MODERATION_STATUS, self::STATUS_PENDING );
+		delete_post_meta( $service_id, self::META_REJECTION_REASON );
 
 		/**
 		 * Fires when a service is submitted for moderation.
@@ -319,9 +379,6 @@ class ModerationService {
 		 * @param int $service_id Service post ID.
 		 */
 		do_action( 'wpss_service_pending_moderation', $service_id );
-
-		// Send notification to admins.
-		$this->send_admin_notification( $service_id );
 
 		return true;
 	}
@@ -504,12 +561,15 @@ If you have any questions, please contact our support team.',
 	}
 
 	/**
-	 * Send notification to admins about new pending service.
+	 * Tell the owner a service is waiting for review.
+	 *
+	 * Bound to `wpss_service_pending_moderation` in Plugin, so the wizard, the
+	 * REST API and set_pending() all notify the owner once.
 	 *
 	 * @param int $service_id Service post ID.
 	 * @return void
 	 */
-	private function send_admin_notification( int $service_id ): void {
+	public function notify_pending( int $service_id ): void {
 		$post = get_post( $service_id );
 		if ( ! $post ) {
 			return;

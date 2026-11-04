@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var int      $dispute_id Dispute ID.
  * @var int      $order_id   Order ID associated with the dispute.

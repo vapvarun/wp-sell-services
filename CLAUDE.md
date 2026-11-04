@@ -317,8 +317,18 @@ Real cases found and fixed in 1.2.2:
    A review is drawn only by `templates/partials/review-body.php`, on page one and on every
    load-more page (`wpss_load_reviews` renders server-side); never build review markup in JS or in
    a second template. Imported reviews (no order) are created only by `ReviewService::create_imported()`.
+
 8. **A schema change bumps `SchemaManager::DB_VERSION`.** The upgrade runs only when the stored
    version is older, so a column change under an unchanged version never reaches a site already on it.
+
+9. **The audit log is written by listeners only.** A writer fires a documented domain action (add a
+   trailing arg to an existing hook before inventing one); `AuditLogService::init()` (Pro:
+   `Services\AuditListeners`) turns it into a row. Never call `log()` from the code that made the change;
+   `tests/test-audit-listener-pattern.php` fails if you do.
+10. **Mail waits for the transaction.** Send through `EmailService::send()`, never `wp_mail()` directly:
+    while a `START TRANSACTION` is open it holds the mail, releases it after `COMMIT` and drops it on
+    `ROLLBACK` (`EmailService::track_transaction()` on the `query` filter). So move or announce inside the
+    transaction freely; `tests/test-mail-waits-for-commit.php` covers it.
 
 Standing audit: `audit/DUPLICATE-FLOWS-money.md` and `audit/DUPLICATE-FLOWS-ui.md`
 inventory known duplications. Re-run that sweep before any major release.

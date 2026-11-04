@@ -78,7 +78,7 @@ Your marketplace runs several background tasks to keep orders moving:
 Admins can view and manage all marketplace orders from **Sell Services > Orders**. From there you can:
 
 - See every order with its current status
-- Filter and search orders
+- Filter and search orders. Search by the order number from its start, with or without the WPSS- prefix (WPSS-AB12CD34, AB12CD34 or AB12 all find it), or by the order ID
 - View full order details, conversations, and deliveries
 - Manually change order status when needed
 

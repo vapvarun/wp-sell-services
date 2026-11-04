@@ -13,7 +13,7 @@
  * Plugin Name:       WP Sell Services
  * Plugin URI:        https://wbcomdesigns.com/downloads/wp-sell-services/
  * Description:       A complete Fiverr-style service marketplace platform for WordPress. Create a service marketplace with built-in standalone checkout, order management, messaging, reviews, and more.
- * Version:           1.9.1
+ * Version:           1.9.2
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Wbcom Designs
@@ -39,7 +39,16 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @var string
  */
-define( 'WPSS_VERSION', '1.9.1' );
+define( 'WPSS_VERSION', '1.9.2' );
+
+/**
+ * Oldest Pro this Free can run beside. Pro 1.8.x implements contracts that
+ * 1.9.0 gave new abstract methods, so a Pro below this fatals on load.
+ * Raise it in the same commit that changes src/Integrations/Contracts.
+ *
+ * @var string
+ */
+define( 'WPSS_MIN_PRO_VERSION', '1.9.0' );
 
 /**
  * Add-on id of a package's Express delivery in a buyer's selection and on an

@@ -22,7 +22,7 @@
     },
     {
       "id": "user_meta-read-never-written:wpss_moderation_per_page",
-      "reason": "WP screen option — core writes it via the set-screen-option filter (ServiceModerationPage.php:63,194); verified 2026-06-11"
+      "reason": "WP screen option \u2014 core writes it via the set-screen-option filter (ServiceModerationPage.php:63,194); verified 2026-06-11"
     },
     {
       "id": "option-read-never-written:wpss_mycred_settings",
@@ -30,7 +30,7 @@
     },
     {
       "id": "option-read-never-written:wpss_fluentcart_settings",
-      "reason": "Settings form renders inside FluentCart's own settings page (fluent_cart/settings_service_marketplace); save path unverifiable locally (FluentCart not installed) — follow-up card when the integration is next testable; verified 2026-06-12"
+      "reason": "Settings form renders inside FluentCart's own settings page (fluent_cart/settings_service_marketplace); save path unverifiable locally (FluentCart not installed) \u2014 follow-up card when the integration is next testable; verified 2026-06-12"
     },
     {
       "id": "option-read-never-written:wpss_pro_currency",
@@ -51,6 +51,10 @@
     {
       "id": "hook-consumed-never-fired:wpss_notification_cleanup",
       "reason": "Scheduled daily by Activator::schedule_cron_events() through Scheduler::schedule_recurring() with the NotificationService::CLEANUP_HOOK constant as the array key, which the audit cannot resolve; verified 2026-10-19"
+    },
+    {
+      "id": "hook-consumed-never-fired:wpss_pro_refresh_rates",
+      "reason": "Fired by the SCHEDULER: RateService queues RateService::REFRESH_HOOK through Free's Scheduler::schedule_single (wp-sell-services-pro/src/Currency/RateService.php:350); the audit cannot follow a class constant into a queued job. Verified 2026-11-04."
     }
   ]
 }

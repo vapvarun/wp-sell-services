@@ -27,6 +27,8 @@ foreach ( array( 'standalone', 'standalone', 'extension', 'tip' ) as $i => $plat
 }
 
 $repo = new VendorProfileRepository();
+// Counters are written to an existing vendor profile only; they never create one.
+$wpdb->insert( $wpdb->prefix . 'wpss_vendor_profiles', array( 'user_id' => $vendor, 'display_name' => 'QA counts', 'status' => 'active' ) ); // phpcs:ignore WordPress.DB
 $repo->update_stats( $vendor );
 $profile = $repo->get_by_user( $vendor );
 

@@ -30,13 +30,27 @@ The Earnings ledger follows the chosen period, and the Pro CSV export uses the s
 - An unpaid milestone, tip or extension no longer credits the vendor's wallet when an admin marks the order completed.
 - Custom-price manual orders read **Custom order**, and **Create Order** keeps a package order as a package.
 
+## Re-cut fixes
+
+- Admins are emailed when a member report or dispute is filed.
+- Creating or updating a service over REST returns 200 or 201 with a `notices` array when a limit trims the request, instead of 400 after saving.
+- Vendor order counts and the response rate ignore milestone, extension and tip rows, in Free and in Pro analytics.
+- A dispute ruling for the vendor or by agreement on a completed order no longer fires completion twice.
+- If Pro is older than Free requires, Pro stays switched off until it is updated.
+- A suspended or rejected vendor cannot reinstate themselves by applying again. Offline checkout, new milestone phases, extensions and tips check the standing of both the buyer and the seller.
+- A blocked member who posts a review or accepts a proposal gets the standing message with a 403, not a server error.
+- A manual order saved with any status after **Pending Payment** must be marked **Paid**. An unpaid offline tip, phase or extension that was set to completed can still be confirmed with **Mark as Paid**, and it credits the vendor once.
+- Milestone, extension and tip totals round to the currency's decimals.
+- A vendor's new service enters the review queue and notifies you once. Your own new services are approved at once, and the upgrade that returns unapproved services to the queue sends no emails.
+- The service gallery accepts only the vendor's own uploads.
+
 ## Settings and admin
 
 Order amount limits and other number settings cannot be saved below their minimum. Withdrawals has a **Cancelled** tab, and the Orders and Withdrawals filters fit a phone. The cart tax line names the rate, such as **VAT (20%)**, the same as checkout.
 
 ## Pro
 
-S3, Spaces, Google Cloud, PayPal Payouts and push credentials are stored encrypted. PayPal Payouts sends in the store currency, Razorpay processes every partial refund, and the WooCommerce rail no longer creates a duplicate order when two requests arrive together. My Services is paginated on WooCommerce and EDD.
+S3, Spaces, Google Cloud, PayPal Payouts and push credentials are stored encrypted. PayPal Payouts sends in the store currency, Razorpay processes every partial refund, and the WooCommerce rail no longer creates a duplicate order when two requests arrive together. My Services is paginated on WooCommerce and EDD. If PayPal does not confirm a payout batch, it is marked **Unknown** and the vendors stay pending instead of being paid twice. The Stripe Connect platform fee on tips, phases and extensions leaves out tax.
 
 ## Upgrading
 

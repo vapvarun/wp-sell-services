@@ -29,8 +29,8 @@ require_once __DIR__ . '/exit-on-fail.php';
 
 $fails  = 0;
 $passes = 0;
-$check  = static function ( string $label, bool $ok ) use ( &$fails, &$passes ) {
-	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . "\n";
+$check  = static function ( string $label, bool $ok, string $detail = '' ) use ( &$fails, &$passes ) {
+	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . ( $ok || '' === $detail ? '' : ' - ' . $detail ) . "\n";
 	$ok ? $passes++ : $fails++;
 };
 
@@ -146,6 +146,141 @@ foreach ( $files as $path ) {
 }
 sort( $btn_owners );
 $check( '.wpss-btn base rule is declared only in design-system.css and the admin sheet', array( 'admin.css', 'design-system.css' ) === $btn_owners );
+
+// --- 5. public pages draw buttons with .wpss-btn, and an outline reads the same on each ---
+// Become a Vendor carried its own .wpss-vr__btn (10px radius, 15px type) beside the shared button, and
+// three page sheets gave the outline a darker rest colour than design-system.css, while the archive's
+// link reset outranked them all and painted Clear All in the theme link colour.
+$private_buttons = array();
+$outline_drift   = array();
+foreach ( $files as $path ) {
+	$rel  = str_replace( array( WPSS_PLUGIN_DIR, defined( 'WPSS_PRO_PLUGIN_DIR' ) ? WPSS_PRO_PLUGIN_DIR : WPSS_PLUGIN_DIR ), '', $path );
+	$code = (string) preg_replace( '#/\*.*?\*/#s', '', (string) file_get_contents( $path ) );
+	// wp-admin screens and the dashboard banners (unified-dashboard.css) are not public pages.
+	$public = ! str_starts_with( basename( $path ), 'admin' ) && ! str_contains( $rel, '/Admin/' ) && 'assets/css/unified-dashboard.css' !== $rel;
+	if ( $public && preg_match_all( '/\.wpss-[a-z0-9-]+__btn(?:--[a-z]+)?\s*\{/', $code, $m ) ) {
+		$private_buttons[] = $rel . ': ' . implode( ', ', array_unique( $m[0] ) );
+	}
+	if ( str_ends_with( $path, '.css' ) && preg_match_all( '/\.wpss-btn--outline(?::visited)?\s*\{[^}]*?[^-]color:\s*([^;]+);/', $code, $m ) ) {
+		foreach ( $m[1] as $value ) {
+			if ( ! str_starts_with( trim( str_replace( '!important', '', $value ) ), 'var(--wpss-text-secondary' ) ) {
+				$outline_drift[] = $rel . ': ' . trim( $value );
+			}
+		}
+	}
+	if ( str_ends_with( $path, '.css' ) && preg_match( '/a:not\((?![^{]*\.wpss-btn)[^{]*\)\s*\{[^}]*color:/', $code ) && str_contains( $code, '.wpss-btn--outline' ) ) {
+		$outline_drift[] = $rel . ': a plain-link colour rule that does not exclude .wpss-btn';
+	}
+}
+$check( 'no public page defines a button component of its own', empty( $private_buttons ), implode( ' | ', $private_buttons ) );
+
+// --- 6. a class that rides on .wpss-btn adds layout, never a second look ---------------
+// The signup submit, the requirements submit, Write a Review and the wizard buttons each carried a
+// .wpss-btn variant and then re-declared radius, border, padding and fill, so one button had four looks.
+// Icon-only buttons keep their own shape on purpose.
+$icon_buttons = array( 'wpss-sidebar-close', 'wpss-fav-toggle', 'wpss-fav-toggle--inline' );
+$companions   = array();
+foreach ( $files as $path ) {
+	if ( ! str_ends_with( $path, '.php' ) ) {
+		continue;
+	}
+	if ( preg_match_all( '/class="([^"]*\bwpss-btn\b[^"]*)"/', (string) file_get_contents( $path ), $m ) ) {
+		foreach ( $m[1] as $list ) {
+			foreach ( preg_split( '/\s+/', $list ) as $class ) {
+				if ( str_starts_with( $class, 'wpss-' ) && ! str_starts_with( $class, 'wpss-btn' ) && ! in_array( $class, $icon_buttons, true ) ) {
+					$companions[ $class ] = true;
+				}
+			}
+		}
+	}
+}
+$restyled = array();
+foreach ( $files as $path ) {
+	$rel = str_replace( array( WPSS_PLUGIN_DIR, defined( 'WPSS_PRO_PLUGIN_DIR' ) ? WPSS_PRO_PLUGIN_DIR : WPSS_PLUGIN_DIR ), '', $path );
+	if ( str_ends_with( $rel, 'design-system.css' ) || str_starts_with( basename( $path ), 'admin' ) || str_contains( $rel, '/Admin/' ) || 'assets/css/unified-dashboard.css' === $rel ) {
+		continue;
+	}
+	$code = (string) preg_replace( '#/\*.*?\*/#s', '', (string) file_get_contents( $path ) );
+	if ( ! preg_match_all( '/([^{}]+)\{([^{}]*)\}/', $code, $rules, PREG_SET_ORDER ) ) {
+		continue;
+	}
+	foreach ( $rules as $rule ) {
+		if ( ! preg_match( '/(?<![\w-])(border-radius|background|background-color|border|font-size|padding)\s*:/', $rule[2] ) ) {
+			continue;
+		}
+		foreach ( explode( ',', $rule[1] ) as $selector ) {
+			if ( preg_match( '/\.(wpss-[\w-]+)(?::hover|:focus|:visited)?\s*$/', trim( $selector ), $sm ) && isset( $companions[ $sm[1] ] ) ) {
+				$restyled[] = $rel . ': .' . $sm[1];
+			}
+		}
+	}
+}
+$restyled = array_values( array_unique( $restyled ) );
+$check( 'a class on a .wpss-btn never re-declares its fill, border, radius, padding or size', empty( $restyled ), implode( ' | ', $restyled ) );
+// --- 7. a scoped rule never resizes or reshapes the shared button --------------------
+// .wpss-wizard .wpss-btn set its own padding and size and `border: none !important`, and
+// .wpss-request-wizard .wpss-btn--lg made "large" a second size. Page sheets may restate colours
+// to beat a theme's link styles; size and shape belong to design-system.css alone.
+$reshaped = array();
+foreach ( $files as $path ) {
+	$rel = str_replace( array( WPSS_PLUGIN_DIR, defined( 'WPSS_PRO_PLUGIN_DIR' ) ? WPSS_PRO_PLUGIN_DIR : WPSS_PLUGIN_DIR ), '', $path );
+	if ( str_ends_with( $rel, 'design-system.css' ) || str_starts_with( basename( $path ), 'admin' ) || str_contains( $rel, '/Admin/' ) ) {
+		continue;
+	}
+	$code = (string) preg_replace( '#/\*.*?\*/#s', '', (string) file_get_contents( $path ) );
+	if ( ! preg_match_all( '/([^{}]+)\{([^{}]*)\}/', $code, $rules, PREG_SET_ORDER ) ) {
+		continue;
+	}
+	foreach ( $rules as $rule ) {
+		if ( ! preg_match( '/(?<![\w-])(padding|font-size|border-radius)\s*:|(?<![\w-])border(-width)?\s*:\s*(none|0)/', $rule[2] ) ) {
+			continue;
+		}
+		foreach ( explode( ',', $rule[1] ) as $selector ) {
+			// The icon-only button keeps its own square shape.
+			if ( preg_match( '/\s\.wpss-btn(--(?!icon)[a-z]+)?(?::[a-z():-]+)?\s*$/', trim( $selector ) ) ) {
+				$reshaped[] = $rel . ': ' . trim( $selector );
+			}
+		}
+	}
+}
+$check( 'no sheet resizes or reshapes .wpss-btn inside one section', empty( $reshaped ), implode( ' | ', array_unique( $reshaped ) ) );
+
+// --- 8. every .wpss-btn names its variant ------------------------------------------
+// The base rule sets size and shape, not a fill, so a bare .wpss-btn drew the browser's own grey
+// button face: the tip modal Cancel, "Go to your orders" after checkout, and View Profile, whose
+// wpss-btn-text class existed nowhere. --locked is the disabled phase-pay chip, styled on its own.
+$bare = array();
+foreach ( $files as $path ) {
+	if ( ! str_ends_with( $path, '.php' ) || str_contains( $path, '/tests/' ) ) {
+		continue;
+	}
+	if ( preg_match_all( '/class="([^"]*(?<![\w-])wpss-btn(?![\w-])[^"]*)"/', (string) file_get_contents( $path ), $m ) ) {
+		foreach ( $m[1] as $list ) {
+			if ( ! preg_match( '/\bwpss-btn--(primary|secondary|outline|ghost|danger|success|link|icon|locked)\b/', $list ) ) {
+				$bare[] = str_replace( array( WPSS_PLUGIN_DIR, defined( 'WPSS_PRO_PLUGIN_DIR' ) ? WPSS_PRO_PLUGIN_DIR : WPSS_PLUGIN_DIR ), '', $path ) . ': ' . $list;
+			}
+		}
+	}
+}
+$check( 'every .wpss-btn carries a variant', empty( $bare ), implode( ' | ', array_unique( $bare ) ) );
+
+// --- 9. frontend sheets never paint with a wp-admin ink ---------------------------------
+// --wpss-wp-admin-* are wp-admin's fixed greys and never flip. pro-teaser.css also styles the
+// frontend service wizard, and its text stayed #646970 on a dark dashboard (3.38:1); the dashboard's
+// "closed" chip stayed a light panel. wpss-tour.css is exempt: its frontend skin overrides each one.
+$admin_ink = array();
+foreach ( $files as $path ) {
+	$base = basename( $path );
+	if ( ! str_ends_with( $path, '.css' ) || str_starts_with( $base, 'admin' ) || in_array( $base, array( 'design-system.css', 'service-edit.css', 'wpss-tour.css' ), true ) ) {
+		continue;
+	}
+	if ( preg_match_all( '/var\(\s*--wpss-wp-admin-[a-z-]+/', (string) preg_replace( '#/\*.*?\*/#s', '', (string) file_get_contents( $path ) ), $m ) ) {
+		$admin_ink[] = $base . ': ' . implode( ', ', array_unique( $m[0] ) );
+	}
+}
+$check( 'no frontend sheet uses a --wpss-wp-admin-* colour', empty( $admin_ink ), implode( ' | ', $admin_ink ) );
+
+$check( 'an outline button at rest is --wpss-text-secondary on every page sheet', empty( $outline_drift ), implode( ' | ', $outline_drift ) );
 
 $check( '.wpss-btn--outline is defined in exactly one stylesheet', 1 === count( $owners ) );
 $check( '  and that stylesheet is design-system.css', array( 'design-system.css' ) === $owners );

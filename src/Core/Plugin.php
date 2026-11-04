@@ -309,7 +309,58 @@ final class Plugin {
 		 * @since 1.0.0
 		 * @param Plugin $plugin Plugin instance.
 		 */
+		$this->hold_back_stale_pro();
+
 		do_action( 'wpss_loaded', $this );
+	}
+
+	/**
+	 * Keep an older Pro from booting against this Free.
+	 *
+	 * Free updates first on many sites (auto-updates, one-at-a-time updates).
+	 * An older Pro then declares classes against contracts that gained abstract
+	 * methods, and PHP fatals the whole site. Pro starts from a `wpss_loaded`
+	 * callback in its own namespace, so those callbacks are removed before the
+	 * action fires and an admin notice says what to update.
+	 *
+	 * @since 1.9.1
+	 * @param string|null $pro_version Installed Pro version; defaults to WPSS_PRO_VERSION (a parameter so a test can pass an old one).
+	 * @return void
+	 */
+	private function hold_back_stale_pro( ?string $pro_version = null ): void {
+		$pro_version = $pro_version ?? ( defined( 'WPSS_PRO_VERSION' ) ? WPSS_PRO_VERSION : null );
+		if ( null === $pro_version || version_compare( $pro_version, WPSS_MIN_PRO_VERSION, '>=' ) ) {
+			return;
+		}
+
+		global $wp_filter;
+		foreach ( $wp_filter['wpss_loaded']->callbacks ?? array() as $priority => $callbacks ) {
+			foreach ( $callbacks as $callback ) {
+				if ( is_string( $callback['function'] ) && 0 === strpos( $callback['function'], 'WPSellServicesPro\\' ) ) {
+					remove_action( 'wpss_loaded', $callback['function'], $priority );
+				}
+			}
+		}
+
+		add_action(
+			'admin_notices',
+			static function () use ( $pro_version ): void {
+				if ( ! current_user_can( 'manage_options' ) ) {
+					return;
+				}
+				printf(
+					'<div class="notice notice-error"><p>%s</p></div>',
+					esc_html(
+						sprintf(
+							/* translators: 1: minimum Pro version, 2: installed Pro version. */
+							__( 'WP Sell Services Pro is switched off until you update it. This version of WP Sell Services needs Pro %1$s or later, and %2$s is installed.', 'wp-sell-services' ),
+							WPSS_MIN_PRO_VERSION,
+							$pro_version
+						)
+					)
+				);
+			}
+		);
 	}
 
 	/**
@@ -1420,6 +1471,11 @@ final class Plugin {
 		$this->loader->add_action(
 			'wpss_message_sent',
 			function ( $message, $conversation ) use ( $notification_service ): void {
+				// Deliveries and revision requests ring their own bell (order status, milestone hooks).
+				if ( $message instanceof \WPSellServices\Models\Message && ! $message->is_chat() ) {
+					return;
+				}
+
 				// Notify other participants.
 				foreach ( $conversation->participants as $participant_id ) {
 					if ( $participant_id !== $message->sender_id ) {
@@ -1641,6 +1697,15 @@ final class Plugin {
 		// (ModerationService, the admin moderation page, the REST controller);
 		// the vendor is told from here, once, whichever one it was.
 		$this->loader->add_action(
+			'wpss_service_pending_moderation',
+			static function ( int $service_id ): void {
+				( new \WPSellServices\Services\ModerationService() )->notify_pending( $service_id );
+			},
+			null,
+			10,
+			1
+		);
+		$this->loader->add_action(
 			'wpss_service_approved',
 			static function ( int $service_id ): void {
 				( new \WPSellServices\Services\ModerationService() )->notify_approved( $service_id );
@@ -1664,6 +1729,32 @@ final class Plugin {
 			'wpss_dispute_resolved',
 			function ( int $dispute_id, string $resolution, $dispute, float $refund_amount ) use ( $notification_service ): void {
 				$notification_service->notify_dispute_resolved( $dispute_id, $resolution, $dispute, $refund_amount );
+			},
+			null,
+			10,
+			4
+		);
+
+		// The owner hears about every new report. A new dispute reaches the owner
+		// once, through EmailService::send_dispute_opened().
+		$this->loader->add_action(
+			'wpss_report_filed',
+			static function ( int $report_id, string $target_type, int $target_id, int $reported_user_id ) use ( $notification_service ): void {
+				$reporter = get_current_user_id();
+
+				// Every report is stored and listed; only the owner's email is capped,
+				// so one member filing in a loop cannot flood the owner's inbox.
+				if ( ! current_user_can( 'manage_options' ) && \WPSellServices\Core\RateLimiter::check_and_track( 'report_alert', $reporter ) ) {
+					return;
+				}
+
+				$target = $reported_user_id ? get_userdata( $reported_user_id ) : false;
+				$notification_service->notify_admin_of_filing(
+					'report',
+					$report_id,
+					$reporter,
+					sprintf( '%s #%d%s', $target_type, $target_id, $target ? ' (' . $target->display_name . ')' : '' )
+				);
 			},
 			null,
 			10,
@@ -1804,6 +1895,11 @@ final class Plugin {
 				if ( ! $parent ) {
 					return;
 				}
+				// Phases created with an accepted contract are announced once by wpss_contract_phases_proposed below.
+				$phase = wpss_get_order( $milestone_id );
+				if ( $phase && ! empty( $phase->meta['is_contract_milestone'] ) ) {
+					return;
+				}
 				$notification_service->send(
 					(int) $parent->customer_id,
 					'milestone_proposed',
@@ -1820,6 +1916,30 @@ final class Plugin {
 			null,
 			10,
 			3
+		);
+
+		// A phased proposal was accepted: one notification and one email for the whole contract.
+		$this->loader->add_action(
+			'wpss_contract_phases_proposed',
+			function ( int $order_id, array $milestone_ids ) use ( $notification_service, $email_service ): void {
+				$parent = wpss_get_order( $order_id );
+				if ( ! $parent || empty( $milestone_ids ) ) {
+					return;
+				}
+				$notification_service->send(
+					(int) $parent->customer_id,
+					'milestone_proposed',
+					array(
+						'order_id'     => $order_id,
+						'milestone_id' => (int) $milestone_ids[0],
+						'phase_count'  => count( $milestone_ids ),
+					)
+				);
+				$email_service->send_contract_phases_proposed( $order_id, array_map( 'intval', $milestone_ids ) );
+			},
+			null,
+			10,
+			2
 		);
 
 		// Milestone paid - buyer's payment cleared, the phase is in_progress.
@@ -2158,14 +2278,6 @@ final class Plugin {
 			}
 		);
 
-		// Connect service moderation filter to settings.
-		add_filter(
-			'wpss_require_service_moderation',
-			function ( bool $default_value ): bool {
-				return (bool) wpss_get_option( 'vendor', 'require_service_moderation' );
-			}
-		);
-
 		// Enforce max services per vendor limit for REST API service creation.
 		add_filter(
 			'wpss_vendor_can_create_service',
@@ -2366,6 +2478,11 @@ final class Plugin {
 		 */
 		$moved = 0;
 
+		// Run as the system: the save hook treats a logged-in member's pending save as a
+		// submit, and the upgrade can fire on any member's request.
+		$acting_user = get_current_user_id();
+		wp_set_current_user( 0 );
+
 		do {
 			$stranded = get_posts(
 				array(
@@ -2399,6 +2516,8 @@ final class Plugin {
 				++$moved;
 			}
 		} while ( self::MODERATION_MIGRATION_BATCH === $found );
+
+		wp_set_current_user( $acting_user );
 
 		if ( $moved ) {
 			wpss_log(
@@ -2967,15 +3086,16 @@ final class Plugin {
 		// handlers above.
 		add_action(
 			'wpss_send_delayed_message_email',
-			static function ( $order_id = 0, $sender_id = 0, $message = '' ): void {
+			static function ( $order_id = 0, $sender_id = 0, $message = '', $payload_key = '' ): void {
 				( new \WPSellServices\Services\EmailService() )->send_delayed_message_email(
 					(int) $order_id,
 					(int) $sender_id,
-					(string) $message
+					(string) $message,
+					(string) $payload_key
 				);
 			},
 			10,
-			3
+			4
 		);
 
 		// Status change hooks.
@@ -3021,6 +3141,24 @@ final class Plugin {
 			},
 			10,
 			3
+		);
+
+		// A bank-transfer order placed: instructions to the buyer, a heads-up to the admin and seller (one email set per order).
+		add_action(
+			'wpss_offline_order_created',
+			static function ( int $order_id ): void {
+				( new \WPSellServices\Services\EmailService() )->send_offline_order_placed( $order_id );
+			}
+		);
+
+		add_action(
+			'wpss_offline_multi_orders_created',
+			static function ( array $order_ids ): void {
+				$email = new \WPSellServices\Services\EmailService();
+				foreach ( $order_ids as $order_id ) {
+					$email->send_offline_order_placed( (int) $order_id );
+				}
+			}
 		);
 
 		// Offline payment proof: tell the people who need to act
@@ -3143,6 +3281,10 @@ final class Plugin {
 
 		// A send that fails is logged to the audit log and retried once.
 		add_action( 'wp_mail_failed', array( \WPSellServices\Services\EmailService::class, 'on_mail_failed' ) );
+
+		// This plugin's mail sent inside a database transaction waits for its COMMIT and is dropped on ROLLBACK.
+		add_filter( 'query', array( \WPSellServices\Services\EmailService::class, 'track_transaction' ) );
+		add_action( 'shutdown', array( \WPSellServices\Services\EmailService::class, 'release_held_mail' ) );
 		add_action( \WPSellServices\Services\EmailService::RETRY_HOOK, array( \WPSellServices\Services\EmailService::class, 'retry' ), 10, 4 );
 
 		// --- DisputeWorkflowManager: lazy-init on first hook fire ---

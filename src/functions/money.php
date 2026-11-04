@@ -267,6 +267,55 @@ function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 
 }
 
 /**
+ * The tax keys an order stores in its meta, in one shape for every order creator.
+ *
+ * The label is stored with the order so a later change to the Tax label setting
+ * does not rename the line on orders already priced. `wpss_get_order_tax()` reads these keys.
+ *
+ * @since 1.9.1
+ *
+ * @param float  $rate     Tax rate in percent.
+ * @param float  $amount   Tax amount.
+ * @param bool   $included Whether the price already includes the tax.
+ * @param string $label    Tax label; empty uses the current setting.
+ * @return array{tax_rate: float, tax_amount: float, tax_included: bool, tax_label: string}
+ */
+function wpss_order_tax_meta( float $rate, float $amount, bool $included, string $label = '' ): array {
+	$label = trim( $label );
+
+	return array(
+		'tax_rate'     => $rate,
+		'tax_amount'   => round( $amount, wpss_get_currency_decimals() ),
+		'tax_included' => $included,
+		'tax_label'    => '' !== $label ? $label : wpss_calculate_tax( 0.0 )['label'],
+	);
+}
+
+/**
+ * The tax an order was priced with, as stored in its meta at creation.
+ *
+ * One reader for the pay page and every store rail's pay-order, so none of them re-parses the meta
+ * or re-derives a rate. `amount` is 0 when the order carries no tax.
+ *
+ * @since 1.9.1
+ *
+ * @param object $order Order row (JSON meta string) or ServiceOrder (decoded meta array).
+ * @return array{amount: float, rate: float, label: string, included: bool}
+ */
+function wpss_get_order_tax( object $order ): array {
+	$meta  = $order->meta ?? array();
+	$meta  = is_string( $meta ) ? (array) json_decode( $meta, true ) : (array) $meta;
+	$label = trim( (string) ( $meta['tax_label'] ?? '' ) );
+
+	return array(
+		'amount'   => (float) ( $meta['tax_amount'] ?? 0 ),
+		'rate'     => (float) ( $meta['tax_rate'] ?? 0 ),
+		'label'    => '' !== $label ? $label : wpss_calculate_tax( 0.0 )['label'],
+		'included' => ! empty( $meta['tax_included'] ),
+	);
+}
+
+/**
  * Get the list of three-decimal currency codes (ISO 4217).
  *
  * These are charged in thousandths, not hundredths — a 10.000 BHD charge is
@@ -1325,4 +1374,15 @@ function wpss_check_order_limits( float $total, string $context = '' ): ?\WP_Err
 	 * @param string         $context Rail asking: offline, stripe, paypal, cart.
 	 */
 	return apply_filters( 'wpss_check_order_limits', $error, $total, $context );
+}
+
+/**
+ * Whether tips carry tax (Settings > Tax > Tax tips, off by default).
+ *
+ * @since 1.9.1
+ *
+ * @return bool
+ */
+function wpss_tips_are_taxed(): bool {
+	return ! empty( get_option( 'wpss_tax', array() )['tax_tips'] );
 }

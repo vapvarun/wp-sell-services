@@ -101,3 +101,36 @@ if ( ! function_exists( 'as_has_scheduled_action' ) ) {
 		return false;
 	}
 }
+
+if ( ! class_exists( 'ActionScheduler_Store' ) ) {
+	/**
+	 * The store Action Scheduler keeps actions in (the parts Scheduler reads).
+	 */
+	abstract class ActionScheduler_Store {
+		const STATUS_PENDING = 'pending';
+
+		/**
+		 * When an action is due.
+		 *
+		 * @param int $action_id Action ID.
+		 * @return \DateTime|null
+		 */
+		abstract public function get_date( $action_id );
+	}
+}
+
+if ( ! class_exists( 'ActionScheduler' ) ) {
+	/**
+	 * Action Scheduler's entry point (the parts Scheduler reads).
+	 */
+	abstract class ActionScheduler {
+		/**
+		 * The active store.
+		 *
+		 * @return ActionScheduler_Store
+		 */
+		public static function store() {
+			throw new \LogicException( 'stub' );
+		}
+	}
+}

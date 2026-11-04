@@ -350,7 +350,7 @@ class MarketplaceSeeder {
 		$summary['disputes'] = $this->seed_disputes( $orders );
 		$this->log( 'Disputes opened: ' . $summary['disputes'] );
 
-		$this->refresh_vendor_stats( $vendors );
+		$this->refresh_vendor_stats( $vendors, $orders );
 
 		// Rows went in with $wpdb->insert, which fires no status hook, so the
 		// "N orders" figure was never written (Basecamp 10350812405).
@@ -465,36 +465,30 @@ class MarketplaceSeeder {
 
 			// Tier-driven realistic stats.
 			$completed  = $this->tier_completed_orders( $blueprint['tier'], $index );
-			$rating     = $this->tier_rating( $blueprint['tier'] );
 			$created_at = gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( 90 + $index * 45 ) . ' days' ) );
 
 			$data = array(
-				'user_id'               => $user_id,
-				'display_name'          => $blueprint['name'],
-				'tagline'               => $blueprint['tagline'],
-				'bio'                   => sprintf(
+				'user_id'             => $user_id,
+				'display_name'        => $blueprint['name'],
+				'tagline'             => $blueprint['tagline'],
+				'bio'                 => sprintf(
 					'%s. Based in %s, I have helped %d+ clients ship work they are proud of. Let us build something great together.',
 					$blueprint['tagline'],
 					$blueprint['country'],
 					$completed
 				),
-				'status'                => 'active',
-				'verification_tier'     => $blueprint['tier'],
-				'country'               => $blueprint['country'],
-				'social_links'          => wp_json_encode(
+				'status'              => 'active',
+				'verification_tier'   => $blueprint['tier'],
+				'country'             => $blueprint['country'],
+				'social_links'        => wp_json_encode(
 					array(
 						'twitter'  => 'https://twitter.com/' . sanitize_title( $blueprint['name'] ),
 						'linkedin' => 'https://linkedin.com/in/' . sanitize_title( $blueprint['name'] ),
 					)
 				),
-				'total_orders'          => $completed + 3,
-				'completed_orders'      => $completed,
-				'avg_rating'            => $rating,
-				'total_reviews'         => (int) round( $completed * 0.7 ),
-				'response_time_hours'   => 1 + ( $index % 5 ),
-				'on_time_delivery_rate' => 92.0 + ( $index % 8 ),
-				'is_available'          => 1,
-				'created_at'            => $created_at,
+				'response_time_hours' => 1 + ( $index % 5 ),
+				'is_available'        => 1,
+				'created_at'          => $created_at,
 			);
 
 			// Store skills as user meta (profile UI reads these as future-feature data).
@@ -1436,40 +1430,26 @@ class MarketplaceSeeder {
 	}
 
 	/**
-	 * Recompute aggregate review stats on each vendor profile from seeded rows.
+	 * Recompute every seeded vendor's stored counters through the production writer.
 	 *
-	 * @param array<int, array{user_id: int, blueprint: array<string, mixed>}> $vendors Vendors.
+	 * Orders and reviews went in with $wpdb->insert, which fires no order hook, so the
+	 * order counters stayed at whatever the profile row was created with (Basecamp 10431939228).
+	 *
+	 * @param array<int, array{user_id: int}>   $vendors Seeded vendors.
+	 * @param array<int, array{vendor_id: int}> $orders  Seeded orders (their vendors may be existing users).
 	 * @return void
 	 */
-	private function refresh_vendor_stats( array $vendors ): void {
-		global $wpdb;
+	private function refresh_vendor_stats( array $vendors, array $orders ): void {
+		$vendor_ids = array_unique(
+			array_merge(
+				array_map( 'intval', array_column( $vendors, 'user_id' ) ),
+				array_map( 'intval', array_column( $orders, 'vendor_id' ) )
+			)
+		);
+		$service    = new \WPSellServices\Services\VendorService();
 
-		$reviews_table = $wpdb->prefix . 'wpss_reviews';
-		$profile_table = $wpdb->prefix . 'wpss_vendor_profiles';
-
-		foreach ( $vendors as $vendor ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$row = $wpdb->get_row(
-				$wpdb->prepare(
-					"SELECT COUNT(*) AS total, AVG(rating) AS avg_rating FROM {$reviews_table} WHERE vendor_id = %d AND status = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					$vendor['user_id'],
-					Review::STATUS_APPROVED
-				)
-			);
-
-			if ( ! $row || 0 === (int) $row->total ) {
-				continue;
-			}
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$profile_table,
-				array(
-					'total_reviews' => (int) $row->total,
-					'avg_rating'    => round( (float) $row->avg_rating, 2 ),
-				),
-				array( 'user_id' => $vendor['user_id'] )
-			);
+		foreach ( array_filter( $vendor_ids ) as $vendor_id ) {
+			$service->update_stats( $vendor_id );
 		}
 	}
 
@@ -1577,25 +1557,6 @@ class MarketplaceSeeder {
 				return 45 + ( $index * 5 );
 			default:
 				return 6 + $index;
-		}
-	}
-
-	/**
-	 * Derive a believable average rating from a vendor tier.
-	 *
-	 * @param string $tier Vendor tier.
-	 * @return float
-	 */
-	private function tier_rating( string $tier ): float {
-		switch ( $tier ) {
-			case VendorProfile::TIER_PRO:
-				return 5.0;
-			case VendorProfile::TIER_TOP_RATED:
-				return 4.9;
-			case VendorProfile::TIER_RISING:
-				return 4.7;
-			default:
-				return 4.5;
 		}
 	}
 

@@ -146,7 +146,8 @@ apart send two New Order emails.
 
 A send the mail server refuses is written to the audit log as `email.failed`
 (recipient, type and the error) and retried once, ten minutes later, through
-Action Scheduler.
+Action Scheduler. Only this plugin's own emails are retried; mail sent by
+WordPress or another plugin is left to whoever sent it.
 
 ## How Emails Are Delivered
 

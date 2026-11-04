@@ -40,14 +40,6 @@
       "anonymous": true,
       "reason": "Account-at-checkout for a signed-out buyer. Gated on wpss_checkout_creates_accounts() - the owner's switch - and rate limited at 20/hour by IP."
     },
-    "wp_ajax_nopriv_wpss_live_search": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::live_search",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": true,
-      "anonymous": true,
-      "reason": "Public catalogue search, the same data GET /search serves. Rate limited via the live_search action."
-    },
     "wp_ajax_nopriv_wpss_load_reviews": {
       "callback": "WPSellServices\\Frontend\\AjaxHandlers::load_reviews",
       "nonce": true,
@@ -130,13 +122,6 @@
     },
     "wp_ajax_wpss_become_vendor": {
       "callback": "WPSellServices\\Frontend\\UnifiedDashboard::ajax_become_vendor",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": false,
-      "anonymous": false
-    },
-    "wp_ajax_wpss_bulk_action": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::bulk_action",
       "nonce": true,
       "capability": false,
       "rate_limited": false,
@@ -266,13 +251,6 @@
       "nonce": true,
       "capability": false,
       "rate_limited": false,
-      "anonymous": false
-    },
-    "wp_ajax_wpss_live_search": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::live_search",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": true,
       "anonymous": false
     },
     "wp_ajax_wpss_load_reviews": {
@@ -450,13 +428,6 @@
       "rate_limited": true,
       "anonymous": false
     },
-    "wp_ajax_wpss_service_action": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::service_action",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": false,
-      "anonymous": false
-    },
     "wp_ajax_wpss_skip_requirements": {
       "callback": "WPSellServices\\Frontend\\AjaxHandlers::skip_requirements",
       "nonce": true,
@@ -588,13 +559,6 @@
       "callback": "WPSellServices\\Frontend\\ServiceWizard::ajax_publish_service",
       "nonce": true,
       "capability": true,
-      "rate_limited": false,
-      "anonymous": false
-    },
-    "wp_ajax_wpss_wizard_remove_gallery": {
-      "callback": "WPSellServices\\Frontend\\ServiceWizard::ajax_remove_gallery",
-      "nonce": true,
-      "capability": false,
       "rate_limited": false,
       "anonymous": false
     },

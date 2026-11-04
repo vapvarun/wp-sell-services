@@ -506,7 +506,7 @@ h2.wpss-settings-subhead__title {
 }
 
 .wpss-stat-icon--revenue {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-stat-info {
@@ -1931,7 +1931,7 @@ h2.wpss-settings-subhead__title {
 /* Wide enough for "Orders" plus its sort arrows on one line at 820px. */
 .wpss-vendors-table .column-orders { width: 13%; text-align: center; }
 .wpss-vendors-table .column-rating { width: 12%; text-align: center; }
-.wpss-vendors-table .column-earnings { width: 14%; text-align: right; }
+.wpss-vendors-table .column-earnings { width: 14%; text-align: end; }
 .wpss-vendors-table .column-status { width: 14%; }
 
 /* A sortable header is a block link holding floated spans, which ignore the
@@ -2115,6 +2115,11 @@ h2.wpss-settings-subhead__title {
 .wpss-withdrawals-table .column-id { width: 5em; }
 .wpss-withdrawals-table .column-vendor { width: 20%; }
 .wpss-withdrawals-table .column-amount { width: 7.5em; text-align: end; }
+/* Money reads right-aligned so the decimals line up; the header follows its values. Core floats a
+   sortable header's label and arrows to the start, which beat text-align and left "Amount" at the
+   start of the cell while the amounts sat at the end (Basecamp 10384370974). */
+.wpss-withdrawals-table th.column-amount > a { display: flex; justify-content: flex-end; }
+.wpss-withdrawals-table th.column-amount > a > span { float: none; }
 .wpss-withdrawals-table .column-method { width: 12%; }
 .wpss-withdrawals-table .column-status { width: 7.5em; }
 .wpss-withdrawals-table .column-date { width: 15%; }
@@ -2653,6 +2658,11 @@ h2.wpss-settings-subhead__title {
 	color: var(--wpss-warning, #ffb900);
 }
 
+/* Lucide draws stars as outlines; the filled ones are painted in the rating colour. */
+.wpss-review-rating .wpss-star.filled {
+	fill: currentColor;
+}
+
 .wpss-review-meta {
 	font-size: 12px;
 	color: var(--wpss-admin-text-light);
@@ -3003,6 +3013,8 @@ h2.wpss-settings-subhead__title {
 
 .wpss-secret-field__badge {
 	display: inline-flex;
+	flex-shrink: 0;
+	white-space: nowrap;
 	align-items: center;
 	padding: 2px 8px;
 	border-radius: var(--wpss-admin-radius-sm);
@@ -3233,6 +3245,11 @@ h2.wpss-settings-subhead__title {
 		width: 100%;
 	}
 
+	/* In a column the 240px basis is a height: let the input keep its own. */
+	.wpss-secret-field__input {
+		flex: none;
+	}
+
 	.wpss-secret-field__toggle {
 		justify-content: center;
 	}
@@ -3253,15 +3270,6 @@ h2.wpss-settings-subhead__title {
 		max-width: 100%;
 	}
 
-	/* WordPress hides a list table's extra filters under 783px; the Orders filters are the point of that screen. */
-	.wpss-list-card__body .tablenav .alignleft.actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		float: none;
-		width: 100%;
-	}
-
 	.wpss-list-card__body .tablenav .alignleft.actions select {
 		flex: 1 1 45%;
 		max-width: 100%;
@@ -3274,6 +3282,17 @@ h2.wpss-settings-subhead__title {
 
 	.wpss-withdrawals-table {
 		min-width: 720px;
+	}
+}
+
+/* WordPress hides a list table's extra filters under 783px; the Orders filters are the point of that screen. */
+@media screen and (max-width: 782px) {
+	.wpss-list-card__body .tablenav .alignleft.actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		float: none;
+		width: 100%;
 	}
 }
 /* ==========================================================================

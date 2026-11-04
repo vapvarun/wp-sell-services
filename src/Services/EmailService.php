@@ -50,6 +50,7 @@ class EmailService {
 	public const TYPE_PROPOSAL_ACCEPTED      = 'proposal_accepted';
 	public const TYPE_PROPOSAL_REJECTED      = 'proposal_rejected';
 	public const TYPE_DISPUTE_ESCALATED      = 'dispute_escalated';
+	public const TYPE_ADMIN_FILING           = 'admin_filing';
 	public const TYPE_MODERATION_APPROVED    = 'moderation_approved';
 	public const TYPE_MODERATION_REJECTED    = 'moderation_rejected';
 	public const TYPE_MODERATION_PENDING     = 'moderation_pending';
@@ -58,6 +59,7 @@ class EmailService {
 	public const TYPE_REVIEW_RECEIVED        = 'review_received';
 	public const TYPE_MILESTONE_PROPOSED     = 'milestone_proposed';
 	public const TYPE_MILESTONE_PAID         = 'milestone_paid';
+	public const TYPE_CONTRACT_PHASES        = 'contract_phases_proposed';
 	public const TYPE_MILESTONE_SUBMITTED    = 'milestone_submitted';
 	public const TYPE_MILESTONE_APPROVED     = 'milestone_approved';
 	public const TYPE_MILESTONE_REVISION     = 'milestone_revision_requested';
@@ -75,6 +77,14 @@ class EmailService {
 	public const TYPE_RECEIPT_SUBMITTED = 'receipt_submitted';
 	public const TYPE_RECEIPT_VERIFIED  = 'receipt_verified';
 	public const TYPE_RECEIPT_REJECTED  = 'receipt_rejected';
+
+	/**
+	 * A bank-transfer order was placed and is waiting for the money.
+	 *
+	 * @since 1.9.2
+	 * @var string
+	 */
+	public const TYPE_OFFLINE_ORDER_PLACED = 'offline_order_placed';
 
 	/**
 	 * Vendor account decisions: approved, rejected, suspended.
@@ -108,6 +118,15 @@ class EmailService {
 	public const RETRY_HOOK = 'wpss_email_retry';
 
 	/**
+	 * Transient prefix for a scheduled job's mail payload.
+	 *
+	 * Action Scheduler drops (logs and returns 0 for) any action whose args
+	 * encode to more than 8000 characters, so a job that carried the mail
+	 * body itself was silently never queued for a long message.
+	 */
+	private const PAYLOAD_PREFIX = 'wpss_mail_job_';
+
+	/**
 	 * Type of the mail currently inside wp_mail(), for the failure listener.
 	 *
 	 * @var string
@@ -121,6 +140,28 @@ class EmailService {
 	 * @var bool
 	 */
 	private static bool $retrying = false;
+
+	/**
+	 * This plugin's mail sent while a database transaction was open, held until it commits.
+	 *
+	 * @var array<int, array{email: array<string, mixed>, type: string}>
+	 */
+	private static array $held_mail = array();
+
+	/**
+	 * True between START TRANSACTION and its COMMIT or ROLLBACK.
+	 *
+	 * @var bool
+	 */
+	private static bool $in_transaction = false;
+
+	/**
+	 * True once a COMMIT was issued; the held mail goes out after it has run.
+	 *
+	 * @var bool
+	 */
+	private static bool $release_due = false;
+
 
 	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
@@ -147,34 +188,6 @@ class EmailService {
 		}
 
 		return $this->settings;
-	}
-
-	/**
-	 * Initialize email hooks.
-	 *
-	 * @return void
-	 */
-	public function init(): void {
-		// Hook into order status changes.
-		add_action( 'wpss_order_status_changed', array( $this, 'handle_status_change' ), 20, 3 );
-		add_action( 'wpss_order_cancelled', array( $this, 'handle_order_cancelled' ), 20, 1 );
-
-		// Hook into specific events.
-		add_action( 'wpss_requirements_submitted', array( $this, 'send_requirements_submitted' ), 20, 3 );
-		add_action( 'wpss_delivery_submitted', array( $this, 'send_delivery_ready' ), 20, 2 );
-		add_action( 'wpss_new_order_message', array( $this, 'send_new_message' ), 20, 3 );
-
-		// New email types.
-		add_action( 'wpss_send_requirements_reminder_email', array( $this, 'send_requirements_reminder' ), 10, 3 );
-		add_action( 'wpss_vendor_level_promoted', array( $this, 'send_level_promotion' ), 10, 3 );
-
-		// Withdrawal processed (approved/rejected).
-		add_action( 'wpss_withdrawal_processed', array( $this, 'send_withdrawal_status' ), 10, 3 );
-
-		// Proposal notifications.
-		add_action( 'wpss_proposal_submitted', array( $this, 'send_proposal_submitted' ), 10, 4 );
-		add_action( 'wpss_proposal_accepted', array( $this, 'send_proposal_accepted' ), 10, 3 );
-		add_action( 'wpss_proposal_rejected', array( $this, 'send_proposal_rejected' ), 10, 3 );
 	}
 
 	/**
@@ -238,6 +251,12 @@ class EmailService {
 			return;
 		}
 
+		// A dispute handing the order back (ruling or withdrawal) is announced by
+		// the dispute emails; the status emails would repeat an old event.
+		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) ) {
+			return;
+		}
+
 		switch ( $new_status ) {
 			case ServiceOrder::STATUS_PENDING_REQUIREMENTS:
 				$this->send_new_order( $order );
@@ -282,7 +301,7 @@ class EmailService {
 		$vendor   = get_user_by( 'id', $order->vendor_id );
 		$customer = get_user_by( 'id', $order->customer_id );
 
-		$service_title = get_the_title( $order->service_id );
+		$service_title = wpss_get_order_title( $order );
 
 		// Send to vendor.
 		if ( $vendor ) {
@@ -337,6 +356,130 @@ class EmailService {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Tell everyone a bank-transfer order was placed and is waiting for payment.
+	 *
+	 * The buyer gets the instructions for the method they chose (the same block the checkout screen shows), the admin
+	 * gets the order to watch for, and the seller hears it exists but is not asked to start: work begins once the
+	 * payment is confirmed, which sends the usual new-order email.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public function send_offline_order_placed( int $order_id ): bool {
+		$order = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return false;
+		}
+
+		// Once per order: the pay-an-existing-order request can be repeated, and each repeat would mail three people.
+		// One conditional UPDATE claims the send, so two requests at once mail once, and it sets
+		// only this key, so it never writes back a stale copy of the rest of the order's meta.
+		global $wpdb;
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$claimed = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->prefix}wpss_orders
+				SET meta = JSON_SET( CASE WHEN meta IS NULL OR meta IN ('', '[]') THEN '{}' ELSE meta END, '$.offline_placed_emailed', true )
+				WHERE id = %d
+				AND ( meta IS NULL OR meta IN ('', '[]') OR JSON_EXTRACT( meta, '$.offline_placed_emailed' ) IS NULL )",
+				$order_id
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// 0 rows: already sent. A query error (unreadable meta) still sends: the buyer needs the payment details.
+		if ( 0 === $claimed ) {
+			return false;
+		}
+
+		$buyer  = get_user_by( 'id', $order->customer_id );
+		$vendor = get_user_by( 'id', $order->vendor_id );
+		$admin  = (string) apply_filters( 'wpss_admin_notification_email', get_option( 'admin_email' ) );
+		$title  = wpss_get_order_title( $order );
+		$total  = wpss_format_price( (float) $order->total, (string) $order->currency );
+		$sent   = false;
+
+		if ( $buyer ) {
+			$sent = $this->send(
+				$buyer->user_email,
+				sprintf(
+					/* translators: 1: site name, 2: order number */
+					__( '[%1$s] Order #%2$s: how to pay', 'wp-sell-services' ),
+					wpss_get_platform_name(),
+					$order->order_number
+				),
+				self::TYPE_OFFLINE_ORDER_PLACED,
+				array(
+					'recipient'     => $buyer,
+					'email_heading' => __( 'Your order is waiting for payment', 'wp-sell-services' ),
+					'content'       => sprintf(
+						/* translators: 1: service title, 2: total */
+						__( 'We have your order for %1$s (%2$s). It starts as soon as your payment is confirmed. Pay using the details below.', 'wp-sell-services' ),
+						esc_html( $title ),
+						esc_html( $total )
+					) . ( new \WPSellServices\Integrations\Gateways\OfflineGateway() )->render_buyer_instructions( $order_id ),
+					'button_url'    => wpss_get_order_url( $order_id ),
+					'button_text'   => __( 'View your order', 'wp-sell-services' ),
+					'order'         => $order,
+				)
+			);
+		}
+
+		$note = sprintf(
+			/* translators: 1: order number, 2: service title, 3: total */
+			__( 'Order #%1$s for %2$s (%3$s) was placed by bank transfer and is waiting for payment. It starts once the payment is marked as received.', 'wp-sell-services' ),
+			esc_html( $order->order_number ),
+			esc_html( $title ),
+			esc_html( $total )
+		);
+
+		$sent = $this->send(
+			$admin,
+			sprintf(
+				/* translators: 1: site name, 2: order number */
+				__( '[%1$s] Order #%2$s is waiting for payment', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$order->order_number
+			),
+			self::TYPE_OFFLINE_ORDER_PLACED,
+			array(
+				'recipient'     => get_user_by( 'email', $admin ) ?: null,
+				'email_heading' => __( 'A bank-transfer order is waiting for payment', 'wp-sell-services' ),
+				'content'       => $note,
+				'button_url'    => admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order_id ),
+				'button_text'   => __( 'Open the order', 'wp-sell-services' ),
+				'order'         => $order,
+			)
+		) || $sent;
+
+		if ( $vendor ) {
+			$sent = $this->send(
+				$vendor->user_email,
+				sprintf(
+					/* translators: 1: site name, 2: order number */
+					__( '[%1$s] Order #%2$s is waiting for the buyer\'s payment', 'wp-sell-services' ),
+					wpss_get_platform_name(),
+					$order->order_number
+				),
+				self::TYPE_OFFLINE_ORDER_PLACED,
+				array(
+					'recipient'     => $vendor,
+					'email_heading' => __( 'A new order is waiting for payment', 'wp-sell-services' ),
+					'content'       => $note . ' ' . __( 'You do not need to do anything yet; we will email you when work can start.', 'wp-sell-services' ),
+					'button_url'    => wpss_get_order_url( $order_id ),
+					'button_text'   => __( 'View order', 'wp-sell-services' ),
+					'order'         => $order,
+				)
+			) || $sent;
+		}
+
+		return $sent;
 	}
 
 	/**
@@ -799,6 +942,74 @@ class EmailService {
 				'amount'        => (float) $milestone->total,
 				'currency'      => $milestone->currency ?? wpss_get_currency(),
 				'pay_url'       => $pay_url,
+			)
+		);
+	}
+
+	/**
+	 * Tell the buyer an accepted phased proposal is set up: every phase, the total, and where to pay first.
+	 *
+	 * One email for the contract, however many phases it has. A phase the seller proposes later on its own still
+	 * goes through send_milestone_proposed().
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param int   $order_id      Parent order ID.
+	 * @param int[] $milestone_ids Phase order IDs, in plan order.
+	 * @return bool
+	 */
+	public function send_contract_phases_proposed( int $order_id, array $milestone_ids ): bool {
+		$parent = wpss_get_order( $order_id );
+		$buyer  = $parent ? get_user_by( 'id', (int) $parent->customer_id ) : false;
+
+		if ( ! $buyer || empty( $milestone_ids ) ) {
+			return false;
+		}
+
+		$vendor   = get_user_by( 'id', (int) $parent->vendor_id );
+		$currency = (string) ( $parent->currency ?: wpss_get_currency() );
+		$rows     = '';
+		$total    = 0.0;
+
+		foreach ( $milestone_ids as $index => $milestone_id ) {
+			$phase = wpss_get_order( (int) $milestone_id );
+			if ( ! $phase ) {
+				continue;
+			}
+			$total += (float) $phase->total;
+			$rows  .= sprintf(
+				'<tr><td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;">%1$d. %2$s</td><td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;text-align:right;">%3$s</td></tr>',
+				$index + 1,
+				esc_html( (string) ( ( (array) $phase->meta )['title'] ?? __( 'Phase', 'wp-sell-services' ) ) ),
+				esc_html( wpss_format_price( (float) $phase->total, $currency ) )
+			);
+		}
+
+		$content = sprintf(
+			/* translators: 1: vendor name, 2: number of phases, 3: contract total */
+			__( '%1$s accepted your project and split it into %2$d phases, %3$s in total. Phases are paid one at a time, in this order.', 'wp-sell-services' ),
+			esc_html( $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' ) ),
+			count( $milestone_ids ),
+			esc_html( wpss_format_price( $total, $currency ) )
+		) . '</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f9f9f9;border-radius:4px;font-size:16px;color:#3c3c3c;">' . $rows . '</table><p style="margin:16px 0 0 0;font-size:16px;color:#3c3c3c;line-height:1.6;">'
+			. __( 'Pay the first phase to start the work.', 'wp-sell-services' );
+
+		return $this->send(
+			$buyer->user_email,
+			sprintf(
+				/* translators: 1: site name, 2: order number */
+				__( '[%1$s] Your project plan for order #%2$s', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$parent->order_number
+			),
+			self::TYPE_CONTRACT_PHASES,
+			array(
+				'recipient'     => $buyer,
+				'email_heading' => __( 'Your project is planned', 'wp-sell-services' ),
+				'content'       => $content,
+				'button_url'    => wpss_ensure_pay_order( (int) $milestone_ids[0] ),
+				'button_text'   => __( 'Pay the first phase', 'wp-sell-services' ),
+				'order'         => $parent,
 			)
 		);
 	}
@@ -1278,12 +1489,24 @@ class EmailService {
 	 *
 	 * @since 1.7.0
 	 *
-	 * @param int    $order_id  Order ID.
-	 * @param int    $sender_id Sender user ID.
-	 * @param string $message   Message body.
+	 * @param int    $order_id    Order ID.
+	 * @param int    $sender_id   Sender user ID.
+	 * @param string $message     Message body, on a job queued before 1.9.2.
+	 * @param string $payload_key Key of the stashed message body.
 	 * @return void
 	 */
-	public function send_delayed_message_email( int $order_id, int $sender_id, string $message ): void {
+	public function send_delayed_message_email( int $order_id, int $sender_id, string $message, string $payload_key = '' ): void {
+		if ( '' !== $payload_key ) {
+			$payload = self::take_payload( $payload_key );
+
+			// Already sent (the job ran twice) or the cache lost it: never mail an empty message.
+			if ( null === $payload ) {
+				return;
+			}
+
+			$message = (string) ( $payload[0] ?? '' );
+		}
+
 		$order = wpss_get_order( $order_id );
 
 		if ( ! $order ) {
@@ -1351,7 +1574,7 @@ class EmailService {
 			\WPSellServices\Services\Scheduler::schedule_single(
 				'wpss_send_delayed_message_email',
 				time() + ( $delay * MINUTE_IN_SECONDS ),
-				array( $order_id, $sender_id, $message )
+				array( $order_id, $sender_id, '', self::stash_payload( array( $message ) ) )
 			);
 
 			return true;
@@ -1649,20 +1872,33 @@ class EmailService {
 			);
 		}
 
-		// Also notify admin with full details.
-		$admin_email = get_option( 'admin_email' );
-		$this->send(
-			$admin_email,
-			$subject,
-			self::TYPE_DISPUTE_OPENED,
-			array_merge(
-				$base_vars,
-				array(
-					'recipient' => get_user_by( 'email', $admin_email ) ?: $customer,
-					'is_admin'  => true,
-				)
-			)
+		/**
+		 * Tell the site owner a member filed a report or a dispute.
+		 *
+		 * The owner's one copy of a new dispute, with full details. Same recipient
+		 * as the report alert: the dispute admin email replaces the site admin
+		 * email when set.
+		 */
+		$admin_email = (string) apply_filters(
+			'wpss_admin_filing_recipient',
+			get_option( 'wpss_dispute_admin_email' ) ?: get_option( 'admin_email' ),
+			'dispute',
+			$dispute ? (int) $dispute->id : 0
 		);
+		if ( is_email( $admin_email ) ) {
+			$this->send(
+				$admin_email,
+				$subject,
+				self::TYPE_DISPUTE_OPENED,
+				array_merge(
+					$base_vars,
+					array(
+						'recipient' => get_user_by( 'email', $admin_email ) ?: $customer,
+						'is_admin'  => true,
+					)
+				)
+			);
+		}
 
 		return true;
 	}
@@ -1714,7 +1950,7 @@ class EmailService {
 			'reminder_num'  => $reminder_num,
 			'message'       => $message,
 			'vendor_name'   => $this->get_vendor_name( $order->vendor_id ),
-			'service_title' => get_the_title( $order->service_id ),
+			'service_title' => wpss_get_order_title( $order ),
 		);
 
 		return $this->send( $customer->user_email, $subject, self::TYPE_REQUIREMENTS_REMINDER, $template_vars );
@@ -2186,15 +2422,103 @@ class EmailService {
 			$type
 		);
 
+		if ( self::$release_due ) {
+			self::release_held_mail();
+		}
+
+		// Inside a database transaction the change this mail announces can still roll back: hold it for the COMMIT.
+		if ( self::$in_transaction ) {
+			self::$held_mail[] = array(
+				'email' => $email,
+				'type'  => $type,
+			);
+			return true;
+		}
+
+		return self::deliver( $email, $type );
+	}
+
+	/**
+	 * Hand one prepared email to wp_mail().
+	 *
+	 * @param array<string, mixed> $email Email after wpss_email_before_send: to, subject, content, headers.
+	 * @param string               $type  Email type, for the failure listener.
+	 * @return bool
+	 */
+	private static function deliver( array $email, string $type ): bool {
 		self::$sending_type = $type;
 		$sent               = wp_mail( $email['to'], $email['subject'], $email['content'], $email['headers'] );
 		self::$sending_type = '';
 
 		if ( ! $sent ) {
-			wpss_log( sprintf( 'Email "%s" (%s) to %s was not sent.', $email['subject'], $type, $email['to'] ), 'error' );
+			wpss_log( sprintf( 'Email "%s" (%s) to %s was not sent.', $email['subject'], $type, implode( ', ', (array) $email['to'] ) ), 'error' );
 		}
 
 		return $sent;
+	}
+
+	/**
+	 * Follow the database transaction state from the SQL itself.
+	 *
+	 * Bound to the `query` filter, so every transaction on the site is seen
+	 * without each START TRANSACTION site having to opt in. A COMMIT releases
+	 * the held mail once it has run (at the next query, mail or shutdown); a
+	 * ROLLBACK drops it, because the change the mail announces never happened.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param string $query SQL about to run.
+	 * @return string The same SQL.
+	 */
+	public static function track_transaction( $query ) {
+		if ( self::$release_due ) {
+			self::release_held_mail();
+		}
+
+		if ( ! is_string( $query ) || strlen( $query ) > 40 ) {
+			return $query;
+		}
+
+		$sql = strtoupper( trim( $query, " \t\n\r;" ) );
+
+		if ( 'START TRANSACTION' === $sql || 'BEGIN' === $sql ) {
+			// A START inside an open transaction commits it implicitly in MySQL.
+			self::$release_due    = self::$in_transaction && self::$held_mail;
+			self::$in_transaction = true;
+		} elseif ( 'COMMIT' === $sql ) {
+			self::$in_transaction = false;
+			self::$release_due    = (bool) self::$held_mail;
+		} elseif ( 'ROLLBACK' === $sql ) {
+			self::$in_transaction = false;
+			self::$held_mail      = array();
+		}
+
+		return $query;
+	}
+
+
+	/**
+	 * Send the mail held for a committed transaction.
+	 *
+	 * Also bound to `shutdown`. Mail still held there, never released by a COMMIT, belongs to a transaction
+	 * that never committed, which MySQL rolls back, so it is not sent.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @return void
+	 */
+	public static function release_held_mail(): void {
+		if ( ! self::$release_due ) {
+			return;
+		}
+
+		$held              = self::$held_mail;
+		self::$held_mail   = array();
+		self::$release_due = false;
+
+		foreach ( $held as $mail ) {
+			self::deliver( $mail['email'], $mail['type'] );
+		}
 	}
 
 	/**
@@ -2213,22 +2537,21 @@ class EmailService {
 		$data = (array) $error->get_error_data();
 		$to   = implode( ', ', (array) ( $data['to'] ?? array() ) );
 
-		( new AuditLogService() )->log(
-			'email.failed',
-			'email',
-			0,
-			array(
-				'action'  => self::$retrying ? 'retry' : 'send',
-				'context' => array(
-					'recipient' => $to,
-					'type'      => self::$sending_type,
-					'subject'   => (string) ( $data['subject'] ?? '' ),
-					'error'     => $error->get_error_message(),
-				),
-			)
-		);
+		/**
+		 * Fires when wp_mail() fails, with which of our email types it was.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param \WP_Error $error    Error raised by wp_mail().
+		 * @param string    $type     Our email type, or '' for mail that was not ours.
+		 * @param bool      $is_retry Whether this was the scheduled retry.
+		 */
+		do_action( 'wpss_email_failed', $error, self::$sending_type, self::$retrying );
 
-		if ( self::$retrying || '' === $to ) {
+		// Only our own mail is retried. Another plugin's mail (a password
+		// reset, a shop receipt) is that plugin's to retry, and queuing it
+		// copied its contents into the actions table.
+		if ( self::$retrying || '' === $to || '' === self::$sending_type ) {
 			return;
 		}
 
@@ -2236,12 +2559,45 @@ class EmailService {
 			self::RETRY_HOOK,
 			time() + 10 * MINUTE_IN_SECONDS,
 			array(
-				$data['to'] ?? '',
-				(string) ( $data['subject'] ?? '' ),
-				(string) ( $data['message'] ?? '' ),
-				$data['headers'] ?? array(),
+				self::stash_payload(
+					array(
+						$data['to'] ?? '',
+						(string) ( $data['subject'] ?? '' ),
+						(string) ( $data['message'] ?? '' ),
+						$data['headers'] ?? array(),
+					)
+				),
 			)
 		);
+	}
+
+	/**
+	 * Keep a scheduled job's payload out of its args.
+	 *
+	 * Stored as a transient (shortcut: a persistent object cache that evicts
+	 * it loses that one job; move to a table if retries ever need a guarantee).
+	 *
+	 * @param array<int, mixed> $payload Job payload (positional).
+	 * @return string Key to pass as the job's argument.
+	 */
+	private static function stash_payload( array $payload ): string {
+		$key = wp_generate_uuid4();
+		set_transient( self::PAYLOAD_PREFIX . $key, $payload, DAY_IN_SECONDS );
+
+		return $key;
+	}
+
+	/**
+	 * Take a stashed payload, once.
+	 *
+	 * @param string $key Key from stash_payload().
+	 * @return array<int, mixed>|null Payload, or null when it is gone.
+	 */
+	private static function take_payload( string $key ): ?array {
+		$payload = get_transient( self::PAYLOAD_PREFIX . $key );
+		delete_transient( self::PAYLOAD_PREFIX . $key );
+
+		return is_array( $payload ) ? $payload : null;
 	}
 
 	/**
@@ -2249,13 +2605,26 @@ class EmailService {
 	 *
 	 * @since 1.7.1
 	 *
-	 * @param string|string[] $to      Recipient(s).
-	 * @param string          $subject Subject.
-	 * @param string          $message Body.
-	 * @param string|string[] $headers Headers.
+	 * Queued with one argument, the payload key. Jobs queued before 1.9.2
+	 * carry the four mail arguments themselves.
+	 *
+	 * @param string|string[] $to      Payload key, or recipient(s) on a pre-1.9.2 job.
+	 * @param string          $subject Subject (pre-1.9.2 job).
+	 * @param string          $message Body (pre-1.9.2 job).
+	 * @param string|string[] $headers Headers (pre-1.9.2 job).
 	 * @return void
 	 */
-	public static function retry( $to, string $subject, string $message, $headers = array() ): void {
+	public static function retry( $to, string $subject = '', string $message = '', $headers = array() ): void {
+		if ( 1 === func_num_args() ) {
+			$payload = self::take_payload( (string) $to );
+
+			if ( null === $payload ) {
+				return;
+			}
+
+			list( $to, $subject, $message, $headers ) = $payload;
+		}
+
 		self::$retrying = true;
 		wp_mail( $to, $subject, $message, $headers );
 		self::$retrying = false;
@@ -2360,6 +2729,7 @@ class EmailService {
 			self::TYPE_PROPOSAL_SUBMITTED     => 'generic.php',
 			self::TYPE_PROPOSAL_ACCEPTED      => 'generic.php',
 			self::TYPE_DISPUTE_ESCALATED      => 'dispute-escalated.php',
+			self::TYPE_ADMIN_FILING           => 'generic.php',
 			self::TYPE_MODERATION_APPROVED    => 'moderation-approved.php',
 			self::TYPE_MODERATION_REJECTED    => 'moderation-rejected.php',
 			self::TYPE_MODERATION_PENDING     => 'moderation-pending.php',
@@ -2504,6 +2874,7 @@ class EmailService {
 			self::TYPE_RECEIPT_SUBMITTED      => 'orders',
 			self::TYPE_RECEIPT_VERIFIED       => 'orders',
 			self::TYPE_RECEIPT_REJECTED       => 'orders',
+			self::TYPE_OFFLINE_ORDER_PLACED   => 'orders',
 			// Plain (generic-template) types NotificationService sends.
 			'review_reply'                    => 'completion',
 			'dispute_escalated'               => 'disputes',

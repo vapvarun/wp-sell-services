@@ -700,7 +700,7 @@ class Settings {
 
 		add_settings_field(
 			'commission_rate',
-			__( 'Commission Rate (%)', 'wp-sell-services' ),
+			__( 'Commission rate (%)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_commission',
 			'wpss_commission_section',
@@ -928,7 +928,7 @@ class Settings {
 				'field'       => 'enable_tax',
 				'label'       => __( 'Enable tax calculation on service orders', 'wp-sell-services' ),
 				'default'     => false,
-				'description' => __( 'Add tax to service orders at checkout. Only applies to standalone checkout — WooCommerce uses its own tax settings.', 'wp-sell-services' ),
+				'description' => __( 'Add tax to service orders at checkout. Milestone phases and extensions carry it on every store. On WooCommerce, Easy Digital Downloads or FluentCart, the store taxes catalog orders with its own tax settings.', 'wp-sell-services' ),
 			)
 		);
 
@@ -975,6 +975,21 @@ class Settings {
 				'label'       => __( 'Service prices already include tax (display tax as part of price)', 'wp-sell-services' ),
 				'default'     => false,
 				'description' => __( 'When enabled, displayed prices already include tax. When disabled, tax is added on top at checkout.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'tax_tips',
+			__( 'Tax Tips', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_tax',
+			'wpss_tax_section',
+			array(
+				'option_name' => 'wpss_tax',
+				'field'       => 'tax_tips',
+				'label'       => __( 'Charge tax on tips', 'wp-sell-services' ),
+				'default'     => false,
+				'description' => __( 'Milestone phases and extensions are taxed like the order they belong to. Tips are not taxed unless you turn this on; many tax authorities treat a tip as a gift, so check with your accountant.', 'wp-sell-services' ),
 			)
 		);
 
@@ -1279,7 +1294,7 @@ class Settings {
 				'default'     => 0,
 				'min'         => 0,
 				'max'         => 120,
-				'description' => __( 'Minutes to wait before sending. When the wait is over the email is sent only if the conversation is still unread. Set to 0 to send immediately.', 'wp-sell-services' ),
+				'description' => __( 'Minutes to wait before sending, up to 120. When the wait is over the email is sent only if the conversation is still unread. Set to 0 to send immediately. A held email needs background jobs (WP-Cron) to run; if they stop, a warning appears at the top of the plugin screens.', 'wp-sell-services' ),
 			)
 		);
 
@@ -1471,6 +1486,15 @@ class Settings {
 				'field'       => 'allowed_file_types',
 				'description' => __( 'Comma-separated list of allowed file extensions.', 'wp-sell-services' ),
 			)
+		);
+
+		add_settings_field(
+			'wpss_trusted_proxies',
+			__( 'Trusted proxies', 'wp-sell-services' ),
+			array( $this, 'render_trusted_proxies_field' ),
+			'wpss_advanced',
+			'wpss_advanced_section',
+			array( 'label_for' => 'wpss_trusted_proxies' )
 		);
 
 		// Realtime (WebSocket) settings.
@@ -1874,7 +1898,9 @@ class Settings {
 	private function render_payments_tab(): void {
 		echo '<div class="wpss-settings-subhead">';
 		echo '<h2 class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</h2>';
-		echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
+		if ( wpss_uses_standalone_payments() ) {
+			echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
+		}
 		echo '</div>';
 
 		$this->render_gateway_cards();
@@ -1994,7 +2020,7 @@ class Settings {
 			printf(
 				'<div class="notice notice-info inline wpss-gateway-notice"><p><strong>%s</strong> %s</p><p>%s</p></div>',
 				esc_html__( 'Payments are handled by', 'wp-sell-services' ) . ' ' . esc_html( $rail ) . '.',
-				esc_html__( 'The gateways below belong to this plugin and are not used while a store plugin is taking payment.', 'wp-sell-services' ),
+				esc_html__( 'The payment gateways built into this plugin are not used while a store plugin is taking payment, so they are not shown here.', 'wp-sell-services' ),
 				esc_html__( 'Configure your payment methods in that plugin instead. Switch Ecommerce Platform to Standalone under General if you want this plugin to take payment directly.', 'wp-sell-services' )
 			);
 
@@ -2806,7 +2832,25 @@ class Settings {
 
 
 	/**
-	 * Render text field.
+	 * Render the Trusted proxies textarea (its own option, wpss_trusted_proxies).
+	 *
+	 * @since 1.9.2
+	 *
+	 * @return void
+	 */
+	public function render_trusted_proxies_field(): void {
+		printf(
+			'<textarea id="wpss_trusted_proxies" name="wpss_trusted_proxies" rows="4" class="large-text code" aria-describedby="wpss_trusted_proxies_help" placeholder="10.0.0.0/8">%s</textarea>',
+			esc_textarea( (string) get_option( 'wpss_trusted_proxies', '' ) )
+		);
+		printf(
+			'<p class="description" id="wpss_trusted_proxies_help">%s</p>',
+			esc_html__( 'Only needed if your site sits behind a load balancer or proxy other than Cloudflare. List its IP addresses, one per line (a range like 10.0.0.0/8 works too), so visitors are recognised individually. Cloudflare is handled automatically. Leave empty if you are not sure.', 'wp-sell-services' )
+		);
+	}
+
+	/**
+	 * Render a text field.
 	 *
 	 * @param array<string, mixed> $args Field arguments.
 	 * @return void
@@ -2841,6 +2885,9 @@ class Settings {
 	 *   - option_name (string) Option array name.
 	 *   - field       (string) Field key within the option array.
 	 *   - label       (string) Optional accessible label (falls back to field).
+	 *   - id          (string) Optional input id, so a caller's <label for> matches
+	 *                          (falls back to field; pass one when two forms on a
+	 *                          page share a field key).
 	 *   - description (string) Optional help text.
 	 *   - prefix      (string) Optional non-secret prefix to hint which key is set
 	 *                          (e.g. 'whsec_'). Shown for recognition only.
@@ -2861,6 +2908,31 @@ class Settings {
 		$label       = (string) ( $args['label'] ?? $field );
 		$prefix_hint = isset( $args['prefix'] ) ? (string) $args['prefix'] : '';
 		$input_name  = (string) ( $args['name'] ?? $option_name . '[' . $field . ']' );
+		$input_id    = (string) ( $args['id'] ?? $field );
+
+		// Supplied by wp-config.php: nothing to type here, and a save never stores it.
+		$constant = wpss_secret_constant( $option_name, $field );
+
+		if ( '' !== $constant ) {
+			printf(
+				'<input type="password" id="%1$s" value="" disabled placeholder="%2$s" aria-label="%3$s" aria-describedby="%1$s-constant" class="regular-text">',
+				esc_attr( $input_id ),
+				esc_attr__( 'Set in wp-config.php', 'wp-sell-services' ),
+				esc_attr( $label )
+			);
+			printf(
+				'<p class="description" id="%1$s-constant">%2$s</p>',
+				esc_attr( $input_id ),
+				esc_html(
+					sprintf(
+						/* translators: %s: constant name, e.g. WPSS_STRIPE_LIVE_SECRET_KEY */
+						__( 'This secret comes from %s and is not stored in the database. Remove the constant to manage it here.', 'wp-sell-services' ),
+						$constant
+					)
+				)
+			);
+			return;
+		}
 
 		$placeholder = $has_secret
 			? __( '••••••••••••  (saved — leave blank to keep)', 'wp-sell-services' )
@@ -2873,7 +2945,7 @@ class Settings {
 
 		printf(
 			'<input type="password" id="%1$s" name="%2$s" value="" autocomplete="off" spellcheck="false" placeholder="%3$s" aria-label="%4$s" class="regular-text wpss-secret-field__input">',
-			esc_attr( $field ),
+			esc_attr( $input_id ),
 			esc_attr( $input_name ),
 			esc_attr( $placeholder ),
 			esc_attr( $label )
@@ -3567,7 +3639,7 @@ class Settings {
 		 */
 		$description = apply_filters(
 			'wpss_ecommerce_platform_description',
-			__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD and FluentCart.', 'wp-sell-services' )
+			__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce.', 'wp-sell-services' )
 		);
 
 		printf( '<p class="description">%s</p>', esc_html( $description ) );
@@ -3833,6 +3905,7 @@ class Settings {
 		}
 		$sanitized['tax_rate']     = min( 50, max( 0, (float) ( $input['tax_rate'] ?? 0 ) ) );
 		$sanitized['tax_included'] = ! empty( $input['tax_included'] );
+		$sanitized['tax_tips']     = ! empty( $input['tax_tips'] );
 
 		return $sanitized;
 	}

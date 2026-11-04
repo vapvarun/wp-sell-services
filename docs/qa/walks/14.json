@@ -1,34 +1,128 @@
 {
   "journey": "14",
-  "sha_free": "c21a7c05",
-  "sha_pro": "e4ac7141",
-  "env": {"site": "http://wp-sell-services.local", "theme": "reign-theme", "rail": "standalone", "wp": "7.1.3"},
-  "ran_at": "2026-10-20T23:08:00Z",
+  "sha_free": "bc6f982f",
+  "sha_pro": "f34e07d",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme",
+    "rail": "auto (WooCommerce active, resolves to Woo); standalone toggled for J12 s5 and restored to auto",
+    "wp": "7.1.3"
+  },
+  "ran_at": "2026-10-21T21:35:00Z",
   "checks": [
-    {"id": "s1-review-required-fields", "result": "pass", "evidence": "Empty submit blocked: textarea and rating radios invalid, message 'Choose a star rating to leave your review.'"},
-    {"id": "s1-review-submits-and-shows-state", "result": "pass", "evidence": "Tomas, completed order 3887: 5 stars + review saved (id 565), notice 'This review is awaiting moderation and is not public yet.'; Write a Review button gone afterwards."},
-    {"id": "s1-sub-ratings-optional", "result": "fail", "evidence": "Review form offers only Overall rating and Your Review; no communication/quality/delivery sub-rating fields although the table has the columns."},
-    {"id": "s1-duplicate-refused", "result": "pass", "evidence": "POST /reviews again for order 3887 -> 400 rest_already_reviewed; 1 row in wpss_reviews."},
-    {"id": "s1-verified-purchase-badge-and-rating-updates", "result": "pass", "evidence": "After approval service 11411 review count 1 -> 2, average 5; approved reviews list on the service page. Verified Purchase badge text was not located in the DOM scan (untested separately)."},
-    {"id": "s2-seller-reply-shown-and-buyer-notified", "result": "pass", "evidence": "Maya > Reviews > Post Reply on Tomas's review: vendor_reply saved with time, reply text shown on the public service page, review_reply notification to buyer 9698. No success toast after posting."},
-    {"id": "s3-favourites-list-matches-hearts", "result": "pass", "evidence": "Ella's saved list shows exactly the 4 ids in _wpss_favorite_services; header '4 saved services'."},
-    {"id": "s3-remove-with-keyboard-and-390", "result": "pass", "evidence": "Focusing the 'Remove ... from favorites' button and pressing Enter removed the card and the meta id; 390px scrollWidth 390."},
-    {"id": "s3-deleted-service-disappears", "result": "pass", "evidence": "After deleting a favourited scratch service, a fresh navigation shows '3 saved services' and no dead card (a plain reload briefly showed it from cache)."},
-    {"id": "s4-presale-thread-both-parties", "result": "pass", "evidence": "Ella Contact Seller (UI modal) -> conversation 292 [7848,7832]; Diego sees '2 unread messages from Ella Martinez' at 1440 and 390; Ella sees the thread with 'You: ...'."},
-    {"id": "s4-unread-clears", "result": "pass", "evidence": "Diego opens the thread: read_by on both messages gains 7832 with a timestamp; badge gone."},
-    {"id": "s4-attachment-type-limit-notice", "result": "fail", "evidence": "Contact Seller with audit-tool.exe: AJAX 200 'Your message has been sent successfully!', message stored with attachments [] and no notice that the file was dropped (modal closes silently). Modal copy promises 'Max 5 files. Allowed: images, PDF, Word, ZIP'."},
-    {"id": "s4-attachment-size-limit", "result": "untested", "evidence": "Oversize attachment not tried."},
-    {"id": "s4-order-thread-both-parties", "result": "untested", "evidence": "Order 3887 is completed and shows no message box; the in-progress order thread is covered in journey 01."},
-    {"id": "s4-suspended-seller-cannot-start-presale-can-answer-order", "result": "fail", "evidence": "Vendor-suspended Maya could start a pre-sale thread (journey 05 p2-s3). Answering an order thread while suspended not tested."},
-    {"id": "s5-service-reviews-and-faqs-partials", "result": "pass", "evidence": "Approved reviews list on service page; held review text absent until approved."},
-    {"id": "s5-no-empty-heading", "result": "fail", "evidence": "qa-guest-return (no reviews, no FAQs): no FAQ heading, but a 'Reviews' heading with 'No reviews yet. Be the first to review this service!' is rendered."},
-    {"id": "s6-helpful-toggle", "result": "pass", "evidence": "Ella: 'Helpful' -> 'Helpful (1)' aria-pressed=true, persists after reload, press again -> 'Helpful' aria-pressed=false, persists. No 390 overflow."},
-    {"id": "s6-author-has-no-helpful-button", "result": "pass", "evidence": "Tomas sees helpful buttons only for review 229, not his own 565."},
-    {"id": "s6-signed-out-asked-to-log-in", "result": "fail", "evidence": "Signed-out visitor: .wpss-review-helpful containers render empty (no button, no login prompt)."}
+    {
+      "id": "s1-review-required-fields",
+      "result": "pass",
+      "evidence": "Empty submit blocked."
+    },
+    {
+      "id": "s1-review-submits-and-shows-state",
+      "result": "pass",
+      "evidence": "Overall 4, Communication 5, Quality 4, Value blank stored (delivery_rating NULL), status pending, 'awaiting moderation' notice shown, button hidden."
+    },
+    {
+      "id": "s1-sub-ratings-optional",
+      "result": "pass",
+      "evidence": "Three selects default 'Not rated'; value 9 rejected (rest_invalid_param); cards show only rated ones ('Communication 5/5 Quality 4/5') on dashboard, service page, vendor profile; fine at 390."
+    },
+    {
+      "id": "review-card-subratings",
+      "result": "pass",
+      "evidence": "Sub-ratings render on all three card surfaces."
+    },
+    {
+      "id": "s1-duplicate-refused",
+      "result": "pass",
+      "evidence": "POST /reviews on reviewed order 400 rest_already_reviewed; on in-progress order 400 rest_order_not_completed."
+    },
+    {
+      "id": "s1-verified-purchase-badge-and-rating-updates",
+      "result": "fail",
+      "evidence": "Rating updates correctly, but no 'Verified Purchase' text renders anywhere; docs/website/reviews-ratings/review-system.md line 56 and buyer-guide/browsing-and-purchasing.md line 72 promise it; grep of templates/ and src/ finds none.",
+      "origin": "for",
+      "invariant": "soft"
+    },
+    {
+      "id": "s2-seller-reply-shown-and-buyer-notified",
+      "result": "pass",
+      "evidence": "Reply shows on service page, vendor profile, dashboard; review_reply notification sent. No success toast seen."
+    },
+    {
+      "id": "s3-favourites-list-matches-hearts",
+      "result": "pass",
+      "evidence": "4 saved ids match meta and heart state."
+    },
+    {
+      "id": "s3-remove-with-keyboard-and-390",
+      "result": "pass",
+      "evidence": "Enter on remove button removes the card; 390 no overflow. Remove button is 30x30px, under the 44px target (soft note)."
+    },
+    {
+      "id": "s3-deleted-service-disappears",
+      "result": "untested",
+      "evidence": "Not re-walked this run."
+    },
+    {
+      "id": "s4-presale-thread-both-parties",
+      "result": "pass",
+      "evidence": "Thread visible to vendor with both messages."
+    },
+    {
+      "id": "s4-unread-clears",
+      "result": "pass",
+      "evidence": "Unread badges cleared after the vendor opened threads."
+    },
+    {
+      "id": "s4-attachment-type-limit-notice",
+      "result": "pass",
+      "evidence": ".exe refused with 'File type could not be verified.' (wording vague, soft)."
+    },
+    {
+      "id": "s4-attachment-size-limit",
+      "result": "pass",
+      "evidence": "'File size exceeds the maximum of 10 MB.'"
+    },
+    {
+      "id": "s4-order-thread-both-parties",
+      "result": "pass",
+      "evidence": "Buyer message visible to vendor. Icon-only send button has title but no aria-label (soft a11y)."
+    },
+    {
+      "id": "s4-suspended-seller-cannot-start-presale-can-answer-order",
+      "result": "fail",
+      "evidence": "Same defect as J13 s3: a buyer can start a new pre-sale thread with a suspended vendor (conversation and message created).",
+      "origin": "from",
+      "invariant": "hard"
+    },
+    {
+      "id": "s5-service-reviews-and-faqs-partials",
+      "result": "pass",
+      "evidence": "FAQs render when _wpss_faqs set (temp meta removed); held reviews never appear."
+    },
+    {
+      "id": "s5-no-empty-heading",
+      "result": "pass",
+      "evidence": "Services without reviews show no Reviews heading or empty text."
+    },
+    {
+      "id": "s6-helpful-toggle",
+      "result": "untested",
+      "evidence": "Helpful vote removed in 1.9.1 (Plugin.php remove_helpful_votes; docs whats-new-1-9-1.md). Journey step 6 is obsolete."
+    },
+    {
+      "id": "s6-author-has-no-helpful-button",
+      "result": "untested",
+      "evidence": "Obsolete, see s6-helpful-toggle."
+    },
+    {
+      "id": "s6-signed-out-asked-to-log-in",
+      "result": "untested",
+      "evidence": "Obsolete, see s6-helpful-toggle."
+    }
   ],
   "proposed_checks": [
-    "Review form: sub-ratings should be offered or the journey text updated.",
-    "Contact Seller / message attachments: a refused file must produce a visible notice."
-  ],
-  "verdict": "FAIL"
+    "Journey 14 step 6 (Helpful) is obsolete; replace with a check that no Helpful control renders.",
+    "Verified Purchase badge: either render it or remove the docs promise.",
+    "Icon-only send button has an aria-label."
+  ]
 }

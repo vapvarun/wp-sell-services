@@ -13,7 +13,7 @@
  * yourtheme/wp-sell-services/partials/request-attachments.php
  *
  * @package WPSellServices
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var array<int> $wpss_attachment_ids Attachment IDs already on the request (edit). Optional.
  * @var bool       $wpss_files_locked   A vendor has proposed: the files already on the request stay. Optional.

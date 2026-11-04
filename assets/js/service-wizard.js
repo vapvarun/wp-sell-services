@@ -953,81 +953,12 @@ function wpssServiceWizard(existingData = {}) {
 		 * @param {string} type    - 'success' or 'error'.
 		 */
 		showNotice(message, type = 'success') {
-			// Create notice element.
-			const notice = document.createElement('div');
-			notice.className = `wpss-wizard-notice wpss-wizard-notice--${type}`;
-			notice.textContent = message;
-
-			/*
-			 * Announce it. Every wizard notice - duplicate image refused, a limit
-			 * reached, draft saved, published - was appended as a plain div, so a
-			 * screen-reader user got no feedback at all for actions that only
-			 * report through this toast. An error is assertive because it means
-			 * the vendor's action did not happen; a success is polite so it does
-			 * not interrupt what they are typing (WCAG 2.1 AA, 4.1.3).
-			 */
-			notice.setAttribute('role', type === 'error' ? 'alert' : 'status');
-			notice.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
-
-			// Style the notice
-			Object.assign(notice.style, {
-				position: 'fixed',
-				top: '20px',
-				right: '20px',
-				padding: '12px 20px',
-				borderRadius: '8px',
-				fontSize: '14px',
-				fontWeight: '500',
-				zIndex: '10000',
-				animation: 'wpss-notice-slide-in 0.3s ease'
-			});
-
-			if (type === 'success') {
-				notice.style.backgroundColor = '#d1fae5';
-				notice.style.color = '#065f46';
-			} else {
-				notice.style.backgroundColor = '#fee2e2';
-				notice.style.color = '#991b1b';
-			}
-
-			document.body.appendChild(notice);
-
-			// Remove after 3 seconds
-			setTimeout(() => {
-				notice.style.animation = 'wpss-notice-slide-out 0.3s ease';
-				setTimeout(() => {
-					notice.remove();
-				}, 300);
-			}, 3000);
+			// The shared toast: above the admin bar, logical inset for RTL,
+			// themed colours, and the right live-region role per type.
+			window.wpssToast(message, type);
 		}
 	};
 }
-
-// Add notice animations to document
-const style = document.createElement('style');
-style.textContent = `
-	@keyframes wpss-notice-slide-in {
-		from {
-			opacity: 0;
-			transform: translateX(20px);
-		}
-		to {
-			opacity: 1;
-			transform: translateX(0);
-		}
-	}
-	@keyframes wpss-notice-slide-out {
-		from {
-			opacity: 1;
-			transform: translateX(0);
-		}
-		to {
-			opacity: 0;
-			transform: translateX(20px);
-		}
-	}
-`;
-document.head.appendChild(style);
 
 // Expose globally for x-data="wpssServiceWizard({})" syntax.
 // This script loads BEFORE Alpine (without defer), so the function

@@ -611,6 +611,35 @@ class VendorProfile {
 	 * @return bool True if the vendor has reached or exceeded the limit.
 	 */
 	public function has_reached_service_limit(): bool {
+		$max_services = $this->get_max_services();
+
+		// 0 (or a negative "unlimited" sentinel) means no ceiling.
+		if ( $max_services <= 0 ) {
+			return false;
+		}
+
+		$current_count = $this->get_service_count();
+
+		return $current_count >= $max_services;
+	}
+
+	/**
+	 * Get the number of active services for this vendor.
+	 *
+	 * Counts published and pending services (not drafts).
+	 *
+	 * @return int Number of services.
+	 */
+	public function get_service_count(): int {
+		return wpss_count_vendor_services( (int) $this->user_id, wpss_get_limit_counted_statuses() );
+	}
+
+	/**
+	 * Get the maximum number of services allowed for this vendor.
+	 *
+	 * @return int Maximum services. 0 means unlimited.
+	 */
+	public function get_max_services(): int {
 		$max_services = absint( wpss_get_option( 'vendor', 'max_services_per_vendor' ) );
 
 		/**
@@ -635,34 +664,8 @@ class VendorProfile {
 		 */
 		$max_services = (int) apply_filters( 'wpss_vendor_max_services', $max_services, (int) $this->user_id );
 
-		// 0 (or a negative "unlimited" sentinel) means no ceiling.
-		if ( $max_services <= 0 ) {
-			return false;
-		}
-
-		$current_count = $this->get_service_count();
-
-		return $current_count >= $max_services;
-	}
-
-	/**
-	 * Get the number of active services for this vendor.
-	 *
-	 * Counts published and pending services (not drafts).
-	 *
-	 * @return int Number of services.
-	 */
-	public function get_service_count(): int {
-		return wpss_count_vendor_services( (int) $this->user_id, array( 'publish', 'pending' ) );
-	}
-
-	/**
-	 * Get the maximum number of services allowed for this vendor.
-	 *
-	 * @return int Maximum services. 0 means unlimited.
-	 */
-	public function get_max_services(): int {
-		return absint( wpss_get_option( 'vendor', 'max_services_per_vendor' ) );
+		// A negative "unlimited" sentinel from the filter means no ceiling, same as 0.
+		return max( 0, $max_services );
 	}
 
 	/**

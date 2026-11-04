@@ -52,6 +52,12 @@ function wpss_get_gallery_ids( $raw ): array {
 /**
  * Get the video URL from gallery meta.
  *
+ * Only a YouTube or Vimeo URL is returned. The page renders the video through
+ * oEmbed on every view, and oEmbed fetches any other URL to discover an
+ * embed, so a vendor-entered host would have the site's server call wherever
+ * the vendor chose. Applied here, on read, so rows saved before the wizard
+ * enforced it are covered too.
+ *
  * @since 1.1.0
  *
  * @param mixed $raw Raw gallery meta value (from get_post_meta).
@@ -62,23 +68,24 @@ function wpss_get_gallery_video_url( $raw ): string {
 		return '';
 	}
 
+	$url = '';
+
 	// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Documents the meta shape this branch handles; not dead code.
 	// ServiceWizard format: ['images' => [...], 'video' => '...'].
 	if ( isset( $raw['video'] ) && is_string( $raw['video'] ) ) {
-		return $raw['video'];
-	}
-
-	// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Documents the meta shape this branch handles; not dead code.
-	// GalleryService format: [['type' => 'video', 'url' => '...'], ...].
-	if ( isset( $raw[0] ) && is_array( $raw[0] ) ) {
+		$url = $raw['video'];
+	} elseif ( isset( $raw[0] ) && is_array( $raw[0] ) ) {
+		// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Documents the meta shape this branch handles; not dead code.
+		// GalleryService format: [['type' => 'video', 'url' => '...'], ...].
 		foreach ( $raw as $item ) {
 			if ( 'video' === ( $item['type'] ?? '' ) && ! empty( $item['url'] ) ) {
-				return $item['url'];
+				$url = (string) $item['url'];
+				break;
 			}
 		}
 	}
 
-	return '';
+	return wpss_is_supported_video_url( $url ) ? $url : '';
 }
 
 /**
@@ -86,7 +93,10 @@ function wpss_get_gallery_video_url( $raw ): string {
  *
  * @since 1.8.0
  *
- * @return array<string,array{key:string,order:string}> Sort slug => meta key and direction.
+ * A rating or sales count of 0 means none yet (`zero_is_none`), so it sorts with the
+ * services that have no value at all; a price of 0 is a real price.
+ *
+ * @return array<string,array{key:string,order:string,zero_is_none?:bool}> Sort slug => meta key and direction.
  */
 function wpss_service_meta_sorts(): array {
 	return array(
@@ -99,20 +109,24 @@ function wpss_service_meta_sorts(): array {
 			'order' => 'DESC',
 		),
 		'rating'      => array(
-			'key'   => '_wpss_rating_average',
-			'order' => 'DESC',
+			'key'          => '_wpss_rating_average',
+			'order'        => 'DESC',
+			'zero_is_none' => true,
 		),
 		'rating_low'  => array(
-			'key'   => '_wpss_rating_average',
-			'order' => 'ASC',
+			'key'          => '_wpss_rating_average',
+			'order'        => 'ASC',
+			'zero_is_none' => true,
 		),
 		'popular'     => array(
-			'key'   => '_wpss_order_count',
-			'order' => 'DESC',
+			'key'          => '_wpss_order_count',
+			'order'        => 'DESC',
+			'zero_is_none' => true,
 		),
 		'popular_low' => array(
-			'key'   => '_wpss_order_count',
-			'order' => 'ASC',
+			'key'          => '_wpss_order_count',
+			'order'        => 'ASC',
+			'zero_is_none' => true,
 		),
 	);
 }
@@ -181,7 +195,9 @@ function wpss_service_sort_clauses( array $clauses, \WP_Query $query ): array {
 	if ( false === strpos( $clauses['groupby'], 'ID' ) ) {
 		$clauses['groupby'] = trim( "{$wpdb->posts}.ID " . ( '' !== $clauses['groupby'] ? ', ' . $clauses['groupby'] : '' ) );
 	}
-	$clauses['orderby'] = 'wpss_sort.meta_value IS NULL, CAST( wpss_sort.meta_value AS DECIMAL( 12, 2 ) ) ' . $sorts[ $sort ]['order'] . ", {$wpdb->posts}.post_date DESC, {$wpdb->posts}.ID DESC";
+	// No value sorts last both ways; for a rating or a sales count, 0 is no value (a service nobody has reviewed is not the lowest rated).
+	$none               = empty( $sorts[ $sort ]['zero_is_none'] ) ? 'wpss_sort.meta_value IS NULL' : '( wpss_sort.meta_value IS NULL OR CAST( wpss_sort.meta_value AS DECIMAL( 12, 2 ) ) = 0 )';
+	$clauses['orderby'] = $none . ', CAST( wpss_sort.meta_value AS DECIMAL( 12, 2 ) ) ' . $sorts[ $sort ]['order'] . ", {$wpdb->posts}.post_date DESC, {$wpdb->posts}.ID DESC";
 
 	return $clauses;
 }
@@ -341,7 +357,7 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 	// vacation is not listed. A grid of one named vendor is that vendor's own
 	// page and keeps their services (Basecamp 10375176013).
 	if ( empty( $args['author'] ) ) {
-		$args['author__not_in'] = wpss_get_vacation_vendor_ids();
+		$args['author__not_in'] = wpss_get_unlisted_seller_ids();
 	}
 
 	$query = new \WP_Query( $args );
@@ -589,7 +605,8 @@ function wpss_get_category_service_counts( array $term_ids ): array {
  * @return string Thumbnail URL, or an empty string.
  */
 function wpss_get_video_thumbnail_url( string $video_url ): string {
-	if ( '' === $video_url || ! function_exists( '_wp_oembed_get_object' ) ) {
+	// oEmbed fetches an unknown URL to discover it, so only the two providers we embed are asked.
+	if ( ! wpss_is_supported_video_url( $video_url ) || ! function_exists( '_wp_oembed_get_object' ) ) {
 		return '';
 	}
 

@@ -77,13 +77,68 @@ Users and data are created by the walk (or `bin/qa-fixtures.sh` for users). Do n
 | `14-member-reviews-favorites-messages.md` | reviews and replies, favourites, messages | standalone, woo |
 | `15-seller-runs-the-business.md` | profile, portfolio, earnings, analytics, plans | standalone, woo |
 | `16-milestones-extensions-and-tips.md` | milestone contracts, paid and deadline extensions, tips | standalone, woo |
+| `17-razorpay-checkout.md` | owner enables Razorpay, buyer pays, webhook, refund, disable (Pro) | standalone |
+| `18-automatic-payouts.md` | Stripe Connect onboarding and destination charges, PayPal Payouts batches (Pro) | standalone |
+| `19-wallet-and-balance-adjustments.md` | wallet provider fallback, balance agreement, admin credit and debit | standalone, woo |
+| `20-store-rails-edd-fluentcart.md` | EDD and FluentCart beta rails: enable, buy, pay-order, platform refund (Pro) | edd, fluentcart |
+| `21-vendor-plans-and-commission-rules.md` | vendor plans: gate, buy, cancel to period end, renewal; tiered commission (Pro) | standalone, woo |
+| `22-seller-levels.md` | levels earned, shown, overridden, and over REST | standalone, woo |
+| `23-blocks-shortcodes-and-pro-presentation.md` | every block and shortcode; cloud storage, display currency, white label, push (Pro) | standalone, woo |
+| `24-catalog-order-lifecycle.md` | buyer orders a service: requirements, delivery, revisions, accept or auto-complete, review | standalone, woo |
 
 Walk dates and results are recorded in `.qa-results/walks.json`, not in these files.
 
+## Every published feature has a journey
+
+Each row of the public feature catalog (`docs/website/feature-catalog.md`) and the journey that walks it.
+
+| Feature catalog row | Journey |
+|---|---|
+| Service listings with packages and add-ons | 05, 04, 24 |
+| Vendor profiles, portfolios, vendor levels | 04, 15, 22 |
+| Buyer requests and vendor proposals | 01, 09 |
+| Order lifecycle with requirements, delivery, revisions | 24 |
+| Order messaging | 14 |
+| Reviews and ratings | 14, 24 |
+| Disputes with frontend messaging | 02 |
+| Favourites | 14 |
+| Services per vendor | 05 |
+| Standalone checkout | 06 |
+| Payment gateways (Stripe, PayPal, Offline; Razorpay) | 06, 17 |
+| Ecommerce integrations (WooCommerce; EDD and FluentCart beta) | 07, 20 |
+| Commission, per-vendor rates; tiered rules | 12, 21 |
+| Vendor subscription plans | 21 |
+| Service limits (gallery, add-ons, FAQs, requirements, packages, videos) | 05 |
+| Vendor wallet and withdrawals | 10, 19 |
+| Manual payouts (mark paid, CSV export) | 10 |
+| Stripe Connect automated payouts | 18 |
+| PayPal Payouts batches | 18 |
+| Tips | 16 |
+| Paid extensions on catalog orders | 16 |
+| Milestone contracts on buyer-request orders | 16 |
+| Refunds, including partial | 13, 07, 20 |
+| Display currency | 23 |
+| Frontend dashboard (buyer + vendor) | 15, 24 |
+| Role-based dashboard sections | 15, 11 |
+| Dark mode and theme integration | every journey, under `../gate-parameters.md` |
+| Gutenberg blocks and shortcodes | 23 |
+| Email notifications; white-label branding | 11, 12, 23 |
+| In-app notifications | 11 |
+| Push notifications to phones | 23 |
+| Realtime alerts | 08 |
+| Admin order, vendor, dispute, withdrawal management | 13, 02, 10 |
+| Moderation queues | 13 |
+| Analytics | 15, 13 |
+| File storage (server, S3, GCS, Spaces) | 23 |
+| Audit log | 13 |
+| REST API | 08 |
+| WP-CLI | 03, 05, 08 |
+| Recurring billing for services | none: not shipping, see below |
+
 ## Not yet written
 
-Wallet providers (TeraWallet, myCred), Razorpay, Stripe Connect and PayPal payouts, EDD and FluentCart rails
-(beta), vendor subscription plan purchase, vendor levels, the blocks and shortcodes, recurring services (switched off).
+Recurring services only: switched off, with no setting to turn them on, so there is nothing an owner can walk.
+Every other feature in `docs/website/feature-catalog.md` has a journey above; `docs/qa/FEATURE-CATALOG.md` maps each row to it.
 
 ## Two things these journeys have taught, the hard way
 

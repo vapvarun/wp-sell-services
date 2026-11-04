@@ -36,44 +36,12 @@ $check  = static function ( string $label, bool $ok ) use ( &$fails, &$passes ) 
 	$ok ? $passes++ : $fails++;
 };
 
-// --- find a published service that renders a gallery ------------------------------
-$service_id = 0;
-
-/*
- * Ask only for services that actually carry gallery meta. Scanning the newest N
- * services and reading meta per row is an N+1 that also finds nothing on a site
- * whose newest services are gallery-less - which is exactly how this fixture
- * first came back empty on a 389-service sandbox.
- */
-$ids = get_posts(
-	array(
-		'post_type'      => 'wpss_service',
-		'post_status'    => 'publish',
-		'posts_per_page' => 25,
-		'fields'         => 'ids',
-		'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one-off contract script, not a page render.
-			array(
-				'key'     => '_wpss_gallery',
-				'compare' => 'EXISTS',
-			),
-		),
-	)
-);
-foreach ( $ids as $id ) {
-	$gallery = wpss_get_gallery_ids( get_post_meta( $id, '_wpss_gallery', true ) );
-	if ( has_post_thumbnail( $id ) ) {
-		$gallery[] = get_post_thumbnail_id( $id );
-	}
-	if ( count( array_unique( array_filter( $gallery ) ) ) > 1 ) {
-		$service_id = (int) $id;
-		break;
-	}
-}
-
-if ( ! $service_id ) {
-	echo "SKIP  no published service with a multi-image gallery on this site\n";
-	return;
-}
+// --- a published service that renders a gallery: main image plus two more -------
+// Throwaway, removed with its images on any exit; a site seeded without images has none.
+$service_id = wpss_test_live_service( 3 );
+$images     = wpss_get_gallery_ids( get_post_meta( $service_id, '_wpss_gallery', true ) );
+$images[]   = get_post_thumbnail_id( $service_id );
+$check( 'fixture: the service has three distinct images', 3 === count( array_unique( array_filter( $images ) ) ) );
 
 $title = (string) get_post_field( 'post_title', $service_id );
 $check( 'fixture: a multi-image service with a real title (#' . $service_id . ')', '' !== $title );

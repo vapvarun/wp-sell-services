@@ -427,6 +427,12 @@ class ExtensionRequestsController extends RestController {
 			return null;
 		}
 
+		// No pay link while the order is not active (the quote is on hold).
+		$pay_order = wpss_get_order( $pay_order_id );
+		if ( ! $pay_order || '' !== wpss_get_order_payment_refusal( $pay_order ) ) {
+			return null;
+		}
+
 		$url = wpss_get_pay_order_url( $pay_order_id );
 
 		return $url ? $url : null;

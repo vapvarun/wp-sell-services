@@ -52,6 +52,13 @@ class CheckoutIntentService {
 			return $this->resolve_order( $pay_order_id, $buyer_id );
 		}
 
+		// New purchases only: paying an order already placed (above) is an
+		// existing obligation and stays open to a member whose standing changed.
+		$standing = wpss_account_status_block( $buyer_id );
+		if ( $standing ) {
+			return $standing;
+		}
+
 		if ( ! empty( $request['is_multi_checkout'] ) ) {
 			return $this->resolve_cart( $buyer_id );
 		}
@@ -75,11 +82,14 @@ class CheckoutIntentService {
 			return new \WP_Error( 'wpss_invalid_order', __( 'Invalid order.', 'wp-sell-services' ) );
 		}
 
-		if ( 'pending_payment' !== $order->status ) {
-			return new \WP_Error(
-				in_array( $order->status, array( 'cancelled', 'refunded' ), true ) ? 'wpss_order_closed' : 'wpss_already_paid',
-				wpss_get_order_not_payable_message( $order )
-			);
+		$refusal = wpss_get_order_payment_refusal( $order );
+		if ( '' !== $refusal ) {
+			if ( 'pending_payment' === $order->status ) {
+				$code = 'wpss_order_on_hold';
+			} else {
+				$code = in_array( $order->status, array( 'cancelled', 'refunded' ), true ) ? 'wpss_order_closed' : 'wpss_already_paid';
+			}
+			return new \WP_Error( $code, $refusal );
 		}
 
 		// A locked milestone phase cannot be funded before the previous phase is
@@ -107,7 +117,7 @@ class CheckoutIntentService {
 				'service_id'  => (int) $order->service_id,
 				'customer_id' => $buyer_id,
 				/* translators: %d: order ID */
-				'description' => wp_strip_all_tags( get_the_title( (int) $order->service_id ) ) ?: sprintf( __( 'Order #%d', 'wp-sell-services' ), $order_id ),
+				'description' => wp_strip_all_tags( wpss_get_order_title( $order ) ) ?: sprintf( __( 'Order #%d', 'wp-sell-services' ), $order_id ),
 			)
 		);
 	}
@@ -317,6 +327,45 @@ class CheckoutIntentService {
 			'net'          => (float) $tax['net'],
 			'tax_included' => (bool) $tax['included'],
 			'tax_label'    => (string) $tax['label'],
+		);
+	}
+
+	/**
+	 * Price a phase, an extension or a tip the way the order it hangs off is priced.
+	 *
+	 * Phases and extensions carry the site's tax like any other part of the service. A tip is taxed
+	 * only when the owner turns on "Tax tips" (off by default: it is often treated as a gift). The row
+	 * keeps the quoted amount as `subtotal` and the taxed `total` (what the buyer pays on every rail),
+	 * with the rate, amount and tax_included flag in `meta`; wpss_order_commission_base() takes the tax
+	 * out of an inclusive subtotal, so commission is never taken on tax in either mode.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param string $kind       'milestone', 'extension' or 'tip'.
+	 * @param float  $amount     Amount the vendor quoted or the buyer tipped.
+	 * @param int    $service_id Parent order's service ID (0 for a custom request).
+	 * @param int    $vendor_id  Parent order's vendor.
+	 * @return array{subtotal:float,total:float,tax_meta:array<string,mixed>}
+	 */
+	public static function price_sub_order( string $kind, float $amount, int $service_id, int $vendor_id ): array {
+		$taxable = 'tip' !== $kind || wpss_tips_are_taxed();
+		$line    = $taxable
+			? self::price_line( $service_id, $amount, 0.0, $vendor_id )
+			: array(
+				'tax'          => 0.0,
+				'tax_rate'     => 0.0,
+				'total'        => $amount,
+				'tax_included' => false,
+				'tax_label'    => '',
+			);
+
+		return array(
+			'subtotal' => $amount,
+			// To the currency's minor unit: the column holds 3 places, and every rail charges in minor units.
+			'total'    => round( (float) $line['total'], wpss_get_currency_decimals() ),
+			'tax_meta' => $line['tax'] > 0
+				? wpss_order_tax_meta( (float) $line['tax_rate'], (float) $line['tax'], (bool) $line['tax_included'], (string) $line['tax_label'] )
+				: array(),
 		);
 	}
 
@@ -585,7 +634,7 @@ class CheckoutIntentService {
 		 * (Basecamp 10375173905). A named lock per transaction makes the second
 		 * caller wait, then find the first one's order.
 		 */
-		$lock = 'wpss_settle_' . md5( $gateway_id . '|' . $transaction_id );
+		$lock = wpss_lock_name( 'wpss_settle_' . md5( $gateway_id . '|' . $transaction_id ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$locked = '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 15 )', $lock ) );
 
@@ -814,11 +863,59 @@ class CheckoutIntentService {
 
 		$provider->mark_as_paid( $order->id, $txn, $gateway );
 
+		if ( ! $this->confirm_paid( (int) $order->id ) ) {
+			return $this->unconfirmed_payment( array( (int) $order->id ), $gateway, $txn );
+		}
+
 		return array(
 			'success'      => true,
 			'order_id'     => (int) $order->id,
 			'order_number' => $order->order_number,
 			'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_requirements_url( $order->id ), 'intent' ),
+		);
+	}
+
+	/**
+	 * Whether an order really is paid now.
+	 *
+	 * The provider's mark_as_paid() answers false for a closed order, a failed
+	 * update and a lost race. Asked of the order as stored, so a payment a webhook already
+	 * recorded counts and a charge that paid nothing never reads as success.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	private function confirm_paid( int $order_id ): bool {
+		$order = wpss_get_order( $order_id );
+
+		return $order && in_array( (string) $order->payment_status, array( 'paid', 'partially_refunded', 'refunded' ), true );
+	}
+
+	/**
+	 * The answer for a charge that did not pay its order.
+	 *
+	 * The buyer is told the truth and given the reference, and the owner gets an
+	 * error in the log naming the orders and the transaction to review.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param array<int> $order_ids Orders the charge should have paid.
+	 * @param string     $gateway   Gateway slug.
+	 * @param string     $txn       Transaction ID.
+	 * @return array<string,mixed>
+	 */
+	private function unconfirmed_payment( array $order_ids, string $gateway, string $txn ): array {
+		wpss_log( sprintf( '%s payment %s was taken but order(s) %s could not be marked paid. Review this payment.', $gateway, $txn, implode( ', ', $order_ids ) ), 'error' );
+
+		return array(
+			'success' => false,
+			'error'   => sprintf(
+				/* translators: %s: payment reference */
+				__( 'Your payment was received, but the order could not be confirmed. Please contact support and quote this reference: %s', 'wp-sell-services' ),
+				$txn
+			),
 		);
 	}
 
@@ -866,8 +963,17 @@ class CheckoutIntentService {
 			);
 		}
 
+		$unpaid = array();
 		foreach ( $order_ids as $oid ) {
 			$provider->mark_as_paid( (int) $oid, $txn, $gateway );
+
+			if ( ! $this->confirm_paid( (int) $oid ) ) {
+				$unpaid[] = (int) $oid;
+			}
+		}
+
+		if ( $unpaid ) {
+			return $this->unconfirmed_payment( $unpaid, $gateway, $txn );
 		}
 
 		delete_user_meta( $intent->buyer_id, '_wpss_cart' );
@@ -930,6 +1036,10 @@ class CheckoutIntentService {
 		}
 
 		$provider->mark_as_paid( $order->id, $txn, $gateway );
+
+		if ( ! $this->confirm_paid( (int) $order->id ) ) {
+			return $this->unconfirmed_payment( array( (int) $order->id ), $gateway, $txn );
+		}
 
 		// Remove the purchased line from the cart so it can't be re-paid.
 		// settle_cart() clears the whole cart after a multi-item checkout; the

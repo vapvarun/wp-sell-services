@@ -53,6 +53,23 @@ function wpss_get_service_status( int $service_id ): string {
 }
 
 /**
+ * Pause or resume a service: it stays published and listed, but takes no new orders.
+ *
+ * The one writer of _wpss_status for services. The vendor dashboard used to "pause" by
+ * unpublishing, which dropped the listing, while the admin metabox wrote this meta, so
+ * paused meant two things (Basecamp 10432412187).
+ *
+ * @since 1.9.2
+ *
+ * @param int  $service_id Service post ID.
+ * @param bool $paused     True to pause, false to resume.
+ * @return void
+ */
+function wpss_set_service_paused( int $service_id, bool $paused ): void {
+	update_post_meta( $service_id, '_wpss_status', $paused ? 'paused' : 'active' );
+}
+
+/**
  * Get service URL.
  *
  * @param int $service_id Service ID.
@@ -101,13 +118,26 @@ function wpss_can_view_service( int $service_id, ?int $user_id = null ): bool {
 		return false;
 	}
 
-	if ( 'publish' === $service->post_status ) {
-		return true;
-	}
+	return 'publish' === $service->post_status || wpss_can_view_unpublished_service( $service_id, $user_id );
+}
 
+/**
+ * Whether a person may see a service that is not public yet (draft, pending, rejected).
+ *
+ * Its author and site admins only. Shared by wpss_can_view_service() and the moderation
+ * guard that lets the author and the reviewer open a held service's permalink.
+ *
+ * @since 1.9.2
+ *
+ * @param int      $service_id Service post ID.
+ * @param int|null $user_id    Viewer; null for the current user.
+ * @return bool
+ */
+function wpss_can_view_unpublished_service( int $service_id, ?int $user_id = null ): bool {
 	$user_id = null === $user_id ? get_current_user_id() : $user_id;
+	$service = $service_id > 0 ? get_post( $service_id ) : null;
 
-	return $user_id > 0 && ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
+	return $user_id > 0 && $service instanceof \WP_Post && ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
 }
 
 /**
@@ -482,6 +512,56 @@ function wpss_get_service_publish_errors( int $service_id ): array {
 }
 
 /**
+ * Why a vendor may not make this service count against their limit, or ''.
+ *
+ * The one answer for every door that takes a service live: the wizard, REST
+ * and the dashboard Publish toggle (which is REST). A published or pending
+ * service already counts, so only a new service or a draft is held to the
+ * limit; the site owner is not bound by it. Pro's plan limits ride the same
+ * `wpss_vendor_can_create_service` filter.
+ *
+ * @since 1.9.1
+ *
+ * @param int $service_id Service post ID, or 0 for a service not yet created.
+ * @param int $user_id    The member saving; a site owner is never limited. A new service is judged against this member, an existing one against its author.
+ * @return string User-facing sentence; empty when the service may count.
+ */
+function wpss_service_limit_error( int $service_id, int $user_id ): string {
+	// The site owner may knowingly publish past a vendor's limit (the control rung).
+	if ( wpss_member_bypasses_limits( $user_id ) ) {
+		return '';
+	}
+
+	if ( $service_id ) {
+		$existing = get_post( $service_id );
+		// Already counted toward the limit (the same statuses the count uses), so no new slot is taken.
+		if ( ! $existing || in_array( $existing->post_status, wpss_get_limit_counted_statuses(), true ) ) {
+			return '';
+		}
+
+		// The slot is the seller's: anyone else saving it is judged against the seller's limit.
+		$user_id = (int) $existing->post_author;
+
+		if ( wpss_member_bypasses_limits( $user_id ) ) {
+			return '';
+		}
+	}
+
+	/** This filter is documented in src/API/ServicesController.php */
+	if ( apply_filters( 'wpss_vendor_can_create_service', true, $user_id ) ) {
+		return '';
+	}
+
+	/** This filter is documented in src/API/ServicesController.php */
+	$message = apply_filters(
+		'wpss_service_limit_error_message',
+		__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
+	);
+
+	return wp_strip_all_tags( (string) $message );
+}
+
+/**
  * Truncate a service's lists to wpss_get_service_limits().
  *
  * The one enforcer for every save path (wizard, REST, admin metabox,
@@ -652,13 +732,10 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 		return __( 'This service is not taking new orders right now.', 'wp-sell-services' );
 	}
 
-	// Seller away: the service page says so and disables its button, but a
-	// line already in the cart, a saved checkout link or a REST call still
-	// sold it (Basecamp 10379595852).
-	$seller = \WPSellServices\Models\VendorProfile::get_by_user_id( (int) $service->post_author );
+	$seller_reason = wpss_seller_unavailable_reason( (int) $service->post_author );
 
-	if ( $seller && $seller->is_on_vacation() ) {
-		return __( 'This vendor is away and not taking new orders right now.', 'wp-sell-services' );
+	if ( '' !== $seller_reason ) {
+		return $seller_reason;
 	}
 
 	/**
@@ -670,6 +747,36 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 	 * @param int    $service_id Service post ID.
 	 */
 	return (string) apply_filters( 'wpss_service_unavailable_reason', '', $service_id );
+}
+
+/**
+ * Why a seller cannot take a new order right now, or '' when they can.
+ *
+ * The seller half of wpss_service_unavailable_reason(), for a cart whose product
+ * is the service itself (an EDD service download with no linked service post).
+ *
+ * @since 1.9.2
+ *
+ * @param int $seller_id Seller's user ID.
+ * @return string Empty when they can sell; otherwise a sentence for the buyer.
+ */
+function wpss_seller_unavailable_reason( int $seller_id ): string {
+	// Seller away: the service page says so and disables its button, but a
+	// line already in the cart, a saved checkout link or a REST call still
+	// sold it (Basecamp 10379595852).
+	$seller = \WPSellServices\Models\VendorProfile::get_by_user_id( $seller_id );
+
+	if ( $seller && $seller->is_on_vacation() ) {
+		return __( 'This vendor is away and not taking new orders right now.', 'wp-sell-services' );
+	}
+
+	// Seller suspended, rejected or banned by an owner: the live service stays
+	// out of listings and cannot be bought from a saved link or a REST call.
+	if ( in_array( $seller_id, wpss_get_unlisted_seller_ids(), true ) ) {
+		return __( 'This vendor is not taking new orders right now.', 'wp-sell-services' );
+	}
+
+	return '';
 }
 
 /**
@@ -758,9 +865,28 @@ add_action(
 			wpss_sync_service_order_count( (int) $order->service_id );
 		}
 
+		// The vendor's stored order counters feed the profile, directory, admin and REST; only the
+		// 12-hour sweep refreshed them, so a sale read 0 until then (Basecamp 10431939228).
+		if ( $order && (int) $order->vendor_id > 0 ) {
+			( new \WPSellServices\Services\VendorService() )->update_stats( (int) $order->vendor_id );
+		}
+
 		// A seller's level follows completed orders now, not a week later.
 		if ( $order && 'completed' === $order->status && (int) $order->vendor_id > 0 ) {
 			( new \WPSellServices\Services\SellerLevelService() )->recalculate( (int) $order->vendor_id );
+		}
+	},
+	30
+);
+
+// A new order counts toward "orders placed" straight away, on every rail.
+add_action(
+	'wpss_order_created',
+	static function ( $order_id ) {
+		$order = wpss_get_order( (int) $order_id );
+
+		if ( $order && (int) $order->vendor_id > 0 ) {
+			( new \WPSellServices\Services\VendorService() )->update_stats( (int) $order->vendor_id );
 		}
 	},
 	30
@@ -781,48 +907,253 @@ add_action(
 );
 
 /**
- * Whether the member may put this service live from a dashboard control.
+ * Why a service may not be permanently deleted, or an empty string.
  *
- * One gate for every door that flips a service to publish (dashboard publish,
- * bulk publish): marketplace standing first, then the plan limit when the
- * service is not already counted, then the publish bar. Pausing and deleting are
- * not gated, so a suspended seller can still take listings down.
+ * Deleting a service for good cascades into every order, delivery, dispute,
+ * message and review placed against it (DataCascadeHandler), so a seller could
+ * erase a buyer's purchase history and a dispute with one call. Only an admin
+ * may do that; everyone else can trash the service, which keeps the order
+ * history readable and the service restorable.
  *
- * @since 1.9.0
+ * @since 1.9.1
  *
  * @param int $service_id Service post ID.
- * @param int $user_id    Member ID. Defaults to the current user.
- * @return string Refusal sentence, or '' when the service may go live.
+ * @return string
  */
-function wpss_service_publish_refusal( int $service_id, int $user_id = 0 ): string {
-	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
-
-	$block = wpss_vendor_status_block( $user_id );
-	if ( $block ) {
-		return $block->get_error_message();
-	}
-
-	if ( 'publish' === get_post_status( $service_id ) ) {
+function wpss_service_delete_refusal( int $service_id ): string {
+	// An operator at the command line (no member logged in) decides for themselves.
+	if ( current_user_can( 'manage_options' ) || ( ! is_user_logged_in() && defined( 'WP_CLI' ) && WP_CLI ) ) {
 		return '';
 	}
 
-	if ( ! user_can( $user_id, 'manage_options' ) && ! apply_filters( 'wpss_vendor_can_create_service', true, $user_id ) ) {
-		/** This filter is documented in src/Frontend/ServiceWizard.php */
-		return wp_strip_all_tags(
-			(string) apply_filters(
-				'wpss_service_limit_error_message',
-				__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
-			)
-		);
+	if ( ( new \WPSellServices\Database\Repositories\OrderRepository() )->count( array( 'service_id' => $service_id ) ) > 0 ) {
+		return __( 'This service has orders, so it can only be moved to the trash. Its order history stays on the site.', 'wp-sell-services' );
 	}
 
-	$errors = wpss_validate_service_publishable(
+	return '';
+}
+
+/**
+ * Stop a permanent delete of a service that has orders, on every door.
+ *
+ * `pre_delete_post` is core's one seam: REST, wp-admin, bulk delete and
+ * wp_delete_post() all pass through it. A member closing their account trashes
+ * their listings and never reaches it.
+ *
+ * @since 1.9.1
+ *
+ * @param mixed    $check Short-circuit value; non-null stops the delete.
+ * @param \WP_Post $post  The post.
+ * @return mixed False to refuse, otherwise $check unchanged.
+ */
+function wpss_guard_service_with_orders( $check, $post ) {
+	if ( null !== $check || ! $post instanceof \WP_Post || 'wpss_service' !== $post->post_type ) {
+		return $check;
+	}
+
+	return '' === wpss_service_delete_refusal( (int) $post->ID ) ? $check : false;
+}
+
+add_filter( 'pre_delete_post', 'wpss_guard_service_with_orders', 10, 2 );
+
+
+/**
+ * Whether the current member may put an attachment in a service gallery.
+ *
+ * The one ownership rule for every door that accepts media ids (wizard, REST):
+ * the attachment must exist and be an image, and be the member's own upload or
+ * attached to a service they may edit; admins may use any.
+ *
+ * @since 1.9.1
+ *
+ * @param int $attachment_id Attachment ID to verify.
+ * @return bool True if the current member can use this attachment.
+ */
+function wpss_user_can_use_attachment( int $attachment_id ): bool {
+	if ( $attachment_id <= 0 ) {
+		return false;
+	}
+
+	$attachment = get_post( $attachment_id );
+
+	// Attachment must exist and be an attachment post type.
+	if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+		return false;
+	}
+
+	// Only allow image attachments in the gallery.
+	if ( ! wp_attachment_is_image( $attachment_id ) ) {
+		return false;
+	}
+
+	// Admins can use any attachment.
+	if ( current_user_can( 'manage_options' ) ) {
+		return true;
+	}
+
+	// The member's own upload.
+	if ( get_current_user_id() === (int) $attachment->post_author ) {
+		return true;
+	}
+
+	// Attached to a service the member may edit (e.g. images imported with another author).
+	// Nothing broader: every seller can upload_files, so that alone would let them show another member's images.
+	return $attachment->post_parent > 0 && wpss_user_can_edit_service( get_post( $attachment->post_parent ), get_current_user_id() );
+}
+
+/**
+ * The service's main image: the explicit choice, else the first usable image.
+ *
+ * @since 1.9.1
+ *
+ * @param int              $explicit    Requested main attachment ID (0 for none).
+ * @param array<int,mixed> $gallery_ids Gallery attachment IDs.
+ * @return int Attachment ID, 0 when none is usable.
+ */
+function wpss_pick_service_main_image( int $explicit, array $gallery_ids ): int {
+	foreach ( array_merge( array( $explicit ), $gallery_ids ) as $id ) {
+		$id = absint( $id );
+
+		if ( $id && wpss_user_can_use_attachment( $id ) ) {
+			return $id;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * Save a service's gallery and main image: the one writer for every door.
+ *
+ * Keeps only attachments the member may use, writes the structured
+ * `_wpss_gallery` shape the readers expect, keeps the stored video unless one
+ * is passed, and sets the main image (the featured image a publish needs) so a
+ * service made through REST is not left without one.
+ *
+ * @since 1.9.1
+ *
+ * @param int              $service_id    Service post ID.
+ * @param array<int,mixed> $image_ids     Gallery attachment IDs (already capped).
+ * @param int              $explicit_main Requested main attachment ID, 0 for automatic.
+ * @param string|null      $video         Video URL, null to keep the stored one.
+ * @return int The main image ID that was set, 0 when none.
+ */
+function wpss_save_service_gallery( int $service_id, array $image_ids, int $explicit_main = 0, ?string $video = null ): int {
+	$usable = array();
+
+	foreach ( $image_ids as $id ) {
+		$id = absint( $id );
+
+		if ( $id && ! in_array( $id, $usable, true ) && wpss_user_can_use_attachment( $id ) ) {
+			$usable[] = $id;
+		}
+	}
+
+	// Keep the current main image when it is still in the gallery and none was asked for.
+	$current = (int) get_post_thumbnail_id( $service_id );
+	$main    = wpss_pick_service_main_image( $explicit_main > 0 ? $explicit_main : ( in_array( $current, $usable, true ) ? $current : 0 ), $usable );
+
+	// The main image is part of the gallery so a template always has one to show.
+	if ( $main && ! in_array( $main, $usable, true ) ) {
+		array_unshift( $usable, $main );
+	}
+
+	if ( null === $video ) {
+		$video = wpss_get_gallery_video_url( get_post_meta( $service_id, '_wpss_gallery', true ) );
+	}
+
+	update_post_meta(
+		$service_id,
+		'_wpss_gallery',
 		array(
-			'title'       => get_the_title( $service_id ),
-			'description' => (string) get_post_field( 'post_content', $service_id ),
-			'packages'    => (array) get_post_meta( $service_id, '_wpss_packages', true ),
+			'images' => $usable,
+			'video'  => $video,
 		)
 	);
 
-	return $errors ? implode( ' ', $errors ) : '';
+	// Set directly: set_post_thumbnail() silently deletes it when attachment
+	// metadata is still being generated.
+	if ( $main ) {
+		update_post_meta( $service_id, '_thumbnail_id', $main );
+	}
+
+	return $main;
+}
+
+/**
+ * Keep a member over their service limit from publishing by any door.
+ *
+ * The wizard and the REST controllers refuse with a message before they save,
+ * but a service can also be inserted by wp-admin Add New, Quick Edit and core
+ * REST (/wp/v2/wpss-services), which never asked. One check on the one write
+ * every door ends in: a service going live or pending past the limit is saved
+ * as a draft instead, and the member is told in the editor. The limit is the
+ * author's, so an admin publishing a vendor's draft is held to the vendor's;
+ * CLI and cron are not limited, and a service already live or pending keeps its slot.
+ *
+ * @since 1.9.1
+ *
+ * @param array<string, mixed> $data    Post data about to be saved.
+ * @param array<string, mixed> $postarr Raw post array, with the ID on an update.
+ * @return array<string, mixed>
+ */
+function wpss_enforce_service_limit_on_insert( array $data, array $postarr ): array {
+	if ( 'wpss_service' !== ( $data['post_type'] ?? '' ) || ! in_array( $data['post_status'] ?? '', wpss_get_limit_counted_statuses(), true ) ) {
+		return $data;
+	}
+
+	$user_id = get_current_user_id();
+
+	if ( $user_id <= 0 ) {
+		return $data;
+	}
+
+	// The site owner is never limited; anyone else's new service is judged against the author it is saved for.
+	$error = wpss_member_bypasses_limits( $user_id ) ? '' : wpss_service_limit_error( (int) ( $postarr['ID'] ?? 0 ), (int) ( $data['post_author'] ?? 0 ) ?: $user_id );
+
+	if ( '' === $error ) {
+		return $data;
+	}
+
+	$data['post_status'] = 'draft';
+	set_transient( 'wpss_service_limit_notice_' . $user_id, array( $error ), MINUTE_IN_SECONDS );
+
+	return $data;
+}
+
+// Before ServiceModerationPage::intercept_publish (10), so a refused publish is not turned into a pending one.
+add_filter( 'wp_insert_post_data', 'wpss_enforce_service_limit_on_insert', 5, 2 );
+
+/**
+ * The service statuses that take a slot toward a vendor's limit.
+ *
+ * One list for the per-profile maximum and Pro's plan limit, so the two cannot
+ * disagree about whether a service waiting for review or for its scheduled date counts. A draft never does.
+ * A scheduled service is counted and gated because core publishes it later with no further check.
+ *
+ * @since 1.9.1
+ *
+ * @return array<string>
+ */
+function wpss_get_limit_counted_statuses(): array {
+	return array( 'publish', 'pending', 'future' );
+}
+
+
+/**
+ * Whether a member may open and change a service in the editor.
+ *
+ * The seller who owns it, or an admin repairing a listing on their behalf. The
+ * seller stays the post author either way. The dashboard page and every wizard
+ * AJAX door ask this one rule.
+ *
+ * @since 1.9.1
+ *
+ * @param \WP_Post|null $service Service post.
+ * @param int           $user_id Member ID.
+ * @return bool
+ */
+function wpss_user_can_edit_service( ?\WP_Post $service, int $user_id ): bool {
+	return $service && 'wpss_service' === $service->post_type
+		&& ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
 }

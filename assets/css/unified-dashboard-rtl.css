@@ -86,7 +86,7 @@
 	display: inline-flex;
 	align-items: center;
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 	font-size: 11px;
 	font-weight: 600;
 	padding: 2px 8px;
@@ -148,7 +148,7 @@
 }
 
 .wpss-dashboard__nav-item--active {
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 	background: var(--wpss-primary-light);
 	/* Active accent is an inset left bar via box-shadow, NOT a border-right.
 	   The old border-right landed exactly on the sidebar/content seam and
@@ -159,7 +159,7 @@
 }
 
 .wpss-dashboard__nav-item--active:hover {
-	color: var(--wpss-primary-accent);
+	color: var(--wpss-primary-dark);
 	background: var(--wpss-primary-light);
 }
 
@@ -176,7 +176,7 @@
 	padding: 0 6px;
 	border-radius: 10px;
 	background: var(--wpss-primary);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	font-size: 12px;
 	font-weight: 600;
 	line-height: 20px;
@@ -578,6 +578,11 @@
 	color: var(--wpss-gray-600);
 }
 
+.wpss-service-card__status--paused {
+	background: var(--wpss-info-light, #eff6ff);
+	color: var(--wpss-info-dark, #1e40af);
+}
+
 .wpss-service-card__status--pending {
 	background: var(--wpss-warning-light);
 	color: var(--wpss-warning-dark, #92400e);
@@ -677,11 +682,18 @@
 	/* Footer action row: a hairline separates it from the content above; the
 	   status badge pins to the start and the icon buttons flow to the end. */
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
 	width: 100%;
 	padding-top: 12px;
 	border-top: 1px solid var(--wpss-gray-100);
+}
+
+/* A labelled action keeps its label on one line; the row wraps instead
+   (a proposal's "View Request" broke onto two lines at 390px). */
+.wpss-dashboard .wpss-request-card__actions > .wpss-btn {
+	white-space: nowrap;
 }
 
 /* Status is state, not an action — hold the left edge so the icon buttons
@@ -801,7 +813,7 @@
 	background: var(--wpss-primary);
 	border: 2px solid var(--wpss-white, #fff);
 	border-radius: 9px;
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	font-size: 11px;
 	font-weight: 600;
 	line-height: 1;
@@ -864,7 +876,7 @@
 
 .wpss-conversation-card__order {
 	font-size: 11px;
-	color: var(--wpss-gray-400);
+	color: var(--wpss-text-muted);
 }
 
 /* ==========================================================================
@@ -874,7 +886,9 @@
 .wpss-section--messages .wpss-conversation-thread {
 	display: flex;
 	flex-direction: column;
-	min-height: 620px;
+	/* Bounded so the thread scrolls inside itself and opens on the newest message. */
+	height: min(720px, 80vh);
+	min-height: 420px;
 	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-gray-200);
 	border-radius: 16px;
@@ -910,6 +924,7 @@
 
 .wpss-section--messages .wpss-conversation-thread__messages {
 	flex: 1;
+	min-height: 0;
 	padding: 24px;
 	overflow-y: auto;
 	background: var(--wpss-gray-50, #f8fafc);
@@ -973,7 +988,7 @@
 }
 
 .wpss-section--messages .wpss-message--mine .wpss-message__content {
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 	background: var(--wpss-primary);
 	border-radius: 16px 16px 16px 4px;
 }
@@ -1033,7 +1048,7 @@
 
 .wpss-section--messages .wpss-conversation-thread__reply .wpss-textarea:focus {
 	border-color: var(--wpss-primary);
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-section--messages .wpss-conversation-thread__reply .wpss-textarea:focus-visible {
@@ -1044,7 +1059,7 @@
 @media (max-width: 767px) {
 
 	.wpss-section--messages .wpss-conversation-thread {
-		min-height: 520px;
+		min-height: 360px;
 		border-radius: 12px;
 	}
 
@@ -1540,7 +1555,7 @@
 
 /* Profile Completion Banner (F7 part a from baseline-2026-04-25.md) */
 .wpss-dashboard__profile-banner {
-	background: linear-gradient(-135deg, var(--wpss-primary-light, #eef2ff) 0%, var(--wpss-primary-50, rgba(79, 70, 229, 0.05)) 100%);
+	background: linear-gradient(-135deg, var(--wpss-primary-light, #eef2ff) 0%, var(--wpss-primary-50) 100%);
 	border: 1px solid var(--wpss-primary, #4f46e5);
 	border-radius: var(--wpss-radius-lg, 12px);
 	padding: 16px 20px;
@@ -1560,7 +1575,7 @@
 	flex-shrink: 0;
 	border-radius: 50%;
 	background: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-profile-banner__icon .wpss-icon {
@@ -1602,7 +1617,7 @@
 	flex-shrink: 0;
 	background: var(--wpss-primary);
 	border-color: var(--wpss-primary);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-profile-banner__btn:hover,
@@ -1611,7 +1626,7 @@
 .wpss-payout-banner__btn:focus {
 	background: var(--wpss-primary-hover);
 	border-color: var(--wpss-primary-hover);
-	color: var(--wpss-white, #fff);
+	color: var(--wpss-on-primary);
 }
 
 .wpss-profile-banner__dismiss {
@@ -1771,7 +1786,7 @@
 .wpss-input:focus,
 .wpss-textarea:focus {
 	border-color: var(--wpss-primary);
-	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
 }
 
 .wpss-input:focus-visible,
@@ -2028,6 +2043,22 @@ select.wpss-input option,
 		border-bottom: 1px solid var(--wpss-gray-200);
 	}
 
+	/* The bar beside Menu already names the section, so the header does not say
+	   it again; the heading stays for screen readers. A header left with nothing
+	   to show (an open order has no actions) is not drawn. */
+	.wpss-dashboard__header .wpss-dashboard__title {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
+
+	.wpss-dashboard__header:not(:has(> :not(.wpss-dashboard__title))) {
+		display: none;
+	}
+
 	.wpss-dashboard__nav-bar {
 		display: flex;
 		align-items: center;
@@ -2139,16 +2170,25 @@ select.wpss-input option,
 	}
 }
 
-/* On a phone the shell and theme already give 27px of gutter; the body's own
-   padding and the messages card's stacked on top left a message 165px of a
-   390px screen (Basecamp 10345275760). */
+/* On a phone the dashboard frame is the only card. The body keeps the
+   header's 16px inset so content lines up with it and nothing meets the edge;
+   a section drawn as a second card inside it (with cards of its own inside
+   that) left 236px of a 390px screen and three borders at the left edge.
+   Messages had the same stack: 165px for a message (Basecamp 10345275760). */
 @media (max-width: 640px) {
-	.wpss-dashboard__body {
-		padding-inline: 0;
+	.wpss-dashboard__body > .wpss-section.wpss-card {
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
 	}
 
-	.wpss-section--messages {
-		padding-inline: 8px;
+	/* 40px touch targets, the design system's floor. */
+	.wpss-dashboard__tour-replay,
+	.wpss-favorites__remove {
+		min-height: 40px;
+		min-width: 40px;
 	}
 
 	.wpss-section--messages .wpss-conversation-thread__messages {
@@ -2597,7 +2637,7 @@ select.wpss-input option,
 
 .wpss-category-chip:hover {
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary-accent, #4f46e5);
+	color: var(--wpss-primary-dark);
 }
 
 .wpss-tip-view__card {
@@ -2880,7 +2920,8 @@ select.wpss-input option,
 	align-items: center;
 	gap: var(--wpss-space-2, 8px);
 	background: var(--wpss-gray-100, #f3f4f6);
-	color: var(--wpss-text-muted, #6b7280);
+	/* Secondary, not muted: muted on this grey read 4.39:1. */
+	color: var(--wpss-text-secondary, #374151);
 	border: 1px dashed var(--wpss-gray-300, #d1d5db);
 	cursor: not-allowed;
 	font-weight: 500;
@@ -3183,7 +3224,7 @@ select.wpss-input option,
 
 .wpss-dispute-link {
 	font-weight: 600;
-	color: var(--wpss-primary, #2271b1);
+	color: var(--wpss-primary-accent);
 	text-decoration: none;
 }
 
@@ -3237,8 +3278,9 @@ select.wpss-input option,
 }
 
 .wpss-status-closed {
-	background: var(--wpss-wp-admin-bg, #f0f0f1);
-	color: var(--wpss-wp-admin-text-muted, #50575e);
+	/* Frontend chip: the design-system greys flip in dark mode; the wp-admin ones did not. */
+	background: var(--wpss-bg-muted, #f3f4f6);
+	color: var(--wpss-text-muted, #6b7280);
 }
 
 /* ==========================================================================
@@ -3398,8 +3440,8 @@ select.wpss-input option,
 }
 
 .wpss-status-pending {
-	background: var(--wpss-warning, #fdcb6e);
-	color: var(--wpss-gray-800, #333);
+	background: var(--wpss-status-pending-bg, #fff3cd);
+	color: var(--wpss-status-pending-fg, #856404);
 }
 
 .wpss-status-draft {
@@ -3628,10 +3670,6 @@ select.wpss-input option,
 	max-width: 100%;
 }
 
-.wpss-required {
-	color: var(--wpss-danger);
-}
-
 .wpss-input-group {
 	display: flex;
 	align-items: stretch;
@@ -3652,11 +3690,6 @@ select.wpss-input option,
 .wpss-input-group .wpss-input {
 	border-radius: var(--wpss-radius) 0 0 var(--wpss-radius);
 	flex: 1;
-}
-
-.wpss-request-wizard .wpss-btn--lg {
-	padding: 12px 24px;
-	font-size: 15px;
 }
 
 .wpss-request-wizard .wpss-btn svg {

@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var WPSellServices\Models\Service $service      Service object.
  * @var int                            $service_id   Service post ID.
@@ -60,7 +60,7 @@ $reviews = $wpdb->get_results(
 	$wpdb->prepare(
 		"SELECT * FROM {$reviews_table}
 		WHERE service_id = %d AND status = 'approved'
-		ORDER BY created_at DESC
+		ORDER BY created_at DESC, id DESC
 		LIMIT %d",
 		$service_id,
 		$reviews_per_page
@@ -77,6 +77,8 @@ $reviews = $wpdb->get_results(
 do_action( 'wpss_before_service_reviews', $service_id );
 ?>
 
+<?php // An empty section is just a heading over a sentence; guests cannot review, only buyers of a completed order. ?>
+<?php if ( $rating_count > 0 || ! empty( $reviews ) ) : ?>
 <div class="wpss-service-reviews" id="reviews">
 	<h2>
 		<?php esc_html_e( 'Reviews', 'wp-sell-services' ); ?>
@@ -157,12 +159,9 @@ do_action( 'wpss_before_service_reviews', $service_id );
 			</div>
 		<?php endif; ?>
 
-	<?php else : ?>
-		<div class="wpss-no-reviews">
-			<p><?php esc_html_e( 'No reviews yet. Be the first to review this service!', 'wp-sell-services' ); ?></p>
-		</div>
 	<?php endif; ?>
 </div>
+<?php endif; ?>
 
 <?php
 /**

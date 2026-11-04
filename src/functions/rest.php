@@ -401,6 +401,8 @@ function wpss_rest_service_card( \WP_Post $service ): array {
 		'description' => $service->post_content,
 		'excerpt'     => $service->post_excerpt,
 		'status'      => $service->post_status,
+		// Published but taking no new orders (wpss_set_service_paused()).
+		'paused'      => 'paused' === wpss_get_service_status( $service->ID ),
 		'link'        => get_permalink( $service->ID ),
 		'vendor'      => wpss_rest_user( (int) $service->post_author ),
 		// Services carry no currency of their own - they are priced in the store

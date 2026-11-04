@@ -12,7 +12,7 @@
   "/dashboard/",
   "/dashboard/orders/",
   "/become-a-vendor/",
-  "/service-cart/",
+  "/cart/",
   "/buyer-request/",
   "/vendors/"
  ],
@@ -89,12 +89,72 @@
  "checks": {
   "static": [
    {
+    "id": "accepting-a-proposal-checks-both-standings",
+    "run": "${WP_CLI:-wp} eval-file tests/test-accepting-a-proposal-checks-both-standings.php"
+   },
+   {
     "id": "account-standing",
     "run": "${WP_CLI:-wp} eval-file tests/test-account-standing.php"
    },
    {
+    "id": "manual-order-unpaid-is-not-credited",
+    "run": "${WP_CLI:-wp} eval-file tests/test-manual-order-unpaid-is-not-credited.php"
+   },
+   {
+    "id": "mark-paid-null-payment-status",
+    "run": "${WP_CLI:-wp} eval-file tests/test-mark-paid-null-payment-status.php"
+   },
+   {
+    "id": "moderation-migration-is-silent",
+    "run": "${WP_CLI:-wp} eval-file tests/test-moderation-migration-is-silent.php"
+   },
+   {
+    "id": "new-money-checks-both-standings",
+    "run": "${WP_CLI:-wp} eval-file tests/test-new-money-checks-both-standings.php"
+   },
+   {
+    "id": "offline-mark-paid-any-unpaid-sub-order",
+    "run": "${WP_CLI:-wp} eval-file tests/test-offline-mark-paid-any-unpaid-sub-order.php"
+   },
+   {
+    "id": "offline-waiting-notice-without-gateway",
+    "run": "${WP_CLI:-wp} eval-file tests/test-offline-waiting-notice-without-gateway.php"
+   },
+   {
+    "id": "order-counts-skip-sub-orders",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-counts-skip-sub-orders.php"
+   },
+   {
+    "id": "review-lists-and-quiet-writes",
+    "run": "${WP_CLI:-wp} eval-file tests/test-review-lists-and-quiet-writes.php"
+   },
+   {
+    "id": "service-gallery-and-limit-owner",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-gallery-and-limit-owner.php"
+   },
+   {
+    "id": "standing-refusals-are-403",
+    "run": "${WP_CLI:-wp} eval-file tests/test-standing-refusals-are-403.php"
+   },
+   {
+    "id": "sub-order-rounds-to-currency",
+    "run": "${WP_CLI:-wp} eval-file tests/test-sub-order-rounds-to-currency.php"
+   },
+   {
+    "id": "vendor-reapply-keeps-owner-decision",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-reapply-keeps-owner-decision.php"
+   },
+   {
+    "id": "admin-publish-approves",
+    "run": "${WP_CLI:-wp} eval-file tests/test-admin-publish-approves.php"
+   },
+   {
     "id": "ajax-standing-gate",
     "run": "${WP_CLI:-wp} eval-file tests/test-ajax-standing-gate.php"
+   },
+   {
+    "id": "audit-labels-and-dispute-reminder-reset",
+    "run": "${WP_CLI:-wp} eval-file tests/test-audit-labels-and-dispute-reminder-reset.php"
    },
    {
     "id": "audit-log-coverage",
@@ -109,6 +169,14 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-auto-withdrawal-schedule.php"
    },
    {
+    "id": "banned-member-cannot-start-new-activity",
+    "run": "${WP_CLI:-wp} eval-file tests/test-banned-member-cannot-start-new-activity.php"
+   },
+   {
+    "id": "breadcrumb-helper",
+    "run": "${WP_CLI:-wp} eval-file tests/test-breadcrumb-helper.php"
+   },
+   {
     "id": "check-skeleton",
     "run": "php bin/check-skeleton.php"
    },
@@ -121,16 +189,40 @@
     "run": "php bin/check-ux-conformance.php"
    },
    {
+    "id": "csv-export-no-deprecation",
+    "run": "${WP_CLI:-wp} eval-file tests/test-csv-export-no-deprecation.php"
+   },
+   {
     "id": "dark-mode-and-icon-hooks",
     "run": "${WP_CLI:-wp} eval-file tests/test-dark-mode-and-icon-hooks.php"
+   },
+   {
+    "id": "dead-service-doors-are-gone",
+    "run": "${WP_CLI:-wp} eval-file tests/test-dead-service-doors-are-gone.php"
    },
    {
     "id": "design-token-integrity",
     "run": "${WP_CLI:-wp} eval-file tests/test-design-token-integrity.php"
    },
    {
+    "id": "dispute-cancel-after-escalation",
+    "run": "${WP_CLI:-wp} eval-file tests/test-dispute-cancel-after-escalation.php"
+   },
+   {
+    "id": "dispute-writes-are-scoped-to-status",
+    "run": "${WP_CLI:-wp} eval-file tests/test-dispute-writes-are-scoped-to-status.php"
+   },
+   {
     "id": "docs-audit",
     "run": "python3 bin/docs-audit.py"
+   },
+   {
+    "id": "empty-state-loads-icon-runtime",
+    "run": "${WP_CLI:-wp} eval-file tests/test-empty-state-loads-icon-runtime.php"
+   },
+   {
+    "id": "failing-test-still-cleans-up",
+    "run": "${WP_CLI:-wp} eval-file tests/test-failing-test-still-cleans-up.php"
    },
    {
     "id": "focus-indicator-css",
@@ -149,6 +241,30 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-layout-surface-css.php"
    },
    {
+    "id": "limit-counts-same-statuses-free-and-pro",
+    "run": "${WP_CLI:-wp} eval-file tests/test-limit-counts-same-statuses-free-and-pro.php"
+   },
+   {
+    "id": "lucide-icons-exist",
+    "run": "${WP_CLI:-wp} eval-file tests/test-lucide-icons-exist.php"
+   },
+   {
+    "id": "mark-as-paid-loses-race-quietly",
+    "run": "${WP_CLI:-wp} eval-file tests/test-mark-as-paid-loses-race-quietly.php"
+   },
+   {
+    "id": "milestone-decline-messages",
+    "run": "${WP_CLI:-wp} eval-file tests/test-milestone-decline-messages.php"
+   },
+   {
+    "id": "moderation-pending-admin-mail",
+    "run": "${WP_CLI:-wp} eval-file tests/test-moderation-pending-admin-mail.php"
+   },
+   {
+    "id": "moderation-submit-is-one-door",
+    "run": "${WP_CLI:-wp} eval-file tests/test-moderation-submit-is-one-door.php"
+   },
+   {
     "id": "multi-checkout-tax-label",
     "run": "${WP_CLI:-wp} eval-file tests/test-multi-checkout-tax-label.php"
    },
@@ -163,6 +279,10 @@
    {
     "id": "no-defaults-on-update-routes",
     "run": "${WP_CLI:-wp} eval-file tests/test-no-defaults-on-update-routes.php"
+   },
+   {
+    "id": "no-unguarded-order-service-lookup",
+    "run": "${WP_CLI:-wp} eval-file tests/test-no-unguarded-order-service-lookup.php"
    },
    {
     "id": "notification-center-retention",
@@ -185,12 +305,44 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-order-again.php"
    },
    {
+    "id": "order-modal-and-selects-presentation",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-modal-and-selects-presentation.php"
+   },
+   {
     "id": "order-not-payable-message",
     "run": "${WP_CLI:-wp} eval-file tests/test-order-not-payable-message.php"
    },
    {
+    "id": "order-payload-exposes-tax",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-payload-exposes-tax.php"
+   },
+   {
     "id": "order-product-columns",
     "run": "${WP_CLI:-wp} eval-file tests/test-order-product-columns.php"
+   },
+   {
+    "id": "order-tax-label-stored",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-tax-label-stored.php"
+   },
+   {
+    "id": "owner-decisions-audited",
+    "run": "${WP_CLI:-wp} eval-file tests/test-owner-decisions-audited.php"
+   },
+   {
+    "id": "owner-decisions-leave-audit-rows",
+    "run": "${WP_CLI:-wp} eval-file tests/test-owner-decisions-leave-audit-rows.php"
+   },
+   {
+    "id": "package-revisions-unlimited-input",
+    "run": "${WP_CLI:-wp} eval-file tests/test-package-revisions-unlimited-input.php"
+   },
+   {
+    "id": "paid-sub-order-skips-service-transition",
+    "run": "${WP_CLI:-wp} eval-file tests/test-paid-sub-order-skips-service-transition.php"
+   },
+   {
+    "id": "portfolio-reorder-ownership",
+    "run": "${WP_CLI:-wp} eval-file tests/test-portfolio-reorder-ownership.php"
    },
    {
     "id": "portfolio-rest-service",
@@ -217,12 +369,24 @@
     "run": "${WP_CLI:-wp} eval-file tests/pro/test-woo-cart-session-price.php"
    },
    {
+    "id": "proposal-gate-vendor-standing",
+    "run": "${WP_CLI:-wp} eval-file tests/test-proposal-gate-vendor-standing.php"
+   },
+   {
     "id": "publish-blocked-notice",
     "run": "${WP_CLI:-wp} eval-file tests/test-publish-blocked-notice.php"
    },
    {
     "id": "integration-seam-contract",
     "run": "${WP_CLI:-wp} eval-file tests/test-integration-seam-contract.php"
+   },
+   {
+    "id": "requirements-skip-once",
+    "run": "${WP_CLI:-wp} eval-file tests/test-requirements-skip-once.php"
+   },
+   {
+    "id": "requirements-title-request-order",
+    "run": "${WP_CLI:-wp} eval-file tests/test-requirements-title-request-order.php"
    },
    {
     "id": "rest-matrix",
@@ -233,8 +397,52 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-review-status-rest.php"
    },
    {
+    "id": "review-sub-ratings",
+    "run": "${WP_CLI:-wp} eval-file tests/test-review-sub-ratings.php"
+   },
+   {
+    "id": "review-verified-purchase-badge",
+    "run": "${WP_CLI:-wp} eval-file tests/test-review-verified-purchase-badge.php"
+   },
+   {
+    "id": "same-state-repeat-is-noop",
+    "run": "${WP_CLI:-wp} eval-file tests/test-same-state-repeat-is-noop.php"
+   },
+   {
+    "id": "seller-levels-rest-earnings",
+    "run": "${WP_CLI:-wp} eval-file tests/test-seller-levels-rest-earnings.php"
+   },
+   {
+    "id": "service-delete-guard-keeps-orders",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-delete-guard-keeps-orders.php"
+   },
+   {
+    "id": "service-gallery-mobile-width",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-gallery-mobile-width.php"
+   },
+   {
+    "id": "service-gallery-saver-sets-main-image",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-gallery-saver-sets-main-image.php"
+   },
+   {
+    "id": "service-limit-every-publish-door",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-limit-every-publish-door.php"
+   },
+   {
+    "id": "service-limit-on-core-insert",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-limit-on-core-insert.php"
+   },
+   {
+    "id": "service-list-column-without-query",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-list-column-without-query.php"
+   },
+   {
     "id": "service-moderation-admin-publish",
     "run": "${WP_CLI:-wp} eval-file tests/test-service-moderation-admin-publish.php"
+   },
+   {
+    "id": "service-reviews-empty-section",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-reviews-empty-section.php"
    },
    {
     "id": "settings-heading-outline",
@@ -249,8 +457,32 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-settings-no-negative-numbers.php"
    },
    {
+    "id": "settle-confirms-order-paid",
+    "run": "${WP_CLI:-wp} eval-file tests/test-settle-confirms-order-paid.php"
+   },
+   {
     "id": "smoke-gate-surfaces",
     "run": "node tests/smoke-gate-surfaces.test.cjs"
+   },
+   {
+    "id": "standing-blocks-buying-doors",
+    "run": "${WP_CLI:-wp} eval-file tests/test-standing-blocks-buying-doors.php"
+   },
+   {
+    "id": "store-rails-start-orders-with-delivery-terms",
+    "run": "${WP_CLI:-wp} eval-file tests/test-store-rails-start-orders-with-delivery-terms.php"
+   },
+   {
+    "id": "sub-order-tax",
+    "run": "${WP_CLI:-wp} eval-file tests/test-sub-order-tax.php"
+   },
+   {
+    "id": "suspended-vendor-doors",
+    "run": "${WP_CLI:-wp} eval-file tests/test-suspended-vendor-doors.php"
+   },
+   {
+    "id": "test-leftovers-are-swept",
+    "run": "${WP_CLI:-wp} eval-file tests/test-test-leftovers-are-swept.php"
    },
    {
     "id": "text-token-contrast",
@@ -265,8 +497,32 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-time-sweep.php"
    },
    {
+    "id": "tip-override-commission-excludes-tax",
+    "run": "${WP_CLI:-wp} eval-file tests/test-tip-override-commission-excludes-tax.php"
+   },
+   {
+    "id": "token-cannot-mint",
+    "run": "${WP_CLI:-wp} eval-file tests/test-token-cannot-mint.php"
+   },
+   {
+    "id": "vendor-max-services-filter",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-max-services-filter.php"
+   },
+   {
+    "id": "vendor-timezone",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-timezone.php"
+   },
+   {
     "id": "withdrawal-status-emails",
     "run": "${WP_CLI:-wp} eval-file tests/test-withdrawal-status-emails.php"
+   },
+   {
+    "id": "wizard-opens-with-odd-meta",
+    "run": "${WP_CLI:-wp} eval-file tests/test-wizard-opens-with-odd-meta.php"
+   },
+   {
+    "id": "wizard-owner-or-admin-and-upload-gate",
+    "run": "${WP_CLI:-wp} eval-file tests/test-wizard-owner-or-admin-and-upload-gate.php"
    },
    {
     "id": "wizard-package-description",
@@ -365,8 +621,8 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-extension-pending-card-inset.php"
    },
    {
-    "id": "edd-my-services-list",
-    "run": "${WP_CLI:-wp} eval-file tests/test-edd-my-services-list.php"
+    "id": "edd-account-uses-dashboard",
+    "run": "${WP_CLI:-wp} eval-file tests/test-edd-account-uses-dashboard.php"
    },
    {
     "id": "pro-paypal-batch-failure",
@@ -411,6 +667,46 @@
    {
     "id": "string-variants",
     "run": "${WP_CLI:-wp} eval-file tests/test-string-variants.php"
+   },
+   {
+    "id": "stale-pro-held-back",
+    "run": "${WP_CLI:-wp} eval-file tests/test-stale-pro-is-held-back.php"
+   },
+   {
+    "id": "admin-told-of-filing",
+    "run": "${WP_CLI:-wp} eval-file tests/test-admin-told-of-filing.php"
+   },
+   {
+    "id": "order-counts-ignore-sub-orders",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-counts-ignore-sub-orders.php"
+   },
+   {
+    "id": "signup-reports-the-new-vendors-caps",
+    "run": "${WP_CLI:-wp} eval-file tests/test-signup-reports-the-new-vendors-caps.php"
+   },
+   {
+    "id": "admin-inputs-and-icons-wiring",
+    "run": "${WP_CLI:-wp} eval-file tests/test-admin-inputs-and-icons-wiring.php"
+   },
+   {
+    "id": "service-limits-and-accept-lock",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-limits-and-accept-lock.php"
+   },
+   {
+    "id": "vendor-stats-hides-non-vendor-registration",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-stats-hides-non-vendor-registration.php"
+   },
+   {
+    "id": "dispute-ruling-on-completed-order-fires-once",
+    "run": "${WP_CLI:-wp} eval-file tests/test-dispute-ruling-on-completed-order-fires-once.php"
+   },
+   {
+    "id": "pro-vendor-analytics-ignore-sub-orders",
+    "run": "${WP_CLI:-wp} eval-file tests/test-pro-vendor-analytics-ignore-sub-orders.php"
+   },
+   {
+    "id": "pro-edd-standing-is-hooked",
+    "run": "${WP_CLI:-wp} eval-file tests/test-pro-edd-standing-is-hooked.php"
    }
   ]
  }

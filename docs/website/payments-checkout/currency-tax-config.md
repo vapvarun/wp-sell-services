@@ -37,6 +37,7 @@ If you need to collect tax on services, the plugin has a built-in tax system tha
 | **Tax Label** | The name buyers see (e.g., "VAT", "GST", "Sales Tax") |
 | **Tax Rate (%)** | The percentage applied to service prices (e.g., 20 for 20%) |
 | **Prices Include Tax** | Whether your displayed prices already include tax or not |
+| **Tax tips** | Charge tax on tips too. Off by default |
 | **Tax on Commission** | How tax interacts with your platform commission |
 
 ### Prices Include Tax vs. Exclude Tax
@@ -49,21 +50,16 @@ A E120 service with 20% VAT shows E120 at checkout. The tax (E20) is already bak
 
 ### What tax applies to
 
-Tax is applied to a **catalog service purchase** -- the package price plus any
-add-ons the buyer selected. That is what the buyer approves at checkout and
-what the gateway charges.
+Tax is applied to everything the buyer pays for on a service:
 
-It is **not** currently applied to:
+- a **catalog service purchase** (the package price plus any add-ons)
+- accepting a **fixed-price proposal** on a buyer request
+- every **milestone phase** payment
+- every paid **extension** on an existing order
 
-- tips
-- paid extensions on an existing order
-- milestone phase payments
-- accepting a fixed-price proposal on a buyer request
+Each is charged with the same rate and label, and the checkout shows the tax on its own line.
 
-Those are charged at their face amount. If you operate somewhere that expects
-tax on all of them, take that into account before switching tax on, and tell
-us -- whether a tip should be taxable is a question with a different answer in
-different places, and we would rather ask than guess.
+**Tips are not taxed** unless you turn on **Tax tips** in the same settings section. Many tax authorities treat a tip as a gift rather than a sale, so check with your accountant before enabling it.
 
 ### Tax and your commission
 

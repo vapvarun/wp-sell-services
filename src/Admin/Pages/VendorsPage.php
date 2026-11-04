@@ -2007,6 +2007,7 @@ class VendorsPage {
 				</p>
 				<div class="form-row">
 					<input type="number" id="wpss-commission-rate-detail"
+							aria-label="<?php esc_attr_e( 'Commission rate for this vendor (%)', 'wp-sell-services' ); ?>"
 							value="<?php echo esc_attr( $effective_rate['is_custom'] ? number_format( $effective_rate['rate'], 2, '.', '' ) : '' ); ?>"
 							placeholder="<?php echo esc_attr( number_format( $global_rate, 1 ) ); ?>"
 							min="0" max="100" step="0.01">
@@ -2218,10 +2219,10 @@ class VendorsPage {
 				"SELECT r.*, o.order_number, s.post_title as service_title, COALESCE(NULLIF(u.display_name, ''), r.reviewer_name) as reviewer_display_name
 				FROM {$wpdb->prefix}wpss_reviews r
 				LEFT JOIN {$wpdb->prefix}wpss_orders o ON r.order_id = o.id
-				LEFT JOIN {$wpdb->posts} s ON o.service_id = s.ID
+				LEFT JOIN {$wpdb->posts} s ON s.ID = COALESCE( NULLIF( r.service_id, 0 ), o.service_id )
 				LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID
 				WHERE r.vendor_id = %d AND r.review_type = 'customer_to_vendor'
-				ORDER BY r.created_at DESC
+				ORDER BY r.created_at DESC, r.id DESC
 				LIMIT %d OFFSET %d",
 				$vendor_id,
 				$per_page,
@@ -2297,7 +2298,7 @@ class VendorsPage {
 									<?php endif; ?>
 								</span>
 							</div>
-							<p class="wpss-review-content"><?php echo wp_kses_post( $review->comment ); ?></p>
+							<p class="wpss-review-content"><?php echo wp_kses_post( (string) $review->review ); ?></p>
 							<?php if ( 'approved' !== $review->status ) : ?>
 								<span class="<?php echo esc_attr( wpss_status_class( $review->status ) ); ?>">
 									<?php echo esc_html( ucfirst( $review->status ) ); ?>
@@ -2468,6 +2469,7 @@ class VendorsPage {
 				</p>
 				<div class="form-row" style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
 					<input type="number" id="wpss-commission-rate-detail"
+							aria-label="<?php esc_attr_e( 'Commission rate for this vendor (%)', 'wp-sell-services' ); ?>"
 							value="<?php echo esc_attr( $effective_rate['is_custom'] ? number_format( $effective_rate['rate'], 2, '.', '' ) : '' ); ?>"
 							placeholder="<?php echo esc_attr( number_format( $global_rate, 1 ) ); ?>"
 							min="0" max="100" step="0.01"

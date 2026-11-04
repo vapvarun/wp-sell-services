@@ -46,11 +46,9 @@ Videos are a powerful way to showcase work, especially for services like video e
 - YouTube
 - Vimeo
 
-Simply paste the video URL into the wizard. The video will embed automatically on your service page.
+Simply paste the video URL into the wizard. The video will embed automatically on your service page. A link from any other site is refused when you save, with a message saying so.
 
-**Limits:**
-- Free: 1 video
-- **[PRO]**: Up to 3 videos
+**Limit:** one video per service, in both Free and Pro.
 
 **Note:** Direct video file uploads (MP4, MOV, etc.) are not supported in the wizard. Use YouTube or Vimeo to host your videos and paste the link.
 

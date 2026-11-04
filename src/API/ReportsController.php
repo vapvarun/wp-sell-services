@@ -426,6 +426,16 @@ class ReportsController extends RestController {
 			return false;
 		}
 
+		/**
+		 * Fires when an admin resolves an open report.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int    $report_id  Report ID.
+		 * @param string $resolution How it was resolved.
+		 */
+		do_action( 'wpss_report_resolved', $report_id, $resolution );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$reporter_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT reporter_id FROM {$table} WHERE id = %d", $report_id ) );
 

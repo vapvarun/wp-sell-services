@@ -266,8 +266,9 @@ class TestGateway extends AbstractPaymentGateway {
 				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
 				return;
 			}
-			if ( 'pending_payment' !== $order->status ) {
-				wp_send_json_error( array( 'message' => wpss_get_order_not_payable_message( $order ) ) );
+			$refusal = wpss_get_order_payment_refusal( $order );
+			if ( '' !== $refusal ) {
+				wp_send_json_error( array( 'message' => $refusal ) );
 				return;
 			}
 			$transaction_id = 'test_' . wp_generate_uuid4();

@@ -16,6 +16,7 @@
  */
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 $GLOBALS['wpss_pass'] = 0;
 $GLOBALS['wpss_fail'] = 0;
@@ -39,17 +40,13 @@ function wpss_t( $cond, $msg ) {
 
 echo "\nPost-payment redirect contract\n\n";
 
-global $wpdb;
-$table = $wpdb->prefix . 'wpss_orders';
+// Throwaway orders, removed on any exit: a catalog order and one of each sub-order on it.
+$f       = wpss_test_fixtures();
+$catalog = ( $f->order )( array( 'service_id' => ( $f->service )( 'draft' ), 'status' => 'pending_requirements' ) );
 
 // Sub-orders go to the order, never to a requirements step they do not have.
 foreach ( wpss_get_sub_order_platforms() as $platform ) {
-	$id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE platform = %s ORDER BY id DESC LIMIT 1", $platform ) );
-
-	if ( ! $id ) {
-		echo "  SKIP  no {$platform} order on this install\n";
-		continue;
-	}
+	$id = ( $f->order )( array( 'platform' => $platform, 'platform_order_id' => $catalog ) );
 
 	$url = wpss_get_order_requirements_url( $id );
 	wpss_t( '' !== $url, sprintf( '%s order resolves a redirect', $platform ) );
@@ -58,17 +55,8 @@ foreach ( wpss_get_sub_order_platforms() as $platform ) {
 }
 
 // A catalog order still goes to requirements - that step is real for it.
-$catalog = (int) $wpdb->get_var(
-	$wpdb->prepare(
-		"SELECT id FROM {$table} WHERE ( platform IS NULL OR platform NOT IN ( '" . implode( "','", array_map( 'esc_sql', wpss_get_sub_order_platforms() ) ) . "' ) ) AND service_id > 0 ORDER BY id DESC LIMIT %d",
-		1
-	)
-);
-
-if ( $catalog ) {
-	$url = wpss_get_order_requirements_url( $catalog );
-	wpss_t( false !== strpos( $url, 'requirements' ), sprintf( 'a catalog order (#%d) still goes to requirements', $catalog ) );
-}
+$url = wpss_get_order_requirements_url( $catalog );
+wpss_t( false !== strpos( $url, 'requirements' ), sprintf( 'a catalog order (#%d) still goes to requirements', $catalog ) );
 
 // One helper, so a gateway cannot grow its own redirect.
 $plugin_dir = dirname( __DIR__ );

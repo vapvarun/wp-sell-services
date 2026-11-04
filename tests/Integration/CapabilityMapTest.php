@@ -191,11 +191,16 @@ class CapabilityMapTest extends TestCase {
 	 *
 	 * Bare is not automatically wrong - a create-time entry gate has no object
 	 * to own yet. But it must be someone's stated decision, not an accident.
+	 *
+	 * Keyed "file :: code" (plus " #n" for a repeat in one file), not by line
+	 * number: an edit elsewhere in the file must not void a reviewed decision,
+	 * while a change to the check itself must ask for a new one.
 	 */
 	public function test_bare_capability_checks_are_allow_listed(): void {
 		$allow      = (array) ( $this->map['bare_check_allowlist'] ?? array() );
 		$unexplained = array();
 		$found       = 0;
+		$seen        = array();
 
 		foreach ( $this->php_files( self::SRC ) as $file ) {
 			$source = (string) file_get_contents( $file );
@@ -211,6 +216,9 @@ class CapabilityMapTest extends TestCase {
 				$code .= is_array( $token ) ? $token[1] : $token;
 			}
 
+			$relative = ltrim( str_replace( realpath( dirname( self::SRC ) ), '', (string) realpath( $file ) ), '/' );
+			$repeats  = array();
+
 			foreach ( explode( "\n", $code ) as $i => $line ) {
 				if ( ! preg_match( "/current_user_can\(\s*['\"](wpss_[a-z_]+)['\"]/", $line ) ) {
 					continue;
@@ -218,11 +226,13 @@ class CapabilityMapTest extends TestCase {
 
 				++$found;
 
-				$key = ltrim( str_replace( realpath( dirname( self::SRC ) ), '', (string) realpath( $file ) ), '/' )
-					. ':' . ( $i + 1 );
+				$text             = trim( $line );
+				$repeats[ $text ] = ( $repeats[ $text ] ?? 0 ) + 1;
+				$key              = $relative . ' :: ' . $text . ( 1 === $repeats[ $text ] ? '' : ' #' . $repeats[ $text ] );
+				$seen[ $key ]     = true;
 
 				if ( '' === trim( (string) ( $allow[ $key ] ?? '' ) ) ) {
-					$unexplained[] = $key . ' - ' . trim( $line );
+					$unexplained[] = $key . ' (line ' . ( $i + 1 ) . ')';
 				}
 			}
 		}
@@ -239,6 +249,51 @@ class CapabilityMapTest extends TestCase {
 			"These wpss_* capability checks are bare - no ownership comparison beside them - and not allow-listed.\n"
 			. "Either pair the check with an ownership test, or record in bare_check_allowlist WHY bare is right here.\n"
 			. implode( "\n", $unexplained )
+		);
+
+		$stale = array_keys( array_diff_key( $allow, $seen ) );
+		$this->assertSame(
+			array(),
+			$stale,
+			"These bare_check_allowlist entries match no check in src/ any more - the check moved, changed or was removed.\n"
+			. "Re-key the entry to the check's current code, or delete it.\n"
+			. implode( "\n", $stale )
+		);
+	}
+
+	/**
+	 * TRIPWIRE - Pro grants no capability, so a first grant must be declared here.
+	 *
+	 * Pro has no role or capability of its own: every check it makes is a Free
+	 * capability or manage_options. A grant added later - add_cap/add_role at
+	 * activation, or a user_has_cap/map_meta_cap filter at runtime - would hand a
+	 * member authority this map never described. A runtime filter leaves no trace
+	 * in wp_roles(), so the live-role tests above cannot see it; only the source can.
+	 */
+	public function test_pro_grants_no_capability(): void {
+		$pro = dirname( __DIR__, 3 ) . '/wp-sell-services-pro/src';
+
+		if ( ! is_dir( $pro ) ) {
+			$this->markTestSkipped( 'Pro is not installed beside Free.' );
+		}
+
+		$grants = array();
+		$files  = $this->php_files( $pro );
+
+		foreach ( $files as $file ) {
+			foreach ( (array) file( $file ) as $n => $line ) {
+				if ( preg_match( "/(?<![\\w$])(add_cap|add_role)\\s*\\(|['\"](user_has_cap|map_meta_cap)['\"]/", (string) $line ) ) {
+					$grants[] = basename( $file ) . ':' . ( $n + 1 ) . ' ' . trim( (string) $line );
+				}
+			}
+		}
+
+		$this->assertGreaterThan( 50, count( $files ), 'The Pro source sweep read almost nothing, so it proved nothing.' );
+		$this->assertSame(
+			array(),
+			$grants,
+			"Pro now grants a capability. Declare it in audit/capability-map.json (who holds it, what it means) and update this tripwire.\n"
+			. implode( "\n", $grants )
 		);
 	}
 

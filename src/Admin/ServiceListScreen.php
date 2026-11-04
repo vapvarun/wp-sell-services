@@ -256,7 +256,10 @@ class ServiceListScreen {
 			case 'wpss_thumb':
 				static $primed = false;
 				if ( ! $primed ) {
-					update_post_thumbnail_cache();
+					// Quick Edit re-renders one row with no list query behind it: nothing to prime.
+					if ( is_array( $GLOBALS['wp_query']->posts ?? null ) ) {
+						update_post_thumbnail_cache();
+					}
 					$primed = true;
 				}
 				$thumb = get_the_post_thumbnail( $post_id, array( 48, 48 ), array( 'class' => 'wpss-list-thumb' ) );

@@ -427,7 +427,7 @@ class UtcMigration {
 		// same cursor would shift the same rows twice. The cursor is read only
 		// once the lock is held. Not acquired in 10s: nothing done, try later.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		if ( '1' !== (string) $wpdb->get_var( "SELECT GET_LOCK( 'wpss_utc_migration', 10 )" ) ) {
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 10 )', wpss_lock_name( 'wpss_utc_migration' ) ) ) ) {
 			return false;
 		}
 
@@ -463,7 +463,7 @@ class UtcMigration {
 
 			return $done;
 		} finally {
-			$wpdb->query( "SELECT RELEASE_LOCK( 'wpss_utc_migration' )" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', wpss_lock_name( 'wpss_utc_migration' ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		}
 	}
 

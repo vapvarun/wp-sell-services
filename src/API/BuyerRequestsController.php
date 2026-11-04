@@ -389,18 +389,9 @@ class BuyerRequestsController extends RestController {
 			return $permission;
 		}
 
-		// Check if user is a vendor using the canonical helper.
-		if ( ! wpss_is_vendor() ) {
-			return new WP_Error(
-				'wpss_not_vendor',
-				__( 'You must be a vendor to submit proposals.', 'wp-sell-services' ),
-				array( 'status' => 403 )
-			);
-		}
-
 		// Same rule as POST /proposals — the two routes reach the same act, so
 		// gating only one of them would leave the other as the way around it.
-		return wpss_vendor_status_block() ?? true;
+		return wpss_proposal_vendor_block() ?? true;
 	}
 
 	/**
@@ -550,9 +541,9 @@ class BuyerRequestsController extends RestController {
 
 		if ( is_wp_error( $result ) ) {
 			return new WP_Error(
-				'create_failed',
+				$result->get_error_code() ?: 'create_failed',
 				$result->get_error_message(),
-				[ 'status' => 400 ]
+				[ 'status' => (int) ( $result->get_error_data()['status'] ?? 400 ) ]
 			);
 		}
 
@@ -752,10 +743,11 @@ class BuyerRequestsController extends RestController {
 		$result = $this->request_service->convert_to_order( $request_id, $proposal_id );
 
 		if ( ! $result['success'] ) {
+			// A standing refusal is a 403, not a malformed request.
 			return new WP_Error(
 				'accept_failed',
 				$result['message'],
-				[ 'status' => 400 ]
+				[ 'status' => (int) ( $result['status'] ?? 400 ) ]
 			);
 		}
 

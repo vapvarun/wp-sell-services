@@ -19,6 +19,7 @@ The analytics dashboard gives you a real-time overview of your marketplace healt
 ### Order Statistics
 
 - Total orders and their status breakdown (pending, in progress, completed, cancelled)
+- These order counts are service orders: tips, extensions and milestone phases are not counted on their own. Click a count to open the matching **Orders** view (**Service orders only** in the type filter), which shows the same number.
 - Recent orders list with quick access to details
 - Order volume trends over time
 

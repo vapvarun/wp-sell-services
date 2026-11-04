@@ -1,275 +1,60 @@
 {
-  "_doc": [
-    "Findings a human has accepted for this release, each naming its card.",
-    "",
-    "The smoke report is EVIDENCE and is never edited to make a gate pass. This",
-    "file is the separate, reviewable record of which findings were triaged and",
-    "consciously shipped with - so the acceptance is auditable, attributable and",
-    "sits next to the evidence rather than inside it.",
-    "",
-    "The release skill's own rule: a pre-existing finding 'does not block - it",
-    "gets a card and a line in the audit file, so the delta stays honest'.",
-    "",
-    "Rules the gate enforces, so this cannot become a dumping ground:",
-    "  - every entry names a real card id and a reason;",
-    "  - every entry names the version it is accepted FOR, and is ignored for any",
-    "    other version, so an acceptance cannot silently carry forward;",
-    "  - a finding in the report that is NOT listed here still blocks.",
-    "",
-    "Accepting a finding is a decision someone made. Removing an entry is how you",
-    "un-make it.",
-    "",
-    "`resolved` is NOT `accepted`. An accepted finding ships as-is. A resolved one",
-    "was FIXED after the walk recorded it, so the report is simply stale for that",
-    "entry - and the honest answer to a stale report is a re-walk. Where a re-walk",
-    "was not run, the entry must say exactly how the fix was verified instead, so a",
-    "reader can weigh that evidence rather than assume a walk covered it."
-  ],
-  "version": "1.9.1",
-  "accepted": [
-    {
-      "id": "J02:rest-cancel-only-opener-only-while-open",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J03:A2-six-pages-slugs",
-      "card": "10427222944",
-      "reason": "Needs a fresh activation on a clean site; covered by the pristine install of the zips."
-    },
-    {
-      "id": "J04:s1-breadcrumb-home-vendors",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J04:p2-s8-empty-states",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J05:p2-s2-suspended-seller-nav",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J05:p2-s3-suspended-seller-starts-nothing",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J08:p1-s2-token-cannot-mint",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J08:p2-s6-requirements-skip-once",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J11:registry-no-generic-bell",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J11:s5-account-page-notifications-tab",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J14:s1-sub-ratings-optional",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J14:s5-no-empty-heading",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J14:s6-signed-out-asked-to-log-in",
-      "card": "10427222944",
-      "reason": "Intentional behaviour: The review Helpful vote was removed in 1.9.1: readme.txt:279 '* Improve - Removed the review Helpful vote: reviews and the vendor rating already say how a vendor did.' (commit 094611e1; readme.txt:306"
-    },
-    {
-      "id": "J15:s1-profile-timezone-and-links-fields",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J15:s1-vendor-without-profile-row",
-      "card": "10427222944",
-      "reason": "Intentional behaviour: Scratch wpss_vendor user 'qa-smoke-noprofile' with no wpss_vendor_profiles row (deleted afterwards): /vendors/?vendor=qa-smoke-noprofile -> 200 rendering the 'Vendors' directory; /vendors/qa-smoke-nop"
-    },
-    {
-      "id": "J15:s2-portfolio-counter-after-delete",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J15:s6-reorder-other-seller-response",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J15:s6-seller-levels-rest",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J16:s1-repeat-decline-message",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J16:s1-phase-tax",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J16:s2-extension-tax",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    },
-    {
-      "id": "J16:s4-tip-tax",
-      "card": "10427222944",
-      "reason": "Known at release, fix in 1.9.2; grouped on the card."
-    }
-  ],
-  "resolved": [
-    {
-      "id": "J02:rest-escalate-admin-mail-recipient",
-      "fixed_in": "0d0012f7",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. wpss_dispute_admin_email option is '' (empty). Escalated dispute 485 via REST as buyer; captured mail via pre_wp_mail: '[Action Required] Dispute #485 has been escalated' to varun@wbcomdesigns.com (th"
-    },
-    {
-      "id": "J06:s8-tax-cart-of-two-reads-rate",
-      "fixed_in": "094611e1",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As buyer Ben added two services (55 each) via POST /cart/add and opened /cart/ in the browser: summary reads '2 items $110.00 / VAT (20%) $22.00 / Total $132.00 / You will be charged $132.00 USD'. The"
-    },
-    {
-      "id": "J07:woo-order-line-name",
-      "fixed_in": "6b48315",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Woo rail, Ben: new COD order 15145 /my-account/view-order/15145/ shows line 'I will write conversion-focused website copy x 1 $45.00' (service name) not 'Service Order'; item meta keeps _wpss_service_"
-    },
-    {
-      "id": "J10:s4-390-layout",
-      "fixed_in": "094611e1 (44px notification and ledger buttons on phones); c21a7c05 for the admin filters",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As Maya at 390x844 on /dashboard/earnings/: scrollWidth 390 (no horizontal scroll), 'Export CSV' is now 268x44 (was 38px high), 'Request Withdrawal' 43.6px. (Withdrawal row 'Cancel' buttons measure 34"
-    },
-    {
-      "id": "J11:s2-390-row-touch-targets",
-      "fixed_in": "094611e1",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As Maya at 390 on /dashboard/notifications/: per-row 'Mark as read' buttons are 44x44 (was 24x24), 'Mark all as read' is 135x44 (was 38px tall), Filter button 68x44, both selects 44px tall; scrollWidt"
-    },
-    {
-      "id": "J12:s2-negative-number-saves-as-zero",
-      "fixed_in": "f8fab03f",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As admin in the browser, POSTed every Settings tab form to options.php with every number field set to -7 (min attributes bypassed). After reload: tax_rate 0, commission_rate 0, tip_commission_rate 0, "
-    },
-    {
-      "id": "J12:page-template-on-theme-without-fullwidth",
-      "fixed_in": "none identified",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Activated Twenty Twenty-Five (restored Reign afterwards). /services/ archive now ends in the theme footer (logo, Blog/Events/About links, 'Twenty Twenty-Five / Designed with WordPress') at 1440 and 39"
-    },
-    {
-      "id": "J13:s2-review-moderation",
-      "fixed_in": "094611e1",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. moderate_reviews on; buyer Amelia POST /orders/3632/review -> 201 status pending; no mail and no notification for the vendor at submit; after ReviewService::moderate(approved) as admin the vendor got "
-    },
-    {
-      "id": "J13:s3-suspended-vendor-cannot-start-new-work",
-      "fixed_in": "f8fab03f",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Same as journey 05 p2-s3 contact path: suspended Maya AJAX wpss_contact_vendor refused with 'Your vendor account is suspended.', no conversation or notification created."
-    },
-    {
-      "id": "J13:s6-nothing-actionable-twice-moderation",
-      "fixed_in": "0d0012f7",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As admin POST /moderation/11461/reject twice then /approve twice (reason 'QA-SMOKE reject'): both replays still return 200 but only the first call sends a mail ('requires changes' once, 'has been appr"
-    },
-    {
-      "id": "J13:s6-resolve-tells-reporter",
-      "fixed_in": "094611e1",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Reporter Ben filed reports on services 11416 and 11421 (POST /reports 201). Admin POST /reports/{id}/resolve with dismissed -> 200 and upheld -> 200 each created one report_resolved notification 'Your"
-    },
-    {
-      "id": "J14:s4-attachment-type-limit-notice",
-      "fixed_in": "094611e1",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As buyer Ben in the browser, opened Contact Vendor on /service/...-spec-2/, attached audit-tool.exe + ok.pdf via the file input, sent: modal now shows 'Your message has been sent successfully!' plus '"
-    },
-    {
-      "id": "J14:s4-suspended-seller-cannot-start-presale-can-answer-order",
-      "fixed_in": "f8fab03f",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Suspended Maya: pre-sale thread reply POST /conversations/190/messages -> 403 'Your vendor account is suspended.' (message count unchanged 24); order thread reply POST /conversations/364/messages -> 2"
-    },
-    {
-      "id": "J15:s1-profile-website-shows-public",
-      "fixed_in": "094611e1",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As Maya saved Website https://qa-smoke-mayachen.example.test on Dashboard > Profile ('Profile updated successfully.'); the public /vendors/?vendor=wpss_vendor_maya now shows a visible 'Website' link ("
-    },
-    {
-      "id": "J15:s3-period-selector-matches-ledger",
-      "fixed_in": "6b48315 (Pro) / 094611e1",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As Maya, Earnings & Payouts with ledger_period=this_month lists 3 rows (Oct 21 tip, Oct 20 x2) and the Export CSV for the same period has 3 data rows with Total Credits 328.50 (no Apr/May rows). Scree"
-    },
-    {
-      "id": "J16:s1-repeat-submit-idempotent",
-      "fixed_in": "f8fab03f",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Built a milestone-contract request (QA-SMOKE request 15141, proposal 282, parent order 5065, phases 5066-5068), paid phase 1 (Woo pay order completed), then as vendor Sofia POST /milestones/5066/submi"
-    },
-    {
-      "id": "J16:s1-revision-notifies-seller",
-      "fixed_in": "094611e1",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As buyer Ella POST /milestones/5066/request-revision {reason} -> 200 'Sent back to the vendor with your notes.'; vendor Sofia received a mail '[wp-sell-services] Revision requested: QA-SMOKE phase one"
-    },
-    {
-      "id": "J16:s2-billing-address-persist",
-      "fixed_in": "697dc76b (older; no 1.9.1 change found)",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. As Amelia on /service-checkout/pay/5072/ (extension quote, standalone) entered billing address 2 QA-SMOKE Road / Testtown / 54321 / GB with the Offline gateway and placed the order: wpss_get_billing_a"
-    },
-    {
-      "id": "J16:s3-late-returns-in-progress",
-      "fixed_in": "f8fab03f",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Set order 3632 to late with a past deadline, vendor quoted extension (5 days), paid it (Woo pay order completed): parent status returned to in_progress and delivery_deadline moved to 2026-10-25. Order"
-    },
-    {
-      "id": "J16:s4-tip-notifications-mail",
-      "fixed_in": "0d0012f7",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Buyer Ella tipped completed order 3888 (12.00) via POST /orders/3888/tip, paid the Woo pay order: seller Maya received exactly one tip mail ('[wp-sell-services] You received a tip from Ella Martinez')"
-    },
-    {
-      "id": "HARD:J05: vendor-profile suspend does not blo",
-      "fixed_in": "f8fab03f",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. With profile status=suspended, AJAX wpss_contact_vendor -> {success:false,'Your vendor account is suspended.'}; conversations/notifications counts unchanged (92/3365); REST pre-sale reply refused 403."
-    },
-    {
-      "id": "HARD:J05: is_suspended_vendor() always false ",
-      "fixed_in": "f8fab03f",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Suspended Maya dashboard now shows Selling > Sales Orders only (UnifiedDashboard.php:529 branch is reached). Caveat: the Sales Orders page itself then says 'Vendor Access Required' (see J05:p2-s2)."
-    },
-    {
-      "id": "HARD:J12: wpss_min_order_amount / wpss_max_or",
-      "fixed_in": "f8fab03f",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. POSTed wpss_general form with wpss_min_order_amount=-7 and wpss_max_order_amount=-7: both saved as '0' (no negative). Previously floatval saved negatives."
-    },
-    {
-      "id": "HARD:J16: MilestoneService::submit on pending",
-      "fixed_in": "f8fab03f",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Three submits of phase 5066: wpss_milestone_submitted effects (buyer mail + notification) fired once; repeats 200 with 0 mails/0 notifications."
-    },
-    {
-      "id": "HARD:J16: paid extension updates deadline onl",
-      "fixed_in": "f8fab03f",
-      "verified_by": "Re-check on 2026-10-21: symptom reproduced as the named role in the browser or REST, then the negative case; not a full walk. Late order 3632 with past deadline: after the paid extension it returned to in_progress with deadline moved to 2026-10-25."
-    }
-  ],
-  "debug_log_accepted": [],
-  "coverage_verified_elsewhere": [],
-  "staleness": {
-    "gate": "verify:smoke-gate",
-    "state": "The recorded combo walk (c21a7c05) predates about 148 rendered-file changes. The 47 checks that failed in it were re-run on 2026-10-21 at 1.9.1 HEAD: 25 fixed, 2 by design, 19 still failing, 1 untested.",
-    "not_covered": "No full combo walk describes the shipped tree. The 117 checks that passed in the recorded walk were not re-run, nor dark mode, RTL, the 1.9.0 to 1.9.1 upgrade path, or money rails."
+ "_doc": [
+  "Findings a human has accepted for this release, each naming its card.",
+  "",
+  "The smoke report is EVIDENCE and is never edited to make a gate pass. This",
+  "file is the separate, reviewable record of which findings were triaged and",
+  "consciously shipped with - so the acceptance is auditable, attributable and",
+  "sits next to the evidence rather than inside it.",
+  "",
+  "The release skill's own rule: a pre-existing finding 'does not block - it",
+  "gets a card and a line in the audit file, so the delta stays honest'.",
+  "",
+  "Rules the gate enforces, so this cannot become a dumping ground:",
+  "  - every entry names a real card id and a reason;",
+  "  - every entry names the version it is accepted FOR, and is ignored for any",
+  "    other version, so an acceptance cannot silently carry forward;",
+  "  - a finding in the report that is NOT listed here still blocks.",
+  "",
+  "Accepting a finding is a decision someone made. Removing an entry is how you",
+  "un-make it.",
+  "",
+  "`resolved` is NOT `accepted`. An accepted finding ships as-is. A resolved one",
+  "was FIXED after the walk recorded it, so the report is simply stale for that",
+  "entry - and the honest answer to a stale report is a re-walk. Where a re-walk",
+  "was not run, the entry must say exactly how the fix was verified instead, so a",
+  "reader can weigh that evidence rather than assume a walk covered it."
+ ],
+ "version": "1.9.2",
+ "accepted": [],
+ "resolved": [
+  {
+   "id": "PRO:admin-js-init-throws-initStorageSettings",
+   "fixed_in": "wp-sell-services-pro ff4c840",
+   "verified_by": "Browser, Local site at Pro ff4c840: Sell Services > Settings loads with zero JS errors; #wpss-save-plan, #wpss-save-subscription-settings, #wpss-save-rule and #wpss-wl-save each have a click handler; clicking White Label Save sent wpss_pro_save_white_label and returned success 'Settings saved.'. tests/test-js-namespace-calls-defined.php fails on the old admin.js (WPSSPro.initStorageSettings() undefined) and passes on the fix."
+  },
+  {
+   "id": "J16:tip-modal-cancel-button-look",
+   "fixed_in": "wp-sell-services f6a239f3",
+   "verified_by": "The tip modal Cancel now carries wpss-btn--secondary like every other modal Cancel. tests/test-design-token-integrity.php section 8 (every .wpss-btn carries a variant) fails on the old template naming this button and passes on the fix."
+  },
+  {
+   "id": "J22:new-vendor-badge-shown",
+   "fixed_in": "wp-sell-services 52fb3503",
+   "verified_by": "A real inconsistency, not intended: the service card hid New for a complete profile while the vendor directory and profile always showed it, each with its own markup. All three now render templates/partials/vendor-level-badge.php and every level shows everywhere (journey 22 updated to say so). Verified on Docker at 1280 and 390, Pro on and off (surface vendor-badge); tests/test-vendor-level-badge-one-renderer.php fails on the old card."
+  },
+  {
+   "id": "J15:pro-teaser-text-dark-contrast",
+   "fixed_in": "wp-sell-services 52fb3503",
+   "verified_by": "The teaser text read --wpss-wp-admin-* tokens that do not flip in dark mode. Now design-system greys: measured 9.86:1 light and 12.71:1 dark on /dashboard/create/ on Docker at 1280 and 390 (surface dashboard-sections). Token test section 9 fails on the old pro-teaser.css and unified-dashboard.css."
   }
+ ],
+ "debug_log_accepted": [],
+ "coverage_verified_elsewhere": [],
+ "staleness": {
+  "gate": "verify:smoke-gate (green at the 1.9.2 cut)",
+  "state": "Full Free and combo walks ran on a disposable Docker stack (Reign, standalone rail) at c5a78de9 / Pro bc20c3d. Files changed after them are covered by per-surface re-walks recorded under surfaces in both reports, each at the commit it ran against.",
+  "verified_instead": "Every fix since the walk has a test that fails on the old code; guards, PHPUnit, PHPStan, phpcs and docs-audit are green.",
+  "not_covered": "Stripe, PayPal, Razorpay and payout re-walks (owner: unchanged this cycle, covered by QA); EDD and FluentCart rails; the Stripe processing-intent return screen (its button measured by class only); Firefox and WebKit; the 1.9.1 to 1.9.2 upgrade path beyond the pristine install."
+ }
 }

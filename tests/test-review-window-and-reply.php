@@ -12,7 +12,8 @@
  * number. Replies had two writers - an inline $wpdb->update in the controller
  * gating on reviews.vendor_id, and ReviewService::add_response gating on
  * Review::reviewed_id - which allowed a different user on a row where the two
- * columns disagree. Every option and row touched here is restored.
+ * columns disagree. The option is restored; the order, service, reviews and
+ * members are throwaway and removed on any exit.
  *
  * @package WPSellServices
  */
@@ -20,6 +21,7 @@
 use WPSellServices\Services\ReviewService;
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 defined( 'ABSPATH' ) || exit;
 
@@ -38,59 +40,45 @@ $fixture_text  = 'Review window contract fixture.';
 // Fixtures.
 // ---------------------------------------------------------------------------
 
-// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$order = $wpdb->get_row(
-	"SELECT * FROM {$orders_table} o
-	WHERE o.status = 'completed' AND o.service_id > 0
-	AND NOT EXISTS ( SELECT 1 FROM {$reviews_table} r WHERE r.order_id = o.id )
-	ORDER BY o.id DESC LIMIT 1"
+// A throwaway completed order between throwaway members on a throwaway
+// service, so the contract asserts on any site; all removed on any exit.
+$f        = wpss_test_fixtures();
+$order_id = ( $f->order )(
+	array(
+		'service_id'   => ( $f->service )( 'draft' ),
+		'status'       => 'completed',
+		'completed_at' => current_time( 'mysql', true ),
+	)
 );
-
-if ( ! $order ) {
-	/*
-	 * SKIP, not FAIL. A missing fixture is not a broken contract, and calling it
-	 * one made this script the reason CI's contract job was red on a bare
-	 * WordPress while the same 58 scripts passed on a seeded site. A gate that
-	 * cries wolf on an empty database gets ignored, which is exactly how a real
-	 * failure would have slipped past. Seed an order and it asserts again.
-	 */
-	echo "SKIP  no completed order without a review on this install; nothing to assert\n";
-	exit( 0 );
-}
-
-$order_id    = (int) $order->id;
+$order       = wpss_get_order( $order_id );
 $customer_id = (int) $order->customer_id;
 $vendor_id   = (int) $order->vendor_id;
 
 // A second vendor, so the reply row can carry an owner in reviewee_id that is
-// not the one in vendor_id. Administrators are excluded: manage_options is a
-// documented bypass, so an admin here would prove nothing.
-$pick_user = static function ( array $exclude ) {
-	global $wpdb;
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	foreach ( (array) $wpdb->get_col( "SELECT ID FROM {$wpdb->users} ORDER BY ID DESC LIMIT 200" ) as $candidate ) {
-		$candidate = (int) $candidate;
-		if ( ! in_array( $candidate, $exclude, true ) && ! user_can( $candidate, 'manage_options' ) ) {
-			return $candidate;
-		}
-	}
-	return 0;
+// not the one in vendor_id, and a stranger. Neither is an administrator:
+// manage_options is a documented bypass, so an admin here would prove nothing.
+$make_user = static function ( string $suffix ) use ( $f ): int {
+	return (int) wp_insert_user(
+		array(
+			'user_login' => "{$f->tag}_{$suffix}",
+			'user_pass'  => wp_generate_password(),
+			'user_email' => "{$f->tag}_{$suffix}@example.test",
+			'role'       => 'subscriber',
+		)
+	);
 };
 
-$other_vendor_id = $pick_user( array( $vendor_id, $customer_id ) );
-$stranger_id     = $pick_user( array( $vendor_id, $customer_id, $other_vendor_id ) );
+$other_vendor_id = $make_user( 'other_vendor' );
+$stranger_id     = $make_user( 'stranger' );
 
 $orders_option = get_option( 'wpss_orders', array() );
 $orders_option = is_array( $orders_option ) ? $orders_option : array();
 $stored_window = (int) ( $orders_option['review_window_days'] ?? 30 );
-$original_done = $order->completed_at;
 
 $review_ids = array();
-$restore    = static function () use ( $orders_option, $orders_table, $original_done, $order_id, $reviews_table, &$review_ids ) {
+$restore    = static function () use ( $orders_option, $order_id, $reviews_table, &$review_ids ) {
 	global $wpdb;
 	update_option( 'wpss_orders', $orders_option );
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$wpdb->update( $orders_table, array( 'completed_at' => $original_done ), array( 'id' => $order_id ) );
 	foreach ( array_unique( $review_ids ) as $rid ) {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->delete( $reviews_table, array( 'id' => (int) $rid ) );
@@ -104,6 +92,8 @@ $restore    = static function () use ( $orders_option, $orders_table, $original_
 	remove_all_filters( 'wpss_review_window_days' );
 	wp_set_current_user( 0 );
 };
+// Also on a crash part way: the option must not stay at the test's value.
+register_shutdown_function( $restore );
 
 // A stored window of 30 days and a completion 90 days ago: expired on the
 // stored number, inside anything the filter widens it to.

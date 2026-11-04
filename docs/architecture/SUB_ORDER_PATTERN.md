@@ -168,7 +168,7 @@ contract. Both have to stay in sync — if you change the lock-step rule
 | `src/Services/TippingService.php` | Tip sub-order flow. |
 | `src/Services/ExtensionOrderService.php` | Extension sub-order flow. |
 | `src/Services/MilestoneService.php` | Milestone sub-order flow (includes lock-step + contract carve-outs). |
-| `src/Services/ExtensionRequestService.php` | The `wpss_extension_requests` row that pairs with the extension sub-order. |
+| `src/Services/ExtensionRequestService.php` | Status constants for the `wpss_extension_requests` row that pairs with the extension sub-order (read by `ExtensionRequestsController`). |
 | `src/Core/Plugin.php` | Listener wiring (cascade cancel, auto-complete parent, notification + email dispatch). |
 | `src/Integrations/Standalone/StandaloneOrderProvider.php` | `mark_as_paid` that fires `wpss_order_paid` after the gateway confirms. |
 | `src/Integrations/Standalone/StandaloneCheckoutProvider.php` | `pay_order` checkout handler + the server-side lock-step backstop. |

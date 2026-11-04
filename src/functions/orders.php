@@ -37,6 +37,82 @@ function wpss_get_order_not_payable_message( $order ): string {
 }
 
 /**
+ * Why this order cannot be paid right now, or '' when it can.
+ *
+ * The one answer every pay door gives (checkout intent, the standalone pay page,
+ * the offline and test gateways, and the store-rail seam wpss_ensure_pay_order()).
+ * An extension quote is on hold while its order is not active: an order that went
+ * into dispute still offered "Accept & Pay" for extra work.
+ *
+ * @since 1.9.2
+ *
+ * @param object $order ServiceOrder or order row.
+ * @return string Message for the buyer, '' when payable.
+ */
+function wpss_get_order_payment_refusal( $order ): string {
+	if ( 'pending_payment' !== (string) ( $order->status ?? '' ) ) {
+		return wpss_get_order_not_payable_message( $order );
+	}
+
+	if ( wpss_is_extension_on_hold( $order ) ) {
+		return __( 'This quote for extra work is on hold while the order is not active, so it cannot be paid now.', 'wp-sell-services' );
+	}
+
+	return '';
+}
+
+/**
+ * Whether an extension sub-order waits on its parent order becoming active again.
+ *
+ * @since 1.9.2
+ *
+ * @param object $order ServiceOrder or order row.
+ * @return bool
+ */
+function wpss_is_extension_on_hold( $order ): bool {
+	if ( \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE !== (string) ( $order->platform ?? '' ) ) {
+		return false;
+	}
+
+	$parent = wpss_get_order( (int) ( $order->platform_order_id ?? 0 ) );
+
+	return $parent && ! in_array( (string) $parent->status, \WPSellServices\Services\ExtensionOrderService::ACTIVE_PARENT_STATUSES, true );
+}
+
+/**
+ * The title an order is shown under.
+ *
+ * A service order is its service's title. A request order has no service post
+ * (service_id 0), and get_post( 0 ) / get_the_title( 0 ) answer with whatever
+ * page the visitor is on - the Dashboard - so the title comes from the request
+ * the proposal answered instead. An empty string means the caller picks its own
+ * generic label.
+ *
+ * @since 1.9.1
+ *
+ * @param object $order ServiceOrder or order row (JSON meta string).
+ * @return string Order title, or '' when it has none.
+ */
+function wpss_get_order_title( object $order ): string {
+	$service_id = (int) ( $order->service_id ?? 0 );
+
+	if ( $service_id > 0 ) {
+		return (string) get_the_title( $service_id );
+	}
+
+	$meta = $order->meta ?? array();
+	$meta = is_string( $meta ) ? (array) json_decode( $meta, true ) : (array) $meta;
+
+	if ( ! empty( $meta['proposal_snapshot']['request_title'] ) ) {
+		return (string) $meta['proposal_snapshot']['request_title'];
+	}
+
+	$request_id = 'request' === ( $order->platform ?? '' ) ? (int) ( $order->platform_order_id ?? 0 ) : 0;
+
+	return $request_id > 0 ? (string) get_the_title( $request_id ) : '';
+}
+
+/**
  * Get order by ID.
  *
  * @param int $order_id Order ID.
@@ -56,6 +132,41 @@ function wpss_get_order( int $order_id ): ?\WPSellServices\Models\ServiceOrder {
 	);
 
 	return $row ? \WPSellServices\Models\ServiceOrder::from_db( $row ) : null;
+}
+
+/**
+ * The one order-number search rule: a starts-with match, typed with or
+ * without the prefix, and with or without a leading '#'.
+ *
+ * A contains match ('%term%') cannot use the unique order_number index, so it
+ * read every order row on each admin search. Order numbers are random, so a
+ * person searches by the number they were given, never by a fragment from its
+ * middle.
+ *
+ * @since 1.9.2
+ *
+ * @param string $term   Search text as typed.
+ * @param string $column Column to match, qualified when the query joins (o.order_number).
+ * @return array{0: string, 1: array<int, string>} SQL with %s placeholders and its params; empty SQL for an empty term.
+ */
+function wpss_order_number_search_sql( string $term, string $column = 'order_number' ): array {
+	global $wpdb;
+
+	$term = ltrim( trim( $term ), '#' );
+	if ( '' === $term ) {
+		return array( '', array() );
+	}
+
+	$prefix = (string) apply_filters( 'wpss_order_number_prefix', 'WPSS-' );
+	$params = array( $wpdb->esc_like( $term ) . '%' );
+	// Also try the prefixed form so "AB12CD34" finds WPSS-AB12CD34; both are index range scans.
+	if ( '' !== $prefix && 0 !== stripos( $term, $prefix ) ) {
+		$params[] = $wpdb->esc_like( $prefix . $term ) . '%';
+	}
+
+	$sql = implode( ' OR ', array_fill( 0, count( $params ), "{$column} LIKE %s" ) );
+
+	return array( "({$sql})", $params );
 }
 
 /**
@@ -471,6 +582,26 @@ function wpss_get_sub_order_platforms(): array {
 }
 
 /**
+ * SQL predicate that keeps only real orders: no tips, extensions or milestones.
+ *
+ * Every "how many orders" count reads this one list, so the seller card, the
+ * REST stats, the seller level and the profile row cannot disagree with
+ * OrderRepository. The slugs come from a fixed map, not from request input.
+ *
+ * @since 1.9.1
+ * @param string $column Platform column, qualified when the query joins tables.
+ * @return string Predicate to AND into a WHERE clause.
+ */
+function wpss_order_rows_sql( string $column = 'platform' ): string {
+	$slugs = array_map(
+		static fn( string $platform ): string => "'" . esc_sql( sanitize_key( $platform ) ) . "'",
+		wpss_get_sub_order_platforms()
+	);
+
+	return $slugs ? "COALESCE({$column}, '') NOT IN (" . implode( ', ', $slugs ) . ')' : '1=1';
+}
+
+/**
  * Freeze the package an order was bought on.
  *
  * Package data lives in the service's `_wpss_packages` post meta, which the
@@ -560,6 +691,34 @@ function wpss_build_package_snapshot_from_legacy_id( int $service_id, int $packa
 		'delivery_days' => (int) ( $row['delivery_days'] ?? 0 ),
 		'revisions'     => (int) ( $row['revisions'] ?? 0 ),
 		'features'      => is_array( $features ) ? $features : array(),
+	);
+}
+
+/**
+ * The delivery terms a new order starts with, for any rail that creates one.
+ *
+ * Revisions come from the package the buyer bought (-1 is unlimited), falling
+ * back to the service's own count; the deadline is the line's days from now
+ * (see wpss_line_delivery_days()) and is also the original deadline. One place,
+ * so an order from a store rail is due and revisable exactly like a standalone one.
+ *
+ * @since 1.9.1
+ *
+ * @param int                              $service_id Service post ID.
+ * @param int                              $package_id Package the buyer bought (stable id or index).
+ * @param array<int, array<string, mixed>> $addons Priced add-on rows, when the rail has them.
+ * @return array{revisions_included: int, revisions_used: int, delivery_deadline: string, original_deadline: string}
+ */
+function wpss_order_delivery_terms( int $service_id, int $package_id, array $addons = array() ): array {
+	$resolved = wpss_resolve_service_package( $service_id, $package_id );
+	$package  = $resolved ? $resolved['package'] : array();
+	$deadline = gmdate( 'Y-m-d H:i:s', strtotime( '+' . wpss_line_delivery_days( $package, $addons ) . ' days' ) );
+
+	return array(
+		'revisions_included' => (int) ( $package['revisions'] ?? wpss_get_service_revisions( $service_id ) ),
+		'revisions_used'     => 0,
+		'delivery_deadline'  => $deadline,
+		'original_deadline'  => $deadline,
 	);
 }
 
@@ -729,7 +888,7 @@ function wpss_get_order_payment_reference( object $order ): ?array {
  *
  * @param object $order   Order model or raw `wpss_orders` row.
  * @param string $context 'admin' for edit links, 'public' for permalinks.
- * @return array{label: string, url: string, service_id: int, is_service: bool} Resolved subject.
+ * @return array{label: string, url: string, service_id: int, is_service: bool, kind: string} Resolved subject. `kind` is 'service', 'project' (a buyer-request order, which is not a gig) or 'sub' (tip, extension, phase).
  */
 function wpss_get_order_subject( object $order, string $context = 'public' ): array {
 	$platform   = (string) ( $order->platform ?? 'standalone' );
@@ -742,6 +901,7 @@ function wpss_get_order_subject( object $order, string $context = 'public' ): ar
 		'url'        => '',
 		'service_id' => 0,
 		'is_service' => false,
+		'kind'       => 'service',
 	);
 
 	// 1. Sub-orders describe their parent, never a service post they never had.
@@ -755,6 +915,7 @@ function wpss_get_order_subject( object $order, string $context = 'public' ): ar
 	);
 
 	if ( isset( $sub_order_labels[ $platform ] ) ) {
+		$subject['kind'] = 'sub';
 		if ( $parent_id > 0 ) {
 			$subject['label'] = sprintf( $sub_order_labels[ $platform ], $parent_id );
 			$subject['url']   = $is_admin
@@ -775,19 +936,15 @@ function wpss_get_order_subject( object $order, string $context = 'public' ): ar
 		return $subject;
 	}
 
-	// 2. Buyer-request orders carry the request post ID in platform_order_id.
+	// 2. Buyer-request orders carry the request post ID in platform_order_id. A custom project is not a gig:
+	// the plain title, no "Request:" prefix, and no public link (the admin keeps the edit link).
 	if ( 'request' === $platform ) {
-		$request_post = $parent_id > 0 ? get_post( $parent_id ) : null;
+		$subject['kind'] = 'project';
+		$request_post    = $parent_id > 0 ? get_post( $parent_id ) : null;
 
 		if ( $request_post && 'wpss_request' === $request_post->post_type ) {
-			$subject['label'] = sprintf(
-				/* translators: %s: buyer request title. */
-				__( 'Request: %s', 'wp-sell-services' ),
-				$request_post->post_title
-			);
-			$subject['url'] = (string) ( $is_admin
-				? get_edit_post_link( $request_post->ID, 'raw' )
-				: get_permalink( $request_post->ID ) );
+			$subject['label'] = $request_post->post_title;
+			$subject['url']   = $is_admin ? (string) get_edit_post_link( $request_post->ID, 'raw' ) : '';
 
 			return $subject;
 		}
@@ -805,13 +962,7 @@ function wpss_get_order_subject( object $order, string $context = 'public' ): ar
 			? (string) $meta['proposal_snapshot']['request_title']
 			: '';
 
-		$subject['label'] = '' !== $frozen_title
-			? sprintf(
-				/* translators: %s: buyer request title. */
-				__( 'Request: %s', 'wp-sell-services' ),
-				$frozen_title
-			)
-			: __( 'Buyer request', 'wp-sell-services' );
+		$subject['label'] = '' !== $frozen_title ? $frozen_title : __( 'Custom project', 'wp-sell-services' );
 
 		return $subject;
 	}

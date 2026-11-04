@@ -1,68 +1,69 @@
 {
   "journey": "07",
-  "sha_free": "c21a7c05",
-  "sha_pro": "e4ac7141",
+  "sha_free": "bc6f982f",
+  "sha_pro": "f34e07d",
   "env": {
     "site": "http://wp-sell-services.local",
     "theme": "reign-theme",
-    "rail": "woo",
-    "wp": "7.1.3"
+    "wp": "7.1.3",
+    "rail": "woocommerce (platform option auto); standalone for step 2 only, restored to auto and rewrite rules flushed"
   },
-  "ran_at": "2026-10-21T02:40:00Z",
+  "ran_at": "2026-10-21T20:58:00Z",
   "checks": [
     {
       "id": "s1-guest-add-to-cart-not-lost",
       "result": "pass",
-      "evidence": "Woo rail (account-at-checkout off): guest picked Standard, Continue -> Order Options modal -> Continue to Checkout -> /login/?redirect_to=<service URL>; logging in as Ella through the form returned to the service page; choosing Standard again went to /checkout/ with 'Service ... Package: Standard 1 x $70.00' in the cart; never an empty checkout."
+      "evidence": "Guest chose Standard on the service page, Continue, Order Options modal showed $70 package / $84 total, Continue to Checkout redirected to /login/?redirect_to=<service>. After autologin as Ella the service page loaded, Standard chosen again, /checkout/ showed 'Standard 1 x $70.00'. COD order placed (Woo 15470, wpss 5460)."
     },
     {
       "id": "s1-standalone-selection-intact",
-      "result": "pass",
-      "evidence": "Covered in J06 (standalone checkout opens with the selection intact)."
+      "result": "untested",
+      "evidence": "Not walked in this batch; the standalone selection round trip is covered by journey 06. Needs a standalone-rail guest pass."
     },
     {
       "id": "s2-site-cart-link-only-where-meaningful",
       "result": "pass",
-      "evidence": "Woo rail: Settings General/Checkout/Orders tabs have no 'Site cart link' control. Standalone: box present; ticking it points header cart at /cart/ (marketplace cart), unticked falls back to Woo cart (/cart-2/ on this site); setting restored."
+      "evidence": "Woo rail: no 'use marketplace cart link' control. Standalone rail: unticked -> header cart /cart-2/, ticked -> /cart/, unticked -> /cart-2/. Platform restored to auto."
     },
     {
       "id": "s3-carrier-redirects-home",
       "result": "pass",
-      "evidence": "Logged out GET /product/service-order/ -> 302 to http://wp-sell-services.local/ (carrier post 805); /wp-sitemap.xml has no product sitemap and /wp-sitemap-posts-product-1.xml is 404 so the carrier is not listed; /shop/ HTML has 0 mentions of service order."
+      "evidence": "curl: /product/service-order/ -> 302 to http://wp-sell-services.local; /wp-sitemap-posts-product-1.xml 404 and the sitemap index lists no product sitemap; /shop/ has 0 mentions of service-order. Carrier post 805 is exclude-from-catalog."
     },
     {
       "id": "s4-capped-seller-upgrade-link",
-      "result": "untested",
-      "evidence": "No Pro subscription plans exist (wpss_pro_subscription_plans empty); plan-cap message and Subscription link not exercised."
+      "result": "fail",
+      "evidence": "Soft. /dashboard/create/ for the capped vendor (Aisha, Pro plan max_services 1, 2 services) shows 'You have reached your service limit. Upgrade your subscription plan...' with a working link to /dashboard/subscription/ (which says '2 of 1 used'). But /dashboard/services/ says 'You have reached your service limit (2 of 20)': VendorProfile::get_max_services() (src/Models/VendorProfile.php:664) ignores the wpss_vendor_max_services filter that has_reached_service_limit() applies; the template (templates/dashboard/sections/services.php ~104) prints the unfiltered number."
     },
     {
       "id": "s5-plan-max-featured",
-      "result": "untested",
-      "evidence": "Needs a plan with Max featured and a subscribed seller; none in the fixture. Double-subscribe database error not exercised."
+      "result": "fail",
+      "evidence": "Soft (door missing, gate holds). A vendor cannot reach any Featured control: wp-admin/post.php redirects vendors to /my-account/ (Woo 11 ignores woocommerce_lock_down_admin, vendor lacks edit_posts), the frontend create/edit form has no Featured field, and there is no REST door. Function probe only: wpss_user_can_feature_service with max_featured 1: 0 featured -> true; at limit new=false other=false already-featured=true; plan max_featured 0 -> false. Double subscribe call returned the same subscription id, 1 row, empty last_error."
     },
     {
       "id": "s6-requirements-panel-dark-light",
-      "result": "untested",
-      "evidence": "The only Woo orders (13047 Completed/in progress, 13048 pending) have no 'awaiting requirements' panel; creating a paid Woo order awaiting requirements was out of scope; dark/light 4.5:1 not measured."
+      "result": "fail",
+      "evidence": "Soft. Order-received panel text 8.18:1 both modes; dark button 9.38:1. Light mode 'Submit requirements' (.button.wpss-wc-next-step__action) is white on rgb(22,163,74) = 3.30:1 at 15px/400 (theme button palette; Pro assets/css/woocommerce.css:149 sets no colours). 390px: scrollWidth 390, panel 15-375, button 279x44. View-order page has the 'Manage what you paid for' link (9.77 dark / 9.23 light) and no Submit button."
     },
     {
       "id": "woo-mini-cart-package-price",
       "result": "pass",
-      "evidence": "Signed-in Ella with a Standard line: header mini cart reads 'Package: Standard 1 x $70.00' and Basic line '1 x $60.00' after reload on /services/, /dashboard/ at 1440 and /checkout/ at 390; no '1 x $0.00' anywhere in the page text."
+      "evidence": "Header mini cart reads 'Package: Standard 1 x $70.00' on home and checkout; no $0.00."
     },
     {
       "id": "woo-order-line-name",
       "result": "fail",
-      "evidence": "Woo My Account view-order 13047 lists the line as generic 'Service Order x 1 $60.00' with no service title or package, while the cart/checkout show the real service names."
+      "evidence": "Soft. Order details name the service ('I will build a custom WordPress plugin to spec x 1 $70.00') but not the package; item meta _wpss_package_id is hidden, while cart and checkout show 'Package: Standard'. The What happens next panel does show '- Standard'."
     },
     {
       "id": "woo-settings-platform-select",
       "result": "pass",
-      "evidence": "RETRACTED in J12 re-check: the earlier fail came from storing the non-canonical slug 'woo' during the walk. With the canonical 'woocommerce' the dropdown renders selected 'WooCommerce (Available)' and the adapter resolves to woocommerce (wpss()->get_integration_manager()->get_active_adapter()->get_id()). An unknown stored slug showing 'auto' is expected."
+      "evidence": "Dropdown offers auto / standalone / woocommerce; with auto the adapter resolves to woocommerce (fresh process); selecting standalone resolves to standalone."
     }
   ],
   "proposed_checks": [
-    "Woo order details name the service and package"
-  ],
-  "verdict": "FAIL"
+    "Vendor dashboard must offer a reachable way to feature a service (or document that only admins can) so max_featured can be exercised by a vendor.",
+    "One shared limit helper for dashboard banner, create gate and subscription page so the numbers agree.",
+    "Woo order line items should show the package name."
+  ]
 }

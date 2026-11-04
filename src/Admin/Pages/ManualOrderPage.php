@@ -275,6 +275,7 @@ class ManualOrderPage {
 												<input type="number"
 														name="total_override"
 														id="wpss-total-override"
+														aria-label="<?php esc_attr_e( 'Order total override', 'wp-sell-services' ); ?>"
 														step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>"
 														min="0"
 														placeholder="<?php esc_attr_e( 'Auto-calculated', 'wp-sell-services' ); ?>"
@@ -292,6 +293,7 @@ class ManualOrderPage {
 												<input type="number"
 														name="commission_rate"
 														id="wpss-commission-rate"
+														aria-label="<?php esc_attr_e( 'Commission rate (%)', 'wp-sell-services' ); ?>"
 														class="wpss-small-input"
 														step="0.1"
 														min="0"
@@ -362,7 +364,7 @@ class ManualOrderPage {
 											<option value="failed"><?php esc_html_e( 'Failed', 'wp-sell-services' ); ?></option>
 											<option value="refunded"><?php esc_html_e( 'Refunded', 'wp-sell-services' ); ?></option>
 										</select>
-										<p class="description"><?php esc_html_e( 'An order set to Pending Payment is saved as unpaid, whatever this says.', 'wp-sell-services' ); ?></p>
+										<p class="description"><?php esc_html_e( 'An order set to Pending Payment is saved as unpaid, whatever this says. Any later status needs Paid.', 'wp-sell-services' ); ?></p>
 									</div>
 
 									<div class="wpss-form-row">
@@ -512,6 +514,12 @@ class ManualOrderPage {
 		if ( 'pending_payment' === $status && 'paid' === $payment_status ) {
 			$payment_status = 'pending';
 		}
+		// Every later status means the money arrived: an unpaid In Progress or
+		// Completed order would fire the completion pipeline and credit the
+		// vendor for money nobody received. Unpaid work is saved as Pending Payment.
+		if ( 'pending_payment' !== $status && 'paid' !== $payment_status ) {
+			wp_send_json_error( array( 'message' => __( 'Only a Pending Payment order can be saved unpaid. Set Payment Status to Paid, or set the order status to Pending Payment.', 'wp-sell-services' ) ) );
+		}
 		$payment_method  = sanitize_key( $_POST['payment_method'] ?? 'manual' );
 		$transaction_id  = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
 		$delivery_days   = absint( $_POST['delivery_days'] ?? 7 );
@@ -637,11 +645,7 @@ class ManualOrderPage {
 			'revisions_included' => $revisions_included,
 			'revisions_used'     => 0,
 			'meta'               => wp_json_encode(
-				array(
-					'tax_rate'     => (float) $line['tax_rate'],
-					'tax_amount'   => round( (float) $line['tax'], 2 ),
-					'tax_included' => (bool) $line['tax_included'],
-				)
+				wpss_order_tax_meta( (float) $line['tax_rate'], (float) $line['tax'], (bool) $line['tax_included'], (string) ( $line['tax_label'] ?? '' ) )
 			),
 			'created_at'         => current_time( 'mysql', true ),
 			'updated_at'         => current_time( 'mysql', true ),

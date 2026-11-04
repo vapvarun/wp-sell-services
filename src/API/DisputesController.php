@@ -556,6 +556,13 @@ class DisputesController extends RestController {
 		$files       = $request->get_file_params();
 		$attachments = array();
 
+		// Before any file is stored: a refused add must not leave an orphan.
+		$open = $this->dispute_service->get( $dispute_id );
+
+		if ( $open && ! DisputeService::accepts_input( $open ) ) {
+			return new WP_Error( 'wpss_dispute_closed', __( 'This dispute is no longer accepting evidence.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
 		// A multipart `file` goes through the one order-file seam, exactly as
 		// the dashboard form does; the record, not a URL, is what is kept.
 		if ( ! empty( $files['file'] ) ) {

@@ -36,4 +36,6 @@ Old read notifications are cleaned after 90 days by default; a site changes it w
 ### 5. The account-page notifications tab
 Where a cart plugin owns the account page, Notifications renders `myaccount/notifications` with the same list, filter and mark-read as the dashboard.
 
+On WooCommerce the tab is My Account > Service notifications (`/my-account/service-notifications/`), for buyers and vendors; Pro `tests/test-woo-account-notifications-tab.php` guards the menu item, query var and render hook.
+
 **Expect** the type filter lists only the types this member has received, and marking read updates the bell badge.

@@ -45,6 +45,8 @@
 	</source>
 
 	<php>
+		<!-- The route sweep boots every REST controller of both plugins and peaks near 155 MB; a stock 128 MB CLI dies silently with exit 255. -->
+		<ini name="memory_limit" value="512M"/>
 		<const name="WPSS_TESTING" value="true"/>
 		<env name="WP_TESTS_DOMAIN" value="localhost"/>
 		<env name="WP_TESTS_EMAIL" value="admin@localhost"/>

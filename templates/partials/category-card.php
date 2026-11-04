@@ -40,7 +40,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.5.1
- * @version 1.9.0
+ * @version 1.9.2
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -120,11 +120,11 @@ do_action( 'wpss_before_category_card', $category );
 		</div>
 	<?php elseif ( $show_icon ) : ?>
 		<div class="wpss-category-icon">
-			<?php if ( $icon ) : ?>
-				<span class="dashicons <?php echo esc_attr( $icon ); ?>"></span>
-			<?php else : ?>
-				<i data-lucide="folder" class="wpss-icon" aria-hidden="true"></i>
-			<?php endif; ?>
+			<?php
+			// The stored icon is a Lucide name (the category screen asks for one); it used to be
+			// printed as a dashicons class, which has no such glyph, so an empty circle showed.
+			echo \WPSellServices\Services\Icon::render( $icon ? (string) $icon : 'folder' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() escapes.
+			?>
 		</div>
 	<?php endif; ?>
 

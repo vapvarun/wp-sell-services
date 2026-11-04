@@ -406,23 +406,6 @@
 		},
 
 		/**
-		 * Flat billing_* map for posting back to the server.
-		 *
-		 * Separate from readBillingDetails(), which shapes the SAME values for
-		 * Stripe's nested billing_details. One read, two consumers — the server
-		 * wants meta keys, the gateway wants its own object shape.
-		 *
-		 * @return {Object} billing_* key => value.
-		 */
-		collectBillingFields: function() {
-			const out = {};
-			document.querySelectorAll('[data-wpss-billing] [name^="billing_"]').forEach((el) => {
-				out[el.name] = (el.value || '').trim();
-			});
-			return out;
-		},
-
-		/**
 		 * Expand the billing form when validation fails on a collapsed block.
 		 *
 		 * Without this the buyer is told to complete their address while the
@@ -470,7 +453,7 @@
 					is_multi_checkout: (this.form && this.form.id === 'wpss-multi-checkout-form') ? 1 : '',
 					// Billing fields, so a correction made at checkout is saved
 					// back to the profile and picked up by the order snapshot.
-					...this.collectBillingFields(),
+					...(window.wpssBillingFields ? window.wpssBillingFields() : {}),
 				},
 				success: (response) => {
 					this.setLoading(false);

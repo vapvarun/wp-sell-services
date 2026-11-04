@@ -105,6 +105,23 @@ report( { ran_against: head3, surfaces: { cart: { ran_against: head3, pro_ran_ag
 v = run();
 check( 'an unmapped Pro file invalidates the combo walk', ! v.ok && v.message.includes( 'Shared.php' ), v.message );
 
+// A template whose only change is its docblock @version is not stale; any other line keeps it stale.
+const tpl = 'templates/partials/unmapped-card.php';
+put( free, tpl, "<?php\n/**\n * Card.\n *\n * @version 1.0.0\n */\necho 'a';\n" );
+const head4 = commit( free, 'add unmapped template' );
+report( { ran_against: head4 } );
+put( pro, 'src/Core/Shared.php' );
+commit( pro, 'pro back to a walked state' );
+report( { ran_against: head4, pro_ran_against: git( pro, 'rev-parse', 'HEAD' ) } );
+put( free, tpl, "<?php\n/**\n * Card.\n *\n * @version 1.0.1\n */\necho 'a';\n" );
+commit( free, 'bump version only' );
+v = run();
+check( 'a @version-only bump does not invalidate the walk', v.ok, v.message );
+put( free, tpl, "<?php\n/**\n * Card.\n *\n * @version 1.0.2\n */\necho 'b';\n" );
+commit( free, 'bump version and change output' );
+v = run();
+check( 'a @version bump with any other change still invalidates it', ! v.ok && v.message.includes( 'unmapped-card.php' ), v.message );
+
 void head2;
 fs.rmSync( root, { recursive: true, force: true } );
 process.exit( fails ? 1 : 0 );

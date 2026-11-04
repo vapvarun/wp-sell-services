@@ -509,10 +509,11 @@ function wpss_client_ip(): string {
 	 * one rate-limit bucket. Cloudflare needs no entry.
 	 *
 	 * @since 1.8.0
+	 * @since 1.9.2 Receives the entries from Settings > System > Trusted proxies.
 	 *
 	 * @param string[] $proxies Trusted proxy IPs / ranges.
 	 */
-	$trusted = (array) apply_filters( 'wpss_trusted_proxies', array() );
+	$trusted = (array) apply_filters( 'wpss_trusted_proxies', wpss_get_trusted_proxies() );
 	$xff     = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '' ) );
 
 	if ( $trusted && '' !== $xff && wpss_ip_in_ranges( $remote, $trusted ) ) {
@@ -568,3 +569,191 @@ function wpss_ip_in_ranges( string $ip, array $ranges ): bool {
 
 	return false;
 }
+
+/**
+ * The proxies the owner listed under Settings > System > Trusted proxies.
+ *
+ * @since 1.9.2
+ *
+ * @return string[] IPs or CIDR ranges, one per entry. Empty by default.
+ */
+function wpss_get_trusted_proxies(): array {
+	return array_values( array_filter( array_map( 'trim', explode( "\n", (string) get_option( 'wpss_trusted_proxies', '' ) ) ) ) );
+}
+
+/**
+ * Whether a string is one IP address or a CIDR range (v4 or v6).
+ *
+ * @since 1.9.2
+ *
+ * @param string $entry Candidate, e.g. 10.0.0.5 or 10.0.0.0/8.
+ * @return bool
+ */
+function wpss_is_ip_or_cidr( string $entry ): bool {
+	list( $ip, $bits ) = array_pad( explode( '/', $entry, 2 ), 2, null );
+
+	if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+		return false;
+	}
+
+	if ( null === $bits ) {
+		return true;
+	}
+
+	return ctype_digit( $bits ) && (int) $bits <= ( str_contains( $ip, ':' ) ? 128 : 32 );
+}
+
+/**
+ * Sanitize the Trusted proxies field: one IP or CIDR range per line.
+ *
+ * Any invalid entry refuses the whole save and keeps the stored list, so a typo
+ * never silently drops a proxy the site depends on. Empty keeps the secure
+ * default (only Cloudflare is trusted).
+ *
+ * @since 1.9.2
+ *
+ * @param mixed $value Submitted value (textarea text).
+ * @return string Newline-separated entries.
+ */
+function wpss_sanitize_trusted_proxies( $value ): string {
+	$entries = array_values( array_unique( array_filter( array_map( 'trim', (array) preg_split( '/[\s,]+/', (string) $value ) ) ) ) );
+	$invalid = array_filter( $entries, static fn( $entry ) => ! wpss_is_ip_or_cidr( (string) $entry ) );
+
+	if ( ! $invalid ) {
+		return implode( "\n", $entries );
+	}
+
+	// Not loaded on REST; core calls this sanitizer twice when the option is new, so report once.
+	static $reported = false;
+
+	if ( ! $reported && function_exists( 'add_settings_error' ) ) {
+		$reported = true;
+		add_settings_error(
+			'wpss_trusted_proxies',
+			'wpss_invalid_trusted_proxies',
+			sprintf(
+				/* translators: %s: the entries that were refused, comma separated */
+				__( 'Trusted proxies were not saved: %s is not an IP address or CIDR range (for example 10.0.0.5 or 10.0.0.0/8). Fix the entry and save again.', 'wp-sell-services' ),
+				implode( ', ', array_map( 'sanitize_text_field', $invalid ) )
+			)
+		);
+	}
+
+	return (string) get_option( 'wpss_trusted_proxies', '' );
+}
+
+/*
+ * Registered on init, not only in the admin, so core's /wp/v2/settings serves it
+ * to administrators (the REST entry point) as well as the System settings form.
+ */
+add_action(
+	'init',
+	static function (): void {
+		register_setting(
+			'wpss_advanced',
+			'wpss_trusted_proxies',
+			array(
+				'type'              => 'string',
+				'description'       => __( 'Proxies allowed to report the visitor IP: one IP address or CIDR range per line. Cloudflare is handled automatically.', 'wp-sell-services' ),
+				'sanitize_callback' => 'wpss_sanitize_trusted_proxies',
+				'default'           => '',
+				'show_in_rest'      => true,
+			)
+		);
+	}
+);
+
+/**
+ * Secrets a site can keep in wp-config.php instead of the database.
+ *
+ * Define the constant and it wins over the saved value at every reader, its
+ * settings field locks, and a save never writes it to wp_options. Owner decision
+ * for 1.9.2: match WooCommerce, keep the saved settings as they are, add constants.
+ *
+ * @since 1.9.2
+ *
+ * @return array<string, array<string, string>> Option name => field => constant name.
+ */
+function wpss_secret_constants(): array {
+	/**
+	 * Filters the secret fields that wp-config.php constants can supply.
+	 *
+	 * Add entries before plugins_loaded priority 10, from the plugin's main file,
+	 * so they are in place before any gateway reads its settings.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param array<string, array<string, string>> $map Option name => field => constant name.
+	 */
+	return (array) apply_filters(
+		'wpss_secret_constants',
+		array(
+			'wpss_stripe_settings'   => array(
+				'test_secret_key' => 'WPSS_STRIPE_TEST_SECRET_KEY',
+				'live_secret_key' => 'WPSS_STRIPE_LIVE_SECRET_KEY',
+				'webhook_secret'  => 'WPSS_STRIPE_WEBHOOK_SECRET',
+			),
+			'wpss_paypal_settings'   => array(
+				'sandbox_client_secret' => 'WPSS_PAYPAL_SANDBOX_CLIENT_SECRET',
+				'live_client_secret'    => 'WPSS_PAYPAL_LIVE_CLIENT_SECRET',
+			),
+			'wpss_realtime_settings' => array(
+				'secret' => 'WPSS_REALTIME_SECRET',
+			),
+		)
+	);
+}
+
+/**
+ * The wp-config.php constant supplying a secret field, or '' when none is set.
+ *
+ * @since 1.9.2
+ *
+ * @param string $option Option name.
+ * @param string $field  Field key within the option.
+ * @return string Constant name, only when it is defined as a non-empty string.
+ */
+function wpss_secret_constant( string $option, string $field ): string {
+	$name = (string) ( wpss_secret_constants()[ $option ][ $field ] ?? '' );
+
+	return '' !== $name && defined( $name ) && is_string( constant( $name ) ) && '' !== constant( $name ) ? $name : '';
+}
+
+/*
+ * Read: the constant replaces the saved value for every reader of the option,
+ * also when the option was never saved (default_option_), as on a site whose
+ * secrets live only in wp-config.php.
+ * Write: a field a constant covers is stored empty, so the secret leaves the database.
+ */
+$wpss_secret_reader = static function ( $value, $option ) {
+	$secrets = array();
+	foreach ( array_keys( wpss_secret_constants()[ $option ] ?? array() ) as $field ) {
+		$constant = wpss_secret_constant( $option, (string) $field );
+		if ( '' !== $constant ) {
+			$secrets[ $field ] = (string) constant( $constant );
+		}
+	}
+	// No constant: leave the value alone, so a missing option still reads as its default.
+	return array() === $secrets ? $value : array_merge( is_array( $value ) ? $value : array(), $secrets );
+};
+foreach ( array_keys( wpss_secret_constants() ) as $wpss_secret_option ) {
+	add_filter( 'option_' . $wpss_secret_option, $wpss_secret_reader, 10, 2 );
+	add_filter( 'default_option_' . $wpss_secret_option, $wpss_secret_reader, 10, 2 );
+	add_filter(
+		'pre_update_option_' . $wpss_secret_option,
+		static function ( $value, $old, $option ) {
+			if ( ! is_array( $value ) ) {
+				return $value;
+			}
+			foreach ( array_keys( wpss_secret_constants()[ $option ] ?? array() ) as $field ) {
+				if ( '' !== wpss_secret_constant( $option, (string) $field ) ) {
+					$value[ $field ] = '';
+				}
+			}
+			return $value;
+		},
+		10,
+		3
+	);
+}
+unset( $wpss_secret_option, $wpss_secret_reader );

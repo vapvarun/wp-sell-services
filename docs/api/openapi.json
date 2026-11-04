@@ -2,7 +2,7 @@
     "openapi": "3.1.0",
     "info": {
         "title": "WP Sell Services REST API",
-        "version": "1.9.1",
+        "version": "1.9.2",
         "description": "REST API for the WP Sell Services marketplace (Free + Pro). Every entity is reachable through these endpoints - the same surface the mobile app and integrations use. Namespaced under `wpss/v1` (Free) and `wpss-pro/v1` (Pro).\n\nThis document is generated from the live route registrations, scoped to the WP Sell Services namespaces only, so it never includes routes from other plugins on the same install.\n\nGenerated on the **standalone** rail, which is the default. Two routes under `wpss-pro/v1` are registered only by the FluentCart adapter and therefore only exist when `wpss_general[ecommerce_platform]` is `fluentcart`; regenerate on the standalone rail so the committed spec stays stable, or the freshness check will flip-flop with whatever rail was last active.\n\nEvery path carries `x-wpss-tier`: `free` routes ship with WP Sell Services, `pro` routes exist only when WP Sell Services Pro is active and licensed.",
         "contact": {
             "name": "Wbcom Designs",
@@ -5610,7 +5610,7 @@
                                 "properties": {
                                     "status": {
                                         "type": "string",
-                                        "description": "Order status."
+                                        "description": "Order status"
                                     }
                                 }
                             }
@@ -5666,7 +5666,7 @@
                                 "properties": {
                                     "status": {
                                         "type": "string",
-                                        "description": "Order status."
+                                        "description": "Order status"
                                     }
                                 }
                             }
@@ -5722,7 +5722,7 @@
                                 "properties": {
                                     "status": {
                                         "type": "string",
-                                        "description": "Order status."
+                                        "description": "Order status"
                                     }
                                 }
                             }
@@ -5879,6 +5879,70 @@
                     },
                     "404": {
                         "description": "Not found."
+                    }
+                }
+            }
+        },
+        "/wpss/v1/orders/{id}/mark-paid": {
+            "x-wpss-tier": "free",
+            "post": {
+                "tags": [
+                    "Orders"
+                ],
+                "operationId": "post_wpss_v1_orders_id_mark_paid",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Order ID."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "transaction_id": {
+                                        "type": "string",
+                                        "description": "Reference from the payment provider. Generated when empty."
+                                    },
+                                    "payment_method": {
+                                        "type": "string",
+                                        "default": "offline",
+                                        "description": "Slug stored on the order, for example flutterwave. Defaults to offline. A gateway the plugin runs itself is refused."
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -7167,6 +7231,24 @@
                                     "review": {
                                         "type": "string",
                                         "description": "Review text."
+                                    },
+                                    "rating_communication": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 5,
+                                        "description": "Optional Communication rating (1-5)."
+                                    },
+                                    "rating_quality": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 5,
+                                        "description": "Optional Quality rating (1-5)."
+                                    },
+                                    "rating_value": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 5,
+                                        "description": "Optional Value rating (1-5)."
                                     }
                                 },
                                 "required": [
@@ -8182,6 +8264,31 @@
                     {
                         "cookieAuth": [],
                         "wpNonce": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 1
+                        },
+                        "description": ""
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100,
+                            "default": 100
+                        },
+                        "description": ""
                     }
                 ],
                 "responses": {
@@ -10061,6 +10168,24 @@
                                     "review": {
                                         "type": "string",
                                         "description": "Review text."
+                                    },
+                                    "rating_communication": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 5,
+                                        "description": "Optional Communication rating (1-5)."
+                                    },
+                                    "rating_quality": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 5,
+                                        "description": "Optional Quality rating (1-5)."
+                                    },
+                                    "rating_value": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 5,
+                                        "description": "Optional Value rating (1-5)."
                                     }
                                 },
                                 "required": [
@@ -11075,6 +11200,10 @@
                                             "draft"
                                         ],
                                         "description": "Vendor-controllable publish state."
+                                    },
+                                    "paused": {
+                                        "type": "boolean",
+                                        "description": "Pause (true) or resume (false): the service stays listed but takes no new orders."
                                     }
                                 }
                             }
@@ -11165,6 +11294,10 @@
                                             "draft"
                                         ],
                                         "description": "Vendor-controllable publish state."
+                                    },
+                                    "paused": {
+                                        "type": "boolean",
+                                        "description": "Pause (true) or resume (false): the service stays listed but takes no new orders."
                                     }
                                 }
                             }
@@ -11255,6 +11388,10 @@
                                             "draft"
                                         ],
                                         "description": "Vendor-controllable publish state."
+                                    },
+                                    "paused": {
+                                        "type": "boolean",
+                                        "description": "Pause (true) or resume (false): the service stays listed but takes no new orders."
                                     }
                                 }
                             }
@@ -12578,7 +12715,7 @@
                                             "weekly"
                                         ],
                                         "default": "monthly",
-                                        "description": "Billing period."
+                                        "description": "Billing period"
                                     },
                                     "max_services": {
                                         "type": "integer",
@@ -12846,7 +12983,7 @@
                                             "yearly",
                                             "weekly"
                                         ],
-                                        "description": "Billing period."
+                                        "description": "Billing period"
                                     },
                                     "max_services": {
                                         "type": "integer",
@@ -12955,7 +13092,7 @@
                                             "yearly",
                                             "weekly"
                                         ],
-                                        "description": "Billing period."
+                                        "description": "Billing period"
                                     },
                                     "max_services": {
                                         "type": "integer",
@@ -13064,7 +13201,7 @@
                                             "yearly",
                                             "weekly"
                                         ],
-                                        "description": "Billing period."
+                                        "description": "Billing period"
                                     },
                                     "max_services": {
                                         "type": "integer",
@@ -13160,7 +13297,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "description": "Search tags."
+                        "description": "Search tags"
                     },
                     {
                         "name": "per_page",
@@ -13384,7 +13521,7 @@
                                 "properties": {
                                     "display_name": {
                                         "type": "string",
-                                        "description": "Display name."
+                                        "description": "Display name"
                                     },
                                     "bio": {
                                         "type": "string",
@@ -13424,6 +13561,9 @@
                                         "type": "string"
                                     },
                                     "city": {
+                                        "type": "string"
+                                    },
+                                    "timezone": {
                                         "type": "string"
                                     },
                                     "website": {
@@ -13490,7 +13630,7 @@
                                 "properties": {
                                     "display_name": {
                                         "type": "string",
-                                        "description": "Display name."
+                                        "description": "Display name"
                                     },
                                     "bio": {
                                         "type": "string",
@@ -13530,6 +13670,9 @@
                                         "type": "string"
                                     },
                                     "city": {
+                                        "type": "string"
+                                    },
+                                    "timezone": {
                                         "type": "string"
                                     },
                                     "website": {
@@ -13596,7 +13739,7 @@
                                 "properties": {
                                     "display_name": {
                                         "type": "string",
-                                        "description": "Display name."
+                                        "description": "Display name"
                                     },
                                     "bio": {
                                         "type": "string",
@@ -13636,6 +13779,9 @@
                                         "type": "string"
                                     },
                                     "city": {
+                                        "type": "string"
+                                    },
+                                    "timezone": {
                                         "type": "string"
                                     },
                                     "website": {
@@ -15015,7 +15161,7 @@
                                 "cancelled"
                             ]
                         },
-                        "description": "Filter by status."
+                        "description": "Filter by status"
                     }
                 ],
                 "responses": {

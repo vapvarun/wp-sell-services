@@ -90,7 +90,8 @@ $check( '  the main image carries an alt', (bool) preg_match( '/alt="[^"]*"\s*cl
  * the keyboard at all.
  */
 $check( 'the zoom trigger is a button', str_contains( $gallery, '<button type="button"' ) && str_contains( $gallery, 'class="wpss-gallery-zoom"' ) );
-$check( '  it carries an accessible name', (bool) preg_match( '/wpss-gallery-zoom"\s*\n?\s*aria-label=/s', $gallery ) );
+// Anywhere inside the button's own tag: attributes can sit between the class and the label.
+$check( '  it carries an accessible name', (bool) preg_match( '/class="wpss-gallery-zoom"(?:(?!<img).)*?aria-label="/s', $gallery ) );
 $check( '  the image sits inside it', (bool) preg_match( '/wpss-gallery-zoom.*?<img.*?wpss-gallery-image.*?<\/button>/s', $gallery ) );
 $check( '  and the opener is bound to the button, not the image', str_contains( $single_js, "'click', '.wpss-gallery-zoom'" ) && ! str_contains( $single_js, "'click', '.wpss-gallery-image'" ) );
 $check( '  the button resets its UA chrome so it stays the stage', str_contains( $single_css, '.wpss-gallery-zoom {' ) && str_contains( $single_css, '.wpss-gallery-zoom:focus-visible' ) );

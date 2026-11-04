@@ -111,8 +111,7 @@ class DisputeWorkflowManager {
 		}
 
 		// Check if dispute is still open for responses.
-		$closed_statuses = array( DisputeService::STATUS_RESOLVED, DisputeService::STATUS_CLOSED );
-		if ( in_array( $dispute->status, $closed_statuses, true ) ) {
+		if ( ! DisputeService::accepts_input( $dispute ) ) {
 			return array(
 				'success' => false,
 				'message' => __( 'This dispute is no longer accepting responses.', 'wp-sell-services' ),
@@ -388,6 +387,21 @@ class DisputeWorkflowManager {
 			);
 		}
 
+		if ( in_array( $dispute->status, array( DisputeService::STATUS_RESOLVED, DisputeService::STATUS_CLOSED ), true ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'A resolved dispute cannot be assigned.', 'wp-sell-services' ),
+			);
+		}
+
+		// Same admin again: nothing to change, no second audit row.
+		if ( (int) ( $dispute->meta['assigned_to'] ?? 0 ) === $admin_id ) {
+			return array(
+				'success' => true,
+				'message' => __( 'Dispute already assigned to this admin.', 'wp-sell-services' ),
+			);
+		}
+
 		global $wpdb;
 
 		$meta                = $dispute->meta;
@@ -412,6 +426,18 @@ class DisputeWorkflowManager {
 				'message' => __( 'Failed to assign dispute.', 'wp-sell-services' ),
 			);
 		}
+
+		/**
+		 * Fires when a dispute is assigned to an admin.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int $dispute_id Dispute ID.
+		 * @param int $admin_id   Admin now assigned.
+		 * @param int $previous   Admin assigned before (0 for none).
+		 * @param int $order_id   Disputed order.
+		 */
+		do_action( 'wpss_dispute_assigned', $dispute_id, $admin_id, (int) ( $dispute->meta['assigned_to'] ?? 0 ), (int) $dispute->order_id );
 
 		// Notify assigned admin.
 		$this->notification_service->send(
@@ -465,6 +491,14 @@ class DisputeWorkflowManager {
 			return array(
 				'success' => false,
 				'message' => __( 'This dispute has already been resolved or closed.', 'wp-sell-services' ),
+			);
+		}
+
+		// Once escalated the dispute is the admin's to close; the opener can no longer withdraw it.
+		if ( DisputeService::STATUS_ESCALATED === $dispute->status && ! current_user_can( 'manage_options' ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This dispute has been escalated to the site team, so only they can close it.', 'wp-sell-services' ),
 			);
 		}
 
@@ -537,9 +571,6 @@ class DisputeWorkflowManager {
 	 */
 	public function check_response_deadlines(): void {
 		global $wpdb;
-
-		$response_days = (int) get_option( 'wpss_dispute_response_days', 3 );
-		$deadline      = gmdate( 'Y-m-d H:i:s', strtotime( "-{$response_days} days" ) );
 
 		// Find disputes awaiting response past deadline.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -783,16 +814,23 @@ class DisputeWorkflowManager {
 		$response_days = (int) get_option( 'wpss_dispute_response_days', 3 );
 		$new_deadline  = gmdate( 'Y-m-d H:i:s', strtotime( "+{$response_days} days" ) );
 
+		// A new deadline is owed a new reminder: the one-per-dispute marker would otherwise silence every later one.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$raw_meta = $wpdb->get_var( $wpdb->prepare( "SELECT meta FROM {$this->disputes_table} WHERE id = %d", $dispute_id ) );
+		$meta     = $this->decode_json_array( $raw_meta );
+		unset( $meta['reminder_sent'] );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
 			$this->disputes_table,
 			array(
 				'response_deadline' => $new_deadline,
 				'last_response_by'  => $responder_id,
+				'meta'              => $meta ? wp_json_encode( $meta ) : null,
 				'updated_at'        => current_time( 'mysql', true ),
 			),
 			array( 'id' => $dispute_id ),
-			array( '%s', '%d', '%s' ),
+			array( '%s', '%d', '%s', '%s' ),
 			array( '%d' )
 		);
 	}
@@ -832,22 +870,7 @@ class DisputeWorkflowManager {
 	 * @return bool True when the order is back on its pre-dispute status.
 	 */
 	private function restore_order_status( int $order_id ): bool {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$order = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT meta FROM {$wpdb->prefix}wpss_orders WHERE id = %d",
-				$order_id
-			)
-		);
-
-		if ( ! $order ) {
-			return false;
-		}
-
-		$meta            = $this->decode_json_array( $order->meta );
-		$previous_status = (string) ( $meta['status_before_dispute'] ?? '' );
+		$previous_status = self::status_before_dispute( $order_id );
 
 		// Rows written by the pre-1.6 bug recorded `disputed` as the status to
 		// go back to; that would leave the order stuck, so treat it as unknown.
@@ -855,10 +878,41 @@ class DisputeWorkflowManager {
 			$previous_status = \WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS;
 		}
 
+		return self::hand_back_order( $order_id, $previous_status, __( 'Dispute closed; order restored.', 'wp-sell-services' ) );
+	}
+
+	/**
+	 * The status an order held before its dispute was opened, or '' when unknown.
+	 *
+	 * @since 1.9.1
+	 * @param int $order_id Order ID.
+	 * @return string
+	 */
+	public static function status_before_dispute( int $order_id ): string {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$raw  = $wpdb->get_var( $wpdb->prepare( "SELECT meta FROM {$wpdb->prefix}wpss_orders WHERE id = %d", $order_id ) );
+		$meta = json_decode( (string) $raw, true );
+
+		return is_array( $meta ) ? (string) ( $meta['status_before_dispute'] ?? '' ) : '';
+	}
+
+	/**
+	 * Move an order out of `disputed` without re-running what its earlier status
+	 * already did: no second commission, completion hook or status notice.
+	 *
+	 * @since 1.9.1
+	 * @param int    $order_id Order ID.
+	 * @param string $status   Status to move to.
+	 * @param string $note     Order note.
+	 * @return bool True when the order moved.
+	 */
+	public static function hand_back_order( int $order_id, string $status, string $note = '' ): bool {
 		self::$restoring[ $order_id ] = true;
 
 		try {
-			return ( new OrderService() )->update_status( $order_id, $previous_status, __( 'Dispute closed; order restored.', 'wp-sell-services' ) );
+			return ( new OrderService() )->update_status( $order_id, $status, $note );
 		} finally {
 			unset( self::$restoring[ $order_id ] );
 		}
@@ -879,14 +933,6 @@ class DisputeWorkflowManager {
 			/* translators: %d: dispute ID */
 			__( '[Action Required] Dispute #%d has been escalated', 'wp-sell-services' ),
 			$dispute_id
-		);
-
-		$message = sprintf(
-			/* translators: 1: dispute ID, 2: order ID, 3: reason */
-			__( "Dispute #%1\$d for Order #%2\$d has been escalated.\n\nReason: %3\$s\n\nPlease review and resolve this dispute.", 'wp-sell-services' ),
-			$dispute_id,
-			$dispute->order_id,
-			$reason
 		);
 
 		( new EmailService() )->send(

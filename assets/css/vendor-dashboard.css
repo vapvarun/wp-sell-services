@@ -103,7 +103,7 @@
 
 .wpss-dashboard__nav-item--active {
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary-accent, #4f46e5);
+	color: var(--wpss-primary-dark);
 	font-weight: 500;
 }
 
@@ -305,7 +305,7 @@
 
 .wpss-badge--primary {
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary-accent, #4f46e5);
+	color: var(--wpss-primary-dark);
 }
 
 .wpss-badge--success {
@@ -593,7 +593,7 @@ select.wpss-input::-ms-expand {
 	justify-content: center;
 	border-radius: 50%;
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary-accent, #4f46e5);
+	color: var(--wpss-primary-dark);
 	flex-shrink: 0;
 }
 

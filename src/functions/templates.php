@@ -344,11 +344,40 @@ function wpss_get_template( string $template_name, array $args = array(), string
 }
 
 /**
+ * The one breadcrumb markup: Home first, the last crumb is the current page.
+ *
+ * The service page, the request page and the vendor directory each carried their own copy of this
+ * nav. Pass the crumbs after Home as label => URL pairs in order; give the last one an empty URL.
+ *
+ * @since 1.9.1
+ *
+ * @param array<int, array{0: string, 1: string}> $crumbs Crumbs after Home, each [ label, url ].
+ * @return void
+ */
+function wpss_render_breadcrumb( array $crumbs ): void {
+	array_unshift( $crumbs, array( __( 'Home', 'wp-sell-services' ), home_url( '/' ) ) );
+	$last = count( $crumbs ) - 1;
+	?>
+	<nav class="wpss-breadcrumb" aria-label="<?php esc_attr_e( 'Breadcrumb', 'wp-sell-services' ); ?>">
+		<ol class="wpss-breadcrumb-list">
+			<?php foreach ( $crumbs as $i => $crumb ) : ?>
+				<?php if ( $i === $last && '' === (string) $crumb[1] ) : ?>
+					<li class="wpss-breadcrumb-item wpss-breadcrumb-current" aria-current="page"><?php echo esc_html( (string) $crumb[0] ); ?></li>
+				<?php else : ?>
+					<li class="wpss-breadcrumb-item"><a href="<?php echo esc_url( (string) $crumb[1] ); ?>"><?php echo esc_html( (string) $crumb[0] ); ?></a></li>
+				<?php endif; ?>
+			<?php endforeach; ?>
+		</ol>
+	</nav>
+	<?php
+}
+
+/**
  * Breadcrumb on a buyer request: Home > Buyer Requests > the request.
  *
  * The template documented this as hooked at wpss_single_request_header 5,
  * but no such function existed, so a request page had no way back to the
- * list (Basecamp 10337197376). Same markup as the service breadcrumb.
+ * list (Basecamp 10337197376).
  *
  * @since 1.8.0
  *
@@ -356,15 +385,12 @@ function wpss_get_template( string $template_name, array $args = array(), string
  * @return void
  */
 function wpss_request_breadcrumb( int $request_id ): void {
-	?>
-	<nav class="wpss-breadcrumb" aria-label="<?php esc_attr_e( 'Breadcrumb', 'wp-sell-services' ); ?>">
-		<ol class="wpss-breadcrumb-list">
-			<li class="wpss-breadcrumb-item"><a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'wp-sell-services' ); ?></a></li>
-			<li class="wpss-breadcrumb-item"><a href="<?php echo esc_url( (string) get_post_type_archive_link( 'wpss_request' ) ); ?>"><?php esc_html_e( 'Buyer Requests', 'wp-sell-services' ); ?></a></li>
-			<li class="wpss-breadcrumb-item wpss-breadcrumb-current" aria-current="page"><?php echo esc_html( (string) get_post_field( 'post_title', $request_id ) ); ?></li>
-		</ol>
-	</nav>
-	<?php
+	wpss_render_breadcrumb(
+		array(
+			array( __( 'Buyer Requests', 'wp-sell-services' ), (string) get_post_type_archive_link( 'wpss_request' ) ),
+			array( (string) get_post_field( 'post_title', $request_id ), '' ),
+		)
+	);
 }
 add_action( 'wpss_single_request_header', 'wpss_request_breadcrumb', 5 );
 
@@ -787,11 +813,141 @@ function wpss_register_design_system( bool $enqueue = false ): void {
 			\WPSS_VERSION
 		);
 		wp_style_add_data( 'wpss-design-system', 'rtl', 'replace' );
+
+		$brand_css = wpss_brand_color_css();
+		if ( '' !== $brand_css ) {
+			wp_add_inline_style( 'wpss-design-system', $brand_css );
+		}
 	}
 
 	if ( $enqueue ) {
 		wp_enqueue_style( 'wpss-design-system' );
 	}
+}
+
+/**
+ * CSS that fills the design system's brand colour slots, or '' to leave them.
+ *
+ * The design system takes its brand colour from the host theme (Reign, BuddyX)
+ * and falls back to the plugin's indigo. This adds the two choices that need
+ * PHP: a brand colour that wins over the theme (Pro White Label), and an
+ * opt-out that keeps the plugin's own colour on any theme. A brand colour gets
+ * the ink and text shades its fills and text need to read at 4.5:1.
+ *
+ * @since 1.9.2
+ *
+ * @return string Inline CSS for the wpss-design-system handle.
+ */
+function wpss_brand_color_css(): string {
+	/**
+	 * Filters the marketplace brand colour.
+	 *
+	 * A hex colour here wins over the theme's colours on every marketplace
+	 * surface, in light and dark mode. Empty follows the theme.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param string $color Hex colour, or '' for none.
+	 */
+	$brand = (string) sanitize_hex_color( (string) apply_filters( 'wpss_brand_color', '' ) );
+
+	if ( '' !== $brand ) {
+		$brand = wpss_hex6( $brand );
+		$ink   = wpss_color_contrast( '#ffffff', $brand ) >= wpss_color_contrast( '#111827', $brand ) ? '#ffffff' : '#111827';
+		return sprintf(
+			'html:root{--wpss-theme-fill:%1$s;--wpss-theme-ink:%2$s;--wpss-theme-accent:%1$s;--wpss-theme-accent-text:%3$s}'
+			. 'html:root[data-bx-mode="dark"],html:root[data-theme="dark"]{--wpss-theme-accent-text:%4$s}',
+			$brand,
+			$ink,
+			wpss_readable_shade( $brand, '#ffffff', '#000000' ),
+			wpss_readable_shade( $brand, '#1f2937', '#ffffff' )
+		);
+	}
+
+	/**
+	 * Filters whether marketplace colours follow the host theme.
+	 *
+	 * On a theme the plugin reads (Reign, BuddyX), buttons take the theme's
+	 * button colours and links, tints and focus rings its theme colour.
+	 * Return false to keep the plugin's own colour.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param bool $follow True to follow the theme.
+	 */
+	if ( ! apply_filters( 'wpss_use_theme_colors', true ) ) {
+		// `initial` makes a custom property unset, so each slot falls back to the plugin colour.
+		return ':root{--wpss-theme-fill:initial;--wpss-theme-ink:initial;--wpss-theme-accent:initial;--wpss-theme-accent-text:initial}';
+	}
+
+	return '';
+}
+
+/**
+ * Expand a hex colour to six lowercase digits ("#abc" becomes "#aabbcc").
+ *
+ * @since 1.9.2
+ *
+ * @param string $hex A sanitized hex colour.
+ * @return string
+ */
+function wpss_hex6( string $hex ): string {
+	$hex = strtolower( ltrim( $hex, '#' ) );
+	if ( 3 === strlen( $hex ) ) {
+		$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+	}
+	return '#' . $hex;
+}
+
+/**
+ * WCAG contrast ratio between two hex colours, 1 to 21.
+ *
+ * @since 1.9.2
+ *
+ * @param string $a Hex colour.
+ * @param string $b Hex colour.
+ * @return float
+ */
+function wpss_color_contrast( string $a, string $b ): float {
+	$luminance = static function ( string $hex ): float {
+		$channels = array_map(
+			static function ( string $pair ): float {
+				$v = hexdec( $pair ) / 255;
+				return $v <= 0.03928 ? $v / 12.92 : ( ( $v + 0.055 ) / 1.055 ) ** 2.4;
+			},
+			str_split( ltrim( wpss_hex6( $hex ), '#' ), 2 )
+		);
+		return 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
+	};
+	$la        = $luminance( $a );
+	$lb        = $luminance( $b );
+	return ( max( $la, $lb ) + 0.05 ) / ( min( $la, $lb ) + 0.05 );
+}
+
+/**
+ * The colour itself, or the nearest shade of it that reads at 4.5:1 on $bg.
+ *
+ * Mixes towards $toward (black on a light ground, white on a dark one) in 5%
+ * steps, so the hue stays recognisable.
+ *
+ * @since 1.9.2
+ *
+ * @param string $hex    Hex colour to shade.
+ * @param string $bg     Hex background the text sits on.
+ * @param string $toward Hex colour to mix towards.
+ * @return string Six-digit hex colour.
+ */
+function wpss_readable_shade( string $hex, string $bg, string $toward ): string {
+	$from = array_map( 'hexdec', str_split( ltrim( wpss_hex6( $hex ), '#' ), 2 ) );
+	$to   = array_map( 'hexdec', str_split( ltrim( wpss_hex6( $toward ), '#' ), 2 ) );
+	for ( $step = 0; $step <= 20; $step++ ) {
+		$mix   = $step / 20;
+		$shade = vsprintf( '#%02x%02x%02x', array_map( static fn( $f, $t ) => (int) round( $f + ( $t - $f ) * $mix ), $from, $to ) );
+		if ( wpss_color_contrast( $shade, $bg ) >= 4.5 ) {
+			return $shade;
+		}
+	}
+	return wpss_hex6( $toward );
 }
 
 /**

@@ -47,21 +47,26 @@ Editing a service does not change any orders already in progress. Existing order
 
 ## Pausing a Service
 
-Pausing hides your service from the marketplace without deleting it. Buyers cannot find or purchase a paused service, but it keeps all its settings, reviews, and order history.
+Pausing stops new orders without taking the service down. It stays published: buyers can still find it in search and the catalog, open its page and save it to favorites. The order buttons are disabled with the note "This service is paused and not accepting new orders right now." It keeps its settings, reviews, order history and page address.
+
+While a service is paused, its page asks search engines not to index it and it is left out of the sitemap, so a long pause can cost search ranking. Resume it as soon as you can take orders again.
 
 ### How to Pause
 
 1. Go to **Dashboard > My Services**
-2. Click the **Pause** button next to the service
-3. The status changes to **Draft** and the service is removed from public listings
+2. Click **Pause** on the service
+3. The badge on the card changes to **Paused** and the button to **Resume**
 
-### How to Reactivate
+### How to Resume
 
 1. Go to **Dashboard > My Services**
-2. Find the paused service (status shows "Draft")
-3. Click **Activate** to republish it
+2. Click **Resume** on the paused service
 
-If moderation is enabled, reactivating sends the service back through the approval queue.
+Resuming takes effect straight away. It does not go back through moderation, because the service never left the published state.
+
+A site admin can pause or resume any service from the **Status** field on the service's edit screen in wp-admin. It is the same setting.
+
+To take a service off the marketplace entirely, open it in the editor and save it as a draft. A draft is not listed, and publishing it again counts against your service limit and goes through moderation if that is on.
 
 ### When to Pause
 
@@ -122,13 +127,10 @@ If you are unsure, pause instead. You can always delete later, but you cannot re
 | Status | Visible to Buyers | Can Be Purchased | How to Get Here |
 |--------|-------------------|------------------|----------------|
 | **Published** | Yes | Yes | Approved by admin (or moderation off) |
-| **Draft** | No | No | New service not yet submitted, or paused by vendor |
-| **Pending** | No | No | Submitted for moderation, awaiting admin approval |
-| **Suspended** | No | No | Admin has paused this service (e.g., policy violation) |
-
-### If Your Service Is Suspended
-
-An admin has paused your service, usually because it violates marketplace policies or needs review. You will typically receive a notification explaining why. Contact the marketplace admin to understand what needs to change before it can be reactivated.
+| **Paused** | Yes | No | You clicked Pause, or an admin set the service to Paused |
+| **Draft** | No | No | New service not yet submitted, or saved as a draft |
+| **Pending review** | No | No | Submitted for moderation, awaiting admin approval |
+| **Rejected** | No | No | An admin rejected it in moderation; edit it and resubmit |
 
 ---
 

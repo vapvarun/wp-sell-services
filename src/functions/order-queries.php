@@ -70,7 +70,7 @@ function wpss_get_user_orders( int $user_id, array $args = array() ): array {
 	);
 	$args     = wp_parse_args( $args, $defaults );
 
-	$sql    = "SELECT * FROM {$table} WHERE customer_id = %d";
+	$sql    = "SELECT * FROM {$table} WHERE customer_id = %d AND " . wpss_order_rows_sql();
 	$params = array( $user_id );
 
 	if ( ! empty( $args['status'] ) ) {
@@ -113,7 +113,7 @@ function wpss_get_vendor_orders( int $vendor_id, array $args = array() ): array 
 	);
 	$args     = wp_parse_args( $args, $defaults );
 
-	$sql    = "SELECT * FROM {$table} WHERE vendor_id = %d";
+	$sql    = "SELECT * FROM {$table} WHERE vendor_id = %d AND " . wpss_order_rows_sql();
 	$params = array( $vendor_id );
 
 	if ( ! empty( $args['status'] ) ) {
@@ -188,14 +188,15 @@ function wpss_count_orders_for( string $column, int $user_id, string $status = '
 		return 0;
 	}
 
-	$table = $wpdb->prefix . 'wpss_orders';
+	$table    = $wpdb->prefix . 'wpss_orders';
+	$is_order = wpss_order_rows_sql(); // Tips, extensions and milestones are not orders of their own.
 
 	if ( '' !== $status ) {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $column is allow-listed above; both values are bound.
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$column} = %d AND status = %s", $user_id, $status );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$column} = %d AND status = %s AND {$is_order}", $user_id, $status );
 	} else {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $column is allow-listed above; the value is bound.
-		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$column} = %d", $user_id );
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$column} = %d AND {$is_order}", $user_id );
 	}
 
 	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is the prepared statement built above.

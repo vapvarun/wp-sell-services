@@ -437,7 +437,9 @@ class PortfolioController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function reorder( WP_REST_Request $request ) {
-		$this->service()->reorder( get_current_user_id(), (array) $request->get_param( 'order' ) );
+		if ( ! $this->service()->reorder( get_current_user_id(), (array) $request->get_param( 'order' ) ) ) {
+			return new WP_Error( 'wpss_not_owner', __( 'You do not own this portfolio item.', 'wp-sell-services' ), array( 'status' => 403 ) );
+		}
 
 		return new WP_REST_Response( array( 'success' => true ) );
 	}

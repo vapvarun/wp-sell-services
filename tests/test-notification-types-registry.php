@@ -11,6 +11,7 @@
 require_once __DIR__ . '/exit-on-fail.php';
 require_once __DIR__ . '/fixtures.php';
 
+global $wpdb;
 $fails = 0;
 $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . "\n";
@@ -23,6 +24,21 @@ $check( 'registry exists with label and icon per type', $registry && ! array_fil
 
 $missing = array_diff( array_keys( wpss_notification_type_settings() ), array_keys( $registry ) );
 $check( 'every type that has an email setting has a registry row (' . implode( ',', $missing ) . ')', ! $missing );
+
+// Class check: every literal type the services send has a registry row, so no bell falls back to a generic icon.
+$sent = array();
+foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( dirname( __DIR__ ) . '/src', FilesystemIterator::SKIP_DOTS ) ) as $file ) {
+	if ( 'php' === $file->getExtension() && preg_match_all( '/->send\(\s*[^,]+,\s*[\'"]([a-z_]+)[\'"]/', file_get_contents( $file->getPathname() ), $m ) ) {
+		$sent = array_merge( $sent, $m[1] );
+	}
+}
+$unregistered = array_diff( array_unique( $sent ), array_keys( $registry ) );
+$check( 'every type sent by the services has a registry row (' . implode( ',', $unregistered ) . ')', ! $unregistered );
+
+// And each has its own message case, so none of them reads the generic "You have a new notification".
+$svc_src   = file_get_contents( dirname( __DIR__ ) . '/src/Services/NotificationService.php' );
+$no_message = array_filter( array_unique( $sent ), static fn( $type ) => false === strpos( $svc_src, "case '{$type}':" ) );
+$check( 'every type sent by the services has a message case (' . implode( ',', $no_message ) . ')', ! $no_message );
 
 // A member's dropdown is their own types, and each filters to exactly its rows. Seed a member with a
 // spread of types, including ones that used to have no filter option.

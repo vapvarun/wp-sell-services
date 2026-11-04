@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.9.1
+Stable tag: 1.9.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -98,8 +98,6 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 * Built-in checkout system - no WooCommerce or other e-commerce plugin required
 * Offline payment gateway with admin confirmation workflow
-* Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce, EDD and FluentCart checkout integrations.
-* Milestone, tip and extension payments are supported on Standalone, WooCommerce and FluentCart
 * Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce checkout; the EDD and FluentCart rails are beta and cannot take a catalog purchase yet.
 * Milestone, tip and extension payments are supported on Standalone and WooCommerce
 
@@ -267,21 +265,103 @@ Three auto-calculated levels plus one admin-granted: New Vendor (default), Risin
 
 == Changelog ==
 
+= 1.9.2 - November 2026 =
+
+Payments recorded from outside the plugin, secrets in wp-config.php, and one look on every page.
+
+* New      - POST /orders/{id}/mark-paid lets an administrator's automation record a payment taken outside the plugin, with a developer guide for Flutterwave, Mobile Money and payment links.
+* New      - Stripe, PayPal and realtime secrets can be set as wp-config.php constants; the constant wins and its settings field locks.
+* New      - Settings > System > Trusted proxies tells the plugin which proxies or CDNs pass on the visitor's real address.
+* New      - Placing a bank-transfer order emails the buyer the payment instructions and tells the admin and the seller.
+* New      - The site owner is warned when the plugin's background jobs are more than an hour overdue.
+* New      - The wpss_gallery_video_first filter opens the service gallery on the video.
+* Improve  - Marketplace colours follow the site's theme, and every public page and dashboard form uses one button style.
+* Improve  - Pausing a service keeps it listed and stops new orders everywhere.
+* Improve  - The Vendors directory looks like the other discovery pages, and each vendor tile leads with the name.
+* Improve  - A vendor's level badge, New vendor included, looks the same on service cards, the Vendors directory and the profile.
+* Improve  - Filter and toolbar dropdowns size to their content on every theme, and dashboard sections line up on a phone and read in dark mode.
+* Improve  - Notification lists page by number on the dashboard, My Account and admin.
+* Improve  - The order page lists the tips and extensions paid on top, and shows a Discount or Price adjustment line when the lines do not add up to the total.
+* Improve  - A buyer-request order reads as a Project, and accepting a phased proposal sends one project-plan email instead of one per phase.
+* Improve  - Order chat picks up a conversation started after the page opened, checks for messages only while the tab is visible, and unread badges refresh without a reload.
+* Improve  - Message threads open on the newest message.
+* Improve  - Dashboard order counts open an Orders view that shows the same number.
+* Improve  - Sales Orders tells a suspended vendor why the menu shrank.
+* Improve  - On a store rail, the Payment Gateways tab links to the store's own payment settings.
+* Improve  - EDD and FluentCart checkout are labelled beta and off by default everywhere.
+* Improve  - Reign shows one navigation on plugin pages.
+* Improve  - Category cards show the saved icon, and a service title shows in full on its page.
+* Fix      - Lowest rated and least sold sorts keep unreviewed and unsold services last.
+* Fix      - PayPal checkout saves the billing details the buyer typed.
+* Fix      - A revision request notifies the vendor once, and each delivery and revision sends one notice.
+* Fix      - Completing a phased project no longer tells the vendor that a payment of zero will be released.
+* Fix      - An extension quote cannot be paid while its order is disputed or otherwise not active.
+* Fix      - A tip, extension or milestone phase no longer takes a review of its own.
+* Fix      - On WooCommerce, EDD or FluentCart the order popup quotes what the store charges.
+* Fix      - Closing an unpaid sub-order in any way cancels its store order.
+* Fix      - Scheduled order sweeps change only the orders whose status they checked.
+* Fix      - Long emails are retried after a failure, and long held messages are sent.
+* Fix      - Email sent while an order is being saved waits until the save completes.
+* Fix      - The extension-paid email shows the new deadline in the vendor's time zone.
+* Fix      - Order counters and flags no longer make a member a vendor.
+* Fix      - The bank-transfer placement email goes out once per order.
+* Fix      - A bank-transfer order with no instructions set tells the buyer the site owner will email them.
+* Fix      - Notification emails carry the site name in the subject, like every other email.
+* Fix      - Mark as Paid is offered for an unpaid phase, extension or tip with no payment method chosen.
+* Fix      - Automatic withdrawals pass the same checks as a vendor's own request.
+* Fix      - Vendor order counts refresh when an order is placed or changes status.
+* Fix      - Buyer Requests sort and the Filters drawer work on the archive.
+* Fix      - The settings page shows validation errors instead of always saying Settings saved.
+* Fix      - A ?vendor= link to a member who is not a vendor is kept out of search indexes.
+* Security - A service gallery video must be on YouTube or Vimeo, so a page view never contacts a host the vendor chose.
+* Security - Every way of saving a service meets the same moderation check, including republishing a draft and editing categories.
+* Security - The unused public live search endpoint is removed.
+* Security - mark-paid refuses a payment method that names a gateway the plugin runs itself.
+* Security - Database lock names carry the site's table prefix, so sites sharing a database server do not block each other.
+* Dev      - Audit log rows are written only by listeners on documented actions.
+* Compat   - Aligned with WP Sell Services Pro 1.9.2. Install both updates together.
+
 = 1.9.1 - October 2026 =
 
 Admins can import reviews for new vendors, and a set of payment, email and review fixes from the 1.9.0 reports.
 
 * New      - Admins can add one review or import a CSV for a vendor's service; imported reviews show an Imported review label, count in ratings and send no email (needs Pro).
+* New      - Buyers can add optional Communication, Quality and Value ratings to a review; they show on the review card and are accepted by the REST API. The overall rating is unchanged.
+* New      - Vendors can set their own time zone in the profile, and the dates they see follow it.
+* New      - A Tax tips setting under Commission and Tax; tips are untaxed unless it is on.
 * Improve  - Custom-price manual orders read Custom order instead of a package name and price.
 * Improve  - Payment, proposal, milestone and extension emails always send, and the email preferences screen says so.
 * Improve  - The vendor profile review list uses the same markup as the service page, and View all reviews loads the next pages from the server.
 * Improve  - Vendor and service ratings, the vendor card, REST stats and vendor levels all count the same reviews.
+* Improve  - Milestone phases and paid extensions carry VAT like the order they belong to, and every pay page shows the VAT line.
+* Improve  - The vendor directory and vendor profiles show a Home and Vendors breadcrumb.
 * Improve  - Removed the review Helpful vote: reviews and the vendor rating already say how a vendor did.
 * Improve  - Vendors are notified when a buyer requests a revision on a milestone phase, and buyers are told the outcome of a report they filed.
 * Improve  - Dispute response reminders show as Dispute response due in the notification center.
 * Improve  - The Earnings ledger follows the chosen period, and the cart tax line names the rate like checkout does.
 * Improve  - Vendor profiles show the website and edit the social links from the dashboard.
 * Improve  - Contact Vendor says which attachments were skipped, and notification and ledger buttons are 44px tall on phones.
+* Improve  - Reviews written for an order show a Verified Purchase badge, and the owner is emailed when a service enters the review queue from the dashboard wizard or the REST API.
+* Improve  - Orders keep the tax label they were priced with, so renaming the Tax label later does not change past orders.
+* Improve  - Resolving a member report, assigning a dispute and changing a member's standing are recorded in the Audit Log.
+* Improve  - The service order window shows the VAT line and now shows a refusal, such as a closed account, instead of failing silently.
+* Improve  - A banned or suspended member can no longer buy, start a request, send a tip or post a review, and is told why; a banned or suspended seller's services are hidden and cannot be bought.
+* Improve  - Accepting a proposal checks both the buyer's and the seller's standing, and any edit to a live service through the REST API goes back to the review queue.
+* Improve  - Orders from WooCommerce, EDD and FluentCart start with the package's revisions and deadline, and FluentCart orders are announced to the vendor.
+* Improve  - The order REST payload shows the tax inside the total, and Audit Log events carry plain labels.
+* Improve  - A new dispute deadline earns the next response reminder.
+* Improve  - Creating or updating a service over REST with more items than the plan allows saves the allowed ones and lists the trimmed items in a notices array, instead of failing with an error.
+* Improve  - The site admin is emailed when a member files a report or a dispute is opened.
+* Improve  - The dashboard Services list marks services waiting for approval as Pending review.
+* Improve  - The owner gets at most five report alerts per member per hour; every report is still saved.
+* Fix      - CSV exports no longer log a PHP 8.4 deprecation.
+* Fix      - Portfolio reordering refuses another vendor's items.
+* Fix      - A dispute opener can no longer cancel after escalation, and repeat notices are not sent.
+* Fix      - A suspended or restricted vendor's proposal gets the standing message, and requirements can be skipped once.
+* Fix      - Declining a milestone phase reads as declined, and extension and dispute assignment notifications have rows and messages.
+* Fix      - Seller levels in REST report total earnings from the ledger and no next level for a manually set tier.
+* Fix      - The portfolio counter updates after a delete, and a service with no reviews shows no empty Reviews section.
+* Fix      - The empty service search state shows its icon.
 * Fix      - A suspended vendor can no longer start new pre-sale conversations, and keeps Sales Orders to finish paid work.
 * Fix      - Order amount limits and other number settings can no longer be saved below their minimum.
 * Fix      - Submitting a milestone phase twice notifies the buyer once, and a paid extension returns a late order to In Progress.
@@ -303,9 +383,46 @@ Admins can import reviews for new vendors, and a set of payment, email and revie
 * Fix      - The admin order screen shows the contract total for milestone projects.
 * Fix      - An unpaid milestone, tip or extension no longer credits the vendor's wallet when an admin marks the order completed.
 * Fix      - The Extra Work and tip cards have inset spacing on mobile.
+* Fix      - Publishing from the dashboard, the wizard or the REST API all enforce the vendor's service limit, and the limit shown on the dashboard follows the vendor's plan.
+* Fix      - Publishing a pending service from the editor now approves it instead of putting it back in the review queue.
+* Fix      - The package editor accepts -1 for unlimited revisions.
+* Fix      - Request orders show the request title on the requirements page and in order emails instead of the page the buyer was on.
+* Fix      - The service gallery thumbnail strip no longer widens the page on phones, and the Quick Edit refresh in the service list no longer logs a PHP warning.
+* Fix      - The withdrawal confirmation stays on screen before the page refreshes.
+* Fix      - Select boxes no longer clip their text.
+* Fix      - An admin can open a seller's service in the editor from the dashboard, and the editor opens when gallery or package data is stored in an older format.
+* Fix      - A failed delete from the dashboard says so instead of reporting success.
+* Fix      - Repeating a decision that was already made, such as approving a withdrawal or setting the same status, sends no second email and writes no second Audit Log row.
+* Fix      - A payment that cannot be settled now says so, and a second payment arriving at the same moment is handled quietly.
+* Fix      - Updating Free before Pro no longer takes the site down: an older Pro is switched off with a notice until it is updated.
+* Fix      - Order counts on the seller card, vendor stats, seller levels and earnings leave out tips, milestone phases and extensions, so they match the Vendors screen.
+* Fix      - A vendor's response rate can no longer go above 100 percent.
+* Fix      - A member who signs up as a vendor sees their vendor permissions at once.
+* Fix      - Review stars and icons on the admin vendor detail screen show filled instead of blank.
+* Fix      - A dispute ruled for the vendor, or settled by agreement, on an order that was already completed no longer sends the buyer a second Order completed notice.
+* Fix      - The total override, commission rate and select-all fields in admin have names for screen readers.
+* Fix      - A suspended or rejected vendor can no longer reinstate themselves by applying to sell again.
+* Fix      - Offline checkout, new milestone phases, extensions and tips check the standing of both the buyer and the seller.
+* Fix      - Posting a review or accepting a proposal while banned or suspended returns the standing message instead of a server error.
+* Fix      - A manual order saved with any status after Pending Payment must be marked Paid, so unpaid money is never credited.
+* Fix      - Mark as Paid is offered on an unpaid offline tip, milestone phase or extension even after it was set to completed, and credits the vendor once.
+* Fix      - Milestone, extension and tip totals and tax round to the currency's decimals.
+* Fix      - The waiting for payment confirmation notice still shows after the offline gateway is switched off.
+* Fix      - Orders from older versions with no payment status can be marked paid.
+* Fix      - A vendor's new service enters the review queue and notifies the owner once, and an admin's own new service is approved at once.
+* Fix      - Restoring an order sends no status emails, and a dispute opening sends the owner one email.
+* Fix      - A completed order handed back to the vendor keeps its completion date, and a seller level that did not change records nothing.
+* Fix      - Editing a review without changes writes no Audit Log row.
+* Fix      - The admin vendor detail Reviews tab shows the review text and the service it belongs to.
+* Fix      - Imported review dates follow the site time zone.
+* Fix      - The tax rate label on the service page can be translated, and the admin Orders filters fit on tablets.
+* Security - Vendor stats no longer reveal when a non-vendor account registered.
+* Security - A service gallery accepts only images the vendor uploaded.
 * Dev      - Updating removes the retired Helpful vote options and cleanup job; the helpful_count column is left in place.
 * Dev      - ReviewRepository::rating_stats() is the one rating query, and ReviewService::create_imported() the one door for imported reviews.
 * Dev      - Removed unused classes (FAQService, three repositories and the admin viewer data classes).
+* Dev      - Removed the unused service and bulk AJAX handlers and ServiceManager::delete; wpss_user_can_edit_service() is the one rule for who may edit a service.
+* Dev      - Test scripts clean up the rows they create on any exit, and only those rows.
 * Compat   - Aligned with WP Sell Services Pro 1.9.1. Install both updates together.
 
 = 1.9.0 - October 2026 =
@@ -1008,6 +1125,9 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * WP 6.7+ compatible (lazy-loaded translations)
 
 == Upgrade Notice ==
+
+= 1.9.2 =
+Update Free and Pro together. No database change. Gateway and realtime secrets can now be set as wp-config.php constants.
 
 = 1.9.1 =
 Update Free and Pro together. The reviews table now allows reviews without an order, and Pro encrypts stored gateway and storage secrets on first load.

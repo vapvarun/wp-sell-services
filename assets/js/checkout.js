@@ -22,6 +22,20 @@
 	var i18n = config.i18n || {};
 
 	/*
+	 * The billing block's fields as a flat billing_* map, for every gateway to
+	 * post with its payment request so the server saves what the buyer typed.
+	 * One collector: PayPal and Razorpay used to post none, so their buyers'
+	 * addresses were never saved.
+	 */
+	window.wpssBillingFields = function() {
+		var out = {};
+		document.querySelectorAll('[data-wpss-billing] [name^="billing_"]').forEach(function(el) {
+			out[el.name] = (el.value || '').trim();
+		});
+		return out;
+	};
+
+	/*
 	 * Create the buyer's account BEFORE paying, when they are logged out and
 	 * the owner has enabled account-at-checkout.
 	 *

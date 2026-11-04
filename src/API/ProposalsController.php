@@ -298,12 +298,8 @@ class ProposalsController extends RestController {
 			return $perm;
 		}
 
-		if ( ! function_exists( 'wpss_is_vendor' ) || ! wpss_is_vendor() ) {
-			return $this->error( 'wpss_not_vendor', __( 'You must be a vendor to submit proposals.', 'wp-sell-services' ), 403 );
-		}
-
 		// Bidding for work is taking on new work. See wpss_vendor_status_block().
-		return wpss_vendor_status_block() ?? true;
+		return wpss_proposal_vendor_block() ?? true;
 	}
 
 	/**

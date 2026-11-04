@@ -10,7 +10,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var int $order_id Order ID passed from parent template.
  *
@@ -52,8 +52,10 @@ if ( ! in_array( $order->status, array( 'pending_requirements', 'pending_payment
 	exit;
 }
 
-$service = get_post( $order->service_id );
-$vendor  = get_userdata( $order->vendor_id );
+$service = $order->service_id ? get_post( $order->service_id ) : null;
+
+$order_title = wpss_get_order_title( $order );
+$vendor      = get_userdata( $order->vendor_id );
 
 /**
  * Hook: wpss_before_requirements_form
@@ -91,7 +93,7 @@ do_action( 'wpss_before_requirements_form', $order );
 						class="wpss-requirements-page__summary-thumb">
 				<?php endif; ?>
 				<div class="wpss-requirements-page__summary-info">
-					<h3 class="wpss-requirements-page__summary-title"><?php echo esc_html( $service ? $service->post_title : __( 'Service', 'wp-sell-services' ) ); ?></h3>
+					<h3 class="wpss-requirements-page__summary-title"><?php echo esc_html( '' !== $order_title ? $order_title : __( 'Service', 'wp-sell-services' ) ); ?></h3>
 					<p class="wpss-requirements-page__summary-order">
 						<?php
 						printf(

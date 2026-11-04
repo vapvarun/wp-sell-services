@@ -67,22 +67,40 @@ class ReviewsController extends RestController {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'check_create_permissions' ),
 					'args'                => array(
-						'order_id' => array(
+						'order_id'             => array(
 							'description' => __( 'Order being reviewed.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
-						'rating'   => array(
+						'rating'               => array(
 							'description' => __( 'Rating (1-5).', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
 							'minimum'     => 1,
 							'maximum'     => 5,
 						),
-						'review'   => array(
+						'review'               => array(
 							'description' => __( 'Review text.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
+						),
+						'rating_communication' => array(
+							'description' => __( 'Optional Communication rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
+						),
+						'rating_quality'       => array(
+							'description' => __( 'Optional Quality rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
+						),
+						'rating_value'         => array(
+							'description' => __( 'Optional Value rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
 						),
 					),
 				),
@@ -132,22 +150,40 @@ class ReviewsController extends RestController {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'check_create_permissions' ),
 					'args'                => array(
-						'order_id' => array(
+						'order_id'             => array(
 							'description' => __( 'Order ID.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
-						'rating'   => array(
+						'rating'               => array(
 							'description' => __( 'Rating (1-5).', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
 							'minimum'     => 1,
 							'maximum'     => 5,
 						),
-						'review'   => array(
+						'review'               => array(
 							'description' => __( 'Review text.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
+						),
+						'rating_communication' => array(
+							'description' => __( 'Optional Communication rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
+						),
+						'rating_quality'       => array(
+							'description' => __( 'Optional Quality rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
+						),
+						'rating_value'         => array(
+							'description' => __( 'Optional Value rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 5,
 						),
 					),
 				),
@@ -401,33 +437,33 @@ class ReviewsController extends RestController {
 			);
 		}
 
-		// Auto-approve unless the site owner turned on review moderation
-		// (wpss_vendor['moderate_reviews']). Previously hard-defaulted to true,
-		// so REST-created reviews went live even with moderation enabled.
-		$moderate_reviews = (bool) wpss_get_option( 'vendor', 'moderate_reviews' );
-		$auto_approve     = apply_filters( 'wpss_auto_approve_reviews', ! $moderate_reviews );
-		$status           = $auto_approve ? 'approved' : 'pending';
+		// Standing refusal: 403 with the reason, not a 500 from create() returning null.
+		$standing = wpss_account_status_block( $user_id );
+		if ( $standing ) {
+			return $standing;
+		}
 
-		// Create review.
-		$result = $wpdb->insert(
-			$reviews_table,
+		// The one eligibility rule, which also refuses a tip, extension or milestone phase.
+		$eligible = $review_service->can_review( $order_id, $user_id );
+		if ( ! $eligible['can_review'] ) {
+			return new WP_Error( 'wpss_review_not_allowed', $eligible['reason'], array( 'status' => 400 ) );
+		}
+
+		// The service is the one writer: moderation, rating caches, the
+		// one-review-per-order guard and the sub-ratings live there.
+		$created = $review_service->create(
+			$order_id,
+			$user_id,
 			array(
-				'order_id'    => $order_id,
-				'service_id'  => $order->service_id,
-				'reviewer_id' => $user_id,
-				'reviewee_id' => $order->vendor_id,
-				'vendor_id'   => $order->vendor_id,
-				'customer_id' => $user_id,
-				'review_type' => 'customer_to_vendor',
-				'rating'      => $rating,
-				'review'      => $review,
-				'status'      => $status,
-				'created_at'  => current_time( 'mysql', true ),
-			),
-			array( '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%d', '%s', '%s', '%s' )
+				'rating'               => $rating,
+				'content'              => $review,
+				'rating_communication' => (int) $request->get_param( 'rating_communication' ),
+				'rating_quality'       => (int) $request->get_param( 'rating_quality' ),
+				'rating_value'         => (int) $request->get_param( 'rating_value' ),
+			)
 		);
 
-		if ( ! $result ) {
+		if ( ! $created ) {
 			return new WP_Error(
 				'rest_review_failed',
 				__( 'Failed to create review.', 'wp-sell-services' ),
@@ -435,13 +471,7 @@ class ReviewsController extends RestController {
 			);
 		}
 
-		$review_id = (int) $wpdb->insert_id;
-
-		// Update service rating cache.
-		self::update_rating_cache( (int) $order->service_id, (int) $order->vendor_id );
-
-		// Trigger actions.
-		do_action( 'wpss_review_created', $review_id, $order_id );
+		$review_id = (int) $created->id;
 
 		$new_review = $this->get_review( $review_id );
 
@@ -508,13 +538,29 @@ class ReviewsController extends RestController {
 		if ( ! empty( $updates ) ) {
 			$updates['updated_at'] = current_time( 'mysql', true );
 
-			$wpdb->update(
+			$saved = $wpdb->update(
 				$wpdb->prefix . 'wpss_reviews',
 				$updates,
 				array( 'id' => $review_id ),
 				null,
 				array( '%d' )
 			);
+
+			// Audited only once stored, and only when the name really changed.
+			$old_name = (string) ( $review->reviewer_name ?? '' );
+			if ( false !== $saved && array_key_exists( 'reviewer_name', $updates ) && (string) $updates['reviewer_name'] !== $old_name ) {
+				/**
+				 * Fires when an admin edits a stored field on a review.
+				 *
+				 * @since 1.9.2
+				 *
+				 * @param int    $review_id Review ID.
+				 * @param string $field     Field changed.
+				 * @param string $before    Previous value.
+				 * @param string $after     New value.
+				 */
+				do_action( 'wpss_review_edited', $review_id, 'reviewer_name', $old_name, (string) $updates['reviewer_name'] );
+			}
 
 			// Update rating cache if rating changed.
 			if ( isset( $updates['rating'] ) ) {
@@ -564,6 +610,16 @@ class ReviewsController extends RestController {
 			array( 'id' => $review_id ),
 			array( '%d' )
 		);
+
+		/**
+		 * Fires after a review is deleted.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int    $review_id Review ID.
+		 * @param object $review    The row as it was before deletion.
+		 */
+		do_action( 'wpss_review_deleted', $review_id, $review );
 
 		// Update rating cache.
 		self::update_rating_cache( $service_id, $vendor_id );
@@ -701,13 +757,14 @@ class ReviewsController extends RestController {
 				"SELECT
 					COUNT(*) as total,
 					AVG(rating) as average,
+					SUM(CASE WHEN order_id IS NOT NULL THEN 1 ELSE 0 END) as order_reviews,
 					SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_star,
 					SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_star,
 					SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_star,
 					SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star,
 					SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star
 				FROM {$table}
-				WHERE vendor_id = %d AND status = 'approved'",
+				WHERE vendor_id = %d AND status = 'approved' AND review_type = 'customer_to_vendor'",
 				$vendor_id
 			)
 		);
@@ -719,12 +776,14 @@ class ReviewsController extends RestController {
 		$orders_table     = $wpdb->prefix . 'wpss_orders';
 		$completed_orders = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'",
+				"SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed' AND " . wpss_order_rows_sql(),
 				$vendor_id
 			)
 		);
 
-		$response_rate = $completed_orders > 0 ? round( ( $total / $completed_orders ) * 100, 1 ) : 0;
+		// Share of completed orders that left a review. Reviews without an order
+		// (imported, marketplace) are not part of it, and it never passes 100.
+		$response_rate = $completed_orders > 0 ? min( 100, round( ( (int) $stats->order_reviews / $completed_orders ) * 100, 1 ) ) : 0;
 
 		return new WP_REST_Response(
 			array(
@@ -908,41 +967,44 @@ class ReviewsController extends RestController {
 		$service = get_post( (int) $review->service_id );
 
 		$data = array(
-			'id'                 => (int) $review->id,
-			'order_id'           => (int) $review->order_id,
-			'service_id'         => (int) $review->service_id,
-			'service_title'      => $service ? $service->post_title : '',
+			'id'                   => (int) $review->id,
+			'order_id'             => (int) $review->order_id,
+			'service_id'           => (int) $review->service_id,
+			'service_title'        => $service ? $service->post_title : '',
 			// Flat keys kept - the app reads them today, and removing a key is a
 			// contract change. `vendor_avatar` is NEW: the card called out that
 			// reviews were the one flat surface missing it, so the flat set is
 			// now symmetrical with the customer_* set beside it.
-			'vendor_id'          => (int) $review->vendor_id,
-			'vendor_name'        => wpss_get_member_display_name( (int) $review->vendor_id ),
-			'vendor_avatar'      => get_avatar_url( (int) $review->vendor_id, array( 'size' => 48 ) ),
-			'customer_id'        => (int) $review->customer_id,
-			'customer_name'      => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
-			'customer_avatar'    => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
+			'vendor_id'            => (int) $review->vendor_id,
+			'vendor_name'          => wpss_get_member_display_name( (int) $review->vendor_id ),
+			'vendor_avatar'        => get_avatar_url( (int) $review->vendor_id, array( 'size' => 48 ) ),
+			'customer_id'          => (int) $review->customer_id,
+			'customer_name'        => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
+			'customer_avatar'      => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
 			// The canonical actor objects, added alongside. A client can now
 			// read a person out of a review with the same code it uses on an
 			// order or a service. `customer` rather than `reviewer` because the
 			// flat keys beside it already say customer.
-			'vendor'             => wpss_rest_user( (int) $review->vendor_id ),
-			'customer'           => wpss_rest_user( (int) $review->customer_id ),
-			'rating'             => (int) $review->rating,
-			'review'             => $review->review,
-			'status'             => $review->status,
-			'vendor_reply'       => $review->vendor_reply ?? null,
+			'vendor'               => wpss_rest_user( (int) $review->vendor_id ),
+			'customer'             => wpss_rest_user( (int) $review->customer_id ),
+			'rating'               => (int) $review->rating,
+			'review'               => $review->review,
+			'rating_communication' => isset( $review->communication_rating ) ? (int) $review->communication_rating : null,
+			'rating_quality'       => isset( $review->quality_rating ) ? (int) $review->quality_rating : null,
+			'rating_value'         => isset( $review->delivery_rating ) ? (int) $review->delivery_rating : null,
+			'status'               => $review->status,
+			'vendor_reply'         => $review->vendor_reply ?? null,
 			// ISO-8601 through the shared formatter (Basecamp 10154919636).
-			'vendor_reply_at'    => $this->format_datetime( $review->vendor_reply_at ?? null ),
-			'created_at'         => $this->format_datetime( $review->created_at ?? null ),
-			'updated_at'         => $this->format_datetime( $review->updated_at ?? null ),
+			'vendor_reply_at'      => $this->format_datetime( $review->vendor_reply_at ?? null ),
+			'created_at'           => $this->format_datetime( $review->created_at ?? null ),
+			'updated_at'           => $this->format_datetime( $review->updated_at ?? null ),
 			// Additive presentation fields so REST consumers (single-service.js
 			// reviews block) can render with parity to the legacy server-rendered
 			// markup without reimplementing wpautop/time-ago client-side.
-			'created_human'      => $review->created_at ? wpss_time_ago( (string) $review->created_at ) : '',
-			'review_html'        => wp_kses_post( wpautop( (string) $review->review ) ),
-			'vendor_reply_html'  => ! empty( $review->vendor_reply ) ? wp_kses_post( wpautop( (string) $review->vendor_reply ) ) : '',
-			'vendor_reply_human' => ! empty( $review->vendor_reply_at ) ? wpss_time_ago( (string) $review->vendor_reply_at ) : '',
+			'created_human'        => $review->created_at ? wpss_time_ago( (string) $review->created_at ) : '',
+			'review_html'          => wp_kses_post( wpautop( (string) $review->review ) ),
+			'vendor_reply_html'    => ! empty( $review->vendor_reply ) ? wp_kses_post( wpautop( (string) $review->vendor_reply ) ) : '',
+			'vendor_reply_human'   => ! empty( $review->vendor_reply_at ) ? wpss_time_ago( (string) $review->vendor_reply_at ) : '',
 		);
 
 		/**

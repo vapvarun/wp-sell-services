@@ -75,7 +75,9 @@
 }
 
 .wpss-pro-teaser__text {
-	color: var(--wpss-wp-admin-text-secondary, #646970);
+	/* The teaser also shows on the frontend service wizard: a wp-admin ink stayed grey on a
+	   dark dashboard (3.38:1). --wpss-text-secondary flips with the mode. */
+	color: var(--wpss-text-secondary, #374151);
 	font-size: 13px;
 	margin: 0 0 12px;
 	line-height: 1.5;
@@ -84,7 +86,7 @@
 .wpss-pro-teaser__cta {
 	display: inline-block;
 	background: var(--wpss-primary, #7c3aed);
-	color: var(--wpss-white, #fff) !important;
+	color: var(--wpss-on-primary) !important;
 	font-size: 12px;
 	font-weight: 600;
 	padding: 6px 16px;
@@ -95,6 +97,6 @@
 
 .wpss-pro-teaser__cta:hover,
 .wpss-pro-teaser__cta:focus {
-	background: var(--wpss-primary-dark, #6d28d9);
-	color: var(--wpss-white, #fff) !important;
+	background: var(--wpss-primary-hover);
+	color: var(--wpss-on-primary) !important;
 }

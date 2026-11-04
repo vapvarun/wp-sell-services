@@ -103,7 +103,47 @@ class AdminActionAuthorityTest extends TestCase {
 
 	/** Handlers this plugin owns. */
 	private function mine(): array {
-		return array_filter( $this->live_handlers(), static fn( $h ) => ! $h['pro'] );
+		return $this->owned_by( 'free' );
+	}
+
+	/**
+	 * Handlers one plugin owns.
+	 *
+	 * @param string $plugin 'free' or 'pro'.
+	 */
+	private function owned_by( string $plugin ): array {
+		return array_filter( $this->live_handlers(), static fn( $h ) => ( 'pro' === $plugin ) === $h['pro'] );
+	}
+
+	/**
+	 * The manifest that declares one plugin's handlers.
+	 *
+	 * @param string $plugin 'free' or 'pro'.
+	 */
+	private function manifest_of( string $plugin ): array {
+		if ( 'free' === $plugin ) {
+			return $this->manifest;
+		}
+
+		if ( ! class_exists( 'WPSellServicesPro\\Core\\Pro' ) || ! file_exists( self::PAIRED ) ) {
+			$this->markTestSkipped( 'Pro is not active, so its handlers are not registered.' );
+		}
+
+		return (array) json_decode( (string) file_get_contents( self::PAIRED ), true );
+	}
+
+	/**
+	 * Each plugin's handlers are held to its own manifest. Pro's used to be
+	 * filtered out of every check and its manifest read only to excuse them,
+	 * so no Pro handler was ever examined.
+	 *
+	 * @return array<string, array{string}>
+	 */
+	public static function plugins(): array {
+		return array(
+			'free' => array( 'free' ),
+			'pro'  => array( 'pro' ),
+		);
 	}
 
 	/**
@@ -126,13 +166,12 @@ class AdminActionAuthorityTest extends TestCase {
 		$this->assertNotEmpty( $this->manifest['handlers'] ?? array(), 'The manifest declares no handlers.' );
 	}
 
-	public function test_every_live_handler_is_declared(): void {
-		$declared = array_keys( (array) ( $this->manifest['handlers'] ?? array() ) );
-		$paired   = file_exists( self::PAIRED )
-			? array_keys( (array) ( json_decode( (string) file_get_contents( self::PAIRED ), true )['handlers'] ?? array() ) )
-			: array();
-
-		$undeclared = array_diff( array_keys( $this->mine() ), $declared, $paired );
+	/**
+	 * @dataProvider plugins
+	 */
+	public function test_every_live_handler_is_declared( string $plugin ): void {
+		$declared   = array_keys( (array) ( $this->manifest_of( $plugin )['handlers'] ?? array() ) );
+		$undeclared = array_diff( array_keys( $this->owned_by( $plugin ) ), $declared );
 
 		$this->assertSame(
 			array(),
@@ -153,9 +192,12 @@ class AdminActionAuthorityTest extends TestCase {
 	 * mount. The exemption is narrow: not "absent is fine", but "absent is fine
 	 * where somebody wrote down what mounts it".
 	 */
-	public function test_the_manifest_has_no_handler_that_no_longer_exists(): void {
-		$declared = (array) ( $this->manifest['handlers'] ?? array() );
-		$live     = $this->live_handlers();
+	/**
+	 * @dataProvider plugins
+	 */
+	public function test_the_manifest_has_no_handler_that_no_longer_exists( string $plugin ): void {
+		$declared = (array) ( $this->manifest_of( $plugin )['handlers'] ?? array() );
+		$live     = $this->owned_by( $plugin );
 		$stale    = array();
 
 		foreach ( $declared as $hook => $entry ) {
@@ -180,12 +222,15 @@ class AdminActionAuthorityTest extends TestCase {
 	 * boolean - otherwise the manifest could simply declare a check into
 	 * existence, which is Trap 3.
 	 */
-	public function test_every_handler_checks_a_nonce_or_says_why_not(): void {
-		$allow    = (array) ( $this->manifest['nonce_allowlist'] ?? array() );
+	/**
+	 * @dataProvider plugins
+	 */
+	public function test_every_handler_checks_a_nonce_or_says_why_not( string $plugin ): void {
+		$allow    = (array) ( $this->manifest_of( $plugin )['nonce_allowlist'] ?? array() );
 		$problems = array();
 		$checked  = 0;
 
-		foreach ( $this->mine() as $hook => $live ) {
+		foreach ( $this->owned_by( $plugin ) as $hook => $live ) {
 			++$checked;
 
 			/*

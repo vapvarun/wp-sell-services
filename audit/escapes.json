@@ -691,11 +691,11 @@
   },
   {
    "card": "10422089787",
-   "title": "EDD rail My Services lists the vendor's services (24 per page with a pager) and the tile counts the same set",
-   "guard": "static:edd-my-services-list",
+   "title": "EDD rail vendors and buyers reach their services and orders: the dead EDD account pages redirect to the dashboard (superseded the My Services list guard, card 10431833430)",
+   "guard": "static:edd-account-uses-dashboard",
    "added": "2026-10-21",
    "fails_on": "4fd5262 (the get_posts that fed the grid was replaced by a count; the grid read an undefined $services and said no services)",
-   "check": "tests/test-edd-my-services-list.php"
+   "check": "tests/test-edd-account-uses-dashboard.php"
   },
   {
    "card": "visual-audit-2026-10-21",
@@ -776,6 +776,186 @@
    "added": "2026-10-21",
    "fails_on": "f8fab03f",
    "check": "tests/test-smoke-1-9-1-contracts.php"
+  },
+  {
+   "card": "10435263190",
+   "title": "an older Pro never boots against a newer Free: Pro's startup callback is removed and an admin notice names the version to update to",
+   "guard": "static:stale-pro-held-back",
+   "added": "2026-10-23",
+   "fails_on": "v1.9.0",
+   "check": "tests/test-stale-pro-is-held-back.php",
+   "note": "upgrade flow also proven in Docker: Free 1.8.0 + Pro 1.8.0 updated to Free 1.9.0 returns 500, to this build returns 200"
+  },
+  {
+   "card": "10432412624",
+   "title": "the owner is emailed once for every new member report and dispute, to the dispute admin email when set",
+   "guard": "static:admin-told-of-filing",
+   "added": "2026-10-23",
+   "fails_on": "627e94cd",
+   "check": "tests/test-admin-told-of-filing.php"
+  },
+  {
+   "card": "10431603325, 10431936693",
+   "title": "every completed-order count reads the one real-orders predicate, so tips, extensions and milestones never raise the seller card, REST stats, seller level, reviews summary or profile row; the reviews response rate never passes 100",
+   "guard": "static:order-counts-ignore-sub-orders",
+   "added": "2026-10-23",
+   "fails_on": "627e94cd",
+   "check": "tests/test-order-counts-ignore-sub-orders.php"
+  },
+  {
+   "card": "10431598185",
+   "title": "the vendor signup response reports the new vendor's real capabilities, from the target user and a rebuilt current user",
+   "guard": "static:signup-reports-the-new-vendors-caps",
+   "added": "2026-10-23",
+   "fails_on": "627e94cd",
+   "check": "tests/test-signup-reports-the-new-vendors-caps.php"
+  },
+  {
+   "card": "10435186161, 10431578930",
+   "title": "admin number inputs and select-all boxes keep an accessible name, and every vendor-detail AJAX injection redraws the Lucide icons",
+   "guard": "static:admin-inputs-and-icons-wiring",
+   "added": "2026-10-23",
+   "fails_on": "627e94cd",
+   "check": "tests/test-admin-inputs-and-icons-wiring.php"
+  },
+  {
+   "card": "10430703737",
+   "title": "REST service create and update save, then answer 201/200 with a notices array when a limit cut a list; no 400 after saving",
+   "guard": "static:service-limits-and-accept-lock",
+   "added": "2026-10-23",
+   "fails_on": "627e94cd",
+   "check": "tests/test-service-limits-and-accept-lock.php"
+  },
+  {
+   "card": "10431603325",
+   "title": "the public vendor-stats route answered a non-vendor id with that account's registration date",
+   "guard": "static:vendor-stats-hides-non-vendor-registration",
+   "added": "2026-10-23",
+   "fails_on": "3b0a53e1",
+   "check": "tests/test-vendor-stats-hides-non-vendor-registration.php"
+  },
+  {
+   "card": "10432412919",
+   "title": "a ruling for the vendor or by agreement on an already-completed order fires wpss_order_completed and the buyer's Order completed notice a second time",
+   "guard": "static:dispute-ruling-on-completed-order-fires-once",
+   "added": "2026-10-23",
+   "fails_on": "cff919c2",
+   "check": "tests/test-dispute-ruling-on-completed-order-fires-once.php",
+   "note": "commission was already idempotent; the in_progress case is the control that a first completion still fires once"
+  },
+  {
+   "card": "10431603325",
+   "title": "Pro vendor analytics overview and per-service totals counted tips, extensions and milestone phases as orders",
+   "guard": "static:pro-vendor-analytics-ignore-sub-orders",
+   "added": "2026-10-23",
+   "fails_on": "Pro deee8ac (35 -> 37 orders with one tip and one extension)",
+   "check": "tests/test-pro-vendor-analytics-ignore-sub-orders.php",
+   "note": "SKIPs without Pro active; run in combo mode"
+  },
+  {
+   "card": "10430799820,10431899379",
+   "title": "the EDD rail's banned-buyer check sat in a method nothing hooked, so a banned buyer could add and buy a service",
+   "guard": "static:pro-edd-standing-is-hooked",
+   "added": "2026-10-23",
+   "fails_on": "Pro 8fbac15 (checkout-only hook) and 0c45949 (no hook)",
+   "check": "tests/test-pro-edd-standing-is-hooked.php",
+   "note": "SKIPs without Pro installed. Live proof: Docker run with real EDD 3.7.2, logged on the card"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "a suspended or rejected vendor could reinstate themselves by registering again, overriding the owner's decision",
+   "guard": "static:vendor-reapply-keeps-owner-decision",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-vendor-reapply-keeps-owner-decision.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "offline checkout, new phases, extensions and tips skipped the buyer's or seller's standing",
+   "guard": "static:new-money-checks-both-standings",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-new-money-checks-both-standings.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "standing refusals on review and proposal-accept doors returned 500 or 400 with a generic message",
+   "guard": "static:standing-refusals-are-403",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-standing-refusals-are-403.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "a manual order saved past Pending Payment while unpaid credited money that never arrived",
+   "guard": "static:manual-order-unpaid-is-not-credited",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-manual-order-unpaid-is-not-credited.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "an unpaid offline sub-order forced to completed could never be marked paid",
+   "guard": "static:offline-mark-paid-any-unpaid-sub-order",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-offline-mark-paid-any-unpaid-sub-order.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "the awaiting-confirmation notice disappeared once the offline gateway was switched off",
+   "guard": "static:offline-waiting-notice-without-gateway",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-offline-waiting-notice-without-gateway.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "sub-order totals and tax were not rounded to the currency's decimals",
+   "guard": "static:sub-order-rounds-to-currency",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-sub-order-rounds-to-currency.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "a legacy order with NULL payment_status could not be marked paid",
+   "guard": "static:mark-paid-null-payment-status",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-mark-paid-null-payment-status.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "the upgrade migration announced a fake submit and erased the rejection when it ran on a member's request",
+   "guard": "static:moderation-migration-is-silent",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-moderation-migration-is-silent.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "the gallery accepted any upload-capable user's attachment and the service limit judged the editor, not the owner",
+   "guard": "static:service-gallery-and-limit-owner",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-service-gallery-and-limit-owner.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "order counts in several aggregates included tips, phases and extensions",
+   "guard": "static:order-counts-skip-sub-orders",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-order-counts-skip-sub-orders.php"
+  },
+  {
+   "card": "1.9.1 fresh-eye review",
+   "title": "review lists paged inconsistently and unchanged edits wrote audit rows",
+   "guard": "static:review-lists-and-quiet-writes",
+   "added": "2026-10-23",
+   "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
+   "check": "tests/test-review-lists-and-quiet-writes.php"
   }
  ]
 }

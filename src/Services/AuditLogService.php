@@ -87,6 +87,22 @@ class AuditLogService {
 			'ledger.duplicate_removed'       => __( 'Duplicate wallet entry removed', 'wp-sell-services' ),
 			'review.duplicate_removed'       => __( 'Duplicate review removed', 'wp-sell-services' ),
 			'email.failed'                   => __( 'Email not sent', 'wp-sell-services' ),
+			'dispute.opened'                 => __( 'Dispute opened', 'wp-sell-services' ),
+			'vendor.level_changed'           => __( 'Seller level changed', 'wp-sell-services' ),
+			'review.deleted'                 => __( 'Review deleted', 'wp-sell-services' ),
+			'review.imported'                => __( 'Review imported', 'wp-sell-services' ),
+			'payout.batch_created'           => __( 'PayPal payout batch sent', 'wp-sell-services' ),
+			'settings.stripe_connect'        => __( 'Stripe Connect setting changed', 'wp-sell-services' ),
+			'review.edited'                  => __( 'Review edited', 'wp-sell-services' ),
+			'commission.rule_created'        => __( 'Commission rule created', 'wp-sell-services' ),
+			'commission.rule_updated'        => __( 'Commission rule changed', 'wp-sell-services' ),
+			'commission.rule_deleted'        => __( 'Commission rule deleted', 'wp-sell-services' ),
+			'dispute.assign'                 => __( 'Dispute assigned', 'wp-sell-services' ),
+			'report.resolve'                 => __( 'Report resolved', 'wp-sell-services' ),
+			'member.account_status'          => __( 'Member standing changed', 'wp-sell-services' ),
+			'order.repair'                   => __( 'Order repaired', 'wp-sell-services' ),
+			'order.refund_unrecorded'        => __( 'Refund not recorded', 'wp-sell-services' ),
+			'order.pending_refund_assigned'  => __( 'Pending refund assigned', 'wp-sell-services' ),
 		);
 	}
 
@@ -97,6 +113,13 @@ class AuditLogService {
 	 * @var string
 	 */
 	public const CLEANUP_HOOK = 'wpss_audit_log_cleanup';
+
+	/**
+	 * Whether the listeners are registered for this request.
+	 *
+	 * @var bool
+	 */
+	private static bool $booted = false;
 
 	/**
 	 * Fully qualified database table name (with site prefix).
@@ -121,22 +144,65 @@ class AuditLogService {
 	 * schedules {@see self::CLEANUP_HOOK}; without this binding the event
 	 * fired with no handler and the audit table grew unbounded.
 	 *
-	 * Decisions whose only shared point is an action (service moderation is
-	 * fired from eight writers, order payment from every rail) are logged
-	 * here rather than at each writer. Seams that are one function
-	 * (dispute transition, ledger insert, vendor status, commission rate,
-	 * review moderation) call log() directly with their before/after.
+	 * Every audit row is written by a listener registered here, never by the
+	 * code that made the change: the writer fires a documented action and
+	 * this class decides what is recorded. tests/test-audit-listener-pattern.php
+	 * fails if a direct log() call appears anywhere else. Safe to call more
+	 * than once (install runs before the plugin boots, and on activation).
 	 *
 	 * @since 1.2.2
 	 *
 	 * @return void
 	 */
 	public function init(): void {
+		if ( self::$booted ) {
+			return;
+		}
+		self::$booted = true;
+
 		add_action(
 			self::CLEANUP_HOOK,
 			function (): void {
 				$this->cleanup_expired();
 			}
+		);
+
+		add_action(
+			'wpss_dispute_opened',
+			function ( int $dispute_id, int $order_id, int $opened_by ): void {
+				$this->log(
+					'dispute.opened',
+					'dispute',
+					$dispute_id,
+					array(
+						'action'   => 'open',
+						'to_value' => 'open',
+						'context'  => array(
+							'order_id'  => $order_id,
+							'opened_by' => $opened_by,
+						),
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_vendor_level_updated',
+			function ( int $user_id, string $level ): void {
+				$this->log(
+					'vendor.level_changed',
+					'vendor',
+					$user_id,
+					array(
+						'action'   => 'level',
+						'to_value' => $level,
+					)
+				);
+			},
+			10,
+			2
 		);
 
 		add_action(
@@ -276,6 +342,508 @@ class AuditLogService {
 						)
 					);
 				}
+			},
+			10,
+			2
+		);
+
+		$this->listen_orders();
+		$this->listen_marketplace();
+	}
+
+	/**
+	 * Order, refund, ledger and email events.
+	 *
+	 * @return void
+	 */
+	private function listen_orders(): void {
+		add_action(
+			'wpss_order_status_recorded',
+			function ( int $order_id, string $old_status, string $new_status, string $note, int $actor_id, bool $is_forced ): void {
+				$this->log(
+					'order.status_change',
+					'order',
+					$order_id,
+					array(
+						'action'     => $is_forced ? 'force' : 'update',
+						'from_value' => $old_status,
+						'to_value'   => $new_status,
+						'is_forced'  => $is_forced,
+						'context'    => array( 'note' => $note ),
+					)
+				);
+			},
+			10,
+			6
+		);
+
+		// Priority 5: before OrderWorkflowManager reverses the earnings, so the row keeps what was unwound.
+		add_action(
+			'wpss_order_status_cancelled',
+			function ( int $order_id, string $old_status = '' ): void {
+				$order = wpss_get_order( $order_id );
+				if ( ! $order ) {
+					return;
+				}
+				$this->log(
+					'order.cancel',
+					'order',
+					$order_id,
+					array(
+						'action'     => 'cancel',
+						'from_value' => $old_status,
+						'to_value'   => 'cancelled',
+						'context'    => array(
+							'vendor_id'       => (int) $order->vendor_id,
+							'customer_id'     => (int) $order->customer_id,
+							'vendor_earnings' => null === $order->vendor_earnings ? null : (float) $order->vendor_earnings,
+							'order_total'     => (float) $order->total,
+							'payment_status'  => (string) $order->payment_status,
+						),
+					)
+				);
+			},
+			5,
+			2
+		);
+
+		add_action(
+			'wpss_order_earnings_reversal_failed',
+			function ( int $order_id, int $vendor_id, float $amount ): void {
+				$this->log(
+					'order.earnings_reversal_failed',
+					'order',
+					$order_id,
+					array(
+						'action'  => 'rollback',
+						'context' => array(
+							'vendor_id' => $vendor_id,
+							'amount'    => $amount,
+						),
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_order_refund_recorded',
+			function ( int $order_id, string $outcome, array $context, $order, bool $is_partial ): void {
+				$data = array(
+					'action'  => 'refund',
+					'context' => $context,
+				);
+				if ( 'refunded' === $outcome ) {
+					$data['from_value'] = (string) ( $order->payment_status ?? '' );
+					$data['to_value']   = $is_partial ? 'paid' : 'refunded';
+				}
+				$events = array(
+					'pending'  => 'order.refund_pending',
+					'refunded' => 'order.refund',
+					'failed'   => 'order.refund_failed',
+				);
+				if ( isset( $events[ $outcome ] ) ) {
+					$this->log( $events[ $outcome ], 'order', $order_id, $data );
+				}
+			},
+			10,
+			5
+		);
+
+		add_action(
+			'wpss_order_refund_marked_sent',
+			function ( int $order_id, float $amount, $order ): void {
+				$this->log(
+					'order.refund',
+					'order',
+					$order_id,
+					array(
+						'action'  => 'refund',
+						'context' => array(
+							'gateway' => (string) ( $order->payment_method ?? '' ),
+							'amount'  => $amount,
+							'result'  => array(
+								'success' => true,
+								'manual'  => true,
+								'message' => 'Marked as sent by admin.',
+							),
+						),
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_order_refund_unrecorded',
+			function ( int $order_id, float $amount, string $status ): void {
+				$this->log(
+					'order.refund_unrecorded',
+					'order',
+					$order_id,
+					array(
+						'action'  => 'refund',
+						'context' => array(
+							'amount' => $amount,
+							'status' => $status,
+						),
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_pending_refund_assigned',
+			function ( int $order_id, string $key, float $amount ): void {
+				$this->log(
+					'order.pending_refund_assigned',
+					'order',
+					$order_id,
+					array(
+						'action'  => 'refund',
+						'context' => array(
+							'key'    => $key,
+							'amount' => $amount,
+						),
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_order_repaired',
+			function ( int $order_id, string $repair, string $from_total, string $to_total, array $details ): void {
+				$this->log(
+					'order.repair',
+					'order',
+					$order_id,
+					array(
+						'from_value' => $from_total,
+						'to_value'   => $to_total,
+						'context'    => array( 'repair' => $repair ) + $details,
+					)
+				);
+			},
+			10,
+			5
+		);
+
+		add_action(
+			'wpss_ledger_row_inserted',
+			function ( int $row_id, int $user_id, float $amount, array $row ): void {
+				$this->log(
+					'ledger.insert',
+					'ledger',
+					$row_id,
+					array(
+						'action'   => (string) ( $row['type'] ?? '' ),
+						'to_value' => (string) $amount,
+						'context'  => array(
+							'user_id'        => $user_id,
+							'type'           => (string) ( $row['type'] ?? '' ),
+							'amount'         => $amount,
+							'reference_type' => (string) ( $row['reference_type'] ?? '' ),
+							'reference_id'   => (int) ( $row['reference_id'] ?? 0 ),
+							'description'    => (string) ( $row['description'] ?? '' ),
+						),
+					)
+				);
+			},
+			10,
+			4
+		);
+
+		add_action(
+			'wpss_email_failed',
+			function ( $error, string $type, bool $is_retry ): void {
+				$data = $error instanceof \WP_Error ? (array) $error->get_error_data() : array();
+				$this->log(
+					'email.failed',
+					'email',
+					0,
+					array(
+						'action'  => $is_retry ? 'retry' : 'send',
+						'context' => array(
+							'recipient' => implode( ', ', (array) ( $data['to'] ?? array() ) ),
+							'type'      => $type,
+							'subject'   => (string) ( $data['subject'] ?? '' ),
+							'error'     => $error instanceof \WP_Error ? $error->get_error_message() : '',
+						),
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_duplicate_row_removed',
+			function ( string $object_type, int $row_id, int $kept_id, array $row ): void {
+				$events = array(
+					'wallet_transaction' => 'ledger.duplicate_removed',
+					'review'             => 'review.duplicate_removed',
+				);
+				$this->log(
+					$events[ $object_type ] ?? $object_type . '.duplicate_removed',
+					$object_type,
+					$row_id,
+					array(
+						'action'  => 'delete',
+						'context' => array( 'kept_id' => $kept_id ) + $row,
+					)
+				);
+			},
+			10,
+			4
+		);
+	}
+
+	/**
+	 * Dispute, review, vendor, member and report events.
+	 *
+	 * @return void
+	 */
+	private function listen_marketplace(): void {
+		add_action(
+			'wpss_dispute_status_changed',
+			function ( int $dispute_id, string $to, string $from, array $details = array() ): void {
+				$this->log(
+					'dispute.transition',
+					'dispute',
+					$dispute_id,
+					array(
+						'action'     => $to,
+						'from_value' => $from,
+						'to_value'   => $to,
+						'context'    => $details,
+					)
+				);
+			},
+			10,
+			4
+		);
+
+		add_action(
+			'wpss_dispute_assigned',
+			function ( int $dispute_id, int $admin_id, int $previous, int $order_id ): void {
+				$this->log(
+					'dispute.assign',
+					'dispute',
+					$dispute_id,
+					array(
+						'action'     => 'assign',
+						'from_value' => $previous,
+						'to_value'   => $admin_id,
+						'context'    => array( 'order_id' => $order_id ),
+					)
+				);
+			},
+			10,
+			4
+		);
+
+		add_action(
+			'wpss_review_moderated',
+			function ( int $review_id, string $new_status, string $old_status = '' ): void {
+				$actions = array(
+					'approved' => 'approve',
+					'rejected' => 'reject',
+				);
+				$this->log(
+					'review.' . $new_status,
+					'review',
+					$review_id,
+					array(
+						'action'     => $actions[ $new_status ] ?? 'unapprove',
+						'from_value' => $old_status,
+						'to_value'   => $new_status,
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_review_imported',
+			function ( int $review_id, int $vendor_id, int $service_id, int $rating ): void {
+				$this->log(
+					'review.imported',
+					'review',
+					$review_id,
+					array(
+						'action'  => 'import',
+						'context' => array(
+							'vendor_id'  => $vendor_id,
+							'service_id' => $service_id,
+							'rating'     => $rating,
+						),
+					)
+				);
+			},
+			10,
+			4
+		);
+
+		add_action(
+			'wpss_review_edited',
+			function ( int $review_id, string $field, string $before, string $after ): void {
+				$this->log(
+					'review.edited',
+					'review',
+					$review_id,
+					array(
+						'action'     => 'edit',
+						'from_value' => $before,
+						'to_value'   => $after,
+						'context'    => array( 'field' => $field ),
+					)
+				);
+			},
+			10,
+			4
+		);
+
+		add_action(
+			'wpss_review_deleted',
+			function ( int $review_id, $review ): void {
+				$this->log(
+					'review.deleted',
+					'review',
+					$review_id,
+					array(
+						'action'  => 'delete',
+						'context' => array(
+							'vendor_id'   => (int) ( $review->vendor_id ?? 0 ),
+							'customer_id' => (int) ( $review->customer_id ?? 0 ),
+							'order_id'    => (int) ( $review->order_id ?? 0 ),
+							'rating'      => (int) ( $review->rating ?? 0 ),
+						),
+					)
+				);
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'wpss_vendor_status_updated',
+			function ( int $user_id, string $status, ?string $from = null ): void {
+				if ( ! isset( VendorService::STATUS_EVENTS[ $status ] ) ) {
+					return;
+				}
+				$this->log(
+					VendorService::STATUS_EVENTS[ $status ],
+					'vendor',
+					$user_id,
+					array(
+						'action'     => $status,
+						'from_value' => (string) $from,
+						'to_value'   => $status,
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_vendor_commission_rate_changed',
+			function ( int $vendor_id, $old, $rate ): void {
+				$this->log(
+					'commission.rate_changed',
+					'vendor',
+					$vendor_id,
+					array(
+						'action'     => 'update',
+						'from_value' => null === $old ? 'global' : (string) $old,
+						'to_value'   => null === $rate ? 'global' : (string) $rate,
+						'context'    => array( 'scope' => 'vendor' ),
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_vendor_migrated',
+			function ( int $user_id ): void {
+				$this->log(
+					'vendor.migrated',
+					'vendor',
+					$user_id,
+					array(
+						'action'   => 'migrated',
+						'to_value' => 'active',
+					)
+				);
+			}
+		);
+
+		add_action(
+			'wpss_vendor_role_removed',
+			function ( int $user_id, array $roles ): void {
+				$this->log(
+					'vendor.role_removed',
+					'user',
+					$user_id,
+					array(
+						'from_value' => VendorService::ROLE,
+						'to_value'   => implode( ',', $roles ),
+					)
+				);
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'wpss_vendor_role_restored',
+			function ( int $user_id, array $roles ): void {
+				$this->log( 'vendor.role_restored', 'user', $user_id, array( 'to_value' => implode( ',', $roles ) ) );
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'wpss_account_status_changed',
+			function ( int $user_id, string $status, string $from = '' ): void {
+				$this->log(
+					'member.account_status',
+					'user',
+					$user_id,
+					array(
+						'action'     => $status,
+						'from_value' => $from,
+						'to_value'   => $status,
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_report_resolved',
+			function ( int $report_id, string $resolution ): void {
+				$this->log(
+					'report.resolve',
+					'report',
+					$report_id,
+					array(
+						'action'     => $resolution,
+						'from_value' => 'open',
+						'to_value'   => $resolution,
+					)
+				);
 			},
 			10,
 			2

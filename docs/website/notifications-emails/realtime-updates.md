@@ -71,6 +71,7 @@ The plugin speaks the **Pusher protocol**. You can connect to either a hosted se
 ## Security
 
 - The App Secret never leaves the server and is never sent to the browser.
+- To keep the App Secret out of the database, define `WPSS_REALTIME_SECRET` in `wp-config.php`. The constant wins, the field is locked, and the next save clears the stored copy.
 - WebSocket channels are **private and per-user**. A buyer or vendor only receives events for their own account.
 - Order message events are only delivered to participants of that specific order (buyer, vendor, and admins).
 - Private channel subscriptions are authorized server-side via `POST /wpss/v1/realtime/auth` after an ownership check.

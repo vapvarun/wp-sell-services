@@ -242,7 +242,7 @@ add_filter( 'wpss_dashboard_section_titles', function( $titles ) {
 
 ## Full-width Plugin Pages
 
-Since 1.2.0, the plugin's app-like pages - Dashboard, Cart, Checkout, and Become a Vendor - render full-width without a theme sidebar. This prevents marketplace UI from appearing next to widgets such as Recent Posts.
+Since 1.2.0, the plugin's app-like pages - Dashboard, Cart, Checkout, Become a Vendor, Registration and Login - render full-width without a theme sidebar. Since 1.9.2 the Vendors directory does too, matching the Services and Buyer Requests archives. This prevents marketplace UI from appearing next to widgets such as Recent Posts.
 
 ### How it works per theme
 
@@ -250,7 +250,7 @@ The plugin detects the active theme and uses its native mechanism rather than hi
 
 | Theme | Method |
 |-------|--------|
-| **Reign** | Sets Reign's native per-page layout meta (`reign_wbcom_metabox_data`), the same mechanism Reign uses for FluentCart. Reign's page wrappers and subheader remain intact. |
+| **Reign** | Sets Reign's native per-page layout meta (`reign_wbcom_metabox_data`), the same mechanism Reign uses for FluentCart. Reign's page wrappers and subheader remain intact. Since 1.9.2 it also hides Reign's Left Panel rail on these pages, so members see one navigation, not two. A page whose "Hide Left Panel Menu" setting is set to No keeps the panel; the `wpss_reign_hide_left_panel` filter turns this off everywhere. |
 | **BuddyX / BuddyX Pro** | Uses the theme's bundled "Page No Sidebar" template (`page-templates/full-width-container.php`). |
 | **Any other theme** | Falls back to `templates/wpss-fullwidth-template.php`, which calls `get_header()` / `get_footer()` and emits a contained full-width wrapper. |
 
@@ -272,7 +272,7 @@ Turn off full-width handling entirely - the active theme's normal sidebar layout
 add_filter( 'wpss_use_fullwidth_template', '__return_false' );
 ```
 
-Control which plugin pages receive the full-width treatment (default: `dashboard`, `cart`, `checkout`, `become_vendor`):
+Control which plugin pages receive the full-width treatment (default: `dashboard`, `cart`, `checkout`, `become_vendor`, `registration`, `login`, `vendors_page`):
 
 ```php
 // Remove the dashboard from full-width treatment
@@ -345,15 +345,47 @@ Components consume semantic and scale tokens, never raw hex. In dark mode the wh
 | `--wpss-surface` | `#ffffff` | `#1f2937` | Card / panel backgrounds |
 | `--wpss-text` / `--wpss-text-muted` | dark | light | Body + muted copy |
 | `--wpss-gray-*` ramp | light ramp | inverted ramp | Raw text + hairlines (ink end resolves light, paper end dark) |
-| `--wpss-primary` | `#4f46e5` | `#4f46e5` | Button/badge **fills** (stays dark enough for white text) |
-| `--wpss-primary-accent` | `#4f46e5` | `#a5b4fc` | Primary as **text/links/icons** (lightens on dark) |
+| `--wpss-primary` | theme button colour, or `#4f46e5` | theme dark button colour, or `#4f46e5` | Button, chip and tile **fills** |
+| `--wpss-on-primary` | theme button text, or `#ffffff` | theme dark button text, or `#ffffff` | Text and icons **on** a `--wpss-primary` fill |
+| `--wpss-primary-accent` | theme text colour, or `#4f46e5` | theme dark text colour, or `#a5b4fc` | Primary as **text/links/icons** |
+| `--wpss-primary-light` | 10% tint of the theme colour | 24% tint | Selected and highlighted grounds |
+| `--wpss-primary-dark` | darker accent | accent | Text **on** a `--wpss-primary-light` ground |
 | `--wpss-secondary-accent` | `#1e293b` | `#e2e8f0` | Emphasis text (prices) |
 | `--wpss-block-surface` | `var(--wpss-surface)` | flips | Gutenberg block card backgrounds |
 
 Two rules matter when extending the UI:
 
-1. **Use `--wpss-primary-accent` / `--wpss-secondary-accent` for text, `--wpss-primary` / `--wpss-secondary` for fills.** The accent tokens lighten in dark mode so links stay readable on dark surfaces; the fill tokens stay dark so white button text keeps its contrast.
+1. **Use `--wpss-primary-accent` / `--wpss-secondary-accent` for text, `--wpss-primary` / `--wpss-secondary` for fills, and `--wpss-on-primary` for anything drawn on a fill.** A theme's button colour can be light (with dark text), so never put `--wpss-white` on a `--wpss-primary` fill, and never use `--wpss-primary` as text.
 2. **Never hard-code hex for text or surfaces** - reach for the tokens above so your addition flips with the rest of the plugin. Lucide icons inherit `currentColor`, so they follow the text token automatically.
+
+### Brand colour: theme, brand, or the plugin's own
+
+_Since 1.9.2._ The marketplace colour follows your site. The first of these that is set wins:
+
+1. **Your own CSS.** Setting `--wpss-primary` (for example in Customizer > Additional CSS) recolours every button, chip and tint, because the other shades are derived from it. Set `--wpss-on-primary` with it, to the text colour that reads on your fill. Otherwise the button text keeps following your theme, and a theme whose dark mode uses dark button text puts that dark text on your fill:
+
+    ```css
+    html:root { --wpss-primary: #15803d; --wpss-on-primary: #ffffff; }
+    ```
+
+    For a colour that works in both modes without this, use the `wpss_brand_color` filter below, which works out the text shades itself.
+
+2. **A brand colour** from the `wpss_brand_color` filter. Pro White Label uses it for its Primary colour. The plugin works out readable text and button-label shades for light and dark mode.
+
+    ```php
+    add_filter( 'wpss_brand_color', fn() => '#c2185b' );
+    ```
+
+3. **Your theme.** On Reign and BuddyX, buttons take the theme's button colour and the text colour the theme chose for it, while links, tints and focus rings take the theme colour (on Reign, Customizer > Color Options > Color Palette). Another theme can join in by setting `--wpss-theme-fill`, `--wpss-theme-ink`, `--wpss-theme-accent` and `--wpss-theme-accent-text` on `:root`.
+4. **The plugin's indigo** on any other theme.
+
+To keep the plugin's own colour on Reign or BuddyX:
+
+```php
+add_filter( 'wpss_use_theme_colors', '__return_false' );
+```
+
+A theme colour brings its own contrast with it: if your theme pairs a light button colour with white text, the plugin's buttons will match it. Set a darker button colour in the theme, or override `--wpss-primary` as above.
 
 ### Overriding tokens per theme
 
@@ -370,10 +402,10 @@ html[data-bx-mode="dark"] {
 
 | Handle | File | Dependencies |
 |--------|------|-------------|
-| `alpinejs` | `assets/js/vendor/alpine.min.js` | None (defer) |
-| `wpss-frontend` | `assets/js/frontend.js` | `alpinejs` |
-| `wpss-single-service` | `assets/js/single-service.js` | `jquery`, `wpss-frontend` |
-| `wpss-unified-dashboard` | `assets/js/unified-dashboard.js` | `jquery` |
+| `wpss-alpine` | `assets/js/vendor/alpine.min.js` | None (defer) |
+| `wpss-frontend` | `assets/js/frontend.js` | `jquery`, `wpss-alpine`, `wpss-icons`, `wpss-ux-primitives`, `wpss-ui` |
+| `wpss-single-service` | `assets/js/single-service.js` | `jquery`, `wpss-frontend`, `wpss-ui` |
+| `wpss-unified-dashboard` | `assets/js/unified-dashboard.js` | `jquery`, `wpss-ui` |
 
 ### JavaScript Data Objects
 

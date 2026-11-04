@@ -209,7 +209,10 @@ class UnifiedDashboard {
 					'errorOccurred'          => __( 'An error occurred.', 'wp-sell-services' ),
 					'errorTryAgain'          => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'published'              => __( 'Published', 'wp-sell-services' ),
+					'paused'                 => __( 'Paused', 'wp-sell-services' ),
+					'resume'                 => __( 'Resume', 'wp-sell-services' ),
 					'draft'                  => __( 'Draft', 'wp-sell-services' ),
+					'pendingReview'          => __( 'Pending review', 'wp-sell-services' ),
 					'requestClosed'          => __( 'Request closed.', 'wp-sell-services' ),
 					'requestCloseFailed'     => __( 'Failed to close request.', 'wp-sell-services' ),
 					'requestReopened'        => __( 'Request reopened.', 'wp-sell-services' ),
@@ -824,7 +827,7 @@ class UnifiedDashboard {
 					<?php endif; ?>
 					<?php // The tour does not load on an order URL (Tour::should_load), so neither does its button. ?>
 					<?php if ( 'h1' === $title_tag ) : ?>
-						<button type="button" class="wpss-dashboard__tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
+						<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-dashboard__tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
 							<i data-lucide="help-circle" class="wpss-icon" aria-hidden="true"></i>
 							<span><?php esc_html_e( 'Replay tour', 'wp-sell-services' ); ?></span>
 						</button>
@@ -967,9 +970,10 @@ class UnifiedDashboard {
 		$vendor_service = $this->vendor_service;
 		$is_vendor      = $vendor_service->is_vendor( $user_id );
 
-		// Check access: vendor-only sections require vendor status.
-		$vendor_only_sections = self::VENDOR_SECTIONS;
-		if ( ! $is_vendor && in_array( $section, $vendor_only_sections, true ) ) {
+		// One gate, the same one the route and the menu use. This used to be a
+		// second, stricter copy that refused a suspended vendor on Sales Orders
+		// even though the menu offered it and the route let them in.
+		if ( in_array( $section, self::VENDOR_SECTIONS, true ) && ! $this->can_access_section( $section ) ) {
 			$this->render_section_fallback( $section );
 			return;
 		}
@@ -987,6 +991,14 @@ class UnifiedDashboard {
 			 * @param int    $user_id Current user ID.
 			 */
 			do_action( 'wpss_dashboard_section_before_content', $section, $user_id );
+
+			// The menu shrinks to Sales Orders for a suspended vendor; say why on the one page left.
+			if ( 'sales' === $section && $this->is_suspended_vendor( $user_id ) ) {
+				printf(
+					'<p class="wpss-notice wpss-notice--warning" role="status">%s</p>',
+					esc_html__( 'Your vendor account is suspended. You can finish the orders below, but you cannot take new work. Contact the site team to find out more.', 'wp-sell-services' )
+				);
+			}
 
 			include $template_path;
 		} else {
@@ -1179,6 +1191,11 @@ class UnifiedDashboard {
 		// Check for existing pending application.
 		if ( $this->vendor_service->has_pending_application( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Your vendor application is already pending approval.', 'wp-sell-services' ) ) );
+		}
+
+		$block = $this->vendor_service->registration_block( $user_id );
+		if ( $block ) {
+			wp_send_json_error( array( 'message' => $block->get_error_message() ) );
 		}
 
 		$result = $this->vendor_service->register( $user_id );

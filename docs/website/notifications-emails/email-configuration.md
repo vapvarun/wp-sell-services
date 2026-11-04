@@ -64,7 +64,11 @@ control this:
   report missing message emails.
 - **Hold message emails for** - minutes to wait before sending. When the wait is
   over the email goes out only if the conversation is still unread. `0` sends
-  immediately.
+  immediately. The longest hold is 120 minutes. A held email is sent by a
+  background job, so it needs WP-Cron (or a server cron job calling
+  `wp-cron.php`) to run. If background jobs stop for more than an hour, a
+  warning with a link to the overdue jobs appears at the top of the plugin's
+  admin screens.
 
 Developers can also change the behaviour with the `wpss_skip_message_email_when_online`
 and `wpss_presence_window` filters - see the

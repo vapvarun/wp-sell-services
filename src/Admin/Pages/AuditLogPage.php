@@ -9,7 +9,7 @@
  * wp-admin so site owners can answer "who did what, when, and was it forced?"
  * without leaving WordPress.
  *
- * The page is intentionally read-only: the audit log is a tamper-evident
+ * The page is intentionally read-only: the audit log is a
  * record, so there are no edit/delete affordances here. Retention is managed
  * by the scheduled `AuditLogService::cleanup_expired()` job.
  *
@@ -185,7 +185,7 @@ class AuditLogPage {
 			<hr class="wp-header-end">
 
 			<p class="description wpss-audit-intro">
-				<?php esc_html_e( 'A tamper-evident record of sensitive marketplace events. This view is read-only.', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'A record of sensitive marketplace events. This view is read-only.', 'wp-sell-services' ); ?>
 			</p>
 
 			<div class="wpss-listing-stats wpss-audit-stats">
@@ -373,16 +373,19 @@ class AuditLogPage {
 	 */
 	private static function object_labels(): array {
 		return array(
-			'order'      => __( 'Orders', 'wp-sell-services' ),
-			'dispute'    => __( 'Disputes', 'wp-sell-services' ),
-			'withdrawal' => __( 'Withdrawals', 'wp-sell-services' ),
-			'ledger'     => __( 'Wallet entries', 'wp-sell-services' ),
-			'vendor'     => __( 'Vendors', 'wp-sell-services' ),
-			'user'       => __( 'Members', 'wp-sell-services' ),
-			'service'    => __( 'Services', 'wp-sell-services' ),
-			'review'     => __( 'Reviews', 'wp-sell-services' ),
-			'email'      => __( 'Emails', 'wp-sell-services' ),
-			'settings'   => __( 'Settings', 'wp-sell-services' ),
+			'order'           => __( 'Orders', 'wp-sell-services' ),
+			'dispute'         => __( 'Disputes', 'wp-sell-services' ),
+			'withdrawal'      => __( 'Withdrawals', 'wp-sell-services' ),
+			'ledger'          => __( 'Wallet entries', 'wp-sell-services' ),
+			'vendor'          => __( 'Vendors', 'wp-sell-services' ),
+			'user'            => __( 'Members', 'wp-sell-services' ),
+			'service'         => __( 'Services', 'wp-sell-services' ),
+			'review'          => __( 'Reviews', 'wp-sell-services' ),
+			'report'          => __( 'Reports', 'wp-sell-services' ),
+			'commission_rule' => __( 'Commission rules', 'wp-sell-services' ),
+			'payout_batch'    => __( 'Payout batches', 'wp-sell-services' ),
+			'email'           => __( 'Emails', 'wp-sell-services' ),
+			'settings'        => __( 'Settings', 'wp-sell-services' ),
 		);
 	}
 

@@ -1,34 +1,218 @@
 {
-  "_doc": [
-    "Which files belong to which browser-walked surface, for bin/smoke-gate.cjs.",
-    "",
-    "A changed rendered file used to invalidate the whole smoke walk. A file listed here only makes its own",
-    "surface stale: re-walk that surface, record it under `surfaces` in the smoke report with the commit it ran",
-    "against, and the file is covered again.",
-    "",
-    "Safety property: a file that matches NO glob here invalidates everything, exactly as before. A shared",
-    "helper, a new file, a rename or an unmapped directory therefore fails safe. This file can only narrow",
-    "invalidation for files someone deliberately mapped; list a file under a surface only when a walk of that",
-    "surface would notice a regression in it.",
-    "",
-    "Globs: ** crosses directories, * stays inside one. `free` paths are relative to the Free plugin, `pro` to Pro."
-  ],
-  "surfaces": {
-    "cart": {
-      "free": [ "templates/cart/**" ],
-      "pro": [ "src/Integrations/*/*Cart*" ]
-    },
-    "checkout": {
-      "free": [ "src/Checkout/**", "templates/checkout/**" ],
-      "pro": [ "src/Integrations/*/*Checkout*" ]
-    },
-    "earnings": {
-      "free": [ "templates/dashboard/sections/earnings.php", "assets/css/unified-dashboard*.css" ],
-      "pro": []
-    },
-    "publish": {
-      "free": [ "src/Admin/Metaboxes/ServiceMetabox.php", "src/Services/ServiceManager.php" ],
-      "pro": []
-    }
+ "_doc": [
+  "Which files belong to which browser-walked surface, for bin/smoke-gate.cjs.",
+  "",
+  "A changed rendered file used to invalidate the whole smoke walk. A file listed here only makes its own",
+  "surface stale: re-walk that surface, record it under `surfaces` in the smoke report with the commit it ran",
+  "against, and the file is covered again.",
+  "",
+  "Safety property: a file that matches NO glob here invalidates everything, exactly as before. A shared",
+  "helper, a new file, a rename or an unmapped directory therefore fails safe. This file can only narrow",
+  "invalidation for files someone deliberately mapped; list a file under a surface only when a walk of that",
+  "surface would notice a regression in it.",
+  "",
+  "Globs: ** crosses directories, * stays inside one. `free` paths are relative to the Free plugin, `pro` to Pro.",
+  "",
+  "1.9.1 re-cut: surfaces added for the files the fix round touched. src/Core/Plugin.php sits under `moderation` because the only change is one listener binding; it is verified by the surface walk plus the full guard run, not by a walk of every bootstrap path.",
+  "Cross-cutting files stay unmapped on purpose: design-system CSS, frontend.js, src/Core, src/Models, src/Database, src/Services (except the named ones) and src/functions. A change there re-walks everything, because no single surface checklist would notice every regression in it."
+ ],
+ "surfaces": {
+  "cart": {
+   "free": [
+    "templates/cart/**"
+   ],
+   "pro": [
+    "src/Integrations/*/*Cart*"
+   ]
+  },
+  "checkout": {
+   "free": [
+    "src/Checkout/**",
+    "templates/checkout/**",
+    "src/Integrations/Standalone/StandaloneCheckoutProvider.php"
+   ],
+   "pro": [
+    "src/Integrations/*/*Checkout*"
+   ]
+  },
+  "earnings": {
+   "free": [
+    "templates/dashboard/sections/earnings.php",
+    "assets/css/unified-dashboard*.css",
+    "assets/js/unified-dashboard*.js"
+   ],
+   "pro": []
+  },
+  "publish": {
+   "free": [
+    "src/Admin/Metaboxes/ServiceMetabox.php",
+    "src/Services/ServiceManager.php",
+    "src/functions/services.php",
+    "src/API/ServicesController.php",
+    "src/Frontend/ServiceWizard.php",
+    "src/Models/VendorProfile.php"
+   ],
+   "pro": []
+  },
+  "moderation": {
+   "free": [
+    "src/Admin/Pages/ServiceModerationPage.php",
+    "src/Services/ModerationService.php",
+    "src/Core/Plugin.php"
+   ],
+   "pro": []
+  },
+  "owner-decisions": {
+   "free": [
+    "src/API/ReportsController.php",
+    "src/Admin/Pages/ReportsPage.php",
+    "src/Services/DisputeWorkflowManager.php"
+   ],
+   "pro": []
+  },
+  "vendor-doors": {
+   "free": [
+    "src/Frontend/UnifiedDashboard.php",
+    "src/Frontend/AjaxHandlers.php"
+   ],
+   "pro": []
+  },
+  "order-titles-and-tax": {
+   "free": [
+    "src/functions/money.php",
+    "src/functions/orders.php",
+    "src/Admin/Pages/ManualOrderPage.php",
+    "src/Integrations/Standalone/StandaloneOrderProvider.php",
+    "src/Services/BuyerRequestService.php",
+    "templates/order/order-requirements.php",
+    "templates/emails/**",
+    "src/Frontend/Shortcodes.php",
+    "src/Services/EmailService.php",
+    "src/Checkout/CheckoutIntentService.php",
+    "templates/order/line-items.php"
+   ],
+   "pro": []
+  },
+  "reviews-and-service-page": {
+   "free": [
+    "assets/css/frontend*.css",
+    "assets/css/single-service*.css",
+    "templates/partials/review-body.php",
+    "templates/content-no-requests.php"
+   ],
+   "pro": []
+  },
+  "admin-service-list": {
+   "free": [
+    "src/Admin/ServiceListScreen.php"
+   ],
+   "pro": []
+  },
+  "analytics-and-ledger": {
+   "free": [],
+   "pro": [
+    "src/Analytics/AnalyticsManager.php",
+    "src/Services/LedgerExporter.php"
+   ]
+  },
+  "dashboard-sections": {
+   "free": [
+    "templates/dashboard/partials/**",
+    "assets/css/vendor-dashboard*.css",
+    "assets/js/vendor/**",
+    "templates/dashboard/sections/create-request.php",
+    "templates/dashboard/sections/create.php",
+    "templates/dashboard/sections/disputes.php",
+    "templates/dashboard/sections/edit-request.php",
+    "templates/dashboard/sections/favorites.php",
+    "templates/dashboard/sections/messages.php",
+    "templates/dashboard/sections/orders.php",
+    "templates/dashboard/sections/portfolio.php",
+    "templates/dashboard/sections/profile.php",
+    "templates/dashboard/sections/proposals.php",
+    "templates/dashboard/sections/requests.php",
+    "templates/dashboard/sections/reviews.php",
+    "templates/dashboard/sections/sales.php",
+    "templates/dashboard/sections/services.php",
+    "assets/css/pro-teaser*.css"
+   ],
+   "pro": []
+  },
+  "admin-screens": {
+   "free": [
+    "src/Admin/Admin.php",
+    "src/Admin/Settings.php",
+    "src/Admin/OrderScreen.php",
+    "src/Admin/RequestListScreen.php",
+    "src/Admin/ProTeaser.php",
+    "src/Admin/PageDropdownWalker.php",
+    "src/Admin/Tables/**",
+    "src/Admin/Pages/AuditLogPage.php",
+    "src/Admin/Pages/ReviewModerationPage.php",
+    "src/Admin/Pages/SetupWizardPage.php",
+    "src/Admin/Pages/UpgradePage.php",
+    "src/Admin/Pages/VendorsPage.php",
+    "src/Admin/Pages/WithdrawalsPage.php",
+    "assets/css/admin*.css",
+    "assets/js/admin-*.js",
+    "src/Admin/Metaboxes/BuyerRequestMetabox.php"
+   ],
+   "pro": []
+  },
+  "notifications": {
+   "free": [
+    "assets/css/notifications*.css",
+    "src/Admin/Pages/NotificationsPage.php",
+    "templates/dashboard/sections/notifications.php",
+    "src/Services/NotificationService.php"
+   ],
+   "pro": []
+  },
+  "rest-api": {
+   "free": [
+    "src/API/**"
+   ],
+   "pro": []
+  },
+  "order-view": {
+   "free": [
+    "templates/order/**",
+    "assets/css/order-view*.css",
+    "assets/css/orders*.css",
+    "assets/js/dispute-thread.js",
+    "assets/js/requirements-form.js"
+   ],
+   "pro": []
+  },
+  "blocks": {
+   "free": [
+    "src/Blocks/**",
+    "assets/css/blocks*.css",
+    "assets/js/blocks*.js"
+   ],
+   "pro": []
+  },
+  "request-page": {
+   "free": [
+    "templates/single-request.php"
+   ],
+   "pro": []
+  },
+  "pro-admin-settings": {
+   "free": [],
+   "pro": [
+    "assets/js/admin.js",
+    "assets/js/admin.min.js"
+   ]
+  },
+  "vendor-badge": {
+   "free": [
+    "templates/partials/vendor-level-badge.php",
+    "templates/content-service-card.php",
+    "templates/partials/vendor-card.php",
+    "templates/vendor/profile.php"
+   ],
+   "pro": []
   }
+ }
 }

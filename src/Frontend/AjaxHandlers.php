@@ -67,10 +67,10 @@ use WPSellServices\Models\ServiceOrder;
  *   get_current_user_id(). No object id from the client widens the scope.
  *
  * Pattern D — intentionally public.
- *   Read-only, non-sensitive, `nopriv`-exposed endpoints (live_search,
- *   load_reviews, load_services) and the guest helpful-vote (mark_review_helpful,
- *   deduped per user/IP). These have no ownership concept by design and are
- *   rate-limited instead.
+ *   Read-only, non-sensitive, `nopriv`-exposed endpoints (load_reviews,
+ *   load_services). These have no ownership concept by design and are
+ *   rate-limited instead. Every public action needs a caller
+ *   (tests/test-public-ajax-has-a-caller.php).
  *
  * Admin-only / cross-user actions are the exception: those DO require an
  * explicit current_user_can( 'manage_options' ) check (see order_action,
@@ -162,8 +162,6 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_upload_file', array( $this, 'upload_file' ) );
 
 		// Search.
-		add_action( 'wp_ajax_wpss_live_search', array( $this, 'live_search' ) );
-		add_action( 'wp_ajax_nopriv_wpss_live_search', array( $this, 'live_search' ) );
 
 		// Contact vendor.
 		add_action( 'wp_ajax_wpss_contact_vendor', array( $this, 'contact_vendor' ) );
@@ -189,10 +187,8 @@ class AjaxHandlers {
 
 		// Dashboard.
 		add_action( 'wp_ajax_wpss_get_dashboard_tab', array( $this, 'get_dashboard_tab' ) );
-		add_action( 'wp_ajax_wpss_service_action', array( $this, 'service_action' ) );
 		add_action( 'wp_ajax_wpss_order_action', array( $this, 'order_action' ) );
 		add_action( 'wp_ajax_wpss_filter_dashboard', array( $this, 'filter_dashboard' ) );
-		add_action( 'wp_ajax_wpss_bulk_action', array( $this, 'bulk_action' ) );
 		add_action( 'wp_ajax_wpss_search_dashboard', array( $this, 'search_dashboard' ) );
 		add_action( 'wp_ajax_wpss_paginate_dashboard', array( $this, 'paginate_dashboard' ) );
 		add_action( 'wp_ajax_wpss_export_data', array( $this, 'export_data' ) );
@@ -976,8 +972,11 @@ class AjaxHandlers {
 			$order_id,
 			$user_id,
 			array(
-				'rating'  => $rating,
-				'content' => $comment,
+				'rating'               => $rating,
+				'content'              => $comment,
+				'rating_communication' => absint( $_POST['rating_communication'] ?? 0 ),
+				'rating_quality'       => absint( $_POST['rating_quality'] ?? 0 ),
+				'rating_value'         => absint( $_POST['rating_value'] ?? 0 ),
 			)
 		);
 
@@ -1004,8 +1003,14 @@ class AjaxHandlers {
 		$service_id = absint( $_POST['service_id'] ?? 0 );
 		$vendor_id  = absint( $_POST['vendor_id'] ?? 0 );
 		$page       = max( 1, absint( $_POST['page'] ?? 1 ) );
-		$per_page   = 10;
-		$args       = array(
+		/**
+		 * Filters the number of reviews to display per page.
+		 *
+		 * The filter page one uses (templates/partials/service-reviews.php), so
+		 * page two lines up with it. The vendor profile renders a fixed 10.
+		 */
+		$per_page = $service_id ? max( 1, (int) apply_filters( 'wpss_reviews_per_page', 10, $service_id ) ) : 10;
+		$args     = array(
 			'limit'  => $per_page,
 			'offset' => ( $page - 1 ) * $per_page,
 		);
@@ -1124,6 +1129,10 @@ class AjaxHandlers {
 
 		if ( ! $dispute ) {
 			wp_send_json_error( array( 'message' => __( 'Dispute not found.', 'wp-sell-services' ) ) );
+		}
+
+		if ( ! DisputeService::accepts_input( $dispute ) ) {
+			wp_send_json_error( array( 'message' => __( 'This dispute is no longer accepting evidence.', 'wp-sell-services' ) ) );
 		}
 
 		// Verify user can add evidence (is part of the order).
@@ -1260,6 +1269,10 @@ class AjaxHandlers {
 
 		$request_service = new BuyerRequestService();
 		$request_id      = $request_service->create( $data );
+
+		if ( is_wp_error( $request_id ) ) {
+			wp_send_json_error( array( 'message' => $request_id->get_error_message() ) );
+		}
 
 		if ( $request_id ) {
 			wp_send_json_success(
@@ -1466,9 +1479,9 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Add at least one milestone phase.', 'wp-sell-services' ) ) );
 		}
 
-		// Check if user is a vendor.
-		if ( ! wpss_is_vendor( $vendor_id ) ) {
-			wp_send_json_error( array( 'message' => __( 'You must be a vendor to submit proposals.', 'wp-sell-services' ) ) );
+		$block = wpss_proposal_vendor_block( $vendor_id );
+		if ( $block ) {
+			wp_send_json_error( array( 'message' => $block->get_error_message() ) );
 		}
 
 		$proposal_service = new ProposalService();
@@ -1712,7 +1725,9 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		wp_trash_post( $service_id );
+		if ( ! wp_trash_post( $service_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete service.', 'wp-sell-services' ) ) );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'Service deleted.', 'wp-sell-services' ) ) );
 	}
@@ -1787,60 +1802,6 @@ class AjaxHandlers {
 	}
 
 	/**
-	 * Live search.
-	 *
-	 * @return void
-	 */
-	public function live_search(): void {
-		// Verify nonce for logged-in users, skip for guests (public search).
-		if ( is_user_logged_in() ) {
-			check_ajax_referer( 'wpss_search_nonce', 'nonce' );
-		}
-
-		// Rate-limit guests by IP (logged-in users by user ID). Live search is
-		// `nopriv`-exposed, so without an IP-scoped limit a single guest can
-		// hammer this endpoint and walk the wpss_service post type at speed.
-		$current_user_id = get_current_user_id();
-		$rate_limit_user = $current_user_id > 0 ? $current_user_id : null;
-		if ( RateLimiter::check_and_track( 'live_search', $rate_limit_user ) ) {
-			RateLimiter::send_error( 'live_search' );
-		}
-
-		$query = sanitize_text_field( wp_unslash( $_POST['query'] ?? '' ) );
-
-		if ( strlen( $query ) < 2 ) {
-			wp_send_json_success( array( 'results' => array() ) );
-		}
-
-		// Only show approved services in search results.
-		$services = new \WP_Query(
-			array(
-				'post_type'             => 'wpss_service',
-				'post_status'           => 'publish',
-				's'                     => $query,
-				'posts_per_page'        => 5,
-				'author__not_in'        => wpss_get_vacation_vendor_ids(),
-				// Effective state: a live service with no moderation meta is approved.
-				'wpss_moderation_state' => 'approved',
-			)
-		);
-
-		$results = array();
-		foreach ( $services->posts as $post ) {
-			$thumb_url = get_the_post_thumbnail_url( $post->ID, 'thumbnail' );
-			$results[] = array(
-				'id'        => $post->ID,
-				'title'     => $post->post_title,
-				'url'       => get_permalink( $post->ID ),
-				'thumbnail' => $thumb_url ? $thumb_url : '',
-				'price'     => get_post_meta( $post->ID, '_wpss_starting_price', true ),
-			);
-		}
-
-		wp_send_json_success( array( 'results' => $results ) );
-	}
-
-	/**
 	 * Contact vendor.
 	 *
 	 * Allows logged-in users to send a message to a service vendor.
@@ -1896,6 +1857,12 @@ class AjaxHandlers {
 		$vendor = get_userdata( $vendor_id );
 		if ( ! $vendor ) {
 			wp_send_json_error( array( 'message' => __( 'Vendor not found.', 'wp-sell-services' ) ) );
+		}
+
+		// A vendor not in good standing (suspended, rejected, banned) takes no new
+		// enquiries; paid orders already open keep their own conversation.
+		if ( wpss_vendor_status_block( $vendor_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'This vendor is not taking new messages right now.', 'wp-sell-services' ) ) );
 		}
 
 		// Get service title for context.
@@ -2377,13 +2344,16 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
+		// Skipping happens once, while the order still waits on requirements.
+		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS !== $order->status ) {
+			wp_send_json_error( array( 'message' => __( 'This order is no longer waiting for requirements.', 'wp-sell-services' ) ) );
+		}
+
 		// Mark requirements as skipped (can be submitted later).
 		update_post_meta( $order_id, '_wpss_requirements_skipped', true );
 
 		// Advance order to in_progress so the vendor can start working.
-		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS === $order->status ) {
-			$order_service->start_work( $order_id );
-		}
+		$order_service->start_work( $order_id );
 
 		$redirect_url = wpss_get_page_url( 'orders' );
 
@@ -2450,80 +2420,6 @@ class AjaxHandlers {
 		wp_send_json_success( array( 'html' => $html ) );
 	}
 
-
-	/**
-	 * Handle service action from dashboard.
-	 *
-	 * @return void
-	 */
-	public function service_action(): void {
-		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
-
-		$action     = sanitize_key( $_POST['service_action'] ?? '' );
-		$service_id = absint( $_POST['service_id'] ?? 0 );
-		$user_id    = get_current_user_id();
-
-		if ( ! $service_id || ! $action ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
-		}
-
-		// Verify ownership.
-		$service = get_post( $service_id );
-		if ( ! $service || 'wpss_service' !== $service->post_type || (int) $service->post_author !== $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
-		}
-
-		$message = '';
-
-		switch ( $action ) {
-			case 'pause':
-				wp_update_post(
-					array(
-						'ID'          => $service_id,
-						'post_status' => 'draft',
-					)
-				);
-				$message = __( 'Service paused.', 'wp-sell-services' );
-				break;
-
-			case 'unpublish':
-				wp_update_post(
-					array(
-						'ID'          => $service_id,
-						'post_status' => 'draft',
-					)
-				);
-				$message = __( 'Service unpublished.', 'wp-sell-services' );
-				break;
-
-			case 'publish':
-				$refusal = wpss_service_publish_refusal( $service_id, $user_id );
-				if ( '' !== $refusal ) {
-					wp_send_json_error( array( 'message' => $refusal ) );
-				}
-				wp_update_post(
-					array(
-						'ID'          => $service_id,
-						'post_status' => 'publish',
-					)
-				);
-				$message = __( 'Service published.', 'wp-sell-services' );
-				break;
-
-			case 'delete':
-				$trashed = wp_trash_post( $service_id );
-				if ( ! $trashed ) {
-					wp_send_json_error( array( 'message' => __( 'Failed to delete service.', 'wp-sell-services' ) ) );
-				}
-				$message = __( 'Service deleted.', 'wp-sell-services' );
-				break;
-
-			default:
-				wp_send_json_error( array( 'message' => __( 'Unknown action.', 'wp-sell-services' ) ) );
-		}
-
-		wp_send_json_success( array( 'message' => $message ) );
-	}
 
 	/**
 	 * Handle order action from dashboard.
@@ -2721,70 +2617,6 @@ class AjaxHandlers {
 	}
 
 	/**
-	 * Handle bulk action.
-	 *
-	 * @return void
-	 */
-	public function bulk_action(): void {
-		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
-
-		$action  = sanitize_key( $_POST['bulk_action'] ?? '' );
-		$ids     = array_map( 'absint', (array) ( $_POST['ids'] ?? array() ) );
-		$type    = sanitize_key( $_POST['type'] ?? 'services' );
-		$user_id = get_current_user_id();
-
-		if ( empty( $ids ) || ! $action ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
-		}
-
-		$processed = 0;
-		$refused   = 0;
-
-		if ( 'services' === $type ) {
-			foreach ( $ids as $service_id ) {
-				$service = get_post( $service_id );
-				if ( $service && 'wpss_service' === $service->post_type && (int) $service->post_author === $user_id ) {
-					switch ( $action ) {
-						case 'delete':
-							wp_trash_post( $service_id );
-							++$processed;
-							break;
-						case 'pause':
-							wp_update_post(
-								array(
-									'ID'          => $service_id,
-									'post_status' => 'draft',
-								)
-							);
-							++$processed;
-							break;
-						case 'publish':
-							if ( '' !== wpss_service_publish_refusal( $service_id, $user_id ) ) {
-								++$refused;
-								break;
-							}
-							wp_update_post(
-								array(
-									'ID'          => $service_id,
-									'post_status' => 'publish',
-								)
-							);
-							++$processed;
-							break;
-					}
-				}
-			}
-		}
-
-		if ( $refused && ! $processed ) {
-			wp_send_json_error( array( 'message' => wpss_service_publish_refusal( (int) reset( $ids ), $user_id ) ) );
-		}
-
-		/* translators: %d: number of items processed */
-		wp_send_json_success( array( 'message' => sprintf( __( '%d items updated.', 'wp-sell-services' ), $processed ) ) );
-	}
-
-	/**
 	 * Search dashboard content.
 	 *
 	 * @return void
@@ -2912,13 +2744,12 @@ class AjaxHandlers {
 			);
 
 			foreach ( $orders as $order ) {
-				$service  = get_post( $order->service_id );
 				$customer = get_userdata( $order->customer_id );
 				wpss_fputcsv(
 					$output,
 					array(
 						$order->id,
-						self::sanitize_csv_cell( $service ? $service->post_title : 'N/A' ),
+						self::sanitize_csv_cell( wpss_get_order_title( $order ) ?: 'N/A' ),
 						self::sanitize_csv_cell( $customer ? $customer->display_name : 'N/A' ),
 						$order->status,
 						$order->total,
@@ -3054,13 +2885,18 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
 		$user_id = get_current_user_id();
-		if ( ! $user_id || ! wpss_is_vendor( $user_id ) ) {
+		if ( ! $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
+		// Standing first: it names the real reason; is_vendor only says no.
 		$standing = wpss_vendor_status_block( $user_id );
 		if ( $standing ) {
 			wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
+		}
+
+		if ( ! wpss_is_vendor( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
 		$data = array(
@@ -3105,13 +2941,18 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
 		$user_id = get_current_user_id();
-		if ( ! $user_id || ! wpss_is_vendor( $user_id ) ) {
+		if ( ! $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
+		// Standing first: it names the real reason; is_vendor only says no.
 		$standing = wpss_vendor_status_block( $user_id );
 		if ( $standing ) {
 			wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
+		}
+
+		if ( ! wpss_is_vendor( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.

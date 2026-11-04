@@ -97,6 +97,7 @@ class VendorsController extends RestController {
 						array(
 							'country'              => array( 'type' => 'string' ),
 							'city'                 => array( 'type' => 'string' ),
+							'timezone'             => array( 'type' => 'string' ),
 							'website'              => array( 'type' => 'string' ),
 							'intro_video_url'      => array( 'type' => 'string' ),
 							'vacation_mode'        => array( 'type' => 'boolean' ),
@@ -500,7 +501,7 @@ class VendorsController extends RestController {
 		// vacation/cover entirely (KG-5 data-loss). Now one store: the
 		// wpss_vendor_profiles table.
 		$src = array();
-		foreach ( array( 'tagline', 'bio', 'country', 'city', 'website', 'intro_video_url', 'vacation_mode', 'vacation_message', 'vacation_return_date' ) as $key ) {
+		foreach ( array( 'tagline', 'bio', 'country', 'city', 'timezone', 'website', 'intro_video_url', 'vacation_mode', 'vacation_message', 'vacation_return_date' ) as $key ) {
 			if ( $request->has_param( $key ) ) {
 				$src[ $key ] = $request->get_param( $key );
 			}
@@ -642,6 +643,12 @@ class VendorsController extends RestController {
 				__( 'You already have a pending vendor application. Please wait for admin approval.', 'wp-sell-services' ),
 				array( 'status' => 400 )
 			);
+		}
+
+		// Suspended/rejected sellers and blocked members: 403 with the reason.
+		$block = $vendor_service->registration_block( $user_id );
+		if ( $block ) {
+			return $block;
 		}
 
 		// Check if vendor registration is open.
@@ -824,6 +831,7 @@ class VendorsController extends RestController {
 
 		// Orders stats.
 		$orders_table = $wpdb->prefix . 'wpss_orders';
+		$is_order     = wpss_order_rows_sql();
 		$order_stats  = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT
@@ -832,7 +840,7 @@ class VendorsController extends RestController {
 					SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as active_orders,
 					SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_orders
 				FROM {$orders_table}
-				WHERE vendor_id = %d",
+				WHERE vendor_id = %d AND {$is_order}",
 				$vendor_id
 			)
 		);
@@ -857,7 +865,7 @@ class VendorsController extends RestController {
 		$on_time_deliveries = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$orders_table}
-				WHERE vendor_id = %d AND status = 'completed' AND completed_at <= delivery_deadline",
+				WHERE vendor_id = %d AND status = 'completed' AND completed_at <= delivery_deadline AND {$is_order}",
 				$vendor_id
 			)
 		);
@@ -878,7 +886,7 @@ class VendorsController extends RestController {
 				'total_reviews'     => $review_stats['count'],
 				'average_rating'    => round( $review_stats['average'], 1 ),
 				'avg_response_time' => $avg_response_time,
-				'member_since'      => $this->format_datetime( $wpss_vp && $wpss_vp->member_since ? $wpss_vp->member_since->format( 'Y-m-d H:i:s' ) : null ),
+				'member_since'      => $this->format_datetime( $wpss_vp && $wpss_vp->member_since ? $wpss_vp->member_since->format( 'Y-m-d H:i:s' ) : ( wpss_is_vendor( $vendor_id ) ? ( get_userdata( $vendor_id )->user_registered ?? null ) : null ) ),
 			)
 		);
 	}

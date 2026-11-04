@@ -35,6 +35,8 @@ PayPal provides a full sandbox environment for testing without real money.
 
 **To go live:** Switch to the **Live** tab in PayPal Developer Dashboard, create a live app, copy the live credentials, and uncheck Sandbox Mode in WP Sell Services.
 
+**Keeping the secret out of the database:** define `WPSS_PAYPAL_LIVE_CLIENT_SECRET` (and `WPSS_PAYPAL_SANDBOX_CLIENT_SECRET` for testing) in `wp-config.php`. The constant wins over the saved value, its field is locked, and the next save clears the stored copy. The Client ID stays on the settings screen.
+
 ### Setting Up PayPal Webhooks
 
 1. In PayPal Developer Dashboard, go to **Webhooks**
@@ -87,6 +89,8 @@ Razorpay is the go-to payment gateway for marketplaces serving buyers in India. 
 4. In WordPress, go to **Sell Services > Settings > Payment Gateways**
 5. Check **Enable Razorpay** and enter your Key ID and Key Secret
 6. Click **Save Changes**
+
+**Keeping the secrets out of the database:** define `WPSS_RAZORPAY_LIVE_KEY_SECRET`, `WPSS_RAZORPAY_TEST_KEY_SECRET` and `WPSS_RAZORPAY_WEBHOOK_SECRET` in `wp-config.php`. Each constant wins over the saved value, its field is locked, and the next save clears the stored copy. The Key IDs stay on the settings screen.
 
 ### Test Mode
 

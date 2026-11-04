@@ -206,7 +206,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				<h2><?php esc_html_e( 'Confirming your payment', 'wp-sell-services' ); ?></h2>
 				<p><?php echo esc_html( $result['message'] ); ?></p>
 				<p><strong><?php esc_html_e( 'Please do not pay again.', 'wp-sell-services' ); ?></strong></p>
-				<p><a class="wpss-btn" href="<?php echo esc_url( $orders ); ?>"><?php esc_html_e( 'Go to your orders', 'wp-sell-services' ); ?></a></p>
+				<p><a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( $orders ); ?>"><?php esc_html_e( 'Go to your orders', 'wp-sell-services' ); ?></a></p>
 			</div>
 			<script>setTimeout(function(){ window.location.reload(); }, 5000);</script>
 			<?php
@@ -465,11 +465,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$parent_order_id = ! empty( $order->platform_order_id ) ? (int) $order->platform_order_id : (int) $order->id;
 		$back_to_order   = wpss_get_order_url( $parent_order_id );
 
-		// Only pending_payment orders can be paid.
-		if ( 'pending_payment' !== $order->status ) {
+		$refusal = wpss_get_order_payment_refusal( $order );
+		if ( '' !== $refusal ) {
 			return sprintf(
 				'<p class="wpss-alert wpss-alert-info">%s</p><p><a class="wpss-btn wpss-btn--secondary" href="%s">%s</a></p>',
-				esc_html( wpss_get_order_not_payable_message( $order ) ),
+				esc_html( $refusal ),
 				esc_url( $back_to_order ),
 				esc_html__( 'Back to order', 'wp-sell-services' )
 			);
@@ -594,12 +594,15 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 		if ( $is_pay_order ) {
 			// Pay-order flow: use the order total directly (tax already included).
-			$total      = (float) $pay_order->total;
-			$currency   = $pay_order->currency ?: wpss_get_currency();
-			$tax_amount = 0;
-			$tax_rate   = 0;
-			$tax_label  = '';
-			$price      = $total;
+			$total    = (float) $pay_order->total;
+			$currency = $pay_order->currency ?: wpss_get_currency();
+			// The tax the order was priced with, so the page shows the VAT line the total already carries.
+			$pay_tax      = wpss_get_order_tax( $pay_order );
+			$tax_amount   = $pay_tax['amount'];
+			$tax_rate     = $pay_tax['rate'];
+			$tax_label    = $pay_tax['label'];
+			$tax_included = $pay_tax['included'];
+			$price        = $total;
 
 			$selected_package = null;
 			$vendor           = get_user_by( 'id', $pay_order->vendor_id );
@@ -653,6 +656,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		// Summary lines for templates/checkout/summary.php.
 		$summary_lines = array();
 		if ( $is_pay_order ) {
+			if ( $tax_amount > 0 ) {
+				$summary_lines[] = array(
+					'label'  => __( 'Subtotal', 'wp-sell-services' ),
+					'amount' => $tax_included ? $total : $total - $tax_amount,
+				);
+				$summary_lines[] = $this->tax_summary_line( $tax_label, $tax_rate, $tax_amount, $tax_included );
+			}
 			$summary_lines[] = array(
 				'label'  => __( 'Order total', 'wp-sell-services' ),
 				'amount' => $total,
@@ -711,7 +721,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				text-decoration: none;
 				transition: color var(--wpss-ease);
 			}
-			.wpss-co-header__back:hover { color: var(--wpss-primary); text-decoration: none; }
+			.wpss-co-header__back:hover { color: var(--wpss-primary-accent, #4f46e5); text-decoration: none; }
 			.wpss-co-header__secure {
 				display: inline-flex;
 				align-items: center;
@@ -852,7 +862,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			}
 			.wpss-co-guarantee > span:first-child {
 				font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 2px;
-				color: var(--wpss-primary);
+				color: var(--wpss-primary-accent, #4f46e5);
 			}
 			.wpss-co-guarantee strong {
 				display: block; font-size: var(--wpss-text-sm); font-weight: 600;
@@ -885,7 +895,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				position: relative; z-index: 1;
 			}
 			.wpss-co-step:first-child .wpss-co-step__dot {
-				background: var(--wpss-primary); border-color: var(--wpss-primary); color: var(--wpss-white, #fff);
+				background: var(--wpss-primary); border-color: var(--wpss-primary); color: var(--wpss-on-primary, #fff);
 			}
 			.wpss-co-step__label { font-size: var(--wpss-text-xs); color: var(--wpss-text-muted); font-weight: 500; }
 
@@ -955,7 +965,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		<div class="wpss-checkout-page">
 			<!-- Header bar -->
 			<div class="wpss-co-header">
-				<a href="<?php echo esc_url( get_permalink( $service->id ) ); ?>" class="wpss-co-header__back">
+				<a href="<?php echo esc_url( ( $service->id > 0 ? get_permalink( $service->id ) : home_url( '/' ) ) ); ?>" class="wpss-co-header__back">
 					<span aria-hidden="true">&larr;</span>
 					<?php esc_html_e( 'Back to service', 'wp-sell-services' ); ?>
 				</a>
@@ -1192,7 +1202,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								global $wpdb;
 								$orders_table      = $wpdb->prefix . 'wpss_orders';
 								$reviews_table     = $wpdb->prefix . 'wpss_reviews';
-								$vendor_orders     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+								$vendor_orders     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed' AND " . wpss_order_rows_sql(), $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 								$vendor_member_obj = get_userdata( $vendor_id_for_stats );
 								// The profile row's date, the one the vendor profile and card show.
 								$vendor_joined = $vendor_member_obj ? wpss_date_label( ( new \WPSellServices\Services\VendorService() )->get_profile( (int) $vendor_id_for_stats )->created_at ?? $vendor_member_obj->user_registered, '—', 'M Y' ) : '';
@@ -1494,7 +1504,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				text-decoration: none;
 				transition: color var(--wpss-ease);
 			}
-			.wpss-co-header__back:hover { color: var(--wpss-primary); text-decoration: none; }
+			.wpss-co-header__back:hover { color: var(--wpss-primary-accent, #4f46e5); text-decoration: none; }
 			.wpss-co-header__secure {
 				display: inline-flex;
 				align-items: center;

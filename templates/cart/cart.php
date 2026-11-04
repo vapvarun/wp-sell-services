@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.6.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var array $cart_items Cart items from _wpss_cart user meta.
  * @var bool  $wpss_guest Whether the visitor is logged out (the cart needs an account).
@@ -162,7 +162,7 @@ defined( 'ABSPATH' ) || exit;
 }
 
 .wpss-cart-item__title a:hover {
-	color: var(--wpss-primary, #7c3aed);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-cart-item__vendor {
@@ -184,7 +184,7 @@ defined( 'ABSPATH' ) || exit;
 	align-items: center;
 	gap: 4px;
 	background: var(--wpss-primary-light, #ede9fe);
-	color: var(--wpss-primary, #7c3aed);
+	color: var(--wpss-primary-accent, #4f46e5);
 	font-size: 0.75rem;
 	font-weight: 600;
 	padding: 2px 10px;

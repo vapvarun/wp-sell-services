@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -353,7 +353,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 					</button>
 				</div>
 
-				<div id="wpss-withdrawal-message" class="wpss-notice" style="display: none;"></div>
+				<div id="wpss-withdrawal-message" class="wpss-notice" role="status" style="display: none;"></div>
 			</form>
 		<?php elseif ( $available_balance < 0 && (float) $earnings['ledger_balance'] >= 0 ) : ?>
 			<?php // Over-committed by a withdrawal in progress, not in debt: the notice above says so. ?>

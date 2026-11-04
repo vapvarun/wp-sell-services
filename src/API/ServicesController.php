@@ -176,6 +176,10 @@ class ServicesController extends RestController {
 								'type'        => 'string',
 								'enum'        => array( 'publish', 'draft' ),
 							),
+							'paused' => array(
+								'description' => __( 'Pause (true) or resume (false): the service stays listed but takes no new orders.', 'wp-sell-services' ),
+								'type'        => 'boolean',
+							),
 						)
 					),
 				),
@@ -361,7 +365,7 @@ class ServicesController extends RestController {
 		}
 
 		// Same catalog rule as the storefront: vendors on vacation are not listed.
-		$vacation_vendors = wpss_get_vacation_vendor_ids();
+		$vacation_vendors = wpss_get_unlisted_seller_ids();
 		if ( ! empty( $vacation_vendors ) ) {
 			$args['author__not_in'] = $vacation_vendors;
 		}
@@ -677,7 +681,7 @@ class ServicesController extends RestController {
 
 		$post_status = 'draft' === $requested_status
 			? 'draft'
-			: ( ModerationService::is_enabled() ? 'pending' : 'publish' );
+			: ( ModerationService::requires_review() ? 'pending' : 'publish' );
 
 		/*
 		 * Creating a service over REST is the app's version of finishing the
@@ -728,8 +732,9 @@ class ServicesController extends RestController {
 		}
 
 		// Save meta.
-		$limit_error = $this->save_service_meta( $service_id, $request );
+		$notices = $this->save_service_meta( $service_id, $request );
 
+		// Into the review queue: tell the owner, as the wizard and set_pending() do.
 		wp_set_object_terms( $service_id, $requested_categories, 'wpss_service_category' );
 
 		// Set tags. Capped by wpss_enforce_service_limits() inside
@@ -740,7 +745,10 @@ class ServicesController extends RestController {
 			wp_set_object_terms( $service_id, $tags, 'wpss_service_tag' );
 		}
 
-		wpss_settle_service_status( $service_id, $post_status );
+		$to_review = wpss_settle_service_status( $service_id, $post_status ) === 'pending';
+		if ( $to_review ) {
+			( new ModerationService() )->submit( $service_id );
+		}
 		$service = get_post( $service_id );
 
 		/**
@@ -751,12 +759,8 @@ class ServicesController extends RestController {
 		 */
 		do_action( 'wpss_rest_service_created', $service_id, $request );
 
-		if ( $limit_error ) {
-			return $limit_error;
-		}
-
 		return new WP_REST_Response(
-			$this->prepare_item_for_response( $service, $request )->get_data(),
+			$this->with_review_notice( $this->with_limit_notices( $this->prepare_item_for_response( $service, $request )->get_data(), $notices ), $to_review ),
 			201
 		);
 	}
@@ -806,6 +810,15 @@ class ServicesController extends RestController {
 					__( 'Status must be either publish or draft.', 'wp-sell-services' ),
 					array( 'status' => 400 )
 				);
+			}
+
+			// Publishing a draft counts against the vendor's service limit, like
+			// creating one does. The dashboard Publish toggle comes through here.
+			if ( 'publish' === $requested_status ) {
+				$limit_error = wpss_service_limit_error( $service_id, get_current_user_id() );
+				if ( '' !== $limit_error ) {
+					return new WP_Error( 'wpss_service_limit_reached', $limit_error, array( 'status' => 403 ) );
+				}
 			}
 
 			$update_data['post_status'] = $requested_status;
@@ -888,14 +901,41 @@ class ServicesController extends RestController {
 			}
 		}
 
+		/*
+		 * With moderation on, a vendor going live or editing a live listing
+		 * goes back through review, as the wizard does. Judged after the
+		 * publishable check above, which pending must clear too.
+		 */
+		$to_review = false;
+		if ( ModerationService::requires_review() ) {
+			// Any field but the route id counts, as in the wizard: a gallery, add-on or category swap is as reviewable as a title.
+			// Pausing is not: it changes nothing a buyer would buy.
+			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'paused', 'context', '_locale', '_fields', '_embed' ) ) );
+			$goes_live     = 'publish' === ( $update_data['post_status'] ?? '' );
+			$edits_live    = ! isset( $update_data['post_status'] ) && $edits_content && 'publish' === get_post_status( $service_id );
+
+			if ( $goes_live || $edits_live ) {
+				$update_data['post_status'] = 'pending';
+				$to_review                  = true;
+			}
+		}
+
 		$result = wp_update_post( $update_data, true );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
+		if ( $to_review ) {
+			( new ModerationService() )->submit( $service_id );
+		}
+
+		if ( $request->has_param( 'paused' ) ) {
+			wpss_set_service_paused( $service_id, (bool) $request->get_param( 'paused' ) );
+		}
+
 		// Update meta.
-		$limit_error = $this->save_service_meta( $service_id, $request );
+		$notices = $this->save_service_meta( $service_id, $request );
 
 		// Update categories.
 		if ( $request->has_param( 'categories' ) ) {
@@ -916,11 +956,10 @@ class ServicesController extends RestController {
 		 */
 		do_action( 'wpss_rest_service_updated', $service_id, $request );
 
-		if ( $limit_error ) {
-			return $limit_error;
-		}
+		$response = $this->prepare_item_for_response( get_post( $service_id ), $request );
+		$response->set_data( $this->with_review_notice( $this->with_limit_notices( $response->get_data(), $notices ), $to_review ) );
 
-		return $this->prepare_item_for_response( get_post( $service_id ), $request );
+		return $response;
 	}
 
 	/**
@@ -944,6 +983,12 @@ class ServicesController extends RestController {
 		$force = (bool) $request->get_param( 'force' );
 
 		if ( $force ) {
+			$refusal = wpss_service_delete_refusal( $service_id );
+
+			if ( '' !== $refusal ) {
+				return new WP_Error( 'wpss_service_has_orders', $refusal, array( 'status' => 409 ) );
+			}
+
 			$result = wp_delete_post( $service_id, true );
 		} else {
 			$result = wp_trash_post( $service_id );
@@ -1030,6 +1075,15 @@ class ServicesController extends RestController {
 
 		if ( is_wp_error( $line ) ) {
 			return $line;
+		}
+
+		// On a store rail the store taxes a catalog order with its own rules, so quote what it charges.
+		if ( ! wpss_uses_standalone_payments() ) {
+			$line = array(
+				'tax'      => 0.0,
+				'tax_rate' => 0.0,
+				'total'    => (float) $line['subtotal'] + (float) $line['addons_total'],
+			) + $line;
 		}
 
 		$currency = wpss_get_currency();
@@ -1295,7 +1349,9 @@ class ServicesController extends RestController {
 			return new WP_Error( 'addon_create_failed', __( 'Failed to create addon.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		return new WP_REST_Response( $this->format_addon( $service_id, $index, $saved[ $index ] ), 201 );
+		$queued = ( new ModerationService() )->requeue_live_edit( $service_id );
+
+		return new WP_REST_Response( $this->with_review_notice( $this->format_addon( $service_id, $index, $saved[ $index ] ), $queued ), 201 );
 	}
 
 	/**
@@ -1320,9 +1376,10 @@ class ServicesController extends RestController {
 		}
 
 		wpss_save_service_addons( $service_id, $addons );
-		$saved = wpss_get_service_extras( $service_id );
+		$saved  = wpss_get_service_extras( $service_id );
+		$queued = ( new ModerationService() )->requeue_live_edit( $service_id );
 
-		return new WP_REST_Response( $this->format_addon( $service_id, $index, $saved[ $index ] ) );
+		return new WP_REST_Response( $this->with_review_notice( $this->format_addon( $service_id, $index, $saved[ $index ] ), $queued ) );
 	}
 
 	/**
@@ -1346,8 +1403,9 @@ class ServicesController extends RestController {
 
 		unset( $addons[ $index ] );
 		wpss_save_service_addons( $service_id, array_values( $addons ) );
+		$queued = ( new ModerationService() )->requeue_live_edit( $service_id );
 
-		return new WP_REST_Response( array( 'deleted' => true ) );
+		return new WP_REST_Response( $this->with_review_notice( array( 'deleted' => true ), $queued ) );
 	}
 
 	/**
@@ -1506,14 +1564,14 @@ class ServicesController extends RestController {
 	 * Save service meta from request.
 	 *
 	 * Lists over wpss_get_service_limits() are cut to the cap before they are
-	 * stored and the call returns a 400 naming the limit, so an app learns the
-	 * rule the same way the web wizard shows it.
+	 * stored. The save succeeds and the cuts come back as notices, as in the web
+	 * wizard, so a client that retries on an error never creates a duplicate.
 	 *
 	 * @param int             $service_id Service ID.
 	 * @param WP_REST_Request $request    Request object.
-	 * @return WP_Error|null Error when any list was over its limit.
+	 * @return string[] One sentence per cut list; empty when nothing was cut.
 	 */
-	private function save_service_meta( int $service_id, WP_REST_Request $request ): ?WP_Error {
+	private function save_service_meta( int $service_id, WP_REST_Request $request ): array {
 		$capped = wpss_enforce_service_limits(
 			array(
 				'packages'     => $request->get_param( 'packages' ),
@@ -1577,10 +1635,14 @@ class ServicesController extends RestController {
 			}
 		}
 
-		// Save gallery (array of media IDs).
-		if ( $request->has_param( 'gallery' ) ) {
-			$gallery_ids = array_map( 'absint', (array) $capped['meta']['gallery'] );
-			update_post_meta( $service_id, '_wpss_gallery', $gallery_ids );
+		// Save gallery (array of media IDs) and the main image, through the one
+		// writer the wizard uses: ownership-checked, structured, thumbnail set.
+		if ( $request->has_param( 'gallery' ) || $request->has_param( 'thumbnail_id' ) ) {
+			wpss_save_service_gallery(
+				$service_id,
+				$request->has_param( 'gallery' ) ? (array) $capped['meta']['gallery'] : (array) wpss_get_gallery_ids( get_post_meta( $service_id, '_wpss_gallery', true ) ),
+				absint( $request->get_param( 'thumbnail_id' ) )
+			);
 		}
 
 		// Add-ons and requirements replace the stored list wholesale; both
@@ -1593,19 +1655,40 @@ class ServicesController extends RestController {
 			wpss_save_service_requirements( $service_id, $capped['meta']['requirements'] );
 		}
 
-		if ( empty( $capped['truncated'] ) ) {
-			return null;
+		return array_values( $capped['truncated'] );
+	}
+
+	/**
+	 * Add the limit notices to a saved service's payload.
+	 *
+	 * @param array<string, mixed> $data    Service payload.
+	 * @param string[]             $notices Sentences from save_service_meta().
+	 * @return array<string, mixed> Payload, with `notices` and `limits` when a list was cut.
+	 */
+	private function with_limit_notices( array $data, array $notices ): array {
+		if ( $notices ) {
+			$data['notices'] = $notices;
+			$data['limits']  = wpss_get_service_limits();
 		}
 
-		return new WP_Error(
-			'wpss_service_limit',
-			implode( ' ', $capped['truncated'] ),
-			array(
-				'status'     => 400,
-				'service_id' => $service_id,
-				'limits'     => wpss_get_service_limits(),
-			)
-		);
+		return $data;
+	}
+
+	/**
+	 * Tell the caller its save went to review instead of live.
+	 *
+	 * The status field alone reads as a silent downgrade to an app that asked for publish.
+	 *
+	 * @param array<string, mixed> $data   Response payload.
+	 * @param bool                 $queued Whether this request sent the service to review.
+	 * @return array<string, mixed> Payload, with the sentence added to `notices` when queued.
+	 */
+	private function with_review_notice( array $data, bool $queued ): array {
+		if ( $queued ) {
+			$data['notices'][] = __( 'Service submitted for review. You will be notified once it is approved.', 'wp-sell-services' );
+		}
+
+		return $data;
 	}
 
 	/**

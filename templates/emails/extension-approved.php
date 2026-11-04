@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var \WPSellServices\Models\ServiceOrder $extension
  * @var \WP_User                            $recipient Vendor.
@@ -28,6 +28,7 @@
 defined( 'ABSPATH' ) || exit;
 
 $old_deadline = $old_deadline ?? '';
+$recipient    = $recipient ?? null;
 $new_deadline = $new_deadline ?? '';
 
 $format = static function ( float $amt ) use ( $currency ): string {
@@ -36,15 +37,9 @@ $format = static function ( float $amt ) use ( $currency ): string {
 		: number_format_i18n( $amt, 2 ) . ' ' . $currency;
 };
 
-$format_date = static function ( string $iso ): string {
-	if ( '' === $iso ) {
-		return '';
-	}
-	$ts = strtotime( $iso );
-	if ( ! $ts ) {
-		return '';
-	}
-	return wpss_deadline_label( $ts );
+// In the vendor's own time zone: the buyer's payment sends this, so the current user is the buyer.
+$format_date = static function ( string $utc ) use ( $recipient ): string {
+	return wpss_deadline_label( $utc, '', (int) ( $recipient->ID ?? 0 ) );
 };
 
 $platform_fee = max( 0.0, $gross_amount - $net_amount );

@@ -23,6 +23,8 @@ EDD is a popular choice if your site focuses on digital products and services. I
 4. Select **Easy Digital Downloads** as your e-commerce platform
 5. Click **Save Changes**
 
+**Where vendors and buyers work:** in the marketplace dashboard, the same as on every other platform. EDD's account page keeps receipts and downloads, and a buyer with service orders sees a link from Order History to their dashboard. The old EDD account addresses (`/service-orders/`, `/my-services/`, `/service-inbox/`, `/service-order/<id>/`) redirect to the matching dashboard section. A service download made in EDD and not linked to a marketplace service is not listed in the dashboard.
+
 **What this rail cannot do yet (beta):**
 
 Services are not created as Easy Digital Downloads downloads, so a buyer who reaches Checkout on a catalog service dead-ends. A refund issued in Easy Digital Downloads is not reflected in the marketplace: the order stays paid and the vendor stays credited, so you have to reverse both by hand. Pay links for milestone phases, tips and paid extensions are unavailable on this rail. Full support is planned for 1.8.0.

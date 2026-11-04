@@ -13,7 +13,6 @@ namespace WPSellServices\Services;
 use WPSellServices\Database\Repositories\OrderRepository;
 use WPSellServices\Models\Dispute;
 use WPSellServices\Models\ServiceOrder;
-use WPSellServices\Services\AuditLogService;
 use WPSellServices\Services\OrderService;
 
 defined( 'ABSPATH' ) || exit;
@@ -465,6 +464,22 @@ class DisputeService {
 	}
 
 	/**
+	 * Whether a dispute still takes messages and evidence.
+	 *
+	 * The one answer for "can anyone still add to this dispute": a resolved or
+	 * closed dispute is final, and every door that stores a file or a message
+	 * asks here before it stores anything.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param object $dispute Dispute row or model.
+	 * @return bool
+	 */
+	public static function accepts_input( object $dispute ): bool {
+		return ! in_array( (string) $dispute->status, array( self::STATUS_RESOLVED, self::STATUS_CLOSED ), true );
+	}
+
+	/**
 	 * Add evidence to a dispute.
 	 *
 	 * Evidence is stored in the dispute's evidence JSON column.
@@ -482,7 +497,7 @@ class DisputeService {
 
 		$dispute = $this->get( $dispute_id );
 
-		if ( ! $dispute || $dispute->status === self::STATUS_CLOSED ) {
+		if ( ! $dispute || ! self::accepts_input( $dispute ) ) {
 			return false;
 		}
 
@@ -822,45 +837,55 @@ class DisputeService {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update( $this->table, $data, array( 'id' => $dispute_id ) );
+		$result = $wpdb->update(
+			$this->table,
+			$data,
+			array(
+				'id'     => $dispute_id,
+				'status' => $from,
+			)
+		);
 
 		if ( false === $result ) {
 			$this->last_error = __( 'Failed to update dispute.', 'wp-sell-services' );
 			return false;
 		}
 
+		// Another admin moved it between our read and this write: refuse rather
+		// than audit, mail and fire hooks a second time for the same decision.
+		if ( ! $no_op && 0 === $result ) {
+			$this->last_error = __( 'This dispute was just changed by someone else. Reload and try again.', 'wp-sell-services' );
+			return false;
+		}
+
 		if ( ! $no_op ) {
 			$fields = (array) ( $context['fields'] ?? array() );
-			( new AuditLogService() )->log(
-				'dispute.transition',
-				'dispute',
-				$dispute_id,
-				array(
-					'action'     => $to,
-					'from_value' => $from,
-					'to_value'   => $to,
-					'context'    => array_filter(
-						array(
-							'order_id'      => (int) $dispute->order_id,
-							'resolution'    => $fields['resolution'] ?? null,
-							'refund_amount' => $fields['refund_amount'] ?? null,
-							'resolved_by'   => $fields['resolved_by'] ?? null,
-							'note'          => '' !== $note ? $note : null,
-						),
-						static fn( $value ) => null !== $value
-					),
-				)
-			);
 
 			/**
 			 * Fires when dispute status changes.
 			 *
 			 * @since 1.0.0
-			 * @param int    $dispute_id Dispute ID.
-			 * @param string $status     New status.
-			 * @param string $old_status Old status.
+			 * @param int                  $dispute_id Dispute ID.
+			 * @param string               $status     New status.
+			 * @param string               $old_status Old status.
+			 * @param array<string, mixed> $details    Order, resolution, refund amount, who resolved and the note; unset keys omitted (since 1.9.2).
 			 */
-			do_action( 'wpss_dispute_status_changed', $dispute_id, $to, $from );
+			do_action(
+				'wpss_dispute_status_changed',
+				$dispute_id,
+				$to,
+				$from,
+				array_filter(
+					array(
+						'order_id'      => (int) $dispute->order_id,
+						'resolution'    => $fields['resolution'] ?? null,
+						'refund_amount' => $fields['refund_amount'] ?? null,
+						'resolved_by'   => $fields['resolved_by'] ?? null,
+						'note'          => '' !== $note ? $note : null,
+					),
+					static fn( $value ) => null !== $value
+				)
+			);
 		}
 
 		return true;
@@ -1120,6 +1145,11 @@ class DisputeService {
 
 			case self::RESOLUTION_FAVOR_VENDOR:
 			case self::RESOLUTION_MUTUAL:
+				// Completed before the dispute: it already paid out and announced, so the ruling hands it back quietly.
+				if ( ServiceOrder::STATUS_COMPLETED === DisputeWorkflowManager::status_before_dispute( $order_id ) ) {
+					return DisputeWorkflowManager::hand_back_order( $order_id, ServiceOrder::STATUS_COMPLETED );
+				}
+
 				return $this->order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
 		}
 

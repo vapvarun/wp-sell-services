@@ -31,13 +31,6 @@ class ServiceModerationPage {
 	private string $hook_suffix = '';
 
 	/**
-	 * Moderation statuses.
-	 */
-	public const STATUS_PENDING  = 'pending';
-	public const STATUS_APPROVED = 'approved';
-	public const STATUS_REJECTED = 'rejected';
-
-	/**
 	 * Meta key for moderation status.
 	 */
 	public const META_KEY = '_wpss_moderation_status';
@@ -86,8 +79,6 @@ class ServiceModerationPage {
 		// Add metabox to service edit screen.
 		add_action( 'add_meta_boxes', array( $this, 'add_moderation_metabox' ) );
 
-		// Admin notices.
-
 		// The moderation guards themselves are registered by
 		// register_guards(), which the plugin calls on every request. They used
 		// to live here, but this method only ever runs inside wp-admin, so a
@@ -126,6 +117,9 @@ class ServiceModerationPage {
 
 		// Hold a vendor's publish at pending until it is approved.
 		add_filter( 'wp_insert_post_data', array( $this, 'intercept_publish' ), 10, 2 );
+
+		// Core /wp/v2 also writes categories, tags and the featured image after the post save, out of that filter's sight.
+		add_action( 'rest_after_insert_wpss_service', array( $this, 'requeue_core_rest_edit' ), 10, 3 );
 	}
 
 	/**
@@ -309,7 +303,7 @@ class ServiceModerationPage {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$status_filter = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : self::STATUS_PENDING;
+		$status_filter = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : ModerationService::STATUS_PENDING;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$paged = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
 
@@ -339,7 +333,7 @@ class ServiceModerationPage {
 		// lists every service that entered moderation, and a vendor's
 		// unsubmitted draft never did.
 		$args['wpss_moderation_state'] = 'all' === $status_filter
-			? array( self::STATUS_PENDING, self::STATUS_APPROVED, self::STATUS_REJECTED )
+			? array( ModerationService::STATUS_PENDING, ModerationService::STATUS_APPROVED, ModerationService::STATUS_REJECTED )
 			: $status_filter;
 
 		$query    = new \WP_Query( $args );
@@ -355,9 +349,9 @@ class ServiceModerationPage {
 			<!-- Stats Cards -->
 			<?php
 			$moderation_total    = array_sum( $counts );
-			$moderation_pending  = $counts[ self::STATUS_PENDING ] ?? 0;
-			$moderation_approved = $counts[ self::STATUS_APPROVED ] ?? 0;
-			$moderation_rejected = $counts[ self::STATUS_REJECTED ] ?? 0;
+			$moderation_pending  = $counts[ ModerationService::STATUS_PENDING ] ?? 0;
+			$moderation_approved = $counts[ ModerationService::STATUS_APPROVED ] ?? 0;
+			$moderation_rejected = $counts[ ModerationService::STATUS_REJECTED ] ?? 0;
 			?>
 			<div class="wpss-listing-stats wpss-moderation-stats">
 				<div class="wpss-admin-stat-card">
@@ -393,24 +387,24 @@ class ServiceModerationPage {
 								</a> |
 							</li>
 							<li>
-								<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_PENDING ) ); ?>"
-									class="<?php echo self::STATUS_PENDING === $status_filter ? 'current' : ''; ?>">
+								<a href="<?php echo esc_url( add_query_arg( 'status', ModerationService::STATUS_PENDING ) ); ?>"
+									class="<?php echo ModerationService::STATUS_PENDING === $status_filter ? 'current' : ''; ?>">
 									<?php esc_html_e( 'Pending', 'wp-sell-services' ); ?>
-									<span class="count">(<?php echo esc_html( $counts[ self::STATUS_PENDING ] ?? 0 ); ?>)</span>
+									<span class="count">(<?php echo esc_html( $counts[ ModerationService::STATUS_PENDING ] ?? 0 ); ?>)</span>
 								</a> |
 							</li>
 							<li>
-								<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_APPROVED ) ); ?>"
-									class="<?php echo self::STATUS_APPROVED === $status_filter ? 'current' : ''; ?>">
+								<a href="<?php echo esc_url( add_query_arg( 'status', ModerationService::STATUS_APPROVED ) ); ?>"
+									class="<?php echo ModerationService::STATUS_APPROVED === $status_filter ? 'current' : ''; ?>">
 									<?php esc_html_e( 'Approved', 'wp-sell-services' ); ?>
-									<span class="count">(<?php echo esc_html( $counts[ self::STATUS_APPROVED ] ?? 0 ); ?>)</span>
+									<span class="count">(<?php echo esc_html( $counts[ ModerationService::STATUS_APPROVED ] ?? 0 ); ?>)</span>
 								</a> |
 							</li>
 							<li>
-								<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_REJECTED ) ); ?>"
-									class="<?php echo self::STATUS_REJECTED === $status_filter ? 'current' : ''; ?>">
+								<a href="<?php echo esc_url( add_query_arg( 'status', ModerationService::STATUS_REJECTED ) ); ?>"
+									class="<?php echo ModerationService::STATUS_REJECTED === $status_filter ? 'current' : ''; ?>">
 									<?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?>
-									<span class="count">(<?php echo esc_html( $counts[ self::STATUS_REJECTED ] ?? 0 ); ?>)</span>
+									<span class="count">(<?php echo esc_html( $counts[ ModerationService::STATUS_REJECTED ] ?? 0 ); ?>)</span>
 								</a>
 							</li>
 						</ul>
@@ -447,6 +441,7 @@ class ServiceModerationPage {
 					<thead>
 						<tr>
 							<td class="manage-column column-cb check-column">
+								<label class="screen-reader-text" for="cb-select-all-1"><?php esc_html_e( 'Select all', 'wp-sell-services' ); ?></label>
 								<input type="checkbox" id="cb-select-all-1">
 							</td>
 							<th scope="col" class="manage-column column-thumbnail"><?php esc_html_e( 'Image', 'wp-sell-services' ); ?></th>
@@ -467,6 +462,7 @@ class ServiceModerationPage {
 					<tfoot>
 						<tr>
 							<td class="manage-column column-cb check-column">
+								<label class="screen-reader-text" for="cb-select-all-2"><?php esc_html_e( 'Select all', 'wp-sell-services' ); ?></label>
 								<input type="checkbox" id="cb-select-all-2">
 							</td>
 							<th scope="col" class="manage-column column-thumbnail"><?php esc_html_e( 'Image', 'wp-sell-services' ); ?></th>
@@ -586,19 +582,19 @@ class ServiceModerationPage {
 				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
 					<?php echo esc_html( ucfirst( $status ) ); ?>
 				</span>
-				<?php if ( self::STATUS_REJECTED === $status && $rejection_reason ) : ?>
+				<?php if ( ModerationService::STATUS_REJECTED === $status && $rejection_reason ) : ?>
 					<div class="wpss-rejection-reason">
 						<?php echo esc_html( $rejection_reason ); ?>
 					</div>
 				<?php endif; ?>
 			</td>
 			<td class="column-actions">
-				<?php if ( self::STATUS_APPROVED !== $status ) : ?>
+				<?php if ( ModerationService::STATUS_APPROVED !== $status ) : ?>
 					<a href="#" class="button button-small wpss-approve-service approve-action" data-service="<?php echo esc_attr( $service->ID ); ?>" data-edit="<?php echo esc_url( (string) get_edit_post_link( $service->ID, 'url' ) ); ?>">
 						<?php esc_html_e( 'Approve', 'wp-sell-services' ); ?>
 					</a>
 				<?php endif; ?>
-				<?php if ( self::STATUS_REJECTED !== $status ) : ?>
+				<?php if ( ModerationService::STATUS_REJECTED !== $status ) : ?>
 					<a href="#" class="button button-small wpss-reject-service reject-action" data-service="<?php echo esc_attr( $service->ID ); ?>">
 						<?php esc_html_e( 'Reject', 'wp-sell-services' ); ?>
 					</a>
@@ -618,9 +614,9 @@ class ServiceModerationPage {
 		global $wpdb;
 
 		$counts = array(
-			self::STATUS_PENDING  => 0,
-			self::STATUS_APPROVED => 0,
-			self::STATUS_REJECTED => 0,
+			ModerationService::STATUS_PENDING  => 0,
+			ModerationService::STATUS_APPROVED => 0,
+			ModerationService::STATUS_REJECTED => 0,
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -763,7 +759,15 @@ class ServiceModerationPage {
 	}
 
 	/**
-	 * Set default moderation status on new service.
+	 * Stamp a new admin service approved; send a member's service that lands in review through submit().
+	 *
+	 * Every door that holds a member's service for review ends in a save at
+	 * post_status=pending: the wizard and REST settle it there, the dashboard
+	 * Publish toggle is REST, and wp-admin's Submit for Review or a publish
+	 * held by intercept_publish() saves it there too. Announcing from this one
+	 * save means the owner notice and audit row fire on every door, once:
+	 * submit() is a no-op for a service already queued. A new draft is not
+	 * stamped, so a later submit is the first one and does announce.
 	 *
 	 * @param int      $post_id Post ID.
 	 * @param \WP_Post $post    Post object.
@@ -771,26 +775,22 @@ class ServiceModerationPage {
 	 * @return void
 	 */
 	public function set_default_moderation_status( int $post_id, \WP_Post $post, bool $update ): void {
-		// Skip if updating existing post.
-		if ( $update ) {
-			return;
-		}
-
-		// Skip auto-drafts.
 		if ( 'auto-draft' === $post->post_status ) {
 			return;
 		}
 
-		// Skip if meta already exists.
-		if ( metadata_exists( 'post', $post_id, self::META_KEY ) ) {
+		// An admin's own service is approved; an admin acting on a member's service is not a submit.
+		if ( current_user_can( 'manage_options' ) ) {
+			if ( ! $update && ! metadata_exists( 'post', $post_id, self::META_KEY ) ) {
+				update_post_meta( $post_id, self::META_KEY, ModerationService::STATUS_APPROVED );
+			}
 			return;
 		}
 
-		// Admins get auto-approved.
-		if ( current_user_can( 'manage_options' ) ) {
-			update_post_meta( $post_id, self::META_KEY, self::STATUS_APPROVED );
-		} else {
-			update_post_meta( $post_id, self::META_KEY, self::STATUS_PENDING );
+		// A save with nobody logged in (upgrade migration, cron, CLI) is the system, not a member
+		// submitting: re-queuing a rejected service there must not erase the rejection or email the owner.
+		if ( 'pending' === $post->post_status && get_current_user_id() && ModerationService::is_enabled() ) {
+			( new ModerationService() )->submit( $post_id );
 		}
 	}
 
@@ -822,34 +822,6 @@ class ServiceModerationPage {
 		$post = get_page_by_path( $slug, OBJECT, 'wpss_service' );
 
 		return $post instanceof \WP_Post ? (int) $post->ID : 0;
-	}
-
-	/**
-	 * Whether the current user may open a service that is not approved yet.
-	 *
-	 * True for whoever moderates the queue, and for the service's own author.
-	 * Everyone else - including a logged-in buyer and another vendor - is
-	 * refused, so an unapproved service stays off the public site.
-	 *
-	 * @since 1.7.2
-	 *
-	 * @param int $service_id Service post ID.
-	 * @return bool
-	 */
-	public static function can_view_unapproved( int $service_id ): bool {
-		if ( current_user_can( 'manage_options' ) ) {
-			return true;
-		}
-
-		$user_id = get_current_user_id();
-
-		if ( $user_id <= 0 || $service_id <= 0 ) {
-			return false;
-		}
-
-		$post = get_post( $service_id );
-
-		return $post instanceof \WP_Post && (int) $post->post_author === $user_id;
 	}
 
 	/**
@@ -898,7 +870,7 @@ class ServiceModerationPage {
 		if ( $query->is_single() && $is_service ) {
 			$viewed = self::resolve_queried_service( $query );
 
-			if ( $viewed && self::can_view_unapproved( $viewed ) ) {
+			if ( $viewed && wpss_can_view_unpublished_service( $viewed ) ) {
 				$query->set( 'post_status', array( 'publish', 'pending', 'draft' ) );
 				return;
 			}
@@ -915,7 +887,7 @@ class ServiceModerationPage {
 
 		// Only approved services are public (effective state, so a live service
 		// with no moderation meta still shows).
-		$query->set( 'wpss_moderation_state', self::STATUS_APPROVED );
+		$query->set( 'wpss_moderation_state', ModerationService::STATUS_APPROVED );
 	}
 
 	/**
@@ -954,9 +926,9 @@ class ServiceModerationPage {
 		$status = wpss_get_service_moderation_state( $post_id );
 
 		$status_labels = array(
-			self::STATUS_PENDING  => __( 'Pending', 'wp-sell-services' ),
-			self::STATUS_APPROVED => __( 'Approved', 'wp-sell-services' ),
-			self::STATUS_REJECTED => __( 'Rejected', 'wp-sell-services' ),
+			ModerationService::STATUS_PENDING  => __( 'Pending', 'wp-sell-services' ),
+			ModerationService::STATUS_APPROVED => __( 'Approved', 'wp-sell-services' ),
+			ModerationService::STATUS_REJECTED => __( 'Rejected', 'wp-sell-services' ),
 		);
 
 		$label = $status_labels[ $status ] ?? ucfirst( $status );
@@ -1012,7 +984,7 @@ class ServiceModerationPage {
 		if ( ! isset( $_POST['wpss_moderation_status'] ) ) {
 			// If this is a new service created by admin, auto-approve.
 			if ( 'auto-draft' !== $post->post_status && ! metadata_exists( 'post', $post_id, self::META_KEY ) ) {
-				update_post_meta( $post_id, self::META_KEY, self::STATUS_APPROVED );
+				update_post_meta( $post_id, self::META_KEY, ModerationService::STATUS_APPROVED );
 			}
 			return;
 		}
@@ -1034,8 +1006,16 @@ class ServiceModerationPage {
 		$new_status = sanitize_text_field( wp_unslash( $_POST['wpss_moderation_status'] ) );
 
 		// Validate status.
-		$valid_statuses = array( self::STATUS_PENDING, self::STATUS_APPROVED, self::STATUS_REJECTED );
+		$valid_statuses = array( ModerationService::STATUS_PENDING, ModerationService::STATUS_APPROVED, ModerationService::STATUS_REJECTED );
 		if ( ! in_array( $new_status, $valid_statuses, true ) ) {
+			return;
+		}
+
+		// The select was left as the page rendered it: no decision was made. Acting
+		// on it anyway re-applied a stale "pending" after the admin's Publish had
+		// already approved the service, and put it straight back in the queue.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+		if ( isset( $_POST['wpss_moderation_status_was'] ) && sanitize_text_field( wp_unslash( $_POST['wpss_moderation_status_was'] ) ) === $new_status ) {
 			return;
 		}
 
@@ -1051,9 +1031,9 @@ class ServiceModerationPage {
 
 		remove_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10 );
 
-		if ( self::STATUS_APPROVED === $new_status ) {
+		if ( ModerationService::STATUS_APPROVED === $new_status ) {
 			$result = $service->approve( $post_id );
-		} elseif ( self::STATUS_REJECTED === $new_status ) {
+		} elseif ( ModerationService::STATUS_REJECTED === $new_status ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
 			$reason = isset( $_POST['wpss_rejection_reason'] ) ? sanitize_textarea_field( wp_unslash( $_POST['wpss_rejection_reason'] ) ) : '';
 			$result = $service->reject( $post_id, $reason );
@@ -1090,7 +1070,7 @@ class ServiceModerationPage {
 			return;
 		}
 
-		if ( 'publish' !== get_post_status( $post_id ) || self::STATUS_APPROVED === wpss_get_service_moderation_state( $post_id ) ) {
+		if ( 'publish' !== get_post_status( $post_id ) || ModerationService::STATUS_APPROVED === wpss_get_service_moderation_state( $post_id ) ) {
 			return;
 		}
 
@@ -1134,15 +1114,15 @@ class ServiceModerationPage {
 		$current_status = wpss_get_service_moderation_state( $post );
 
 		$statuses = array(
-			self::STATUS_PENDING  => __( 'Pending review', 'wp-sell-services' ),
-			self::STATUS_APPROVED => __( 'Approved', 'wp-sell-services' ),
-			self::STATUS_REJECTED => __( 'Rejected', 'wp-sell-services' ),
+			ModerationService::STATUS_PENDING  => __( 'Pending review', 'wp-sell-services' ),
+			ModerationService::STATUS_APPROVED => __( 'Approved', 'wp-sell-services' ),
+			ModerationService::STATUS_REJECTED => __( 'Rejected', 'wp-sell-services' ),
 		);
 
 		$status_colors = array(
-			self::STATUS_PENDING  => '#856404',
-			self::STATUS_APPROVED => '#155724',
-			self::STATUS_REJECTED => '#721c24',
+			ModerationService::STATUS_PENDING  => '#856404',
+			ModerationService::STATUS_APPROVED => '#155724',
+			ModerationService::STATUS_REJECTED => '#721c24',
 		);
 
 		// A draft the vendor never submitted is not in moderation. Without this
@@ -1154,6 +1134,7 @@ class ServiceModerationPage {
 
 		wp_nonce_field( 'wpss_moderation_metabox', 'wpss_moderation_nonce' );
 		?>
+		<input type="hidden" name="wpss_moderation_status_was" value="<?php echo esc_attr( $current_status ); ?>">
 		<div class="wpss-moderation-metabox">
 			<p>
 				<label for="wpss-moderation-decision"><strong><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></strong></label>
@@ -1211,50 +1192,90 @@ class ServiceModerationPage {
 	}
 
 	/**
-	 * Intercept publish action for vendors to set pending status.
+	 * Hold a member's service at pending until it is reviewed: the one gate under every save door.
 	 *
-	 * @param array $data    Post data.
+	 * Runs inside wp_insert_post(), so the wizard, this plugin's REST routes, core
+	 * /wp/v2/wpss-services, the admin editor and Quick Edit all meet it. Three ways
+	 * to go live are held: publishing an unapproved service or republishing an
+	 * approved one from draft, scheduling one (cron publishes a future post without
+	 * a save, so the review has to happen now), and editing a live approved one.
+	 * set_default_moderation_status() queues and announces it once saved.
+	 *
+	 * @param array $data    Post data (slashed).
 	 * @param array $postarr Post array.
 	 * @return array
 	 */
 	public function intercept_publish( array $data, array $postarr ): array {
-		// Only for services.
-		if ( 'wpss_service' !== $data['post_type'] ) {
+		if ( 'wpss_service' !== $data['post_type'] || current_user_can( 'manage_options' ) ) {
 			return $data;
 		}
 
-		// Admins can publish directly.
-		if ( current_user_can( 'manage_options' ) ) {
+		$post_id = (int) ( $postarr['ID'] ?? 0 );
+
+		if ( 'future' === $data['post_status'] ) {
+			$data['post_status'] = 'pending';
 			return $data;
 		}
 
-		// If being published, check if moderation is approved.
-		if ( 'publish' === $data['post_status'] ) {
-			$post_id = $postarr['ID'] ?? 0;
+		if ( 'publish' !== $data['post_status'] ) {
+			return $data;
+		}
 
-			// For new posts, prevent publish - will be set to pending moderation.
-			if ( ! $post_id ) {
-				$data['post_status'] = 'pending';
-				return $data;
-			}
+		if ( ! $post_id || ModerationService::STATUS_APPROVED !== get_post_meta( $post_id, self::META_KEY, true ) ) {
+			$data['post_status'] = 'pending';
+			return $data;
+		}
 
-			// For existing posts, check current moderation status.
-			$moderation_status = get_post_meta( $post_id, self::META_KEY, true );
-
-			// Only allow publish if moderation status is approved.
-			if ( self::STATUS_APPROVED !== $moderation_status ) {
-				// Set post status to pending and update moderation meta.
-				$data['post_status'] = 'pending';
-
-				// If rejected or new, reset moderation to pending.
-				if ( self::STATUS_REJECTED === $moderation_status || ! $moderation_status ) {
-					update_post_meta( $post_id, self::META_KEY, self::STATUS_PENDING );
-					delete_post_meta( $post_id, self::REJECTION_REASON_KEY );
-				}
-			}
+		// Approved once is not approved for ever: a member bringing a draft back, or changing a live one, is reviewed again.
+		if ( get_current_user_id() && ( 'publish' !== get_post_status( $post_id ) || self::edits_live_listing( $post_id, $data, $postarr ) ) ) {
+			$data['post_status'] = 'pending';
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Whether a member's save changes what buyers see on a live service.
+	 *
+	 * The fields buyers read are compared, so a status-only save (pause, settle)
+	 * stays live. A save from the editor form or Quick Edit counts whole, as the
+	 * wizard does, because it also carries the meta boxes this filter cannot see.
+	 *
+	 * @param int                  $post_id Service ID.
+	 * @param array<string, mixed> $data    Post data being saved (slashed).
+	 * @param array<string, mixed> $postarr Post array.
+	 * @return bool
+	 */
+	private static function edits_live_listing( int $post_id, array $data, array $postarr ): bool {
+		if ( in_array( $postarr['action'] ?? '', array( 'editpost', 'inline-save' ), true ) ) {
+			return true;
+		}
+
+		$current = get_post( $post_id );
+
+		foreach ( array( 'post_title', 'post_content', 'post_excerpt' ) as $field ) {
+			if ( isset( $data[ $field ] ) && wp_unslash( $data[ $field ] ) !== $current->$field ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Send a live service back to review after a member's core /wp/v2 edit changed more than its status.
+	 *
+	 * @param \WP_Post         $post     Saved service.
+	 * @param \WP_REST_Request $request  Request.
+	 * @param bool             $creating Whether this request created the service.
+	 * @return void
+	 */
+	public function requeue_core_rest_edit( \WP_Post $post, \WP_REST_Request $request, bool $creating ): void {
+		$edits = array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'context', '_locale', '_fields', '_embed' ) ) );
+
+		if ( ! $creating && $edits ) {
+			( new ModerationService() )->requeue_live_edit( $post->ID );
+		}
 	}
 
 	/**
@@ -1274,6 +1295,6 @@ class ServiceModerationPage {
 	 * @return bool
 	 */
 	public static function is_approved( int $service_id ): bool {
-		return self::get_status( $service_id ) === self::STATUS_APPROVED;
+		return self::get_status( $service_id ) === ModerationService::STATUS_APPROVED;
 	}
 }

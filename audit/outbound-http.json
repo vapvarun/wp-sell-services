@@ -1,0 +1,39 @@
+{
+  "_doc": [
+    "Every outbound HTTP call this plugin makes, keyed 'file :: function', and where its target comes from.",
+    "",
+    "target: constant (a provider URL in code), setting (an admin-set host or region), site (this site's own URL),",
+    "or member (input a member can set). A member target uses wp_safe_remote_* or names in limited_by the",
+    "function that bounds the host. OutboundHttpAuthorityTest tokenises src/ and fails on an undeclared call,",
+    "a stale entry, a missing reason, or an unbounded member target."
+  ],
+  "calls": {
+    "src/Integrations/PayPal/PayPalGateway.php :: api_request": {
+      "target": "constant"
+    },
+    "src/Integrations/PayPal/PayPalGateway.php :: get_access_token": {
+      "target": "constant"
+    },
+    "src/Integrations/Stripe/StripeGateway.php :: api_request": {
+      "target": "constant"
+    },
+    "src/Services/GalleryService.php :: render_item": {
+      "target": "member",
+      "reason": "An embed URL stored in the service gallery meta, sent to oEmbed.",
+      "limited_by": "wpss_is_supported_video_url"
+    },
+    "src/Services/RealtimeService.php :: publish": {
+      "target": "setting",
+      "reason": "Admin-set Pusher cluster or self-hosted host (Advanced > Realtime). Only manage_options can change it."
+    },
+    "src/functions/catalog.php :: wpss_get_video_thumbnail_url": {
+      "target": "member",
+      "reason": "A vendor's gallery video URL, sent to oEmbed discovery for a poster.",
+      "limited_by": "wpss_is_supported_video_url"
+    },
+    "src/functions/files.php :: wpss_order_files_are_public": {
+      "target": "site",
+      "reason": "Probes this site's own uploads URL to see whether order files are publicly served."
+    }
+  }
+}

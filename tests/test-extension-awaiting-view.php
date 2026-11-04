@@ -4,8 +4,8 @@
  *
  * Run: wp eval-file tests/test-extension-awaiting-view.php
  *
- * Renders templates/order/extension-view.php for the buyer of an extension order that
- * wpss_order_awaits_payment_confirmation() reports as waiting. Skips when the site has none.
+ * Renders templates/order/extension-view.php for the buyer and the vendor of a throwaway
+ * extension order the buyer has chosen an offline method for, removed on any exit.
  *
  * @package WPSellServices
  */
@@ -13,6 +13,7 @@
 use WPSellServices\Models\ServiceOrder;
 
 require_once __DIR__ . '/exit-on-fail.php';
+require_once __DIR__ . '/fixtures.php';
 
 global $wpdb;
 $fails = 0;
@@ -21,17 +22,27 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 	$fails += $ok ? 0 : 1;
 };
 
-$current_order = null;
-foreach ( $wpdb->get_col( "SELECT id FROM {$wpdb->prefix}wpss_orders WHERE platform = 'extension' AND status = 'pending_payment' ORDER BY id DESC LIMIT 50" ) as $id ) {
-	$o = ServiceOrder::find( (int) $id );
-	if ( $o && wpss_order_awaits_payment_confirmation( $o ) ) {
-		$current_order = $o;
-		break;
-	}
-}
+// A quote on a catalog order, paid offline and not yet confirmed: what
+// ExtensionOrderService writes, plus the method the buyer chose at checkout.
+$f             = wpss_test_fixtures();
+$parent        = ( $f->order )( array( 'service_id' => ( $f->service )( 'draft' ) ) );
+$extension     = ( $f->order )(
+	array(
+		'platform'          => 'extension',
+		'platform_order_id' => $parent,
+		'status'            => 'pending_payment',
+		'payment_status'    => 'pending',
+		'payment_method'    => 'offline',
+		'paid_at'           => null,
+		'subtotal'          => 25,
+		'total'             => 25,
+		'meta'              => wp_json_encode( array( 'extra_days' => 2, 'reason' => 'QA extra work' ) ),
+	)
+);
+$current_order = ServiceOrder::find( $extension );
+$check( 'the staged extension is awaiting offline confirmation', $current_order && wpss_order_awaits_payment_confirmation( $current_order ) );
 if ( ! $current_order ) {
-	echo "SKIP  no extension order is awaiting offline confirmation on this site\n";
-	return;
+	exit( 1 );
 }
 
 $user_id = (int) $current_order->customer_id;

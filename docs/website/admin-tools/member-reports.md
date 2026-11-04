@@ -67,7 +67,7 @@ Open the **Account** menu on a report to change the reported member's standing:
 
 Suspending and closing both ask you to confirm first. The confirmation opens with **Cancel** selected and the action button in red. Administrators cannot be suspended from this screen.
 
-Account standing applies to the person, not only to their selling: a suspended member is stopped as a buyer too. A suspended vendor cannot list services, send proposals, start contact-seller threads or withdraw, but can still open Sales Orders, deliver and message inside orders a buyer already paid for. It is separate from vendor status (pending, active, rejected), which you manage under [Vendor Management](vendor-management.md).
+Account standing applies to the person, not only to their selling: a suspended member is stopped as a buyer too. A suspended vendor cannot list services, send proposals, start contact-seller threads or withdraw, but can still open Sales Orders, deliver and message inside orders a buyer already paid for. Sales Orders tells them their vendor account is suspended and that they can finish those orders but not take new work. It is separate from vendor status (pending, active, rejected), which you manage under [Vendor Management](vendor-management.md).
 
 ## Tips
 

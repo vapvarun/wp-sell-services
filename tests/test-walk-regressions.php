@@ -237,7 +237,11 @@ if ( $vendor_user && $vendors_page ) {
 	$check( '  document title names the vendor', str_contains( wp_get_document_title(), wpss_get_member_display_name( $vendor_id ) ) );
 	$_GET['vendor'] = 'no-such-vendor-' . wp_rand();
 	set_query_var( 'wpss_vendor', '' ); // The route above set it for the template; a real request starts clean.
-	$check( '  an unknown slug falls through to the directory page', 'page.php' === ( new TemplateLoader() )->template_include( 'page.php' ) );
+	// Full width off: on a theme without its own support the directory page gets the plugin's full-width
+	// wrapper instead of page.php, which is still the directory page (CI runs a stock theme).
+	add_filter( 'wpss_use_fullwidth_template', '__return_false' );
+	$check( '  an unknown slug falls through to the directory page', 'page.php' === ( new TemplateLoader() )->template_include( 'page.php' ) && ! is_404() );
+	remove_filter( 'wpss_use_fullwidth_template', '__return_false' );
 	unset( $_GET['vendor'] );
 	wp_reset_query();
 } else {

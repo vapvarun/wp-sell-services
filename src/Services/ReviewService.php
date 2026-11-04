@@ -33,31 +33,12 @@ class ReviewService {
 	 * @return Review|null
 	 */
 	public function create( int $order_id, int $reviewer_id, array $data ): ?Review {
+		// One eligibility rule for every door (REST, AJAX, direct calls): can_review().
+		if ( ! $this->can_review( $order_id, $reviewer_id )['can_review'] ) {
+			return null;
+		}
+
 		$order = wpss_get_order( $order_id );
-
-		if ( ! $order ) {
-			return null;
-		}
-
-		// Verify order is completed.
-		if ( ServiceOrder::STATUS_COMPLETED !== $order->status ) {
-			return null;
-		}
-
-		// Verify reviewer is the customer.
-		if ( $order->customer_id !== $reviewer_id ) {
-			return null;
-		}
-
-		// Check if review already exists.
-		if ( $this->has_review( $order_id ) ) {
-			return null;
-		}
-
-		// Check review time window.
-		if ( ! $this->is_within_review_window( $order ) ) {
-			return null;
-		}
 
 		// Validate rating.
 		$rating = (int) ( $data['rating'] ?? 0 );
@@ -91,9 +72,9 @@ class ReviewService {
 				'customer_id'          => $reviewer_id,
 				'vendor_id'            => $order->vendor_id,
 				'rating'               => $rating,
-				'communication_rating' => ! empty( $data['rating_communication'] ) ? (int) $data['rating_communication'] : null,
-				'quality_rating'       => ! empty( $data['rating_quality'] ) ? (int) $data['rating_quality'] : null,
-				'delivery_rating'      => ! empty( $data['rating_value'] ) ? (int) $data['rating_value'] : null,
+				'communication_rating' => self::sub_rating( $data['rating_communication'] ?? null ),
+				'quality_rating'       => self::sub_rating( $data['rating_quality'] ?? null ),
+				'delivery_rating'      => self::sub_rating( $data['rating_value'] ?? null ),
 				'review'               => wp_kses_post( $data['content'] ?? '' ),
 				'status'               => $this->requires_moderation() ? Review::STATUS_PENDING : Review::STATUS_APPROVED,
 				'created_at'           => current_time( 'mysql', true ),
@@ -143,7 +124,7 @@ class ReviewService {
 	 *
 	 * @param int                  $vendor_id  Vendor user ID.
 	 * @param int                  $service_id Service the review is about; must be the vendor's.
-	 * @param array<string, mixed> $data       reviewer_name, rating (1-5), content, date (optional, any strtotime format).
+	 * @param array<string, mixed> $data       reviewer_name, rating (1-5), content, date (optional, read in the site timezone).
 	 * @param bool                 $dry_run    Run every check and save nothing.
 	 * @return Review|true|\WP_Error The review, true for a dry run that would succeed, or why not.
 	 */
@@ -161,7 +142,9 @@ class ReviewService {
 			return new \WP_Error( 'wpss_import_review_data', __( 'A reviewer name and a rating from 1 to 5 are required.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		$when    = ! empty( $data['date'] ) ? strtotime( (string) $data['date'] ) : false;
+		// A CSV date has no zone: it is the site's local day, stored in UTC.
+		$when    = ! empty( $data['date'] ) ? wpss_datetime_input_to_utc( (string) $data['date'] ) : null;
+		$now     = current_time( 'mysql', true );
 		$content = wp_kses_post( (string) ( $data['content'] ?? '' ) );
 		$repo    = new ReviewRepository();
 
@@ -184,7 +167,7 @@ class ReviewService {
 				'rating'        => $rating,
 				'review'        => $content,
 				'status'        => Review::STATUS_APPROVED,
-				'created_at'    => gmdate( 'Y-m-d H:i:s', $when && $when <= time() ? $when : time() ),
+				'created_at'    => null !== $when && $when <= $now ? $when : $now,
 			)
 		);
 
@@ -194,6 +177,18 @@ class ReviewService {
 
 		$this->update_service_rating( $service_id );
 		$this->update_vendor_rating( $vendor_id );
+
+		/**
+		 * Fires after a review is imported (no order behind it).
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param int $review_id  Review ID.
+		 * @param int $vendor_id  Vendor reviewed.
+		 * @param int $service_id Service reviewed.
+		 * @param int $rating     Stars.
+		 */
+		do_action( 'wpss_review_imported', (int) $review_id, $vendor_id, $service_id, $rating );
 
 		return $this->get( $review_id );
 	}
@@ -240,21 +235,6 @@ class ReviewService {
 		// - the one writer - rather than in a listener that only loads on admin screens.
 		\WPSellServices\API\ReviewsController::update_rating_cache( (int) $row->service_id, (int) $row->vendor_id );
 
-		( new AuditLogService() )->log(
-			'review.' . $new_status,
-			'review',
-			$review_id,
-			array(
-				'action'     => match ( $new_status ) {
-					Review::STATUS_APPROVED => 'approve',
-					Review::STATUS_REJECTED => 'reject',
-					default                 => 'unapprove',
-				},
-				'from_value' => (string) $old,
-				'to_value'   => $new_status,
-			)
-		);
-
 		/**
 		 * Fires after an admin moderates a review from the queue.
 		 *
@@ -262,8 +242,9 @@ class ReviewService {
 		 *
 		 * @param int    $review_id  Moderated review ID.
 		 * @param string $new_status New review status.
+		 * @param string $old_status Status before (since 1.9.2).
 		 */
-		do_action( 'wpss_review_moderated', $review_id, $new_status );
+		do_action( 'wpss_review_moderated', $review_id, $new_status, (string) $old );
 
 		return true;
 	}
@@ -355,7 +336,7 @@ class ReviewService {
 			$wpdb->prepare(
 				"SELECT * FROM {$table}
 				WHERE service_id = %d AND status = %s
-				ORDER BY created_at DESC
+				ORDER BY created_at DESC, id DESC
 				LIMIT %d OFFSET %d",
 				$service_id,
 				$args['status'],
@@ -391,7 +372,7 @@ class ReviewService {
 			$wpdb->prepare(
 				"SELECT * FROM {$table}
 				WHERE vendor_id = %d AND status = %s
-				ORDER BY created_at DESC
+				ORDER BY created_at DESC, id DESC
 				LIMIT %d OFFSET %d",
 				$vendor_id,
 				$args['status'],
@@ -497,7 +478,20 @@ class ReviewService {
 		// Stored in the wpss_vendor settings array beside the service
 		// moderation toggle - the old standalone wpss_moderate_reviews
 		// option never had a writer (Basecamp #9985174862).
-		return (bool) wpss_get_option( 'vendor', 'moderate_reviews' );
+		$moderate = (bool) wpss_get_option( 'vendor', 'moderate_reviews' );
+
+		// One rule for the website form and REST: the filter used to be read by REST only.
+		return ! apply_filters( 'wpss_auto_approve_reviews', ! $moderate );
+	}
+
+	/**
+	 * Optional Communication / Quality / Value rating: 1-5, or null when left blank.
+	 *
+	 * @param mixed $value Raw submitted value.
+	 */
+	public static function sub_rating( $value ): ?int {
+		$value = (int) $value;
+		return $value >= 1 && $value <= 5 ? $value : null;
 	}
 
 	/**
@@ -648,6 +642,14 @@ class ReviewService {
 			);
 		}
 
+		// A tip, extension or milestone phase belongs to its main order, which takes the one review.
+		if ( in_array( (string) $order->platform, wpss_get_sub_order_platforms(), true ) ) {
+			return array(
+				'can_review' => false,
+				'reason'     => __( 'Reviews are left on the main order, not on its tips, extensions or milestone phases.', 'wp-sell-services' ),
+			);
+		}
+
 		if ( ServiceOrder::STATUS_COMPLETED !== $order->status ) {
 			return array(
 				'can_review' => false,
@@ -659,6 +661,15 @@ class ReviewService {
 			return array(
 				'can_review' => false,
 				'reason'     => __( 'Only the buyer can review this order.', 'wp-sell-services' ),
+			);
+		}
+
+		// A suspended or closed member leaves no new review; say so instead of "try again".
+		$standing = wpss_account_status_block( $reviewer_id );
+		if ( $standing ) {
+			return array(
+				'can_review' => false,
+				'reason'     => $standing->get_error_message(),
 			);
 		}
 

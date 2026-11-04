@@ -466,13 +466,13 @@ class DisputesListTable extends \WP_List_Table {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! empty( $_GET['s'] ) ) {
-			$where .= ' AND (d.id = %d OR d.reason LIKE %s OR o.order_number LIKE %s)';
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$params[] = absint( $_GET['s'] );
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$search   = '%' . $wpdb->esc_like( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) . '%';
-			$params[] = $search;
-			$params[] = $search;
+			$search                             = sanitize_text_field( wp_unslash( $_GET['s'] ) );
+			list( $search_sql, $search_params ) = wpss_order_number_search_sql( $search, 'o.order_number' );
+			$where                             .= ' AND (d.id = %d OR d.reason LIKE %s' . ( '' !== $search_sql ? ' OR ' . $search_sql : '' ) . ')';
+			$params[]                           = absint( ltrim( $search, '#' ) );
+			$params[]                           = '%' . $wpdb->esc_like( $search ) . '%';
+			$params                             = array_merge( $params, $search_params );
 		}
 
 		$orders   = $wpdb->prefix . 'wpss_orders';

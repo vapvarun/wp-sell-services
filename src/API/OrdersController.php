@@ -197,6 +197,38 @@ class OrdersController extends RestController {
 			)
 		);
 
+		// Record a payment made outside the plugin (a bank transfer, or a gateway the plugin does not ship) and settle the
+		// order the same way the admin Mark as Paid button does. Admin only: it moves money.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/mark-paid',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'mark_order_paid' ),
+					'permission_callback' => array( $this, 'check_admin_permissions' ),
+					'args'                => array(
+						'id'             => array(
+							'description' => __( 'Order ID.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+						'transaction_id' => array(
+							'description'       => __( 'Reference from the payment provider. Generated when empty.', 'wp-sell-services' ),
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'payment_method' => array(
+							'description'       => __( 'Slug stored on the order, for example flutterwave. Defaults to offline. A gateway the plugin runs itself is refused.', 'wp-sell-services' ),
+							'type'              => 'string',
+							'default'           => 'offline',
+							'sanitize_callback' => 'sanitize_key',
+						),
+					),
+				),
+			)
+		);
+
 		// Order status actions.
 		//
 		// 'accept' and 'reject' are deliberately absent. Both gated on status
@@ -1360,14 +1392,20 @@ class OrdersController extends RestController {
 			);
 		}
 
+		// Skipping happens once, while the order still waits on requirements.
+		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS !== $order->status ) {
+			return new WP_Error(
+				'wpss_requirements_not_pending',
+				__( 'This order is no longer waiting for requirements.', 'wp-sell-services' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		// Mark requirements as skipped (can be submitted later).
 		update_post_meta( $order_id, '_wpss_requirements_skipped', true );
 
 		// Advance order to in_progress so the vendor can start working.
-		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS === $order->status ) {
-			$order_service = new OrderService();
-			$order_service->start_work( $order_id );
-		}
+		( new OrderService() )->start_work( $order_id );
 
 		// Refresh order data.
 		$order = ServiceOrder::find( $order_id );
@@ -1692,12 +1730,9 @@ class OrdersController extends RestController {
 			);
 		}
 
-		if ( 'pending_payment' !== ( $order->status ?? '' ) ) {
-			return new WP_Error(
-				'wpss_order_not_payable',
-				__( 'This order is not awaiting payment.', 'wp-sell-services' ),
-				array( 'status' => 409 )
-			);
+		$refusal = wpss_get_order_payment_refusal( $order );
+		if ( '' !== $refusal ) {
+			return new WP_Error( 'wpss_order_not_payable', $refusal, array( 'status' => 409 ) );
 		}
 
 		// Lock-step guard on milestone sub-orders — HTTP 409 with the same
@@ -1881,6 +1916,51 @@ class OrdersController extends RestController {
 	}
 
 	/**
+	 * Mark an order as paid. Repeating the call on a paid order changes nothing.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function mark_order_paid( WP_REST_Request $request ) {
+		$order_id = (int) $request->get_param( 'id' );
+		$order    = wpss_get_order( $order_id );
+
+		// mark_as_paid() treats a second call as success, so an integration that retries is safe. Answer it
+		// here too: the settle check below would call a paid order "not awaiting payment".
+		if ( $order && 'paid' === ( $order->payment_status ?? '' ) ) {
+			return rest_ensure_response(
+				array(
+					'order_id'       => $order_id,
+					'status'         => (string) $order->status,
+					'payment_status' => 'paid',
+					'already_paid'   => true,
+				)
+			);
+		}
+
+		$result = ( new \WPSellServices\Integrations\Gateways\OfflineGateway() )->settle_manually(
+			$order_id,
+			(string) $request->get_param( 'transaction_id' ),
+			(string) $request->get_param( 'payment_method' )
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response(
+			array(
+				'order_id'       => $order_id,
+				'status'         => $result['status'],
+				'payment_status' => 'paid',
+				'already_paid'   => false,
+			)
+		);
+	}
+
+	/**
 	 * Check if user is the vendor for this order.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -2026,6 +2106,26 @@ class OrdersController extends RestController {
 	}
 
 	/**
+	 * The tax an order was priced with, for the response.
+	 *
+	 * @since 1.9.1
+	 *
+	 * @param object $order Order.
+	 * @return array{amount: float, amount_minor: int, rate: float, label: string, included: bool}
+	 */
+	private function get_tax_payload( object $order ): array {
+		$tax = wpss_get_order_tax( $order );
+
+		return array(
+			'amount'       => $tax['amount'],
+			'amount_minor' => wpss_amount_to_minor_units( $tax['amount'], (string) $order->currency ),
+			'rate'         => $tax['rate'],
+			'label'        => $tax['label'],
+			'included'     => $tax['included'],
+		);
+	}
+
+	/**
 	 * Shape one order row for the API.
 	 *
 	 * @param object          $order   Order row.
@@ -2033,13 +2133,11 @@ class OrdersController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function prepare_item_for_response( $order, $request ): WP_REST_Response {
-		$service = get_post( $order->service_id );
-
 		$data = array(
 			'id'                  => (int) $order->id,
 			'order_number'        => $order->order_number,
 			'service_id'          => (int) $order->service_id,
-			'service_title'       => $service ? $service->post_title : '',
+			'service_title'       => wpss_get_order_title( $order ),
 			'package_id'          => (int) $order->package_id,
 			// Flat keys KEPT. The app reads them today, so removing them would
 			// break it; they are the compatibility surface and should be retired
@@ -2074,6 +2172,9 @@ class OrdersController extends RestController {
 			'total_minor'         => wpss_amount_to_minor_units( (float) $order->total, (string) $order->currency ),
 			'currency'            => $order->currency,
 			'formatted_total'     => wpss_format_currency( (float) $order->total, $order->currency ),
+			// The tax inside `total`, from the same reader as the pay page and the
+			// emails. amount is 0 when the order carries none.
+			'tax'                 => $this->get_tax_payload( $order ),
 			// Revisions. Both numbers were already ON the order row and simply
 			// never exposed, so a client could not tell a buyer how many
 			// revisions were left before requesting one -- nor a vendor before
@@ -2413,6 +2514,12 @@ class OrdersController extends RestController {
 					'total'        => array(
 						'description' => __( 'Order total', 'wp-sell-services' ),
 						'type'        => 'number',
+						'context'     => array( 'view', 'edit' ),
+						'readonly'    => true,
+					),
+					'tax'          => array(
+						'description' => __( 'Tax included in the total: amount, amount_minor, rate, label and whether the price already included it.', 'wp-sell-services' ),
+						'type'        => 'object',
 						'context'     => array( 'view', 'edit' ),
 						'readonly'    => true,
 					),

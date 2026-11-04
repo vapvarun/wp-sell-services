@@ -14,7 +14,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.7.1
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var int           $user_id        Current user ID.
  * @var VendorService $vendor_service Vendor service instance.
@@ -138,9 +138,8 @@ if ( $request_ids ) {
 						<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>"><?php echo esc_html( $status_text ); ?></span>
 						<?php if ( '' !== $request_title ) : ?>
 							<?php $view_label = __( 'View Request', 'wp-sell-services' ); ?>
-							<a href="<?php echo esc_url( (string) get_permalink( $request_id ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-btn--action" aria-label="<?php echo esc_attr( $view_label ); ?>" title="<?php echo esc_attr( $view_label ); ?>">
-								<i data-lucide="megaphone" class="wpss-icon" aria-hidden="true"></i>
-								<span class="wpss-btn__label"><?php echo esc_html( $view_label ); ?></span>
+							<a href="<?php echo esc_url( (string) get_permalink( $request_id ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+								<?php echo esc_html( $view_label ); ?>
 							</a>
 						<?php endif; ?>
 						<?php if ( ProposalService::STATUS_PENDING === $status ) : ?>
@@ -150,9 +149,8 @@ if ( $request_ids ) {
 						<?php endif; ?>
 						<?php if ( ! empty( $proposal->order_id ) ) : ?>
 							<?php $order_label = __( 'View order', 'wp-sell-services' ); ?>
-							<a href="<?php echo esc_url( wpss_get_order_url( (int) $proposal->order_id, 'sales' ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-btn--action" aria-label="<?php echo esc_attr( $order_label ); ?>" title="<?php echo esc_attr( $order_label ); ?>">
-								<i data-lucide="banknote" class="wpss-icon" aria-hidden="true"></i>
-								<span class="wpss-btn__label"><?php echo esc_html( $order_label ); ?></span>
+							<a href="<?php echo esc_url( wpss_get_order_url( (int) $proposal->order_id, 'sales' ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+								<?php echo esc_html( $order_label ); ?>
 							</a>
 						<?php endif; ?>
 					</div>

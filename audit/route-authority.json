@@ -882,6 +882,12 @@
       "object_id": true,
       "writes": true
     },
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/mark-paid": {
+      "audience": "admin",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_admin_permissions",
+      "object_id": true,
+      "writes": true
+    },
     "POST /wpss/v1/orders/(?P<id>[\\d]+)/messages": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",

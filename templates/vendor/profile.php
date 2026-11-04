@@ -43,7 +43,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var int $vendor_id Vendor user ID.
  */
@@ -133,6 +133,13 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 <div class="wpss-vendor-profile">
 	<div class="wpss-container">
 		<?php
+		// Home > Vendors > this vendor; with no directory page the Vendors crumb is dropped.
+		$vendors_page = function_exists( 'wpss_get_vendors_page_id' ) ? wpss_get_vendors_page_id() : 0;
+		$crumbs       = $vendors_page ? array( array( (string) get_post_field( 'post_title', $vendors_page ), (string) get_permalink( $vendors_page ) ) ) : array();
+		$crumbs[]     = array( $vendor->display_name, '' );
+		wpss_render_breadcrumb( $crumbs );
+		?>
+		<?php
 		/*
 		 * Availability first, before anything the buyer might act on.
 		 *
@@ -187,18 +194,12 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 						<?php
 						$vendor_profile_obj = VendorProfile::get_by_user_id( $vendor_id );
 						if ( $vendor_profile_obj ) :
-							$tier       = $vendor_profile_obj->tier;
-							$tier_label = $vendor_profile_obj->get_tier_label();
-							// Colour comes from the .wpss-seller-badge--{tier} modifier in
-							// frontend.css (token-driven), not an inline style attribute.
-							?>
-							<span class="wpss-seller-badge wpss-seller-badge--lg wpss-seller-badge--<?php echo esc_attr( $tier ); ?>" title="<?php echo esc_attr( wpss_seller_level_note( $vendor_id, $tier, true ) ); ?>">
-								<?php if ( 'pro' === $tier ) : ?>
-									<i data-lucide="badge-check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
-								<?php endif; ?>
-								<?php echo esc_html( $tier_label ); ?>
-							</span>
-						<?php endif; ?>
+							$wpss_badge_profile = $vendor_profile_obj;
+							$wpss_badge_size    = 'lg';
+							$wpss_badge_full    = true;
+							include wpss_locate_template( 'partials/vendor-level-badge.php' );
+						endif;
+						?>
 					</h1>
 
 					<?php if ( $tagline ) : ?>

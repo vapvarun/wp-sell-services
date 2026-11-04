@@ -1,68 +1,65 @@
 {
   "journey": "09",
-  "sha_free": "c21a7c05",
-  "sha_pro": "e4ac7141",
+  "sha_free": "e742c62b",
+  "sha_pro": "251dea0",
   "env": {
     "site": "http://wp-sell-services.local",
     "theme": "reign-theme",
     "rail": "standalone",
     "wp": "7.1.3"
   },
-  "ran_at": "2026-10-21T04:00:00Z",
+  "ran_at": "2026-10-21T20:15:00Z",
   "checks": [
     {
       "id": "s1-request-lists-file",
       "result": "pass",
-      "evidence": "Ella posted 'Redesign our storefront banner set for the autumn sale' (id 13596) with storefront-reference.png via the form (preview row 'storefront-reference.png / Remove'). _wpss_attachments=[13595]. Seller (Sofia) request page shows an 'Attachments' section with storefront-reference.png linking to /wp-content/uploads/2026/10/storefront-reference.png; 390px scrollWidth 390."
+      "evidence": "Request 15468 (Ella, budget 150-300, _wpss_attachments=[15467]) lists the file; it serves 200 image/jpeg."
     },
     {
       "id": "s2-propose-accept-pay-platform-request",
       "result": "pass",
-      "evidence": "Sofia proposal $200 / 7 days submitted from modal (button became 'Withdraw Proposal'). Ella saw 'Accept Proposal', confirm dialog 'Accept this fixed-price proposal ($200.00)?', landed on /service-checkout/pay/3889/, paid via Test Gateway. wpss_orders id 3889: platform=request, platform_order_id=13596, subtotal 200, tax 40 (20% fixture), total 240, commission 10% = 20, vendor_earnings 180, status after pay pending_requirements."
+      "evidence": "Aisha $250 proposal accepted via confirm dialog and paid with Test gateway. Order 5451: platform=request, platform_order_id=15468, subtotal 250, total 300 (VAT 50), commission 10% = fee 25, earnings 225, payment_status paid. Pay page lists Subtotal 250 / Tax (20%) 50 / 300."
     },
     {
       "id": "s3a-seller-opens-from-messages",
       "result": "pass",
-      "evidence": "Sofia Messages list shows a card for Ella with 'No messages yet' linking to /dashboard/orders/3889/; clicking it renders the full order page with 'Files the buyer attached: storefront-reference.png' (link wpss-order-file&order=3889&file=13595). Sidebar present, footer height>0, last section reached, 1440 and 390 (scrollWidth 390)."
+      "evidence": "Aisha's Messages card links to /dashboard/orders/5451/; page has sidebar, footer (62px at 1440, 86px at 390), 6 sections, sw 390 at 390, and 'Files the buyer attached' lists service-4-9.jpg, which downloads 200 image/jpeg as an attachment (27698 bytes)."
     },
     {
       "id": "s3b-seller-opens-from-sales-deliver",
       "result": "pass",
-      "evidence": "Before requirements the Sales Orders row shows 'Pending Requirements | View' (no Deliver yet, expected). After the buyer submits, the row shows 'In Progress | Deliver' -> /dashboard/sales/3889/ with both files listed. Pre-requirements file download via fetch: 200 image/png 665 bytes, content-disposition attachment filename=storefront-reference.png."
+      "evidence": "Sales Orders row: 'Pending Requirements | View' then 'In Progress | Deliver' (to /dashboard/sales/5451/). Vendor view lists both files (200), brief, request description and proposal cover; at 390 sw 390, 2 files, maxRight 363."
     },
     {
       "id": "s4-both-files-and-brief-all-views",
       "result": "pass",
-      "evidence": "Ella submitted requirements (description + brand-colors.png + notes). Order 3889 moved to In Progress. Buyer, seller (/dashboard/sales/3889/) and admin (wpss-orders&action=view&order_id=3889) each list storefront-reference.png AND brand-colors.png, plus Request title, Request description, Proposal cover, 'What the buyer asked for' and Additional notes. Downloads: seller 200/665 and 200/666, admin 200/665 and 200/666. 390px: buyer lists both files, scrollWidth 390."
+      "evidence": "After buyer requirements (description, notes, service-1-2.jpg) the buyer, vendor and admin (wpss-orders&action=view&order_id=5451) views each list BOTH files (200) plus brief, request description and proposal cover. field_data has request_title, request_description, proposal_cover, description, additional_notes."
     },
     {
       "id": "s5-rest-requirements-and-files",
       "result": "pass",
-      "evidence": "Ella app-password curl: GET /orders/3889/requirements -> 200, status 'submitted', submitted_at 2026-10-20T23:44:45+00:00, attachments [13595 storefront-reference.png, f08fc346... brand-colors.png]; GET /orders/3889/files/13595 -> 200 image/png 665; GET files/f08fc346-... -> 200 image/png 666."
+      "evidence": "As Ella GET /orders/5451/requirements gives status submitted with 2 attachments; /orders/5451/files/{id} gives 200 image/jpeg for both."
     },
     {
       "id": "s6a-second-buyer-403",
       "result": "pass",
-      "evidence": "Ben app-password: GET /orders/3889, /requirements, /files/13595, /files/f08fc3... all 403 wpss_not_owner. Cookie download link as Ben: 404 (no file served), Ben's /dashboard/orders/3889/ HTML contains neither file name. Guest download link: 400, nothing served."
+      "evidence": "As Amelia: requirements and both files routes 403; admin-post wpss_order_file download 404, nothing served."
     },
     {
       "id": "s6b-foreign-media-not-stored",
       "result": "pass",
-      "evidence": "Ben's media 13597 (author 7847, ben-private-invoice.pdf). Ella POST /orders/2277/requirements (temporarily pending_requirements) with attachments:[13597] -> 200; stored attachments column '[]', 13597 not on the order. Replaying on submitted order 3889 -> 400 'Requirements cannot be submitted for this order status' and attachments unchanged. Fixture 2277 restored to pending_payment and its row removed."
+      "evidence": "Fixture order 5452 (Amelia): POST requirements with attachments:[15467] returned 200 but stored attachments are []. Fixture deleted."
     },
     {
       "id": "automated-test-requirement-attachment-records",
-      "result": "pass",
-      "evidence": "wp eval-file tests/test-requirement-attachment-records.php: 11 PASS lines, ALL PASS."
+      "result": "untested",
+      "evidence": "Running tests is forbidden during the walk; run tests/ in the CI pass."
     }
   ],
   "proposed_checks": [
-    "Request single page shows only the minimum budget ('Budget $120.00') when the buyer entered 120-260 (no budget type chosen on the form); the maximum 260 is not shown anywhere. Confirm intent for fixed vs range.",
-    "Service checkout for a request order shows only 'Order Total $240.00' for a $200 proposal; the 20% VAT ($40) is not itemised on the checkout page, though the order pages show Tax $40.00. Buyer sees a price jump with no explanation at pay time.",
-    "Request attachment form says 'Up to 10 MB each' while the order requirements form says 'Maximum file size: 300 MB'. Two limits for the same brief file.",
-    "Request attachments are served from the public uploads URL (/wp-content/uploads/2026/10/storefront-reference.png) on the request page, so anyone with the URL can fetch the buyer's brief file; the order copy uses the protected wpss_order_file endpoint.",
-    "Order page shows 'Order Requirements - Submitted <date>' while the order is still 'Pending Requirements', because the request brief snapshot is already present.",
-    "Header mini-cart shows two '1 x $0.00 Service Order' lines and 'Subtotal: $130.00' on a standalone-rail checkout (stale Woo cart session from J07); shown on every page for Ella."
+    "Request single page shows the budget range (150-300) and budget_type matches; currently shows only 'Budget $150.00'.",
+    "Request attachment size hint ('Up to 10 MB each') agrees with the order requirements form ('Maximum file size: 300 MB').",
+    "Request attachments are served from the public uploads URL; decide whether they need the gated download route."
   ],
-  "verdict": "PASS"
+  "verdict": "All walked checks pass; 1 untested (automated test not run during the walk)."
 }

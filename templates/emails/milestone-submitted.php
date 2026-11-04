@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.0
+ * @version 1.9.1
  *
  * @var \WPSellServices\Models\ServiceOrder $milestone
  * @var \WP_User                            $recipient Buyer.

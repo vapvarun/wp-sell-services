@@ -212,6 +212,20 @@ class Message {
 	}
 
 	/**
+	 * Check if this is a person-to-person chat message (text or attachment).
+	 *
+	 * Deliveries, revision requests and system lines carry their own email and
+	 * bell, so only chat announces itself as "new message".
+	 *
+	 * @since 1.9.2
+	 *
+	 * @return bool
+	 */
+	public function is_chat(): bool {
+		return in_array( $this->type, array( self::TYPE_TEXT, self::TYPE_ATTACHMENT ), true ) && ! $this->is_system_message();
+	}
+
+	/**
 	 * Get formatted timestamp.
 	 *
 	 * @return string
