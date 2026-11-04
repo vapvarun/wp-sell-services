@@ -510,7 +510,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 * methods existed, then the configured method of the same id.
 	 *
 	 * @param object $order Order object.
-	 * @return array{method: ?array, text: string} Text is '' when the owner wrote none.
+	 * @return array{method: array{id:string,label:string,instructions:string}|null, text: string} Text is '' when the owner wrote none.
 	 */
 	private function resolve_buyer_instructions( object $order ): array {
 		$method       = self::get_order_method( $order );

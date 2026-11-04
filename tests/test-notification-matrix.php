@@ -169,8 +169,11 @@ $check( '  whose subject says suspended', ! empty( $suspended ) && false !== str
 $check( '  and an in-app row of its own type', 1 === $rows( $vendor, 'vendor_suspended' ) );
 
 // A notification's mail carries the site name in its subject, like every mail EmailService composes itself.
-$mails = array();
-$ns->create( $vendor, NotificationService::TYPE_DISPUTE_RESOLVED, 'Dispute resolved', 'Matrix subject check.' );
+// Called on the one mail path directly with a type no toggle maps, so a site's mail settings cannot skip it.
+$mails     = array();
+$send_mail = new ReflectionMethod( NotificationService::class, 'send_email' );
+$send_mail->setAccessible( true );
+$send_mail->invoke( $ns, $vendor, 'Dispute resolved', 'Matrix subject check.', array(), 'qa_subject_check' );
 $resolved_mail = $mails_to( $vendor_email );
 $check( 'a notification mail subject starts with the site name, once', ! empty( $resolved_mail ) && str_starts_with( $resolved_mail[0]['subject'], '[' . wpss_get_platform_name() . '] Dispute resolved' ) && 1 === substr_count( $resolved_mail[0]['subject'], '[' . wpss_get_platform_name() . ']' ) );
 
