@@ -10,7 +10,7 @@ Free and Pro ship in lockstep. Install both.
 
 A site that collects money through something the plugin does not ship, such as Flutterwave, Mobile Money or a payment link, can now tell the plugin an order is paid. An administrator's automation calls `POST /wp-json/wpss/v1/orders/{id}/mark-paid`, which does what the **Mark as Paid** button does and is safe to repeat. A gateway the plugin runs itself, such as Stripe or PayPal, cannot be named there, because that gateway records its own payments. See [Take Payments Outside the Plugin](../developer-guide/payments-outside-the-plugin.md).
 
-Placing a bank-transfer order now emails the buyer the payment instructions and tells the admin and the seller, once per order.
+Placing a bank-transfer order now emails the buyer the payment instructions and tells the admin and the seller, once per order. If no instructions are set, the email and the order page tell the buyer the site owner will send them.
 
 ## Secrets in wp-config.php
 
@@ -20,7 +20,7 @@ Stripe, PayPal and realtime secrets can be set as constants in `wp-config.php`, 
 
 ## One look on every page
 
-Marketplace colours follow the site's theme, and every public page uses one button style. The Vendors directory looks like the other discovery pages, and each vendor tile leads with the name. Filter and toolbar dropdowns size to their content on every theme, and dashboard sections line up on a phone and read in dark mode. Category cards show the saved icon, and a service title shows in full on its page. Reign shows one navigation on plugin pages.
+Marketplace colours follow the site's theme, and every public page and dashboard form uses one button style. The Vendors directory looks like the other discovery pages, and each vendor tile leads with the name. Filter and toolbar dropdowns size to their content on every theme, and dashboard sections line up on a phone and read in dark mode. Category cards show the saved icon, and a service title shows in full on its page. Reign shows one navigation on plugin pages.
 
 ## Orders and messages
 
@@ -50,7 +50,7 @@ Notification lists page by number on the dashboard, My Account and admin. Dashbo
 
 ## Pro
 
-A vendor who cancels a paid plan keeps it until the paid period ends. Only one PayPal payout batch runs at a time, money in an unfinished batch cannot be withdrawn again, and the vendor list is paged so it reaches every vendor. Public plan lists no longer show the Stripe Price ID, or the commission rate to visitors. Display-currency rates are fetched in the background, the OpenExchangeRates App ID is stored as a secret, and Razorpay checkout saves the billing the buyer typed. The Pro dashboard, analytics and White Label follow the site colour.
+A vendor who cancels a paid plan keeps it until the paid period ends. Creating a service without a plan says once that a plan is required. Only one PayPal payout batch runs at a time, money in an unfinished batch cannot be withdrawn again, and the vendor list is paged so it reaches every vendor. Public plan lists no longer show the Stripe Price ID, or the commission rate to visitors. Display-currency rates are fetched in the background, the OpenExchangeRates App ID is stored as a secret, and Razorpay checkout saves the billing the buyer typed. The Pro dashboard, analytics and White Label follow the site colour.
 
 ## For developers
 

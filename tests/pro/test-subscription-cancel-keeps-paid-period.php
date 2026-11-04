@@ -100,6 +100,20 @@ $check( 'a local plan ends when cancelled', ! $can_create() );
 $seed( 'sub_qa', '', gmdate( 'Y-m-d H:i:s' ) );
 $check( 'a cancelled plan with no period end no longer lets the vendor create', ! $can_create() && ! VendorSubscriptionService::is_live( $service->get_vendor_subscription( $vendor ) ) );
 
+// 5c. Refused for having no plan, the create screen gives that reason once, not "you have reached your limit".
+wp_set_current_user( $vendor );
+$refusal = (string) apply_filters( 'wpss_service_limit_error_message', 'Free default.' );
+$check( 'no live plan: the refusal says a plan is required', str_contains( $refusal, 'subscription plan is required' ) && ! str_contains( $refusal, 'service limit' ), $refusal );
+ob_start();
+do_action( 'wpss_dashboard_section_before_content', 'create', $vendor );
+$on_create = (string) ob_get_clean();
+ob_start();
+do_action( 'wpss_dashboard_section_before_content', 'services', $vendor );
+$on_services = (string) ob_get_clean();
+$check( '  and the create screen shows no second banner saying the same', ! str_contains( $on_create, 'wpss-subscription-banner' ) );
+$check( '  while other sections still show the banner', str_contains( $on_services, 'wpss-subscription-banner--required' ) );
+wp_set_current_user( 0 );
+
 // 6. An active plan with no cancel and a period end in the past (renewal pending) stays live.
 $seed( 'sub_qa', gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) );
 $check( 'an uncancelled plan is not ended by its period date alone', $can_create() );

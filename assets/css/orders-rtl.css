@@ -1000,26 +1000,6 @@
 	border-top: 1px solid var(--wpss-border, #e5e7eb);
 }
 
-.wpss-requirements-form__submit-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	padding: 0.875rem 2rem;
-	font-size: 1rem;
-	font-weight: 600;
-	border: none;
-	border-radius: var(--wpss-radius, 8px);
-	cursor: pointer;
-	background: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-on-primary);
-	transition: background 0.2s;
-}
-
-.wpss-requirements-form__submit-btn:hover {
-	background: var(--wpss-primary-hover);
-}
-
 .wpss-requirements-form__submit-btn:disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
@@ -1301,44 +1281,9 @@
 	max-width: 400px;
 }
 
-/* Write Review Button - High Specificity */
-button.wpss-write-review-btn,
-.wpss-write-review-btn,
-.wpss-review-cta .wpss-btn {
-	display: inline-flex !important;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	padding: 0.875rem 2rem !important;
-	font-size: 1rem !important;
-	font-weight: 600 !important;
-	color: var(--wpss-on-primary) !important;
-	background: var(--wpss-primary, #1e40af) !important;
-	background-color: var(--wpss-primary, #1e40af) !important;
-	border: none !important;
-	border-radius: var(--wpss-radius, 8px) !important;
-	cursor: pointer !important;
-	text-decoration: none !important;
-	box-shadow: 0 2px 4px rgba(30, 64, 175, 0.3) !important;
-	transition: all 0.2s ease !important;
+/* The look is the .wpss-btn--primary .wpss-btn--lg it carries. */
+.wpss-write-review-btn {
 	margin-top: 0.5rem;
-}
-
-button.wpss-write-review-btn:hover,
-.wpss-write-review-btn:hover,
-.wpss-review-cta .wpss-btn:hover {
-	background: var(--wpss-primary-hover, #1e3a8a) !important;
-	background-color: var(--wpss-primary-hover, #1e3a8a) !important;
-	color: var(--wpss-on-primary) !important;
-	transform: translateY(-1px);
-	box-shadow: 0 4px 8px rgba(30, 64, 175, 0.4) !important;
-}
-
-button.wpss-write-review-btn:focus,
-.wpss-write-review-btn:focus,
-.wpss-review-cta .wpss-btn:focus {
-	outline: 2px solid var(--wpss-primary, #1e40af) !important;
-	outline-offset: 2px !important;
 }
 
 /* Review Modal Enhancements */
@@ -1371,10 +1316,8 @@ button.wpss-write-review-btn:focus,
 		font-size: 1.125rem !important;
 	}
 
-	button.wpss-write-review-btn,
 	.wpss-write-review-btn {
 		width: 100%;
-		padding: 1rem !important;
 	}
 }
 

@@ -1463,15 +1463,8 @@ class Shortcodes {
 		}
 		.wpss-signup-form .wpss-form-hint { font-size: 12px; color: var(--wpss-text-muted, #6b7280); margin: 4px 0 0; }
 		.wpss-signup-form .wpss-required { color: var(--wpss-danger, #ef4444); }
-		.wpss-signup-form__submit {
-			display: block; width: 100%; padding: 14px 24px;
-			font-size: 15px; font-weight: 600;
-			background: var(--wpss-primary, #4f46e5); color: var(--wpss-on-primary, #fff);
-			border: 0; border-radius: 10px; cursor: pointer;
-			transition: background-color 0.15s ease;
-			margin-top: 8px;
-		}
-		.wpss-signup-form__submit:hover:not(:disabled) { background: var(--wpss-primary-hover, #4338ca); }
+		/* Layout only: the look is the shared .wpss-btn--primary .wpss-btn--lg it carries. */
+		.wpss-signup-form__submit { display: flex; width: 100%; margin-top: 8px; }
 		.wpss-signup-form__submit:disabled { opacity: 0.6; cursor: not-allowed; }
 		.wpss-signup-form__signin {
 			text-align: center; font-size: 13px; color: var(--wpss-text-muted, #6b7280);

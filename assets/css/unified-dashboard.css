@@ -3691,11 +3691,6 @@ select.wpss-input option,
 	flex: 1;
 }
 
-.wpss-request-wizard .wpss-btn--lg {
-	padding: 12px 24px;
-	font-size: 15px;
-}
-
 .wpss-request-wizard .wpss-btn svg {
 	flex-shrink: 0;
 }

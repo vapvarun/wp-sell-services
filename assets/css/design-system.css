@@ -1830,7 +1830,8 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	.wpss-banner { flex-direction: column; text-align: center; gap: var(--wpss-space-3); }
 	.wpss-banner__action { width: 100%; }
 	.wpss-card { padding: var(--wpss-space-4); }
-	.wpss-btn--lg { width: 100%; }
+	/* Full width here, so the desktop side padding would only wrap the label. */
+	.wpss-btn--lg { width: 100%; padding-inline: var(--wpss-space-5); }
 }
 
 /* Billing summary — the read-only "Billed to" block on an order / invoice.

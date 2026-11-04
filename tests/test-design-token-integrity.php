@@ -173,6 +173,78 @@ foreach ( $files as $path ) {
 	}
 }
 $check( 'no public page defines a button component of its own', empty( $private_buttons ), implode( ' | ', $private_buttons ) );
+
+// --- 6. a class that rides on .wpss-btn adds layout, never a second look ---------------
+// The signup submit, the requirements submit, Write a Review and the wizard buttons each carried a
+// .wpss-btn variant and then re-declared radius, border, padding and fill, so one button had four looks.
+// Icon-only buttons keep their own shape on purpose.
+$icon_buttons = array( 'wpss-sidebar-close', 'wpss-fav-toggle', 'wpss-fav-toggle--inline' );
+$companions   = array();
+foreach ( $files as $path ) {
+	if ( ! str_ends_with( $path, '.php' ) ) {
+		continue;
+	}
+	if ( preg_match_all( '/class="([^"]*\bwpss-btn\b[^"]*)"/', (string) file_get_contents( $path ), $m ) ) {
+		foreach ( $m[1] as $list ) {
+			foreach ( preg_split( '/\s+/', $list ) as $class ) {
+				if ( str_starts_with( $class, 'wpss-' ) && ! str_starts_with( $class, 'wpss-btn' ) && ! in_array( $class, $icon_buttons, true ) ) {
+					$companions[ $class ] = true;
+				}
+			}
+		}
+	}
+}
+$restyled = array();
+foreach ( $files as $path ) {
+	$rel = str_replace( array( WPSS_PLUGIN_DIR, defined( 'WPSS_PRO_PLUGIN_DIR' ) ? WPSS_PRO_PLUGIN_DIR : WPSS_PLUGIN_DIR ), '', $path );
+	if ( str_ends_with( $rel, 'design-system.css' ) || str_starts_with( basename( $path ), 'admin' ) || str_contains( $rel, '/Admin/' ) || 'assets/css/unified-dashboard.css' === $rel ) {
+		continue;
+	}
+	$code = (string) preg_replace( '#/\*.*?\*/#s', '', (string) file_get_contents( $path ) );
+	if ( ! preg_match_all( '/([^{}]+)\{([^{}]*)\}/', $code, $rules, PREG_SET_ORDER ) ) {
+		continue;
+	}
+	foreach ( $rules as $rule ) {
+		if ( ! preg_match( '/(?<![\w-])(border-radius|background|background-color|border|font-size|padding)\s*:/', $rule[2] ) ) {
+			continue;
+		}
+		foreach ( explode( ',', $rule[1] ) as $selector ) {
+			if ( preg_match( '/\.(wpss-[\w-]+)(?::hover|:focus|:visited)?\s*$/', trim( $selector ), $sm ) && isset( $companions[ $sm[1] ] ) ) {
+				$restyled[] = $rel . ': .' . $sm[1];
+			}
+		}
+	}
+}
+$restyled = array_values( array_unique( $restyled ) );
+$check( 'a class on a .wpss-btn never re-declares its fill, border, radius, padding or size', empty( $restyled ), implode( ' | ', $restyled ) );
+// --- 7. a scoped rule never resizes or reshapes the shared button --------------------
+// .wpss-wizard .wpss-btn set its own padding and size and `border: none !important`, and
+// .wpss-request-wizard .wpss-btn--lg made "large" a second size. Page sheets may restate colours
+// to beat a theme's link styles; size and shape belong to design-system.css alone.
+$reshaped = array();
+foreach ( $files as $path ) {
+	$rel = str_replace( array( WPSS_PLUGIN_DIR, defined( 'WPSS_PRO_PLUGIN_DIR' ) ? WPSS_PRO_PLUGIN_DIR : WPSS_PLUGIN_DIR ), '', $path );
+	if ( str_ends_with( $rel, 'design-system.css' ) || str_starts_with( basename( $path ), 'admin' ) || str_contains( $rel, '/Admin/' ) ) {
+		continue;
+	}
+	$code = (string) preg_replace( '#/\*.*?\*/#s', '', (string) file_get_contents( $path ) );
+	if ( ! preg_match_all( '/([^{}]+)\{([^{}]*)\}/', $code, $rules, PREG_SET_ORDER ) ) {
+		continue;
+	}
+	foreach ( $rules as $rule ) {
+		if ( ! preg_match( '/(?<![\w-])(padding|font-size|border-radius)\s*:|(?<![\w-])border(-width)?\s*:\s*(none|0)/', $rule[2] ) ) {
+			continue;
+		}
+		foreach ( explode( ',', $rule[1] ) as $selector ) {
+			// The icon-only button keeps its own square shape.
+			if ( preg_match( '/\s\.wpss-btn(--(?!icon)[a-z]+)?(?::[a-z():-]+)?\s*$/', trim( $selector ) ) ) {
+				$reshaped[] = $rel . ': ' . trim( $selector );
+			}
+		}
+	}
+}
+$check( 'no sheet resizes or reshapes .wpss-btn inside one section', empty( $reshaped ), implode( ' | ', array_unique( $reshaped ) ) );
+
 $check( 'an outline button at rest is --wpss-text-secondary on every page sheet', empty( $outline_drift ), implode( ' | ', $outline_drift ) );
 
 $check( '.wpss-btn--outline is defined in exactly one stylesheet', 1 === count( $owners ) );

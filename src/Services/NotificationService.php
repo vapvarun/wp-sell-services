@@ -2175,9 +2175,12 @@ class NotificationService {
 		$button_url  = wpss_get_notification_url( $data );
 		$button_text = '' === $button_url ? '' : ( ! empty( $data['order_id'] ) && empty( $data['action_url'] ) ? __( 'View Order Details', 'wp-sell-services' ) : __( 'View Details', 'wp-sell-services' ) );
 
+		// The in-app title is the heading; the subject carries the site name like every EmailService mail.
+		$prefix = '[' . wpss_get_platform_name() . ']';
+
 		return ( new EmailService() )->send(
 			$user->user_email,
-			$subject,
+			str_starts_with( $subject, $prefix ) ? $subject : $prefix . ' ' . $subject,
 			$type,
 			array(
 				'recipient'     => $user,

@@ -275,7 +275,7 @@ Payments recorded from outside the plugin, secrets in wp-config.php, and one loo
 * New      - Placing a bank-transfer order emails the buyer the payment instructions and tells the admin and the seller.
 * New      - The site owner is warned when the plugin's background jobs are more than an hour overdue.
 * New      - The wpss_gallery_video_first filter opens the service gallery on the video.
-* Improve  - Marketplace colours follow the site's theme, and every public page uses one button style.
+* Improve  - Marketplace colours follow the site's theme, and every public page and dashboard form uses one button style.
 * Improve  - Pausing a service keeps it listed and stops new orders everywhere.
 * Improve  - The Vendors directory looks like the other discovery pages, and each vendor tile leads with the name.
 * Improve  - Filter and toolbar dropdowns size to their content on every theme, and dashboard sections line up on a phone and read in dark mode.
@@ -304,6 +304,8 @@ Payments recorded from outside the plugin, secrets in wp-config.php, and one loo
 * Fix      - The extension-paid email shows the new deadline in the vendor's time zone.
 * Fix      - Order counters and flags no longer make a member a vendor.
 * Fix      - The bank-transfer placement email goes out once per order.
+* Fix      - A bank-transfer order with no instructions set tells the buyer the site owner will email them.
+* Fix      - Notification emails carry the site name in the subject, like every other email.
 * Fix      - Mark as Paid is offered for an unpaid phase, extension or tip with no payment method chosen.
 * Fix      - Automatic withdrawals pass the same checks as a vendor's own request.
 * Fix      - Vendor order counts refresh when an order is placed or changes status.
