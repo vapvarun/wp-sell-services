@@ -26,7 +26,53 @@
   "reader can weigh that evidence rather than assume a walk covered it."
  ],
  "version": "1.9.2",
- "accepted": [],
+ "accepted": [
+  {
+   "id": "12-2b / card:10403454753 class",
+   "card": "10475418682",
+   "reason": "Tuning settings run absint() before the min/max clamp (src/Admin/Settings.php:3202), so a crafted negative POST stores its positive. The browser min= blocks it in normal use. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
+  },
+  {
+   "id": "12-settings-duplicate-ids",
+   "card": "10475418881",
+   "reason": "16 submit_button() calls share id=\"submit\" on the Settings page. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
+  },
+  {
+   "id": "13-admin-listed-as-vendor",
+   "card": "10475419083",
+   "reason": "By design since 1.1.0 (Plugin::maybe_auto_vendor_admin): the first admin gets a vendor profile and is counted in Vendors. Owner decision on the card. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
+  },
+  {
+   "id": "J24.2-email",
+   "card": "10475484314",
+   "reason": "Vendor receives Requirements Submitted and Now In Progress as two emails. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
+  },
+  {
+   "id": "J01.1-generic-email-at-payment",
+   "card": "10475484149",
+   "reason": "Mark paid also emails the generic Order status updated (NotificationService default branch, order_status not in the email-covered list). Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
+  },
+  {
+   "id": "08-10 api:shapes / GET /disputes/{id} evidence created_at",
+   "card": "10475573764",
+   "reason": "Single-dispute evidence dates are not converted with wpss_rest_date(); the timeline endpoint is. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
+  },
+  {
+   "id": "13-6c vendor application reject carries no reason",
+   "card": "10475573933",
+   "reason": "Reject confirm has no reason field; server and email template already support one. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
+  },
+  {
+   "id": "05-P2-6b refused publish is silent on the vendor dashboard and REST",
+   "card": "10475574103",
+   "reason": "Publish gate refusal not surfaced on the vendor dashboard or REST; wp-admin Quick Edit shows it. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
+  },
+  {
+   "id": "19-1b inactive wallet provider falls back with no admin notice",
+   "card": "10475574286",
+   "reason": "Fallback works and the balance is unchanged; the notice is missing or the journey line is stale. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
+  }
+ ],
  "resolved": [
   {
    "id": "PRO:admin-js-init-throws-initStorageSettings",
@@ -47,9 +93,30 @@
    "id": "J15:pro-teaser-text-dark-contrast",
    "fixed_in": "wp-sell-services 52fb3503",
    "verified_by": "The teaser text read --wpss-wp-admin-* tokens that do not flip in dark mode. Now design-system greys: measured 9.86:1 light and 12.71:1 dark on /dashboard/create/ on Docker at 1280 and 390 (surface dashboard-sections). Token test section 9 fails on the old pro-teaser.css and unified-dashboard.css."
+  },
+  {
+   "id": "J01.8",
+   "fixed_in": "wp-sell-services d7d55d38 (journey text, not product code)",
+   "verified_by": "Code read plus the combo walk observation at 56381157: Journey 01 step 8 expected a \"Request:\" prefix; commit f466df71 intentionally made request orders read as a plain project title (admin keeps the link). The combo walk observed exactly that: request title, linked to the request post, not \"Deleted\"."
+  },
+  {
+   "id": "J03.A2",
+   "fixed_in": "wp-sell-services d7d55d38 (journey text, not product code)",
+   "verified_by": "Code read plus the combo walk observation at 56381157: Journey 03 listed the slug become-vendor; the installer creates become-a-vendor (src/functions/urls.php) and the router accepts both. The combo walk observed become-a-vendor with the right title and shortcode."
   }
  ],
- "debug_log_accepted": [],
+ "debug_log_accepted": [
+  {
+   "match": "Manual refund required for order",
+   "card": "10475574528",
+   "reason": "Intended operator warning from the standalone refund path on seeded demo orders (free walk, 14:36:06); the card asks whether the owner should also see it in wp-admin."
+  },
+  {
+   "match": "no completed wallet credit found for the vendor",
+   "card": "10475574528",
+   "reason": "Intended operator warning from the standalone refund path on seeded demo orders (free walk, 14:36:06); the card asks whether the owner should also see it in wp-admin."
+  }
+ ],
  "coverage_verified_elsewhere": [],
  "staleness": {
   "gate": "verify:smoke-gate (green at the 1.9.2 cut)",
