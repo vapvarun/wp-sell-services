@@ -175,7 +175,7 @@ $send_mail = new ReflectionMethod( NotificationService::class, 'send_email' );
 $send_mail->setAccessible( true );
 $send_mail->invoke( $ns, $vendor, 'Dispute resolved', 'Matrix subject check.', array(), 'qa_subject_check' );
 $resolved_mail = $mails_to( $vendor_email );
-$check( 'a notification mail subject starts with the site name, once', ! empty( $resolved_mail ) && str_starts_with( $resolved_mail[0]['subject'], '[' . wpss_get_platform_name() . '] Dispute resolved' ) && 1 === substr_count( $resolved_mail[0]['subject'], '[' . wpss_get_platform_name() . ']' ) );
+$check( 'a notification mail subject starts with the site name, once (' . ( $resolved_mail[0]['subject'] ?? count( $mails ) . ' mails, none to the vendor' ) . ')', ! empty( $resolved_mail ) && str_starts_with( $resolved_mail[0]['subject'], '[' . wpss_get_platform_name() . '] Dispute resolved' ) && 1 === substr_count( $resolved_mail[0]['subject'], '[' . wpss_get_platform_name() . ']' ) );
 
 // --- 5. events that used to produce nothing -----------------------------------
 do_action( 'wpss_review_reply_created', $review_id );
