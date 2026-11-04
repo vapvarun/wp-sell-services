@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-04T05:49:17+00:00\n"
+"POT-Creation-Date: 2026-11-04T09:06:28+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -559,7 +559,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1709
 #: src/Frontend/Tour.php:432
 #: templates/myaccount/vendor-dashboard.php:196
-#: templates/partials/vendor-card.php:117
+#: templates/partials/vendor-card.php:111
 msgid "Orders"
 msgstr ""
 
@@ -4460,7 +4460,7 @@ msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1168
 #: src/Blocks/SellerCard.php:220
-#: templates/partials/vendor-card.php:177
+#: templates/partials/vendor-card.php:171
 #: templates/single-request.php:433
 msgid "View Profile"
 msgstr ""
@@ -8901,7 +8901,7 @@ msgstr ""
 
 #: src/Blocks/FeaturedServices.php:281
 #: src/Frontend/ServiceWizard.php:1239
-#: templates/content-service-card.php:295
+#: templates/content-service-card.php:273
 msgid "Starting at"
 msgstr ""
 
@@ -11640,13 +11640,13 @@ msgstr ""
 #: templates/order/extension-view.php:152
 #: templates/order/milestone-view.php:175
 #: templates/order/tip-view.php:127
-#: templates/partials/vendor-card.php:140
+#: templates/partials/vendor-card.php:134
 msgid "From"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:511
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1240
-#: templates/partials/vendor-card.php:149
+#: templates/partials/vendor-card.php:143
 msgid "Member since"
 msgstr ""
 
@@ -11655,7 +11655,7 @@ msgid "Avg. Response Time"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:532
-#: templates/partials/vendor-card.php:168
+#: templates/partials/vendor-card.php:162
 msgid "Last Delivery"
 msgstr ""
 
@@ -15511,7 +15511,7 @@ msgstr ""
 #. translators: %d: number of days
 #. translators: %d: delivery time in days
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1122
-#: templates/content-service-card.php:272
+#: templates/content-service-card.php:250
 #, php-format
 msgid "%d-day delivery"
 msgid_plural "%d-day delivery"
@@ -16034,7 +16034,6 @@ msgstr ""
 
 #: src/Models/VendorProfile.php:439
 #: src/Services/SellerLevelService.php:231
-#: templates/content-service-card.php:191
 msgid "New vendor"
 msgstr ""
 
@@ -19758,20 +19757,20 @@ msgid "Verified Vendor"
 msgstr ""
 
 #. translators: %s: formatted return date
-#: templates/content-service-card.php:208
+#: templates/content-service-card.php:186
 #, php-format
 msgid "Back on %s"
 msgstr ""
 
 #. translators: %d: number of reviews
-#: templates/content-service-card.php:258
+#: templates/content-service-card.php:236
 #, php-format
 msgid "(%d)"
 msgid_plural "(%d)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/content-service-card.php:264
+#: templates/content-service-card.php:242
 msgid "New"
 msgstr ""
 
@@ -22993,7 +22992,7 @@ msgstr ""
 msgid "Track your orders, earnings and reviews from one dashboard"
 msgstr ""
 
-#: templates/partials/vendor-card.php:158
+#: templates/partials/vendor-card.php:152
 msgid "Avg. Response"
 msgstr ""
 
