@@ -970,25 +970,7 @@
 	margin: var(--wpss-space-4, 16px) 0 var(--wpss-space-6, 24px);
 }
 
-.wpss-pricing-add-tier {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--wpss-space-2, 8px);
-	padding: var(--wpss-space-2, 8px) var(--wpss-space-4, 16px);
-	background: transparent;
-	color: var(--wpss-primary-accent, #4f46e5);
-	border: 1px dashed var(--wpss-primary, #4f46e5);
-	border-radius: var(--wpss-radius, 8px);
-	font-size: var(--wpss-text-sm, 14px);
-	font-weight: 500;
-	cursor: pointer;
-	transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.wpss-pricing-add-tier:hover {
-	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary-dark, #4338ca);
-}
+/* .wpss-pricing-add-tier carries .wpss-btn--outline, the same as Add Requirement, Add Extra and Add FAQ. */
 
 .wpss-pricing-tier-actions {
 	display: flex;

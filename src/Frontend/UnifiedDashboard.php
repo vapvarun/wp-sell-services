@@ -827,7 +827,7 @@ class UnifiedDashboard {
 					<?php endif; ?>
 					<?php // The tour does not load on an order URL (Tour::should_load), so neither does its button. ?>
 					<?php if ( 'h1' === $title_tag ) : ?>
-						<button type="button" class="wpss-dashboard__tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
+						<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-dashboard__tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
 							<i data-lucide="help-circle" class="wpss-icon" aria-hidden="true"></i>
 							<span><?php esc_html_e( 'Replay tour', 'wp-sell-services' ); ?></span>
 						</button>

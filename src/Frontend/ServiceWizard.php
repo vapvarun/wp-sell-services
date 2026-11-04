@@ -608,14 +608,14 @@ class ServiceWizard {
 				x-show="!data.packages.standard.enabled || !data.packages.premium.enabled"
 				x-cloak>
 				<button type="button"
-					class="wpss-pricing-add-tier"
+					class="wpss-btn wpss-btn--outline wpss-pricing-add-tier"
 					x-show="!data.packages.standard.enabled"
 					@click="addTier('standard')">
 					<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Add Standard tier', 'wp-sell-services' ); ?>
 				</button>
 				<button type="button"
-					class="wpss-pricing-add-tier"
+					class="wpss-btn wpss-btn--outline wpss-pricing-add-tier"
 					x-show="!data.packages.premium.enabled"
 					@click="addTier('premium')">
 					<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
