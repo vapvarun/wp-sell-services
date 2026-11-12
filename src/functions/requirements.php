@@ -66,7 +66,7 @@ function wpss_get_order_requirements_url( int $order_id ): string {
 		return '';
 	}
 
-	$sub_order_platforms = function_exists( 'wpss_get_sub_order_platforms' ) ? wpss_get_sub_order_platforms() : array();
+	$sub_order_platforms = wpss_get_sub_order_platforms();
 
 	if ( in_array( (string) ( $order->platform ?? '' ), $sub_order_platforms, true ) ) {
 		return wpss_get_order_url( $order_id );

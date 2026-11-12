@@ -184,7 +184,7 @@ class OrderRepository extends AbstractRepository {
 
 		$sql = $this->filter_sql( $sql, $params, $args );
 
-		if ( ! empty( $args['actionable_first'] ) && function_exists( 'wpss_get_order_status_priority' ) ) {
+		if ( ! empty( $args['actionable_first'] ) ) {
 			// FIELD() returns the 1-based position of status in the list and 0
 			// for anything absent, so ordering by it ascending would put the
 			// unlisted statuses FIRST. Sorting descending on the negated value
@@ -333,9 +333,7 @@ class OrderRepository extends AbstractRepository {
 			return $sql;
 		}
 
-		$sub_platforms = function_exists( 'wpss_get_sub_order_platforms' )
-			? wpss_get_sub_order_platforms()
-			: array();
+		$sub_platforms = wpss_get_sub_order_platforms();
 
 		if ( empty( $sub_platforms ) ) {
 			return $sql;
@@ -558,29 +556,6 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
-	 * Update order status.
-	 *
-	 * @param int    $order_id   Order ID.
-	 * @param string $new_status New status.
-	 * @return bool True on success.
-	 */
-	public function update_status( int $order_id, string $new_status ): bool {
-		$data = array( 'status' => $new_status );
-
-		// Add timestamps based on status.
-		switch ( $new_status ) {
-			case 'in_progress':
-				$data['started_at'] = current_time( 'mysql', true );
-				break;
-			case 'completed':
-				$data['completed_at'] = current_time( 'mysql', true );
-				break;
-		}
-
-		return $this->update( $order_id, $data );
-	}
-
-	/**
 	 * Get vendor order statistics.
 	 *
 	 * @param int $vendor_id Vendor user ID.
@@ -612,7 +587,7 @@ class OrderRepository extends AbstractRepository {
 		 * to total for legacy rows written before CommissionService populated
 		 * vendor_earnings.
 		 */
-		$groups = function_exists( 'wpss_get_order_status_groups' ) ? wpss_get_order_status_groups() : array();
+		$groups = wpss_get_order_status_groups();
 
 		$active_statuses    = $groups['active']['statuses'] ?? array( 'in_progress', 'pending_approval' );
 		$completed_statuses = $groups['completed']['statuses'] ?? array( 'completed' );
@@ -624,7 +599,7 @@ class OrderRepository extends AbstractRepository {
 		// the chips - not a second one written here. COALESCE because in SQL
 		// `NULL NOT IN (...)` is NULL, which dropped every catalog order with
 		// no platform set out of the stats while the chips still counted it.
-		$sub_platforms = function_exists( 'wpss_get_sub_order_platforms' ) ? wpss_get_sub_order_platforms() : array();
+		$sub_platforms = wpss_get_sub_order_platforms();
 		$sub_sql       = $this->status_in_placeholders( $sub_platforms );
 		$is_order      = "COALESCE(platform, '') NOT IN {$sub_sql}";
 
@@ -861,7 +836,7 @@ class OrderRepository extends AbstractRepository {
 		 * awaiting_payment and disputed stay broken out because they are the
 		 * two states that need the BUYER to act.
 		 */
-		$groups = function_exists( 'wpss_get_order_status_groups' ) ? wpss_get_order_status_groups() : array();
+		$groups = wpss_get_order_status_groups();
 
 		$active_statuses    = $groups['active']['statuses'] ?? array( 'in_progress', 'pending_approval', 'pending_requirements' );
 		$awaiting_statuses  = $groups['awaiting']['statuses'] ?? array( 'pending_payment' );

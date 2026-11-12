@@ -12,7 +12,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.7.1
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var string  $suspension_reason Reason given by the administrator (optional).
  * @var string  $site_url          Site home URL.

@@ -44,42 +44,6 @@ function wpss(): \WPSellServices\Core\Plugin {
 }
 
 /**
- * Sanitize HTML content.
- *
- * @param string $content HTML content.
- * @return string
- */
-function wpss_sanitize_html( string $content ): string {
-	return wp_kses(
-		$content,
-		array(
-			'a'          => array(
-				'href'   => array(),
-				'title'  => array(),
-				'target' => array(),
-				'rel'    => array(),
-			),
-			'br'         => array(),
-			'em'         => array(),
-			'strong'     => array(),
-			'p'          => array(),
-			'ul'         => array(),
-			'ol'         => array(),
-			'li'         => array(),
-			'h1'         => array(),
-			'h2'         => array(),
-			'h3'         => array(),
-			'h4'         => array(),
-			'h5'         => array(),
-			'h6'         => array(),
-			'blockquote' => array(),
-			'code'       => array(),
-			'pre'        => array(),
-		)
-	);
-}
-
-/**
  * Log message for debugging.
  *
  * @param mixed  $message Message to log.

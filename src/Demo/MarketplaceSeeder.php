@@ -21,7 +21,6 @@ declare(strict_types=1);
 namespace WPSellServices\Demo;
 
 use WPSellServices\Models\BuyerRequest;
-use WPSellServices\Models\Proposal;
 use WPSellServices\Models\Review;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Models\VendorProfile;
@@ -30,6 +29,7 @@ use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\ConversationService;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\EarningsService;
+use WPSellServices\Services\ProposalService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -1130,10 +1130,10 @@ class MarketplaceSeeder {
 			// Each request gets 2-3 proposals from different vendors.
 			$proposal_total    = 2 + ( $r_index % 2 );
 			$proposal_statuses = array(
-				Proposal::STATUS_PENDING,
-				Proposal::STATUS_ACCEPTED,
-				Proposal::STATUS_REJECTED,
-				Proposal::STATUS_WITHDRAWN,
+				ProposalService::STATUS_PENDING,
+				ProposalService::STATUS_ACCEPTED,
+				ProposalService::STATUS_REJECTED,
+				ProposalService::STATUS_WITHDRAWN,
 			);
 
 			for ( $p = 0; $p < $proposal_total; $p++ ) {

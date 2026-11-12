@@ -30,4 +30,4 @@ $provider = (string) file_get_contents( $dir . '/EDDCheckoutProvider.php' );
 
 $check( 'the adapter binds refuse_unbuyable_service to edd_can_purchase_download', 1 === preg_match( "/add_filter\(\s*'edd_can_purchase_download',\s*\[\s*\\\$this->checkout_provider,\s*'refuse_unbuyable_service'/", $adapter ) );
 $check( 'the provider defines refuse_unbuyable_service', false !== strpos( $provider, 'function refuse_unbuyable_service(' ) );
-$check( 'the provider asks wpss_account_status_block in one place', 1 === substr_count( $provider, "wpss_account_status_block'" ), (string) substr_count( $provider, "wpss_account_status_block'" ) );
+$check( 'the provider asks wpss_account_status_block in one place', 1 === substr_count( $provider, 'wpss_account_status_block(' ), (string) substr_count( $provider, 'wpss_account_status_block(' ) );

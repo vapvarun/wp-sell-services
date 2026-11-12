@@ -193,7 +193,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			return true;
 		}
 
-		if ( ! function_exists( 'wpss_uses_standalone_payments' ) || ! wpss_uses_standalone_payments() ) {
+		if ( ! wpss_uses_standalone_payments() ) {
 			return false;
 		}
 
@@ -228,7 +228,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 
 		// Pretty pay-one-order: /{checkout}/pay/{id}/.
 		// Prefer the mapped checkout page path so a renamed slug still matches.
-		$checkout_id   = function_exists( 'wpss_get_page_id' ) ? (int) wpss_get_page_id( 'checkout' ) : 0;
+		$checkout_id   = (int) wpss_get_page_id( 'checkout' );
 		$checkout_path = '';
 		if ( $checkout_id ) {
 			$uri = get_page_uri( $checkout_id );
@@ -356,7 +356,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 
 		// Named after the mapped checkout page, which is what the pay-one-order
 		// route renders through - the tab here used to read the bare site name.
-		$page_id = function_exists( 'wpss_get_page_id' ) ? wpss_get_page_id( 'checkout' ) : 0;
+		$page_id = wpss_get_page_id( 'checkout' );
 		$title   = $page_id ? (string) get_the_title( $page_id ) : '';
 
 		$this->render_standalone_page(

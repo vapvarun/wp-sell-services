@@ -519,9 +519,8 @@ class ProposalService {
 	/**
 	 * Record the order a proposal produced.
 	 *
-	 * The proposals table has always carried an order_id column, the Proposal
-	 * model reads it, and Proposal::to_array() publishes it in every REST
-	 * response — but no code path ever wrote it, so every consumer saw null
+	 * The proposals table has always carried an order_id column and every REST
+	 * response publishes it — but no code path ever wrote it, so every consumer saw null
 	 * forever and nothing could get from an accepted proposal to the order it
 	 * created. Verified on 2026-08-01: proposals #16 and #17 both minted real
 	 * orders (#61 and #106) while their order_id stayed NULL.

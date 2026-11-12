@@ -926,18 +926,16 @@ class AuditLogService {
 		);
 
 		if ( false === $inserted ) {
-			if ( function_exists( 'wpss_log' ) ) {
-				wpss_log(
-					sprintf(
-						'AuditLogService::log failed for %s/%d (%s): %s',
-						$object_type,
-						$object_id,
-						$event_type,
-						$wpdb->last_error
-					),
-					'error'
-				);
-			}
+			wpss_log(
+				sprintf(
+					'AuditLogService::log failed for %s/%d (%s): %s',
+					$object_type,
+					$object_id,
+					$event_type,
+					$wpdb->last_error
+				),
+				'error'
+			);
 			return 0;
 		}
 

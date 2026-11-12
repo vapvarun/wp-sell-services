@@ -389,9 +389,7 @@ class UnifiedDashboard {
 	 * @return int Order ID, or 0 when the URL names no order.
 	 */
 	private function resolve_requested_order_id(): int {
-		return function_exists( 'wpss_resolve_request_order_id' )
-			? wpss_resolve_request_order_id()
-			: 0;
+		return wpss_resolve_request_order_id();
 	}
 
 	/**

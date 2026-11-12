@@ -1730,9 +1730,7 @@ do_action( 'wpss_before_order_view', $order );
 						<p class="wpss-tip-receipt__amount">
 							<?php
 							echo esc_html(
-								function_exists( 'wpss_format_price' )
-									? wpss_format_price( (float) $tip_order_row->total, $currency )
-									: number_format_i18n( (float) $tip_order_row->total, 2 ) . ' ' . $currency
+								wpss_format_price( (float) $tip_order_row->total, $currency )
 							);
 							?>
 						</p>
@@ -1786,9 +1784,7 @@ do_action( 'wpss_before_order_view', $order );
 						<button type="button" class="wpss-tip-form__preset" data-amount="<?php echo esc_attr( (string) $preset ); ?>">
 							<?php
 							echo esc_html(
-								function_exists( 'wpss_format_price' )
-									? wpss_format_price( (float) $preset, $currency )
-									: number_format_i18n( (float) $preset, 0 ) . ' ' . $currency
+								wpss_format_price( (float) $preset, $currency )
 							);
 							?>
 						</button>

@@ -173,16 +173,6 @@ class ServicePackage {
 	}
 
 	/**
-	 * Get formatted price.
-	 *
-	 * @param string $currency Currency code.
-	 * @return string
-	 */
-	public function get_formatted_price( string $currency = 'USD' ): string {
-		return wpss_format_price( $this->price, $currency );
-	}
-
-	/**
 	 * Get delivery time label.
 	 *
 	 * @return string

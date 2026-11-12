@@ -1066,9 +1066,7 @@ class NotificationService {
 		$buyer      = get_user_by( 'id', $customer_id );
 		$buyer_name = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'A buyer', 'wp-sell-services' ) );
 
-		$net_display = function_exists( 'wpss_format_price' )
-			? wpss_format_price( $net_amount, $currency )
-			: number_format_i18n( $net_amount, 2 ) . ' ' . $currency;
+		$net_display = wpss_format_price( $net_amount, $currency );
 
 		$message = NotificationMessage::make()->line(
 			/* translators: 1: buyer name, 2: net amount credited */
@@ -1100,9 +1098,7 @@ class NotificationService {
 
 		// The buyer's receipt. Plain path: in-app row plus the generic mail.
 		$vendor       = get_user_by( 'id', $vendor_id );
-		$gross_amount = function_exists( 'wpss_format_price' )
-			? wpss_format_price( $gross, $currency )
-			: number_format_i18n( $gross, 2 ) . ' ' . $currency;
+		$gross_amount = wpss_format_price( $gross, $currency );
 		$this->create(
 			$customer_id,
 			'tip_receipt',
@@ -1342,7 +1338,7 @@ class NotificationService {
 				$message->line(
 					/* translators: 1: net amount, 2: extra days, 3: parent order ID */
 					__( 'Buyer approved your quote. %1$s credited to your wallet, deadline on Order #%3$s extended by %2$d days.', 'wp-sell-services' ),
-					function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ) : (string) ( $data['net_amount'] ?? 0 ),
+					wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ),
 					(int) ( $data['extra_days'] ?? 0 ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
@@ -1373,7 +1369,7 @@ class NotificationService {
 				$message->line(
 					/* translators: 1: net amount, 2: parent order ID */
 					__( 'Buyer paid the phase on Order #%2$s, so you can start work. %1$s is credited to your wallet when the buyer approves it.', 'wp-sell-services' ),
-					function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ) : (string) ( $data['net_amount'] ?? 0 ),
+					wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
@@ -1450,7 +1446,7 @@ class NotificationService {
 				if ( ! empty( $data['bid_amount'] ) ) {
 					$message->block()->field(
 						__( 'Their price:', 'wp-sell-services' ),
-						function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) $data['bid_amount'] ) : (string) $data['bid_amount']
+						wpss_format_price( (float) $data['bid_amount'] )
 					);
 				}
 				$message->paragraph( __( 'Open the request to compare proposals and hire when you are ready.', 'wp-sell-services' ) );
@@ -2126,7 +2122,7 @@ class NotificationService {
 	 * @return string Phase name with amount, or a generic fallback.
 	 */
 	private function milestone_label( $milestone_id ): string {
-		$milestone = ( (int) $milestone_id > 0 && function_exists( 'wpss_get_order' ) )
+		$milestone = ( (int) $milestone_id > 0 )
 			? wpss_get_order( (int) $milestone_id )
 			: null;
 
@@ -2137,9 +2133,7 @@ class NotificationService {
 		// ServiceOrder decodes meta on load, so it is already an array here.
 		$meta  = (array) $milestone->meta;
 		$name  = (string) ( $meta['title'] ?? '' );
-		$price = function_exists( 'wpss_format_price' )
-			? wpss_format_price( (float) $milestone->total, (string) $milestone->currency )
-			: (string) $milestone->total;
+		$price = wpss_format_price( (float) $milestone->total, (string) $milestone->currency );
 
 		if ( '' === $name ) {
 			/* translators: %s: formatted amount */
@@ -2174,7 +2168,7 @@ class NotificationService {
 			return '';
 		}
 
-		$order = function_exists( 'wpss_get_order' ) ? wpss_get_order( $order_id ) : null;
+		$order = wpss_get_order( $order_id );
 
 		return ( $order && ! empty( $order->order_number ) ) ? (string) $order->order_number : (string) $order_id;
 	}

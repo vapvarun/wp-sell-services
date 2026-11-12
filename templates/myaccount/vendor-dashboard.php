@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var \WPSellServices\Models\VendorProfile|null $vendor  Vendor profile.
  * @var object                                     $stats   Vendor statistics.

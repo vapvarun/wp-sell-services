@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var int $user_id Current user ID.
  */
@@ -117,9 +117,7 @@ $favorites_pages = $favorites_query ? (int) $favorites_query->max_num_pages : 0;
 										sprintf(
 											/* translators: %s: formatted starting price. */
 											__( 'From %s', 'wp-sell-services' ),
-											function_exists( 'wpss_format_price' )
-												? wpss_format_price( $price_cents, $currency )
-												: number_format_i18n( $price_cents / 100, 2 ) . ' ' . $currency
+											wpss_format_price( $price_cents, $currency )
 										)
 									);
 									?>

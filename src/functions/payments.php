@@ -52,7 +52,7 @@ function wpss_get_active_adapter(): ?\WPSellServices\Integrations\Contracts\Ecom
  * @return bool True when new payments are taken through our own gateways.
  */
 function wpss_uses_standalone_payments(): bool {
-	$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+	$adapter = wpss_get_ecommerce_adapter();
 
 	return ! $adapter || 'standalone' === $adapter->get_id();
 }

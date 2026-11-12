@@ -212,11 +212,7 @@ class ReportsController extends RestController {
 
 			// Logged rather than returned: $wpdb->last_error can carry schema
 			// detail, and this endpoint is reachable by any logged-in member.
-			if ( $error && function_exists( 'wpss_log' ) ) {
-				wpss_log( 'Report insert failed: ' . $error, 'error' );
-			} else {
-				error_log( 'WPSS report insert failed: ' . $error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			}
+			wpss_log( 'Report insert failed: ' . $error, 'error' );
 
 			return new WP_Error(
 				'wpss_report_not_saved',

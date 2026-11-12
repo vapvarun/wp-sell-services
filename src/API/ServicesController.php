@@ -547,19 +547,13 @@ class ServicesController extends RestController {
 		// A client that stores an index sends the wrong tier the moment a vendor
 		// reorders their packages, which is the bug that release repaired on ten
 		// live orders.
-		$packages = function_exists( 'wpss_get_service_packages' )
-			? (array) wpss_get_service_packages( $service_id )
-			: array();
+		$packages = (array) wpss_get_service_packages( $service_id );
 
 		return array(
 			'content'        => apply_filters( 'the_content', $service->post_content ),
 			'packages'       => array_values( $packages ),
-			'extras'         => function_exists( 'wpss_get_service_extras' )
-				? array_values( (array) wpss_get_service_extras( $service_id ) )
-				: array(),
-			'requirements'   => function_exists( 'wpss_get_service_requirements' )
-				? array_values( (array) wpss_get_service_requirements( $service_id ) )
-				: array(),
+			'extras'         => array_values( (array) wpss_get_service_extras( $service_id ) ),
+			'requirements'   => array_values( (array) wpss_get_service_requirements( $service_id ) ),
 			// The full vendor profile, not the compact actor shape already on the
 			// card. A service page shows the seller's tagline, rating and
 			// completed orders; without this a client had to make a second call
@@ -577,7 +571,7 @@ class ServicesController extends RestController {
 	 * @return array<string, mixed>|null
 	 */
 	private function get_vendor_profile( int $vendor_id ): ?array {
-		if ( $vendor_id <= 0 || ! function_exists( 'wpss_get_vendor' ) ) {
+		if ( $vendor_id <= 0 ) {
 			return null;
 		}
 

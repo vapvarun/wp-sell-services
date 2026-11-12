@@ -75,9 +75,7 @@ $counterparty_id = $is_buyer ? (int) $current_order->vendor_id : (int) $current_
 $counterparty    = get_userdata( $counterparty_id );
 
 $format = static function ( float $amount ) use ( $currency ): string {
-	return function_exists( 'wpss_format_price' )
-		? wpss_format_price( $amount, $currency )
-		: number_format_i18n( $amount, 2 ) . ' ' . $currency;
+	return wpss_format_price( $amount, $currency );
 };
 
 /**

@@ -2185,9 +2185,7 @@ class OrdersController extends RestController {
 			// may have been edited or re-priced since, and what the buyer paid
 			// for is the authoritative answer.
 			'package'             => $this->get_package_snapshot( $order ),
-			'requirements'        => function_exists( 'wpss_get_order_requirements' )
-				? wpss_get_order_requirements( (int) $order->id )
-				: array(),
+			'requirements'        => wpss_get_order_requirements( (int) $order->id ),
 			'due_date'            => $this->format_datetime( $order->delivery_deadline ),
 			'started_at'          => $this->format_datetime( $order->started_at ),
 			'completed_at'        => $this->format_datetime( $order->completed_at ),

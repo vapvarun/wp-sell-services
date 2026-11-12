@@ -453,21 +453,19 @@ Thank you for being a valued vendor on our platform.',
 		);
 
 		// Also add platform notification.
-		if ( function_exists( 'wpss_add_notification' ) ) {
-			wpss_add_notification(
-				$vendor->ID,
-				'service_approved',
-				sprintf(
-					/* translators: %s: Service title */
-					__( 'Your service "%s" has been approved and is now live.', 'wp-sell-services' ),
-					$post->post_title
-				),
-				array(
-					'service_id' => $service_id,
-					'link'       => get_permalink( $service_id ),
-				)
-			);
-		}
+		wpss_add_notification(
+			$vendor->ID,
+			'service_approved',
+			sprintf(
+				/* translators: %s: Service title */
+				__( 'Your service "%s" has been approved and is now live.', 'wp-sell-services' ),
+				$post->post_title
+			),
+			array(
+				'service_id' => $service_id,
+				'link'       => get_permalink( $service_id ),
+			)
+		);
 	}
 
 	/**
@@ -542,22 +540,20 @@ If you have any questions, please contact our support team.',
 		);
 
 		// Also add platform notification.
-		if ( function_exists( 'wpss_add_notification' ) ) {
-			wpss_add_notification(
-				$vendor->ID,
-				'service_rejected',
-				sprintf(
-					/* translators: %s: Service title */
-					__( 'Your service "%s" requires changes before approval.', 'wp-sell-services' ),
-					$post->post_title
-				),
-				array(
-					'service_id' => $service_id,
-					'reason'     => $reason,
-					'link'       => $edit_url,
-				)
-			);
-		}
+		wpss_add_notification(
+			$vendor->ID,
+			'service_rejected',
+			sprintf(
+				/* translators: %s: Service title */
+				__( 'Your service "%s" requires changes before approval.', 'wp-sell-services' ),
+				$post->post_title
+			),
+			array(
+				'service_id' => $service_id,
+				'reason'     => $reason,
+				'link'       => $edit_url,
+			)
+		);
 	}
 
 	/**

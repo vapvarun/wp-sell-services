@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.1
+ * @version 1.9.2
  *
  * @var array $orders  Service orders.
  * @var int   $user_id Current user ID.

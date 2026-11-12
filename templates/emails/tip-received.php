@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var WPSellServices\Models\ServiceOrder      $tip_order     The paid tip sub-order.
  * @var WPSellServices\Models\ServiceOrder|null $parent_order  Parent service order (may be null if deleted).
@@ -35,9 +35,7 @@ defined( 'ABSPATH' ) || exit;
 do_action( 'wpss_email_content_before', 'tip_received', $tip_order, $recipient );
 
 $format = static function ( float $amount ) use ( $currency ): string {
-	return function_exists( 'wpss_format_price' )
-		? wpss_format_price( $amount, $currency )
-		: number_format_i18n( $amount, 2 ) . ' ' . $currency;
+	return wpss_format_price( $amount, $currency );
 };
 
 $platform_fee = max( 0.0, $gross_amount - $net_amount );

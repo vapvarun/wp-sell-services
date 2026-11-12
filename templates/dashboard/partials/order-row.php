@@ -13,7 +13,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var object $order_item    Order row from OrderRepository.
  * @var string $wpss_side     'buyer' (My Orders) or 'seller' (Sales Orders).

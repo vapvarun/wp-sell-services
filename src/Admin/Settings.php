@@ -2014,7 +2014,7 @@ class Settings {
 		// A saved setting that silently does nothing is worse than one that is
 		// not offered.
 		if ( ! wpss_uses_standalone_payments() ) {
-			$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+			$adapter = wpss_get_ecommerce_adapter();
 			$rail    = $adapter ? $adapter->get_name() : __( 'your store plugin', 'wp-sell-services' );
 
 			printf(
@@ -2223,7 +2223,7 @@ class Settings {
 
 		// Same source the checkout uses, so the placeholders an owner sees are
 		// exactly what buyers get when a row is left blank.
-		$defaults = function_exists( 'wpss_get_checkout_badge_defaults' ) ? wpss_get_checkout_badge_defaults() : array();
+		$defaults = wpss_get_checkout_badge_defaults();
 
 		echo '<table class="widefat striped wpss-badge-editor"><thead><tr>';
 		echo '<th class="wpss-badge-editor__item">' . esc_html__( 'Item', 'wp-sell-services' ) . '</th>';

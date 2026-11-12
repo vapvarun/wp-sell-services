@@ -487,7 +487,7 @@ class CartController extends RestController {
 				);
 			}
 
-			$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+			$adapter = wpss_get_ecommerce_adapter();
 
 			return new WP_REST_Response(
 				array(

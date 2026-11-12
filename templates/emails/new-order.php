@@ -121,7 +121,7 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 	 * @param WPSellServices\Models\ServiceOrder $order Service order object.
 	 */
 	if ( ! empty( $is_customer ) ) {
-		$default_url  = function_exists( 'wpss_get_order_requirements_url' ) ? wpss_get_order_requirements_url( $order->id ) : wpss_get_order_url( $order->id );
+		$default_url  = wpss_get_order_requirements_url( $order->id );
 		$default_text = __( 'Submit requirements', 'wp-sell-services' );
 	} else {
 		$default_url  = wpss_get_order_url( $order->id );

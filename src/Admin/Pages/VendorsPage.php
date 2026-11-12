@@ -569,9 +569,7 @@ class VendorsPage {
 			 * deliberately cut back to the two totals that appear nowhere else,
 			 * and this is an exception that needs reading, not a number.
 			 */
-			$wpss_negative = function_exists( 'wpss_get_negative_ledger_balances' )
-				? wpss_get_negative_ledger_balances( 20 )
-				: array();
+			$wpss_negative = wpss_get_negative_ledger_balances( 20 );
 
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display of the redirect result only.
 			$wpss_wo = isset( $_GET['wpss_write_off'] ) ? sanitize_key( wp_unslash( $_GET['wpss_write_off'] ) ) : '';

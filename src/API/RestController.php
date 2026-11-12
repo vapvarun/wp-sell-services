@@ -332,7 +332,7 @@ abstract class RestController extends WP_REST_Controller {
 			return $login;
 		}
 
-		$order = function_exists( 'wpss_get_order' ) ? wpss_get_order( $order_id ) : null;
+		$order = wpss_get_order( $order_id );
 		if ( ! $order ) {
 			return $this->error(
 				'wpss_order_not_found',

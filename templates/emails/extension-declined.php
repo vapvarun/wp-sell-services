@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var \WPSellServices\Models\ServiceOrder $extension
  * @var \WP_User                            $recipient Vendor.
@@ -25,9 +25,7 @@
 defined( 'ABSPATH' ) || exit;
 
 $format = static function ( float $amt ) use ( $currency ): string {
-	return function_exists( 'wpss_format_price' )
-		? wpss_format_price( $amt, $currency )
-		: number_format_i18n( $amt, 2 ) . ' ' . $currency;
+	return wpss_format_price( $amt, $currency );
 };
 
 $dashboard = wpss_get_dashboard_url() ?: wpss_get_page_url( 'dashboard' );

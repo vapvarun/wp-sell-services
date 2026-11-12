@@ -204,7 +204,7 @@ $wpss_not_provided  = ! $wpss_has_submitted && ! empty( $service_requirements ) 
 							<?php foreach ( $orphan_attachments as $orphan_att ) : ?>
 								<?php
 								$orphan_att['order_id'] = $wpss_order->id;
-								$orphan_url             = function_exists( 'wpss_get_order_file_url' ) ? wpss_get_order_file_url( $orphan_att ) : '';
+								$orphan_url             = wpss_get_order_file_url( $orphan_att );
 								$orphan_name            = wpss_format_attachment_name( (string) ( $orphan_att['name'] ?? '' ) );
 								?>
 								<li>

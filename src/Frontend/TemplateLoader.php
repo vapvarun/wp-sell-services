@@ -160,7 +160,7 @@ class TemplateLoader {
 		$vendor_slug    = get_query_var( 'wpss_vendor' );
 		$from_directory = false;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public link.
-		if ( ! $vendor_slug && isset( $_GET['vendor'] ) && function_exists( 'wpss_get_vendors_page_id' ) && wpss_get_vendors_page_id() && is_page( wpss_get_vendors_page_id() ) ) {
+		if ( ! $vendor_slug && isset( $_GET['vendor'] ) && wpss_get_vendors_page_id() && is_page( wpss_get_vendors_page_id() ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public link.
 			$vendor_slug    = sanitize_title( wp_unslash( $_GET['vendor'] ) );
 			$from_directory = true;

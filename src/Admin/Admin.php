@@ -469,7 +469,7 @@ class Admin {
 	 * @return void
 	 */
 	public function order_files_public_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_order_files_are_public' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
@@ -802,7 +802,7 @@ class Admin {
 	 * @return void
 	 */
 	public function missing_terms_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_has_live_gateway' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
@@ -3173,7 +3173,7 @@ class Admin {
 	private function render_dispute_resolution_fields( object $dispute, ?object $order, array $resolutions, string $id ): void {
 		$selected = (string) ( $dispute->resolution ?? '' );
 		$total    = $order ? (float) $order->total : 0.0;
-		$decimals = function_exists( 'wpss_get_currency_decimals' ) ? wpss_get_currency_decimals( $order->currency ?? '' ) : 2;
+		$decimals = wpss_get_currency_decimals( $order->currency ?? '' );
 		$step     = $decimals > 0 ? '0.' . str_repeat( '0', $decimals - 1 ) . '1' : '1';
 		$existing = isset( $dispute->refund_amount ) ? (float) $dispute->refund_amount : 0.0;
 		$partial  = DisputeService::RESOLUTION_PARTIAL_REFUND;

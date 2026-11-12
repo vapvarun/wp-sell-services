@@ -119,19 +119,7 @@ function wpss_get_order_title( object $order ): string {
  * @return \WPSellServices\Models\ServiceOrder|null
  */
 function wpss_get_order( int $order_id ): ?\WPSellServices\Models\ServiceOrder {
-	global $wpdb;
-
-	$table = $wpdb->prefix . 'wpss_orders';
-
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$row = $wpdb->get_row(
-		$wpdb->prepare(
-			"SELECT * FROM {$table} WHERE id = %d",
-			$order_id
-		)
-	);
-
-	return $row ? \WPSellServices\Models\ServiceOrder::from_db( $row ) : null;
+	return \WPSellServices\Models\ServiceOrder::find( $order_id );
 }
 
 /**

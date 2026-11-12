@@ -802,7 +802,7 @@ class Shortcodes {
 							<tr>
 								<td>#<?php echo esc_html( $order->order_number ?: $order->id ); ?></td>
 								<td><?php echo esc_html( wpss_get_order_title( $order ) ); ?></td>
-								<td><?php echo wp_kses_post( function_exists( 'wpss_format_currency' ) ? wpss_format_currency( (float) $order->total, $order->currency ) : '$' . number_format( (float) $order->total, 2 ) ); ?></td>
+								<td><?php echo wp_kses_post( wpss_format_currency( (float) $order->total, $order->currency ) ); ?></td>
 								<td><span class="<?php echo esc_attr( wpss_status_class( (string) $order->status ) ); ?>"><?php echo esc_html( wpss_get_order_status_label( (string) $order->status ) ); ?></span></td>
 								<td>
 									<?php
@@ -868,7 +868,7 @@ class Shortcodes {
 			) . '</div>';
 		}
 
-		$order_id = function_exists( 'wpss_resolve_request_order_id' ) ? wpss_resolve_request_order_id() : 0;
+		$order_id = wpss_resolve_request_order_id();
 
 		if ( ! $order_id ) {
 			return '<div class="wpss-notice wpss-notice--error">' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</div>';
@@ -1679,7 +1679,7 @@ class Shortcodes {
 			// real payment page instead of a generic (empty) checkout.
 			$pay_order = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect of a public link.
 
-			$target = $pay_order > 0 && function_exists( 'wpss_ensure_pay_order' )
+			$target = $pay_order > 0
 				? wpss_ensure_pay_order( $pay_order )
 				: wpss_get_checkout_base_url();
 

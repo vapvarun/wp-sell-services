@@ -627,17 +627,11 @@ class API {
 		// them through the same resolvers the rest of the plugin uses rather
 		// than trusting our own page map — on a WooCommerce site these point at
 		// WooCommerce's pages, not the standalone ones.
-		if ( function_exists( 'wpss_get_checkout_base_url' ) ) {
-			$urls['checkout'] = wpss_get_checkout_base_url() ?: $urls['checkout'];
-		}
+		$urls['checkout'] = wpss_get_checkout_base_url() ?: $urls['checkout'];
 
-		if ( function_exists( 'wpss_get_cart_url' ) ) {
-			$urls['cart'] = wpss_get_cart_url() ?: $urls['cart'];
-		}
+		$urls['cart'] = wpss_get_cart_url() ?: $urls['cart'];
 
-		if ( function_exists( 'wpss_get_vendors_url' ) ) {
-			$urls['vendors'] = wpss_get_vendors_url() ?: $urls['vendors'];
-		}
+		$urls['vendors'] = wpss_get_vendors_url() ?: $urls['vendors'];
 
 		return $urls;
 	}

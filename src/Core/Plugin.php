@@ -837,10 +837,6 @@ final class Plugin {
 	 * @return void
 	 */
 	private function register_dashboard_section_rule(): void {
-		if ( ! function_exists( 'wpss_get_page_id' ) ) {
-			return;
-		}
-
 		$dashboard_id = wpss_get_page_id( 'dashboard' );
 
 		// Legacy fallback so sites mapped via the older single option still work.
@@ -940,11 +936,7 @@ final class Plugin {
 	 * @return void
 	 */
 	public function redirect_legacy_section_url(): void {
-		if ( ! function_exists( 'wpss_is_page' ) || ! wpss_is_page( 'dashboard' ) ) {
-			return;
-		}
-
-		if ( ! function_exists( 'wpss_normalize_dashboard_section' ) || ! function_exists( 'wpss_get_dashboard_url' ) ) {
+		if ( ! wpss_is_page( 'dashboard' ) ) {
 			return;
 		}
 
@@ -1036,10 +1028,6 @@ final class Plugin {
 			return;
 		}
 
-		if ( ! function_exists( 'wpss_is_page' ) || ! function_exists( 'wpss_get_order_url' ) ) {
-			return;
-		}
-
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization.
 		$order_id = isset( $_GET['order_id'] ) ? absint( wp_unslash( $_GET['order_id'] ) ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization.
@@ -1052,7 +1040,7 @@ final class Plugin {
 			return;
 		}
 
-		if ( $pay_order > 0 && wpss_is_page( 'checkout' ) && function_exists( 'wpss_get_pay_order_url' ) ) {
+		if ( $pay_order > 0 && wpss_is_page( 'checkout' ) ) {
 			$target = wpss_get_pay_order_url( $pay_order );
 			if ( $target && false === strpos( $target, 'pay_order=' ) ) {
 				wp_safe_redirect( $target, 301 );
@@ -1070,18 +1058,16 @@ final class Plugin {
 			$section = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( $_GET['section'] ) ) : '';
 		}
 
-		if ( function_exists( 'wpss_normalize_dashboard_section' ) ) {
-			$normalized = wpss_normalize_dashboard_section( $section );
-			if ( '' !== $normalized ) {
-				$section = $normalized;
-			}
+		$normalized = wpss_normalize_dashboard_section( $section );
+		if ( '' !== $normalized ) {
+			$section = $normalized;
 		}
 
 		if ( ! in_array( $section, array( 'orders', 'sales' ), true ) ) {
 			$section = 'orders';
 		}
 
-		$target = ( 'requirements' === $action && function_exists( 'wpss_get_order_requirements_url' ) )
+		$target = ( 'requirements' === $action )
 			? wpss_get_order_requirements_url( $order_id )
 			: wpss_get_order_url( $order_id, $section );
 
@@ -1148,10 +1134,6 @@ final class Plugin {
 			return $this->dormant_page_ids;
 		}
 
-		if ( ! function_exists( 'wpss_get_active_adapter' ) || ! function_exists( 'wpss_get_page_id' ) ) {
-			return array();
-		}
-
 		$ids     = array();
 		$adapter = wpss_get_active_adapter();
 
@@ -1190,10 +1172,6 @@ final class Plugin {
 	 * @return int Page ID, or 0.
 	 */
 	private function find_legacy_create_service_page(): int {
-		if ( ! function_exists( 'wpss_get_default_page_slugs' ) ) {
-			return 0;
-		}
-
 		$slug = wpss_get_default_page_slugs()['create_service'] ?? '';
 
 		if ( '' === $slug ) {
@@ -1238,7 +1216,7 @@ final class Plugin {
 			return;
 		}
 
-		$target = function_exists( 'wpss_get_page_url' ) ? wpss_get_page_url( 'become_vendor' ) : '';
+		$target = wpss_get_page_url( 'become_vendor' );
 
 		if ( ! $target || untrailingslashit( $target ) === untrailingslashit( home_url( $path ) ) ) {
 			return;
@@ -1268,7 +1246,7 @@ final class Plugin {
 		$filters = array( 'search', 'min_price', 'max_price' );
 		$front   = 'page' === get_option( 'show_on_front' ) ? (int) get_option( 'page_on_front' ) : 0;
 
-		if ( $front <= 0 || ! function_exists( 'wpss_get_page_id' ) || wpss_get_page_id( 'services_page' ) !== $front ) {
+		if ( $front <= 0 || wpss_get_page_id( 'services_page' ) !== $front ) {
 			return $query_vars;
 		}
 
@@ -1323,9 +1301,9 @@ final class Plugin {
 			// route this leftover page was named after. Sending the visitor there
 			// is what the page was always meant to do; it just never carried
 			// anything (Basecamp 10208199338).
-			$target = function_exists( 'wpss_get_create_service_url' ) ? wpss_get_create_service_url() : '';
+			$target = wpss_get_create_service_url();
 		} elseif ( 'cart' === $key ) {
-			$target = function_exists( 'wpss_get_cart_url' ) ? wpss_get_cart_url() : '';
+			$target = wpss_get_cart_url();
 		} else {
 			// `?pay_order=N` is how a buyer pays ONE order: every Pay button and
 			// emailed link on a store rail lands here. This click is where the
@@ -1335,9 +1313,9 @@ final class Plugin {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect of a public link.
 			$pay_order = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;
 
-			$target = ( $pay_order > 0 && function_exists( 'wpss_ensure_pay_order' ) )
+			$target = ( $pay_order > 0 )
 				? wpss_ensure_pay_order( $pay_order )
-				: ( function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : '' );
+				: wpss_get_checkout_base_url();
 		}
 
 		if ( '' === $target ) {

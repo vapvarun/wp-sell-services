@@ -27,9 +27,7 @@
 defined( 'ABSPATH' ) || exit;
 
 $format = static function ( float $amt ) use ( $currency ): string {
-	return function_exists( 'wpss_format_price' )
-		? wpss_format_price( $amt, $currency )
-		: number_format_i18n( $amt, 2 ) . ' ' . $currency;
+	return wpss_format_price( $amt, $currency );
 };
 
 do_action( 'wpss_email_content_before', 'extension_proposed', $extension, $recipient );

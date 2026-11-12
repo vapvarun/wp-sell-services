@@ -10,7 +10,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.2.0
- * @version 1.9.0
+ * @version 1.9.2
  *
  * @var WP_User $recipient     Recipient user object.
  * @var string  $email_heading Email heading.

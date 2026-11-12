@@ -236,13 +236,7 @@ class Dispute {
 	 * @return array<string, string>
 	 */
 	public static function get_statuses(): array {
-		return [
-			self::STATUS_OPEN      => __( 'Open', 'wp-sell-services' ),
-			self::STATUS_PENDING   => __( 'Pending review', 'wp-sell-services' ),
-			self::STATUS_ESCALATED => __( 'Escalated', 'wp-sell-services' ),
-			self::STATUS_RESOLVED  => __( 'Resolved', 'wp-sell-services' ),
-			self::STATUS_CLOSED    => __( 'Closed', 'wp-sell-services' ),
-		];
+		return \WPSellServices\Services\DisputeService::get_statuses();
 	}
 
 	/**

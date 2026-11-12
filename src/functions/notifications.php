@@ -44,7 +44,7 @@ defined( 'ABSPATH' ) || exit;
 function wpss_get_email_preference_categories( int $user_id = 0 ): array {
 	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
 
-	$is_vendor = $user_id > 0 && function_exists( 'wpss_is_vendor' ) && wpss_is_vendor( $user_id );
+	$is_vendor = $user_id > 0 && wpss_is_vendor( $user_id );
 
 	// Shared by everyone who can hold an order at all. The copy is written
 	// neutrally so it reads correctly to a buyer and a seller alike.

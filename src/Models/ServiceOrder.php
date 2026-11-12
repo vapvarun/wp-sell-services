@@ -479,7 +479,7 @@ class ServiceOrder {
 	/**
 	 * Update order fields.
 	 *
-	 * When updating status, validates the transition is allowed.
+	 * A status change goes through OrderService::update_status().
 	 *
 	 * @param array $data Fields to update.
 	 * @return bool
@@ -488,11 +488,16 @@ class ServiceOrder {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		// If updating status, validate the transition.
-		if ( isset( $data['status'] ) && $data['status'] !== $this->status ) {
-			$order_service = new \WPSellServices\Services\OrderService();
-			if ( ! $order_service->can_transition( $this->status, $data['status'] ) ) {
+		// Status has one writer: OrderService::update_status() guards the
+		// transition, stamps the dates and fires the status hooks.
+		if ( isset( $data['status'] ) ) {
+			if ( $data['status'] !== $this->status && ! ( new \WPSellServices\Services\OrderService() )->update_status( $this->id, (string) $data['status'] ) ) {
 				return false;
+			}
+			$this->status = (string) $data['status'];
+			unset( $data['status'] );
+			if ( ! $data ) {
+				return true;
 			}
 		}
 
@@ -500,46 +505,8 @@ class ServiceOrder {
 		$data['updated_at'] = current_time( 'mysql', true );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update( $table, $data, array( 'id' => $this->id ) );
-
-		if ( false === $result ) {
+		if ( false === $wpdb->update( $table, $data, array( 'id' => $this->id ) ) ) {
 			return false;
-		}
-
-		// Fire status change hook and record history if status changed.
-		if ( isset( $data['status'] ) && $data['status'] !== $this->status ) {
-			$old_status   = $this->status;
-			$this->status = $data['status'];
-
-			// Record status change in meta for timeline.
-			$meta    = $this->meta;
-			$history = $meta['status_history'] ?? array();
-
-			$history[] = array(
-				'status'    => $data['status'],
-				'timestamp' => current_time( 'mysql', true ),
-				'note'      => '',
-			);
-
-			$meta['status_history'] = $history;
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$table,
-				array( 'meta' => wp_json_encode( $meta ) ),
-				array( 'id' => $this->id )
-			);
-			$this->meta = $meta;
-
-			/**
-			 * Fires when order status changes.
-			 *
-			 * @param int    $order_id   Order ID.
-			 * @param string $new_status New status.
-			 * @param string $old_status Old status.
-			 */
-			do_action( 'wpss_order_status_changed', $this->id, $data['status'], $old_status );
-			do_action( "wpss_order_status_{$data['status']}", $this->id, $old_status );
 		}
 
 		// Update instance properties.
@@ -1230,14 +1197,5 @@ class ServiceOrder {
 		$request = $this->meta['cancellation_request'] ?? null;
 
 		return is_array( $request ) ? $request : null;
-	}
-
-	/**
-	 * Get order status history (stored in meta JSON).
-	 *
-	 * @return array<array{status: string, timestamp: string, note: string}>
-	 */
-	public function get_status_history(): array {
-		return $this->meta['status_history'] ?? array();
 	}
 }

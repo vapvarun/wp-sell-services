@@ -32,9 +32,7 @@ $recipient    = $recipient ?? null;
 $new_deadline = $new_deadline ?? '';
 
 $format = static function ( float $amt ) use ( $currency ): string {
-	return function_exists( 'wpss_format_price' )
-		? wpss_format_price( $amt, $currency )
-		: number_format_i18n( $amt, 2 ) . ' ' . $currency;
+	return wpss_format_price( $amt, $currency );
 };
 
 // In the vendor's own time zone: the buyer's payment sends this, so the current user is the buyer.
