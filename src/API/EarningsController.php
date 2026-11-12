@@ -636,7 +636,7 @@ class EarningsController extends RestController {
 
 			if ( $is_admin ) {
 				$user              = get_user_by( 'id', $item['vendor_id'] );
-				$wd['vendor_name'] = $user ? $user->display_name : __( 'Unknown', 'wp-sell-services' );
+				$wd['vendor_name'] = wpss_get_member_display_name( (int) ( $user->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) );
 			}
 
 			$withdrawals[] = $wd;

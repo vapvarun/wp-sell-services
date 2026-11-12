@@ -621,10 +621,13 @@ class VendorsPage {
 						<?php foreach ( $wpss_negative as $wpss_row ) : ?>
 							<?php
 							$wpss_user = get_userdata( $wpss_row['user_id'] );
-							$wpss_name = $wpss_user ? $wpss_user->display_name : sprintf(
+							$wpss_name = wpss_get_member_display_name(
+								(int) $wpss_row['user_id'],
+								sprintf(
 								/* translators: %d: user ID of a deleted account. */
-								__( 'Deleted user #%d', 'wp-sell-services' ),
-								$wpss_row['user_id']
+									__( 'Deleted user #%d', 'wp-sell-services' ),
+									$wpss_row['user_id']
+								)
 							);
 							?>
 							<li>

@@ -122,7 +122,7 @@ $is_working = in_array( $order_item->status, array( 'in_progress', 'revision_req
 				<?php
 				printf(
 					esc_html( $wpss_is_seller ? /* translators: %s: buyer name */ __( 'Buyer: %s', 'wp-sell-services' ) : /* translators: %s: seller name */ __( 'by %s', 'wp-sell-services' ) ),
-					esc_html( $other_party ? $other_party->display_name : __( 'Unknown', 'wp-sell-services' ) )
+					esc_html( wpss_get_member_display_name( (int) ( $other_party->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) ) )
 				);
 				?>
 				<span class="wpss-order-card__sep">&bull;</span>

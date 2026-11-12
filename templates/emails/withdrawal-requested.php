@@ -37,7 +37,7 @@ do_action( 'wpss_email_content_before', 'withdrawal_requested', $vendor, $withdr
 	<tbody>
 		<tr>
 			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></td>
+			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) ) ); ?></td>
 		</tr>
 		<tr>
 			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Email', 'wp-sell-services' ); ?></th>

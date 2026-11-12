@@ -151,7 +151,7 @@ do_action( 'wpss_before_service_card', $service_id );
 					alt="<?php echo esc_attr( $vendor ? $vendor->display_name : '' ); ?>"
 					class="wpss-service-card__vendor-avatar">
 				<span class="wpss-service-card__vendor-name">
-					<?php echo esc_html( $vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?>
+					<?php echo esc_html( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) ) ); ?>
 				</span>
 				<?php
 				// Verified state derives from the canonical wpss_vendor_profiles

@@ -320,7 +320,7 @@ do_action( 'wpss_before_single_request', $request_id );
 													class="wpss-vendor-avatar">
 												<div class="wpss-vendor-info">
 													<a href="<?php echo esc_url( wpss_get_vendor_url( $proposal->vendor_id ) ); ?>" class="wpss-vendor-name">
-														<?php echo esc_html( $vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?>
+														<?php echo esc_html( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) ) ); ?>
 													</a>
 													<div class="wpss-vendor-stats">
 														<?php if ( $vendor_rating > 0 ) : ?>
@@ -532,7 +532,7 @@ do_action( 'wpss_before_single_request', $request_id );
 								class="wpss-buyer-avatar">
 							<div class="wpss-buyer-info">
 								<span class="wpss-buyer-name" title="<?php echo esc_attr( $buyer ? $buyer->display_name : '' ); ?>">
-									<?php echo esc_html( $buyer ? $buyer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
+									<?php echo esc_html( wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'Anonymous', 'wp-sell-services' ) ) ); ?>
 								</span>
 								<span class="wpss-buyer-member-since">
 									<?php

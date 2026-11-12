@@ -46,7 +46,7 @@ do_action( 'wpss_email_content_before', 'dispute_opened', $order, $recipient );
 	printf(
 		/* translators: %s: recipient name */
 		esc_html__( 'Hi %s,', 'wp-sell-services' ),
-		esc_html( $recipient ? $recipient->display_name : __( 'there', 'wp-sell-services' ) )
+		esc_html( wpss_get_member_display_name( (int) ( $recipient->ID ?? 0 ), __( 'there', 'wp-sell-services' ) ) )
 	);
 	?>
 </p>
@@ -99,7 +99,7 @@ else :
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;">
 				<?php
 				$customer = get_user_by( 'id', $order->customer_id );
-				echo esc_html( $customer ? $customer->display_name : '#' . $order->customer_id );
+				echo esc_html( wpss_get_member_display_name( (int) $order->customer_id, '#' . $order->customer_id ) );
 				?>
 			</td>
 		</tr>
@@ -108,7 +108,7 @@ else :
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;">
 				<?php
 				$vendor = get_user_by( 'id', $order->vendor_id );
-				echo esc_html( $vendor ? $vendor->display_name : '#' . $order->vendor_id );
+				echo esc_html( wpss_get_member_display_name( (int) $order->vendor_id, '#' . $order->vendor_id ) );
 				?>
 			</td>
 		</tr>

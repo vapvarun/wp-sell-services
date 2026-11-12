@@ -730,7 +730,7 @@ class EmailService {
 		}
 
 		$customer     = get_user_by( 'id', $tip_order->customer_id );
-		$buyer_name   = $customer ? $customer->display_name : __( 'A buyer', 'wp-sell-services' );
+		$buyer_name   = wpss_get_member_display_name( (int) ( $customer->ID ?? 0 ), __( 'A buyer', 'wp-sell-services' ) );
 		$parent_id    = (int) ( $tip_order->platform_order_id ?? 0 );
 		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
 
@@ -932,7 +932,7 @@ class EmailService {
 		}
 
 		$vendor       = get_user_by( 'id', $milestone->vendor_id );
-		$vendor_name  = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
+		$vendor_name  = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Your vendor', 'wp-sell-services' ) );
 		$parent_id    = (int) ( $milestone->platform_order_id ?? 0 );
 		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
 		$meta         = $this->decode_order_meta( $milestone );
@@ -1009,7 +1009,7 @@ class EmailService {
 		$content = sprintf(
 			/* translators: 1: vendor name, 2: number of phases, 3: contract total */
 			__( '%1$s accepted your project and split it into %2$d phases, %3$s in total. Phases are paid one at a time, in this order.', 'wp-sell-services' ),
-			esc_html( $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' ) ),
+			esc_html( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Your vendor', 'wp-sell-services' ) ) ),
 			count( $milestone_ids ),
 			esc_html( wpss_format_price( $total, $currency ) )
 		) . '</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f9f9f9;border-radius:4px;font-size:16px;color:#3c3c3c;">' . $rows . '</table><p style="margin:16px 0 0 0;font-size:16px;color:#3c3c3c;line-height:1.6;">'
@@ -1054,7 +1054,7 @@ class EmailService {
 		}
 
 		$buyer      = get_user_by( 'id', $milestone->customer_id );
-		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+		$buyer_name = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'The buyer', 'wp-sell-services' ) );
 		$meta       = $this->decode_order_meta( $milestone );
 
 		$subject = sprintf(
@@ -1099,7 +1099,7 @@ class EmailService {
 		}
 
 		$vendor      = get_user_by( 'id', $milestone->vendor_id );
-		$vendor_name = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
+		$vendor_name = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Your vendor', 'wp-sell-services' ) );
 		$meta        = $this->decode_order_meta( $milestone );
 
 		$parent_id     = (int) ( $milestone->platform_order_id ?? 0 );
@@ -1153,7 +1153,7 @@ class EmailService {
 		}
 
 		$buyer      = get_user_by( 'id', $milestone->customer_id );
-		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+		$buyer_name = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'The buyer', 'wp-sell-services' ) );
 		$meta       = $this->decode_order_meta( $milestone );
 
 		$subject = sprintf(
@@ -1212,7 +1212,7 @@ class EmailService {
 				'recipient'     => $vendor,
 				'email_heading' => __( 'Revision requested', 'wp-sell-services' ),
 				'vendor_name'   => $vendor->display_name,
-				'buyer_name'    => $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' ),
+				'buyer_name'    => wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'The buyer', 'wp-sell-services' ) ),
 				'phase_title'   => (string) ( $meta['title'] ?? '' ),
 				'reason'        => $reason,
 				'order_url'     => add_query_arg(
@@ -1243,7 +1243,7 @@ class EmailService {
 		}
 
 		$vendor      = get_user_by( 'id', $extension->vendor_id );
-		$vendor_name = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
+		$vendor_name = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Your vendor', 'wp-sell-services' ) );
 		$reason      = (string) ( $extension->vendor_notes ?? '' );
 
 		$pay_url = wpss_ensure_pay_order( (int) $extension->id );
@@ -1292,7 +1292,7 @@ class EmailService {
 		}
 
 		$buyer      = get_user_by( 'id', $extension->customer_id );
-		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+		$buyer_name = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'The buyer', 'wp-sell-services' ) );
 
 		$subject = sprintf(
 			/* translators: %s: site name */
@@ -1348,7 +1348,7 @@ class EmailService {
 		}
 
 		$buyer      = get_user_by( 'id', $extension->customer_id );
-		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+		$buyer_name = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'The buyer', 'wp-sell-services' ) );
 
 		$subject = sprintf(
 			/* translators: %s: site name */
@@ -2823,8 +2823,7 @@ class EmailService {
 	 * @return string
 	 */
 	private function get_customer_name( int $customer_id ): string {
-		$customer = get_user_by( 'id', $customer_id );
-		return $customer ? $customer->display_name : __( 'Buyer', 'wp-sell-services' );
+		return wpss_get_member_display_name( $customer_id, __( 'Buyer', 'wp-sell-services' ) );
 	}
 
 	/**
@@ -2834,8 +2833,7 @@ class EmailService {
 	 * @return string
 	 */
 	private function get_vendor_name( int $vendor_id ): string {
-		$vendor = get_user_by( 'id', $vendor_id );
-		return $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
+		return wpss_get_member_display_name( $vendor_id, __( 'Vendor', 'wp-sell-services' ) );
 	}
 
 	/**

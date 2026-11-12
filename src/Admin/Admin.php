@@ -2713,11 +2713,10 @@ class Admin {
 							<?php if ( ! empty( $messages ) ) : ?>
 								<div class="wpss-order-messages" style="max-height: 400px; overflow-y: auto;">
 									<?php foreach ( $messages as $message ) : ?>
-										<?php $msg_user = ! empty( $message->sender_id ) ? get_userdata( (int) $message->sender_id ) : null; ?>
 										<div class="wpss-message" style="padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-left: 3px solid #0073aa;">
 											<div style="margin-bottom: 5px;">
 												<?php // No sender means the plugin wrote it (a status change, a note) - not an "Unknown" person. ?>
-												<strong><?php echo esc_html( $msg_user ? $msg_user->display_name : ( empty( $message->sender_id ) ? __( 'System', 'wp-sell-services' ) : __( 'Deleted user', 'wp-sell-services' ) ) ); ?></strong>
+												<strong><?php echo esc_html( empty( $message->sender_id ) ? __( 'System', 'wp-sell-services' ) : wpss_get_member_display_name( (int) $message->sender_id ) ); ?></strong>
 												<span style="color: #666; margin-left: 10px;">
 													<?php echo esc_html( wpss_datetime_label( $message->created_at ) ); ?>
 												</span>

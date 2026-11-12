@@ -603,7 +603,7 @@ Review this service: %3$s',
 				'wp-sell-services'
 			),
 			$post->post_title,
-			$vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ),
+			wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) ),
 			$review_url
 		);
 
@@ -617,7 +617,7 @@ Review this service: %3$s',
 				array(
 					'recipient'     => get_user_by( 'email', $admin_email ),
 					'service_title' => $post->post_title,
-					'vendor_name'   => $vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ),
+					'vendor_name'   => wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) ),
 					'review_url'    => $review_url,
 				)
 			);

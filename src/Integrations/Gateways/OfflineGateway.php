@@ -1173,7 +1173,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 					sprintf(
 						/* translators: 1: uploader name, 2: date */
 						__( 'uploaded by %1$s on %2$s', 'wp-sell-services' ),
-						$who ? $who->display_name : __( 'a buyer', 'wp-sell-services' ),
+						wpss_get_member_display_name( (int) ( $who->ID ?? 0 ), __( 'a buyer', 'wp-sell-services' ) ),
 						wpss_date_label( (string) $receipt->created_at )
 					)
 				)

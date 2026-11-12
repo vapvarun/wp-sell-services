@@ -1772,7 +1772,7 @@ do_action( 'wpss_before_order_view', $order );
 						sprintf(
 							/* translators: %s: vendor display name */
 							__( 'Send a tip to %s. It goes to their wallet, less any marketplace fee on tips.', 'wp-sell-services' ),
-							$other_party ? $other_party->display_name : __( 'the vendor', 'wp-sell-services' )
+							wpss_get_member_display_name( (int) ( $other_party->ID ?? 0 ), __( 'the vendor', 'wp-sell-services' ) )
 						)
 					);
 					?>

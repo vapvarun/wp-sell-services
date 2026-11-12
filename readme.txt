@@ -286,6 +286,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - The service wizard highlights the step you are on when editing a service, and marks it for screen readers.
 * Fix      - Ratings and percentages follow the site's number format, and the proposal price on the admin buyer request screen shows its currency.
 * Fix      - Relative times such as "2 hours ago" follow the translation's word order, and the dashboard messages list now says "ago".
+* Fix      - Member names in emails, notifications, admin screens and exports all go through one helper, so the wpss_member_display_name filter applies everywhere and a blank display name falls back to the username.
 * Fix      - PayPal checkout and refunds work in Japanese yen, Hungarian forint and New Taiwan dollar, which PayPal takes only as whole amounts, and send three decimals for currencies that have them.
 * Dev      - The wpss_vendor_status_updated action passes the admin's reason as a fourth argument, and wpss_submit_button() accepts an optional button id.
 

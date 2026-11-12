@@ -110,7 +110,7 @@ do_action( 'wpss_before_request_card', $request_id );
 				class="wpss-request-card__buyer-avatar">
 			<div class="wpss-request-card__buyer-info">
 				<span class="wpss-request-card__buyer-name">
-					<?php echo esc_html( $buyer ? $buyer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
+					<?php echo esc_html( wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'Anonymous', 'wp-sell-services' ) ) ); ?>
 				</span>
 				<span class="wpss-request-card__date">
 					<?php

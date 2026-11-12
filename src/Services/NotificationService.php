@@ -378,9 +378,9 @@ class NotificationService {
 		// notices in string functions, which would corrupt AJAX JSON responses).
 		$service_name = wpss_get_order_title( $order ) ?: __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
-		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
+		$buyer_name   = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'Buyer', 'wp-sell-services' ) );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
-		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
+		$vendor_name  = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Vendor', 'wp-sell-services' ) );
 		$order_number = (string) ( $order->order_number ?? '' );
 		$amount       = wpss_format_price( (float) ( $order->total ?? 0 ) );
 
@@ -505,9 +505,9 @@ class NotificationService {
 		// Get service and user details (null-safe for PHP 8.1+ compat).
 		$service_name = wpss_get_order_title( $order ) ?: __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
-		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
+		$buyer_name   = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'Buyer', 'wp-sell-services' ) );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
-		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
+		$vendor_name  = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Vendor', 'wp-sell-services' ) );
 		$order_number = (string) ( $order->order_number ?? '' );
 
 		$statuses     = \WPSellServices\Models\ServiceOrder::get_statuses();
@@ -868,7 +868,7 @@ class NotificationService {
 		global $wpdb;
 
 		$sender      = get_user_by( 'id', $sender_id );
-		$sender_name = $sender ? $sender->display_name : __( 'Someone', 'wp-sell-services' );
+		$sender_name = wpss_get_member_display_name( (int) ( $sender->ID ?? 0 ), __( 'Someone', 'wp-sell-services' ) );
 
 		// Get conversation details for context.
 		$conversation = $wpdb->get_row(
@@ -1064,7 +1064,7 @@ class NotificationService {
 		$currency  = $tip_order ? ( $tip_order->currency ?? wpss_get_currency() ) : wpss_get_currency();
 
 		$buyer      = get_user_by( 'id', $customer_id );
-		$buyer_name = $buyer ? $buyer->display_name : __( 'A buyer', 'wp-sell-services' );
+		$buyer_name = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'A buyer', 'wp-sell-services' ) );
 
 		$net_display = function_exists( 'wpss_format_price' )
 			? wpss_format_price( $net_amount, $currency )
@@ -1111,7 +1111,7 @@ class NotificationService {
 				/* translators: 1: amount, 2: vendor name, 3: order number */
 				__( 'Your tip of %1$s to %2$s on Order #%3$s has been paid.', 'wp-sell-services' ),
 				NotificationMessage::strong( $gross_amount ),
-				NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'your vendor', 'wp-sell-services' ) ),
+				NotificationMessage::strong( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'your vendor', 'wp-sell-services' ) ) ),
 				$this->order_ref( $parent_order_id )
 			),
 			array(
@@ -1250,7 +1250,7 @@ class NotificationService {
 			case 'dispute_opened':
 				$title       = __( 'Dispute opened', 'wp-sell-services' );
 				$opener      = get_user_by( 'id', $data['opened_by'] ?? 0 );
-				$opener_name = $opener ? $opener->display_name : __( 'The other party', 'wp-sell-services' );
+				$opener_name = wpss_get_member_display_name( (int) ( $opener->ID ?? 0 ), __( 'The other party', 'wp-sell-services' ) );
 				$message->line(
 					/* translators: 1: opener name, 2: order ID */
 					__( '%1$s has opened a dispute for Order #%2$s.', 'wp-sell-services' ),
@@ -1289,7 +1289,7 @@ class NotificationService {
 			case 'dispute_response_received':
 				$title     = __( 'Dispute Response Received', 'wp-sell-services' );
 				$from_user = get_user_by( 'id', $data['from_user'] ?? 0 );
-				$from_name = $from_user ? $from_user->display_name : __( 'The other party', 'wp-sell-services' );
+				$from_name = wpss_get_member_display_name( (int) ( $from_user->ID ?? 0 ), __( 'The other party', 'wp-sell-services' ) );
 				$message->line(
 					/* translators: 1: responder name, 2: order ID */
 					__( '%1$s has responded to the dispute for Order #%2$s.', 'wp-sell-services' ),
@@ -1444,7 +1444,7 @@ class NotificationService {
 				$message->line(
 					/* translators: 1: vendor name, 2: request title */
 					__( '%1$s sent a proposal on your request "%2$s".', 'wp-sell-services' ),
-					NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'A vendor', 'wp-sell-services' ) ),
+					NotificationMessage::strong( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'A vendor', 'wp-sell-services' ) ) ),
 					(string) ( $data['request_title'] ?? '' )
 				);
 				if ( ! empty( $data['bid_amount'] ) ) {
@@ -1754,7 +1754,7 @@ class NotificationService {
 		$content = sprintf(
 			/* translators: 1: member display name, 2: what it is about */
 			$is_case ? __( '%1$s opened a dispute: %2$s', 'wp-sell-services' ) : __( '%1$s filed a report: %2$s', 'wp-sell-services' ),
-			$member ? $member->display_name : __( 'A member', 'wp-sell-services' ),
+			wpss_get_member_display_name( (int) ( $member->ID ?? 0 ), __( 'A member', 'wp-sell-services' ) ),
 			$detail
 		);
 

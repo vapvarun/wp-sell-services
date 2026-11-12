@@ -475,7 +475,7 @@ class ReportsPage {
 	 */
 	private function status_button( int $user_id, string $status, string $label ): void {
 		$user = get_userdata( $user_id );
-		$name = $user ? $user->display_name : (string) $user_id;
+		$name = wpss_get_member_display_name( $user_id, (string) $user_id );
 
 		// Suspending or closing an account is not undoable from the member's
 		// side and changes what they can do everywhere at once, so it asks

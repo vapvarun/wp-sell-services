@@ -27,7 +27,7 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 $base_color  = $base_color ?? '#7f54b3';
 $customer    = isset( $recipient ) ? $recipient : get_user_by( 'id', $order->customer_id );
 $vendor      = get_user_by( 'id', $order->vendor_id );
-$vendor_name = $vendor ? $vendor->display_name : __( 'The vendor', 'wp-sell-services' );
+$vendor_name = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'The vendor', 'wp-sell-services' ) );
 
 /**
  * Fires before the email content for the delivery ready email.
@@ -45,7 +45,7 @@ do_action( 'wpss_email_content_before', 'delivery_ready', $order, $recipient );
 	printf(
 		/* translators: %s: recipient name */
 		esc_html__( 'Hi %s,', 'wp-sell-services' ),
-		esc_html( $customer ? $customer->display_name : __( 'there', 'wp-sell-services' ) )
+		esc_html( wpss_get_member_display_name( (int) ( $customer->ID ?? 0 ), __( 'there', 'wp-sell-services' ) ) )
 	);
 	?>
 </p>
