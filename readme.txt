@@ -284,6 +284,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - Each Save button on the Settings page and the order screen has its own id.
 * Fix      - The order number search field and its Search button are the same height on My Orders, Sales and the notifications filter.
 * Fix      - The service wizard highlights the step you are on when editing a service, and marks it for screen readers.
+* Fix      - PayPal checkout and refunds work in Japanese yen, Hungarian forint and New Taiwan dollar, which PayPal takes only as whole amounts, and send three decimals for currencies that have them.
 * Dev      - The wpss_vendor_status_updated action passes the admin's reason as a fourth argument, and wpss_submit_button() accepts an optional button id.
 
 = 1.9.2 - November 2026 =

@@ -170,13 +170,21 @@ class PayPalGateway extends AbstractPaymentGateway {
 	 * @return array Order data.
 	 */
 	public function create_payment( float $amount, string $currency, array $metadata = array() ): array {
+		$value = $this->amount_value( $amount, $currency );
+		if ( null === $value ) {
+			return array(
+				'success' => false,
+				'error'   => $this->whole_amount_error( $currency ),
+			);
+		}
+
 		$order_data = array(
 			'intent'         => 'CAPTURE',
 			'purchase_units' => array(
 				array(
 					'amount'      => array(
 						'currency_code' => strtoupper( $currency ),
-						'value'         => number_format( $amount, 2, '.', '' ),
+						'value'         => $value,
 					),
 					'description' => $metadata['description'] ?? __( 'Service purchase', 'wp-sell-services' ),
 					// custom_id is capped at 127 chars by PayPal; the description
@@ -234,6 +242,38 @@ class PayPalGateway extends AbstractPaymentGateway {
 			'status'       => $response['status'],
 			'approval_url' => $approval_url,
 		);
+	}
+
+	/**
+	 * An amount as PayPal's API wants it: the currency's own decimals, and none at
+	 * all for the currencies PayPal takes only in whole units (JPY, HUF, TWD),
+	 * which PayPal refuses with DECIMAL_PRECISION when sent "1000.00".
+	 *
+	 * @param float  $amount   Amount in major units.
+	 * @param string $currency Currency code.
+	 * @return string|null The value, or null when the amount has a fraction PayPal cannot take.
+	 */
+	private function amount_value( float $amount, string $currency ): ?string {
+		$currency = strtoupper( $currency );
+		$decimals = in_array( $currency, array( 'HUF', 'JPY', 'TWD' ), true ) ? 0 : wpss_get_currency_decimals( $currency );
+
+		// Rounding a HUF 1234.50 total to 1235 would charge a figure the order does not hold.
+		if ( 0 === $decimals && ! wpss_amounts_match( round( $amount ), $amount, $currency ) ) {
+			return null;
+		}
+
+		return number_format( $amount, $decimals, '.', '' );
+	}
+
+	/**
+	 * Why an amount with a fraction cannot go to PayPal in a whole-unit currency.
+	 *
+	 * @param string $currency Currency code.
+	 * @return string
+	 */
+	private function whole_amount_error( string $currency ): string {
+		/* translators: %s: currency code, e.g. HUF */
+		return sprintf( __( 'PayPal takes only whole amounts in %s, and this amount has a fraction.', 'wp-sell-services' ), strtoupper( $currency ) );
 	}
 
 	/**
@@ -325,9 +365,16 @@ class PayPalGateway extends AbstractPaymentGateway {
 			// Get original transaction to determine currency.
 			$capture  = $this->api_request( "v2/payments/captures/{$transaction_id}", array(), 'GET' );
 			$currency = $capture['amount']['currency_code'] ?? 'USD';
+			$value    = $this->amount_value( $amount, $currency );
+			if ( null === $value ) {
+				return array(
+					'success' => false,
+					'error'   => $this->whole_amount_error( $currency ),
+				);
+			}
 
 			$data['amount'] = array(
-				'value'         => number_format( $amount, 2, '.', '' ),
+				'value'         => $value,
 				'currency_code' => $currency,
 			);
 		}
