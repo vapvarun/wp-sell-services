@@ -43,7 +43,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.2
+ * @version 1.9.3
  *
  * @var int $vendor_id Vendor user ID.
  */

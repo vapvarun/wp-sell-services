@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.2
+ * @version 1.9.3
  *
  * @var WPSellServices\Models\ServiceOrder      $tip_order     The paid tip sub-order.
  * @var WPSellServices\Models\ServiceOrder|null $parent_order  Parent service order (may be null if deleted).

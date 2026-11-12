@@ -20,7 +20,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.2.2
- * @version 1.9.2
+ * @version 1.9.3
  *
  * @var int  $user_id           Optional. User whose notifications to render.
  *                              Defaults to the current user.

@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.2
+ * @version 1.9.3
  *
  * @var int $user_id Current user ID.
  */

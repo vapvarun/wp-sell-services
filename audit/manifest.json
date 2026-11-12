@@ -1292,5 +1292,19 @@
     "package_signatures": "libs/package-signatures 1.0.1, registered from wp-sell-services.php for wp-sell-services and wp-sell-services-pro; key wbcom-2026-1, mode warn, log option package_signatures_log.",
     "preset_activation": "admin_init, through the helper; options wpss_license_key + wpss_preset_activated; 12h backoff transient wpss_preset_activation_retry; owner opt-out constant WPSS_NO_LICENSE_PHONE_HOME.",
     "tests_never_call_store": "tests/no-live-store.php (both bootstraps + CI mu-plugin), asserted by tests/Integration/NoLiveStoreTest.php and the CI install step."
+  },
+  "shared_helpers_1_9_3": {
+    "_note": "One door per rule, added or tightened in 1.9.3. Reuse; Pro calls these instead of keeping copies.",
+    "order_view": "wpss_user_can_view_order( $order|$id, $user_id ) is the single order-view rule; wpss_order_actor_role() decides. TemplateLoader, Shortcodes and REST all call it.",
+    "prices_in_js": "wpss_get_currency_format() + wpss_get_decimal_places() feed wpssAdmin and wpssFrontend; JS uses currencyFormat.replace('%s', n).",
+    "dashboard_url": "wpss_get_dashboard_url( $tab ) resolves the page through wpss_get_page_id( 'dashboard' ); no ?tab= redirects.",
+    "buyer_request_status": "BuyerRequestService::update_status() is the one status writer; buyers may only set open or closed (get_buyer_settable_statuses()).",
+    "email_sender": "EmailService from address: filter wpss_email_from_address; WooCommerce sender borrowed only when the active adapter is woocommerce.",
+    "login_lock": "Per-account sign-in lockout removed; REST login keeps the per-IP RateLimiter. wpss_web_login_lock is deprecated (apply_filters_deprecated).",
+    "new_hooks": [
+      "wpss_dashboard_assets_enqueued (action, end of UnifiedDashboard::enqueue_assets)",
+      "wpss_notify_message_participants (filter, mutes the duplicate bell on contact-vendor)",
+      "wpss_email_from_address (filter)"
+    ]
   }
 }

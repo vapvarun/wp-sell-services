@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.3.0
- * @version 1.9.2
+ * @version 1.9.3
  *
  * @var WP_User|null $vendor          Vendor user object.
  * @var float        $amount          Withdrawal amount.

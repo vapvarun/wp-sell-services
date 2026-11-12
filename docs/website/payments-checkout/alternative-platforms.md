@@ -27,7 +27,7 @@ EDD is a popular choice if your site focuses on digital products and services. I
 
 **What this rail cannot do yet (beta):**
 
-Services are not created as Easy Digital Downloads downloads, so a buyer who reaches Checkout on a catalog service dead-ends. A refund issued in Easy Digital Downloads is not reflected in the marketplace: the order stays paid and the vendor stays credited, so you have to reverse both by hand. Pay links for milestone phases, tips and paid extensions are unavailable on this rail. Full support is planned for 1.8.0.
+Services are not created as Easy Digital Downloads downloads, so a buyer who reaches Checkout on a catalog service dead-ends. With WP Sell Services Pro active, a refund issued in Easy Digital Downloads is carried to the marketplace order and the vendor's earnings are reversed; without Pro, reverse both by hand. Pay links for milestone phases, tips and paid extensions are unavailable on this rail. Full support is planned for 1.8.0.
 
 **Payment gateways available:** PayPal (built into EDD), Stripe (via EDD Stripe extension), plus other EDD gateway extensions.
 
@@ -102,7 +102,7 @@ Existing orders remain accessible -- they stay in the system they were created i
 | Milestone, tip and extension payments | Yes | No (beta) | Yes | Yes |
 | Where you refund | In WooCommerce | In EDD | In FluentCart | Sell Services > Orders |
 | Refunds reflected in the marketplace | Yes | No (beta) | Yes | Yes |
-| Known limitations | None | Buyers cannot complete a catalog purchase, and a refund issued in EDD leaves the order paid and the vendor credited | Buyers cannot complete a catalog purchase because a service cannot be linked to a FluentCart product | None |
+| Known limitations | None | Buyers cannot complete a catalog purchase, and without Pro a refund issued in EDD leaves the order paid and the vendor credited | Buyers cannot complete a catalog purchase because a service cannot be linked to a FluentCart product | None |
 
 ## Related Docs
 
