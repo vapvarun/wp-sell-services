@@ -1847,10 +1847,6 @@ class OrdersController extends RestController {
 			);
 		}
 
-		if ( current_user_can( 'manage_options' ) ) {
-			return true;
-		}
-
 		if ( ! $this->user_owns_resource( $order_id, 'order' ) ) {
 			return new WP_Error(
 				'wpss_not_owner',

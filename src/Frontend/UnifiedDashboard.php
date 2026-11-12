@@ -243,6 +243,17 @@ class UnifiedDashboard {
 				),
 			)
 		);
+
+		/**
+		 * Fires once the dashboard's own assets are enqueued, wherever it renders.
+		 *
+		 * An add-on that styles or scripts dashboard sections hooks here instead of
+		 * guessing which page the dashboard is on: it may sit in any page, synced
+		 * pattern or widget.
+		 *
+		 * @since 1.9.3
+		 */
+		do_action( 'wpss_dashboard_assets_enqueued' );
 	}
 
 	/**
@@ -1018,7 +1029,7 @@ class UnifiedDashboard {
 
 		// Check if vendor registration is open.
 		$fb_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-		$registration_is_open = 'closed' !== $fb_registration_mode;
+		$registration_is_open = 'closed' !== $fb_registration_mode || current_user_can( 'manage_options' );
 
 		// Vendor-only sections: show a CTA to become a vendor.
 		$vendor_only_sections = self::VENDOR_SECTIONS;
@@ -1201,10 +1212,8 @@ class UnifiedDashboard {
 		$result = $this->vendor_service->register( $user_id );
 
 		if ( $result ) {
-			// Check if approval is required (vendor will be in pending state).
-			$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-
-			if ( 'approval' === $registration_mode ) {
+			// Pending when approval is required; an administrator is approved at once.
+			if ( ! $this->vendor_service->is_active_vendor( $user_id ) ) {
 				wp_send_json_success(
 					array(
 						'message'          => __( 'Your vendor application has been submitted! It is pending admin approval.', 'wp-sell-services' ),

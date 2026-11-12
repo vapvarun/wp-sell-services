@@ -102,7 +102,11 @@ over `/services` when you only need cards.
 `PUT /services/{id}` takes `paused` (boolean) to pause or resume a service: it
 stays published and listed but takes no new orders, and every card carries
 `paused`. `status` (`publish` or `draft`) is the separate publish control; a
-draft is not listed.
+draft is not listed. When a draft cannot go live yet (no main image, no category,
+a short description), a PUT that asks for `publish` still saves its other fields,
+leaves the service a draft and answers `400 wpss_not_publishable` with the reasons
+in `data.errors`. A POST that is held back as a draft returns those reasons in
+`notices`.
 
 `/services/limits` returns the ceilings a single service may not exceed, so a
 client can build its create-service form without discovering each one by being

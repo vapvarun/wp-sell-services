@@ -312,24 +312,7 @@ class OrderWorkflowManager {
 			) ) {
 				continue;
 			}
-
-			// Notify vendor.
-			$this->notification_service->create(
-				(int) $order->vendor_id,
-				'order_late',
-				__( 'Order Overdue', 'wp-sell-services' ),
-				__( 'Your order is past the delivery deadline. Please deliver as soon as possible.', 'wp-sell-services' ),
-				[ 'order_id' => $order->id ]
-			);
-
-			// Notify customer.
-			$this->notification_service->create(
-				(int) $order->customer_id,
-				'order_late',
-				__( 'Order Delayed', 'wp-sell-services' ),
-				__( 'Your order is past the expected delivery date. We have notified the vendor.', 'wp-sell-services' ),
-				[ 'order_id' => $order->id ]
-			);
+			// update_status() fires wpss_order_status_changed; NotificationService writes the overdue rows.
 		}
 	}
 

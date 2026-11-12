@@ -1058,26 +1058,15 @@ its stored token to every request could never reach the login route to replace
 it. These three take their credentials from the request body and grant nothing
 on their own, which is what makes them safe to open.
 
-### Sign-in lockout (1.7.1)
+### Sign-in lockout (removed in 1.9.3)
 
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_web_login_lock` | `bool $enabled` | `Core/Plugin.php` |
 
-Five wrong passwords for one account inside 15 minutes lock it for 15 minutes,
-on the website sign-in form and on `POST /auth/login` alike - one counter, keyed
-on the resolved account rather than on the address the attempts came from. A
-successful sign-in clears it, and the 15 minutes always runs down, so an
-administrator cannot be held out indefinitely.
-
-Return `false` to leave `wp-login.php` alone on a site whose security plugin
-already limits failed sign-ins. The counter keeps running either way, so the
-app's own lockout - `423 wpss_account_locked` - is unaffected.
-
-```php
-// A dedicated security plugin owns the login form on this site.
-add_filter( 'wpss_web_login_lock', '__return_false' );
-```
+The plugin no longer locks accounts after wrong passwords, so this filter does
+nothing. It stays as a deprecated no-op: a site that still hooks it gets a
+deprecation notice under `WP_DEBUG`. Remove the `add_filter` call.
 
 ### Selling limits
 

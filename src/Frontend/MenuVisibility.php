@@ -297,7 +297,7 @@ class MenuVisibility {
 					<?php endforeach; ?>
 
 					<div class="wpss-settings-section__footer">
-						<?php wpss_submit_button( __( 'Save Menu Visibility', 'wp-sell-services' ) ); ?>
+						<?php wpss_submit_button( __( 'Save Menu Visibility', 'wp-sell-services' ), 'primary', 'submit', 'wpss-save-menu-visibility' ); ?>
 					</div>
 				</form>
 			</div>

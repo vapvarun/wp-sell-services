@@ -17,7 +17,7 @@ Dashboard, All Services, All Requests, Categories, Tags, Moderation, Review Mode
 ### 2. Every Settings tab saves and survives a reload
 General, Checkout, Pages, Payment Gateways (standalone only), Commission & Tax, Payouts, Vendor Settings, Orders & Disputes, Emails, Branding, Integrations, System.
 
-**Expect** per tab: change one field, save, reload, the value stays; a negative number in a number field saves as 0 (card:10403454753); an empty required label does not save blank (card:10403205035).
+**Expect** per tab: change one field, save, reload, the value stays; a negative number in a number field saves as 0 (card:10403454753), and a crafted negative POST to an Orders & Disputes day field (Reminder After -4) stores the field's minimum, never its positive twin (card:10475418682); an empty required label does not save blank (card:10403205035). Every Save button has its own id: `document.querySelectorAll('#submit').length` is 0 and no submit id repeats (card:10475418881). Email preferences: a member's Notifications > Email preferences save per category and survive a reload, and a muted category sends no mail.
 
 ### 3. Pro options are marked and inert without a licence
 **Expect** every Pro-only control carries the Pro badge, and with Pro deactivated the control is hidden or disabled, never a working-looking field that does nothing.

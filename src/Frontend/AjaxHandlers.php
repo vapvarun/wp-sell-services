@@ -1952,7 +1952,12 @@ class AjaxHandlers {
 		$conversation = $conversation_service->create_direct( $user_id, $vendor_id, $conv_subject, $service_id );
 
 		if ( $conversation ) {
+			// The bell entry and branded mail above are this inquiry's notice. Without
+			// this the message hook adds a second bell entry and a second email.
+			$mute_first_message = static fn(): bool => false;
+			add_filter( 'wpss_notify_message_participants', $mute_first_message );
 			$conversation_service->send_message( $conversation->id, $user_id, $message, $attachments );
+			remove_filter( 'wpss_notify_message_participants', $mute_first_message );
 		}
 
 		/**

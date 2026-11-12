@@ -29,6 +29,61 @@
 		setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
 	}
 
+	/**
+	 * Confirm and save a vendor status change; the one flow for the row buttons
+	 * and the drawer's select. Rejecting or suspending asks for an optional
+	 * reason, which reaches the vendor's email and the audit log.
+	 *
+	 * @param {number} vendorId  Vendor user id.
+	 * @param {string} newStatus active, pending, suspended or rejected.
+	 * @return {Promise<boolean>} false when cancelled or refused, so the caller can reset its control.
+	 */
+	function changeVendorStatus(vendorId, newStatus) {
+		var i18n = wpssVendors.i18n;
+		var asksReason = 'rejected' === newStatus || 'suspended' === newStatus;
+		var options = { tone: asksReason ? 'danger' : undefined };
+
+		if (asksReason) {
+			options.title = 'rejected' === newStatus ? i18n.rejectTitle : i18n.suspendTitle;
+			options.confirmText = 'rejected' === newStatus ? i18n.reject : i18n.suspend;
+			options.prompt = { label: i18n.statusReason, placeholder: i18n.statusReasonPlaceholder, maxLength: 500 };
+		}
+
+		return window.wpssConfirm(i18n.confirmStatusChange, options).then(function(result) {
+			// false is cancel; '' is a deliberate empty reason. Never test truthiness here.
+			if (false === result) {
+				return false;
+			}
+
+			return new Promise(function(resolve) {
+				$.ajax({
+					url: wpssVendors.ajaxUrl,
+					type: 'POST',
+					data: {
+						action: 'wpss_update_vendor_status',
+						nonce: wpssVendors.nonce,
+						vendor_id: vendorId,
+						status: newStatus,
+						reason: asksReason && 'string' === typeof result ? result : ''
+					},
+					success: function(response) {
+						if (response.success) {
+							location.reload();
+							resolve(true);
+							return;
+						}
+						wpssAdminNotice((response.data && response.data.message) || i18n.anErrorOccurredPleaseTryAgain, 'error');
+						resolve(false);
+					},
+					error: function() {
+						wpssAdminNotice(i18n.anErrorOccurredPleaseTryAgain, 'error');
+						resolve(false);
+					}
+				});
+			});
+		});
+	}
+
 	jQuery(function($) {
 		// Bulk actions: select-all + apply.
 		$('#cb-select-all-1, #cb-select-all-2').on('change', function() {
@@ -55,8 +110,16 @@
 			var confirmMsg = wpssVendors.i18n.bulkConfirm;
 			confirmMsg = confirmMsg.replace('%1$s', labels[bulkAction] || bulkAction).replace('%2$d', ids.length);
 			var $btn = $(this);
-			window.wpssConfirm( confirmMsg, { tone: 'suspend' === bulkAction ? 'danger' : undefined } ).then( function ( ok ) {
-			if ( ! ok ) {
+			var bulkOptions = { tone: 'suspend' === bulkAction ? 'danger' : undefined };
+			if ( 'suspend' === bulkAction ) {
+				// One optional reason for every vendor in the batch, as the row button asks.
+				bulkOptions.title = wpssVendors.i18n.suspendTitle;
+				bulkOptions.confirmText = wpssVendors.i18n.suspend;
+				bulkOptions.prompt = { label: wpssVendors.i18n.statusReason, placeholder: wpssVendors.i18n.statusReasonPlaceholder, maxLength: 500 };
+			}
+			window.wpssConfirm( confirmMsg, bulkOptions ).then( function ( ok ) {
+			// false is cancel; '' is a deliberate empty reason. Never test truthiness here.
+			if ( false === ok ) {
 				return;
 			}
 			$btn.prop('disabled', true);
@@ -67,6 +130,7 @@
 					action: 'wpss_bulk_update_vendor_status',
 					bulk_action: bulkAction,
 					vendor_ids: ids,
+					reason: 'suspend' === bulkAction && 'string' === typeof ok ? ok : '',
 					nonce: $('input[name="wpss_vendors_bulk_nonce"]').val()
 				},
 				success: function(response) {
@@ -90,38 +154,12 @@
 			e.preventDefault();
 
 			var $btn = $(this);
-			var vendorId = $btn.data('vendor-id');
-			var newStatus = $btn.data('status');
-
-			window.wpssConfirm(wpssVendors.i18n.confirmStatusChange, { tone: 'suspended' === newStatus ? 'danger' : undefined }).then(function(ok) {
-			if (!ok) {
-				return;
-			}
 
 			$btn.prop('disabled', true);
-
-			$.ajax({
-				url: wpssVendors.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'wpss_update_vendor_status',
-					nonce: wpssVendors.nonce,
-					vendor_id: vendorId,
-					status: newStatus
-				},
-				success: function(response) {
-					if (response.success) {
-						location.reload();
-					} else {
-						wpssAdminNotice(response.data.message || i18n.error, 'error');
-						$btn.prop('disabled', false);
-					}
-				},
-				error: function() {
-					wpssAdminNotice(i18n.error, 'error');
+			changeVendorStatus($btn.data('vendor-id'), $btn.data('status')).then(function(saved) {
+				if (!saved) {
 					$btn.prop('disabled', false);
 				}
-			});
 			});
 		});
 	});
@@ -132,7 +170,6 @@
 		var ajaxUrl = wpssVendors.ajaxUrl;
 		var nonce = wpssVendors.nonce;
 		var i18n = {
-			confirmStatusChange: wpssVendors.i18n.areYouSureYouWantToChangeThisVendorSStatus,
 			error: wpssVendors.i18n.anErrorOccurredPleaseTryAgain
 		};
 
@@ -574,32 +611,10 @@
 			}
 
 			var $select = $(this);
-			window.wpssConfirm(i18n.confirmStatusChange, { tone: 'suspended' === newStatus ? 'danger' : undefined }).then(function(ok) {
-			if (!ok) {
-				$select.val('');
-				return;
-			}
-
-			$.ajax({
-				url: ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'wpss_update_vendor_status',
-					nonce: nonce,
-					vendor_id: vendorId,
-					status: newStatus
-				},
-				success: function(response) {
-					if (response.success) {
-						location.reload();
-					} else {
-						wpssAdminNotice(response.data.message || i18n.error, 'error');
-					}
-				},
-				error: function() {
-					wpssAdminNotice(i18n.error, 'error');
+			changeVendorStatus(vendorId, newStatus).then(function(saved) {
+				if (!saved) {
+					$select.val('');
 				}
-			});
 			});
 		});
 	});

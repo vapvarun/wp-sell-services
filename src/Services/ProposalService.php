@@ -725,7 +725,7 @@ class ProposalService {
 		$sql = $wpdb->prepare(
 			"SELECT * FROM {$this->table}
 			WHERE {$where_clause}
-			ORDER BY {$order_by} {$order}
+			ORDER BY {$order_by} {$order}, id {$order}
 			LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 			$values
 		);
@@ -784,6 +784,21 @@ class ProposalService {
 		$proposals = $wpdb->get_results( $sql );
 
 		return array_map( array( $this, 'format_proposal' ), $proposals );
+	}
+
+	/**
+	 * Count every proposal on a request, the same rows get_by_request() pages through.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param int $request_id Request ID.
+	 * @return int
+	 */
+	public function count_by_request( int $request_id ): int {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is the class property.
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$this->table} WHERE request_id = %d", $request_id ) );
 	}
 
 	/**

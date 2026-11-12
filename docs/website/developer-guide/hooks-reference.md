@@ -406,6 +406,7 @@ guide; this is the complete index.
 | `wpss_email_button_text` | 2 | `templates/emails/cancellation-requested.php` *(+20 more)* |  |
 | `wpss_email_button_url` | 3 | `templates/emails/cancellation-requested.php` *(+20 more)* |  |
 | `wpss_email_from_name` | 1 | `src/Services/EmailService.php` | Filter the email "from" name for white-labelling. |
+| `wpss_email_from_address` | 1 | `src/Services/EmailService.php` | Filter the email "from" address for a plugin-specific sender. |
 | `wpss_email_header_vars` | 2 | `src/Services/EmailService.php` | Filter email header/template variables for white-labelling. |
 | `wpss_email_preference_categories` | 3 | `src/functions/notifications.php` | Filters the email preference categories offered to a user. |
 | `wpss_email_subject` | 3 | `src/Services/EmailService.php` | Filters the email subject line before sending. |
@@ -595,7 +596,7 @@ guide; this is the complete index.
 | `wpss_video_thumbnail_cache_ttl` | 2 | `src/functions/catalog.php` | Filter how long a video's poster URL is cached. |
 | `wpss_wallet_manager` | 1 | `src/functions/ledger.php` | Filter the wallet manager instance. |
 | `wpss_wallet_providers` | 1 | `src/Core/Plugin.php` *(+2 more)* | Filter the registered product types. |
-| `wpss_web_login_lock` | 1 | `src/Core/Plugin.php` | Filter whether the website sign-in form honours the lockout. |
+| `wpss_web_login_lock` | 1 | `src/Core/Plugin.php` | Deprecated 1.9.3, no-op: the sign-in lockout was removed. |
 | `wpss_wizard_sanitize_service_data` | 2 | `src/Frontend/ServiceWizard.php` | Filter the sanitized wizard payload. |
 | `wpss_wizard_service_data` | 2 | `src/Frontend/ServiceWizard.php` | Filter the wizard's Alpine seed data for an existing service. |
 | `wpss_zero_decimal_currencies` | 1 | `src/functions/money.php` | Filter the list of zero-decimal currency codes. |

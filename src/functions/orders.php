@@ -216,11 +216,17 @@ function wpss_generate_order_number(): string {
 /**
  * Check if user can view order.
  *
- * @param int      $order_id Order ID.
- * @param int|null $user_id  User ID. Defaults to current user.
+ * Anyone wpss_order_actor_role() names: the buyer, the vendor, an administrator
+ * or a member who manages orders (the shop manager). One answer for the order
+ * page, the shortcode and GET /orders/{id}.
+ *
+ * @since 1.9.3 Also admits wpss_manage_orders and takes an order row.
+ *
+ * @param int|object $order   Order ID or an order row with customer_id and vendor_id.
+ * @param int|null   $user_id User ID. Defaults to current user.
  * @return bool
  */
-function wpss_user_can_view_order( int $order_id, ?int $user_id = null ): bool {
+function wpss_user_can_view_order( $order, ?int $user_id = null ): bool {
 	if ( null === $user_id ) {
 		$user_id = get_current_user_id();
 	}
@@ -229,19 +235,11 @@ function wpss_user_can_view_order( int $order_id, ?int $user_id = null ): bool {
 		return false;
 	}
 
-	// Admins can view all orders.
-	if ( user_can( $user_id, 'manage_options' ) ) {
-		return true;
+	if ( ! is_object( $order ) ) {
+		$order = wpss_get_order( (int) $order );
 	}
 
-	$order = wpss_get_order( $order_id );
-
-	if ( ! $order ) {
-		return false;
-	}
-
-	// Order participants can view.
-	return (int) $order->customer_id === $user_id || (int) $order->vendor_id === $user_id;
+	return $order && '' !== wpss_order_actor_role( $order, $user_id );
 }
 
 /**

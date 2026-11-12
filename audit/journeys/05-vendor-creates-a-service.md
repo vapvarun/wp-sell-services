@@ -175,6 +175,8 @@ Publish an incomplete service from the editor and from the list.
 
 **Expect** the service stays a draft and an explicit notice names what is missing, visible only to someone who may edit that service.
 
+From Dashboard > My Services click **Publish** on a draft with no main image, and send `PUT /wpss/v1/services/{id}` `{status: publish}`. **Expect** an error naming the missing image on the dashboard, and 400 `wpss_not_publishable` with `data.errors` over REST; the service stays a draft and the other fields in the same PUT are saved. The same PUT carrying `thumbnail_id` publishes (or goes to Pending with moderation on) (card:10475574103).
+
 ### 7. My Services status tiles (card:10403854262)
 Open Dashboard > My Services.
 

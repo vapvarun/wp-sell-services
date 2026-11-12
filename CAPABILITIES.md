@@ -3,7 +3,7 @@
 Buyer-level truth for the store listing and for anyone deciding whether this
 plugin fits. Written to be read before purchase, not after.
 
-**Version**: 1.9.0 · **Last verified**: 2026-10-19 (rows changed in 1.9.0 checked against the release smoke walk)
+**Version**: 1.9.3 · **Last verified**: 2026-11-12 (header refreshed; rows were last walked for 1.9.0, and the 1.9.3 fixes are covered by contract tests, not yet by a release smoke walk)
 
 `YES` — ships and is exercised · `PARTIAL` — ships with a stated limit ·
 `NO` — does not ship, whatever a roadmap says.

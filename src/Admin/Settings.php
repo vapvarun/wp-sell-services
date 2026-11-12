@@ -1852,7 +1852,7 @@ class Settings {
 					do_settings_sections( 'wpss_general' );
 					?>
 					<div class="wpss-settings-section__footer">
-						<?php submit_button( __( 'Save General Settings', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+						<?php submit_button( __( 'Save General Settings', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-save-general' ) ); ?>
 					</div>
 				</form>
 			</div>
@@ -1876,7 +1876,7 @@ class Settings {
 					do_settings_sections( 'wpss_pages' );
 					?>
 					<div class="wpss-settings-section__footer">
-						<?php submit_button( __( 'Save Page Settings', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+						<?php submit_button( __( 'Save Page Settings', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-save-pages' ) ); ?>
 					</div>
 				</form>
 			</div>
@@ -2132,7 +2132,8 @@ class Settings {
 							),
 							'primary',
 							'submit',
-							false
+							false,
+							array( 'id' => 'wpss-save-gateway-' . sanitize_html_class( $gateway_id ) )
 						);
 						?>
 					</div>
@@ -2581,7 +2582,8 @@ class Settings {
 								),
 								'primary',
 								'submit',
-								false
+								false,
+								array( 'id' => 'wpss-save-' . sanitize_html_class( (string) ( $section['id'] ?? $section['option_group'] ) ) )
 							);
 							?>
 						</div>
@@ -2718,7 +2720,7 @@ class Settings {
 				</button>
 			<?php else : ?>
 				<p style="margin-bottom: 10px;">
-					<?php esc_html_e( 'Creates 20 sample services across 6 categories with 4 demo vendors.', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Creates sample services across 6 categories with 4 demo vendors.', 'wp-sell-services' ); ?>
 				</p>
 				<button type="button" class="button button-primary wpss-import-demo" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 					<?php esc_html_e( 'Import Demo Content', 'wp-sell-services' ); ?>
@@ -3199,8 +3201,9 @@ class Settings {
 				$option,
 				array(
 					// Clamp to the field's own min/max: the HTML attributes are client-only.
+					// (int), not absint(): absint() turned -4 into 4 before the clamp saw it.
 					'sanitize_callback' => static function ( $value ) use ( $args ) {
-						$value = ( $args['float'] ?? false ) ? (float) $value : absint( $value );
+						$value = ( $args['float'] ?? false ) ? (float) $value : (int) $value;
 						return max( $args['min'] ?? $value, min( $args['max'] ?? $value, $value ) );
 					},
 				)
@@ -4113,7 +4116,7 @@ class Settings {
 		$cluster              = sanitize_text_field( $input['cluster'] ?? 'mt1' );
 		$sanitized['cluster'] = '' !== $cluster ? $cluster : 'mt1';
 
-		$port              = absint( $input['port'] ?? 443 );
+		$port              = (int) ( $input['port'] ?? 443 ); // A negative falls back to 443, never flips to its positive twin.
 		$sanitized['port'] = ( $port >= 1 && $port <= 65535 ) ? $port : 443;
 
 		$sanitized['use_tls'] = ! empty( $input['use_tls'] );

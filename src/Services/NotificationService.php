@@ -515,16 +515,45 @@ class NotificationService {
 
 		// Generate context-specific messages based on status.
 		switch ( $new_status ) {
+			// A paid order (any rail: payment moves pending_payment here) is the new-order
+			// event, the same as EmailService::handle_status_change(). It fell to default
+			// and sent a second, generic "Order status updated" mail beside the branded pair.
+			case 'pending_requirements':
+				$this->notify_order_created( $order_id );
+				break;
+
+			// The one writer of the overdue rows: the cron sweep and a manual change both land here.
+			case 'late':
+				$this->create(
+					(int) $order->vendor_id,
+					'order_late',
+					__( 'Order Overdue', 'wp-sell-services' ),
+					__( 'Your order is past the delivery deadline. Please deliver as soon as possible.', 'wp-sell-services' ),
+					array( 'order_id' => $order_id )
+				);
+				$this->create(
+					(int) $order->customer_id,
+					'order_late',
+					__( 'Order Delayed', 'wp-sell-services' ),
+					__( 'Your order is past the expected delivery date. We have notified the vendor.', 'wp-sell-services' ),
+					array( 'order_id' => $order_id )
+				);
+				break;
+
 			case 'in_progress':
-				// Notify vendor that requirements are received.
+				// No requirement questions, or the buyer skipped them: nothing was "submitted" to name.
+				$has_brief = wpss_order_needs_requirements( $order ) && ! get_post_meta( $order_id, '_wpss_requirements_skipped', true );
 				$this->create(
 					$order->vendor_id,
 					'order_started',
 					__( 'Order ready to start', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
-							/* translators: 1: buyer name, 2: order number */
-							__( '%1$s has submitted the requirements for Order #%2$s.', 'wp-sell-services' ),
+							$has_brief
+								/* translators: 1: buyer name, 2: order number */
+								? __( '%1$s has submitted the requirements for Order #%2$s.', 'wp-sell-services' )
+								/* translators: 1: buyer name, 2: order number */
+								: __( '%1$s has paid for Order #%2$s.', 'wp-sell-services' ),
 							$buyer_name,
 							$order_number
 						)
@@ -543,8 +572,11 @@ class NotificationService {
 					__( 'Your Order is In Progress', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
-							/* translators: 1: vendor name, 2: order number */
-							__( '%1$s has received your requirements and started working on Order #%2$s.', 'wp-sell-services' ),
+							$has_brief
+								/* translators: 1: vendor name, 2: order number */
+								? __( '%1$s has received your requirements and started working on Order #%2$s.', 'wp-sell-services' )
+								/* translators: 1: vendor name, 2: order number */
+								: __( '%1$s has started working on Order #%2$s.', 'wp-sell-services' ),
 							$vendor_name,
 							$order_number
 						)
@@ -1872,7 +1904,7 @@ class NotificationService {
 				/* translators: %s: platform name */
 				__( 'Your vendor application on %s was not approved at this time.', 'wp-sell-services' ),
 				$platform_name
-			),
+			) . $this->reason_suffix( $reason ),
 			array( 'user_id' => $user_id )
 		);
 
@@ -1890,6 +1922,17 @@ class NotificationService {
 				'rejection_reason' => $reason,
 			)
 		);
+	}
+
+	/**
+	 * The admin's reason as a trailing sentence for an in-app message, or ''.
+	 *
+	 * @param string $reason Reason given by the admin.
+	 * @return string
+	 */
+	private function reason_suffix( string $reason ): string {
+		/* translators: %s: reason the admin gave */
+		return '' !== $reason ? ' ' . sprintf( __( 'Reason: %s', 'wp-sell-services' ), $reason ) : '';
 	}
 
 	/**
@@ -1921,7 +1964,7 @@ class NotificationService {
 				/* translators: %s: platform name */
 				__( 'Your vendor account on %s has been suspended. Your services are hidden and you cannot take new orders until it is reinstated.', 'wp-sell-services' ),
 				$platform_name
-			),
+			) . $this->reason_suffix( $reason ),
 			array( 'user_id' => $user_id )
 		);
 

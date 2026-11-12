@@ -21,7 +21,7 @@ site.
 | Field | What it does |
 |-------|-------------|
 | **Name / slug / description** | What vendors see when choosing |
-| **Price** and **billing period** | Monthly or yearly |
+| **Price** and **billing period** | Weekly, monthly or yearly |
 | **Max services** | Active services allowed. `-1` means unlimited |
 | **Max featured** | Featured slots allowed |
 | **Commission override** | Charge members a different platform rate |

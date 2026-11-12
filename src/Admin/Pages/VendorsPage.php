@@ -236,7 +236,11 @@ class VendorsPage {
 					/* translators: 1: bulk action label, 2: number of vendors. */
 					'bulkConfirm'                        => __( '%1$s %2$d vendor(s)? This applies to every selected row.', 'wp-sell-services' ),
 					'confirmStatusChange'                => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
-					'areYouSureYouWantToChangeThisVendorSStatus' => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
+					'reject'                             => __( 'Reject', 'wp-sell-services' ),
+					'rejectTitle'                        => __( 'Reject vendor application', 'wp-sell-services' ),
+					'suspendTitle'                       => __( 'Suspend vendor', 'wp-sell-services' ),
+					'statusReason'                       => __( 'Reason (optional)', 'wp-sell-services' ),
+					'statusReasonPlaceholder'            => __( 'The vendor sees this in their email. Say what needs to change.', 'wp-sell-services' ),
 					'pleaseEnterACommissionRate'         => __( 'Please enter a commission rate.', 'wp-sell-services' ),
 					'resetThisVendorsCommission'         => __( 'Reset this vendor\'s commission rate to the global rate?', 'wp-sell-services' ),
 					'resetToGlobalCommissionRate'        => __( 'Reset to global commission rate?', 'wp-sell-services' ),
@@ -1319,7 +1323,10 @@ class VendorsPage {
 			wp_send_json_error( array( 'message' => __( 'Invalid status.', 'wp-sell-services' ) ) );
 		}
 
-		if ( ! $this->vendor_service->set_status( $vendor_id, $status ) ) {
+		// Optional, for a rejection or suspension: it reaches the vendor's email and the audit log.
+		$reason = mb_substr( sanitize_textarea_field( wp_unslash( (string) ( $_POST['reason'] ?? '' ) ) ), 0, 500 );
+
+		if ( ! $this->vendor_service->set_status( $vendor_id, $status, $reason ) ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to update vendor status.', 'wp-sell-services' ) ) );
 		}
 
@@ -1364,11 +1371,12 @@ class VendorsPage {
 		}
 
 		$status  = $status_map[ $bulk_action ];
+		$reason  = 'suspended' === $status ? mb_substr( sanitize_textarea_field( wp_unslash( (string) ( $_POST['reason'] ?? '' ) ) ), 0, 500 ) : '';
 		$success = 0;
 		$failed  = array();
 
 		foreach ( $ids as $vendor_id ) {
-			if ( $this->vendor_service->set_status( $vendor_id, $status ) ) {
+			if ( $this->vendor_service->set_status( $vendor_id, $status, $reason ) ) {
 				++$success;
 			} else {
 				$failed[] = sprintf( '#%d', $vendor_id );

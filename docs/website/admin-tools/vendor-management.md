@@ -66,6 +66,10 @@ If you want to screen vendors before they can sell, enable vendor verification:
 
 The vendor receives a notification that they can now start selling.
 
+### Rejecting an Application
+
+Click **Reject** on a pending applicant. The dialog asks for an optional reason. Whatever you type is shown in the rejection email and the applicant's notification, and kept in the audit log, so tell them what to change before they apply again.
+
 ## Custom Commission Per Vendor
 
 By default, all vendors share the same global commission rate. But you can override it for any individual vendor:
@@ -83,6 +87,8 @@ If a vendor violates your policies or you need to temporarily restrict their acc
 
 1. Click the vendor's name
 2. Change their status to **Suspended**
+
+You can give an optional reason when you suspend; it is shown in the suspension email and notification, and kept in the audit log.
 
 Suspended vendors cannot receive new orders, but their existing active orders continue to completion. You can reactivate them at any time by setting their status back to **Active**.
 

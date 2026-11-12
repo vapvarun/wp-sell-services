@@ -27,7 +27,7 @@ A helper goes in the file for its domain. Never create `misc`, `utils` or `helpe
 | File | Holds |
 |---|---|
 | `core.php` | platform name, plugin instance, logging, generic sanitizers, admin/enqueue/form helpers, `wpss_validate_registry()` |
-| `security.php` | secrets, app tokens, login lockout, client IP |
+| `security.php` | secrets, app tokens, client IP |
 | `settings.php` | option readers |
 | `money.php` | formatting, currency registry, minor units, tax, order limits |
 | `ledger.php` | ledger rows, refunds, commission base, wallet balance |

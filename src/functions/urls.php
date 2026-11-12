@@ -59,13 +59,13 @@ function wpss_get_active_store_page_id( string $key ): int {
  * @return string
  */
 function wpss_get_dashboard_url( string $section = '' ): string {
-	// First check wpss_pages option (newer, preferred).
-	$pages          = get_option( 'wpss_pages', array() );
-	$dashboard_page = (int) ( $pages['dashboard'] ?? 0 );
+	// wpss_get_page_id() drops a trashed or drafted page, so no link points at a 404.
+	$dashboard_page = wpss_get_page_id( 'dashboard' );
 
 	// Fallback to legacy option for backward compatibility.
 	if ( ! $dashboard_page ) {
-		$dashboard_page = (int) get_option( 'wpss_dashboard_page' );
+		$legacy         = (int) get_option( 'wpss_dashboard_page' );
+		$dashboard_page = $legacy && 'publish' === get_post_status( $legacy ) ? $legacy : 0;
 	}
 
 	if ( ! $dashboard_page ) {

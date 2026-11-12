@@ -23,7 +23,7 @@ Open the first service, choose Basic, add one add-on, pay (standalone: 06; woo: 
 ### 2. Buyer answers the requirements
 Answer both questions, attach the file, submit.
 
-**Expect** the order moves to In Progress, the delivery clock starts now, the vendor gets one notification and one email, and the answers and the file are on the order for both people. Submitting again changes nothing. REST twin: `POST /orders/{id}/requirements`.
+**Expect** the order moves to In Progress, the delivery clock starts now, the vendor gets one notification and one email (Requirements Submitted, not a second Now In Progress; card:10475484314), the buyer gets Now In Progress, and the answers and the file are on the order for both people. Submitting again changes nothing. REST twin: `POST /orders/{id}/requirements`.
 
 ### 3. A buyer who has nothing to say
 The website has no skip button (it went with the old checkout script in 1.0.x); skip is an API action for apps. On a second Basic order, call `POST /orders/{id}/requirements/skip` twice as the buyer.

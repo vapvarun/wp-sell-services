@@ -20,6 +20,9 @@ Add, edit, feature and remove an item.
 ### 3. Earnings and Payouts
 **Expect** available, pending clearance and withdrawn balances add up to the ledger; the period selector changes the figures; the CSV export (Pro) carries the same rows and a summary; money formats follow the site currency.
 
+### 3a. Email preferences and the onboarding tour
+Dashboard > Settings > Email preferences: turn one category off, save, reload. **Expect** it stays off and that category sends no mail. The vendor's first dashboard visit starts the tour once; dismissing it keeps it dismissed.
+
 ### 4. Analytics
 **Expect** figures agree with Sales Orders for the same period; an empty period shows a designed empty state.
 

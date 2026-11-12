@@ -265,6 +265,27 @@ Three auto-calculated levels plus one admin-granted: New Vendor (default), Risin
 
 == Changelog ==
 
+= 1.9.3 - November 2026 =
+
+Clearer emails, honest publish errors, and a demo that looks like a marketplace.
+
+* Improve  - Rejecting or suspending a vendor asks for an optional reason, shown in their email and notification and kept in the audit log.
+* Improve  - An administrator becomes a vendor the first time they create a service or click Start Selling, so the site owner is no longer listed and counted as a vendor by default. Existing vendor profiles are unchanged.
+* Improve  - Import Demo Content creates 14 distinct services, each sold by a demo vendor for its category, never by the administrator.
+* Improve  - Demo service images can be matched to their category by adding category-named files to the demo media folder.
+* Improve  - GET /buyer-requests/{id}/proposals accepts page and per_page and returns X-WP-Total, and still returns up to 50 when not paged.
+* Improve  - A new wpss_email_from_address filter sets a plugin-specific sender address, and WooCommerce's sender is used only when WooCommerce is the active store rail, not whenever it is installed.
+* Improve  - The sign-in lockout is removed: wrong passwords no longer lock an account on wp-login.php or in the app, so a security plugin or your host owns that. The app login keeps its per-address rate limit, and the wpss_web_login_lock filter is now a deprecated no-op.
+* Fix      - Marking an order paid no longer sends buyer and vendor a third "Order status updated" email beside the order confirmation, on every payment rail.
+* Fix      - The vendor gets one email when the buyer submits requirements, not a second "Now In Progress" email.
+* Fix      - Publishing an incomplete service from the vendor dashboard or the REST API now says what is missing; updating through the REST API answers 400 with the reasons, and creating one returns the draft with the reasons in notices.
+* Fix      - Every REST date is ISO 8601 over HTTP, including dispute status notes, and buyer request dates are UTC.
+* Fix      - A negative number posted to an Orders & Disputes setting saves as the field minimum instead of its positive value.
+* Fix      - Each Save button on the Settings page and the order screen has its own id.
+* Fix      - The order number search field and its Search button are the same height on My Orders, Sales and the notifications filter.
+* Fix      - The service wizard highlights the step you are on when editing a service, and marks it for screen readers.
+* Dev      - The wpss_vendor_status_updated action passes the admin's reason as a fourth argument, and wpss_submit_button() accepts an optional button id.
+
 = 1.9.2 - November 2026 =
 
 Payments recorded from outside the plugin, secrets in wp-config.php, and one look on every page.

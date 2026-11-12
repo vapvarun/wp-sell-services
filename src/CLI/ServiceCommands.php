@@ -513,7 +513,7 @@ class ServiceCommands extends WP_CLI_Command {
 				'post_content' => $data['content'],
 				'post_excerpt' => $data['excerpt'] ?? '',
 				'post_status'  => 'draft', // Published below once the meta is in.
-				'post_author'  => get_current_user_id() ?: 1,
+				'post_author'  => ! empty( $data['author'] ) ? (int) $data['author'] : ( get_current_user_id() ?: 1 ),
 			)
 		);
 
@@ -592,7 +592,7 @@ class ServiceCommands extends WP_CLI_Command {
 		// in Draft (Basecamp 10350889943, 10375511072). Same bundled demo
 		// media the marketplace seeder uses.
 		if ( ! has_post_thumbnail( $post_id ) ) {
-			$image = ( new \WPSellServices\Demo\MarketplaceSeeder() )->sideload_image( 'wpss-demo-service-' . $post_id, 800, 600, (int) $post_id, (string) $data['title'] );
+			$image = ( new \WPSellServices\Demo\MarketplaceSeeder() )->sideload_image( 'wpss-demo-service-' . $post_id, 800, 600, (int) $post_id, (string) $data['title'], (string) ( $data['category'] ?? '' ) );
 			if ( $image ) {
 				update_post_meta( $post_id, '_wpss_gallery', array( $image ) );
 				set_post_thumbnail( $post_id, $image );

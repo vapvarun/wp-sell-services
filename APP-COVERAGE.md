@@ -4,32 +4,33 @@ Team-facing. For the buyer-facing "can it do X" answers, read
 [`CAPABILITIES.md`](CAPABILITIES.md) instead — that one is written to be read
 before purchase and deliberately carries no route detail.
 
-**Measured 2026-08-09** from a running site with Free **and** Pro active.
-Regenerate rather than edit — see [Re-measuring](#re-measuring) at the bottom.
+**Measured 2026-11-12** (Free 1.9.3 branch, Pro active) with the app repo's
+`scripts/coverage.py`; first measured 2026-08-09. Regenerate rather than edit —
+see [Re-measuring](#re-measuring) at the bottom.
 
 | | |
 |---|---|
-| REST paths registered | **183** (260 distinct path+method pairs) |
-| Called by the app | **76** — 41% of paths |
-| **Genuine gaps** | **58** |
-| Database tables | 26 — 19 free, 7 pro |
+| REST paths registered | **190** (275 distinct path+method pairs) |
+| Called by the app | **76** — 40% of paths |
+| **Genuine gaps** | **66** |
+| Database tables | 27 — 20 free, 7 pro |
 | App screens | 23, across 13 API modules |
 
 ---
 
-## The 41% is mostly deliberate
+## The 40% is mostly deliberate
 
 Quoting coverage alone makes a boundary we chose on purpose look like neglect.
-Of the 107 paths the app does not call:
+Of the 114 paths the app does not call:
 
 | | Count | Why |
 |---|---:|---|
-| Owner-only | 25 | Moderation queues, commission rules, audit log, white-label, payout runs. A member's phone has no business calling them. |
+| Owner-only | 24 | Moderation queues, commission rules, audit log, white-label, payout runs. A member's phone has no business calling them. |
 | Payment rail | 12 | The app opens the marketplace's own hosted checkout instead of embedding a card form — which is also what keeps it outside In-App Purchase. |
 | Alias | 6 | Duplicate paths the app reaches under another name. |
 | Infrastructure | 3 | Namespace index, batch endpoint, realtime auth. |
 | Web-only | 3 | Server-rendered grid, web dashboard stats, the onboarding tour. |
-| **Gap** | **58** | Member-facing capability the plugins serve and the app cannot reach. |
+| **Gap** | **66** | Member-facing capability the plugins serve and the app cannot reach. |
 
 Every one of the app's 87 call sites matched a real route with a method that
 exists, so the app currently calls nothing that isn't there.
@@ -89,7 +90,16 @@ and a Pusher-compatible realtime layer (off by default) — all web-side.
 
 ---
 
-## The 58 gaps, grouped
+## The gaps, grouped
+
+Grouped at the 2026-08-09 measure (58). The 2026-11-12 measure adds
+`/auth/sessions`, `/auth/sessions/{id}`, `/milestones/{id}/request-revision`,
+`/orders/{id}/files/{id}`, `/orders/{id}/mark-paid`, `/orders/{id}/receipts`,
+`/orders/{id}/reorder`, `/reviews/import`, `/services/limits`,
+`/services/{id}/quote`, `/vendors/{id}/balance/write-off` and
+`/withdrawals/profile`, and drops `/reviews/{id}/helpful` and the three
+`/storage/*` paths (66 in all). `GET /buyer-requests/{id}/proposals`, which the
+app calls, now honours `page` / `per_page` and sends `X-WP-Total`.
 
 | Group | Count |
 |---|---:|

@@ -446,7 +446,7 @@ class TemplateLoader {
 
 		// Check user has access (customer, vendor, or admin).
 		$user_id = get_current_user_id();
-		if ( $order->customer_id !== $user_id && $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+		if ( ! wpss_user_can_view_order( $order, $user_id ) ) {
 			wp_die( esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ), '', array( 'response' => 403 ) );
 		}
 

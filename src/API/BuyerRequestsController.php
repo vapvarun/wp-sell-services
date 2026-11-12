@@ -17,7 +17,6 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
-use WPSellServices\Models\BuyerRequest;
 use WPSellServices\Services\BuyerRequestService;
 use WPSellServices\Services\ProposalService;
 
@@ -213,7 +212,7 @@ class BuyerRequestsController extends RestController {
 						],
 						'status'      => [
 							'type' => 'string',
-							'enum' => BuyerRequest::get_filterable_statuses(),
+							'enum' => \WPSellServices\Services\BuyerRequestService::get_buyer_settable_statuses(),
 						],
 					],
 				],
@@ -240,9 +239,12 @@ class BuyerRequestsController extends RestController {
 					'callback'            => [ $this, 'get_proposals' ],
 					'permission_callback' => [ $this, 'check_owner_permission' ],
 					'args'                => [
-						'id' => [
+						'id'       => [
 							'validate_callback' => [ $this, 'validate_id' ],
 						],
+						'page'     => $this->get_collection_params()['page'],
+						// 50 is what the route returned before it paged, so an unpaged client sees no change.
+						'per_page' => array_merge( $this->get_collection_params()['per_page'], [ 'default' => 50 ] ),
 					],
 				],
 			]
@@ -672,11 +674,18 @@ class BuyerRequestsController extends RestController {
 	 */
 	public function get_proposals( $request ) {
 		$request_id = (int) $request->get_param( 'id' );
-		$proposals  = $this->proposal_service->get_by_request( $request_id );
+		$paging     = $this->get_pagination_args( $request );
+		$proposals  = $this->proposal_service->get_by_request(
+			$request_id,
+			[
+				'limit'  => $paging['per_page'],
+				'offset' => $paging['offset'],
+			]
+		);
 
 		$data = array_map( [ $this, 'prepare_proposal_for_response' ], $proposals );
 
-		return new WP_REST_Response( $data );
+		return $this->paginated_response( $data, $this->proposal_service->count_by_request( $request_id ), $paging['page'], $paging['per_page'] );
 	}
 
 	/**

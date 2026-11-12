@@ -40,6 +40,7 @@ class BuyerRequestService {
 	public const STATUS_HIRED     = 'hired';
 	public const STATUS_EXPIRED   = 'expired';
 	public const STATUS_CANCELLED = 'cancelled';
+	public const STATUS_CLOSED    = 'closed';
 
 	/**
 	 * Budget types.
@@ -163,8 +164,16 @@ class BuyerRequestService {
 			}
 		}
 
+		// Status goes through update_status(): its allow-list and its changed hook.
+		$new_status = isset( $data['status'] ) ? sanitize_key( $data['status'] ) : '';
+		unset( $data['status'] );
+
 		// Update meta.
 		$this->save_meta( $request_id, $data );
+
+		if ( '' !== $new_status && ( ! in_array( $new_status, self::get_buyer_settable_statuses(), true ) || ! $this->update_status( $request_id, $new_status ) ) ) {
+			return false;
+		}
 
 		// Update category. Accept both 'category_id' and 'category' keys.
 		$category_id = $data['category_id'] ?? ( $data['category'] ?? null );
@@ -267,7 +276,6 @@ class BuyerRequestService {
 			'budget_min'    => 'floatval',
 			'budget_max'    => 'floatval',
 			'delivery_days' => 'absint',
-			'status'        => 'sanitize_key',
 			'expires_at'    => 'sanitize_text_field',
 		);
 
@@ -369,7 +377,7 @@ class BuyerRequestService {
 			'attachments'     => get_post_meta( $post->ID, '_wpss_attachments', true ) ?: array(),
 			'skills_required' => get_post_meta( $post->ID, '_wpss_skills_required', true ) ?: array(),
 			'expires_at'      => get_post_meta( $post->ID, '_wpss_expires_at', true ),
-			'created_at'      => $post->post_date,
+			'created_at'      => $post->post_date_gmt, // UTC: REST stamps it +00:00.
 			'proposal_count'  => $this->get_proposal_count( $post->ID ),
 		);
 
@@ -619,6 +627,18 @@ class BuyerRequestService {
 	}
 
 	/**
+	 * Statuses a buyer may set by hand (REST PUT, app). Hired is only reached
+	 * by accepting a proposal, and expired by the expiry job.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @return array<int, string>
+	 */
+	public static function get_buyer_settable_statuses(): array {
+		return array( self::STATUS_OPEN, self::STATUS_CLOSED );
+	}
+
+	/**
 	 * Update request status.
 	 *
 	 * @param int    $request_id Request post ID.
@@ -632,6 +652,7 @@ class BuyerRequestService {
 			self::STATUS_HIRED,
 			self::STATUS_EXPIRED,
 			self::STATUS_CANCELLED,
+			self::STATUS_CLOSED,
 		);
 
 		if ( ! in_array( $status, $valid_statuses, true ) ) {

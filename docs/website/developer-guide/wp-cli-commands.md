@@ -35,7 +35,9 @@ listings only. `marketplace` builds a working marketplace: multiple vendors with
 profiles and portfolios, buyers, orders across the whole lifecycle, reviews,
 buyer requests with proposals, and conversations. Use `marketplace` for staging
 sites, theme testing, and client demos; use `create` when you just need catalog
-volume.
+volume. `create --count` cycles the 14 templates and rewords the repeats; the
+**Settings > System > Import Demo Content** button imports each template once,
+filed under the demo vendor for its category.
 
 `demo delete` and **Settings > System > Delete Demo Content** run the same
 routine (`wpss_delete_demo_content()`): flagged services, buyer requests and

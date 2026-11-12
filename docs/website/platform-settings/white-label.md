@@ -67,6 +67,7 @@ Branding is applied through filters, so you can extend or override it:
 |-----------------|---------|
 | `wpss_admin_menu_label` | The admin menu label |
 | `wpss_email_from_name` | Sender name on transactional emails |
+| `wpss_email_from_address` | Sender address on transactional emails (use an address on your own domain) |
 | `wpss_email_header_vars` | Logo and colours in email headers |
 | `wpss_show_powered_by` | Whether the attribution renders |
 | `wpss_dashboard_header` | Inject markup into the branded dashboard header |

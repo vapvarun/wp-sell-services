@@ -890,7 +890,7 @@ class Shortcodes {
 		$user_id = get_current_user_id();
 
 		// Check permission.
-		if ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+		if ( ! wpss_user_can_view_order( $order, $user_id ) ) {
 			return '<div class="wpss-notice wpss-notice--error">' . esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ) . '</div>';
 		}
 

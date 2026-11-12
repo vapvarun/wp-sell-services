@@ -779,7 +779,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			wp_send_json_success(
 				array(
 					'order_ids'    => $order_ids,
-					'redirect_url' => add_query_arg( 'tab', 'orders', wpss_get_page_url( 'dashboard' ) ),
+					'redirect_url' => wpss_get_dashboard_url( 'orders' ),
 					'message'      => __( 'Your orders have been placed. Please complete your payment using the instructions for each order.', 'wp-sell-services' ),
 				)
 			);

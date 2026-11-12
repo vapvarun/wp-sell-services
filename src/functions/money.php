@@ -526,7 +526,7 @@ function wpss_get_currency_format( string $currency = '' ): string {
 	 * @param string $symbol   Currency symbol.
 	 * @param string $currency Currency code.
 	 */
-	return apply_filters( 'wpss_currency_format', $symbol . '%s', $symbol, $currency );
+	return apply_filters( 'wpss_currency_format', 'after' === wpss_get_currency_position() ? '%s' . $symbol : $symbol . '%s', $symbol, $currency );
 }
 
 /**

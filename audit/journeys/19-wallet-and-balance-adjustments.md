@@ -9,10 +9,10 @@ There is no "pay with wallet credit" at checkout: no wallet gateway exists in Fr
 
 ## Steps
 
-### 1. Provider choice
-Settings > Payouts > Wallet Provider.
+### 1. Provider choice (the notice is Pro, licensed; card:10475574286)
+Settings > Payouts > Wallet Provider. Seed an inactive provider with `wp option update wpss_wallet_provider terawallet`.
 
-**Expect** Internal is offered; choosing a provider whose plugin is inactive falls back to Internal with an admin notice, and the vendor's balance is unchanged.
+**Expect** Internal is offered and the vendor's balance is unchanged. With Pro active and licensed, the inactive provider falls back to Internal with an admin notice. Free alone has only the Internal provider and reads no other, so it shows no notice; that is correct, not a missing one.
 
 ### 2. Balance agrees everywhere
 As a vendor with earnings open Earnings & Payouts; as admin open that vendor's user profile.

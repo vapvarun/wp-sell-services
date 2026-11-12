@@ -125,24 +125,13 @@ Only sign-ins this plugin issued are expired or listed. An application password
 a member created by hand in their WordPress profile belongs to whatever script
 they built with it and is left alone.
 
-**Repeated wrong passwords lock the account.** Five failed sign-ins for one
-account within 15 minutes lock it for 15 minutes, answered with
-`423 wpss_account_locked`. The counter is per account, not per address - it
-does not matter how many IPs the attempts came from - and it sits alongside
-the per-IP limiter (`429 rate_limit_exceeded`, 5 attempts per 5 minutes). A
-successful sign-in clears the counter. Show the message and stop; retrying
-will not help.
+**Repeated wrong passwords are rate limited, not locked.** `/auth/login` is
+held to 5 attempts per address per 5 minutes (`429 rate_limit_exceeded`). The
+plugin does not lock accounts, on the app or on `wp-login.php`: that belongs to
+a security plugin or the host. (Before 1.9.3 an account locked for 15 minutes
+after five wrong passwords, `423 wpss_account_locked`.)
 
-**The website counts against the same total.** Wrong passwords at
-`wp-login.php` and wrong passwords at `/auth/login` feed one counter, so five
-of either - or a mix - lock the account on both rails, and a correct password
-is refused in a browser while the app reports it locked. A site whose security
-plugin already limits failed sign-ins can hand the login form back to it with
-`add_filter( 'wpss_web_login_lock', '__return_false' )`; the API lockout above
-is unaffected.
-
-**A second factor plugs in after the password.** Once the password and the
-lockout have both passed, `wpss_auth_login_challenge` runs before a token is
+**A second factor plugs in after the password.** Once the password has passed, `wpss_auth_login_challenge` runs before a token is
 issued:
 
 ```php

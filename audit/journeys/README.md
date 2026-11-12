@@ -90,7 +90,7 @@ Walk dates and results are recorded in `.qa-results/walks.json`, not in these fi
 
 ## Every published feature has a journey
 
-Each row of the public feature catalog (`docs/website/feature-catalog.md`) and the journey that walks it.
+Each row of the public feature catalog (`docs/website/getting-started/feature-catalog.md`) and the journey that walks it.
 
 | Feature catalog row | Journey |
 |---|---|
@@ -138,7 +138,7 @@ Each row of the public feature catalog (`docs/website/feature-catalog.md`) and t
 ## Not yet written
 
 Recurring services only: switched off, with no setting to turn them on, so there is nothing an owner can walk.
-Every other feature in `docs/website/feature-catalog.md` has a journey above; `docs/qa/FEATURE-CATALOG.md` maps each row to it.
+Every other feature in `docs/website/getting-started/feature-catalog.md` has a journey above; `docs/qa/FEATURE-CATALOG.md` maps each row to it.
 
 ## Two things these journeys have taught, the hard way
 

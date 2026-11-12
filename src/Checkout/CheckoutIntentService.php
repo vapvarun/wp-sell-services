@@ -981,7 +981,7 @@ class CheckoutIntentService {
 		return array(
 			'success'      => true,
 			'order_ids'    => array_map( 'intval', $order_ids ),
-			'redirect_url' => add_query_arg( 'tab', 'orders', wpss_get_page_url( 'dashboard' ) ),
+			'redirect_url' => wpss_get_dashboard_url( 'orders' ),
 		);
 	}
 

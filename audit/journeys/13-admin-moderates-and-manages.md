@@ -20,7 +20,11 @@ Settings > Vendor Settings > moderate reviews on. A buyer leaves a review.
 ### 3. Vendor management
 Vendors list: filter All, Active, Pending, Suspended; approve a pending vendor (Require Verification on).
 
-**Expect** stats match the list, filters keep paging, approval emails the vendor, and a suspended vendor cannot start new work (see journey 05 part 2).
+**Expect** stats match the list, filters keep paging, approval emails the vendor, and a suspended vendor cannot start new work (see journey 05 part 2). Reject (row button and the drawer's status select) and Suspend ask for an optional reason; the reason is in the vendor's email and notification and the audit row; Cancel or Esc changes nothing and resets the select (card:10475573933). On a fresh install the administrator is NOT in the Vendors list or the counts until they create a service or click Start Selling (card:10475419083).
+
+Manual refunds (card:10475574528): cancel an offline-paid order. **Expect** a dashboard notice, the order's Mark refund sent postbox and an admin notification; Mark refund sent clears all three.
+
+Admin manual order: create an order for a buyer from Sell Services > Orders. **Expect** it appears for the buyer and the vendor with the right totals and one notification each.
 
 ### 4. Member reports
 A buyer uses Report this service on a service page and Report this vendor on a profile.
@@ -35,5 +39,6 @@ A buyer uses Report this service on a service page and Report this vendor on a p
 - A service entering the queue sends the admin `emails/moderation-pending`; the decision sends the vendor `emails/moderation-response`.
 - Vendor application: approve sends `emails/vendor-approved`, reject sends `emails/vendor-rejected` with the reason; the Contact action sends `emails/vendor-contact`.
 - `POST /reports/{id}/resolve` closes a member report once, records who resolved it, and tells the reporter.
+- Account deletion and privacy: Tools > Export Personal Data and Erase Personal Data for a buyer include and erase the plugin's data; deleting a vendor with orders keeps the orders readable with the member shown as deleted.
 
 **Expect** nothing in the queue is actionable twice, and each mail reaches the right person only.

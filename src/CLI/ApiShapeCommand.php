@@ -104,7 +104,9 @@ class ApiShapeCommand {
 				continue;
 			}
 
-			$response = rest_do_request( new \WP_REST_Request( 'GET', $path ) );
+			// rest_do_request() skips rest_post_dispatch; run it so the gate measures what HTTP serves.
+			$request  = new \WP_REST_Request( 'GET', $path );
+			$response = apply_filters( 'rest_post_dispatch', rest_ensure_response( rest_do_request( $request ) ), rest_get_server(), $request );
 
 			if ( $response->is_error() || $response->get_status() >= 400 ) {
 				$skipped[] = $path . ' (HTTP ' . $response->get_status() . ')';

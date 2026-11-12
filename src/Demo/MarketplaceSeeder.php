@@ -643,7 +643,7 @@ class MarketplaceSeeder {
 				// _gallery_ids expects).
 				$gallery = array();
 				for ( $g = 0; $g < 3; $g++ ) {
-					$attachment_id = $this->sideload_image( 'wpss-service-' . $post_id . '-' . $g, 800, 600, $post_id, $title );
+					$attachment_id = $this->sideload_image( 'wpss-service-' . $post_id . '-' . $g, 800, 600, $post_id, $title, (string) $category );
 					if ( $attachment_id ) {
 						$gallery[] = $attachment_id;
 					}
@@ -1577,9 +1577,13 @@ class MarketplaceSeeder {
 	 * @param int    $height Intended height (used for the placeholder fallback).
 	 * @param int    $parent_id Parent post ID to attach to (0 for none).
 	 * @param string $label  Human label used for alt text + placeholder fallback.
+	 * @param string $category Service category name. A landscape image is picked
+	 *                         from `services/<category-slug>-N.jpg` when such files
+	 *                         ship, so a logo service does not show a field of hay;
+	 *                         otherwise from the general `service-N.jpg` pool.
 	 * @return int Attachment ID, or 0 when images are disabled or all paths fail.
 	 */
-	public function sideload_image( string $seed, int $width, int $height, int $parent_id, string $label ): int {
+	public function sideload_image( string $seed, int $width, int $height, int $parent_id, string $label, string $category = '' ): int {
 		if ( ! $this->seed_images ) {
 			return 0;
 		}
@@ -1588,8 +1592,14 @@ class MarketplaceSeeder {
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 
-		$pool  = ( $width === $height ) ? 'avatars' : 'services';
-		$files = glob( WPSS_PLUGIN_DIR . 'assets/demo-media/' . $pool . '/*.jpg' );
+		$dir = WPSS_PLUGIN_DIR . 'assets/demo-media/';
+
+		if ( $width === $height ) {
+			$files = glob( $dir . 'avatars/*.jpg' );
+		} else {
+			$themed = '' !== $category ? glob( $dir . 'services/' . sanitize_title( $category ) . '-*.jpg' ) : array();
+			$files  = $themed ? $themed : glob( $dir . 'services/service-*.jpg' );
+		}
 
 		if ( ! empty( $files ) ) {
 			sort( $files );

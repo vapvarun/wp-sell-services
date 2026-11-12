@@ -623,26 +623,8 @@ class ServiceOrder {
 	 * @return array<string, string>
 	 */
 	public static function get_statuses(): array {
-		return array(
-			self::STATUS_PENDING_PAYMENT        => __( 'Pending Payment', 'wp-sell-services' ),
-			self::STATUS_PENDING                => __( 'Pending', 'wp-sell-services' ),
-			self::STATUS_ACCEPTED               => __( 'Accepted', 'wp-sell-services' ),
-			self::STATUS_REJECTED               => __( 'Rejected', 'wp-sell-services' ),
-			self::STATUS_PENDING_REQUIREMENTS   => __( 'Waiting for Requirements', 'wp-sell-services' ),
-			self::STATUS_REQUIREMENTS_SUBMITTED => __( 'Requirements submitted', 'wp-sell-services' ),
-			self::STATUS_IN_PROGRESS            => __( 'In Progress', 'wp-sell-services' ),
-			self::STATUS_DELIVERED              => __( 'Delivered', 'wp-sell-services' ),
-			self::STATUS_PENDING_APPROVAL       => __( 'Pending Approval', 'wp-sell-services' ),
-			self::STATUS_REVISION_REQUESTED     => __( 'Revision requested', 'wp-sell-services' ),
-			self::STATUS_COMPLETED              => __( 'Completed', 'wp-sell-services' ),
-			self::STATUS_CANCELLED              => __( 'Cancelled', 'wp-sell-services' ),
-			self::STATUS_DISPUTED               => __( 'Disputed', 'wp-sell-services' ),
-			self::STATUS_ON_HOLD                => __( 'On Hold', 'wp-sell-services' ),
-			self::STATUS_LATE                   => __( 'Late', 'wp-sell-services' ),
-			self::STATUS_CANCELLATION_REQUESTED => __( 'Cancellation requested', 'wp-sell-services' ),
-			self::STATUS_REFUNDED               => __( 'Refunded', 'wp-sell-services' ),
-			self::STATUS_PARTIALLY_REFUNDED     => __( 'Partially Refunded', 'wp-sell-services' ),
-		);
+		// One list, filterable through wpss_order_statuses, for admin, email and dashboard alike.
+		return wpss_get_order_statuses();
 	}
 
 	/**

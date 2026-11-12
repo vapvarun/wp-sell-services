@@ -174,17 +174,22 @@ function wpss_sanitize_date( string $value ): ?string {
  * @param string $text Button label.
  * @param string $type Button type passed through to submit_button().
  * @param string $name Button name attribute.
+ * @param string $id   Button id. Empty uses the name, as core does; pass one
+ *                     when the screen has more than one form.
  * @return void
  */
-function wpss_submit_button( string $text, string $type = 'primary', string $name = 'submit' ): void {
+function wpss_submit_button( string $text, string $type = 'primary', string $name = 'submit', string $id = '' ): void {
+	$id = '' !== $id ? $id : $name;
+
 	if ( function_exists( 'submit_button' ) ) {
-		submit_button( $text, $type, $name, false );
+		submit_button( $text, $type, $name, false, array( 'id' => $id ) );
 		return;
 	}
 
 	printf(
-		'<button type="submit" name="%1$s" id="%1$s" class="button button-%2$s">%3$s</button>',
+		'<button type="submit" name="%1$s" id="%2$s" class="button button-%3$s">%4$s</button>',
 		esc_attr( $name ),
+		esc_attr( $id ),
 		esc_attr( $type ),
 		esc_html( $text )
 	);

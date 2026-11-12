@@ -312,7 +312,7 @@ class TestGateway extends AbstractPaymentGateway {
 			delete_user_meta( $customer_id, '_wpss_cart' );
 
 			$dashboard_url = wpss_get_page_url( 'dashboard' );
-			$redirect      = $dashboard_url ? add_query_arg( 'tab', 'orders', $dashboard_url ) : home_url();
+			$redirect      = $dashboard_url ? wpss_get_dashboard_url( 'orders' ) : home_url();
 
 			wp_send_json_success(
 				array(

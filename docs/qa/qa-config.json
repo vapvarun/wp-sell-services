@@ -707,6 +707,42 @@
    {
     "id": "pro-edd-standing-is-hooked",
     "run": "${WP_CLI:-wp} eval-file tests/test-pro-edd-standing-is-hooked.php"
+   },
+   {
+    "id": "settings-unique-ids",
+    "run": "${WP_CLI:-wp} eval-file tests/test-settings-unique-ids.php"
+   },
+   {
+    "id": "paid-order-one-email",
+    "run": "${WP_CLI:-wp} eval-file tests/test-paid-order-one-email.php"
+   },
+   {
+    "id": "requirements-submit-one-vendor-email",
+    "run": "${WP_CLI:-wp} eval-file tests/test-requirements-submit-one-vendor-email.php"
+   },
+   {
+    "id": "rest-publish-refusal-is-explained",
+    "run": "${WP_CLI:-wp} eval-file tests/test-rest-publish-refusal-is-explained.php"
+   },
+   {
+    "id": "vendor-rejection-carries-reason",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-rejection-carries-reason.php"
+   },
+   {
+    "id": "admin-is-not-auto-vendor",
+    "run": "${WP_CLI:-wp} eval-file tests/test-admin-is-not-auto-vendor.php"
+   },
+   {
+    "id": "demo-import-shape",
+    "run": "${WP_CLI:-wp} eval-file tests/test-demo-import-shape.php"
+   },
+   {
+    "id": "wizard-current-step-wins",
+    "run": "${WP_CLI:-wp} eval-file tests/test-wizard-current-step-wins.php"
+   },
+   {
+    "id": "request-proposals-paged",
+    "run": "${WP_CLI:-wp} eval-file tests/test-request-proposals-paged.php"
    }
   ]
  }

@@ -56,10 +56,6 @@ class API {
 
 		// Filter REST response.
 		add_filter( 'rest_pre_serve_request', [ $this, 'serve_request' ], 10, 4 );
-
-		// One place that guarantees ISO 8601 on every wpss route, so a new endpoint
-		// cannot ship a bare MySQL datetime (Time Standard rule 7).
-		add_filter( 'rest_post_dispatch', [ $this, 'normalise_response_dates' ], 10, 3 );
 	}
 
 	/**

@@ -4339,7 +4339,9 @@ a.wpss-order-filter.is-active:focus {
 
 .wpss-order-search {
 	display: flex;
-	align-items: center;
+	/* Stretch, not center: the field and the small Search button have different
+	   heights, so centring left them visibly mismatched (Basecamp 10475164240). */
+	align-items: stretch;
 	gap: var(--wpss-space-2, 8px);
 }
 
@@ -4347,6 +4349,9 @@ a.wpss-order-filter.is-active:focus {
 	flex: 1 1 10rem;
 	width: auto;
 	min-width: 0;
+	/* The shared input bottom margin made the row taller than the field, so the
+	   stretched button came out 8px taller than the input beside it. */
+	margin-block: 0;
 }
 
 /* The row scrolls rather than stacking into six lines on a phone. */

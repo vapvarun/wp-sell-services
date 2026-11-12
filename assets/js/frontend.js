@@ -1391,9 +1391,9 @@
 			total += parseFloat($(this).find('[data-milestone-amount]').val()) || 0;
 			days  += parseInt($(this).find('[data-milestone-days]').val(), 10) || 0;
 		});
-		const symbol = (wpssData && wpssData.currencySymbol) || '$';
+		const format = (wpssData && wpssData.currencyFormat) || '$%s';
 		const decimals = (wpssData && typeof wpssData.currencyDecimals !== 'undefined') ? wpssData.currencyDecimals : 2;
-		$('#wpss-proposal-modal [data-milestones-total]').text(symbol + total.toFixed(decimals));
+		$('#wpss-proposal-modal [data-milestones-total]').text(format.replace('%s', total.toFixed(decimals)));
 		$('#wpss-proposal-modal [data-milestones-days]').text(days);
 	};
 

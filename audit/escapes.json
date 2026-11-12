@@ -956,6 +956,94 @@
    "added": "2026-10-23",
    "fails_on": "1.9.1 ab063275 (fix reverted in the working tree, guard red)",
    "check": "tests/test-review-lists-and-quiet-writes.php"
+  },
+  {
+   "card": "10475418682",
+   "title": "tuning settings ran absint() before the min/max clamp, so a negative stored its positive twin",
+   "guard": "static:settings-no-negative-numbers",
+   "added": "2026-11-12",
+   "fails_on": "1.9.3 working tree with the fix reverted (guard red), base b4e66f6b",
+   "check": "tests/test-settings-no-negative-numbers.php"
+  },
+  {
+   "card": "10475418881",
+   "title": "every Settings form and the order screen forms shared id=\"submit\"",
+   "guard": "static:settings-unique-ids",
+   "added": "2026-11-12",
+   "fails_on": "1.9.3 working tree with the fix reverted (guard red), base b4e66f6b",
+   "check": "tests/test-settings-unique-ids.php"
+  },
+  {
+   "card": "10475573764",
+   "title": "the REST date normaliser was hooked only in the never-called API::init(), so no route was normalised over HTTP",
+   "guard": "static:time-sweep",
+   "added": "2026-11-12",
+   "fails_on": "1.9.3 working tree with the fix reverted (guard red), base b4e66f6b",
+   "check": "tests/test-time-sweep.php"
+  },
+  {
+   "card": "10475484149",
+   "title": "the status payment moves an order into fell to the generic notification branch and mailed Order status updated beside the branded pair",
+   "guard": "static:paid-order-one-email",
+   "added": "2026-11-12",
+   "fails_on": "1.9.3 working tree with the fix reverted (guard red), base b4e66f6b",
+   "check": "tests/test-paid-order-one-email.php"
+  },
+  {
+   "card": "10475484314",
+   "title": "submitting requirements mailed the vendor twice (Requirements Submitted and Now In Progress)",
+   "guard": "static:requirements-submit-one-vendor-email",
+   "added": "2026-11-12",
+   "fails_on": "1.9.3 working tree with the fix reverted (guard red), base b4e66f6b",
+   "check": "tests/test-requirements-submit-one-vendor-email.php"
+  },
+  {
+   "card": "10475574103",
+   "title": "REST publish wrote the status before the meta, the guard demoted it, and the client got 200 draft with no reason",
+   "guard": "static:rest-publish-refusal-is-explained",
+   "added": "2026-11-12",
+   "fails_on": "1.9.3 working tree with the fix reverted (guard red), base b4e66f6b",
+   "check": "tests/test-rest-publish-refusal-is-explained.php"
+  },
+  {
+   "card": "10475573933",
+   "title": "the admin's reason for rejecting or suspending a vendor was dropped at four layers",
+   "guard": "static:vendor-rejection-carries-reason",
+   "added": "2026-11-12",
+   "fails_on": "1.9.3 working tree with the fix reverted (guard red), base b4e66f6b",
+   "check": "tests/test-vendor-rejection-carries-reason.php"
+  },
+  {
+   "card": "10475419083",
+   "title": "every administrator was made an active vendor on their first wp-admin page load",
+   "guard": "static:admin-is-not-auto-vendor",
+   "added": "2026-11-12",
+   "fails_on": "1.9.3 working tree with the fix reverted (guard red), base b4e66f6b",
+   "check": "tests/test-admin-is-not-auto-vendor.php"
+  },
+  {
+   "card": "10478804193",
+   "title": "the demo importer cycled 14 templates into 20 reworded services and left several on the admin",
+   "guard": "static:demo-import-shape",
+   "added": "2026-11-12",
+   "fails_on": "not shown red: the test SKIPs on a site with demo content; run inside a rolled-back transaction on the 1.9.3 tree only",
+   "check": "tests/test-demo-import-shape.php"
+  },
+  {
+   "card": "10475157221",
+   "title": "a finished step you were on rendered as completed, not current, because the Completed rules came after Active",
+   "guard": "static:wizard-current-step-wins",
+   "added": "2026-11-12",
+   "fails_on": "not shown red separately; the CSS order guard is static",
+   "check": "tests/test-wizard-current-step-wins.php"
+  },
+  {
+   "card": "app board: proposals list",
+   "title": "GET /buyer-requests/{id}/proposals ignored page/per_page and sent no totals",
+   "guard": "static:request-proposals-paged",
+   "added": "2026-11-12",
+   "fails_on": "not shown red (additive paging; the old route had no paging to compare)",
+   "check": "tests/test-request-proposals-paged.php"
   }
  ]
 }

@@ -26,53 +26,7 @@
   "reader can weigh that evidence rather than assume a walk covered it."
  ],
  "version": "1.9.2",
- "accepted": [
-  {
-   "id": "12-2b / card:10403454753 class",
-   "card": "10475418682",
-   "reason": "Tuning settings run absint() before the min/max clamp (src/Admin/Settings.php:3202), so a crafted negative POST stores its positive. The browser min= blocks it in normal use. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
-  },
-  {
-   "id": "12-settings-duplicate-ids",
-   "card": "10475418881",
-   "reason": "16 submit_button() calls share id=\"submit\" on the Settings page. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
-  },
-  {
-   "id": "13-admin-listed-as-vendor",
-   "card": "10475419083",
-   "reason": "By design since 1.1.0 (Plugin::maybe_auto_vendor_admin): the first admin gets a vendor profile and is counted in Vendors. Owner decision on the card. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
-  },
-  {
-   "id": "J24.2-email",
-   "card": "10475484314",
-   "reason": "Vendor receives Requirements Submitted and Now In Progress as two emails. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
-  },
-  {
-   "id": "J01.1-generic-email-at-payment",
-   "card": "10475484149",
-   "reason": "Mark paid also emails the generic Order status updated (NotificationService default branch, order_status not in the email-covered list). Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
-  },
-  {
-   "id": "08-10 api:shapes / GET /disputes/{id} evidence created_at",
-   "card": "10475573764",
-   "reason": "Single-dispute evidence dates are not converted with wpss_rest_date(); the timeline endpoint is. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
-  },
-  {
-   "id": "13-6c vendor application reject carries no reason",
-   "card": "10475573933",
-   "reason": "Reject confirm has no reason field; server and email template already support one. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
-  },
-  {
-   "id": "05-P2-6b refused publish is silent on the vendor dashboard and REST",
-   "card": "10475574103",
-   "reason": "Publish gate refusal not surfaced on the vendor dashboard or REST; wp-admin Quick Edit shows it. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
-  },
-  {
-   "id": "19-1b inactive wallet provider falls back with no admin notice",
-   "card": "10475574286",
-   "reason": "Fallback works and the balance is unchanged; the notice is missing or the journey line is stale. Present in the team v1.9.2 tag (ccdaa89c): the file is unchanged by the signed-updates re-cut, which only touched licensing, bundled libs, tests, CI, readme, POT and manifests. Shipped as-is under the release rule for inherited findings; fix targeted at 1.9.3."
-  }
- ],
+ "accepted": [],
  "resolved": [
   {
    "id": "PRO:admin-js-init-throws-initStorageSettings",
@@ -103,6 +57,60 @@
    "id": "J03.A2",
    "fixed_in": "wp-sell-services d7d55d38 (journey text, not product code)",
    "verified_by": "Code read plus the combo walk observation at 56381157: Journey 03 listed the slug become-vendor; the installer creates become-a-vendor (src/functions/urls.php) and the router accepts both. The combo walk observed become-a-vendor with the right title and shortcode."
+  },
+  {
+   "id": "12-2b / card:10403454753 class",
+   "card": "10475418682",
+   "fixed_in": "wp-sell-services branch 1.9.3 (uncommitted at writing; replace with the commit sha)",
+   "verified_by": "Tuning settings clamp the raw (int) now, so -4 stores the field minimum. tests/test-settings-no-negative-numbers.php (reminder -4 => 1, 999 => 30, decimal places -2 => 0, realtime port -6001 => 443) fails on the old Settings.php (4 FAIL) and passes on the fix. Not re-walked in the browser."
+  },
+  {
+   "id": "12-settings-duplicate-ids",
+   "card": "10475418881",
+   "fixed_in": "wp-sell-services branch 1.9.3 (uncommitted at writing; replace with the commit sha)",
+   "verified_by": "Every Settings form and the four order-screen forms pass their own submit id (wpss-save-*, wpss-order-*); wpss_submit_button() takes an optional id. tests/test-settings-unique-ids.php renders the whole Settings page: 18 submit buttons, no repeated id, zero id=\"submit\"; it fails on the old code (6 FAIL). Not re-walked in the browser."
+  },
+  {
+   "id": "13-admin-listed-as-vendor",
+   "card": "10475419083",
+   "fixed_in": "wp-sell-services branch 1.9.3 (uncommitted at writing; replace with the commit sha)",
+   "verified_by": "Owner decision A: the admin_init auto-vendor hook is gone; an administrator gets an active profile the first time they author a service, or at once on Start Selling. Existing rows are left untouched. tests/test-admin-is-not-auto-vendor.php fails on the old Plugin.php (4 FAIL) and passes on the fix. The full suite was not re-run on a pristine database (tests that assume user 1 is a vendor would need wpss_test_activate_vendor())."
+  },
+  {
+   "id": "J24.2-email",
+   "card": "10475484314",
+   "fixed_in": "wp-sell-services branch 1.9.3 (uncommitted at writing; replace with the commit sha)",
+   "verified_by": "EmailService skips the vendor copy of Now In Progress when the Requirements Submitted mail went out for that order in the same request; the buyer still gets In Progress and skip/timeout/resume paths still mail the vendor. tests/test-requirements-submit-one-vendor-email.php fails on the old EmailService (2 FAIL) and passes on the fix."
+  },
+  {
+   "id": "J01.1-generic-email-at-payment",
+   "card": "10475484149",
+   "fixed_in": "wp-sell-services branch 1.9.3 (uncommitted at writing; replace with the commit sha)",
+   "verified_by": "NotificationService::notify_order_status() handles pending_requirements as the new-order event (any rail) and silences the generic row for late; the empty(old_status) branch in Plugin.php is gone. tests/test-paid-order-one-email.php: one mail per party, vendor row order_created, no order_status row on late; fails on the old code (6 FAIL)."
+  },
+  {
+   "id": "08-10 api:shapes / GET /disputes/{id} evidence created_at",
+   "card": "10475573764",
+   "fixed_in": "wp-sell-services branch 1.9.3 (uncommitted at writing; replace with the commit sha)",
+   "verified_by": "Root cause was wider than the card: API::normalise_response_dates() was hooked only in the never-called API::init(), so no route was normalised over HTTP. Now wired in Plugin::define_api_hooks(); api:shapes runs rest_post_dispatch so it measures served output. GET /disputes/857 (status note) served with created_at 2026-11-02T12:10:52+00:00; wp wpss api:shapes exits 0 (86 routes). tests/test-time-sweep.php asserts the hook. Authenticated HTTP probe not run (no app password)."
+  },
+  {
+   "id": "13-6c vendor application reject carries no reason",
+   "card": "10475573933",
+   "fixed_in": "wp-sell-services branch 1.9.3 (uncommitted at writing; replace with the commit sha)",
+   "verified_by": "Reject and Suspend ask for an optional reason (wpssConfirm prompt); it travels set_status() -> wpss_vendor_status_updated (4th arg) -> email, in-app row and audit note. tests/test-vendor-rejection-carries-reason.php fails on the old VendorService (7 FAIL) and passes on the fix."
+  },
+  {
+   "id": "05-P2-6b refused publish is silent on the vendor dashboard and REST",
+   "card": "10475574103",
+   "fixed_in": "wp-sell-services branch 1.9.3 (uncommitted at writing; replace with the commit sha)",
+   "verified_by": "PUT /services/{id} status=publish settles the status after meta/terms/gallery and answers 400 wpss_not_publishable with data.errors when the service cannot go live; the dashboard shows responseJSON.message. tests/test-rest-publish-refusal-is-explained.php fails on the old controller (4 FAIL) and passes on the fix."
+  },
+  {
+   "id": "19-1b inactive wallet provider falls back with no admin notice",
+   "card": "10475574286",
+   "fixed_in": "wp-sell-services branch 1.9.3 (uncommitted at writing; replace with the commit sha)",
+   "verified_by": "Not a Free defect: Free reads no wallet provider other than Internal, and the fallback notice lives in Pro (licensed). Journey 19 step 1 now says (Pro, licensed), seeds wpss_wallet_provider, and gives the Free-only expectation."
   }
  ],
  "debug_log_accepted": [

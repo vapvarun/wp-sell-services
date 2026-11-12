@@ -190,7 +190,8 @@ class ServiceWizard {
 
 		$user_id = get_current_user_id();
 
-		if ( ! $this->vendor_service->is_vendor( $user_id ) ) {
+		// The site owner sells without applying, even when registration is closed.
+		if ( ! $this->vendor_service->is_vendor( $user_id ) && ! $this->vendor_service->ensure_admin_profile( $user_id ) ) {
 			return $this->render_not_vendor();
 		}
 
@@ -380,6 +381,7 @@ class ServiceWizard {
 						'wpss-wizard__progress-item--active': currentStep === '<?php echo esc_attr( $key ); ?>',
 						'wpss-wizard__progress-item--completed': isStepCompleted('<?php echo esc_attr( $key ); ?>')
 					}"
+					:aria-current="currentStep === '<?php echo esc_attr( $key ); ?>' ? 'step' : false"
 					@click="goToStep('<?php echo esc_attr( $key ); ?>')">
 					<span class="wpss-wizard__progress-icon">
 						<i data-lucide="<?php echo esc_attr( $step['icon'] ); ?>" class="wpss-icon" aria-hidden="true"></i>

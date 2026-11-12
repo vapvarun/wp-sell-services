@@ -162,6 +162,16 @@ class EmailService {
 	 */
 	private static bool $release_due = false;
 
+	/**
+	 * Orders whose vendor got the "Requirements Submitted" mail in this request.
+	 *
+	 * Submitting requirements starts the order, so the In Progress mail would
+	 * reach the vendor a second time for the same event; it is skipped for them.
+	 *
+	 * @var array<int, true>
+	 */
+	private static array $requirements_mailed = array();
+
 
 	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
@@ -196,11 +206,15 @@ class EmailService {
 	 * @return array
 	 */
 	private function get_email_settings(): array {
-		// Use WooCommerce mailer settings when available, otherwise fall back to platform name.
+		// The marketplace's own sender by default. A store that runs on WooCommerce
+		// already set a sender in WooCommerce > Emails, so only that rail borrows
+		// it; WooCommerce merely being installed beside a standalone marketplace
+		// must not change who these mails come from.
 		$from_name  = wpss_get_platform_name();
 		$from_email = get_option( 'admin_email' );
+		$adapter    = wpss_get_active_adapter();
 
-		if ( function_exists( 'WC' ) && WC()->mailer() ) {
+		if ( $adapter && 'woocommerce' === $adapter->get_id() && function_exists( 'WC' ) && WC()->mailer() ) {
 			$from_name  = WC()->mailer()->get_from_name();
 			$from_email = WC()->mailer()->get_from_address();
 		}
@@ -520,7 +534,13 @@ class EmailService {
 			'reply_to_name'   => $customer ? $customer->display_name : '',
 		);
 
-		return $this->send( $vendor->user_email, $subject, self::TYPE_REQUIREMENTS_SUBMITTED, $template_vars );
+		$sent = $this->send( $vendor->user_email, $subject, self::TYPE_REQUIREMENTS_SUBMITTED, $template_vars );
+
+		if ( $sent ) {
+			self::$requirements_mailed[ $order_id ] = true;
+		}
+
+		return $sent;
 	}
 
 	/**
@@ -559,8 +579,9 @@ class EmailService {
 			);
 		}
 
-		// Send to vendor (requirements received, start working).
-		if ( $vendor ) {
+		// Send to vendor (requirements received, start working), unless the
+		// Requirements Submitted mail already told them in this request.
+		if ( $vendor && empty( self::$requirements_mailed[ (int) $order->id ] ) ) {
 			$this->send(
 				$vendor->user_email,
 				$subject,
@@ -2393,10 +2414,25 @@ class EmailService {
 		 */
 		$from_name = sanitize_text_field( (string) apply_filters( 'wpss_email_from_name', $this->settings()['from_name'] ) );
 
+		/**
+		 * Filter the email "from" address, for a plugin-specific sender.
+		 *
+		 * Use an address on the site's own domain (and one the mail host allows):
+		 * a sender from another domain is often rejected as spoofed.
+		 *
+		 * @since 1.9.3
+		 *
+		 * @param string $from_email The sender address.
+		 */
+		$from_email = sanitize_email( (string) apply_filters( 'wpss_email_from_address', $this->settings()['from_email'] ) );
+		if ( ! is_email( $from_email ) ) {
+			$from_email = (string) get_option( 'admin_email' );
+		}
+
 		// Set headers.
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
-			sprintf( 'From: %s <%s>', $from_name, $this->settings()['from_email'] ),
+			sprintf( 'From: %s <%s>', $from_name, $from_email ),
 		);
 
 		// Add Reply-To header when reply_to_email is provided by the sending method.

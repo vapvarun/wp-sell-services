@@ -139,7 +139,7 @@ abstract class RestController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Check that the signed-in user is a party to the order named by the `order_id` parameter (or an admin).
+	 * Check that the signed-in user may access the order named by the `order_id` parameter.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return bool|WP_Error
@@ -152,7 +152,7 @@ abstract class RestController extends WP_REST_Controller {
 
 		$order_id = (int) $request->get_param( 'order_id' );
 
-		if ( ! $this->user_owns_resource( $order_id, 'order' ) && ! current_user_can( 'manage_options' ) ) {
+		if ( ! $this->user_owns_resource( $order_id, 'order' ) ) {
 			return new WP_Error(
 				'wpss_not_owner',
 				__( 'You do not have permission to access this order.', 'wp-sell-services' ),
@@ -179,18 +179,8 @@ abstract class RestController extends WP_REST_Controller {
 				return $author_id === $user_id;
 
 			case 'order':
-				global $wpdb;
-				$table = $wpdb->prefix . 'wpss_orders';
-				$order = $wpdb->get_row(
-					$wpdb->prepare(
-						"SELECT customer_id, vendor_id FROM {$table} WHERE id = %d",
-						$resource_id
-					)
-				);
-				if ( $order ) {
-					return (int) $order->customer_id === $user_id || (int) $order->vendor_id === $user_id;
-				}
-				return false;
+				// One rule for every order door: buyer, vendor, admin, order manager.
+				return wpss_user_can_view_order( $resource_id, $user_id );
 
 			default:
 				return false;
@@ -266,23 +256,7 @@ abstract class RestController extends WP_REST_Controller {
 	 * @return string|null ISO 8601 formatted string or null.
 	 */
 	protected function format_datetime( $datetime ): ?string {
-		if ( ! $datetime ) {
-			return null;
-		}
-
-		if ( $datetime instanceof \DateTimeInterface ) {
-			return $datetime->format( 'c' );
-		}
-
-		if ( is_string( $datetime ) && '' !== $datetime ) {
-			try {
-				return ( new \DateTimeImmutable( $datetime, new \DateTimeZone( 'UTC' ) ) )->format( 'c' );
-			} catch ( \Exception $e ) {
-				return null;
-			}
-		}
-
-		return null;
+		return wpss_rest_date( $datetime );
 	}
 
 	/**
@@ -368,7 +342,7 @@ abstract class RestController extends WP_REST_Controller {
 		}
 
 		$user_id = get_current_user_id();
-		if ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+		if ( ! wpss_user_can_view_order( $order, $user_id ) ) {
 			return $this->error(
 				'wpss_forbidden',
 				__( 'You do not have access to this order.', 'wp-sell-services' ),

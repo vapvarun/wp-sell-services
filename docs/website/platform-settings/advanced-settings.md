@@ -135,6 +135,8 @@ filter -- see [Hooks and Filters](../developer-guide/hooks-filters.md).
 
 Quickly populate your marketplace with sample services, vendors, and categories for testing or demonstration purposes. Go to **Settings > System** and click **Import Demo Content**.
 
+The import creates 14 sample services across 6 categories, each listed once, and 4 demo vendors. Every service is sold by the demo vendor for its category, never by your administrator account. If a partial delete left some demo vendors behind, a new import reuses them.
+
 ### Delete Demo Content
 
 When you are done testing, click **Delete Demo Content** to remove all sample data without affecting your real marketplace content.

@@ -1080,7 +1080,7 @@ class Admin {
 		// Rail: the setting names a store plugin that is not running.
 		$manager    = wpss()->get_integration_manager();
 		$active     = $manager ? $manager->get_active_adapter() : null;
-		$configured = (string) wpss_get_option( 'wpss_general', 'ecommerce_platform', 'auto' );
+		$configured = (string) wpss_get_option( 'general', 'ecommerce_platform', 'auto' );
 
 		if ( $active && 'auto' !== $configured && $configured !== $active->get_id() ) {
 			$wanted           = $manager->get_adapter( $configured );
@@ -1604,8 +1604,8 @@ class Admin {
 			array(
 				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
 				'nonce'            => wp_create_nonce( 'wpss_admin_nonce' ),
-				'currencyFormat'   => wpss_get_currency_symbol() . '%s',
-				'currencyDecimals' => wpss_get_currency_decimals(),
+				'currencyFormat'   => wpss_get_currency_format(),
+				'currencyDecimals' => wpss_get_decimal_places(),
 				'i18n'             => array(
 					'selectImage'  => __( 'Select Image', 'wp-sell-services' ),
 					'selectImages' => __( 'Select Images', 'wp-sell-services' ),
@@ -2799,7 +2799,7 @@ class Admin {
 										<li><?php esc_html_e( 'Any other status moves no money.', 'wp-sell-services' ); ?></li>
 									</ul>
 
-									<?php submit_button( __( 'Update Status', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+									<?php submit_button( __( 'Update Status', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-order-update-status' ) ); ?>
 								</form>
 							</div>
 						</div>
@@ -2854,7 +2854,7 @@ class Admin {
 										<label for="wpss-assign-refund-<?php echo esc_attr( (string) $order_id ); ?>"><strong><?php esc_html_e( 'Amount for this service', 'wp-sell-services' ); ?></strong></label><br>
 										<input type="number" id="wpss-assign-refund-<?php echo esc_attr( (string) $order_id ); ?>" name="amount" min="0" step="0.01" max="<?php echo esc_attr( (string) $wpss_unassigned['remaining'] ); ?>" value="<?php echo esc_attr( (string) $wpss_unassigned['remaining'] ); ?>" style="width: 140px;">
 									</p>
-									<?php submit_button( __( 'Assign to this service', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+									<?php submit_button( __( 'Assign to this service', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-order-assign-service' ) ); ?>
 								</form>
 							</div>
 						</div>
@@ -2917,7 +2917,7 @@ class Admin {
 									<input type="hidden" name="action" value="wpss_mark_refund_sent">
 									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
 									<?php wp_nonce_field( 'wpss_mark_refund_sent_' . $order_id, 'wpss_refund_sent_nonce' ); ?>
-									<?php submit_button( __( 'Mark refund sent', 'wp-sell-services' ), 'secondary', 'submit', false ); ?>
+									<?php submit_button( __( 'Mark refund sent', 'wp-sell-services' ), 'secondary', 'submit', false, array( 'id' => 'wpss-order-mark-refund-sent' ) ); ?>
 								</form>
 							</div>
 						</div>
@@ -2953,7 +2953,7 @@ class Admin {
 									<input type="hidden" name="action" value="wpss_retry_refund">
 									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
 									<?php wp_nonce_field( 'wpss_retry_refund_' . $order_id, 'wpss_retry_refund_nonce' ); ?>
-									<?php submit_button( __( 'Retry refund', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+									<?php submit_button( __( 'Retry refund', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-order-retry-refund' ) ); ?>
 								</form>
 							</div>
 						</div>
@@ -3576,7 +3576,7 @@ class Admin {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		// One import at a time: a second click added 20 more services.
+		// One import at a time: a second click added a second set of services.
 		if ( wpss_has_demo_content() ) {
 			wp_send_json_error(
 				array(
@@ -3609,8 +3609,7 @@ class Admin {
 		$ref_templates = $ref_class->getProperty( 'service_templates' );
 		$templates     = $ref_templates->getValue( $commands );
 
-		$ref_create    = $ref_class->getMethod( 'create_service' );
-		$ref_variation = $ref_class->getMethod( 'apply_variation' );
+		$ref_create = $ref_class->getMethod( 'create_service' );
 
 		// Create categories first.
 		$categories = array_unique( array_column( $templates, 'category' ) );
@@ -3624,20 +3623,32 @@ class Admin {
 			}
 		}
 
-		// Create 20 services (cycling through templates).
-		$count          = 20;
-		$created        = 0;
-		$featured       = 0;
-		$template_count = count( $templates );
+		// Vendors first, so every service is filed under the seller of its category, never the admin.
+		$vendors = $this->create_demo_vendors();
+		$sellers = array(
+			'Graphics & Design'     => array( 'sarah_designer' ),
+			'Programming & Tech'    => array( 'mike_developer' ),
+			'Writing & Translation' => array( 'emma_writer' ),
+			'Digital Marketing'     => array( 'alex_marketer' ),
+			'Video & Animation'     => array( 'sarah_designer', 'mike_developer' ),
+			'Business'              => array( 'emma_writer', 'alex_marketer' ),
+		);
 
-		for ( $i = 0; $i < $count; $i++ ) {
-			$template  = $templates[ $i % $template_count ];
-			$variation = (int) floor( $i / $template_count );
+		// Each template once: reworded copies ("expertly ... that converts") read as filler.
+		$created  = 0;
+		$featured = 0;
+		$turns    = array();
 
-			$service_data = $ref_variation->invoke( $commands, $template, $variation );
+		foreach ( array_values( $templates ) as $i => $service_data ) {
+			$category = (string) $service_data['category'];
+			$logins   = $sellers[ $category ] ?? array( 'sarah_designer' );
+			$turn     = $turns[ $category ] ?? 0;
+
+			$turns[ $category ]     = $turn + 1;
+			$service_data['author'] = (int) ( $vendors[ $logins[ $turn % count( $logins ) ] ] ?? 0 );
 
 			// Mark some as featured.
-			if ( $featured < 5 && ( $i % 4 === 0 || ! empty( $template['featured'] ) ) ) {
+			if ( $featured < 5 && ( 0 === $i % 3 || ! empty( $service_data['featured'] ) ) ) {
 				$service_data['featured'] = true;
 				++$featured;
 			}
@@ -3650,9 +3661,6 @@ class Admin {
 			}
 		}
 
-		// Create demo vendor profiles.
-		$vendors_created = $this->create_demo_vendors();
-
 		wp_send_json_success(
 			array(
 				'message'    => sprintf(
@@ -3660,21 +3668,21 @@ class Admin {
 					__( 'Imported %1$d services, %2$d categories, and %3$d vendor profiles.', 'wp-sell-services' ),
 					$created,
 					count( $categories ),
-					$vendors_created
+					count( $vendors )
 				),
 				'services'   => $created,
 				'categories' => count( $categories ),
-				'vendors'    => $vendors_created,
+				'vendors'    => count( $vendors ),
 			)
 		);
 	}
 
 	/**
-	 * Create demo vendor profiles.
+	 * Create the demo vendors, or reuse the ones a partial delete left behind.
 	 *
-	 * @return int Number of vendors created.
+	 * @return array<string, int> User id per demo login.
 	 */
-	private function create_demo_vendors(): int {
+	private function create_demo_vendors(): array {
 		$vendors = array(
 			array(
 				'login'   => 'sarah_designer',
@@ -3710,77 +3718,56 @@ class Admin {
 			),
 		);
 
-		$created = 0;
+		$ids      = array();
+		$profiles = new \WPSellServices\Database\Repositories\VendorProfileRepository();
 
 		foreach ( $vendors as $vendor_data ) {
-			// Skip if user exists.
-			if ( username_exists( $vendor_data['login'] ) ) {
+			$user_id = username_exists( $vendor_data['login'] );
+
+			// A real member who happens to share a demo login is not ours to take over.
+			if ( $user_id && ! get_user_meta( (int) $user_id, '_wpss_demo_content', true ) ) {
 				continue;
 			}
 
-			$user_id = wp_insert_user(
-				array(
-					'user_login'   => $vendor_data['login'],
-					'user_email'   => $vendor_data['email'],
-					'user_pass'    => wp_generate_password(),
-					'display_name' => $vendor_data['name'],
-					'role'         => 'wpss_vendor',
-				)
-			);
-
-			if ( is_wp_error( $user_id ) ) {
-				continue;
-			}
-
-			// Mark as demo user.
-			update_user_meta( $user_id, '_wpss_demo_content', 1 );
-			update_user_meta( $user_id, '_wpss_is_vendor', true );
-
-			// Create vendor profile in DB.
-			global $wpdb;
-			$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$wpdb->insert(
-				$profiles_table,
-				array(
-					'user_id'      => $user_id,
-					'display_name' => $vendor_data['name'],
-					'tagline'      => $vendor_data['tagline'],
-					'bio'          => $vendor_data['bio'],
-					'status'       => 'active',
-					'country'      => $vendor_data['country'],
-					'is_available' => 1,
-					'created_at'   => current_time( 'mysql', true ),
-				),
-				array( '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
-			);
-
-			// Assign some services to this vendor.
-			$services = get_posts(
-				array(
-					'post_type'      => 'wpss_service',
-					'posts_per_page' => 3,
-					'orderby'        => 'rand',
-					'meta_key'       => '_wpss_demo_content',
-					'meta_value'     => '1',
-					'author'         => 0, // Only unassigned.
-					'fields'         => 'ids',
-				)
-			);
-
-			foreach ( $services as $service_id ) {
-				wp_update_post(
+			if ( ! $user_id ) {
+				$user_id = wp_insert_user(
 					array(
-						'ID'          => $service_id,
-						'post_author' => $user_id,
+						'user_login'   => $vendor_data['login'],
+						'user_email'   => $vendor_data['email'],
+						'user_pass'    => wp_generate_password(),
+						'display_name' => $vendor_data['name'],
+						'role'         => 'wpss_vendor',
+					)
+				);
+
+				if ( is_wp_error( $user_id ) ) {
+					continue;
+				}
+
+				// Mark as demo user.
+				update_user_meta( $user_id, '_wpss_demo_content', 1 );
+				update_user_meta( $user_id, '_wpss_is_vendor', true );
+			}
+
+			if ( ! $profiles->get_by_user( (int) $user_id ) ) {
+				$profiles->upsert(
+					(int) $user_id,
+					array(
+						'display_name' => $vendor_data['name'],
+						'tagline'      => $vendor_data['tagline'],
+						'bio'          => $vendor_data['bio'],
+						'status'       => 'active',
+						'country'      => $vendor_data['country'],
+						'is_available' => 1,
+						'created_at'   => current_time( 'mysql', true ),
 					)
 				);
 			}
 
-			++$created;
+			$ids[ $vendor_data['login'] ] = (int) $user_id;
 		}
 
-		return $created;
+		return $ids;
 	}
 
 	/**

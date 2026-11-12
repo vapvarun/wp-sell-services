@@ -635,6 +635,11 @@ final class Plugin {
 		// release, not a quiet side effect of this fix.
 		$this->loader->add_filter( 'rest_post_dispatch', $api, 'clarify_method_not_allowed', 10, 3 );
 
+		// One place that guarantees ISO 8601 on every wpss route, so a new endpoint
+		// cannot ship a bare MySQL datetime (Time Standard rule 7). It used to be
+		// hooked only from the never-called API::init(), so no route was normalised.
+		$this->loader->add_filter( 'rest_post_dispatch', $api, 'normalise_response_dates', 10, 3 );
+
 		// Enforce app-token expiry at authentication. Application passwords do
 		// not expire on their own, so `expires` on a login response was purely
 		// decorative and a stolen token worked forever (Basecamp 10154918753).
@@ -1453,13 +1458,6 @@ final class Plugin {
 		$this->loader->add_action(
 			'wpss_order_status_changed',
 			function ( int $order_id, string $new_status, string $old_status ) use ( $notification_service ): void {
-				// For new orders (pending_requirements with no old status), send specific new order notification.
-				if ( 'pending_requirements' === $new_status && empty( $old_status ) ) {
-					$notification_service->notify_order_created( $order_id );
-					return; // Don't send generic status update for new orders.
-				}
-
-				// For all other status changes, send generic notification.
 				$notification_service->notify_order_status( $order_id, $new_status, $old_status );
 			},
 			null,
@@ -1473,6 +1471,22 @@ final class Plugin {
 			function ( $message, $conversation ) use ( $notification_service ): void {
 				// Deliveries and revision requests ring their own bell (order status, milestone hooks).
 				if ( $message instanceof \WPSellServices\Models\Message && ! $message->is_chat() ) {
+					return;
+				}
+
+				/**
+				 * Filter whether a sent message notifies the other participants.
+				 *
+				 * Return false when the caller already told them, as the vendor
+				 * contact form does with its branded email.
+				 *
+				 * @since 1.9.3
+				 *
+				 * @param bool                          $notify       Whether to notify.
+				 * @param \WPSellServices\Models\Message $message      The message.
+				 * @param object                        $conversation The conversation.
+				 */
+				if ( ! apply_filters( 'wpss_notify_message_participants', true, $message, $conversation ) ) {
 					return;
 				}
 
@@ -1507,18 +1521,18 @@ final class Plugin {
 		// Vendor status update notifications (approval/rejection).
 		$this->loader->add_action(
 			'wpss_vendor_status_updated',
-			function ( int $vendor_id, string $status ) use ( $notification_service ): void {
+			function ( int $vendor_id, string $status, ?string $from = null, string $reason = '' ) use ( $notification_service ): void {
 				if ( 'active' === $status ) {
 					$notification_service->notify_vendor_approved( $vendor_id );
 				} elseif ( 'rejected' === $status ) {
-					$notification_service->notify_vendor_rejected( $vendor_id );
+					$notification_service->notify_vendor_rejected( $vendor_id, $reason );
 				} elseif ( 'suspended' === $status ) {
-					$notification_service->notify_vendor_suspended( $vendor_id );
+					$notification_service->notify_vendor_suspended( $vendor_id, $reason );
 				}
 			},
 			null,
 			10,
-			2
+			4
 		);
 
 		// Proposal notifications.
@@ -2189,64 +2203,23 @@ final class Plugin {
 	}
 
 	/**
-	 * Bind the account lockout to every sign-in, not just the REST route.
+	 * Retire the sign-in lockout.
 	 *
-	 * 1.7.1 added the lockout inside POST /auth/login only, so six wrong
-	 * passwords in the app locked the account while six wrong passwords at
-	 * wp-login.php were waved through - and the account the plugin reported as
-	 * locked signed in perfectly well in a browser (Basecamp 10267994010).
+	 * Locking sign-ins after failed passwords is a security plugin's job, not a
+	 * marketplace's: it applied to wp-login.php for every user, administrators
+	 * included (Basecamp 10504362544). The app's login route keeps only the
+	 * per-IP RateLimiter. The wpss_web_login_lock filter is kept as a deprecated
+	 * no-op so a site that hooked it is told, not broken.
 	 *
-	 * Counting hangs off wp_login_failed, which core fires from
-	 * wp_authenticate() itself, so the REST route and the login form feed the
-	 * same counter. Refusal hangs off `authenticate` at a late priority so it
-	 * outranks the password check and covers anything else that authenticates
-	 * a username and password.
-	 *
-	 * Signed-in sessions are validated by cookie, which never reaches
-	 * `authenticate`, so a locked account does not throw an administrator out
-	 * of a session they already have.
-	 *
-	 * @since 1.7.1
+	 * @since 1.9.3 Lockout removed.
 	 * @return void
 	 */
 	private function define_login_lock_hooks(): void {
 		add_action(
-			'wp_login_failed',
-			static function ( $username ): void {
-				wpss_login_record_failure( (string) $username );
+			'init',
+			static function (): void {
+				apply_filters_deprecated( 'wpss_web_login_lock', array( true ), '1.9.3', '', 'The sign-in lockout was removed; use a security plugin.' );
 			}
-		);
-
-		add_action(
-			'wp_login',
-			static function ( $user_login ): void {
-				wpss_login_clear_failures( (string) $user_login );
-			}
-		);
-
-		add_filter(
-			'authenticate',
-			static function ( $user, $username ) {
-				/**
-				 * Filter whether the website sign-in form honours the lockout.
-				 *
-				 * Return false on a site whose security plugin already limits
-				 * failed sign-ins, to leave wp-login.php entirely to it. The
-				 * counter keeps running either way, so the app's own lockout
-				 * (423 `wpss_account_locked`) is unaffected.
-				 *
-				 * @since 1.7.1
-				 *
-				 * @param bool $enabled Whether to refuse a locked account here.
-				 */
-				if ( ! apply_filters( 'wpss_web_login_lock', true ) ) {
-					return $user;
-				}
-
-				return wpss_login_is_locked( (string) $username ) ? wpss_login_lock_error() : $user;
-			},
-			100,
-			2
 		);
 	}
 
@@ -2723,114 +2696,29 @@ final class Plugin {
 	/**
 	 * Define auto-vendor hooks.
 	 *
-	 * Automatically makes administrators vendors.
+	 * An administrator becomes a vendor the first time they author a service,
+	 * not on their first wp-admin page load (Basecamp 10475419083): the old
+	 * admin_init hook listed and counted every site owner as a vendor whether
+	 * they sold or not. Profiles made that way before 1.9.3 are left as they are.
 	 *
 	 * @since 1.1.0
+	 * @since 1.9.3 Lazy, on the first service the administrator authors.
 	 * @return void
 	 */
 	private function define_auto_vendor_hooks(): void {
-		// Auto-vendor for admins on admin_init.
 		$this->loader->add_action(
-			'admin_init',
-			function (): void {
-				$this->maybe_auto_vendor_admin();
-			}
+			'save_post_wpss_service',
+			function ( int $post_id, \WP_Post $post ): void {
+				if ( wp_is_post_revision( $post_id ) || 'auto-draft' === $post->post_status || ! user_can( (int) $post->post_author, 'manage_options' ) ) {
+					return;
+				}
+
+				( new \WPSellServices\Services\VendorService() )->ensure_admin_profile( (int) $post->post_author );
+			},
+			null,
+			10,
+			2
 		);
-
-		// Also run on plugin activation.
-		register_activation_hook(
-			WPSS_PLUGIN_FILE,
-			function (): void {
-				$this->maybe_auto_vendor_admin();
-			}
-		);
-	}
-
-	/**
-	 * Maybe make admin user a vendor automatically.
-	 *
-	 * Uses a user meta flag to skip the expensive VendorService check
-	 * on subsequent admin page loads after the initial vendor setup.
-	 *
-	 * @since 1.1.0
-	 * @return void
-	 */
-	private function maybe_auto_vendor_admin(): void {
-		$user_id = get_current_user_id();
-
-		if ( ! $user_id || ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		// Fast path: already checked and confirmed for this user.
-		if ( get_user_meta( $user_id, '_wpss_vendor_checked', true ) ) {
-			return;
-		}
-
-		// The profile row is the record that decides who is a vendor, so it is
-		// the only thing worth checking here - the old `_wpss_is_vendor` read
-		// added a second, weaker answer to the same question and changed nothing
-		// about what this method does.
-		$vendor_service = new \WPSellServices\Services\VendorService();
-
-		// Note: VendorService::register() checks is_vendor() which might return true
-		// if role exists. Use ensure_vendor_profile() for just the profile.
-		if ( null === $vendor_service->get_profile( $user_id ) ) {
-			$this->ensure_vendor_profile( $user_id );
-		}
-
-		// Still written for back-compat with anything reading the old flag.
-		update_user_meta( $user_id, '_wpss_is_vendor', true );
-		update_user_meta( $user_id, '_wpss_vendor_checked', '1' );
-	}
-
-	/**
-	 * Ensure vendor profile exists in database.
-	 *
-	 * Creates a vendor profile if one doesn't exist, without modifying roles.
-	 *
-	 * @since 1.1.0
-	 * @param int $user_id User ID.
-	 * @return bool True if profile exists or was created.
-	 */
-	private function ensure_vendor_profile( int $user_id ): bool {
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'wpss_vendor_profiles';
-
-		// Check if profile already exists.
-		$exists = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT id FROM {$table} WHERE user_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$user_id
-			)
-		);
-
-		if ( $exists ) {
-			return true;
-		}
-
-		// Create profile.
-		$user = get_userdata( $user_id );
-
-		if ( ! $user ) {
-			return false;
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$result = $wpdb->insert(
-			$table,
-			array(
-				'user_id'           => $user_id,
-				'display_name'      => $user->display_name,
-				'status'            => 'active',
-				'verification_tier' => 'new',
-				'created_at'        => current_time( 'mysql', true ),
-			),
-			array( '%d', '%s', '%s', '%s', '%s' )
-		);
-
-		return false !== $result;
 	}
 
 	/**

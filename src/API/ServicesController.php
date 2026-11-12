@@ -745,9 +745,14 @@ class ServicesController extends RestController {
 			wp_set_object_terms( $service_id, $tags, 'wpss_service_tag' );
 		}
 
-		$to_review = wpss_settle_service_status( $service_id, $post_status ) === 'pending';
+		$settled   = wpss_settle_service_status( $service_id, $post_status );
+		$to_review = 'pending' === $settled;
 		if ( $to_review ) {
 			( new ModerationService() )->submit( $service_id );
+		}
+		// Saved, but held back (no main image, say): say why instead of a silent draft.
+		if ( $settled !== $post_status ) {
+			$notices = array_merge( $notices, wpss_get_service_publish_errors( $service_id ) );
 		}
 		$service = get_post( $service_id );
 
@@ -822,6 +827,18 @@ class ServicesController extends RestController {
 			}
 
 			$update_data['post_status'] = $requested_status;
+		}
+
+		/*
+		 * Taking a service live is settled AFTER its meta, terms and gallery are
+		 * written, and refused with the reasons when it cannot go live. Writing
+		 * the status first let ServiceMetabox::enforce_publish_rules() demote it
+		 * before this request's own image or category landed, and the client got
+		 * 200 with status draft and no word why (Basecamp 10475574103).
+		 */
+		$going_live = 'publish' === ( $update_data['post_status'] ?? '' ) && 'publish' !== get_post_status( $service_id );
+		if ( $going_live ) {
+			unset( $update_data['post_status'] );
 		}
 
 		/*
@@ -911,12 +928,14 @@ class ServicesController extends RestController {
 			// Any field but the route id counts, as in the wizard: a gallery, add-on or category swap is as reviewable as a title.
 			// Pausing is not: it changes nothing a buyer would buy.
 			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'paused', 'context', '_locale', '_fields', '_embed' ) ) );
-			$goes_live     = 'publish' === ( $update_data['post_status'] ?? '' );
+			$goes_live     = $going_live || 'publish' === ( $update_data['post_status'] ?? '' );
 			$edits_live    = ! isset( $update_data['post_status'] ) && $edits_content && 'publish' === get_post_status( $service_id );
 
 			if ( $goes_live || $edits_live ) {
-				$update_data['post_status'] = 'pending';
-				$to_review                  = true;
+				if ( ! $going_live ) {
+					$update_data['post_status'] = 'pending';
+				}
+				$to_review = true;
 			}
 		}
 
@@ -926,7 +945,7 @@ class ServicesController extends RestController {
 			return $result;
 		}
 
-		if ( $to_review ) {
+		if ( $to_review && ! $going_live ) {
 			( new ModerationService() )->submit( $service_id );
 		}
 
@@ -948,6 +967,15 @@ class ServicesController extends RestController {
 			wp_set_object_terms( $service_id, $capped_tags, 'wpss_service_tag' );
 		}
 
+		// The edits above are saved either way; only the status change is refused.
+		$publish_errors = $going_live ? wpss_get_service_publish_errors( $service_id ) : array();
+		if ( $going_live && ! $publish_errors ) {
+			wpss_settle_service_status( $service_id, $to_review ? 'pending' : 'publish' );
+			if ( $to_review ) {
+				( new ModerationService() )->submit( $service_id );
+			}
+		}
+
 		/**
 		 * Fires after a service is updated via REST API.
 		 *
@@ -955,6 +983,17 @@ class ServicesController extends RestController {
 		 * @param WP_REST_Request $request    Request object.
 		 */
 		do_action( 'wpss_rest_service_updated', $service_id, $request );
+
+		if ( $publish_errors ) {
+			return new WP_Error(
+				'wpss_not_publishable',
+				implode( ' ', $publish_errors ),
+				array(
+					'status' => 400,
+					'errors' => array_values( $publish_errors ),
+				)
+			);
+		}
 
 		$response = $this->prepare_item_for_response( get_post( $service_id ), $request );
 		$response->set_data( $this->with_review_notice( $this->with_limit_notices( $response->get_data(), $notices ), $to_review ) );

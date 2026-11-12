@@ -150,6 +150,8 @@ Dashboard > Portfolio: add an item with tags "logo, branding", edit it, clear th
 **Expect** the other fields are untouched, `is_active` is in every response, and a category rule with no category is refused.
 
 ### 6. Cart, order payment and proposals over REST
+- Account deletion and privacy erase: a member who deletes their account (or is erased by Tools > Erase Personal Data) leaves orders and messages that still load for the other party, with the actor shape carrying `deleted: true`.
+- `GET /buyer-requests/{id}/proposals?per_page=1&page=2` returns the second proposal with `X-WP-Total` / `X-WP-TotalPages`; with no paging it returns up to 50, as before.
 - `DELETE /cart/{item_key}` removes one line; a key from another user's cart is a 404, not a removal.
 - `POST /payments/create-intent` registers only on the standalone rail; on Woo it does not exist. `POST /orders/{id}/pay` is the buyer's own call to pay an existing order (milestone phases use it): another buyer gets 403, and a later phase cannot be paid before the earlier one is approved.
 - `POST /buyer-requests/{id}/proposals` creates a proposal for a vendor; the request owner cannot propose on their own request. `.../proposals/{proposal_id}/accept` creates one order and rejects every other proposal's pending state; `.../reject` tells the vendor; `POST /proposals/{id}/withdraw` is the vendor's own and only while pending.
