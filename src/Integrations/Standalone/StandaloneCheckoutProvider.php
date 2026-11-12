@@ -1104,7 +1104,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 												<?php if ( $review_count > 0 ) : ?>
 													<span class="wpss-co-meta__item">
 														<i data-lucide="star" class="wpss-icon wpss-icon--sm wpss-co-stars" aria-hidden="true"></i>
-														<strong><?php echo esc_html( number_format( $review_avg, 1 ) ); ?></strong>
+														<strong><?php echo esc_html( number_format_i18n( $review_avg, 1 ) ); ?></strong>
 														<span>(<?php echo esc_html( $review_count ); ?>)</span>
 													</span>
 												<?php endif; ?>
@@ -1224,7 +1224,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 										<div class="wpss-co-seller-stat">
 											<span class="wpss-co-seller-stat__value">
 												<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
-												<?php echo esc_html( number_format( $review_avg, 1 ) ); ?>
+												<?php echo esc_html( number_format_i18n( $review_avg, 1 ) ); ?>
 											</span>
 											<span class="wpss-co-seller-stat__label">
 												<?php

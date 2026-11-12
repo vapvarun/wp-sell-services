@@ -172,7 +172,7 @@ class Notification {
 	 * @return string
 	 */
 	public function get_time_ago(): string {
-		return human_time_diff( strtotime( $this->created_at . ' UTC' ), time() ) . ' ' . __( 'ago', 'wp-sell-services' );
+		return wpss_time_ago( (string) $this->created_at );
 	}
 
 	/**

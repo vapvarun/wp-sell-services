@@ -174,13 +174,7 @@ wpss_enqueue_notifications_style();
 				$wpss_icon   = wpss_notification_type_icon( (string) $wpss_n->type );
 				$wpss_data   = is_string( $wpss_n->data ?? null ) ? json_decode( $wpss_n->data, true ) : (array) ( $wpss_n->data ?? array() );
 				$wpss_url    = wpss_get_notification_url( is_array( $wpss_data ) ? $wpss_data : array(), $wpss_n->action_url ?? null );
-				$wpss_when   = ! empty( $wpss_n->created_at )
-					? sprintf(
-						/* translators: %s: human-readable time difference, e.g. "2 hours" */
-						esc_html__( '%s ago', 'wp-sell-services' ),
-						human_time_diff( strtotime( $wpss_n->created_at ), time() )
-					)
-					: '';
+				$wpss_when   = ! empty( $wpss_n->created_at ) ? wpss_time_ago( (string) $wpss_n->created_at ) : '';
 				?>
 				<li class="wpss-notif-row<?php echo $wpss_unread ? ' wpss-notif-row--unread' : ''; ?>" data-id="<?php echo esc_attr( (string) $wpss_n->id ); ?>">
 					<span class="wpss-notif-row__icon" aria-hidden="true"><i data-lucide="<?php echo esc_attr( $wpss_icon ); ?>"></i></span>

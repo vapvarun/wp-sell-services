@@ -132,7 +132,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 						<i data-lucide="star" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 					<div class="wpss-stat-card__content">
-						<div class="wpss-stat-card__value"><?php echo esc_html( number_format( $vendor->rating, 1 ) ); ?></div>
+						<div class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $vendor->rating, 1 ) ); ?></div>
 						<div class="wpss-stat-card__label"><?php esc_html_e( 'Average Rating', 'wp-sell-services' ); ?></div>
 					</div>
 				</div>
@@ -155,7 +155,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 						<div class="wpss-metric">
 							<div class="wpss-metric__header">
 								<span class="wpss-metric__label"><?php esc_html_e( 'On-Time Delivery', 'wp-sell-services' ); ?></span>
-								<span class="wpss-metric__value"><?php echo esc_html( number_format( $vendor->delivery_rate, 0 ) ); ?>%</span>
+								<span class="wpss-metric__value"><?php echo esc_html( number_format_i18n( $vendor->delivery_rate, 0 ) ); ?>%</span>
 							</div>
 							<div class="wpss-metric__bar">
 								<div class="wpss-metric__fill" style="width: <?php echo esc_attr( $vendor->delivery_rate ); ?>%"></div>
@@ -165,7 +165,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 						<div class="wpss-metric">
 							<div class="wpss-metric__header">
 								<span class="wpss-metric__label"><?php esc_html_e( 'Order Completion', 'wp-sell-services' ); ?></span>
-								<span class="wpss-metric__value"><?php echo esc_html( number_format( $vendor->completion_rate, 0 ) ); ?>%</span>
+								<span class="wpss-metric__value"><?php echo esc_html( number_format_i18n( $vendor->completion_rate, 0 ) ); ?>%</span>
 							</div>
 							<div class="wpss-metric__bar">
 								<div class="wpss-metric__fill" style="width: <?php echo esc_attr( $vendor->completion_rate ); ?>%"></div>

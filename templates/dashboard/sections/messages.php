@@ -296,8 +296,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				// list does not filter them out (history stays visible), so
 				// without this the badges on screen and the banner disagreed.
 				$is_unread         = $my_unread > 0 && empty( $conversation->is_closed );
-				$last_message_time = ! empty( $conversation->last_message_at ) ? strtotime( $conversation->last_message_at . ' UTC' ) : false;
-				$time_ago          = $last_message_time ? human_time_diff( $last_message_time, time() ) : '';
+				$time_ago          = ! empty( $conversation->last_message_at ) ? wpss_time_ago( (string) $conversation->last_message_at ) : '';
 
 				// EVERY row leads with the person, never the thing being discussed.
 				// Order conversations used to title themselves with the service,

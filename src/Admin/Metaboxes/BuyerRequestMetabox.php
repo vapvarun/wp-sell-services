@@ -200,7 +200,7 @@ class BuyerRequestMetabox {
 						$proposed_price = (float) ( $proposal->proposed_price ?? 0 );
 						$proposed_days  = (int) ( $proposal->proposed_days ?? 0 );
 						?>
-						<td><?php echo esc_html( number_format( $proposed_price, 2 ) ); ?></td>
+						<td><?php echo esc_html( wpss_format_price( $proposed_price ) ); ?></td>
 						<td>
 							<?php
 							printf(

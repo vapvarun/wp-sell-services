@@ -889,7 +889,7 @@ do_action( 'wpss_before_order_view', $order );
 							<?php if ( $vendor_count > 0 ) : ?>
 								<div class="wpss-party-info__rating">
 									<i data-lucide="star" class="wpss-icon wpss-star-icon" aria-hidden="true"></i>
-									<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
+									<?php echo esc_html( number_format_i18n( $vendor_rating, 1 ) ); ?>
 									<span class="wpss-party-info__rating-count">(<?php echo esc_html( $vendor_count ); ?> <?php esc_html_e( 'reviews', 'wp-sell-services' ); ?>)</span>
 								</div>
 							<?php endif; ?>

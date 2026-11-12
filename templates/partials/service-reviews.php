@@ -90,7 +90,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 	<?php if ( $rating_count > 0 ) : ?>
 		<div class="wpss-reviews-summary">
 			<div class="wpss-reviews-average">
-				<span class="wpss-average-number"><?php echo esc_html( number_format( $rating_avg, 1 ) ); ?></span>
+				<span class="wpss-average-number"><?php echo esc_html( number_format_i18n( $rating_avg, 1 ) ); ?></span>
 				<div class="wpss-average-stars">
 					<?php echo wpss_star_rating( (float) $rating_avg ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper. ?>
 				</div>

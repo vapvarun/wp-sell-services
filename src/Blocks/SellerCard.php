@@ -175,7 +175,7 @@ class SellerCard extends AbstractBlock {
 						<?php if ( $attributes['showRating'] && $stats['rating'] ) : ?>
 							<div class="wpss-seller-rating">
 								<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
-								<span class="wpss-rating-value"><?php echo esc_html( number_format( $stats['rating'], 1 ) ); ?></span>
+								<span class="wpss-rating-value"><?php echo esc_html( number_format_i18n( $stats['rating'], 1 ) ); ?></span>
 								<span class="wpss-review-count">(<?php echo esc_html( $stats['reviews'] ); ?>)</span>
 							</div>
 						<?php endif; ?>

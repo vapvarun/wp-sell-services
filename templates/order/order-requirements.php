@@ -159,7 +159,7 @@ do_action( 'wpss_before_requirements_form', $order );
 								<?php if ( $vendor_count > 0 ) : ?>
 									<span class="wpss-order-card__rating">
 										<i data-lucide="star" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
-										<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
+										<?php echo esc_html( number_format_i18n( $vendor_rating, 1 ) ); ?>
 										(<?php echo esc_html( $vendor_count ); ?>)
 									</span>
 								<?php endif; ?>

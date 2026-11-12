@@ -210,7 +210,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 						<?php if ( $rating_count > 0 ) : ?>
 							<span class="wpss-meta-item wpss-rating">
 								<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
-								<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
+								<?php echo esc_html( number_format_i18n( $rating_avg, 1 ) ); ?>
 								<span class="wpss-rating-count">
 									<?php
 									printf(
@@ -393,7 +393,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 						<?php esc_html_e( 'Reviews', 'wp-sell-services' ); ?>
 						<?php if ( $rating_count > 0 ) : ?>
 							<span class="wpss-section-meta">
-								<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
+								<?php echo esc_html( number_format_i18n( $rating_avg, 1 ) ); ?>
 								<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 								(<?php echo esc_html( $rating_count ); ?>)
 							</span>

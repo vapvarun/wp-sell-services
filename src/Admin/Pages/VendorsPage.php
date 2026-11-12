@@ -1091,7 +1091,7 @@ class VendorsPage {
 			<td class="column-rating" data-colname="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
 				<?php if ( $reviews > 0 ) : ?>
 					<span class="wpss-rating-stars">
-						<?php echo esc_html( number_format( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
+						<?php echo esc_html( number_format_i18n( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 					</span>
 					<span class="wpss-rating-count">
 						(<?php echo esc_html( number_format_i18n( $reviews ) ); ?>)
@@ -1240,7 +1240,7 @@ class VendorsPage {
 				<div class="wpss-detail-stat-card">
 					<span class="wpss-detail-stat-number">
 						<?php if ( $reviews > 0 ) : ?>
-							<?php echo esc_html( number_format( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
+							<?php echo esc_html( number_format_i18n( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 						<?php else : ?>
 							-
 						<?php endif; ?>
@@ -1659,7 +1659,7 @@ class VendorsPage {
 			<div class="wpss-info-grid">
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'On-Time Delivery Rate', 'wp-sell-services' ); ?></span>
-					<span class="wpss-info-value"><?php echo esc_html( number_format( (float) ( $profile->on_time_delivery_rate ?? 0 ), 1 ) ); ?>%</span>
+					<span class="wpss-info-value"><?php echo esc_html( number_format_i18n( (float) ( $profile->on_time_delivery_rate ?? 0 ), 1 ) ); ?>%</span>
 				</div>
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Completed Orders', 'wp-sell-services' ); ?></span>
@@ -2009,7 +2009,7 @@ class VendorsPage {
 					printf(
 						/* translators: %s: global commission rate */
 						esc_html__( 'Global platform commission: %s%%. Customize the rate for this vendor below.', 'wp-sell-services' ),
-						esc_html( number_format( $global_rate, 1 ) )
+						esc_html( number_format_i18n( $global_rate, 1 ) )
 					);
 					?>
 				</p>
@@ -2036,7 +2036,7 @@ class VendorsPage {
 							printf(
 								/* translators: %s: custom commission rate */
 								esc_html__( 'Using custom rate: %s%%', 'wp-sell-services' ),
-								esc_html( number_format( $effective_rate['rate'], 2 ) )
+								esc_html( number_format_i18n( $effective_rate['rate'], 2 ) )
 							);
 							?>
 						</span>
@@ -2471,7 +2471,7 @@ class VendorsPage {
 					printf(
 						/* translators: %s: global commission rate */
 						esc_html__( 'Global platform commission: %s%%. Set a custom rate for this vendor.', 'wp-sell-services' ),
-						esc_html( number_format( $global_rate, 1 ) )
+						esc_html( number_format_i18n( $global_rate, 1 ) )
 					);
 					?>
 				</p>
@@ -2499,7 +2499,7 @@ class VendorsPage {
 							printf(
 								/* translators: %s: custom commission rate */
 								esc_html__( 'Using custom rate: %s%%', 'wp-sell-services' ),
-								esc_html( number_format( $effective_rate['rate'], 2 ) )
+								esc_html( number_format_i18n( $effective_rate['rate'], 2 ) )
 							);
 							?>
 						</span>

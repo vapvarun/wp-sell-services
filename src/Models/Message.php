@@ -237,17 +237,4 @@ class Message {
 
 		return wpss_datetime_label( $this->created_at->getTimestamp() );
 	}
-
-	/**
-	 * Get relative time (e.g., "2 hours ago").
-	 *
-	 * @return string
-	 */
-	public function get_relative_time(): string {
-		if ( ! $this->created_at ) {
-			return '';
-		}
-
-		return human_time_diff( $this->created_at->getTimestamp(), time() ) . ' ' . __( 'ago', 'wp-sell-services' );
-	}
 }

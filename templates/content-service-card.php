@@ -228,7 +228,7 @@ do_action( 'wpss_before_service_card', $service_id );
 			<div class="wpss-service-card__rating">
 				<?php if ( $rating_count > 0 ) : ?>
 					<i data-lucide="star" class="wpss-icon wpss-icon--sm wpss-service-card__star" aria-hidden="true"></i>
-					<span class="wpss-service-card__rating-value"><?php echo esc_html( number_format( $rating_avg, 1 ) ); ?></span>
+					<span class="wpss-service-card__rating-value"><?php echo esc_html( number_format_i18n( $rating_avg, 1 ) ); ?></span>
 					<span class="wpss-service-card__rating-count">
 						<?php
 						printf(

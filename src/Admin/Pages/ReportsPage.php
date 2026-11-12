@@ -360,13 +360,7 @@ class ReportsPage {
 								<td data-label="<?php esc_attr_e( 'When', 'wp-sell-services' ); ?>">
 									<?php
 									// created_at is stored in UTC, like time().
-									echo esc_html(
-										sprintf(
-											/* translators: %s: human-readable time difference, e.g. "2 hours" */
-											__( '%s ago', 'wp-sell-services' ),
-											human_time_diff( strtotime( $row->created_at . ' UTC' ), time() )
-										)
-									);
+									echo esc_html( wpss_time_ago( (string) $row->created_at ) );
 									?>
 								</td>
 								<td class="wpss-reports-table__actions" data-label="<?php esc_attr_e( 'Actions', 'wp-sell-services' ); ?>">

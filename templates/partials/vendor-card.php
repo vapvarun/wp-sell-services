@@ -100,7 +100,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 			<div class="wpss-stat">
 				<span class="wpss-stat-value">
 					<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
-					<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
+					<?php echo esc_html( number_format_i18n( $rating_avg, 1 ) ); ?>
 					<span class="wpss-stat-count">(<?php echo esc_html( $rating_count ); ?>)</span>
 				</span>
 			</div>
