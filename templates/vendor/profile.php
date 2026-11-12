@@ -359,7 +359,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							</div>
 							<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No services yet', 'wp-sell-services' ); ?></h3>
 							<p class="wpss-empty-state__body"><?php esc_html_e( 'This vendor hasn\'t published any services. Check back soon or browse other vendors.', 'wp-sell-services' ); ?></p>
-							<a href="<?php echo esc_url( home_url( '/services/' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?></a>
+							<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?></a>
 						</div>
 					<?php endif; ?>
 				</section>

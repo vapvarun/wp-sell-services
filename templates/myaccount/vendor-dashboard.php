@@ -237,7 +237,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 				</div>
 				<h3 class="wpss-empty-state__title"><?php esc_html_e( 'Set Up Your Vendor Profile', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-empty-state__text"><?php esc_html_e( 'Complete your profile to start selling services on our marketplace.', 'wp-sell-services' ); ?></p>
-				<a href="<?php echo esc_url( home_url( '/become-a-seller/' ) ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--lg">
+				<a href="<?php echo esc_url( wpss_get_become_vendor_url() ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--lg">
 					<?php esc_html_e( 'Get Started', 'wp-sell-services' ); ?>
 				</a>
 			</div>

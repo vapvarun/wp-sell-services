@@ -741,9 +741,9 @@ class VendorsPage {
 						<?php echo \WPSellServices\Services\Icon::render( 'users' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					</div>
 					<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No vendors yet', 'wp-sell-services' ); ?></h2>
-					<p class="wpss-empty-state__body"><?php esc_html_e( 'Invite site users to register as vendors, or let them self-register via the /become-a-vendor page.', 'wp-sell-services' ); ?></p>
+					<p class="wpss-empty-state__body"><?php esc_html_e( 'Invite site users to register as vendors, or let them self-register on the vendor registration page.', 'wp-sell-services' ); ?></p>
 					<p class="wpss-empty-state__actions">
-						<a href="<?php echo esc_url( home_url( '/become-a-vendor/' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Open vendor registration', 'wp-sell-services' ); ?></a>
+						<a href="<?php echo esc_url( wpss_get_become_vendor_url() ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Open vendor registration', 'wp-sell-services' ); ?></a>
 						<a href="https://wbcomdesigns.com/docs/wp-sell-services/vendor-registration-wpss" class="wpss-empty-state__learn" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
 					</p>
 				</div>

@@ -33,7 +33,7 @@ $format = static function ( float $amt ) use ( $currency ): string {
 };
 
 $platform_fee = max( 0.0, $gross_amount - $net_amount );
-$dashboard    = wpss_get_dashboard_url() ?: home_url( '/dashboard/' );
+$dashboard    = wpss_get_dashboard_url() ?: wpss_get_page_url( 'dashboard' );
 $order_url    = add_query_arg(
 	array(
 		'section'  => 'sales',

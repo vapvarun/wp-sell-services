@@ -30,7 +30,7 @@ $format = static function ( float $amt ) use ( $currency ): string {
 		: number_format_i18n( $amt, 2 ) . ' ' . $currency;
 };
 
-$dashboard = wpss_get_dashboard_url() ?: home_url( '/dashboard/' );
+$dashboard = wpss_get_dashboard_url() ?: wpss_get_page_url( 'dashboard' );
 $parent_id = (int) ( $extension->platform_order_id ?? 0 );
 $order_url = $parent_id ? add_query_arg(
 	array(

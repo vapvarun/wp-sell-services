@@ -66,7 +66,7 @@ $favorites_pages = $favorites_query ? (int) $favorites_query->max_num_pages : 0;
 				<?php esc_html_e( 'Tap the heart on any service to save it here for later.', 'wp-sell-services' ); ?>
 			</p>
 			<?php
-			$services_page_id = get_option( 'wpss_pages', array() )['services_page'] ?? 0;
+			$services_page_id = wpss_get_page_id( 'services_page' );
 			$browse_url       = $services_page_id ? get_permalink( $services_page_id ) : home_url( '/' );
 			?>
 			<a href="<?php echo esc_url( $browse_url ); ?>" class="wpss-btn wpss-btn--primary">

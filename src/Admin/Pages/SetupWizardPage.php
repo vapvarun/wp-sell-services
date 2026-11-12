@@ -224,9 +224,7 @@ class SetupWizardPage {
 	 * @return bool
 	 */
 	private function site_is_configured(): bool {
-		$pages = (array) get_option( 'wpss_pages', array() );
-
-		$has_core_pages = ! empty( $pages['services_page'] ) && ! empty( $pages['dashboard'] );
+		$has_core_pages = wpss_get_page_id( 'services_page' ) && wpss_get_page_id( 'dashboard' );
 
 		if ( ! $has_core_pages ) {
 			return false;
@@ -414,13 +412,10 @@ class SetupWizardPage {
 
 		// Validate that all required pages exist before completing.
 		$required_pages = wpss_get_required_pages();
-
-		$pages   = get_option( 'wpss_pages', array() );
-		$missing = array();
+		$missing        = array();
 
 		foreach ( $required_pages as $key => $label ) {
-			$page_id = (int) ( $pages[ $key ] ?? 0 );
-			if ( ! $page_id || ! get_post( $page_id ) || 'publish' !== get_post_status( $page_id ) ) {
+			if ( ! wpss_get_page_id( $key ) ) {
 				$missing[] = $label;
 			}
 		}

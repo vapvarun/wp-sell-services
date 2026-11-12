@@ -1103,7 +1103,7 @@ class EmailService {
 		$meta        = $this->decode_order_meta( $milestone );
 
 		$parent_id     = (int) ( $milestone->platform_order_id ?? 0 );
-		$dashboard_url = wpss_get_dashboard_url() ?: home_url( '/dashboard/' );
+		$dashboard_url = wpss_get_dashboard_url() ?: wpss_get_page_url( 'dashboard' );
 		$review_url    = add_query_arg(
 			array(
 				'section'  => $parent_id ? 'orders' : 'orders',
@@ -1220,7 +1220,7 @@ class EmailService {
 						'section'  => 'sales',
 						'order_id' => (int) $milestone->id,
 					),
-					wpss_get_dashboard_url() ?: home_url( '/dashboard/' )
+					wpss_get_dashboard_url() ?: wpss_get_page_url( 'dashboard' )
 				),
 			)
 		);
