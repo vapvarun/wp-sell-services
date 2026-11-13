@@ -801,6 +801,14 @@ add_filter( 'wpss_api_controllers', function( $controllers ) {
 
 See [Custom Integrations](custom-integrations.md) for detailed examples.
 
+## Deprecated admin-ajax actions
+
+Since 1.9.3, 27 admin-ajax actions are deprecated. The plugin's own screens and the app no longer call them; the REST API above does the same work. They still work in 1.9.x, and each call logs a "deprecated since version 1.9.3" notice in your debug log when `WP_DEBUG` is on. They will be removed in the next major release, so move any custom code that posts to them to the matching REST route.
+
+`wpss_accept_cancellation`, `wpss_accept_delivery`, `wpss_add_portfolio_item`, `wpss_cancel_order`, `wpss_delete_portfolio_item`, `wpss_export_data`, `wpss_favorite_service`, `wpss_filter_dashboard`, `wpss_get_dashboard_tab`, `wpss_get_favorites`, `wpss_get_messages`, `wpss_get_new_messages`, `wpss_get_notifications`, `wpss_load_services`, `wpss_mark_messages_read`, `wpss_paginate_dashboard`, `wpss_reject_cancellation`, `wpss_remove_requirement_file`, `wpss_search_dashboard`, `wpss_send_direct_message`, `wpss_skip_requirements`, `wpss_start_work`, `wpss_unfavorite_service`, `wpss_update_cart_item`, `wpss_update_portfolio_item`, `wpss_update_vendor_profile`, `wpss_upload_file`.
+
+`wpss_accept_proposal`, `wpss_reject_proposal`, `wpss_withdraw_proposal` and `wpss_update_request` are still in use and are not deprecated. The list lives in `AjaxHandlers::DEPRECATED_ACTIONS`.
+
 ## Related Documentation
 
 - [REST API Controllers Reference](rest-api-controllers.md) - Every route, by controller

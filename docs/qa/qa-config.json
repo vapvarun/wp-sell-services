@@ -747,6 +747,10 @@
    {
     "id": "seo-service-schema-once",
     "run": "${WP_CLI:-wp} eval-file tests/test-seo-service-schema-once.php"
+   },
+   {
+    "id": "dead-ajax-actions-deprecated",
+    "run": "${WP_CLI:-wp} eval-file tests/test-dead-ajax-actions-deprecated.php"
    }
   ]
  }

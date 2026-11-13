@@ -95,6 +95,48 @@ class AjaxHandlers {
 	private const VALID_FILTERABLE_TABS = array( 'orders', 'sales', 'services', 'requests', 'messages', 'earnings' );
 
 	/**
+	 * Actions no shipped script, template or Pro file calls any more.
+	 *
+	 * The REST API replaced them. They keep working for one more release and log
+	 * a deprecation notice when called (WP_DEBUG on); they are removed at the next
+	 * major. Still live and not listed: accept/reject/withdraw_proposal (called by
+	 * a built name in frontend.js) and update_request.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @var array<int, string>
+	 */
+	public const DEPRECATED_ACTIONS = array(
+		'wpss_accept_cancellation',
+		'wpss_accept_delivery',
+		'wpss_add_portfolio_item',
+		'wpss_cancel_order',
+		'wpss_delete_portfolio_item',
+		'wpss_export_data',
+		'wpss_favorite_service',
+		'wpss_filter_dashboard',
+		'wpss_get_dashboard_tab',
+		'wpss_get_favorites',
+		'wpss_get_messages',
+		'wpss_get_new_messages',
+		'wpss_get_notifications',
+		'wpss_load_services',
+		'wpss_mark_messages_read',
+		'wpss_paginate_dashboard',
+		'wpss_reject_cancellation',
+		'wpss_remove_requirement_file',
+		'wpss_search_dashboard',
+		'wpss_send_direct_message',
+		'wpss_skip_requirements',
+		'wpss_start_work',
+		'wpss_unfavorite_service',
+		'wpss_update_cart_item',
+		'wpss_update_portfolio_item',
+		'wpss_update_vendor_profile',
+		'wpss_upload_file',
+	);
+
+	/**
 	 * Initialize AJAX handlers.
 	 *
 	 * @return void
@@ -204,6 +246,30 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_add_portfolio_item', array( $this, 'add_portfolio_item' ) );
 		add_action( 'wp_ajax_wpss_update_portfolio_item', array( $this, 'update_portfolio_item' ) );
 		add_action( 'wp_ajax_wpss_delete_portfolio_item', array( $this, 'delete_portfolio_item' ) );
+
+		// Log callers of the dead actions before their handler runs. Only the
+		// logged-out door that already exists is hooked, so no new nopriv action appears.
+		foreach ( self::DEPRECATED_ACTIONS as $action ) {
+			add_action( 'wp_ajax_' . $action, array( $this, 'note_deprecated_ajax' ), 1 );
+			if ( has_action( 'wp_ajax_nopriv_' . $action ) ) {
+				add_action( 'wp_ajax_nopriv_' . $action, array( $this, 'note_deprecated_ajax' ), 1 );
+			}
+		}
+	}
+
+	/**
+	 * Log a call to a deprecated admin-ajax action, then let its handler run.
+	 *
+	 * _deprecated_function() fires the deprecated_function_run action every time
+	 * and shows the notice only when WP_DEBUG is on.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @return void
+	 */
+	public function note_deprecated_ajax(): void {
+		$action = preg_replace( '/^wp_ajax_(nopriv_)?/', '', (string) current_action() );
+		_deprecated_function( esc_html( 'admin-ajax action ' . $action ), '1.9.3', esc_html__( 'the wpss/v1 REST API', 'wp-sell-services' ) );
 	}
 
 	/**

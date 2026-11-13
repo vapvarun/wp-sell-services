@@ -1052,6 +1052,14 @@
    "added": "2026-11-13",
    "fails_on": "1.9.3 tree before this commit (Yoast graph built and Rank Math graph built cases: 2 FAILED)",
    "check": "tests/test-seo-service-schema-once.php"
+  },
+  {
+   "card": "10505025997 (WPSS-3)",
+   "title": "admin-ajax actions REST replaced stayed registered with no notice to the third parties still calling them",
+   "guard": "static:dead-ajax-actions-deprecated",
+   "added": "2026-11-13",
+   "fails_on": "1.9.3 tree before this commit (4 FAILED: no list, no priority-1 note, no nopriv note, no deprecation fired)",
+   "check": "tests/test-dead-ajax-actions-deprecated.php"
   }
  ]
 }
