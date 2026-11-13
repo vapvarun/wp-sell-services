@@ -803,8 +803,14 @@ class DisputesController extends RestController {
 		);
 
 		if ( $detailed ) {
-			$data['description']       = $dispute->description;
-			$data['evidence']          = $dispute->evidence ?? array();
+			$data['description'] = $dispute->description;
+			// The row's JSON entries (notes, refund info) keep every key; only the date is converted.
+			$data['evidence']          = array_map(
+				fn( $entry ) => is_array( $entry ) && array_key_exists( 'created_at', $entry )
+					? array_merge( $entry, array( 'created_at' => $format_date( $entry['created_at'] ) ) )
+					: $entry,
+				(array) ( $dispute->evidence ?? array() )
+			);
 			$data['response_deadline'] = $format_date( $dispute->response_deadline );
 			$data['resolved_at']       = $format_date( $dispute->resolved_at );
 			$data['resolution']        = $dispute->resolution_type ?? null;
