@@ -40,7 +40,22 @@ class SchemaMarkup {
 		$schema = null;
 
 		if ( is_singular( 'wpss_service' ) ) {
-			$schema = $this->get_service_schema( get_the_ID() );
+			/**
+			 * Whether to print the plugin's own Service JSON-LD on a single service.
+			 *
+			 * The Yoast and Rank Math integrations return false once they have
+			 * added the same Service piece to their own graph, since two copies
+			 * show up as duplicate structured data. Archive, category, vendor, Organization and
+			 * Breadcrumb output is not affected.
+			 *
+			 * @since 1.9.3
+			 *
+			 * @param bool $show       Default true.
+			 * @param int  $service_id Service ID.
+			 */
+			if ( apply_filters( 'wpss_output_service_schema', true, (int) get_the_ID() ) ) {
+				$schema = $this->get_service_schema( get_the_ID() );
+			}
 		} elseif ( is_post_type_archive( 'wpss_service' ) ) {
 			$schema = $this->get_service_list_schema();
 		} elseif ( is_tax( 'wpss_service_category' ) ) {

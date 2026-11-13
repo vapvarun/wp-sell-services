@@ -23,6 +23,30 @@ defined( 'ABSPATH' ) || exit;
 abstract class AbstractSeoIntegration implements SeoIntegrationInterface {
 
 	/**
+	 * Whether this plugin put our Service piece into its own graph on this request.
+	 *
+	 * @var bool
+	 */
+	protected bool $service_schema_added = false;
+
+	/**
+	 * Skip our own single-service JSON-LD once the SEO plugin's graph carries it.
+	 *
+	 * Yoast and Rank Math print their graph at wp_head priority 1, before
+	 * SchemaMarkup at 10, so the flag is known by then. When their schema output
+	 * is off (Rank Math before its setup wizard, a disabled schema module) the
+	 * piece is never added and ours still prints, so the page is never left with none.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param bool $show Whether to print our Service JSON-LD.
+	 * @return bool
+	 */
+	public function keep_own_service_schema( bool $show ): bool {
+		return $this->service_schema_added ? false : $show;
+	}
+
+	/**
 	 * Modify page title.
 	 *
 	 * @param string $title Current title.

@@ -743,6 +743,10 @@
    {
     "id": "request-proposals-paged",
     "run": "${WP_CLI:-wp} eval-file tests/test-request-proposals-paged.php"
+   },
+   {
+    "id": "seo-service-schema-once",
+    "run": "${WP_CLI:-wp} eval-file tests/test-seo-service-schema-once.php"
    }
   ]
  }

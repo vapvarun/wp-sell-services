@@ -1304,7 +1304,8 @@
     "new_hooks": [
       "wpss_dashboard_assets_enqueued (action, end of UnifiedDashboard::enqueue_assets)",
       "wpss_notify_message_participants (filter, mutes the duplicate bell on contact-vendor)",
-      "wpss_email_from_address (filter)"
+      "wpss_email_from_address (filter)",
+      "wpss_output_service_schema (filter, bool $print, int $service_id; SchemaMarkup::output_schema single-service branch). Yoast and Rank Math integrations return false via AbstractSeoIntegration::keep_own_service_schema() once their graph carries our Service piece; archive, category, vendor, Organization and Breadcrumb output unchanged. Test tests/test-seo-service-schema-once.php"
     ]
   }
 }

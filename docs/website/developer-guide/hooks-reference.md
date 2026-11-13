@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**581 hooks** across **805** firing sites.
+**582 hooks** across **806** firing sites.
 
 ## Actions (301)
 
@@ -318,7 +318,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (280)
+## Filters (281)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -457,6 +457,7 @@ guide; this is the complete index.
 | `wpss_order_status_transitions` | 3 | `src/Services/OrderService.php` | Filter allowed status transitions. |
 | `wpss_order_statuses` | 1 | `src/functions/order-status.php` | Filter order statuses. |
 | `wpss_organization_schema` | 1 | `src/SEO/SchemaMarkup.php` |  |
+| `wpss_output_service_schema` | 2 | `src/SEO/SchemaMarkup.php` | Whether to print the plugin's own Service JSON-LD on a single service. |
 | `wpss_package_button_text` | 2 | `templates/partials/service-packages.php` | Filters the package button text. |
 | `wpss_package_id_base` | 2 | `src/functions/packages.php` |  |
 | `wpss_package_price_html` | 3 | `templates/partials/service-packages.php` | Filters the package price HTML. |

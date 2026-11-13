@@ -1044,6 +1044,14 @@
    "added": "2026-11-12",
    "fails_on": "not shown red (additive paging; the old route had no paging to compare)",
    "check": "tests/test-request-proposals-paged.php"
+  },
+  {
+   "card": "10505025858 (WPSS-2)",
+   "title": "a single service printed our Service JSON-LD beside the same piece in the Yoast / Rank Math graph",
+   "guard": "static:seo-service-schema-once",
+   "added": "2026-11-13",
+   "fails_on": "1.9.3 tree before this commit (Yoast graph built and Rank Math graph built cases: 2 FAILED)",
+   "check": "tests/test-seo-service-schema-once.php"
   }
  ]
 }

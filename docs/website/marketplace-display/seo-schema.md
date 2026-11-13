@@ -75,7 +75,9 @@ If you use Yoast SEO, Rank Math, or All in One SEO, WP Sell Services plays nicel
 
 - The plugin automatically detects your SEO plugin
 - Meta descriptions and social tags are deferred to your SEO plugin
-- Structured data from WP Sell Services still applies (unless your SEO plugin provides its own)
+- With Yoast SEO or Rank Math, the service details are added to your SEO plugin's own structured data, so each service page carries them once, not twice
+- With All in One SEO, or when your SEO plugin's structured data is switched off, WP Sell Services adds the service details itself
+- Category, archive and vendor structured data always comes from WP Sell Services
 - Service pages appear in your SEO plugin's sitemap
 
 You do not need to configure anything special -- the integration is automatic.
