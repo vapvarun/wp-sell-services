@@ -237,7 +237,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:272` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:469` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1477` |
-| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:1971` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2037` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:535` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:587` |
 
@@ -841,12 +841,13 @@ add_filter( 'wpss_reign_hide_left_panel', '__return_false' );
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_service_schema` | `$schema, $service_id` | `src/SEO/SchemaMarkup.php:202` |
-| `wpss_service_list_schema` | `$schema` | `src/SEO/SchemaMarkup.php:242` |
-| `wpss_category_schema` | `$schema, $term` | `src/SEO/SchemaMarkup.php:301` |
-| `wpss_person_schema` | `$schema, $user_id` | `src/SEO/SchemaMarkup.php:354` |
-| `wpss_vendor_page_schema` | `$schema, $user_id` | `src/SEO/SchemaMarkup.php:401` |
-| `wpss_organization_schema` | `$schema` | `src/SEO/SchemaMarkup.php:432` |
+| `wpss_output_service_schema` | `bool $show, int $service_id` | `src/SEO/SchemaMarkup.php:56` |
+| `wpss_service_schema` | `$schema, $service_id` | `src/SEO/SchemaMarkup.php:217` |
+| `wpss_service_list_schema` | `$schema` | `src/SEO/SchemaMarkup.php:257` |
+| `wpss_category_schema` | `$schema, $term` | `src/SEO/SchemaMarkup.php:316` |
+| `wpss_person_schema` | `$schema, $user_id` | `src/SEO/SchemaMarkup.php:369` |
+| `wpss_vendor_page_schema` | `$schema, $user_id` | `src/SEO/SchemaMarkup.php:416` |
+| `wpss_organization_schema` | `$schema` | `src/SEO/SchemaMarkup.php:447` |
 | `wpss_seo_integrations` | `array<string, SeoIntegrationInterface> $integrations` | `src/SEO/SEO.php:54` |
 | `wpss_open_graph_data` | `$data, $service_id` | `src/SEO/SEO.php:260` |
 | `wpss_sitemap_post_types` | `$post_types` | `src/SEO/SEO.php:324` |
