@@ -1068,6 +1068,14 @@
    "added": "2026-11-13",
    "fails_on": "1.9.3 tree before this commit (13 FAILED)",
    "check": "tests/test-dev-cli-not-shipped.php"
+  },
+  {
+   "card": "10488472455 (comment 2)",
+   "title": "buyer request docs promised notifications (new request, close, withdraw) the code never sends",
+   "guard": "static:request-docs-match-notifications",
+   "added": "2026-11-13",
+   "fails_on": "1.9.3 tree before this commit (4 FAILED)",
+   "check": "tests/test-request-docs-match-notifications.php"
   }
  ]
 }

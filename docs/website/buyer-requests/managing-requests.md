@@ -93,7 +93,7 @@ After the first proposal arrives, the **Remove** button disappears from the file
 
 ## Closing a Request
 
-If you no longer need the work done, click **Close Request** on your request page. The status changes to "Cancelled", vendors with pending proposals are notified, and the request is removed from public listings.
+If you no longer need the work done, click **Close** next to the request in **Dashboard > Buyer Requests**. The request is removed from public listings and shows as Draft in your dashboard, where **Reopen** lists it again. Vendors with pending proposals are not notified.
 
 **Reasons to close:**
 - Found a vendor outside the platform

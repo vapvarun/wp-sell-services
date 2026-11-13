@@ -755,6 +755,10 @@
    {
     "id": "dev-cli-not-shipped",
     "run": "${WP_CLI:-wp} eval-file tests/test-dev-cli-not-shipped.php"
+   },
+   {
+    "id": "request-docs-match-notifications",
+    "run": "${WP_CLI:-wp} eval-file tests/test-request-docs-match-notifications.php"
    }
   ]
  }

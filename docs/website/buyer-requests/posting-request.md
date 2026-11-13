@@ -70,7 +70,7 @@ Each file uploads as soon as you pick it. Request files are visible to vendors b
 
 Once your request is live:
 
-- **Vendors are notified** and can browse your request
+- **Vendors can find it** in the Buyer Requests listing. They are not emailed or notified about new requests, so they see it when they browse.
 - **Proposals arrive** with pricing, timelines, and cover letters
 - **You get notified** by email and in-app each time a new proposal comes in
 - **Your request stays open** for 30 days by default (admin-configurable)
@@ -113,11 +113,11 @@ Attachments follow one extra rule. Until a vendor sends a proposal you can add a
 
 ### Closing
 
-If you no longer need the work, click **Close Request**. Pending proposals are notified, and the request is removed from vendor listings.
+If you no longer need the work, click **Close** next to the request in **Dashboard > Buyer Requests**. The request is removed from vendor listings and shows as Draft in your dashboard. Vendors who sent proposals are not notified.
 
 ### Reopening
 
-If your request expires or you close it early, you can repost it with updates to start receiving proposals again.
+A request you closed has a **Reopen** button in **Dashboard > Buyer Requests** that lists it again. An expired request can be reposted with updates to start receiving proposals again.
 
 ---
 
