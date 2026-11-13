@@ -811,8 +811,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_payouts',
 				'field'       => 'min_withdrawal',
-				'min'         => 0,
-				'max'         => 1000,
+				'min'         => self::NUMBER_LIMITS['min_withdrawal'][0],
+				'max'         => self::NUMBER_LIMITS['min_withdrawal'][1],
 				'step'        => 1,
 				'description' => __( 'Two rules, one number. A vendor needs at least this much in available earnings before they can request a withdrawal at all, and every individual request must also be for at least this amount. Recommended: $50-$100 for most marketplaces.', 'wp-sell-services' ),
 			)
@@ -878,8 +878,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_payouts',
 				'field'       => 'auto_withdrawal_threshold',
-				'min'         => 100,
-				'max'         => 10000,
+				'min'         => self::NUMBER_LIMITS['auto_withdrawal_threshold'][0],
+				'max'         => self::NUMBER_LIMITS['auto_withdrawal_threshold'][1],
 				'step'        => 50,
 				'description' => __( 'A withdrawal request is created for any vendor whose available balance is above this amount, on the schedule below. You still approve and pay each request - no money leaves your account on its own. To stop, untick Enable Auto-Withdrawal above.', 'wp-sell-services' ),
 			)
@@ -1107,8 +1107,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'auto_complete_days',
-				'min'         => 0,
-				'max'         => 30,
+				'min'         => self::NUMBER_LIMITS['auto_complete_days'][0],
+				'max'         => self::NUMBER_LIMITS['auto_complete_days'][1],
 				'description' => __( 'Days after vendor submits delivery before the order auto-completes if buyer does not respond. Set to 0 to require buyer action.', 'wp-sell-services' ),
 			)
 		);
@@ -1160,8 +1160,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'dispute_window_days',
-				'min'         => 1,
-				'max'         => 90,
+				'min'         => self::NUMBER_LIMITS['dispute_window_days'][0],
+				'max'         => self::NUMBER_LIMITS['dispute_window_days'][1],
 				'description' => __( 'Days after order completion during which buyers can open a dispute. After this window, disputes are locked.', 'wp-sell-services' ),
 			)
 		);
@@ -1175,8 +1175,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'auto_dispute_late_days',
-				'min'         => 0,
-				'max'         => 30,
+				'min'         => self::NUMBER_LIMITS['auto_dispute_late_days'][0],
+				'max'         => self::NUMBER_LIMITS['auto_dispute_late_days'][1],
 				'description' => __( 'Automatically open a dispute if delivery is overdue by this many days past the deadline. Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
@@ -1204,8 +1204,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'requirements_timeout_days',
-				'min'         => 0,
-				'max'         => 30,
+				'min'         => self::NUMBER_LIMITS['requirements_timeout_days'][0],
+				'max'         => self::NUMBER_LIMITS['requirements_timeout_days'][1],
 				'description' => __( 'Days to wait for buyer to submit requirements before the order auto-starts or auto-cancels (see next setting). Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
@@ -1233,8 +1233,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'review_window_days',
-				'min'         => 0,
-				'max'         => 365,
+				'min'         => self::NUMBER_LIMITS['review_window_days'][0],
+				'max'         => self::NUMBER_LIMITS['review_window_days'][1],
 				'description' => __( 'Days after an order completes during which the buyer can leave a review. Set to 0 for no limit.', 'wp-sell-services' ),
 			)
 		);
@@ -1468,8 +1468,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_advanced',
 				'field'       => 'max_file_size',
-				'min'         => 1,
-				'max'         => 100,
+				'min'         => self::NUMBER_LIMITS['max_file_size'][0],
+				'max'         => self::NUMBER_LIMITS['max_file_size'][1],
 				'step'        => 1,
 				'description' => __( 'Maximum file size in megabytes for uploads.', 'wp-sell-services' ),
 			)
@@ -3869,7 +3869,7 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['min_withdrawal'] = max( 0, (int) ( $input['min_withdrawal'] ?? 50 ) );
+		$sanitized['min_withdrawal'] = $this->clamp_number( 'min_withdrawal', $input['min_withdrawal'] ?? 50 );
 
 		// 0 is a legitimate, supported value: pay vendors out the moment an
 		// order completes (owner decision 2026-07-23 — see the field definition
@@ -3878,7 +3878,7 @@ class Settings {
 		// a browser hint a posted value can sail straight past.
 		$sanitized['clearance_days']            = min( 90, max( 0, (int) ( $input['clearance_days'] ?? 0 ) ) );
 		$sanitized['auto_withdrawal_enabled']   = ! empty( $input['auto_withdrawal_enabled'] );
-		$sanitized['auto_withdrawal_threshold'] = max( 0, (int) ( $input['auto_withdrawal_threshold'] ?? 500 ) );
+		$sanitized['auto_withdrawal_threshold'] = $this->clamp_number( 'auto_withdrawal_threshold', $input['auto_withdrawal_threshold'] ?? 500 );
 		$sanitized['auto_withdrawal_schedule']  = sanitize_key( $input['auto_withdrawal_schedule'] ?? 'monthly' );
 
 		// Validate schedule.
@@ -3933,6 +3933,41 @@ class Settings {
 	}
 
 	/**
+	 * Min and max of the number fields on the Orders, Payouts and Advanced screens.
+	 *
+	 * The field definitions and clamp_number() both read this table, so the limit
+	 * a browser shows and the limit the server enforces cannot drift apart.
+	 *
+	 * @var array<string, array{0:int, 1:int}>
+	 */
+	private const NUMBER_LIMITS = array(
+		'auto_complete_days'        => array( 0, 30 ),
+		'dispute_window_days'       => array( 1, 90 ),
+		'auto_dispute_late_days'    => array( 0, 30 ),
+		'requirements_timeout_days' => array( 0, 30 ),
+		'review_window_days'        => array( 0, 365 ),
+		'min_withdrawal'            => array( 0, 1000 ),
+		'auto_withdrawal_threshold' => array( 100, 10000 ),
+		'max_file_size'             => array( 1, 100 ),
+	);
+
+	/**
+	 * Clamp a posted number to its field's limits.
+	 *
+	 * The raw integer is clamped, never absint()'d first, so -4 stores the
+	 * minimum and not 4. The HTML min and max attributes are a browser hint only.
+	 *
+	 * @param string $field Key in NUMBER_LIMITS.
+	 * @param mixed  $value Posted value.
+	 * @return int
+	 */
+	private function clamp_number( string $field, $value ): int {
+		[ $min, $max ] = self::NUMBER_LIMITS[ $field ];
+
+		return max( $min, min( $max, (int) $value ) );
+	}
+
+	/**
 	 * Sanitize order settings.
 	 *
 	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
@@ -3942,15 +3977,15 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['auto_complete_days'] = max( 0, (int) ( $input['auto_complete_days'] ?? 3 ) );
+		$sanitized['auto_complete_days'] = $this->clamp_number( 'auto_complete_days', $input['auto_complete_days'] ?? 3 );
 		// Revision limits are defined per-package in service packages, not as a global setting.
 		$sanitized['allow_disputes']            = ! empty( $input['allow_disputes'] );
-		$sanitized['dispute_window_days']       = max( 0, (int) ( $input['dispute_window_days'] ?? 14 ) );
-		$sanitized['auto_dispute_late_days']    = max( 0, (int) ( $input['auto_dispute_late_days'] ?? 3 ) );
+		$sanitized['dispute_window_days']       = $this->clamp_number( 'dispute_window_days', $input['dispute_window_days'] ?? 14 );
+		$sanitized['auto_dispute_late_days']    = $this->clamp_number( 'auto_dispute_late_days', $input['auto_dispute_late_days'] ?? 3 );
 		$sanitized['allow_late_requirements']   = ! empty( $input['allow_late_requirements'] );
-		$sanitized['requirements_timeout_days'] = max( 0, (int) ( $input['requirements_timeout_days'] ?? 0 ) );
+		$sanitized['requirements_timeout_days'] = $this->clamp_number( 'requirements_timeout_days', $input['requirements_timeout_days'] ?? 0 );
 		$sanitized['auto_start_on_timeout']     = ! empty( $input['auto_start_on_timeout'] );
-		$sanitized['review_window_days']        = max( 0, (int) ( $input['review_window_days'] ?? 30 ) );
+		$sanitized['review_window_days']        = $this->clamp_number( 'review_window_days', $input['review_window_days'] ?? 30 );
 
 		return $sanitized;
 	}
@@ -4075,7 +4110,7 @@ class Settings {
 		$sanitized['delete_data_on_uninstall'] = ! empty( $input['delete_data_on_uninstall'] );
 		$sanitized['enable_debug_mode']        = ! empty( $input['enable_debug_mode'] );
 
-		$sanitized['max_file_size']      = max( 0, (int) ( $input['max_file_size'] ?? 10 ) );
+		$sanitized['max_file_size']      = $this->clamp_number( 'max_file_size', $input['max_file_size'] ?? 10 );
 		$sanitized['allowed_file_types'] = sanitize_text_field( $input['allowed_file_types'] ?? 'jpg,jpeg,png,gif,pdf,doc,docx' );
 
 		// Keep stored keys this form does not own. currency_position moved to

@@ -27,7 +27,8 @@ $check( 'message delay 30 is kept', 30 === $s->sanitize_notification_delivery_se
 $p = $s->sanitize_payouts_settings( array( 'min_withdrawal' => -50, 'clearance_days' => -3, 'auto_withdrawal_threshold' => -500 ) );
 $check( 'min withdrawal -50 stores 0', 0 === (int) $p['min_withdrawal'] );
 $check( 'clearance days -3 stores 0, not a 3-day hold', 0 === (int) $p['clearance_days'] );
-$check( 'auto-withdrawal threshold -500 stores 0', 0 === (int) $p['auto_withdrawal_threshold'] );
+// The screen's minimum is 100, so a threshold of 0 (pay out any balance) is not a value the owner can choose.
+$check( 'auto-withdrawal threshold -500 stores the screen minimum 100', 100 === (int) $p['auto_withdrawal_threshold'] );
 
 // Tuning fields clamp the raw integer (Basecamp 10475418682): absint() ran
 // before the min/max clamp, so -4 days was stored as 4.
