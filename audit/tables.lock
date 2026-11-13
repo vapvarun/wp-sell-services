@@ -1,0 +1,3 @@
+# Allowed CREATE TABLE statements. Editing this file needs the owner's yes in the commit body.
+# Standard: wbcom-scope-and-schema-standard.md
+{$table} x20

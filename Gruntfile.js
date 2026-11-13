@@ -125,6 +125,12 @@ module.exports = function ( grunt ) {
 							'!.git/**',
 							'!.github/**',
 
+							// Developer-only WP-CLI tools (keep in step with .distignore).
+							'!src/CLI/TestFlowCommand.php',
+							'!src/CLI/ScaleCommand.php',
+							'!src/CLI/RestContractCommand.php',
+							'!src/CLI/ApiShapeCommand.php',
+
 							// Exclude dev config files.
 							'!Gruntfile.js',
 							'!package.json',

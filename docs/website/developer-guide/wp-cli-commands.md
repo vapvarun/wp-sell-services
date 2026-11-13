@@ -5,13 +5,21 @@ developers. Run `wp wpss` to list everything, or add `--help` to any command for
 its full options.
 
 ```
-wp wpss demo         Manage demo services
-wp wpss preflight    Run release-readiness preflight checks
-wp wpss scale        Seed, benchmark and teardown a production-shape dataset
-wp wpss service      Manage services (alias of `demo` -- same subcommands)
-wp wpss test:flow    Run end-to-end data flow tests
-wp wpss validate     Validate models and schema
+wp wpss demo               Manage demo services
+wp wpss preflight          Run release-readiness preflight checks
+wp wpss refunds            List and assign refunds that wait for a gig
+wp wpss repair:stripe-tax  Correct Stripe orders whose tax was counted twice
+wp wpss service            Manage services (alias of `demo` -- same subcommands)
+wp wpss utc-migrate        Convert pre-1.8.0 datetimes to UTC
+wp wpss validate           Validate models and schema
 ```
+
+**Developer tools, not in the plugin zip.** Since 1.9.3 `wp wpss scale`,
+`wp wpss test:flow`, `wp wpss rest:contract` and `wp wpss api:shapes` are only
+in a copy of the plugin's source repository. The zip you install from
+wordpress.org or your account does not include them, so on a normal site
+`wp wpss` does not list them and they answer "not a registered wp command".
+Pro's `wp wpsspro test:flow` is the same.
 
 All commands respect the current site in multisite (`--url=`).
 
@@ -51,8 +59,8 @@ again straight after a delete.
 Demo content is flagged internally (`_wpss_demo_content`), so `demo delete` never
 touches real customer data unless you pass `--all`, which also requires `--yes`
 and still confirms the site-wide count. Every command that writes rows (`create`,
-`marketplace`, `regenerate-meta`, `delete`, `scale seed`, `scale teardown`,
-`test:flow`) prompts with the count -- pass `--yes` in scripts -- and refuses
+`marketplace`, `regenerate-meta`, `delete`, and the developer tools `scale seed`,
+`scale teardown` and `test:flow`) prompts with the count -- pass `--yes` in scripts -- and refuses
 outright when `wp_get_environment_type()` is `production` unless you pass
 `--force`.
 `marketplace` no longer changes the homepage; it prints the `wp option update`
@@ -68,7 +76,7 @@ wp wpss validate     # validate marketplace data integrity
 Run `preflight` after installation, after a migration, and before a release.
 Every check prints PASS or FAIL with the reason.
 
-## Testing and gap detection
+## Testing and gap detection (developer tool)
 
 ```bash
 wp wpss test:flow      # end-to-end data flow tests
@@ -81,10 +89,10 @@ wp wpss test:flow      # end-to-end data flow tests
 > release checks `wp wpss preflight`.
 
 `test:flow` walks a complete order lifecycle through the data layer and reports
-where a flow breaks. It is the fastest way to confirm a fresh install actually
-works end to end.
+where a flow breaks. It is in the source repository only, not the plugin zip;
+on an installed site use `wp wpss preflight`.
 
-## API payload contract
+## API payload contract (developer tool)
 
 ```bash
 wp wpss api:shapes                        # audit every GET route
@@ -160,7 +168,7 @@ and left unchanged. Run the dry run first and read both tables. Running
 `--apply` twice changes nothing the second time. Every corrected order is
 written to the audit log as `order.repair`.
 
-## Scale benchmarking
+## Scale benchmarking (developer tool)
 
 For verifying the marketplace holds up at production shape -- 10k vendors with
 orders and wallet transactions.

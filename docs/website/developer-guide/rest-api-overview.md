@@ -283,7 +283,8 @@ Adding a key is not a bump. Changing a date's format is not a bump. Changing
 
 ## Checking the conventions yourself
 
-They are enforced by a committed command rather than by review:
+They are enforced by a committed command rather than by review. It is a
+developer tool in the source repository, not in the plugin zip:
 
 ```
 wp wpss api:shapes            # every GET route

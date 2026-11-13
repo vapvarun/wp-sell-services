@@ -1060,6 +1060,14 @@
    "added": "2026-11-13",
    "fails_on": "1.9.3 tree before this commit (4 FAILED: no list, no priority-1 note, no nopriv note, no deprecation fired)",
    "check": "tests/test-dead-ajax-actions-deprecated.php"
+  },
+  {
+   "card": "10505026158 (WPSS-4)",
+   "title": "developer-only seed and audit CLI tools shipped in every customer zip, and the two exclude lists can disagree",
+   "guard": "static:dev-cli-not-shipped",
+   "added": "2026-11-13",
+   "fails_on": "1.9.3 tree before this commit (13 FAILED)",
+   "check": "tests/test-dev-cli-not-shipped.php"
   }
  ]
 }

@@ -178,7 +178,7 @@ the first match wins. See [Tiered Commission](../earnings-wallet/tiered-commissi
 - **Balance comes from the ledger.** Sum `wpss_wallet_transactions`; the profile counters are for display.
 - **Prepare everything.** These are direct `$wpdb` tables with no `WP_Query` layer -- use `$wpdb->prepare()` on every interpolated value.
 - **Do not ALTER these tables.** Schema is managed by the plugin's installer and migrations will overwrite you. Use `meta` JSON columns or your own table.
-- **Test at scale.** `wp wpss scale seed` builds a production-shape dataset and `wp wpss scale bench` times hot-path queries against a budget. See [WP-CLI Commands](wp-cli-commands.md).
+- **Test at scale.** `wp wpss scale seed` builds a production-shape dataset and `wp wpss scale bench` times hot-path queries against a budget. Both are developer tools in the source repository, not the plugin zip. See [WP-CLI Commands](wp-cli-commands.md).
 
 ## Uninstall
 

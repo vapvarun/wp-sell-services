@@ -2206,10 +2206,22 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'wpss service', ServiceCommands::class, array( 'shortdesc' => 'Manage services.' ) );
 	WP_CLI::add_command( 'wpss validate', ValidateCommand::class, array( 'shortdesc' => 'Validate models and schema.' ) );
 	WP_CLI::add_command( 'wpss preflight', PreflightCommand::class, array( 'shortdesc' => 'Run release-readiness preflight checks.' ) );
-	WP_CLI::add_command( 'wpss test:flow', TestFlowCommand::class, array( 'shortdesc' => 'Run end-to-end data flow tests.' ) );
-	WP_CLI::add_command( 'wpss scale', ScaleCommand::class, array( 'shortdesc' => 'Seed, benchmark and teardown a production-shape scale dataset.' ) );
-	WP_CLI::add_command( 'wpss rest:contract', RestContractCommand::class, array( 'shortdesc' => 'Assert the REST 401/403/404 contract the client depends on.' ) );
-	WP_CLI::add_command( 'wpss api:shapes', array( ApiShapeCommand::class, 'shapes' ), array( 'shortdesc' => 'Audit every GET payload for ISO dates and the shared actor shape.' ) );
+
+	// Developer tools: in the repo, left out of the release zip (.distignore and
+	// Gruntfile copy:dist), so they register only where their file exists.
+	if ( class_exists( TestFlowCommand::class ) ) {
+		WP_CLI::add_command( 'wpss test:flow', TestFlowCommand::class, array( 'shortdesc' => 'Run end-to-end data flow tests.' ) );
+	}
+	if ( class_exists( ScaleCommand::class ) ) {
+		WP_CLI::add_command( 'wpss scale', ScaleCommand::class, array( 'shortdesc' => 'Seed, benchmark and teardown a production-shape scale dataset.' ) );
+	}
+	if ( class_exists( RestContractCommand::class ) ) {
+		WP_CLI::add_command( 'wpss rest:contract', RestContractCommand::class, array( 'shortdesc' => 'Assert the REST 401/403/404 contract the client depends on.' ) );
+	}
+	if ( class_exists( ApiShapeCommand::class ) ) {
+		WP_CLI::add_command( 'wpss api:shapes', array( ApiShapeCommand::class, 'shapes' ), array( 'shortdesc' => 'Audit every GET payload for ISO dates and the shared actor shape.' ) );
+	}
+
 	WP_CLI::add_command( 'wpss utc-migrate', UtcMigrateCommand::class, array( 'shortdesc' => 'Convert pre-1.8.0 datetimes to UTC (--dry-run to preview).' ) );
 	WP_CLI::add_command( 'wpss refunds', RefundsCommand::class, array( 'shortdesc' => 'List and assign refunds that wait for a gig.' ) );
 	WP_CLI::add_command( 'wpss repair:stripe-tax', array( RepairCommand::class, 'stripe_tax' ), array( 'shortdesc' => 'Correct Stripe orders whose tax was counted twice (dry run unless --apply).' ) );

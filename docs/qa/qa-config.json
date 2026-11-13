@@ -751,6 +751,10 @@
    {
     "id": "dead-ajax-actions-deprecated",
     "run": "${WP_CLI:-wp} eval-file tests/test-dead-ajax-actions-deprecated.php"
+   },
+   {
+    "id": "dev-cli-not-shipped",
+    "run": "${WP_CLI:-wp} eval-file tests/test-dev-cli-not-shipped.php"
    }
   ]
  }

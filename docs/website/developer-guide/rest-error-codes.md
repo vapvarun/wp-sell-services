@@ -8,7 +8,7 @@ failure it is; the code tells you *which one*.
 
 Asserted by `wp wpss rest:contract`, which runs the table below against a live
 site as anonymous, buyer, vendor and admin. Run it before shipping a client
-release.
+release. It is a developer tool in the source repository, not in the plugin zip.
 
 ## Status meanings
 

@@ -291,6 +291,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - With Yoast SEO or Rank Math active, a service page carries its service structured data once instead of twice; category, archive and vendor structured data is unchanged.
 * Fix      - PayPal checkout and refunds work in Japanese yen, Hungarian forint and New Taiwan dollar, which PayPal takes only as whole amounts, and send three decimals for currencies that have them.
 * Dev      - 27 admin-ajax actions that the plugin and app no longer call are deprecated and log a notice when WP_DEBUG is on; they keep working until the next major release. The list is in the REST API overview.
+* Dev      - The developer tools wp wpss scale, test:flow, rest:contract and api:shapes are no longer in the plugin zip; they stay in the source repository.
 * Dev      - Removed unused code: the Proposal model (use ProposalService), wpss_sanitize_html(), OrderRepository::update_status(), ServiceOrder::get_status_history() and ServicePackage::get_formatted_price().
 * Dev      - ServiceOrder::update() hands a status change to OrderService::update_status(), so the transition rules and status hooks apply on every path.
 * Dev      - The wpss_vendor_status_updated action passes the admin's reason as a fourth argument, and wpss_submit_button() accepts an optional button id.
