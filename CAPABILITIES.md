@@ -153,6 +153,24 @@ them.
 **YES** in the general case. The frontend is token-driven with dark-mode and RTL
 support, and does not require one of our themes.
 
+## What is frozen?
+
+These features work today and keep working, but they are frozen: no new
+providers, regions or features will be added to them. Bugs in what already
+ships are still fixed.
+
+- Display currency (Pro): no new currency sources or rate providers.
+- Cloud storage (Pro): no new storage providers.
+- Wallets (Pro): no new wallet providers beyond the four that ship (Internal
+  Wallet, TeraWallet, WooCommerce Wallet, MyCred).
+- Flat tax (Free): one flat rate, no tax regions or tax tables.
+- Menu visibility (Free): the current role rules, no new menu features.
+
+Three features that do not ship are frozen too, with no new work planned:
+recurring services (Pro, switched off), and the Easy Digital Downloads and
+FluentCart rails (Pro, beta behind `wpss_pro_beta_rails`). Do not buy Pro
+expecting any of them to be finished.
+
 ---
 
 Fuller detail: [Feature catalog](docs/website/feature-catalog.md) ·
