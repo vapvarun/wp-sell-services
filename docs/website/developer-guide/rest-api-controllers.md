@@ -652,7 +652,7 @@ without persisting anything -- use it to explain a rate in your own UI.
 
 | Method | Route |
 |--------|-------|
-| GET, POST | `/recurring-services` |
+| GET | `/recurring-services` |
 | GET | `/recurring-services/(?P<id>[\d]+)` |
 | GET | `/recurring-services/my-subscriptions` |
 | GET | `/recurring-services/vendor-subscriptions` |
@@ -661,7 +661,10 @@ without persisting anything -- use it to explain a rate in your own UI.
 | POST | `/recurring-services/(?P<id>[\d]+)/resume` |
 
 Recurring services sit behind a default-off feature flag in 1.3.0. The routes
-register, but the feature's UI is hidden until you opt in -- see
+register, but while the flag is off every route except `/{id}/cancel` answers
+`403 wpss_recurring_unavailable` (since 1.9.3), so a buyer can always cancel an
+existing subscription. `GET /recurring-services` takes optional `status` and
+`vendor_id` filters. See
 [Recurring Services](../order-management/recurring-services.md).
 
 ### Analytics

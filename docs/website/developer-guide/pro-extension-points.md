@@ -135,7 +135,11 @@ add_filter( 'wpss_pro_recurring_feature_available', '__return_true' );
 
 While the flag is off, all recurring-service UI, settings, and the admin
 Subscriptions page stay hidden, so the feature never appears before it ships. Its
-REST routes register either way. See
+REST routes register either way, but since 1.9.3 they answer `403`
+`wpss_recurring_unavailable` while the flag is off. The one exception is
+`POST /wpss/v1/recurring-services/{id}/cancel`, so a buyer who already holds a
+subscription can always stop being billed. The Stripe webhook is not one of
+these routes and keeps working. See
 [Recurring Services](../order-management/recurring-services.md).
 
 ## Related
