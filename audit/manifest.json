@@ -1319,5 +1319,18 @@
       "wpss_email_from_address (filter)",
       "wpss_output_service_schema (filter, bool $print, int $service_id; SchemaMarkup::output_schema single-service branch). Yoast and Rank Math integrations return false via AbstractSeoIntegration::keep_own_service_schema() once their graph carries our Service piece; archive, category, vendor, Organization and Breadcrumb output unchanged. Test tests/test-seo-service-schema-once.php"
     ]
+  },
+  "owner_controls_1_9_3": {
+    "_note": "Settings added in 1.9.3 from the first-hour walk. Every default keeps the old behaviour. Read with wpss_get_option(group,key).",
+    "settings": {
+      "wpss_vendor.re_review_live_edits": "bool, default false. ModerationService::re_reviews_live_edits(); used by ServiceWizard and ServicesController.",
+      "wpss_vendor.suspended_money_access": "bool, default false. wpss_suspended_vendor_money_access(); EarningsController::check_vendor_permissions, UnifiedDashboard::can_access_section (earnings, wallet).",
+      "wpss_vendor.application_fields": "bool, default false. UnifiedDashboard::render_application_fields(); tagline and bio passed to VendorService::register().",
+      "wpss_vendor.verify_email_for_vendors": "bool, default false. wpss_email_verification_pending(), wpss_send_email_verification(), wpss_handle_email_verification() (init, ?wpss_verify_email=&key=); PublicSignup and VendorService::register honour it.",
+      "wpss_vendor.signup_notify_admin": "bool, default false. PublicSignup::create_account sends wp_new_user_notification( id, null, 'admin' ).",
+      "wpss_orders.cancel_window_hours": "int 0-720, default 24, 0 = off. wpss_cancel_window_hours() and wpss_cancel_window_rule(); read by OrderService::request_cancellation, OrdersController::can_buyer_cancel_in_progress and templates/order/order-view.php."
+    },
+    "seller_cancellation": "OrderService::request_seller_cancellation() / decline_seller_cancellation() (statuses from seller_cancellation_statuses()); ServiceOrder::is_cancellation_requested_by_vendor(). No timer: OrderWorkflowManager::process_cancellation_timeouts skips requested_by == vendor_id. Doors: REST cancel / accept-cancellation / reject-cancellation, AJAX cancel_order / accept_cancellation / reject_cancellation, order-view.php buttons.",
+    "orders_csv": "admin_post_wpss_export_orders (Admin::export_orders_csv, manage_options, nonce wpss_export_orders); filter SQL shared via OrdersListTable::get_filter_sql()."
   }
 }
