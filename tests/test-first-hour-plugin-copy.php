@@ -124,6 +124,7 @@ $check( 'orders export reuses the list filter and is admin-only', false !== strp
 $check( 'live-edit re-review is a setting, default off', false === wpss_get_option( 'vendor', 're_review_live_edits' ) && method_exists( \\WPSellServices\\Services\\ModerationService::class, 're_reviews_live_edits' ) );
 $check( 'cancel window is one setting, default 24', 24 === wpss_cancel_window_hours() && false !== strpos( wpss_cancel_window_rule(), '24 hours' ) );
 $check( 'suspended money access is a setting, default off', false === wpss_get_option( 'vendor', 'suspended_money_access' ) && false === wpss_suspended_vendor_money_access( 1 ) );
+$check( 'application questions are a setting, default off', false === wpss_get_option( 'vendor', 'application_fields' ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 

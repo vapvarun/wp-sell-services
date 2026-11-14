@@ -1056,6 +1056,20 @@ class Settings {
 		);
 
 		add_settings_field(
+			'application_fields',
+			__( 'Vendor Application Questions', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_vendor',
+			'wpss_vendor_section',
+			array(
+				'option_name' => 'wpss_vendor',
+				'field'       => 'application_fields',
+				'label'       => __( 'Ask applicants what they sell', 'wp-sell-services' ),
+				'description' => __( 'Off: members become vendors with one click. On: the Start selling panel asks for a tagline and a short description, which you see on the Vendors screen when you approve.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
 			'suspended_money_access',
 			__( 'Suspended Vendors and Earnings', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
@@ -3973,6 +3987,7 @@ class Settings {
 		$sanitized['moderate_reviews']           = ! empty( $input['moderate_reviews'] );
 		$sanitized['re_review_live_edits']       = ! empty( $input['re_review_live_edits'] );
 		$sanitized['suspended_money_access']     = ! empty( $input['suspended_money_access'] );
+		$sanitized['application_fields']         = ! empty( $input['application_fields'] );
 
 		return $sanitized;
 	}

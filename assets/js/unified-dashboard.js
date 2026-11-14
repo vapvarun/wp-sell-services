@@ -428,7 +428,10 @@
 				type: 'POST',
 				data: {
 					action: 'wpss_become_vendor',
-					nonce: wpssUnifiedDashboard.nonce
+					nonce: wpssUnifiedDashboard.nonce,
+					// Read from this button's own panel: the sidebar and the page can both carry one.
+					tagline: $button.parent().find('[name="tagline"]').val() || '',
+					bio: $button.parent().find('[name="bio"]').val() || ''
 				},
 				success: function (response) {
 					if (response.success) {

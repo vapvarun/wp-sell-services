@@ -467,6 +467,34 @@ class UnifiedDashboard {
 	}
 
 	/**
+	 * Optional application fields on the Start selling panel.
+	 *
+	 * Off by default (one click, as before). When the owner turns on "Ask
+	 * applicants about what they sell", a member sees a tagline and a short
+	 * description, saved to the vendor profile the owner reviews. The site
+	 * owner joining their own marketplace is never asked.
+	 *
+	 * @return void
+	 */
+	private function render_application_fields(): void {
+		if ( ! wpss_get_option( 'vendor', 'application_fields' ) || current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		?>
+		<div class="wpss-application-fields">
+			<p>
+				<label><?php esc_html_e( 'What do you sell?', 'wp-sell-services' ); ?>
+				<input type="text" name="tagline" class="wpss-input" maxlength="100" placeholder="<?php esc_attr_e( 'e.g. Logo design for small businesses', 'wp-sell-services' ); ?>"></label>
+			</p>
+			<p>
+				<label><?php esc_html_e( 'Tell us about your work', 'wp-sell-services' ); ?>
+				<textarea name="bio" class="wpss-input" rows="3" maxlength="1000" placeholder="<?php esc_attr_e( 'Experience, a portfolio link, anything that helps us approve you.', 'wp-sell-services' ); ?>"></textarea></label>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Check if user can access a section.
 	 *
 	 * Vendor-only sections require an active (approved) vendor. Pending vendors
@@ -806,6 +834,7 @@ class UnifiedDashboard {
 						?>
 					<div class="wpss-dashboard__become-vendor">
 						<p><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></p>
+						<?php $this->render_application_fields(); ?>
 						<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--full" data-action="become-vendor"<?php echo $this->become_vendor_attrs(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed literal. ?>>
 							<?php echo esc_html( $this->become_vendor_label() ); ?>
 						</button>
@@ -1068,6 +1097,7 @@ class UnifiedDashboard {
 				</div>
 				<h3><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></h3>
 				<p><?php esc_html_e( 'Start selling your services on this marketplace. Click the button below to register as a vendor and begin offering your skills.', 'wp-sell-services' ); ?></p>
+				<?php $this->render_application_fields(); ?>
 				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor"<?php echo $this->become_vendor_attrs(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed literal. ?>>
 					<?php echo esc_html( $this->become_vendor_label() ); ?>
 				</button>
@@ -1083,6 +1113,7 @@ class UnifiedDashboard {
 				<h3><?php esc_html_e( 'Vendor Access Required', 'wp-sell-services' ); ?></h3>
 				<p><?php esc_html_e( 'This section is available to vendors. Become a vendor to access this feature and start selling your services.', 'wp-sell-services' ); ?></p>
 				<?php if ( $registration_is_open ) : ?>
+					<?php $this->render_application_fields(); ?>
 				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor"<?php echo $this->become_vendor_attrs(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed literal. ?>>
 					<?php echo esc_html( $this->become_vendor_label() ); ?>
 				</button>
@@ -1234,7 +1265,13 @@ class UnifiedDashboard {
 			wp_send_json_error( array( 'message' => $block->get_error_message() ) );
 		}
 
-		$result = $this->vendor_service->register( $user_id );
+		// The optional application fields (empty when the owner has not switched them on).
+		$application = array(
+			'tagline' => isset( $_POST['tagline'] ) ? sanitize_text_field( wp_unslash( $_POST['tagline'] ) ) : '',
+			'bio'     => isset( $_POST['bio'] ) ? sanitize_textarea_field( wp_unslash( $_POST['bio'] ) ) : '',
+		);
+
+		$result = $this->vendor_service->register( $user_id, wpss_get_option( 'vendor', 'application_fields' ) ? $application : array() );
 
 		if ( $result ) {
 			// Pending when approval is required; an administrator is approved at once.
