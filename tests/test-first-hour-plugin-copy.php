@@ -139,6 +139,7 @@ $check( 'a declined seller request restores late or revision-requested status', 
 $check( 'orders CSV uses the row currency decimals', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), "wpss_get_currency_decimals( (string) \$row->currency )" ) );
 $check( 'bulk order and dispute results print at once, not via a late admin_notices hook', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'function print_bulk_notice' ) );
 $check( 'order detail status form asks first for Completed and Cancelled', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'data-wpss-confirm-cancelled' ) && false !== strpos( file_get_contents( $root . '/assets/js/admin.js' ), 'wpss-order-status-form' ) );
+$check( 'refused Assign and Retry refund carry the reason back; Mark refund sent asks first', 2 === substr_count( file_get_contents( $root . '/src/Admin/Admin.php' ), "\$args['wpss_error'] = rawurlencode" ) && false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'data-wpss-order-confirm' ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 

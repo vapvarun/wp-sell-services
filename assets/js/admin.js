@@ -51,6 +51,24 @@
 		});
 	});
 
+	// Irreversible order-page forms (e.g. Mark refund sent) carry their own question.
+	$(document).on('submit', 'form[data-wpss-order-confirm]', function(e) {
+		var form = this;
+		var message = form.getAttribute('data-wpss-order-confirm');
+
+		if (!message || form.dataset.wpssConfirmed === '1' || typeof window.wpssConfirm !== 'function') {
+			return;
+		}
+
+		e.preventDefault();
+		window.wpssConfirm(message, { tone: 'danger' }).then(function(ok) {
+			if (ok) {
+				form.dataset.wpssConfirmed = '1';
+				form.submit();
+			}
+		});
+	});
+
 	/**
 	 * Instantiate Lucide icons in markup added after page load.
 	 *

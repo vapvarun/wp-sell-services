@@ -682,6 +682,8 @@ class Admin {
 
 		if ( $result['ok'] ) {
 			$args['updated'] = '1';
+		} else {
+			$args['wpss_error'] = rawurlencode( (string) ( $result['message'] ?? '' ) );
 		}
 
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
@@ -779,6 +781,8 @@ class Admin {
 
 		if ( $result['ok'] ) {
 			$args['updated'] = '1';
+		} else {
+			$args['wpss_error'] = rawurlencode( (string) ( $result['message'] ?? '' ) );
 		}
 
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
@@ -2479,6 +2483,15 @@ class Admin {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$result = isset( $_GET['updated'] ) ? sanitize_key( wp_unslash( $_GET['updated'] ) ) : '';
 
+		// A refused refund or assignment says why, in the words the gateway or service gave.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$wpss_error = isset( $_GET['wpss_error'] ) ? sanitize_text_field( wp_unslash( $_GET['wpss_error'] ) ) : '';
+
+		if ( '' !== $wpss_error ) {
+			printf( '<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html( mb_substr( $wpss_error, 0, 300 ) ) );
+			return;
+		}
+
 		$notices = array(
 			'1'         => array( 'notice-success', __( 'Order status updated', 'wp-sell-services' ) ),
 			'unchanged' => array( 'notice-info', __( 'The order already has that status. Nothing changed.', 'wp-sell-services' ) ),
@@ -3050,7 +3063,7 @@ class Admin {
 									);
 									?>
 								</p>
-								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-wpss-order-confirm="<?php echo esc_attr__( 'Mark this refund as sent? This clears the pending refund and cannot be undone. Only do this after the money has gone back to the buyer.', 'wp-sell-services' ); ?>">
 									<input type="hidden" name="action" value="wpss_mark_refund_sent">
 									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
 									<?php wp_nonce_field( 'wpss_mark_refund_sent_' . $order_id, 'wpss_refund_sent_nonce' ); ?>
