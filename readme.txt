@@ -276,6 +276,10 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Improve  - GET /buyer-requests/{id}/proposals accepts page and per_page and returns X-WP-Total, and still returns up to 50 when not paged.
 * Improve  - A new wpss_email_from_address filter sets a plugin-specific sender address, and WooCommerce's sender is used only when WooCommerce is the active store rail, not whenever it is installed.
 * Improve  - The sign-in lockout is removed: wrong passwords no longer lock an account on wp-login.php or in the app, so a security plugin or your host owns that. The app login keeps its per-address rate limit, and the wpss_web_login_lock filter is now a deprecated no-op.
+* Improve  - When WordPress sign-up is closed, the Log In and Create account pages tell the buyer to contact the site owner and link to Sign in, and the new wpss_signup_closed_message filter lets the store add its own contact details.
+* Improve  - On the front-end dashboard an administrator adds their first service in one click, with no confirmation dialog.
+* Fix      - The setup wizard suggests the same eight starter categories the plugin creates, so it no longer adds near-duplicates such as Graphic Design beside Graphics & Design.
+* Fix      - The Terms page notice says checkout can take payments instead of claiming buyers are paying, and the Open vendor registration label says any member can start selling instead of anyone can register.
 * Fix      - Marking an order paid no longer sends buyer and vendor a third "Order status updated" email beside the order confirmation, on every payment rail.
 * Fix      - The vendor gets one email when the buyer submits requirements, not a second "Now In Progress" email.
 * Fix      - Publishing an incomplete service from the vendor dashboard or the REST API now says what is missing; updating through the REST API answers 400 with the reasons, and creating one returns the draft with the reasons in notices.

@@ -602,7 +602,7 @@
   },
   "hooks_fired": {
     "do_action_count": 247,
-    "apply_filters_count": 149,
+    "apply_filters_count": 150,
     "key_extension_hooks": [
       {
         "name": "wpss_loaded",
@@ -763,6 +763,11 @@
         "name": "wpss_enqueue_dashboard_assets",
         "type": "action",
         "purpose": "Ask for the dashboard CSS/JS at render time (fired by [wpss_post_request]); for a dashboard surface placed where the page content does not name the shortcode: pattern, widget, page builder"
+      },
+      {
+        "name": "wpss_signup_closed_message",
+        "type": "filter",
+        "purpose": "Text buyers read on the login and Create account pages when WordPress sign-up is closed (wpss_signup_closed_message() in functions/urls.php). Put the store's contact details here."
       }
     ],
     "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 237 hook firings. 1.6.0: wpss_offline_order_created now fires from BOTH offline entry points (cart checkout and pay-an-existing-order), so listeners no longer need to know which one the buyer used."
