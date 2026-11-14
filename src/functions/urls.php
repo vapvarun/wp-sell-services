@@ -837,6 +837,35 @@ function wpss_marketplace_register_url( string $url ): string {
 add_filter( 'register_url', 'wpss_marketplace_register_url' );
 
 /**
+ * What a buyer reads when this site is not taking sign-ups.
+ *
+ * "Registration is currently disabled." on its own left a buyer who was sent
+ * to log in or sign up with no next step. The sentence now says what to do,
+ * and the site can put its own contact details in through the filter. It
+ * reads the WordPress registration setting and never changes it.
+ *
+ * @since 1.9.3
+ *
+ * @return string Plain text, escaped by the caller.
+ */
+function wpss_signup_closed_message(): string {
+	$message = sprintf(
+		/* translators: %s: site name. */
+		__( 'New accounts are not open on %s. To get an account, please contact the site owner.', 'wp-sell-services' ),
+		wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
+	);
+
+	/**
+	 * Filter the message shown where sign-up is closed.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string $message Message text.
+	 */
+	return (string) apply_filters( 'wpss_signup_closed_message', $message );
+}
+
+/**
  * Point Sign in at the marketplace's own login page when one is mapped.
  *
  * Every Sign in link (ours and the theme's) is built with wp_login_url(), so

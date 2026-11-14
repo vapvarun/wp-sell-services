@@ -978,6 +978,8 @@ class Shortcodes {
 							<?php esc_html_e( 'New here?', 'wp-sell-services' ); ?>
 							<a href="<?php echo esc_url( wp_registration_url() ); ?>"><?php esc_html_e( 'Create an account', 'wp-sell-services' ); ?></a>
 						</p>
+					<?php elseif ( ! wpss_checkout_creates_accounts() ) : ?>
+						<p class="wpss-signup-form__signin"><?php echo esc_html( wpss_signup_closed_message() ); ?></p>
 					<?php endif; ?>
 				</form>
 			</div>
@@ -1002,7 +1004,7 @@ class Shortcodes {
 		}
 
 		if ( ! get_option( 'users_can_register' ) ) {
-			return '<div class="wpss-notice wpss-notice--error">' . esc_html__( 'Registration is currently disabled.', 'wp-sell-services' ) . '</div>';
+			return '<div class="wpss-notice wpss-notice--error"><div><p>' . esc_html( wpss_signup_closed_message() ) . '</p><p style="margin-top:12px"><a class="wpss-btn wpss-btn--primary" href="' . esc_url( wp_login_url() ) . '">' . esc_html__( 'Sign in', 'wp-sell-services' ) . '</a></p></div></div>';
 		}
 
 		/*
