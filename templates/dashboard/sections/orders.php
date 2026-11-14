@@ -71,6 +71,14 @@ if ( $order_id ) {
 		}
 		return;
 	}
+
+	// A missing order and someone else's order get the same words, so the page
+	// never tells a buyer which order numbers belong to other people.
+	?>
+	<div class="wpss-notice wpss-notice--info" role="status">
+		<?php esc_html_e( 'That order was not found, or it is not yours.', 'wp-sell-services' ); ?>
+	</div>
+	<?php
 }
 
 $order_repo = new OrderRepository();

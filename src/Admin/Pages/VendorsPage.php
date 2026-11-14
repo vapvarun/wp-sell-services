@@ -1043,7 +1043,8 @@ class VendorsPage {
 						<span class="untrash">
 							| <button type="button" class="button-link wpss-change-status"
 									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-									data-status="active"><?php esc_html_e( 'Activate', 'wp-sell-services' ); ?></button>
+									data-status="active"
+									data-confirm="<?php esc_attr_e( 'Reactivate this vendor? They can sell again.', 'wp-sell-services' ); ?>"><?php esc_html_e( 'Activate', 'wp-sell-services' ); ?></button>
 						</span>
 					<?php elseif ( 'pending' === $status ) : ?>
 						<?php
@@ -1066,7 +1067,8 @@ class VendorsPage {
 						<span class="wpss-approve">
 							| <button type="button" class="button-link wpss-change-status"
 									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-									data-status="active"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></button>
+									data-status="active"
+									data-confirm="<?php esc_attr_e( 'Approve this vendor? They can start selling and will be emailed.', 'wp-sell-services' ); ?>"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></button>
 						</span>
 						<span class="trash">
 							| <button type="button" class="button-link wpss-change-status"

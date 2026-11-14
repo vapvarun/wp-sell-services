@@ -38,7 +38,7 @@
 	 * @param {string} newStatus active, pending, suspended or rejected.
 	 * @return {Promise<boolean>} false when cancelled or refused, so the caller can reset its control.
 	 */
-	function changeVendorStatus(vendorId, newStatus) {
+	function changeVendorStatus(vendorId, newStatus, confirmText) {
 		var i18n = wpssVendors.i18n;
 		var asksReason = 'rejected' === newStatus || 'suspended' === newStatus;
 		var options = { tone: asksReason ? 'danger' : undefined };
@@ -49,7 +49,7 @@
 			options.prompt = { label: i18n.statusReason, placeholder: i18n.statusReasonPlaceholder, maxLength: 500 };
 		}
 
-		return window.wpssConfirm(i18n.confirmStatusChange, options).then(function(result) {
+		return window.wpssConfirm(confirmText || i18n.confirmStatusChange, options).then(function(result) {
 			// false is cancel; '' is a deliberate empty reason. Never test truthiness here.
 			if (false === result) {
 				return false;
@@ -156,7 +156,7 @@
 			var $btn = $(this);
 
 			$btn.prop('disabled', true);
-			changeVendorStatus($btn.data('vendor-id'), $btn.data('status')).then(function(saved) {
+			changeVendorStatus($btn.data('vendor-id'), $btn.data('status'), $btn.data('confirm')).then(function(saved) {
 				if (!saved) {
 					$btn.prop('disabled', false);
 				}

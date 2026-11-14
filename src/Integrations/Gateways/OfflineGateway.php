@@ -27,6 +27,14 @@ defined( 'ABSPATH' ) || exit;
  * @since 1.0.0
  */
 class OfflineGateway extends AbstractPaymentGateway {
+	/**
+	 * Prefix of the reference made when the owner marks an order paid without typing a transaction ID.
+	 * Kept for the record; screens that show a Transaction ID to the buyer and seller skip it.
+	 *
+	 * @since 1.9.3
+	 */
+	public const GENERATED_TRANSACTION_PREFIX = 'offline_manual_';
+
 
 	/**
 	 * Gateway ID.
@@ -980,7 +988,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			);
 		}
 
-		$transaction_id = '' === $transaction_id ? 'offline_manual_' . time() : $transaction_id;
+		$transaction_id = '' === $transaction_id ? self::GENERATED_TRANSACTION_PREFIX . time() : $transaction_id;
 
 		if ( ! wpss_get_order_provider()->mark_as_paid( $order_id, $transaction_id, $payment_method ) ) {
 			return new \WP_Error( 'wpss_mark_paid_failed', __( 'Failed to mark order as paid.', 'wp-sell-services' ), array( 'status' => 409 ) );

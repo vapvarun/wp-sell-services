@@ -156,12 +156,23 @@ class Activator {
 		$staff_caps = array_merge(
 			$vendor_caps,
 			array(
-				'wpss_manage_orders'           => true,
-				'edit_others_wpss_services'    => true,
-				'edit_private_wpss_services'   => true,
-				'read_private_wpss_services'   => true,
-				'delete_others_wpss_services'  => true,
-				'delete_private_wpss_services' => true,
+				'wpss_manage_orders'             => true,
+				'edit_others_wpss_services'      => true,
+				'edit_private_wpss_services'     => true,
+				'read_private_wpss_services'     => true,
+				'delete_others_wpss_services'    => true,
+				'delete_private_wpss_services'   => true,
+				// Buyer requests carry their own capability set (1.9.3); only site staff moderate them.
+				'edit_wpss_requests'             => true,
+				'edit_others_wpss_requests'      => true,
+				'edit_private_wpss_requests'     => true,
+				'edit_published_wpss_requests'   => true,
+				'publish_wpss_requests'          => true,
+				'read_private_wpss_requests'     => true,
+				'delete_wpss_requests'           => true,
+				'delete_others_wpss_requests'    => true,
+				'delete_private_wpss_requests'   => true,
+				'delete_published_wpss_requests' => true,
 			)
 		);
 

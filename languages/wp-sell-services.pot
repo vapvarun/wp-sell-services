@@ -17334,7 +17334,7 @@ msgstr ""
 #. translators: 1: order number, 2: service title, 3: total
 #: src/Services/EmailService.php:446
 #, php-format
-msgid "Order #%1$s for %2$s (%3$s) was placed by bank transfer and is waiting for payment. It starts once the payment is marked as received."
+msgid "Order #%1$s for %2$s (%3$s) was placed with offline payment and is waiting for payment. It starts once the payment is marked as received."
 msgstr ""
 
 #. translators: 1: site name, 2: order number
@@ -17344,7 +17344,7 @@ msgid "[%1$s] Order #%2$s is waiting for payment"
 msgstr ""
 
 #: src/Services/EmailService.php:463
-msgid "A bank-transfer order is waiting for payment"
+msgid "An offline-payment order is waiting for payment"
 msgstr ""
 
 #: src/Services/EmailService.php:466

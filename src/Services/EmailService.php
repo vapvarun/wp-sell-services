@@ -447,7 +447,7 @@ class EmailService {
 
 		$note = sprintf(
 			/* translators: 1: order number, 2: service title, 3: total */
-			__( 'Order #%1$s for %2$s (%3$s) was placed by bank transfer and is waiting for payment. It starts once the payment is marked as received.', 'wp-sell-services' ),
+			__( 'Order #%1$s for %2$s (%3$s) was placed with offline payment and is waiting for payment. It starts once the payment is marked as received.', 'wp-sell-services' ),
 			esc_html( $order->order_number ),
 			esc_html( $title ),
 			esc_html( $total )
@@ -464,7 +464,7 @@ class EmailService {
 			self::TYPE_OFFLINE_ORDER_PLACED,
 			array(
 				'recipient'     => get_user_by( 'email', $admin ) ?: null,
-				'email_heading' => __( 'A bank-transfer order is waiting for payment', 'wp-sell-services' ),
+				'email_heading' => __( 'An offline-payment order is waiting for payment', 'wp-sell-services' ),
 				'content'       => $note,
 				'button_url'    => admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order_id ),
 				'button_text'   => __( 'Open the order', 'wp-sell-services' ),
@@ -472,7 +472,8 @@ class EmailService {
 			)
 		) || $sent;
 
-		if ( $vendor ) {
+		// A solo owner is both the admin and the seller: the admin email above already told them.
+		if ( $vendor && 0 !== strcasecmp( (string) $vendor->user_email, $admin ) ) {
 			$sent = $this->send(
 				$vendor->user_email,
 				sprintf(

@@ -100,5 +100,21 @@ foreach ( $made as $uid ) {
 	wp_delete_user( $uid );
 }
 
+// 7. Owner-walk fixes: request caps, generated transaction id, bad order notice, vendor confirm.
+$root = dirname( __DIR__ );
+$admin_role = get_role( 'administrator' );
+$check( 'staff hold the request caps', $admin_role && $admin_role->has_cap( 'edit_others_wpss_requests' ) );
+foreach ( array( 'editor', 'author' ) as $r ) {
+	$role = get_role( $r );
+	$check( $r . ' cannot edit others\' buyer requests', ! $role || ! $role->has_cap( 'edit_others_wpss_requests' ) );
+}
+$check( 'generated transaction ids share one prefix', 'offline_manual_' === \WPSellServices\Integrations\Gateways\OfflineGateway::GENERATED_TRANSACTION_PREFIX );
+$check( 'payment template hides generated ids', false !== strpos( file_get_contents( $root . '/templates/order/payment.php' ), 'GENERATED_TRANSACTION_PREFIX' ) );
+foreach ( array( 'orders', 'sales' ) as $sec ) {
+	$check( $sec . ' section tells the user about a bad order URL', false !== strpos( file_get_contents( $root . '/templates/dashboard/sections/' . $sec . '.php' ), 'That order was not found, or it is not yours.' ) );
+}
+$vp = file_get_contents( $root . '/src/Admin/Pages/VendorsPage.php' );
+$check( 'Approve and Activate name their action', false !== strpos( $vp, 'Approve this vendor?' ) && false !== strpos( $vp, 'Reactivate this vendor?' ) );
+
 update_option( 'users_can_register', $was_open );
 echo $fails ? "\n$fails FAILED\n" : "\nALL PASSED\n";

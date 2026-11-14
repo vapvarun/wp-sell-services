@@ -390,7 +390,7 @@
     },
     {
       "name": "wpss_request",
-      "purpose": "Buyer request (job post)"
+      "purpose": "Buyer request (job post). Own caps (capability_type wpss_request/wpss_requests, granted to administrator and shop_manager by Activator::create_roles); buyers post through the REST and front-end paths, not core caps."
     }
   ],
   "taxonomies": [

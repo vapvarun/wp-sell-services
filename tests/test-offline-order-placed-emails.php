@@ -90,4 +90,15 @@ $check( 'blank instructions: the buyer email says the owner will send them', iss
 remove_filter( 'option_wpss_offline_settings', $blank );
 remove_filter( 'default_option_wpss_offline_settings', $blank );
 
+// A solo owner is the admin and the seller: one email for the order, in neutral words, not two near-identical ones.
+$mails      = array();
+$solo_admin = static fn() => get_userdata( $vendor )->user_email;
+add_filter( 'wpss_admin_notification_email', $solo_admin );
+$four = $make_order();
+do_action( 'wpss_offline_order_created', $four, wpss_get_order( $four ) );
+$solo = $to( get_userdata( $vendor )->user_email );
+$check( 'admin who is also the seller gets one email for the order', 1 === count( $solo ), (string) count( $solo ) );
+$check( 'it does not say bank transfer for every offline method', isset( $solo[0] ) && ! str_contains( $solo[0]['message'] . $solo[0]['subject'], 'bank-transfer' ) && ! str_contains( $solo[0]['message'], 'by bank transfer' ) );
+remove_filter( 'wpss_admin_notification_email', $solo_admin );
+
 echo $fails ? "FAILED: {$fails}\n" : "OK\n";
