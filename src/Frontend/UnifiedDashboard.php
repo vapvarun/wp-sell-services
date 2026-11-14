@@ -616,6 +616,32 @@ class UnifiedDashboard {
 	}
 
 	/**
+	 * Label for the become-vendor button.
+	 *
+	 * The site owner is already the seller (decision of 2026-11-14), so for an
+	 * administrator the button says what happens next instead of asking them to
+	 * join their own marketplace.
+	 *
+	 * @since 1.9.3
+	 * @return string
+	 */
+	private function become_vendor_label(): string {
+		return current_user_can( 'manage_options' )
+			? __( 'Add your first service', 'wp-sell-services' )
+			: __( 'Start selling', 'wp-sell-services' );
+	}
+
+	/**
+	 * Attribute that lets the script skip the confirm dialog for an administrator.
+	 *
+	 * @since 1.9.3
+	 * @return string Empty, or a fixed attribute literal.
+	 */
+	private function become_vendor_attrs(): string {
+		return current_user_can( 'manage_options' ) ? ' data-skip-confirm="1"' : '';
+	}
+
+	/**
 	 * Render login prompt.
 	 *
 	 * @return string Login prompt HTML.
@@ -779,8 +805,8 @@ class UnifiedDashboard {
 						?>
 					<div class="wpss-dashboard__become-vendor">
 						<p><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></p>
-						<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--full" data-action="become-vendor">
-							<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
+						<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--full" data-action="become-vendor"<?php echo $this->become_vendor_attrs(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed literal. ?>>
+							<?php echo esc_html( $this->become_vendor_label() ); ?>
 						</button>
 					</div>
 					<?php endif; ?>
@@ -1041,8 +1067,8 @@ class UnifiedDashboard {
 				</div>
 				<h3><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></h3>
 				<p><?php esc_html_e( 'Start selling your services on this marketplace. Click the button below to register as a vendor and begin offering your skills.', 'wp-sell-services' ); ?></p>
-				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor">
-					<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
+				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor"<?php echo $this->become_vendor_attrs(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed literal. ?>>
+					<?php echo esc_html( $this->become_vendor_label() ); ?>
 				</button>
 			</div>
 			<?php
@@ -1056,8 +1082,8 @@ class UnifiedDashboard {
 				<h3><?php esc_html_e( 'Vendor Access Required', 'wp-sell-services' ); ?></h3>
 				<p><?php esc_html_e( 'This section is available to vendors. Become a vendor to access this feature and start selling your services.', 'wp-sell-services' ); ?></p>
 				<?php if ( $registration_is_open ) : ?>
-				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor">
-					<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
+				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor"<?php echo $this->become_vendor_attrs(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed literal. ?>>
+					<?php echo esc_html( $this->become_vendor_label() ); ?>
 				</button>
 				<?php endif; ?>
 			</div>
@@ -1233,7 +1259,7 @@ class UnifiedDashboard {
 				 */
 				$redirect_url = apply_filters(
 					'wpss_after_become_vendor_redirect',
-					$this->get_section_url( 'services' ),
+					$this->get_section_url( current_user_can( 'manage_options' ) ? 'create' : 'services' ),
 					$user_id
 				);
 
