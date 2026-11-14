@@ -292,6 +292,13 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * New      - A Verify Email Before Selling setting makes members who sign up through the plugin confirm their email with a one-time link before they can become vendors; off by default, and earlier members are not affected.
 * New      - A Sign-up Notice setting emails the site admin when someone signs up through the plugin, using WordPress's own New User Registration email; off by default.
 * New      - A seller who cannot finish paid work can ask the buyer to cancel from the order page; the buyer accepts (cancelled and refunded) or declines (work continues), both get an email and a notification, and there is no auto-cancel timer on a seller's request.
+* Fix      - A buyer can no longer pay a milestone phase out of order through the offline or test payment methods.
+* Fix      - With disputes switched off in settings, a dispute can no longer be opened through the app or by rejecting a cancellation request.
+* Fix      - A proposal that was already accepted, withdrawn or rejected can no longer be rejected again.
+* Fix      - A service sold one at a time now enforces that limit at checkout, not only on the service page.
+* Fix      - Buying one service with Buy Now no longer empties the rest of the buyer's cart.
+* Fix      - Double-clicking Deliver no longer creates two deliveries, and an empty delivery is refused.
+* Fix      - Proposals with a zero or negative price are refused.
 * Improve  - Bulk Mark as Completed and Mark as Cancelled on Orders ask first, naming the number of orders and the money effect, and skip orders already in that status.
 * Fix      - The Become a Vendor page tells a logged-out visitor sign-up is closed, with a Sign in link, instead of showing a form that always fails when WordPress registration is off.
 * Fix      - With vendor registration closed, the site owner can still start selling from the dashboard.

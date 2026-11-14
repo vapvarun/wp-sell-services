@@ -128,6 +128,12 @@ $check( 'application questions are a setting, default off', false === wpss_get_o
 $check( 'sign-up verification and admin notice are settings, default off', false === wpss_get_option( 'vendor', 'verify_email_for_vendors' ) && false === wpss_get_option( 'vendor', 'signup_notify_admin' ) && ! wpss_email_verification_pending( 1 ) );
 $check( 'seller cancellation request exists and statuses are limited to work in flight', method_exists( \WPSellServices\Services\OrderService::class, 'request_seller_cancellation' ) && array( 'in_progress', 'late', 'revision_requested' ) === \WPSellServices\Services\OrderService::seller_cancellation_statuses() );
 $check( 'seller cancellation request has no auto-cancel timer', false !== strpos( file_get_contents( $root . '/src/Services/OrderWorkflowManager.php' ), 'A seller\'s request has no timer' ) );
+$check( 'one phase-lock test feeds the shared pay refusal', function_exists( 'wpss_is_order_phase_locked' ) && false !== strpos( file_get_contents( $root . '/src/functions/orders.php' ), 'wpss_is_order_phase_locked( $order )' ) );
+$check( 'disputes-off is part of the shared dispute guard', false !== strpos( file_get_contents( $root . '/src/Services/DisputeService.php' ), 'Disputes are turned off on this site.' ) );
+$check( 'proposal reject only moves a pending proposal', 1 === preg_match( "/STATUS_REJECTED.*?'status' => self::STATUS_PENDING/s", file_get_contents( $root . '/src/Services/ProposalService.php' ) ) );
+$check( 'order quantity ceiling is applied by the shared pricer', false !== strpos( file_get_contents( $root . '/src/Checkout/CheckoutIntentService.php' ), "apply_filters( 'wpss_max_order_quantity'" ) );
+$check( 'single-service purchase removes only its cart line', method_exists( \WPSellServices\Checkout\ServiceCart::class, 'remove_line' ) );
+$check( 'delivery takes a per-order lock', false !== strpos( file_get_contents( $root . '/src/Services/DeliveryService.php' ), "'wpss_delivery_' . \$order_id" ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 

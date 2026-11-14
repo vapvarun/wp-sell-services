@@ -346,7 +346,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$package_id = isset( $_GET['package'] ) ? absint( wp_unslash( $_GET['package'] ) ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$quantity = isset( $_GET['quantity'] ) ? absint( wp_unslash( $_GET['quantity'] ) ) : 1;
-		$quantity = max( 1, min( $quantity, 10 ) ); // Clamp 1-10.
+		$quantity = max( 1, $quantity ); // The pricer applies the service's ceiling (wpss_max_order_quantity).
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$addon_ids_raw = isset( $_GET['addons'] ) ? sanitize_text_field( wp_unslash( $_GET['addons'] ) ) : '';
@@ -473,21 +473,6 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				esc_url( $back_to_order ),
 				esc_html__( 'Back to order', 'wp-sell-services' )
 			);
-		}
-
-		// Lock-step backstop on milestone sub-orders: even though the on-page
-		// timeline hides the Pay button on locked phases, a buyer could craft
-		// the URL by hand to skip ahead. The server is the only authority.
-		if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
-			$milestones = new \WPSellServices\Services\MilestoneService();
-			if ( $milestones->is_locked( $order_id ) ) {
-				return sprintf(
-					'<p class="wpss-alert wpss-alert-info">%s</p><p><a class="wpss-btn wpss-btn--secondary" href="%s">%s</a></p>',
-					esc_html__( 'This phase is locked. Pay the previous phase first — once it is approved or cancelled, this one will unlock.', 'wp-sell-services' ),
-					esc_url( $back_to_order ),
-					esc_html__( 'Back to order', 'wp-sell-services' )
-				);
-			}
 		}
 
 		// Sub-orders (tip, extension, milestone) are one-shot credits or

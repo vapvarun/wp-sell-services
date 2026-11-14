@@ -622,7 +622,7 @@ class AjaxHandlers {
 		if ( $dispute_result ) {
 			wp_send_json_success( array( 'message' => __( 'Cancellation disputed. The order has been escalated for admin review.', 'wp-sell-services' ) ) );
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to create dispute. Please try again.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => $dispute_service->last_error() ?: __( 'Failed to create dispute. Please try again.', 'wp-sell-services' ) ) );
 		}
 	}
 

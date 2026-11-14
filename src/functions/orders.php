@@ -54,11 +54,30 @@ function wpss_get_order_payment_refusal( $order ): string {
 		return wpss_get_order_not_payable_message( $order );
 	}
 
+	if ( wpss_is_order_phase_locked( $order ) ) {
+		return __( 'This phase is locked. Pay the previous phase first - once it is approved or cancelled, this one will unlock.', 'wp-sell-services' );
+	}
+
 	if ( wpss_is_extension_on_hold( $order ) ) {
 		return __( 'This quote for extra work is on hold while the order is not active, so it cannot be paid now.', 'wp-sell-services' );
 	}
 
 	return '';
+}
+
+/**
+ * Whether a milestone phase is still locked behind an earlier, unapproved phase.
+ *
+ * The one test every pay door uses, so a crafted request cannot fund a phase out of order.
+ *
+ * @since 1.9.3
+ *
+ * @param object $order ServiceOrder or order row.
+ * @return bool
+ */
+function wpss_is_order_phase_locked( $order ): bool {
+	return \WPSellServices\Services\MilestoneService::ORDER_TYPE === (string) ( $order->platform ?? '' )
+		&& ( new \WPSellServices\Services\MilestoneService() )->is_locked( (int) ( $order->id ?? 0 ) );
 }
 
 /**

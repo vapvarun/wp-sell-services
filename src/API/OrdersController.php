@@ -1246,7 +1246,7 @@ class OrdersController extends RestController {
 						$result = true;
 						do_action( 'wpss_order_disputed', $order_id, 'vendor', $dispute_note );
 					} else {
-						$error = __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
+						$error = $dispute_service->last_error() ?: __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
 					}
 				}
 				break;
@@ -1753,23 +1753,18 @@ class OrdersController extends RestController {
 			);
 		}
 
+		// A locked phase keeps its own documented code (mobile shows the "previous phase first" hint).
+		if ( wpss_is_order_phase_locked( $order ) ) {
+			return new WP_Error(
+				'wpss_milestone_locked',
+				__( 'This phase is locked. Pay the previous phase first — once it is approved or cancelled, this one will unlock.', 'wp-sell-services' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		$refusal = wpss_get_order_payment_refusal( $order );
 		if ( '' !== $refusal ) {
 			return new WP_Error( 'wpss_order_not_payable', $refusal, array( 'status' => 409 ) );
-		}
-
-		// Lock-step guard on milestone sub-orders — HTTP 409 with the same
-		// error code the UI surfaces, so the mobile client shows the
-		// "previous phase first" hint identically to the website.
-		if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
-			$milestone_service = new \WPSellServices\Services\MilestoneService();
-			if ( $milestone_service->is_locked( $order_id ) ) {
-				return new WP_Error(
-					'wpss_milestone_locked',
-					__( 'This phase is locked. Pay the previous phase first — once it is approved or cancelled, this one will unlock.', 'wp-sell-services' ),
-					array( 'status' => 409 )
-				);
-			}
 		}
 
 		$checkout_url = wpss_ensure_pay_order( $order_id );

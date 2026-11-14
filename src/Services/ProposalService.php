@@ -158,7 +158,7 @@ class ProposalService {
 			$proposed_price  = (float) array_sum( array_column( $milestones, 'amount' ) );
 			$proposed_days   = (int) array_sum( array_column( $milestones, 'days' ) );
 		} else {
-			if ( empty( $data['price'] ) ) {
+			if ( empty( $data['price'] ) || (float) $data['price'] <= 0 ) {
 				return false;
 			}
 			$proposed_price = (float) $data['price'];
@@ -341,6 +341,9 @@ class ProposalService {
 				$update_data['milestones'] = null;
 			}
 			if ( isset( $data['price'] ) ) {
+				if ( (float) $data['price'] <= 0 ) {
+					return false;
+				}
 				$update_data['proposed_price'] = (float) $data['price'];
 			}
 			if ( isset( $data['delivery_days'] ) ) {
@@ -451,10 +454,14 @@ class ProposalService {
 				'status'     => self::STATUS_REJECTED,
 				'updated_at' => current_time( 'mysql', true ),
 			),
-			array( 'id' => $proposal_id )
+			array(
+				'id'     => $proposal_id,
+				'status' => self::STATUS_PENDING,
+			)
 		);
 
-		if ( $result !== false ) {
+		// A proposal already accepted, withdrawn or rejected is final: 0 rows means nothing changed.
+		if ( $result ) {
 			/**
 			 * Fires when a proposal is rejected.
 			 *

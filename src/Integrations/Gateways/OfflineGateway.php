@@ -832,8 +832,8 @@ class OfflineGateway extends AbstractPaymentGateway {
 		 */
 		do_action( 'wpss_offline_order_created', $order->id, $order );
 
-		// Clear cart after successful order creation.
-		delete_user_meta( get_current_user_id(), '_wpss_cart' );
+		// Drop only the purchased line; other saved items stay in the cart.
+		\WPSellServices\Checkout\ServiceCart::remove_line( get_current_user_id(), $service_id, $package_id );
 
 		// Return success with order view redirect (shows payment instructions).
 		wp_send_json_success(

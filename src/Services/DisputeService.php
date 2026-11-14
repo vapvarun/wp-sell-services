@@ -171,10 +171,6 @@ class DisputeService {
 	 * @return bool
 	 */
 	public function can_open_dispute( object $order ): bool {
-		if ( ! wpss_get_option( 'orders', 'allow_disputes' ) ) {
-			return false;
-		}
-
 		return null === $this->open_guard( $order );
 	}
 
@@ -190,6 +186,10 @@ class DisputeService {
 	 * @return string|null Translated refusal, or null when a dispute may be opened.
 	 */
 	private function open_guard( object $order ): ?string {
+		if ( ! wpss_get_option( 'orders', 'allow_disputes' ) ) {
+			return __( 'Disputes are turned off on this site.', 'wp-sell-services' );
+		}
+
 		if ( $this->get_by_order( (int) $order->id ) ) {
 			return __( 'A dispute already exists for this order.', 'wp-sell-services' );
 		}
