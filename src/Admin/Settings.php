@@ -1017,7 +1017,7 @@ class Settings {
 				'option_name' => 'wpss_vendor',
 				'field'       => 'vendor_registration',
 				'options'     => array(
-					'open'     => __( 'Open (anyone can register)', 'wp-sell-services' ),
+					'open'     => __( 'Open (any member can start selling at once)', 'wp-sell-services' ),
 					'approval' => __( 'Requires Approval', 'wp-sell-services' ),
 					'closed'   => __( 'Closed (admin only)', 'wp-sell-services' ),
 				),

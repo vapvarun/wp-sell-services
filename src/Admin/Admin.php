@@ -838,7 +838,7 @@ class Admin {
 			'<div class="notice notice-warning is-dismissible wpss-dismissible-notice" data-notice="terms" data-signature="%s" data-nonce="%s"><p><strong>%s</strong> %s</p><p><a class="button" href="%s">%s</a></p></div>',
 			esc_attr( $signature ),
 			esc_attr( wp_create_nonce( 'wpss_dismiss_notice' ) ),
-			esc_html__( 'Buyers are paying on this site, but no Terms page is mapped.', 'wp-sell-services' ),
+			esc_html__( 'Checkout can take payments on this site, but no Terms page is mapped.', 'wp-sell-services' ),
 			esc_html__( 'Checkout has nothing to link to, so buyers agree to nothing in writing - which is the gap owners usually find out about during a dispute. Map a page you have written; we never publish one for you.', 'wp-sell-services' ),
 			esc_url( wpss_get_settings_url( 'pages' ) ),
 			esc_html__( 'Map a Terms page', 'wp-sell-services' )

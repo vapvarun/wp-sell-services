@@ -68,7 +68,7 @@ to `auto`/`standalone`, so no payment rail has been chosen yet; and the catalog
 is the only surface that is populated the moment the plugin is on.
 
 **Known zero-config gap, found this cycle:** a fresh install has **no Terms page
-mapped**, and the admin says so on every screen — *"Buyers are paying on this
+mapped**, and the admin says so on every screen — *"Checkout can take payments on this
 site, but no Terms page is mapped."* The checkout still completes, so this is a
 warning rather than a block, but any zero-config walk will meet that notice
 first and should not treat it as a defect.

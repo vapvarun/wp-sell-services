@@ -216,7 +216,7 @@ msgid "no Terms page is mapped"
 msgstr ""
 
 #: src/Admin/Admin.php:841
-msgid "Buyers are paying on this site, but no Terms page is mapped."
+msgid "Checkout can take payments on this site, but no Terms page is mapped."
 msgstr ""
 
 #: src/Admin/Admin.php:842
@@ -3879,7 +3879,7 @@ msgid "Vendor Registration"
 msgstr ""
 
 #: src/Admin/Pages/SetupWizardPage.php:643
-msgid "Open — Anyone can register"
+msgid "Open — any member can start selling at once"
 msgstr ""
 
 #: src/Admin/Pages/SetupWizardPage.php:647
@@ -5740,7 +5740,7 @@ msgid "Milestone phases and extensions are taxed like the order they belong to. 
 msgstr ""
 
 #: src/Admin/Settings.php:1020
-msgid "Open (anyone can register)"
+msgid "Open (any member can start selling at once)"
 msgstr ""
 
 #: src/Admin/Settings.php:1021

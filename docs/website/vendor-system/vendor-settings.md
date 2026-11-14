@@ -12,7 +12,7 @@ Choose how vendors can join your marketplace:
 
 | Mode | What Happens | Best For |
 |------|-------------|----------|
-| **Open** | Anyone can register and start selling immediately | Growing marketplaces, community platforms |
+| **Open** | Any logged-in member can start selling immediately | Growing marketplaces, community platforms |
 | **Requires Approval** | Users submit applications; you approve or reject them | Curated marketplaces, quality control |
 | **Closed** | Only you can create vendor accounts | Invite-only platforms, soft launches |
 

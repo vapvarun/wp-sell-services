@@ -82,16 +82,17 @@ class ServicePostType {
 	}
 
 	/**
-	 * Insert the default service categories. Returns the created term IDs.
+	 * The category names a fresh marketplace starts with.
 	 *
-	 * Separated from maybe_seed_default_categories() so it is directly testable
-	 * and reusable (e.g. from the setup wizard's "skip categories" path).
+	 * One list for the activation seed and the setup wizard's suggestions, so
+	 * the wizard never offers a near-duplicate ("Graphic Design" beside
+	 * "Graphics & Design") of a category the plugin already created.
 	 *
-	 * @since 1.3.0
-	 * @return int[] Created term IDs.
+	 * @since 1.9.3
+	 * @return string[] Category names.
 	 */
-	public function seed_default_categories(): array {
-		$defaults = apply_filters(
+	public function get_default_category_names(): array {
+		return (array) apply_filters(
 			'wpss_default_service_categories',
 			array(
 				__( 'Graphics & Design', 'wp-sell-services' ),
@@ -104,6 +105,19 @@ class ServicePostType {
 				__( 'AI Services', 'wp-sell-services' ),
 			)
 		);
+	}
+
+	/**
+	 * Insert the default service categories. Returns the created term IDs.
+	 *
+	 * Separated from maybe_seed_default_categories() so it is directly testable
+	 * and reusable (e.g. from the setup wizard's "skip categories" path).
+	 *
+	 * @since 1.3.0
+	 * @return int[] Created term IDs.
+	 */
+	public function seed_default_categories(): array {
+		$defaults = $this->get_default_category_names();
 
 		// Lucide icons for the defaults, so a fresh marketplace's category
 		// list and Icon column are not blank (Basecamp 10337190248).

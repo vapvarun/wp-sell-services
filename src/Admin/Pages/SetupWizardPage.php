@@ -581,17 +581,14 @@ class SetupWizardPage {
 
 				<div class="wpss-wizard-chips" id="wpss-wizard-chips">
 					<?php
-					$presets = array(
-						__( 'Web Development', 'wp-sell-services' ),
-						__( 'Graphic Design', 'wp-sell-services' ),
-						__( 'Writing', 'wp-sell-services' ),
-						__( 'Digital Marketing', 'wp-sell-services' ),
-						__( 'Video', 'wp-sell-services' ),
-						__( 'Music', 'wp-sell-services' ),
-						__( 'Programming', 'wp-sell-services' ),
-						__( 'Business', 'wp-sell-services' ),
-						__( 'Photography', 'wp-sell-services' ),
-						__( 'Data', 'wp-sell-services' ),
+					// The plugin's own starter categories first (shown as already
+					// added), then extras it does not create, so no chip duplicates one.
+					$presets = array_merge(
+						( new \WPSellServices\PostTypes\ServicePostType() )->get_default_category_names(),
+						array(
+							__( 'Photography', 'wp-sell-services' ),
+							__( 'Data', 'wp-sell-services' ),
+						)
 					);
 					foreach ( $presets as $preset ) :
 						$exists = term_exists( $preset, 'wpss_service_category' );
@@ -635,7 +632,7 @@ class SetupWizardPage {
 					<div class="wpss-wizard-radio-group">
 						<label class="wpss-wizard-radio-inline">
 							<input type="radio" name="wpss_vendor_reg" value="open" <?php checked( 'open', $vendor_registration ); ?>>
-							<?php esc_html_e( 'Open — Anyone can register', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Open — any member can start selling at once', 'wp-sell-services' ); ?>
 						</label>
 						<label class="wpss-wizard-radio-inline">
 							<input type="radio" name="wpss_vendor_reg" value="approval" <?php checked( 'approval', $vendor_registration ); ?>>
