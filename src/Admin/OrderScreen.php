@@ -148,7 +148,8 @@ class OrderScreen {
 	public function ajax_update_status(): void {
 		check_ajax_referer( 'wpss_order_admin', 'nonce' );
 
-		if ( ! current_user_can( 'wpss_manage_orders' ) ) {
+		// Same rule as the order form and the Refund box: status changes move money, so administrators only.
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 

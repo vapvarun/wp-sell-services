@@ -1213,7 +1213,7 @@ class UnifiedDashboard {
 
 		// Reject if vendor registration is closed.
 		$ajax_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-		if ( 'closed' === $ajax_registration_mode ) {
+		if ( 'closed' === $ajax_registration_mode && ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Vendor registration is currently closed.', 'wp-sell-services' ) ) );
 		}
 

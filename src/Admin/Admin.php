@@ -2180,7 +2180,9 @@ class Admin {
 			<?php endif; ?>
 			<hr class="wp-header-end">
 
-			<form method="get">
+			<form method="get" class="wpss-orders-bulk"
+				data-wpss-confirm-mark_completed="<?php /* translators: %d: number of orders. */ echo esc_attr__( 'Mark %d selected orders as Completed? Each vendor is credited for their order.', 'wp-sell-services' ); ?>"
+				data-wpss-confirm-mark_cancelled="<?php /* translators: %d: number of orders. */ echo esc_attr__( 'Cancel %d selected orders? Buyers are refunded through the gateway and vendor earnings are taken back.', 'wp-sell-services' ); ?>">
 				<input type="hidden" name="page" value="wpss-orders">
 				<div class="wpss-list-card">
 					<div class="wpss-list-card__filters">
@@ -2242,9 +2244,14 @@ class Admin {
 		$order_service = new OrderService();
 
 		foreach ( $order_ids as $id ) {
-			$result = $order_service->update_status( (int) $id, $new_status );
+			$order = $order_service->get( (int) $id );
 
-			if ( $result ) {
+			// Re-running or reloading the URL must not count an order already in the target status as updated.
+			if ( ! $order || $new_status === $order->status ) {
+				continue;
+			}
+
+			if ( $order_service->update_status( (int) $id, $new_status ) ) {
 				++$updated;
 			}
 		}

@@ -1111,6 +1111,20 @@ class Shortcodes {
 			return ob_get_clean();
 		}
 
+		// The sign-up handler refuses when WordPress registration is off, so do not print a form that always fails.
+		if ( ! is_user_logged_in() && ! get_option( 'users_can_register' ) ) {
+			?>
+			<div class="wpss-vr">
+				<div class="wpss-vr__card">
+					<h2 class="wpss-vr__title"><?php esc_html_e( 'Sign-up is closed', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-vr__desc"><?php echo esc_html( wpss_signup_closed_message() ); ?></p>
+					<p><a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"><?php esc_html_e( 'Sign in', 'wp-sell-services' ); ?></a></p>
+				</div>
+			</div>
+			<?php
+			return ob_get_clean();
+		}
+
 		if ( ! is_user_logged_in() ) {
 			?>
 			<div class="wpss-vr wpss-vr--pitch">

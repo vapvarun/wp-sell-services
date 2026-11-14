@@ -230,7 +230,7 @@ class VendorService {
 		// Check if registration is closed.
 		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
-		if ( 'closed' === $registration_mode ) {
+		if ( 'closed' === $registration_mode && ! user_can( $user_id, 'manage_options' ) ) {
 			return array(
 				'success' => false,
 				'message' => __( 'Vendor registration is currently closed.', 'wp-sell-services' ),

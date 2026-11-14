@@ -116,6 +116,10 @@ foreach ( array( 'orders', 'sales' ) as $sec ) {
 $vp = file_get_contents( $root . '/src/Admin/Pages/VendorsPage.php' );
 $check( 'Approve and Activate name their action', false !== strpos( $vp, 'Approve this vendor?' ) && false !== strpos( $vp, 'Reactivate this vendor?' ) );
 
+$check( 'admin order AJAX is administrator-only', false !== strpos( file_get_contents( $root . '/src/Admin/OrderScreen.php' ), "! current_user_can( 'manage_options' )" ) );
+$check( 'bulk order actions ask first and skip same-status orders', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'wpss-orders-bulk' ) && false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), '$new_status === $order->status' ) );
+$check( 'vendor registration page does not print a doomed form', false !== strpos( file_get_contents( $root . '/src/Frontend/Shortcodes.php' ), 'Sign-up is closed' ) );
+$check( 'closed vendor mode exempts the site owner in both doors', false !== strpos( file_get_contents( $root . '/src/Frontend/UnifiedDashboard.php' ), "'closed' === \$ajax_registration_mode && ! current_user_can( 'manage_options' )" ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 

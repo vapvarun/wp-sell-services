@@ -8,6 +8,30 @@
 (function($) {
 	'use strict';
 
+	// Bulk order status changes move money: ask first, naming the count and the effect.
+	$(document).on('submit', 'form.wpss-orders-bulk', function(e) {
+		var form = this;
+		var $form = $(form);
+		var action = $form.find('select[name="action"]').val();
+		if (!action || '-1' === action) {
+			action = $form.find('select[name="action2"]').val();
+		}
+		var message = action ? $form.attr('data-wpss-confirm-' + action) : '';
+		var count = $form.find('input[name="order_ids[]"]:checked').length;
+
+		if (!message || !count || form.dataset.wpssConfirmed === '1' || typeof window.wpssConfirm !== 'function') {
+			return;
+		}
+
+		e.preventDefault();
+		window.wpssConfirm(message.replace('%d', count), { tone: 'danger' }).then(function(ok) {
+			if (ok) {
+				form.dataset.wpssConfirmed = '1';
+				form.submit();
+			}
+		});
+	});
+
 	/**
 	 * Instantiate Lucide icons in markup added after page load.
 	 *
