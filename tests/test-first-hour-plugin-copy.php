@@ -73,5 +73,32 @@ $check( 'terms notice does not claim buyers are paying', false === strpos( $admi
 $settings = (string) file_get_contents( dirname( __DIR__ ) . '/src/Admin/Settings.php' ) . $wizard;
 $check( 'vendor registration label does not say anyone can register', false === stripos( $settings, 'anyone can register' ) );
 
+// 6. One sign-up name field is split, not stored whole as the first name.
+$made = array();
+foreach ( array(
+	'Maria del Carmen Ruiz' => array( 'Maria', 'del Carmen Ruiz' ),
+	'Casey Buyer'           => array( 'Casey', 'Buyer' ),
+	'Prince'                => array( 'Prince', '' ),
+) as $typed => $expect ) {
+	$uid = \WPSellServices\Frontend\PublicSignup::create_account(
+		array(
+			'email'        => 'split-' . wp_generate_password( 6, false, false ) . '@example.test',
+			'password'     => wp_generate_password(),
+			'display_name' => $typed,
+		)
+	);
+	if ( is_wp_error( $uid ) ) {
+		$check( 'sign-up with "' . $typed . '"', false, $uid->get_error_message() );
+		continue;
+	}
+	$made[] = $uid;
+	$check( '"' . $typed . '" is stored as first/last', array( get_user_meta( $uid, 'first_name', true ), get_user_meta( $uid, 'last_name', true ) ) === $expect );
+	$check( 'and checkout prefill shows the same split', $expect === array( wpss_get_billing_address( $uid )['billing_first_name'], wpss_get_billing_address( $uid )['billing_last_name'] ) );
+}
+require_once ABSPATH . 'wp-admin/includes/user.php';
+foreach ( $made as $uid ) {
+	wp_delete_user( $uid );
+}
+
 update_option( 'users_can_register', $was_open );
 echo $fails ? "\n$fails FAILED\n" : "\nALL PASSED\n";

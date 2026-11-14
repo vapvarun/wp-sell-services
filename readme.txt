@@ -278,6 +278,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Improve  - The sign-in lockout is removed: wrong passwords no longer lock an account on wp-login.php or in the app, so a security plugin or your host owns that. The app login keeps its per-address rate limit, and the wpss_web_login_lock filter is now a deprecated no-op.
 * Improve  - When WordPress sign-up is closed, the Log In and Create account pages tell the buyer to contact the site owner and link to Sign in, and the new wpss_signup_closed_message filter lets the store add its own contact details.
 * Improve  - On the front-end dashboard an administrator adds their first service in one click, with no confirmation dialog.
+* Fix      - A name typed once on the Create account form is split into first and last name, so checkout no longer shows "Casey Buyer" in First name and "Buyer" in Last name.
 * Fix      - The setup wizard suggests the same eight starter categories the plugin creates, so it no longer adds near-duplicates such as Graphic Design beside Graphics & Design.
 * Fix      - The Terms page notice says checkout can take payments instead of claiming buyers are paying, and the Open vendor registration label says any member can start selling instead of anyone can register.
 * Fix      - Marking an order paid no longer sends buyer and vendor a third "Order status updated" email beside the order confirmation, on every payment rail.
