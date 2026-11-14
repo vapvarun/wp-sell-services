@@ -1198,4 +1198,20 @@ class ServiceOrder {
 
 		return is_array( $request ) ? $request : null;
 	}
+
+	/**
+	 * Whether the pending cancellation request came from the seller.
+	 *
+	 * The other party answers: the buyer for a seller's request, the vendor for
+	 * a buyer's.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @return bool
+	 */
+	public function is_cancellation_requested_by_vendor(): bool {
+		$request = $this->get_cancellation_request();
+
+		return null !== $request && (int) ( $request['requested_by'] ?? 0 ) === (int) $this->vendor_id;
+	}
 }

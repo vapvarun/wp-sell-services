@@ -291,6 +291,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * New      - A Vendor Application Questions setting asks applicants what they sell and for a short description on the Start selling panel; the answers fill the vendor profile you review before approving. Off by default.
 * New      - A Verify Email Before Selling setting makes members who sign up through the plugin confirm their email with a one-time link before they can become vendors; off by default, and earlier members are not affected.
 * New      - A Sign-up Notice setting emails the site admin when someone signs up through the plugin, using WordPress's own New User Registration email; off by default.
+* New      - A seller who cannot finish paid work can ask the buyer to cancel from the order page; the buyer accepts (cancelled and refunded) or declines (work continues), both get an email and a notification, and there is no auto-cancel timer on a seller's request.
 * Improve  - Bulk Mark as Completed and Mark as Cancelled on Orders ask first, naming the number of orders and the money effect, and skip orders already in that status.
 * Fix      - The Become a Vendor page tells a logged-out visitor sign-up is closed, with a Sign in link, instead of showing a form that always fails when WordPress registration is off.
 * Fix      - With vendor registration closed, the site owner can still start selling from the dashboard.

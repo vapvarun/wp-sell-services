@@ -1179,18 +1179,33 @@ class OrdersController extends RestController {
 							$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );
 						}
 					}
+				} elseif ( $is_vendor && in_array( $order->status, OrderService::seller_cancellation_statuses(), true ) ) {
+					// The seller asks, the buyer decides.
+					if ( empty( $reason ) ) {
+						$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
+					} else {
+						$cancel_result = $order_service->request_seller_cancellation( $order_id, $user_id, $reason, sanitize_textarea_field( $request->get_param( 'note' ) ?? '' ) );
+						$result        = $cancel_result['success'] ?? false;
+						if ( ! $result ) {
+							$error = $cancel_result['message'] ?? __( 'Failed to request cancellation.', 'wp-sell-services' );
+						}
+					}
 				} else {
 					$error = __( 'You cannot cancel this order in its current status.', 'wp-sell-services' );
 				}
 				break;
 
 			case 'accept-cancellation':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor can accept cancellation requests.', 'wp-sell-services' );
+				// The other party answers: the buyer for a seller's request, the vendor for a buyer's.
+				$by_vendor = 'cancellation_requested' === $order->status && $order->is_cancellation_requested_by_vendor();
+				if ( ! $is_admin && ! ( $by_vendor ? $is_customer : $is_vendor ) ) {
+					$error = $by_vendor
+						? __( 'Only the buyer can accept the seller\'s cancellation request.', 'wp-sell-services' )
+						: __( 'Only the vendor can accept cancellation requests.', 'wp-sell-services' );
 				} elseif ( 'cancellation_requested' !== $order->status ) {
 					$error = __( 'No cancellation request to accept.', 'wp-sell-services' );
 				} else {
-					$cancel_result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
+					$cancel_result = $order_service->cancel( $order_id, $user_id, $by_vendor ? __( 'Buyer accepted cancellation request.', 'wp-sell-services' ) : __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
 					$result        = $cancel_result['success'] ?? false;
 					if ( ! $result ) {
 						$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );
@@ -1199,10 +1214,18 @@ class OrdersController extends RestController {
 				break;
 
 			case 'reject-cancellation':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor can respond to cancellation requests.', 'wp-sell-services' );
+				$by_vendor = 'cancellation_requested' === $order->status && $order->is_cancellation_requested_by_vendor();
+				if ( ! $is_admin && ! ( $by_vendor ? $is_customer : $is_vendor ) ) {
+					$error = __( 'Only the other party can respond to a cancellation request.', 'wp-sell-services' );
 				} elseif ( 'cancellation_requested' !== $order->status ) {
 					$error = __( 'No cancellation request to respond to.', 'wp-sell-services' );
+				} elseif ( $by_vendor ) {
+					// Buyer declines the seller's request: work resumes, nothing to dispute.
+					$decline = $order_service->decline_seller_cancellation( $order_id, $user_id );
+					$result  = $decline['success'];
+					if ( ! $result ) {
+						$error = $decline['message'] ?? __( 'Failed to resume the order.', 'wp-sell-services' );
+					}
 				} else {
 					// Vendor disputes the cancellation — escalate to dispute.
 					//
@@ -2327,13 +2350,17 @@ class OrdersController extends RestController {
 				if ( $is_customer && 'in_progress' === $order->status && $this->can_buyer_cancel_in_progress( $order ) ) {
 					$actions[] = 'cancel';
 				}
+				if ( $is_vendor && in_array( $order->status, OrderService::seller_cancellation_statuses(), true ) ) {
+					$actions[] = 'cancel';
+				}
 				if ( $is_customer || $is_vendor ) {
 					$actions[] = 'dispute';
 				}
 				break;
 
 			case 'cancellation_requested':
-				if ( $is_vendor || $is_admin ) {
+				// The other party answers the request.
+				if ( $is_admin || ( $order->is_cancellation_requested_by_vendor() ? $is_customer : $is_vendor ) ) {
 					$actions[] = 'accept-cancellation';
 					$actions[] = 'reject-cancellation';
 				}
@@ -2345,6 +2372,9 @@ class OrdersController extends RestController {
 			case 'revision_requested':
 				if ( $is_vendor || $is_admin ) {
 					$actions[] = 'deliver';
+				}
+				if ( $is_vendor ) {
+					$actions[] = 'cancel';
 				}
 				if ( $is_customer || $is_vendor ) {
 					$actions[] = 'dispute';

@@ -372,7 +372,8 @@ do_action( 'wpss_before_order_view', $order );
 				);
 			}
 
-			if ( 'cancellation_requested' === $order->status ) {
+			// Only the buyer's own request waits on the vendor; a seller's request waits on the buyer, who has the answer buttons.
+			if ( 'cancellation_requested' === $order->status && ! $order->is_cancellation_requested_by_vendor() ) {
 				$actions['cancel_pending_notice'] = array(
 					'label' => __( 'Cancellation Pending', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
@@ -412,15 +413,25 @@ do_action( 'wpss_before_order_view', $order );
 			}
 		}
 
-			// Vendor: accept/reject cancellation.
-		if ( $is_vendor && 'cancellation_requested' === $order->status ) {
+		// Seller: ask the buyer to cancel an order they cannot complete.
+		if ( $is_vendor && in_array( $order->status, \WPSellServices\Services\OrderService::seller_cancellation_statuses(), true ) ) {
+			$actions['cancel'] = array(
+				'label' => __( 'Ask Buyer to Cancel', 'wp-sell-services' ),
+				'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
+				'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+			);
+		}
+
+		// The OTHER party answers a cancellation request: the buyer for a seller's, the vendor for a buyer's.
+		$wpss_cancel_by_vendor = 'cancellation_requested' === $order->status && $order->is_cancellation_requested_by_vendor();
+		if ( 'cancellation_requested' === $order->status && ( $wpss_cancel_by_vendor ? $is_customer : $is_vendor ) ) {
 			$actions['accept-cancellation'] = array(
 				'label' => __( 'Accept Cancellation', 'wp-sell-services' ),
 				'class' => 'wpss-btn wpss-btn--success wpss-order-action',
 				'attrs' => 'data-action="accept-cancellation" data-order="' . esc_attr( $order_id ) . '"',
 			);
 			$actions['reject-cancellation'] = array(
-				'label' => __( 'Dispute Cancellation', 'wp-sell-services' ),
+				'label' => $wpss_cancel_by_vendor ? __( 'Decline Cancellation', 'wp-sell-services' ) : __( 'Dispute Cancellation', 'wp-sell-services' ),
 				'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
 				'attrs' => 'data-action="reject-cancellation" data-order="' . esc_attr( $order_id ) . '"',
 			);
@@ -1002,7 +1013,8 @@ do_action( 'wpss_before_order_view', $order );
 		$requested_at_iso         = $cancel_data['requested_at'] ?? '';
 		$cancellation_deadline_ts = 0;
 		$time_remaining_label     = '';
-		if ( $requested_at_iso ) {
+		// A seller's request has no timer: a silent buyer never loses the order.
+		if ( $requested_at_iso && ! $order->is_cancellation_requested_by_vendor() ) {
 			// requested_at is stored in UTC, the same value the 48h cron in
 			// OrderWorkflowManager reads, so the countdown and the cron agree.
 			$requested_ts             = strtotime( $requested_at_iso . ' UTC' );
@@ -1040,7 +1052,13 @@ do_action( 'wpss_before_order_view', $order );
 					<div>
 						<p style="margin: 0 0 8px 0; font-weight: 600;">
 							<?php
-							if ( $is_vendor ) {
+							if ( $order->is_cancellation_requested_by_vendor() ) {
+								if ( $is_vendor ) {
+									esc_html_e( 'You asked the buyer to cancel this order. Waiting for their answer.', 'wp-sell-services' );
+								} else {
+									esc_html_e( 'The seller has asked to cancel this order. Accept to cancel and refund it, or decline to continue the work.', 'wp-sell-services' );
+								}
+							} elseif ( $is_vendor ) {
 								esc_html_e( 'The buyer has requested to cancel this order.', 'wp-sell-services' );
 							} else {
 								esc_html_e( 'Your cancellation request has been submitted. Waiting for vendor response.', 'wp-sell-services' );
@@ -1841,9 +1859,11 @@ $can_cancel_request    = false;
 if ( $is_customer && 'in_progress' === $order->status && $order->started_at ) {
 	$hours_since_start  = ( time() - $order->started_at->getTimestamp() ) / 3600;
 	$has_any_deliveries = ! empty( $deliveries );
-	$can_cancel_request = $hours_since_start <= 24 && ! $has_any_deliveries;
+	$can_cancel_request = $hours_since_start <= wpss_cancel_window_hours() && ! $has_any_deliveries;
 }
-$can_cancel = $can_cancel_immediate || $can_cancel_request;
+// A seller on paid work in flight can ask the buyer to cancel; the buyer decides.
+$seller_can_request = $is_vendor && in_array( $order->status, \WPSellServices\Services\OrderService::seller_cancellation_statuses(), true );
+$can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_can_request;
 ?>
 
 <?php if ( $can_deliver ) : ?>
@@ -2117,7 +2137,12 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 			<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
 
 			<div class="wpss-modal__body">
-				<?php if ( $can_cancel_request ) : ?>
+				<?php if ( $seller_can_request ) : ?>
+					<div class="wpss-alert wpss-alert--info">
+						<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
+						<p><?php esc_html_e( 'Your request goes to the buyer, who can accept it (the order is cancelled and refunded) or decline it (work continues). If they do not answer you can still open a dispute.', 'wp-sell-services' ); ?></p>
+					</div>
+				<?php elseif ( $can_cancel_request ) : ?>
 					<div class="wpss-alert wpss-alert--info">
 						<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
 						<p><?php esc_html_e( 'Since work has already started, your cancellation request will be sent to the vendor for review. They have 48 hours to respond.', 'wp-sell-services' ); ?></p>
@@ -2131,11 +2156,18 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					</label>
 					<select name="reason" id="cancel-reason" class="wpss-select" required>
 						<option value=""><?php esc_html_e( 'Select a reason', 'wp-sell-services' ); ?></option>
-						<option value="changed_mind"><?php esc_html_e( 'I changed my mind', 'wp-sell-services' ); ?></option>
-						<option value="found_alternative"><?php esc_html_e( 'Found an alternative', 'wp-sell-services' ); ?></option>
-						<option value="taking_too_long"><?php esc_html_e( 'Taking too long', 'wp-sell-services' ); ?></option>
-						<option value="wrong_order"><?php esc_html_e( 'Ordered by mistake', 'wp-sell-services' ); ?></option>
-						<option value="communication_issues"><?php esc_html_e( 'Communication issues with vendor', 'wp-sell-services' ); ?></option>
+						<?php if ( $seller_can_request ) : ?>
+							<option value="cannot_complete"><?php esc_html_e( 'I cannot complete this work', 'wp-sell-services' ); ?></option>
+							<option value="scope_changed"><?php esc_html_e( 'The scope changed', 'wp-sell-services' ); ?></option>
+							<option value="buyer_unresponsive"><?php esc_html_e( 'The buyer is not responding', 'wp-sell-services' ); ?></option>
+							<option value="order_mistake"><?php esc_html_e( 'This order was a mistake', 'wp-sell-services' ); ?></option>
+						<?php else : ?>
+							<option value="changed_mind"><?php esc_html_e( 'I changed my mind', 'wp-sell-services' ); ?></option>
+							<option value="found_alternative"><?php esc_html_e( 'Found an alternative', 'wp-sell-services' ); ?></option>
+							<option value="taking_too_long"><?php esc_html_e( 'Taking too long', 'wp-sell-services' ); ?></option>
+							<option value="wrong_order"><?php esc_html_e( 'Ordered by mistake', 'wp-sell-services' ); ?></option>
+							<option value="communication_issues"><?php esc_html_e( 'Communication issues with vendor', 'wp-sell-services' ); ?></option>
+						<?php endif; ?>
 						<option value="other"><?php esc_html_e( 'Other (please specify)', 'wp-sell-services' ); ?></option>
 					</select>
 				</div>
@@ -2155,7 +2187,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 				</button>
 				<button type="submit" class="wpss-btn wpss-btn--danger">
 					<?php
-					if ( $can_cancel_request ) {
+					if ( $can_cancel_request || $seller_can_request ) {
 						esc_html_e( 'Submit Cancellation Request', 'wp-sell-services' );
 					} else {
 						esc_html_e( 'Cancel Order', 'wp-sell-services' );

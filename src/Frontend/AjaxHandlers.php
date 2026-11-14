@@ -457,6 +457,24 @@ class AjaxHandlers {
 			return;
 		}
 
+		// A seller on paid work in flight asks; the buyer decides.
+		if ( (int) $order->vendor_id === $user_id && in_array( $order->status, OrderService::seller_cancellation_statuses(), true ) ) {
+			$reason = sanitize_textarea_field( wp_unslash( $_POST['reason'] ?? '' ) );
+			if ( '' === $reason ) {
+				wp_send_json_error( array( 'message' => __( 'Reason is required for cancellation.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			$result = $order_service->request_seller_cancellation( $order_id, $user_id, $reason, sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) ) );
+
+			if ( $result['success'] ) {
+				wp_send_json_success( array( 'message' => __( 'Your cancellation request has been sent to the buyer.', 'wp-sell-services' ) ) );
+			}
+
+			wp_send_json_error( $result );
+			return;
+		}
+
 		// Vendors can only cancel orders in pending status via AJAX — all other cancellations go through REST API.
 		if ( (int) $order->vendor_id === $user_id && 'pending' !== $order->status ) {
 			wp_send_json_error( array( 'message' => __( 'You cannot cancel this order in its current status.', 'wp-sell-services' ) ) );
@@ -518,7 +536,11 @@ class AjaxHandlers {
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
 
-		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
+		// The other party answers: the buyer for a seller's request, the vendor for a buyer's.
+		$by_vendor = $order && $order->is_cancellation_requested_by_vendor();
+		$responder = $order ? ( $by_vendor ? (int) $order->customer_id : (int) $order->vendor_id ) : 0;
+
+		if ( ! $order || $responder !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-sell-services' ) ) );
 			return;
 		}
@@ -528,7 +550,7 @@ class AjaxHandlers {
 			return;
 		}
 
-		$result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
+		$result = $order_service->cancel( $order_id, $user_id, $by_vendor ? __( 'Buyer accepted cancellation request.', 'wp-sell-services' ) : __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
 
 		if ( $result['success'] ) {
 			wp_send_json_success( array( 'message' => __( 'Cancellation accepted. Order has been cancelled.', 'wp-sell-services' ) ) );
@@ -561,13 +583,28 @@ class AjaxHandlers {
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
 
-		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
+		$by_vendor = $order && $order->is_cancellation_requested_by_vendor();
+		$responder = $order ? ( $by_vendor ? (int) $order->customer_id : (int) $order->vendor_id ) : 0;
+
+		if ( ! $order || $responder !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-sell-services' ) ) );
 			return;
 		}
 
 		if ( 'cancellation_requested' !== $order->status ) {
 			wp_send_json_error( array( 'message' => __( 'This order does not have a pending cancellation request.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		// The buyer declining a seller's request just resumes the work.
+		if ( $by_vendor ) {
+			$resumed = $order_service->decline_seller_cancellation( $order_id, $user_id );
+
+			if ( $resumed['success'] ) {
+				wp_send_json_success( array( 'message' => __( 'Request declined. The order is back in progress.', 'wp-sell-services' ) ) );
+			}
+
+			wp_send_json_error( $resumed );
 			return;
 		}
 
@@ -2541,8 +2578,9 @@ class AjaxHandlers {
 			'start'               => array( array( 'vendor' ), ServiceOrder::STATUS_IN_PROGRESS ),
 			'cancel'              => array( array( 'buyer', 'admin' ), ServiceOrder::STATUS_CANCELLED ),
 			'refund'              => array( array( 'admin' ), ServiceOrder::STATUS_REFUNDED ),
-			'accept-cancellation' => array( array( 'vendor' ), ServiceOrder::STATUS_CANCELLED ),
-			'reject-cancellation' => array( array( 'vendor' ), ServiceOrder::STATUS_DISPUTED ),
+			// Either party can be the one answering; the case below checks it is the OTHER party from the requester.
+			'accept-cancellation' => array( array( 'vendor', 'buyer' ), ServiceOrder::STATUS_CANCELLED ),
+			'reject-cancellation' => array( array( 'vendor', 'buyer' ), ServiceOrder::STATUS_DISPUTED ),
 		);
 
 		if ( ! isset( $allowed[ $action ] ) ) {
@@ -2630,14 +2668,27 @@ class AjaxHandlers {
 
 			case 'accept-cancellation':
 				if ( 'cancellation_requested' === $order->status ) {
-					$result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
+					$by_vendor = $order->is_cancellation_requested_by_vendor();
+					if ( ( $by_vendor ? 'buyer' : 'vendor' ) !== $actor ) {
+						wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+					}
+					$result = $order_service->cancel( $order_id, $user_id, $by_vendor ? __( 'Buyer accepted cancellation request.', 'wp-sell-services' ) : __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
 				} else {
 					wp_send_json_error( array( 'message' => __( 'Cannot accept cancellation.', 'wp-sell-services' ) ) );
 				}
 				break;
 
 			case 'reject-cancellation':
-				if ( 'cancellation_requested' === $order->status ) {
+				if ( 'cancellation_requested' === $order->status && $order->is_cancellation_requested_by_vendor() ) {
+					// The buyer declines the seller's request: work resumes.
+					if ( 'buyer' !== $actor ) {
+						wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+					}
+					$result = $order_service->decline_seller_cancellation( $order_id, $user_id );
+				} elseif ( 'cancellation_requested' === $order->status ) {
+					if ( 'vendor' !== $actor ) {
+						wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+					}
 					$dispute_service = new DisputeService();
 					$dispute_result  = $dispute_service->open(
 						$order_id,

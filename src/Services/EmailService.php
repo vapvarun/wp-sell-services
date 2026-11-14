@@ -1665,6 +1665,58 @@ class EmailService {
 		$deadline    = $requested_at->modify( '+48 hours' );
 		$deadline_ts = $deadline->getTimestamp();
 
+		// A seller's request goes to the buyer, who decides; there is no deadline.
+		if ( $order->is_cancellation_requested_by_vendor() ) {
+			$site = wpss_get_platform_name();
+
+			if ( $customer ) {
+				$this->send(
+					$customer->user_email,
+					/* translators: 1: site name, 2: order number */
+					sprintf( __( '[%1$s] The seller asked to cancel - Order #%2$s', 'wp-sell-services' ), $site, $order->order_number ),
+					self::TYPE_CANCELLATION_REQUESTED,
+					array(
+						'order'               => $order,
+						'recipient'           => $customer,
+						'email_heading'       => __( 'The seller asked to cancel', 'wp-sell-services' ),
+						'buyer_name'          => $this->get_customer_name( $order->customer_id ),
+						'vendor_name'         => $this->get_vendor_name( $order->vendor_id ),
+						'reason'              => $reason_label,
+						'note'                => $note,
+						'deadline'            => '',
+						'is_customer'         => true,
+						'requested_by_vendor' => true,
+						'reply_to_email'      => $vendor ? $vendor->user_email : '',
+						'reply_to_name'       => $vendor ? $vendor->display_name : '',
+					)
+				);
+			}
+
+			if ( $vendor ) {
+				$this->send(
+					$vendor->user_email,
+					/* translators: 1: site name, 2: order number */
+					sprintf( __( '[%1$s] Cancellation request sent - Order #%2$s', 'wp-sell-services' ), $site, $order->order_number ),
+					self::TYPE_CANCELLATION_REQUESTED,
+					array(
+						'order'               => $order,
+						'recipient'           => $vendor,
+						'email_heading'       => __( 'Cancellation request sent', 'wp-sell-services' ),
+						'buyer_name'          => $this->get_customer_name( $order->customer_id ),
+						'reason'              => $reason_label,
+						'note'                => $note,
+						'deadline'            => '',
+						'is_customer'         => false,
+						'requested_by_vendor' => true,
+						'reply_to_email'      => $customer ? $customer->user_email : '',
+						'reply_to_name'       => $customer ? $customer->display_name : '',
+					)
+				);
+			}
+
+			return true;
+		}
+
 		// Send to vendor.
 		if ( $vendor ) {
 			$subject = sprintf(

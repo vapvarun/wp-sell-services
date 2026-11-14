@@ -1475,6 +1475,111 @@ class OrderService {
 	}
 
 	/**
+	 * Statuses in which a seller may ask the buyer to cancel an order.
+	 *
+	 * Paid work in flight only: pre-work orders the seller can still cancel
+	 * outright, and a delivered order has its own accept / revise / dispute path.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @return string[]
+	 */
+	public static function seller_cancellation_statuses(): array {
+		return array(
+			ServiceOrder::STATUS_IN_PROGRESS,
+			ServiceOrder::STATUS_LATE,
+			ServiceOrder::STATUS_REVISION_REQUESTED,
+		);
+	}
+
+	/**
+	 * A seller asks the buyer to cancel an order they cannot complete.
+	 *
+	 * The mirror of request_cancellation(): the buyer accepts (cancel and refund)
+	 * or declines (back to work). There is no timer. A silent buyer does not
+	 * lose the order; the owner can step in or the seller can open a dispute.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param int    $user_id  The vendor asking.
+	 * @param string $reason   Cancellation reason key.
+	 * @param string $note     Optional details.
+	 * @return array{success: bool, message?: string}
+	 */
+	public function request_seller_cancellation( int $order_id, int $user_id, string $reason, string $note = '' ): array {
+		$order = $this->get( $order_id );
+
+		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Order not found.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( ! in_array( $order->status, self::seller_cancellation_statuses(), true ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'You cannot ask to cancel this order in its current status.', 'wp-sell-services' ),
+			);
+		}
+
+		global $wpdb;
+		$old_meta = $this->store_cancellation( $order_id, sanitize_key( $reason ), $note, $user_id );
+
+		if ( null === $old_meta ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to save cancellation details.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( ! $this->update_status( $order_id, ServiceOrder::STATUS_CANCELLATION_REQUESTED, $reason ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update( $wpdb->prefix . 'wpss_orders', array( 'meta' => '' === $old_meta ? null : $old_meta ), array( 'id' => $order_id ) );
+
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to request cancellation.', 'wp-sell-services' ),
+			);
+		}
+
+		/** This action is documented in OrderService::request_cancellation(). */
+		do_action( 'wpss_cancellation_requested', $order_id, $user_id, $reason, $note );
+
+		return array( 'success' => true );
+	}
+
+	/**
+	 * The buyer declines the seller's cancellation request; work resumes.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param int $order_id Order ID.
+	 * @param int $user_id  The buyer (or an admin) declining.
+	 * @return array{success: bool, message?: string}
+	 */
+	public function decline_seller_cancellation( int $order_id, int $user_id ): array {
+		$order = $this->get( $order_id );
+
+		if ( ! $order || ServiceOrder::STATUS_CANCELLATION_REQUESTED !== $order->status || ! $order->is_cancellation_requested_by_vendor() ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This order has no seller cancellation request to decline.', 'wp-sell-services' ),
+			);
+		}
+
+		$updated = $this->update_status( $order_id, ServiceOrder::STATUS_IN_PROGRESS, __( 'Buyer declined the seller cancellation request.', 'wp-sell-services' ), ServiceOrder::STATUS_CANCELLATION_REQUESTED );
+
+		return $updated
+			? array( 'success' => true )
+			: array(
+				'success' => false,
+				'message' => __( 'Failed to resume the order.', 'wp-sell-services' ),
+			);
+	}
+
+	/**
 	 * Extend deadline.
 	 *
 	 * @param int $order_id   Order ID.

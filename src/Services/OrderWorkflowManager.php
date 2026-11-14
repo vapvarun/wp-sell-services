@@ -1748,6 +1748,11 @@ class OrderWorkflowManager {
 				? strtotime( $cancel_data['requested_at'] . ' UTC' )
 				: 0;
 
+			// A seller's request has no timer: the buyer decides, and a silent buyer must not lose the order.
+			if ( ! empty( $cancel_data['requested_by'] ) && (int) $cancel_data['requested_by'] === (int) $order->vendor_id ) {
+				continue;
+			}
+
 			// Fall back to updated_at if the stored request is missing.
 			if ( $requested_at <= 0 && ! empty( $order->updated_at ) ) {
 				$requested_at = strtotime( $order->updated_at . ' UTC' );

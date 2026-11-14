@@ -684,6 +684,49 @@ class NotificationService {
 				$reason       = $cancel_data['reason'] ?? '';
 				$reason_label = wpss_get_cancellation_reason_label( (string) $reason );
 
+				// A seller's request goes to the buyer, who decides.
+				if ( \WPSellServices\Models\ServiceOrder::find( (int) $order->id )?->is_cancellation_requested_by_vendor() ) {
+					$this->create(
+						$order->customer_id,
+						'cancellation_requested',
+						__( 'The seller asked to cancel', 'wp-sell-services' ),
+						NotificationMessage::make()
+							->line(
+								/* translators: 1: vendor name, 2: order number */
+								__( '%1$s has asked to cancel Order #%2$s.', 'wp-sell-services' ),
+								$vendor_name,
+								$order_number
+							)
+							->block()
+							->field( __( 'Service:', 'wp-sell-services' ), $service_name )
+							->field( __( 'Reason:', 'wp-sell-services' ), $reason_label )
+							->paragraph( __( 'Accept to cancel and refund the order, or decline to continue the work.', 'wp-sell-services' ) ),
+						array(
+							'order_id'     => $order_id,
+							'order_number' => $order_number,
+						)
+					);
+					$this->create(
+						$order->vendor_id,
+						'cancellation_submitted',
+						__( 'Cancellation Request Submitted', 'wp-sell-services' ),
+						NotificationMessage::make()
+							->line(
+								/* translators: %s: order number */
+								__( 'Your cancellation request for Order #%s has been sent to the buyer.', 'wp-sell-services' ),
+								$order_number
+							)
+							->block()
+							->field( __( 'Service:', 'wp-sell-services' ), $service_name )
+							->paragraph( __( 'The order stays as it is until the buyer answers.', 'wp-sell-services' ) ),
+						array(
+							'order_id'     => $order_id,
+							'order_number' => $order_number,
+						)
+					);
+					break;
+				}
+
 				// Notify vendor.
 				$this->create(
 					$order->vendor_id,
