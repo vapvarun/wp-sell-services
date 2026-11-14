@@ -833,7 +833,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		do_action( 'wpss_offline_order_created', $order->id, $order );
 
 		// Drop only the purchased line; other saved items stay in the cart.
-		\WPSellServices\Checkout\ServiceCart::remove_line( get_current_user_id(), $service_id, $package_id );
+		\WPSellServices\Checkout\ServiceCart::remove_line( get_current_user_id(), $service_id, (int) ( $order->package_id ?? $package_id ) );
 
 		// Return success with order view redirect (shows payment instructions).
 		wp_send_json_success(

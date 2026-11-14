@@ -135,6 +135,8 @@ $check( 'order quantity ceiling is applied by the shared pricer', false !== strp
 $check( 'single-service purchase removes only its cart line', method_exists( \WPSellServices\Checkout\ServiceCart::class, 'remove_line' ) );
 $check( 'delivery takes a per-order lock', false !== strpos( file_get_contents( $root . '/src/Services/DeliveryService.php' ), "'wpss_delivery_' . \$order_id" ) );
 $check( 'long lists are paged: thread page, withdrawal count, wallet page', method_exists( \WPSellServices\Services\ConversationService::class, 'get_thread_page' ) && method_exists( \WPSellServices\Services\EarningsService::class, 'count_withdrawals' ) && false !== strpos( file_get_contents( $root . '/src/Admin/Pages/VendorsPage.php' ), 'wallet_page' ) );
+$check( 'a declined seller request restores late or revision-requested status', false !== strpos( file_get_contents( $root . '/src/Services/OrderService.php' ), "'from_status'" ) && false !== strpos( file_get_contents( $root . '/src/Services/OrderService.php' ), 'The seller may ask the buyer to cancel (request_seller_cancellation())' ) );
+$check( 'orders CSV uses the row currency decimals', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), "wpss_get_currency_decimals( (string) \$row->currency )" ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 

@@ -1273,8 +1273,9 @@ class UnifiedDashboard {
 
 		// The optional application fields (empty when the owner has not switched them on).
 		$application = array(
-			'tagline' => isset( $_POST['tagline'] ) ? sanitize_text_field( wp_unslash( $_POST['tagline'] ) ) : '',
-			'bio'     => isset( $_POST['bio'] ) ? sanitize_textarea_field( wp_unslash( $_POST['bio'] ) ) : '',
+			// The limits the form states (maxlength 100 and 1000), enforced here too.
+			'tagline' => isset( $_POST['tagline'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_POST['tagline'] ) ), 0, 100 ) : '',
+			'bio'     => isset( $_POST['bio'] ) ? mb_substr( sanitize_textarea_field( wp_unslash( $_POST['bio'] ) ), 0, 1000 ) : '',
 		);
 
 		$result = $this->vendor_service->register( $user_id, wpss_get_option( 'vendor', 'application_fields' ) ? $application : array() );

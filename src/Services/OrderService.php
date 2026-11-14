@@ -987,20 +987,27 @@ class OrderService {
 				ServiceOrder::STATUS_CANCELLED,
 				// Past the revision's own deadline (check_late_orders()).
 				ServiceOrder::STATUS_LATE,
+				// The seller may ask the buyer to cancel (request_seller_cancellation()).
+				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
 			),
 			ServiceOrder::STATUS_LATE                   => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_DELIVERED,
+				// The seller may ask the buyer to cancel (request_seller_cancellation()).
+				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
 			),
 			ServiceOrder::STATUS_ON_HOLD                => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_CANCELLED,
 			),
+			// A declined seller request restores the status the order had (late, revision requested).
 			ServiceOrder::STATUS_CANCELLATION_REQUESTED => array(
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_IN_PROGRESS,
+				ServiceOrder::STATUS_LATE,
+				ServiceOrder::STATUS_REVISION_REQUESTED,
 			),
 			// The four rulings, plus every status a dispute can be opened from:
 			// a dispute closed without a ruling hands the order back to where
@@ -1346,7 +1353,7 @@ class OrderService {
 	 * @return string|null The meta JSON as it was, to put back if the status
 	 *                     change is refused; null when the write failed.
 	 */
-	private function store_cancellation( int $order_id, string $reason, string $note, int $user_id ): ?string {
+	private function store_cancellation( int $order_id, string $reason, string $note, int $user_id, string $from_status = '' ): ?string {
 		global $wpdb;
 
 		$table    = $wpdb->prefix . 'wpss_orders';
@@ -1360,6 +1367,11 @@ class OrderService {
 			'requested_by' => $user_id,
 			'requested_at' => current_time( 'mysql', true ),
 		);
+
+		// Where the order was, so a declined request puts it back there.
+		if ( '' !== $from_status ) {
+			$meta['cancellation_request']['from_status'] = $from_status;
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$written = $wpdb->update( $table, array( 'meta' => wp_json_encode( $meta ) ), array( 'id' => $order_id ) );
@@ -1525,7 +1537,7 @@ class OrderService {
 		}
 
 		global $wpdb;
-		$old_meta = $this->store_cancellation( $order_id, sanitize_key( $reason ), $note, $user_id );
+		$old_meta = $this->store_cancellation( $order_id, sanitize_key( $reason ), $note, $user_id, (string) $order->status );
 
 		if ( null === $old_meta ) {
 			return array(
@@ -1569,7 +1581,14 @@ class OrderService {
 			);
 		}
 
-		$updated = $this->update_status( $order_id, ServiceOrder::STATUS_IN_PROGRESS, __( 'Buyer declined the seller cancellation request.', 'wp-sell-services' ), ServiceOrder::STATUS_CANCELLATION_REQUESTED );
+		// Back to where the order was (a revision request or a late order must not vanish), else in progress.
+		$request = $order->get_cancellation_request() ?? array();
+		$back_to = (string) ( $request['from_status'] ?? '' );
+		if ( ! in_array( $back_to, self::seller_cancellation_statuses(), true ) ) {
+			$back_to = ServiceOrder::STATUS_IN_PROGRESS;
+		}
+
+		$updated = $this->update_status( $order_id, $back_to, __( 'Buyer declined the seller cancellation request.', 'wp-sell-services' ), ServiceOrder::STATUS_CANCELLATION_REQUESTED );
 
 		return $updated
 			? array( 'success' => true )

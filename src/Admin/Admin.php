@@ -2269,6 +2269,8 @@ class Admin {
 
 			foreach ( $rows as $row ) {
 				$last_id = (int) $row->id;
+				// The row's own currency precision, so a three-decimal or zero-decimal store exports what was charged.
+				$dec = wpss_get_currency_decimals( (string) $row->currency );
 				wpss_fputcsv(
 					$out,
 					array(
@@ -2282,11 +2284,11 @@ class Admin {
 						(int) $row->vendor_id,
 						(string) ( $users[ (int) $row->vendor_id ]->display_name ?? '' ),
 						(int) $row->service_id,
-						number_format( (float) $row->subtotal, 2, '.', '' ),
-						number_format( (float) $row->total, 2, '.', '' ),
-						number_format( (float) $row->platform_fee, 2, '.', '' ),
-						number_format( (float) $row->vendor_earnings, 2, '.', '' ),
-						number_format( (float) $row->refunded_amount, 2, '.', '' ),
+						number_format( (float) $row->subtotal, $dec, '.', '' ),
+						number_format( (float) $row->total, $dec, '.', '' ),
+						number_format( (float) $row->platform_fee, $dec, '.', '' ),
+						number_format( (float) $row->vendor_earnings, $dec, '.', '' ),
+						number_format( (float) $row->refunded_amount, $dec, '.', '' ),
 						(string) $row->currency,
 						(string) $row->platform,
 						(string) $row->created_at,
