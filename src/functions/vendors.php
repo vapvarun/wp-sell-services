@@ -1211,3 +1211,24 @@ function wpss_restore_vendor_role(): int {
 
 	return $restored;
 }
+
+
+/**
+ * Whether a suspended vendor can still see their earnings and ask for a payout.
+ *
+ * Suspension stops new work; whether it also holds money already earned is the
+ * site owner's call, so it is a setting. Off by default: nothing changes until
+ * the owner turns it on. An account-level suspension or ban is never relaxed.
+ *
+ * @since 1.9.3
+ *
+ * @param int $user_id Vendor user ID. Defaults to the current user.
+ * @return bool
+ */
+function wpss_suspended_vendor_money_access( int $user_id = 0 ): bool {
+	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+
+	return (bool) wpss_get_option( 'vendor', 'suspended_money_access' )
+		&& 'suspended' === wpss_get_vendor_status( $user_id )
+		&& ! wpss_account_status_block( $user_id );
+}

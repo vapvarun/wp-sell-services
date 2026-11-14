@@ -26,6 +26,26 @@ use WP_Error;
 class EarningsController extends RestController {
 
 	/**
+	 * Vendor permission, relaxed for suspended vendors only when the owner allows money access.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool|WP_Error
+	 */
+	public function check_vendor_permissions( WP_REST_Request $request ) {
+		$logged_in = $this->check_permissions( $request );
+		if ( is_wp_error( $logged_in ) ) {
+			return $logged_in;
+		}
+
+		if ( wpss_suspended_vendor_money_access() ) {
+			return true;
+		}
+
+		return wpss_rest_require_vendor();
+	}
+
+
+	/**
 	 * Resource type.
 	 *
 	 * @var string

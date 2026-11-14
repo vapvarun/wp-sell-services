@@ -1056,6 +1056,20 @@ class Settings {
 		);
 
 		add_settings_field(
+			'suspended_money_access',
+			__( 'Suspended Vendors and Earnings', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_vendor',
+			'wpss_vendor_section',
+			array(
+				'option_name' => 'wpss_vendor',
+				'field'       => 'suspended_money_access',
+				'label'       => __( 'Let suspended vendors view their earnings and request withdrawals', 'wp-sell-services' ),
+				'description' => __( 'Off: a suspended vendor keeps Sales Orders only, and money already earned is held until you reactivate them or pay it by hand. On: they can still see their balance, request a withdrawal and update payout details. You still approve every withdrawal.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
 			're_review_live_edits',
 			__( 'Re-review Live Edits', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
@@ -3958,6 +3972,7 @@ class Settings {
 		$sanitized['require_service_moderation'] = ! empty( $input['require_service_moderation'] );
 		$sanitized['moderate_reviews']           = ! empty( $input['moderate_reviews'] );
 		$sanitized['re_review_live_edits']       = ! empty( $input['re_review_live_edits'] );
+		$sanitized['suspended_money_access']     = ! empty( $input['suspended_money_access'] );
 
 		return $sanitized;
 	}

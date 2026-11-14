@@ -485,7 +485,8 @@ class UnifiedDashboard {
 		if ( in_array( $section, $vendor_only_sections, true )
 			&& ! ( $this->vendor_service->is_vendor( $user_id )
 				&& 'active' === $this->vendor_service->get_vendor_status( $user_id ) )
-			&& ! ( 'sales' === $section && $this->is_suspended_vendor( $user_id ) ) ) {
+			&& ! ( 'sales' === $section && $this->is_suspended_vendor( $user_id ) )
+			&& ! ( in_array( $section, array( 'earnings', 'wallet' ), true ) && wpss_suspended_vendor_money_access( $user_id ) ) ) {
 			return false;
 		}
 

@@ -1037,7 +1037,8 @@ class VendorsPage {
 						<span class="trash">
 							| <button type="button" class="button-link wpss-change-status"
 									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-									data-status="suspended"><?php esc_html_e( 'Suspend', 'wp-sell-services' ); ?></button>
+									data-status="suspended"
+									data-confirm="<?php echo esc_attr( wpss_get_option( 'vendor', 'suspended_money_access' ) ? __( 'Suspend this vendor? They stop taking new work but can still see their earnings and request withdrawals.', 'wp-sell-services' ) : __( 'Suspend this vendor? They stop taking new work and keep Sales Orders only; money already earned is held until you reactivate them.', 'wp-sell-services' ) ); ?>"><?php esc_html_e( 'Suspend', 'wp-sell-services' ); ?></button>
 						</span>
 					<?php elseif ( 'suspended' === $status ) : ?>
 						<span class="untrash">

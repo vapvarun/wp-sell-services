@@ -68,6 +68,8 @@ function wpss_settings_defaults(): array {
 			'moderate_reviews'           => false,
 			// An approved, live service stays live when its vendor edits it.
 			're_review_live_edits'       => false,
+			// A suspended vendor's earned balance stays held unless the owner opens it.
+			'suspended_money_access'     => false,
 		),
 		// Revision limits are per-package, not a global setting.
 		'wpss_orders'        => array(
