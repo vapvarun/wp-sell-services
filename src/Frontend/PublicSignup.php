@@ -455,6 +455,15 @@ class PublicSignup {
 
 		$user_id = (int) $user_id;
 
+		// Owner settings, both off by default: confirm the address before vendor promotion, and tell the admin.
+		if ( wpss_get_option( 'vendor', 'verify_email_for_vendors' ) ) {
+			wpss_send_email_verification( $user_id );
+		}
+
+		if ( wpss_get_option( 'vendor', 'signup_notify_admin' ) ) {
+			wp_new_user_notification( $user_id, null, 'admin' );
+		}
+
 		/*
 		 * Sign in immediately - and make the session token visible to THIS request.
 		 *
@@ -507,7 +516,7 @@ class PublicSignup {
 		 */
 		// The one place a vendor intent is promoted, so the signup form, checkout
 		// and the REST register all follow the site's vendor registration mode.
-		if ( 'vendor' === $intent ) {
+		if ( 'vendor' === $intent && ! wpss_email_verification_pending( $user_id ) ) {
 			( new VendorService() )->register( $user_id );
 			// The current user object was built before the vendor role was granted;
 			// rebuild it so this request, its hooks and the response see the new caps.

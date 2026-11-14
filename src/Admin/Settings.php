@@ -1056,6 +1056,34 @@ class Settings {
 		);
 
 		add_settings_field(
+			'signup_notify_admin',
+			__( 'Sign-up Notice', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_vendor',
+			'wpss_vendor_section',
+			array(
+				'option_name' => 'wpss_vendor',
+				'field'       => 'signup_notify_admin',
+				'label'       => __( 'Email the site admin when someone signs up through the plugin', 'wp-sell-services' ),
+				'description' => __( 'The same "New user registration" email WordPress sends for its own sign-up form.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'verify_email_for_vendors',
+			__( 'Verify Email Before Selling', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_vendor',
+			'wpss_vendor_section',
+			array(
+				'option_name' => 'wpss_vendor',
+				'field'       => 'verify_email_for_vendors',
+				'label'       => __( 'Members who sign up here must confirm their email before they can become vendors', 'wp-sell-services' ),
+				'description' => __( 'Off: sign-up works as before. On: new members get a confirmation link, and the Start selling button asks them to use it first. Members who joined earlier are not affected.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
 			'application_fields',
 			__( 'Vendor Application Questions', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
@@ -3988,6 +4016,8 @@ class Settings {
 		$sanitized['re_review_live_edits']       = ! empty( $input['re_review_live_edits'] );
 		$sanitized['suspended_money_access']     = ! empty( $input['suspended_money_access'] );
 		$sanitized['application_fields']         = ! empty( $input['application_fields'] );
+		$sanitized['verify_email_for_vendors']   = ! empty( $input['verify_email_for_vendors'] );
+		$sanitized['signup_notify_admin']        = ! empty( $input['signup_notify_admin'] );
 
 		return $sanitized;
 	}

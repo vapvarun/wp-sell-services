@@ -1265,6 +1265,12 @@ class UnifiedDashboard {
 			wp_send_json_error( array( 'message' => $block->get_error_message() ) );
 		}
 
+		// "Verify email before vendor promotion" is on and this member has not confirmed yet.
+		if ( wpss_email_verification_pending( $user_id ) ) {
+			wpss_send_email_verification( $user_id );
+			wp_send_json_error( array( 'message' => __( 'Please confirm your email first. We sent you a link; open it, then click Start selling again.', 'wp-sell-services' ) ) );
+		}
+
 		// The optional application fields (empty when the owner has not switched them on).
 		$application = array(
 			'tagline' => isset( $_POST['tagline'] ) ? sanitize_text_field( wp_unslash( $_POST['tagline'] ) ) : '',

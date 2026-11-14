@@ -125,6 +125,7 @@ $check( 'live-edit re-review is a setting, default off', false === wpss_get_opti
 $check( 'cancel window is one setting, default 24', 24 === wpss_cancel_window_hours() && false !== strpos( wpss_cancel_window_rule(), '24 hours' ) );
 $check( 'suspended money access is a setting, default off', false === wpss_get_option( 'vendor', 'suspended_money_access' ) && false === wpss_suspended_vendor_money_access( 1 ) );
 $check( 'application questions are a setting, default off', false === wpss_get_option( 'vendor', 'application_fields' ) );
+$check( 'sign-up verification and admin notice are settings, default off', false === wpss_get_option( 'vendor', 'verify_email_for_vendors' ) && false === wpss_get_option( 'vendor', 'signup_notify_admin' ) && ! wpss_email_verification_pending( 1 ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 

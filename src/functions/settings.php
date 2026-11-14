@@ -72,6 +72,10 @@ function wpss_settings_defaults(): array {
 			'suspended_money_access'     => false,
 			// One-click applications unless the owner asks applicants what they sell.
 			'application_fields'         => false,
+			// Confirm the email before a new member can apply to sell.
+			'verify_email_for_vendors'   => false,
+			// Email the admin when someone signs up here, as WordPress core does.
+			'signup_notify_admin'        => false,
 		),
 		// Revision limits are per-package, not a global setting.
 		'wpss_orders'        => array(

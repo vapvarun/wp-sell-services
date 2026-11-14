@@ -97,6 +97,11 @@ class VendorService {
 			return false;
 		}
 
+		// The owner asked for a confirmed email first; the member confirms, then applies.
+		if ( wpss_email_verification_pending( $user_id ) ) {
+			return false;
+		}
+
 		// Check if user already has a pending application.
 		if ( $this->has_pending_application( $user_id ) ) {
 			return false;

@@ -1232,3 +1232,88 @@ function wpss_suspended_vendor_money_access( int $user_id = 0 ): bool {
 		&& 'suspended' === wpss_get_vendor_status( $user_id )
 		&& ! wpss_account_status_block( $user_id );
 }
+
+
+/**
+ * Whether a member still has to confirm their email before they can become a vendor.
+ *
+ * Only accounts the sign-up flow marked while "Verify email before vendor
+ * promotion" was on carry the pending marker, so members who joined earlier or
+ * another way are never locked out by switching the setting on.
+ *
+ * @since 1.9.3
+ *
+ * @param int $user_id User ID.
+ * @return bool
+ */
+function wpss_email_verification_pending( int $user_id ): bool {
+	return '' !== (string) get_user_meta( $user_id, '_wpss_email_verify', true );
+}
+
+/**
+ * Email the member a one-time link that confirms their address.
+ *
+ * Creates a fresh token each time, so a resend invalidates the earlier link.
+ * Throttled to one mail every five minutes per member.
+ *
+ * @since 1.9.3
+ *
+ * @param int $user_id User ID.
+ * @return bool True when a mail was sent.
+ */
+function wpss_send_email_verification( int $user_id ): bool {
+	$user = get_userdata( $user_id );
+
+	if ( ! $user || get_transient( 'wpss_verify_sent_' . $user_id ) ) {
+		return false;
+	}
+
+	$token = wp_generate_password( 32, false, false );
+	update_user_meta( $user_id, '_wpss_email_verify', wp_hash_password( $token ) );
+	set_transient( 'wpss_verify_sent_' . $user_id, 1, 5 * MINUTE_IN_SECONDS );
+
+	$url = add_query_arg(
+		array(
+			'wpss_verify_email' => $user_id,
+			'key'               => $token,
+		),
+		home_url( '/' )
+	);
+
+	return wp_mail(
+		$user->user_email,
+		/* translators: %s: site name. */
+		sprintf( __( 'Confirm your email on %s', 'wp-sell-services' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) ),
+		/* translators: 1: link. */
+		sprintf( __( "Please confirm your email address to start selling:\n\n%s\n\nIf you did not sign up, ignore this message.", 'wp-sell-services' ), $url )
+	);
+}
+
+/**
+ * Confirm the address when a member opens the link from the verification mail.
+ *
+ * @since 1.9.3
+ *
+ * @return void
+ */
+function wpss_handle_email_verification(): void {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The one-time key is the credential.
+	if ( empty( $_GET['wpss_verify_email'] ) || empty( $_GET['key'] ) ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$user_id = absint( $_GET['wpss_verify_email'] );
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$key    = sanitize_text_field( wp_unslash( $_GET['key'] ) );
+	$stored = (string) get_user_meta( $user_id, '_wpss_email_verify', true );
+
+	if ( '' !== $stored && wp_check_password( $key, $stored ) ) {
+		delete_user_meta( $user_id, '_wpss_email_verify' );
+		wp_safe_redirect( add_query_arg( 'wpss_email_verified', '1', wpss_get_dashboard_url( 'become-vendor' ) ) );
+		exit;
+	}
+
+	wp_die( esc_html__( 'This confirmation link is invalid or has already been used. Request a new one from the Start selling button.', 'wp-sell-services' ), '', array( 'response' => 410 ) );
+}
+add_action( 'init', 'wpss_handle_email_verification' );
