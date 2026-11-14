@@ -280,6 +280,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Improve  - On the front-end dashboard an administrator adds their first service in one click, with no confirmation dialog.
 * Improve  - Approve, Reactivate, Reject and Suspend on the Vendors screen each say what will happen in their confirmation.
 * Improve  - A dashboard order link that is missing or belongs to someone else shows a short notice above the list instead of silently ignoring it.
+* Improve  - Setting an order to Completed or Cancelled on its page asks first and says what happens to the money.
 * Fix      - Bulk order and dispute actions now show a result message, including how many could not be changed.
 * Fix      - Buyer requests use their own capabilities, so Editors and Authors can no longer edit or delete them; administrators and shop managers keep full access, and the roles update on upgrade.
 * Fix      - When the site owner is also the seller, an offline order sends one owner email instead of two, and the wording says offline payment rather than bank transfer.

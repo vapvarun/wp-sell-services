@@ -2912,7 +2912,9 @@ class Admin {
 						<div class="postbox">
 							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Update Order', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
-								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<form method="post" class="wpss-order-status-form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+									data-wpss-confirm-completed="<?php echo esc_attr__( 'Mark this order as Completed? The vendor is credited for it.', 'wp-sell-services' ); ?>"
+									data-wpss-confirm-cancelled="<?php echo esc_attr__( 'Cancel this order? The buyer is refunded through the gateway (or it is listed for a manual refund) and vendor earnings are taken back.', 'wp-sell-services' ); ?>">
 									<?php wp_nonce_field( 'wpss_update_order', 'wpss_order_nonce' ); ?>
 									<input type="hidden" name="action" value="wpss_update_order">
 									<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">

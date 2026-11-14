@@ -32,6 +32,25 @@
 		});
 	});
 
+	// A single order's Completed / Cancelled also moves money: ask first, same as the bulk bar.
+	$(document).on('submit', 'form.wpss-order-status-form', function(e) {
+		var form = this;
+		var $form = $(form);
+		var message = $form.attr('data-wpss-confirm-' + $form.find('select[name="order_status"]').val());
+
+		if (!message || form.dataset.wpssConfirmed === '1' || typeof window.wpssConfirm !== 'function') {
+			return;
+		}
+
+		e.preventDefault();
+		window.wpssConfirm(message, { tone: 'danger' }).then(function(ok) {
+			if (ok) {
+				form.dataset.wpssConfirmed = '1';
+				form.submit();
+			}
+		});
+	});
+
 	/**
 	 * Instantiate Lucide icons in markup added after page load.
 	 *
