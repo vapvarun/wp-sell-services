@@ -138,7 +138,7 @@ class SetupWizardPage {
 		wp_enqueue_script(
 			'wpss-admin-wizard',
 			\WPSS_PLUGIN_URL . 'assets/js/admin-wizard.js',
-			array( 'jquery' ),
+			array( 'jquery', 'wpss-ui' ),
 			\WPSS_VERSION,
 			true
 		);
@@ -164,6 +164,7 @@ class SetupWizardPage {
 					'demoImported' => __( 'Demo Imported!', 'wp-sell-services' ),
 					'demoAlready'  => __( 'Already imported', 'wp-sell-services' ),
 					'importFailed' => __( 'Import failed', 'wp-sell-services' ),
+					'confirmDemo'  => __( 'Import demo content? This adds sample services, vendors and categories to this site. You can delete it later from Settings.', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -305,7 +306,21 @@ class SetupWizardPage {
 			$general['platform_name'] = sanitize_text_field( wp_unslash( $_POST['platform_name'] ) );
 		}
 		if ( isset( $_POST['currency'] ) ) {
-			$general['currency'] = sanitize_text_field( wp_unslash( $_POST['currency'] ) );
+			$currency = strtoupper( sanitize_text_field( wp_unslash( $_POST['currency'] ) ) );
+
+			if ( ! array_key_exists( $currency, wpss_get_currencies() ) ) {
+				wp_send_json_error( array( 'message' => __( 'That currency is not supported. Pick one from the list.', 'wp-sell-services' ) ) );
+			}
+
+			// Orders keep the currency they were placed in, so switching the shop currency
+			// under existing orders would show their amounts in the wrong one.
+			$has_orders = array_sum( ( new \WPSellServices\Database\Repositories\OrderRepository() )->count_by_status() ) > 0;
+
+			if ( $has_orders && ( $general['currency'] ?? 'USD' ) !== $currency ) {
+				wp_send_json_error( array( 'message' => __( 'This store already has orders, so the currency can no longer be changed from the wizard. Leave it as it is.', 'wp-sell-services' ) ) );
+			}
+
+			$general['currency'] = $currency;
 		}
 		if ( isset( $_POST['commission_rate'] ) ) {
 			$commission['commission_rate'] = max( 0, min( 100, (float) $_POST['commission_rate'] ) );

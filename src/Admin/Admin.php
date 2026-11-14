@@ -683,7 +683,7 @@ class Admin {
 		if ( $result['ok'] ) {
 			$args['updated'] = '1';
 		} else {
-			$args['wpss_error'] = rawurlencode( (string) ( $result['message'] ?? '' ) );
+			$args += $this->signed_error_args( (string) ( $result['message'] ?? '' ) );
 		}
 
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
@@ -782,7 +782,7 @@ class Admin {
 		if ( $result['ok'] ) {
 			$args['updated'] = '1';
 		} else {
-			$args['wpss_error'] = rawurlencode( (string) ( $result['message'] ?? '' ) );
+			$args += $this->signed_error_args( (string) ( $result['message'] ?? '' ) );
 		}
 
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
@@ -2473,6 +2473,31 @@ class Admin {
 	}
 
 	/**
+	 * Query args that carry a refusal reason to the order page, signed for this user.
+	 *
+	 * @param string $message Reason text.
+	 * @return array<string, string>
+	 */
+	private function signed_error_args( string $message ): array {
+		$message = mb_substr( sanitize_text_field( $message ), 0, 300 );
+
+		return array(
+			'wpss_error' => rawurlencode( $message ),
+			'wpss_sig'   => $this->error_signature( $message ),
+		);
+	}
+
+	/**
+	 * Signature binding a refusal reason to the signed-in user.
+	 *
+	 * @param string $message Reason text.
+	 * @return string
+	 */
+	private function error_signature( string $message ): string {
+		return wp_hash( get_current_user_id() . '|' . $message, 'auth' );
+	}
+
+	/**
 	 * Result notice after the order status form posts back with ?updated=.
 	 *
 	 * @since 1.9.0
@@ -2484,11 +2509,14 @@ class Admin {
 		$result = isset( $_GET['updated'] ) ? sanitize_key( wp_unslash( $_GET['updated'] ) ) : '';
 
 		// A refused refund or assignment says why, in the words the gateway or service gave.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$wpss_error = isset( $_GET['wpss_error'] ) ? sanitize_text_field( wp_unslash( $_GET['wpss_error'] ) ) : '';
+		// The text rides in the link, so it is signed: a hand-made link cannot put its own words in the notice.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$wpss_error = isset( $_GET['wpss_error'], $_GET['wpss_sig'] ) ? sanitize_text_field( wp_unslash( $_GET['wpss_error'] ) ) : '';
+		$wpss_sig   = isset( $_GET['wpss_sig'] ) ? (string) wp_unslash( $_GET['wpss_sig'] ) : '';
+		// phpcs:enable
 
-		if ( '' !== $wpss_error ) {
-			printf( '<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html( mb_substr( $wpss_error, 0, 300 ) ) );
+		if ( '' !== $wpss_error && hash_equals( $this->error_signature( $wpss_error ), $wpss_sig ) ) {
+			printf( '<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html( $wpss_error ) );
 			return;
 		}
 

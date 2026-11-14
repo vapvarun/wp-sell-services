@@ -282,6 +282,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Improve  - A dashboard order link that is missing or belongs to someone else shows a short notice above the list instead of silently ignoring it.
 * Improve  - Setting an order to Completed or Cancelled on its page asks first and says what happens to the money.
 * Fix      - A refused Assign refund or Retry refund on an order now shows the reason, and Mark refund sent asks before it clears the pending refund.
+* Fix      - The setup wizard stays on a step that failed to save and says why, rejects an unsupported currency, will not change the currency once orders exist, and asks before importing demo content.
 * Fix      - Bulk order and dispute actions now show a result message, including how many could not be changed.
 * Fix      - Buyer requests use their own capabilities, so Editors and Authors can no longer edit or delete them; administrators and shop managers keep full access, and the roles update on upgrade.
 * Fix      - When the site owner is also the seller, an offline order sends one owner email instead of two, and the wording says offline payment rather than bank transfer.

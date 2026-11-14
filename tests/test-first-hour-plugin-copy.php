@@ -140,6 +140,9 @@ $check( 'orders CSV uses the row currency decimals', false !== strpos( file_get_
 $check( 'bulk order and dispute results print at once, not via a late admin_notices hook', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'function print_bulk_notice' ) );
 $check( 'order detail status form asks first for Completed and Cancelled', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'data-wpss-confirm-cancelled' ) && false !== strpos( file_get_contents( $root . '/assets/js/admin.js' ), 'wpss-order-status-form' ) );
 $check( 'refused Assign and Retry refund carry the reason back; Mark refund sent asks first', 2 === substr_count( file_get_contents( $root . '/src/Admin/Admin.php' ), "\$args['wpss_error'] = rawurlencode" ) && false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'data-wpss-order-confirm' ) );
+$check( 'refusal reason in the order-page link is signed', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'hash_equals( $this->error_signature(' ) );
+$check( 'wizard validates currency and refuses a change under existing orders', false !== strpos( $wizard, "array_key_exists( \$currency, wpss_get_currencies() )" ) && false !== strpos( $wizard, 'count_by_status()' ) );
+$check( 'wizard stays on a step that failed to save and confirms the demo import', false !== strpos( file_get_contents( $root . '/assets/js/admin-wizard.js' ), '!response.success' ) && false !== strpos( file_get_contents( $root . '/assets/js/admin-wizard.js' ), 'confirmDemo' ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 
