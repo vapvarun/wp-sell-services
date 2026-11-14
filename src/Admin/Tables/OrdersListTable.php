@@ -442,6 +442,75 @@ class OrdersListTable extends \WP_List_Table {
 	}
 
 	/**
+	 * WHERE clause and bound values for the current list filters.
+	 *
+	 * One definition for the table rows and the CSV export, so the file always
+	 * holds exactly what the owner was looking at.
+	 *
+	 * @return array{0: string, 1: array} Where fragment and its parameters.
+	 */
+	public function get_filter_sql(): array {
+		// Build query.
+		$where  = '1=1';
+		$params = [];
+
+		// Vendor filter — non-admin vendors only see their own orders.
+		if ( ! current_user_can( 'manage_options' ) && wpss_is_vendor() ) {
+			$where   .= ' AND vendor_id = %d';
+			$params[] = get_current_user_id();
+		}
+
+		// Status filter: the exact status when chosen, else the tab's group.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! empty( $_GET['status'] ) ) {
+			$where .= ' AND status = %s';
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$params[] = sanitize_key( $_GET['status'] );
+		} else {
+			$group_statuses = wpss_get_order_filter_groups( $this->get_status_counts() )[ $this->get_current_group() ]['statuses'];
+			if ( $group_statuses ) {
+				$where .= ' AND status IN (' . implode( ', ', array_fill( 0, count( $group_statuses ), '%s' ) ) . ')';
+				$params = array_merge( $params, $group_statuses );
+			}
+		}
+
+		// Vendor and buyer filters (admins only; a vendor is already scoped above).
+		if ( current_user_can( 'manage_options' ) ) {
+			foreach ( array( 'vendor_id', 'customer_id' ) as $party ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$party_id = isset( $_GET[ $party ] ) ? absint( $_GET[ $party ] ) : 0;
+				if ( $party_id ) {
+					$where   .= " AND {$party} = %d";
+					$params[] = $party_id;
+				}
+			}
+		}
+
+		// Month filter.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! empty( $_GET['m'] ) ) {
+			$where .= ' AND DATE_FORMAT(' . wpss_site_day_sql( 'created_at' ) . ', "%%Y-%%m") = %s';
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$params[] = sanitize_text_field( wp_unslash( $_GET['m'] ) );
+		}
+
+		$where .= $this->order_type_sql();
+
+		// Search.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! empty( $_GET['s'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			list( $search_sql, $search_params ) = wpss_order_number_search_sql( sanitize_text_field( wp_unslash( $_GET['s'] ) ) );
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$search_id = absint( ltrim( sanitize_text_field( wp_unslash( $_GET['s'] ) ), '#' ) );
+			$where    .= ' AND (' . ( '' !== $search_sql ? $search_sql . ' OR ' : '' ) . 'id = %d)';
+			$params    = array_merge( $params, $search_params, array( $search_id ) );
+		}
+
+		return [ $where, $params ];
+	}
+
+	/**
 	 * Get bulk actions.
 	 *
 	 * @return array
@@ -653,62 +722,7 @@ class OrdersListTable extends \WP_List_Table {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_page = $this->get_pagenum();
 
-		// Build query.
-		$where  = '1=1';
-		$params = [];
-
-		// Vendor filter — non-admin vendors only see their own orders.
-		if ( ! current_user_can( 'manage_options' ) && wpss_is_vendor() ) {
-			$where   .= ' AND vendor_id = %d';
-			$params[] = get_current_user_id();
-		}
-
-		// Status filter: the exact status when chosen, else the tab's group.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! empty( $_GET['status'] ) ) {
-			$where .= ' AND status = %s';
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$params[] = sanitize_key( $_GET['status'] );
-		} else {
-			$group_statuses = wpss_get_order_filter_groups( $this->get_status_counts() )[ $this->get_current_group() ]['statuses'];
-			if ( $group_statuses ) {
-				$where .= ' AND status IN (' . implode( ', ', array_fill( 0, count( $group_statuses ), '%s' ) ) . ')';
-				$params = array_merge( $params, $group_statuses );
-			}
-		}
-
-		// Vendor and buyer filters (admins only; a vendor is already scoped above).
-		if ( current_user_can( 'manage_options' ) ) {
-			foreach ( array( 'vendor_id', 'customer_id' ) as $party ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				$party_id = isset( $_GET[ $party ] ) ? absint( $_GET[ $party ] ) : 0;
-				if ( $party_id ) {
-					$where   .= " AND {$party} = %d";
-					$params[] = $party_id;
-				}
-			}
-		}
-
-		// Month filter.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! empty( $_GET['m'] ) ) {
-			$where .= ' AND DATE_FORMAT(' . wpss_site_day_sql( 'created_at' ) . ', "%%Y-%%m") = %s';
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$params[] = sanitize_text_field( wp_unslash( $_GET['m'] ) );
-		}
-
-		$where .= $this->order_type_sql();
-
-		// Search.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! empty( $_GET['s'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			list( $search_sql, $search_params ) = wpss_order_number_search_sql( sanitize_text_field( wp_unslash( $_GET['s'] ) ) );
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$search_id = absint( ltrim( sanitize_text_field( wp_unslash( $_GET['s'] ) ), '#' ) );
-			$where    .= ' AND (' . ( '' !== $search_sql ? $search_sql . ' OR ' : '' ) . 'id = %d)';
-			$params    = array_merge( $params, $search_params, array( $search_id ) );
-		}
+		[ $where, $params ] = $this->get_filter_sql();
 
 		// Count total.
 		if ( ! empty( $params ) ) {

@@ -441,6 +441,7 @@ class Admin {
 		add_action( 'admin_notices', array( $this, 'deferred_notices_summary' ), 99 );
 		add_action( 'wp_ajax_wpss_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
+		add_action( 'admin_post_wpss_export_orders', array( $this, 'export_orders_csv' ) );
 		add_action( 'admin_post_wpss_mark_refund_sent', array( $this, 'handle_mark_refund_sent' ) );
 		add_action( 'admin_post_wpss_retry_refund', array( $this, 'handle_retry_refund' ) );
 		add_action( 'admin_post_wpss_assign_pending_refund', array( $this, 'handle_assign_pending_refund' ) );
@@ -2177,6 +2178,12 @@ class Admin {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-create-order' ) ); ?>" class="page-title-action">
 					<?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?>
 				</a>
+				<?php
+				// Export the CURRENT filter, so the file is what the owner is looking at.
+				$export_args = array_intersect_key( wp_unslash( $_GET ), array_flip( array( 'group', 'status', 'm', 'suborder_type', 's', 'vendor_id', 'customer_id' ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only filters, sanitized in the handler.
+				$export_url  = wp_nonce_url( add_query_arg( array_merge( array( 'action' => 'wpss_export_orders' ), $export_args ), admin_url( 'admin-post.php' ) ), 'wpss_export_orders' );
+				?>
+				<a href="<?php echo esc_url( $export_url ); ?>" class="page-title-action"><?php esc_html_e( 'Export CSV', 'wp-sell-services' ); ?></a>
 			<?php endif; ?>
 			<hr class="wp-header-end">
 
@@ -2204,6 +2211,95 @@ class Admin {
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Stream the filtered Orders list as CSV.
+	 *
+	 * Same filter SQL as the list (OrdersListTable::get_filter_sql), keyset paged
+	 * on id so a 50,000-order store streams in constant memory. Admin-only; it
+	 * never changes an order.
+	 *
+	 * @return void
+	 */
+	public function export_orders_csv(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), 403 );
+		}
+
+		check_admin_referer( 'wpss_export_orders' );
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		[ $where, $params ] = ( new OrdersListTable() )->get_filter_sql();
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=wpss-orders-' . gmdate( 'Ymd-His' ) . '.csv' );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Streaming CSV to the response body.
+		$out = fopen( 'php://output', 'w' );
+
+		wpss_fputcsv( $out, array( 'order_id', 'order_number', 'status', 'payment_status', 'payment_method', 'buyer_id', 'buyer_email', 'vendor_id', 'vendor_name', 'service_id', 'subtotal', 'total', 'platform_fee', 'vendor_earnings', 'refunded_amount', 'currency', 'type', 'created_at', 'completed_at' ) );
+
+		$batch_size = 500;
+		$last_id    = 0;
+
+		do {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM {$table} WHERE {$where} AND id > %d ORDER BY id ASC LIMIT %d",
+					array_merge( $params, array( $last_id, $batch_size ) )
+				)
+			);
+
+			// One user lookup per batch, not per row.
+			$user_ids = array_unique( array_merge( wp_list_pluck( $rows, 'customer_id' ), wp_list_pluck( $rows, 'vendor_id' ) ) );
+			$users    = array();
+			foreach ( $user_ids ? get_users(
+				array(
+					'include' => array_map( 'intval', $user_ids ),
+					'fields'  => array( 'ID', 'user_email', 'display_name' ),
+				)
+			) : array() as $u ) {
+				$users[ (int) $u->ID ] = $u;
+			}
+
+			foreach ( $rows as $row ) {
+				$last_id = (int) $row->id;
+				wpss_fputcsv(
+					$out,
+					array(
+						(int) $row->id,
+						(string) $row->order_number,
+						(string) $row->status,
+						(string) $row->payment_status,
+						(string) $row->payment_method,
+						(int) $row->customer_id,
+						(string) ( $users[ (int) $row->customer_id ]->user_email ?? '' ),
+						(int) $row->vendor_id,
+						(string) ( $users[ (int) $row->vendor_id ]->display_name ?? '' ),
+						(int) $row->service_id,
+						number_format( (float) $row->subtotal, 2, '.', '' ),
+						number_format( (float) $row->total, 2, '.', '' ),
+						number_format( (float) $row->platform_fee, 2, '.', '' ),
+						number_format( (float) $row->vendor_earnings, 2, '.', '' ),
+						number_format( (float) $row->refunded_amount, 2, '.', '' ),
+						(string) $row->currency,
+						(string) $row->platform,
+						(string) $row->created_at,
+						(string) ( $row->completed_at ?? '' ),
+					)
+				);
+			}
+			$row_count = count( $rows );
+		} while ( $row_count === $batch_size );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		fclose( $out );
+		exit;
 	}
 
 	/**

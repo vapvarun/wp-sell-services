@@ -284,6 +284,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - When the site owner is also the seller, an offline order sends one owner email instead of two, and the wording says offline payment rather than bank transfer.
 * Fix      - The order payment details no longer show a Transaction ID the plugin generated itself; an ID the owner typed still shows.
 * Security - A buyer can no longer cancel and refund a disputed or revision-stage order through the legacy cancel AJAX action; it now follows the same pre-delivery rule as the REST route.
+* New      - Export CSV on the Orders screen downloads the orders matching the current filters, streamed in batches so large stores do not run out of memory.
 * Improve  - Bulk Mark as Completed and Mark as Cancelled on Orders ask first, naming the number of orders and the money effect, and skip orders already in that status.
 * Fix      - The Become a Vendor page tells a logged-out visitor sign-up is closed, with a Sign in link, instead of showing a form that always fails when WordPress registration is off.
 * Fix      - With vendor registration closed, the site owner can still start selling from the dashboard.
