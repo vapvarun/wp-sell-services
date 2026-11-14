@@ -79,7 +79,7 @@ means Pro loads nothing, so these disappear along with the rest of Pro.
 | Ability | Permission | Read-only | Input |
 |---------|-----------|-----------|-------|
 | `wpss/analytics-overview` | `manage_options` or `wpss_view_analytics` | Yes | `period`, `metrics[]` |
-| `wpss/manage-vendor-subscriptions` | `manage_options` | Yes | `action`, `plan_id`, `vendor_id` |
+| `wpss/manage-vendor-subscriptions` | `manage_options` | Yes | `action` (`list_plans`, `list_subscriptions`, `view_plan`, `view_subscription`), `plan_id`, `vendor_id`, `subscription_id` |
 | `wpss/configure-stripe-connect` | `manage_options` | Yes | `action` |
 
 ## Consuming them
