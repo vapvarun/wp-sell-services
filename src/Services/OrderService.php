@@ -1406,10 +1406,10 @@ class OrderService {
 		$now         = new \DateTimeImmutable( 'now', $order->started_at->getTimezone() );
 		$hours_since = ( $now->getTimestamp() - $order->started_at->getTimestamp() ) / 3600;
 
-		if ( $hours_since > 24 ) {
+		if ( $hours_since > wpss_cancel_window_hours() ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Cancellation window has expired. You can only request cancellation within 24 hours of work starting.', 'wp-sell-services' ),
+				'message' => wpss_cancel_window_rule(),
 			);
 		}
 

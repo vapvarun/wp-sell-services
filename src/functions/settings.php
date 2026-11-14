@@ -72,6 +72,7 @@ function wpss_settings_defaults(): array {
 		// Revision limits are per-package, not a global setting.
 		'wpss_orders'        => array(
 			'auto_complete_days'        => 3,
+			'cancel_window_hours'       => 24,
 			'allow_disputes'            => true,
 			'dispute_window_days'       => 14,
 			'auto_dispute_late_days'    => 3,

@@ -395,11 +395,18 @@ do_action( 'wpss_before_order_view', $order );
 				$hours_since_start = ( time() - $order->started_at->getTimestamp() ) / 3600;
 				$has_deliveries    = ! empty( $deliveries );
 
-				if ( $hours_since_start <= 24 && ! $has_deliveries ) {
+				if ( $hours_since_start <= wpss_cancel_window_hours() && ! $has_deliveries ) {
 					$actions['cancel'] = array(
 						'label' => __( 'Request Cancellation', 'wp-sell-services' ),
 						'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
-						'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+						'attrs' => 'data-order="' . esc_attr( $order_id ) . '" title="' . esc_attr( wpss_cancel_window_rule() ) . '"',
+					);
+				} else {
+					// Say why the button is gone instead of letting it vanish.
+					$actions['cancel_closed_notice'] = array(
+						'label' => __( 'Cancellation Closed', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
+						'attrs' => 'disabled="disabled" title="' . esc_attr( wpss_cancel_window_rule() ) . '"',
 					);
 				}
 			}

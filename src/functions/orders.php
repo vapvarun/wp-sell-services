@@ -1185,3 +1185,46 @@ function wpss_get_reorder_plan( \WPSellServices\Models\ServiceOrder $order, int 
 		'current_total'  => $current,
 	);
 }
+
+
+/**
+ * Hours after work starts during which a buyer may ask to cancel an in-progress order.
+ *
+ * One reader for the order page, the REST route and the service, so the rule the
+ * buyer is shown is the rule that is enforced. 0 turns the request off.
+ *
+ * @since 1.9.3
+ *
+ * @return int Hours, 0 to 720.
+ */
+function wpss_cancel_window_hours(): int {
+	$hours = wpss_get_option( 'orders', 'cancel_window_hours' );
+
+	return null === $hours || '' === $hours ? 24 : max( 0, min( 720, (int) $hours ) );
+}
+
+/**
+ * The cancellation rule in words, for buttons, notices and errors.
+ *
+ * @since 1.9.3
+ *
+ * @return string
+ */
+function wpss_cancel_window_rule(): string {
+	$hours = wpss_cancel_window_hours();
+
+	if ( 0 === $hours ) {
+		return __( 'Once work has started this order cannot be cancelled by request. If something is wrong, open a dispute.', 'wp-sell-services' );
+	}
+
+	return sprintf(
+		/* translators: %d: hours. */
+		_n(
+			'You can request cancellation within %d hour of work starting, before any delivery. After that, open a dispute.',
+			'You can request cancellation within %d hours of work starting, before any delivery. After that, open a dispute.',
+			$hours,
+			'wp-sell-services'
+		),
+		$hours
+	);
+}

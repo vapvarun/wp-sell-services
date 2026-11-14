@@ -2397,7 +2397,7 @@ class OrdersController extends RestController {
 		$now         = new \DateTimeImmutable();
 		$hours_since = ( $now->getTimestamp() - $order->started_at->getTimestamp() ) / 3600;
 
-		if ( $hours_since > 24 ) {
+		if ( $hours_since > wpss_cancel_window_hours() ) {
 			return false;
 		}
 

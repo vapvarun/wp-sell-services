@@ -1113,6 +1113,21 @@ class Settings {
 		);
 
 		add_settings_field(
+			'cancel_window_hours',
+			__( 'Buyer Cancellation Window (Hours)', 'wp-sell-services' ),
+			array( $this, 'render_number_field' ),
+			'wpss_orders',
+			'wpss_orders_section',
+			array(
+				'option_name' => 'wpss_orders',
+				'field'       => 'cancel_window_hours',
+				'min'         => self::NUMBER_LIMITS['cancel_window_hours'][0],
+				'max'         => self::NUMBER_LIMITS['cancel_window_hours'][1],
+				'description' => __( 'Hours after work starts during which a buyer can ask to cancel an in-progress order, if nothing has been delivered. The vendor still answers the request. Set to 0 to turn it off; buyers then use a dispute.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
 			'auto_complete_days',
 			__( 'Auto-Complete Days', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
@@ -3958,6 +3973,7 @@ class Settings {
 	private const NUMBER_LIMITS = array(
 		'auto_complete_days'        => array( 0, 30 ),
 		'dispute_window_days'       => array( 1, 90 ),
+		'cancel_window_hours'       => array( 0, 720 ),
 		'auto_dispute_late_days'    => array( 0, 30 ),
 		'requirements_timeout_days' => array( 0, 30 ),
 		'review_window_days'        => array( 0, 365 ),
@@ -3994,6 +4010,7 @@ class Settings {
 
 		$sanitized['auto_complete_days'] = $this->clamp_number( 'auto_complete_days', $input['auto_complete_days'] ?? 3 );
 		// Revision limits are defined per-package in service packages, not as a global setting.
+		$sanitized['cancel_window_hours']       = $this->clamp_number( 'cancel_window_hours', $input['cancel_window_hours'] ?? 24 );
 		$sanitized['allow_disputes']            = ! empty( $input['allow_disputes'] );
 		$sanitized['dispute_window_days']       = $this->clamp_number( 'dispute_window_days', $input['dispute_window_days'] ?? 14 );
 		$sanitized['auto_dispute_late_days']    = $this->clamp_number( 'auto_dispute_late_days', $input['auto_dispute_late_days'] ?? 3 );
