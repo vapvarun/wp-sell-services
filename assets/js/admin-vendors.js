@@ -245,6 +245,8 @@
 				initOrdersHandlers();
 			} else if (tab === 'reviews') {
 				initReviewsHandlers();
+			} else if (tab === 'wallet') {
+				initWalletHandlers();
 			} else if (tab === 'portfolio') {
 				initPortfolioHandlers();
 			}
@@ -568,6 +570,33 @@
 						initOrdersHandlers();
 					}
 				}
+			});
+		}
+
+		// Wallet tab handlers (pagination).
+		function initWalletHandlers() {
+			$('.wpss-wallet-pagination a').off('click').on('click', function(e) {
+				e.preventDefault();
+				var page = $(this).data('page');
+				delete tabCache['wallet'];
+				$.ajax({
+					url: ajaxUrl,
+					type: 'POST',
+					data: {
+						action: 'wpss_vendor_tab_content',
+						nonce: nonce,
+						vendor_id: vendorId,
+						tab: 'wallet',
+						wallet_page: page
+					},
+					success: function(response) {
+						if (response.success) {
+							$('#wpss-tab-content').html(response.data.html);
+							wpssRefreshIcons();
+							initWalletHandlers();
+						}
+					}
+				});
 			});
 		}
 

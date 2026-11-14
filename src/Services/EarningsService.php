@@ -1018,6 +1018,28 @@ class EarningsService {
 	}
 
 	/**
+	 * Count a vendor's withdrawals (for paging the history), optionally by status.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param int    $vendor_id Vendor user ID.
+	 * @param string $status    Optional status.
+	 * @return int
+	 */
+	public function count_withdrawals( int $vendor_id, string $status = '' ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_withdrawals';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( '' !== $status ) {
+			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND status = %s", $vendor_id, $status ) );
+		}
+
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d", $vendor_id ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
+	/**
 	 * Get vendor withdrawals.
 	 *
 	 * @param int   $vendor_id Vendor user ID.

@@ -76,7 +76,12 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 	$active_conversation  = $conversation_service->get( $active_conversation_id );
 
 	if ( $active_conversation && $active_conversation->can_view( $user_id ) ) :
-		$messages      = $conversation_service->get_messages( $active_conversation_id, array( 'limit' => 100 ) );
+		// The newest 50 messages, oldest first; "Show earlier messages" pages back. This used to load the
+		// OLDEST 100 and stop, so a long thread opened at its start and hid the latest reply.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only paging parameter.
+		$before_msg    = isset( $_GET['before_msg'] ) ? absint( wp_unslash( $_GET['before_msg'] ) ) : 0;
+		$thread        = $conversation_service->get_thread_page( $active_conversation_id, $before_msg, 50 );
+		$messages      = $thread['messages'];
 		$participants  = $active_conversation->participants;
 		$other_user_id = 0;
 
@@ -107,6 +112,11 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				<?php if ( empty( $messages ) ) : ?>
 					<p class="wpss-text-muted"><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></p>
 				<?php else : ?>
+					<?php if ( $thread['has_older'] ) : ?>
+						<p class="wpss-messaging__earlier">
+							<a class="wpss-btn wpss-btn--sm wpss-btn--outline" href="<?php echo esc_url( add_query_arg( 'before_msg', (int) $messages[0]->id ) ); ?>"><?php esc_html_e( 'Show earlier messages', 'wp-sell-services' ); ?></a>
+						</p>
+					<?php endif; ?>
 					<?php foreach ( $messages as $msg ) : ?>
 						<?php
 						// The SAME renderer the order conversation, the REST endpoint and
@@ -122,6 +132,11 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 						echo wpss_render_message_row( $msg, $user_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Renderer returns internally-escaped markup.
 						?>
 					<?php endforeach; ?>
+					<?php if ( $before_msg ) : ?>
+						<p class="wpss-messaging__earlier">
+							<a class="wpss-btn wpss-btn--sm wpss-btn--outline" href="<?php echo esc_url( remove_query_arg( 'before_msg' ) ); ?>"><?php esc_html_e( 'Back to the latest messages', 'wp-sell-services' ); ?></a>
+						</p>
+					<?php endif; ?>
 				<?php endif; ?>
 			</div>
 
@@ -295,8 +310,8 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				// count_unread_for_user() excludes closed conversations, but this
 				// list does not filter them out (history stays visible), so
 				// without this the badges on screen and the banner disagreed.
-				$is_unread         = $my_unread > 0 && empty( $conversation->is_closed );
-				$time_ago          = ! empty( $conversation->last_message_at ) ? wpss_time_ago( (string) $conversation->last_message_at ) : '';
+				$is_unread = $my_unread > 0 && empty( $conversation->is_closed );
+				$time_ago  = ! empty( $conversation->last_message_at ) ? wpss_time_ago( (string) $conversation->last_message_at ) : '';
 
 				// EVERY row leads with the person, never the thing being discussed.
 				// Order conversations used to title themselves with the service,

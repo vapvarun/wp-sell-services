@@ -374,6 +374,12 @@
 }
 
 /* Date Divider */
+.wpss-messaging__earlier {
+	display: flex;
+	justify-content: center;
+	margin: 12px 0;
+}
+
 .wpss-messaging__date-divider {
 	display: flex;
 	align-items: center;

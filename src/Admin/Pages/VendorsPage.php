@@ -2124,7 +2124,8 @@ class VendorsPage {
 	private function render_tab_wallet( int $vendor_id ): void {
 		global $wpdb;
 
-		$limit = 50;
+		$limit       = 50;
+		$wallet_page = isset( $_POST['wallet_page'] ) ? max( 1, absint( $_POST['wallet_page'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
 
 		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
 
@@ -2142,11 +2143,13 @@ class VendorsPage {
 				FROM {$wpdb->prefix}wpss_wallet_transactions
 				WHERE user_id = %d
 				ORDER BY created_at DESC, id DESC
-				LIMIT %d",
+				LIMIT %d OFFSET %d",
 				$vendor_id,
-				$limit
+				$limit,
+				( $wallet_page - 1 ) * $limit
 			)
 		);
+		$wallet_pages = max( 1, (int) ceil( $total / $limit ) );
 		?>
 		<div class="wpss-tab-section">
 			<h3><?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?></h3>
@@ -2168,17 +2171,6 @@ class VendorsPage {
 
 		<div class="wpss-tab-section">
 			<h3><?php esc_html_e( 'Transaction History', 'wp-sell-services' ); ?></h3>
-			<?php if ( $total > $limit ) : ?>
-				<p class="description">
-					<?php
-					printf(
-						/* translators: %d: number of transactions shown */
-						esc_html__( 'Showing the %d most recent transactions.', 'wp-sell-services' ),
-						(int) $limit
-					);
-					?>
-				</p>
-			<?php endif; ?>
 			<?php if ( empty( $transactions ) ) : ?>
 				<p><?php esc_html_e( 'No wallet transactions yet.', 'wp-sell-services' ); ?></p>
 			<?php else : ?>
@@ -2198,7 +2190,7 @@ class VendorsPage {
 								<td><?php echo esc_html( wpss_datetime_label( $txn->created_at ) ); ?></td>
 								<td><?php echo esc_html( ucwords( str_replace( '_', ' ', (string) $txn->type ) ) ); ?></td>
 								<td><?php echo esc_html( (string) ( $txn->description ?? '' ) ); ?></td>
-								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount ) ); ?></td>
+								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount, (string) $txn->currency ) ); ?></td>
 								<td>
 									<span class="<?php echo esc_attr( wpss_status_class( $txn->status ) ); ?>">
 										<?php echo esc_html( ucfirst( (string) $txn->status ) ); ?>
@@ -2208,6 +2200,19 @@ class VendorsPage {
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+				<?php if ( $wallet_pages > 1 ) : ?>
+					<div class="tablenav wpss-wallet-pagination">
+						<div class="tablenav-pages">
+							<?php if ( $wallet_page > 1 ) : ?>
+								<a href="#" data-page="<?php echo esc_attr( $wallet_page - 1 ); ?>" aria-label="<?php esc_attr_e( 'Previous page', 'wp-sell-services' ); ?>">&laquo;</a>
+							<?php endif; ?>
+							<span class="paging-input"><?php echo esc_html( $wallet_page ); ?> / <?php echo esc_html( $wallet_pages ); ?></span>
+							<?php if ( $wallet_page < $wallet_pages ) : ?>
+								<a href="#" data-page="<?php echo esc_attr( $wallet_page + 1 ); ?>" aria-label="<?php esc_attr_e( 'Next page', 'wp-sell-services' ); ?>">&raquo;</a>
+							<?php endif; ?>
+						</div>
+					</div>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 		<?php

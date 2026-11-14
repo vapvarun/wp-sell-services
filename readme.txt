@@ -299,6 +299,9 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - Buying one service with Buy Now no longer empties the rest of the buyer's cart.
 * Fix      - Double-clicking Deliver no longer creates two deliveries, and an empty delivery is refused.
 * Fix      - Proposals with a zero or negative price are refused.
+* Fix      - Order and dashboard conversations open at the newest 50 messages with a Show earlier messages link, instead of loading the whole thread or only the oldest 100.
+* Improve  - Opening an order conversation marks messages read with one lookup instead of one query per message.
+* Improve  - Withdrawal History on the seller dashboard pages through every request, and the vendor Wallet tab in wp-admin pages through the full ledger and shows each row in its own currency.
 * Improve  - Bulk Mark as Completed and Mark as Cancelled on Orders ask first, naming the number of orders and the money effect, and skip orders already in that status.
 * Fix      - The Become a Vendor page tells a logged-out visitor sign-up is closed, with a Sign in link, instead of showing a form that always fails when WordPress registration is off.
 * Fix      - With vendor registration closed, the site owner can still start selling from the dashboard.

@@ -134,6 +134,7 @@ $check( 'proposal reject only moves a pending proposal', 1 === preg_match( "/STA
 $check( 'order quantity ceiling is applied by the shared pricer', false !== strpos( file_get_contents( $root . '/src/Checkout/CheckoutIntentService.php' ), "apply_filters( 'wpss_max_order_quantity'" ) );
 $check( 'single-service purchase removes only its cart line', method_exists( \WPSellServices\Checkout\ServiceCart::class, 'remove_line' ) );
 $check( 'delivery takes a per-order lock', false !== strpos( file_get_contents( $root . '/src/Services/DeliveryService.php' ), "'wpss_delivery_' . \$order_id" ) );
+$check( 'long lists are paged: thread page, withdrawal count, wallet page', method_exists( \WPSellServices\Services\ConversationService::class, 'get_thread_page' ) && method_exists( \WPSellServices\Services\EarningsService::class, 'count_withdrawals' ) && false !== strpos( file_get_contents( $root . '/src/Admin/Pages/VendorsPage.php' ), 'wallet_page' ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 
