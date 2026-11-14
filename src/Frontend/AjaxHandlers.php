@@ -463,6 +463,14 @@ class AjaxHandlers {
 			return;
 		}
 
+		// Same gate as the REST cancel route: a buyer cancels outright only before work starts. Later statuses
+		// (delivered, disputed, revision, late...) would refund the buyer and reverse the vendor's earnings with no consent.
+		$buyer_immediate = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted', 'requirements_submitted', 'in_progress' );
+		if ( (int) $order->customer_id === $user_id && ! in_array( $order->status, $buyer_immediate, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot cancel this order in its current status.', 'wp-sell-services' ) ) );
+			return;
+		}
+
 		if ( empty( $reason ) ) {
 			wp_send_json_error( array( 'message' => __( 'Reason is required for cancellation.', 'wp-sell-services' ) ) );
 			return;

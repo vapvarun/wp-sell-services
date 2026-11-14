@@ -283,6 +283,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - Buyer requests use their own capabilities, so Editors and Authors can no longer edit or delete them; administrators and shop managers keep full access, and the roles update on upgrade.
 * Fix      - When the site owner is also the seller, an offline order sends one owner email instead of two, and the wording says offline payment rather than bank transfer.
 * Fix      - The order payment details no longer show a Transaction ID the plugin generated itself; an ID the owner typed still shows.
+* Security - A buyer can no longer cancel and refund a disputed or revision-stage order through the legacy cancel AJAX action; it now follows the same pre-delivery rule as the REST route.
 * Fix      - A name typed once on the Create account form is split into first and last name, so checkout no longer shows "Casey Buyer" in First name and "Buyer" in Last name.
 * Fix      - The setup wizard suggests the same eight starter categories the plugin creates, so it no longer adds near-duplicates such as Graphic Design beside Graphics & Design.
 * Fix      - The Terms page notice says checkout can take payments instead of claiming buyers are paying, and the Open vendor registration label says any member can start selling instead of anyone can register.
