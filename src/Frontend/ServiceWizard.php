@@ -1890,6 +1890,11 @@ class ServiceWizard {
 		// Determine post status based on moderation setting.
 		$post_status = ModerationService::requires_review( (int) $user_id ) ? 'pending' : 'publish';
 
+		// An approved, live service keeps its status when edited unless the owner asked for re-review.
+		if ( 'pending' === $post_status && $service_id && 'publish' === get_post_status( $service_id ) && ! ModerationService::re_reviews_live_edits() ) {
+			$post_status = 'publish';
+		}
+
 		// Create or update post. A new service starts as a draft and an existing
 		// one keeps its status until its meta is written; the status is settled
 		// last, by wpss_settle_service_status() below.

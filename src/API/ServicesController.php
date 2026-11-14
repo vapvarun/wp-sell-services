@@ -923,7 +923,7 @@ class ServicesController extends RestController {
 			// Pausing is not: it changes nothing a buyer would buy.
 			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'paused', 'context', '_locale', '_fields', '_embed' ) ) );
 			$goes_live     = $going_live || 'publish' === ( $update_data['post_status'] ?? '' );
-			$edits_live    = ! isset( $update_data['post_status'] ) && $edits_content && 'publish' === get_post_status( $service_id );
+			$edits_live    = ! isset( $update_data['post_status'] ) && $edits_content && 'publish' === get_post_status( $service_id ) && ModerationService::re_reviews_live_edits();
 
 			if ( $goes_live || $edits_live ) {
 				if ( ! $going_live ) {

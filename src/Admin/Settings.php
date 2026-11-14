@@ -1056,6 +1056,20 @@ class Settings {
 		);
 
 		add_settings_field(
+			're_review_live_edits',
+			__( 'Re-review Live Edits', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_vendor',
+			'wpss_vendor_section',
+			array(
+				'option_name' => 'wpss_vendor',
+				'field'       => 're_review_live_edits',
+				'label'       => __( 'Send a live service back for approval when its vendor edits it', 'wp-sell-services' ),
+				'description' => __( 'Off: once a service is approved, its edits stay live. On: every edit takes it offline until you approve it again. New services always wait for approval when moderation is on.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
 			'moderate_reviews',
 			__( 'Review Moderation', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
@@ -3928,6 +3942,7 @@ class Settings {
 		// Vendor verification is not yet implemented — setting removed to avoid confusion.
 		$sanitized['require_service_moderation'] = ! empty( $input['require_service_moderation'] );
 		$sanitized['moderate_reviews']           = ! empty( $input['moderate_reviews'] );
+		$sanitized['re_review_live_edits']       = ! empty( $input['re_review_live_edits'] );
 
 		return $sanitized;
 	}

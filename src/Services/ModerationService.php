@@ -105,6 +105,20 @@ class ModerationService {
 	}
 
 	/**
+	 * Whether editing an already-live service sends it back to review.
+	 *
+	 * A vendor whose service was approved has already passed review, so by
+	 * default their later edits stay live; the owner can switch re-review on.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @return bool
+	 */
+	public static function re_reviews_live_edits(): bool {
+		return (bool) wpss_get_option( 'vendor', 're_review_live_edits' );
+	}
+
+	/**
 	 * Whether a service this member saves goes to review instead of live.
 	 *
 	 * The one rule for the wizard and REST: an admin's save is the approval, so

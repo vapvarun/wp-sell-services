@@ -66,6 +66,8 @@ function wpss_settings_defaults(): array {
 			// launch day. Consistent with open registration above.
 			'require_service_moderation' => false,
 			'moderate_reviews'           => false,
+			// An approved, live service stays live when its vendor edits it.
+			're_review_live_edits'       => false,
 		),
 		// Revision limits are per-package, not a global setting.
 		'wpss_orders'        => array(

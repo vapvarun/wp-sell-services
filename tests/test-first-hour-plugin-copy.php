@@ -121,6 +121,7 @@ $check( 'bulk order actions ask first and skip same-status orders', false !== st
 $check( 'vendor registration page does not print a doomed form', false !== strpos( file_get_contents( $root . '/src/Frontend/Shortcodes.php' ), 'Sign-up is closed' ) );
 $check( 'closed vendor mode exempts the site owner in both doors', false !== strpos( file_get_contents( $root . '/src/Frontend/UnifiedDashboard.php' ), "'closed' === \$ajax_registration_mode && ! current_user_can( 'manage_options' )" ) );
 $check( 'orders export reuses the list filter and is admin-only', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'get_filter_sql()' ) && false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), "check_admin_referer( 'wpss_export_orders' )" ) );
+$check( 'live-edit re-review is a setting, default off', false === wpss_get_option( 'vendor', 're_review_live_edits' ) && method_exists( \\WPSellServices\\Services\\ModerationService::class, 're_reviews_live_edits' ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 
