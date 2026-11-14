@@ -23,9 +23,7 @@ $was_open = get_option( 'users_can_register' );
 $checkout = wpss_get_option( 'general', 'checkout_account_creation' );
 $sc       = new Shortcodes();
 
-// 1. Sign-up closed: both pages give a next step and name the site.$ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
-$check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
-
+// 1. Sign-up closed: both pages give a next step and name the site.
 update_option( 'users_can_register', 0 );
 add_filter( 'wpss_checkout_creates_accounts', '__return_false', 99 );
 
@@ -117,6 +115,9 @@ foreach ( array( 'orders', 'sales' ) as $sec ) {
 }
 $vp = file_get_contents( $root . '/src/Admin/Pages/VendorsPage.php' );
 $check( 'Approve and Activate name their action', false !== strpos( $vp, 'Approve this vendor?' ) && false !== strpos( $vp, 'Reactivate this vendor?' ) );
+
+$ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
+$check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 
 update_option( 'users_can_register', $was_open );
 echo $fails ? "\n$fails FAILED\n" : "\nALL PASSED\n";
