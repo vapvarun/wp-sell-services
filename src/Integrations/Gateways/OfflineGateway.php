@@ -903,7 +903,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			array(
 				'service_id'     => $service_id,
 				'package_id'     => (int) $line['package_id'],
-				'quantity'       => max( 1, $quantity ),
+				'quantity'       => (int) $line['quantity'],
 				'customer_id'    => get_current_user_id(),
 				'subtotal'       => (float) $line['subtotal'],
 				'addons'         => $line['addons'],

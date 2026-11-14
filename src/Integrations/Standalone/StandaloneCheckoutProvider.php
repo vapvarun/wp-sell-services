@@ -601,6 +601,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				return;
 			}
 
+			// Show the quantity the pricer used, not the one asked for.
+			$quantity         = (int) $line['quantity'];
 			$selected_package = $line['package'];
 			$package_id       = (int) $line['package_id'];
 			$addon_lines      = $line['addons'];
@@ -1399,6 +1401,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				continue;
 			}
 
+			$quantity         = (int) $line['quantity'];
 			$selected_package = $line['package'];
 			$unit_price       = (float) ( $selected_package['price'] ?? 0 );
 			$line_price       = (float) $line['subtotal'];
