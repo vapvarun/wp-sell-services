@@ -2339,6 +2339,7 @@ class Admin {
 
 		$new_status    = $status_map[ $action ];
 		$updated       = 0;
+		$failed        = 0;
 		$order_service = new OrderService();
 
 		foreach ( $order_ids as $id ) {
@@ -2351,20 +2352,45 @@ class Admin {
 
 			if ( $order_service->update_status( (int) $id, $new_status ) ) {
 				++$updated;
+			} else {
+				++$failed;
 			}
 		}
 
-		if ( $updated > 0 ) {
-			add_action(
-				'admin_notices',
-				function () use ( $updated ) {
-					printf(
-						'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
-						/* translators: %d: number of orders updated */
-						esc_html( sprintf( _n( '%d order updated.', '%d orders updated.', $updated, 'wp-sell-services' ), $updated ) )
-					);
-				}
-			);
+		$this->print_bulk_notice(
+			sprintf(
+				/* translators: %d: number of orders updated */
+				_n( '%d order updated.', '%d orders updated.', $updated, 'wp-sell-services' ),
+				$updated
+			),
+			sprintf(
+				/* translators: %d: number of orders that could not be moved to the chosen status */
+				_n( '%d order could not be moved to that status from its current one.', '%d orders could not be moved to that status from their current one.', $failed, 'wp-sell-services' ),
+				$failed
+			),
+			$updated,
+			$failed
+		);
+	}
+
+	/**
+	 * Print a bulk-action result right away.
+	 *
+	 * The list page callback runs after core has already printed admin_notices,
+	 * so a hooked closure would never show.
+	 *
+	 * @param string $ok_text     Success message.
+	 * @param string $failed_text Failure message.
+	 * @param int    $ok          Success count.
+	 * @param int    $failed      Failure count.
+	 * @return void
+	 */
+	private function print_bulk_notice( string $ok_text, string $failed_text, int $ok, int $failed ): void {
+		if ( $ok > 0 ) {
+			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $ok_text ) );
+		}
+		if ( $failed > 0 ) {
+			printf( '<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html( $failed_text ) );
 		}
 	}
 
@@ -2405,6 +2431,7 @@ class Admin {
 		$new_status      = $status_map[ $action ];
 		$dispute_service = new DisputeService();
 		$updated         = 0;
+		$failed          = 0;
 
 		foreach ( $dispute_ids as $dispute_id ) {
 			// Closing restores the order and escalating notifies everyone, so both
@@ -2420,21 +2447,25 @@ class Admin {
 
 			if ( $ok ) {
 				++$updated;
+			} else {
+				++$failed;
 			}
 		}
 
-		if ( $updated > 0 ) {
-			add_action(
-				'admin_notices',
-				function () use ( $updated ) {
-					printf(
-						'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
-						/* translators: %d: number of disputes updated */
-						esc_html( sprintf( _n( '%d dispute updated.', '%d disputes updated.', $updated, 'wp-sell-services' ), $updated ) )
-					);
-				}
-			);
-		}
+		$this->print_bulk_notice(
+			sprintf(
+				/* translators: %d: number of disputes updated */
+				_n( '%d dispute updated.', '%d disputes updated.', $updated, 'wp-sell-services' ),
+				$updated
+			),
+			sprintf(
+				/* translators: %d: number of disputes that could not be changed */
+				_n( '%d dispute could not be changed from its current status.', '%d disputes could not be changed from their current status.', $failed, 'wp-sell-services' ),
+				$failed
+			),
+			$updated,
+			$failed
+		);
 	}
 
 	/**

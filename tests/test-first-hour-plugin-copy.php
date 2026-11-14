@@ -137,6 +137,7 @@ $check( 'delivery takes a per-order lock', false !== strpos( file_get_contents( 
 $check( 'long lists are paged: thread page, withdrawal count, wallet page', method_exists( \WPSellServices\Services\ConversationService::class, 'get_thread_page' ) && method_exists( \WPSellServices\Services\EarningsService::class, 'count_withdrawals' ) && false !== strpos( file_get_contents( $root . '/src/Admin/Pages/VendorsPage.php' ), 'wallet_page' ) );
 $check( 'a declined seller request restores late or revision-requested status', false !== strpos( file_get_contents( $root . '/src/Services/OrderService.php' ), "'from_status'" ) && false !== strpos( file_get_contents( $root . '/src/Services/OrderService.php' ), 'The seller may ask the buyer to cancel (request_seller_cancellation())' ) );
 $check( 'orders CSV uses the row currency decimals', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), "wpss_get_currency_decimals( (string) \$row->currency )" ) );
+$check( 'bulk order and dispute results print at once, not via a late admin_notices hook', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'function print_bulk_notice' ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 
