@@ -828,7 +828,8 @@ class BuyerRequestsController extends RestController {
 			'proposal_count'   => (int) ( $buyer_request->proposal_count ?? 0 ),
 			'author'           => wpss_rest_user( (int) $author_id ),
 			// ISO-8601 through the shared formatter (Basecamp 10154919636).
-			'created_at'       => $this->format_datetime( $buyer_request->created_at ?? $buyer_request->post_date ?? null ),
+			// The model carries the post's site-local date; REST dates are UTC, so convert before stamping the offset.
+			'created_at'       => $this->format_datetime( get_gmt_from_date( (string) ( $buyer_request->created_at ?? $buyer_request->post_date ?? '' ) ) ?: null ),
 		];
 
 		// Same rule as the website (Basecamp 10337217098).

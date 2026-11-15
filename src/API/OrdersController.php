@@ -1387,7 +1387,7 @@ class OrdersController extends RestController {
 				'success'      => true,
 				'message'      => $result['message'],
 				'submitted'    => $result['submitted'],
-				'submitted_at' => current_time( 'mysql', true ),
+				'submitted_at' => wpss_rest_date( current_time( 'mysql', true ) ),
 			)
 		);
 	}

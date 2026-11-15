@@ -348,7 +348,7 @@ class SetupWizardPage {
 				: 'open';
 		}
 		if ( isset( $_POST['max_services_per_vendor'] ) ) {
-			$vendor['max_services_per_vendor'] = absint( $_POST['max_services_per_vendor'] );
+			$vendor['max_services_per_vendor'] = max( 0, (int) $_POST['max_services_per_vendor'] );
 		}
 
 		// `require_verification` is deliberately NOT written. Nothing in free or
