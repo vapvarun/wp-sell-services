@@ -109,7 +109,6 @@ foreach ( array( 'editor', 'author' ) as $r ) {
 	$check( $r . ' cannot edit others\' buyer requests', ! $role || ! $role->has_cap( 'edit_others_wpss_requests' ) );
 }
 $check( 'generated transaction ids share one prefix', 'offline_manual_' === \WPSellServices\Integrations\Gateways\OfflineGateway::GENERATED_TRANSACTION_PREFIX );
-$check( 'payment template hides generated ids', false !== strpos( file_get_contents( $root . '/templates/order/payment.php' ), 'GENERATED_TRANSACTION_PREFIX' ) );
 foreach ( array( 'orders', 'sales' ) as $sec ) {
 	$check( $sec . ' section tells the user about a bad order URL', false !== strpos( file_get_contents( $root . '/templates/dashboard/sections/' . $sec . '.php' ), 'That order was not found, or it is not yours.' ) );
 }
@@ -189,6 +188,8 @@ if ( $wpss_vendors ) {
 $wpss_ov = file_get_contents( $root . '/templates/order/order-view.php' );
 $check( 'cancel request modal follows the owner window, not a fixed 24 hours', false === strpos( $wpss_ov, '<= 24' ) && 2 === substr_count( $wpss_ov, '<= wpss_cancel_window_hours()' ) );
 $check( 'closed cancellation is written out beside the button, not only a tooltip', false !== strpos( $wpss_ov, "'hint'  => \$closed_reason" ) && false !== strpos( $wpss_ov, 'wpss-order-view__action-hint' ) );
+$wpss_og = \WPSellServices\Integrations\Gateways\OfflineGateway::class;
+$check( 'plugin-made transaction IDs (manual and cart) are recognised, typed ones are not', $wpss_og::is_generated_transaction_id( 'offline_manual_1794650000' ) && $wpss_og::is_generated_transaction_id( 'offline_multi_0b317451-aaaa' ) && ! $wpss_og::is_generated_transaction_id( 'BANK-REF-123' ) && false !== strpos( file_get_contents( $root . '/templates/order/payment.php' ), 'is_generated_transaction_id' ) && false !== strpos( file_get_contents( $root . '/src/Integrations/Gateways/OfflineGateway.php' ), '! self::is_generated_transaction_id( (string) $order->transaction_id )' ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 

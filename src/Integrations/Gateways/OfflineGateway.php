@@ -35,6 +35,25 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 */
 	public const GENERATED_TRANSACTION_PREFIX = 'offline_manual_';
 
+	/**
+	 * Prefix of the placeholder an Offline cart checkout stores for all its orders.
+	 */
+	public const GENERATED_MULTI_PREFIX = 'offline_multi_';
+
+	/**
+	 * Whether a transaction ID was made up by the plugin rather than typed by the owner.
+	 *
+	 * The buyer only ever sees an ID someone entered; every reader asks here.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string $transaction_id Stored transaction ID.
+	 * @return bool
+	 */
+	public static function is_generated_transaction_id( string $transaction_id ): bool {
+		return 0 === strpos( $transaction_id, self::GENERATED_TRANSACTION_PREFIX ) || 0 === strpos( $transaction_id, self::GENERATED_MULTI_PREFIX );
+	}
+
 
 	/**
 	 * Gateway ID.
@@ -758,7 +777,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			}
 
 			// For offline payments there is no shared transaction ID yet — generate a placeholder.
-			$transaction_id = 'offline_multi_' . wp_generate_uuid4();
+			$transaction_id = self::GENERATED_MULTI_PREFIX . wp_generate_uuid4();
 
 			$order_ids = $order_provider->create_orders_from_cart( $cart, 'offline', $transaction_id, $customer_id );
 
@@ -1592,7 +1611,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 							<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Method', 'wp-sell-services' ); ?></th>
 							<td style="text-align:right;"><?php esc_html_e( 'Offline payment', 'wp-sell-services' ); ?></td>
 						</tr>
-						<?php if ( ! empty( $order->transaction_id ) ) : ?>
+						<?php if ( ! empty( $order->transaction_id ) && ! self::is_generated_transaction_id( (string) $order->transaction_id ) ) : ?>
 							<tr>
 								<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Reference', 'wp-sell-services' ); ?></th>
 								<td style="text-align:right;"><?php echo esc_html( (string) $order->transaction_id ); ?></td>

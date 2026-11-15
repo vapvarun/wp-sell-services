@@ -36,7 +36,7 @@ $wpss_payment = wpss_get_payment_status_label( (string) $wpss_order->payment_sta
 	</div>
 <?php endif; ?>
 <?php // A reference the plugin made up when the owner typed none is not a transaction ID worth showing. ?>
-<?php if ( '' !== (string) $wpss_order->transaction_id && 0 !== strpos( (string) $wpss_order->transaction_id, \WPSellServices\Integrations\Gateways\OfflineGateway::GENERATED_TRANSACTION_PREFIX ) ) : ?>
+<?php if ( '' !== (string) $wpss_order->transaction_id && ! \WPSellServices\Integrations\Gateways\OfflineGateway::is_generated_transaction_id( (string) $wpss_order->transaction_id ) ) : ?>
 	<div class="wpss-order-detail-item">
 		<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Transaction ID', 'wp-sell-services' ); ?></span>
 		<span class="wpss-order-detail-item__value wpss-order-detail-item__value--id"><?php echo esc_html( (string) $wpss_order->transaction_id ); ?></span>
