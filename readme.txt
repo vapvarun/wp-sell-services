@@ -278,6 +278,11 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Improve  - The sign-in lockout is removed: wrong passwords no longer lock an account on wp-login.php or in the app, so a security plugin or your host owns that. The app login keeps its per-address rate limit, and the wpss_web_login_lock filter is now a deprecated no-op.
 * Improve  - When WordPress sign-up is closed, the Log In and Create account pages tell the buyer to contact the site owner and link to Sign in, and the new wpss_signup_closed_message filter lets the store add its own contact details.
 * Improve  - On the front-end dashboard an administrator adds their first service in one click, with no confirmation dialog.
+* Improve  - Declining a seller's cancellation request asks a plain confirmation instead of the dispute wording.
+* Improve  - With "suspended vendors keep money access" on, a suspended vendor still sees Earnings & Payouts in the dashboard menu.
+* Fix      - Bulk Mark as Completed / Cancelled now skips orders the workflow does not allow, and disputed orders, and reports them as not moved.
+* Fix      - Editing a live service over the REST API with status=publish follows the Re-review setting like every other edit instead of failing on listings with older gaps.
+* Fix      - EDD, FluentCart and test-gateway placeholder references are no longer shown as a payment Reference on offline receipts.
 * Improve  - Approve, Reactivate, Reject and Suspend on the Vendors screen each say what will happen in their confirmation.
 * Improve  - A dashboard order link that is missing or belongs to someone else shows a short notice above the list instead of silently ignoring it.
 * Improve  - Setting an order to Completed or Cancelled on its page asks first and says what happens to the money.

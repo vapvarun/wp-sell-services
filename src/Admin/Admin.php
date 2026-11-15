@@ -2356,7 +2356,9 @@ class Admin {
 				continue;
 			}
 
-			if ( $order_service->update_status( (int) $id, $new_status ) ) {
+			// A bulk run acts on orders nobody looked at one by one, so it follows the natural workflow only. The admin override stays on the single order screen, where the admin sees the order first.
+			// A disputed order ends through the dispute resolution, which sizes refunds and payouts; a bulk status flip would skip it.
+			if ( 'disputed' !== $order->status && $order_service->can_transition_naturally( $order->status, $new_status ) && $order_service->update_status( (int) $id, $new_status ) ) {
 				++$updated;
 			} else {
 				++$failed;

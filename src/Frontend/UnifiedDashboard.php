@@ -578,6 +578,14 @@ class UnifiedDashboard {
 					),
 				),
 			);
+
+			// Owner setting: a suspended vendor can still reach the money they already earned.
+			if ( wpss_suspended_vendor_money_access( $user_id ) ) {
+				$sections['selling']['items']['earnings'] = array(
+					'icon'  => 'wallet',
+					'label' => __( 'Earnings & Payouts', 'wp-sell-services' ),
+				);
+			}
 		}
 
 		if ( $is_active ) {

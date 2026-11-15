@@ -886,7 +886,8 @@ class ServicesController extends RestController {
 			 * Going live is unchanged: a draft asking for publish, or any
 			 * request that sets status, must clear the whole bar.
 			 */
-			$edits_a_live_listing = ! isset( $update_data['post_status'] ) && 'publish' === get_post_status( $service_id );
+			// status=publish on a listing that is already live changes nothing about its status, so it is an edit too.
+			$edits_a_live_listing = 'publish' === get_post_status( $service_id ) && ( ! isset( $update_data['post_status'] ) || 'publish' === $update_data['post_status'] );
 
 			if ( $publish_errors && $edits_a_live_listing ) {
 				$existing_errors = wpss_validate_service_publishable(
@@ -922,8 +923,11 @@ class ServicesController extends RestController {
 			// Any field but the route id counts, as in the wizard: a gallery, add-on or category swap is as reviewable as a title.
 			// Pausing is not: it changes nothing a buyer would buy.
 			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'paused', 'context', '_locale', '_fields', '_embed' ) ) );
-			$goes_live     = $going_live || 'publish' === ( $update_data['post_status'] ?? '' );
-			$edits_live    = ! isset( $update_data['post_status'] ) && $edits_content && 'publish' === get_post_status( $service_id ) && ModerationService::re_reviews_live_edits();
+			// Sending status=publish for a listing that is already live is not "going live": it is a live edit, and the Re-review setting decides.
+			$is_live      = 'publish' === get_post_status( $service_id );
+			$asks_publish = 'publish' === ( $update_data['post_status'] ?? '' );
+			$goes_live    = $going_live || ( $asks_publish && ! $is_live );
+			$edits_live   = $is_live && $edits_content && ( ! isset( $update_data['post_status'] ) || $asks_publish ) && ModerationService::re_reviews_live_edits();
 
 			if ( $goes_live || $edits_live ) {
 				if ( ! $going_live ) {

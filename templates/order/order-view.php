@@ -439,7 +439,9 @@ do_action( 'wpss_before_order_view', $order );
 			$actions['reject-cancellation'] = array(
 				'label' => $wpss_cancel_by_vendor ? __( 'Decline Cancellation', 'wp-sell-services' ) : __( 'Dispute Cancellation', 'wp-sell-services' ),
 				'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
-				'attrs' => 'data-action="reject-cancellation" data-order="' . esc_attr( $order_id ) . '"',
+				'attrs' => 'data-action="reject-cancellation" data-order="' . esc_attr( $order_id ) . '"'
+					// Declining a seller's request only keeps the order going; it is not a dispute, so the confirm must not say so.
+					. ( $wpss_cancel_by_vendor ? ' data-confirm="' . esc_attr__( 'Decline this cancellation request? The order goes back to its previous status and the seller keeps working on it.', 'wp-sell-services' ) . '"' : '' ),
 			);
 		}
 

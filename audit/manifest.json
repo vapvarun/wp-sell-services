@@ -1323,7 +1323,7 @@
   "owner_controls_1_9_3": {
     "_note": "Settings added in 1.9.3 from the first-hour walk. Every default keeps the old behaviour. Read with wpss_get_option(group,key).",
     "settings": {
-      "wpss_vendor.re_review_live_edits": "bool, default false. ModerationService::re_reviews_live_edits(); used by ServiceWizard and ServicesController.",
+      "wpss_vendor.re_review_live_edits": "bool, default false. ModerationService::re_reviews_live_edits(); used by ServiceWizard and ServicesController. A REST edit sending status=publish on an already-live service counts as a live edit, not going live.",
       "wpss_vendor.suspended_money_access": "bool, default false. wpss_suspended_vendor_money_access(); EarningsController::check_vendor_permissions, UnifiedDashboard::can_access_section (earnings, wallet).",
       "wpss_vendor.application_fields": "bool, default false. UnifiedDashboard::render_application_fields(); tagline and bio passed to VendorService::register().",
       "wpss_vendor.verify_email_for_vendors": "bool, default false. wpss_email_verification_pending(), wpss_send_email_verification(), wpss_handle_email_verification() (init, ?wpss_verify_email=&key=); PublicSignup and VendorService::register honour it.",

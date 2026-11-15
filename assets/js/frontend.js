@@ -261,7 +261,7 @@
 					WPSS.performOrderAction(orderId, action, reason);
 				}, { submitText: wpssData.i18n.submit, placeholder: wpssData.i18n.enterReason });
 			} else {
-				WPSS.showConfirm(WPSS.getActionConfirm(action), function() {
+				WPSS.showConfirm($btn.data('confirm') || WPSS.getActionConfirm(action), function() {
 					WPSS.performOrderAction(orderId, action);
 				});
 			}

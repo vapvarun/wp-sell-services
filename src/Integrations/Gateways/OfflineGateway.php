@@ -51,7 +51,15 @@ class OfflineGateway extends AbstractPaymentGateway {
 	 * @return bool
 	 */
 	public static function is_generated_transaction_id( string $transaction_id ): bool {
-		return 0 === strpos( $transaction_id, self::GENERATED_TRANSACTION_PREFIX ) || 0 === strpos( $transaction_id, self::GENERATED_MULTI_PREFIX );
+		// Offline's own ids, and the references the EDD and FluentCart rails and the test gateway stamp
+		// when no gateway has issued anything: none of them is a payment reference a buyer can quote.
+		foreach ( array( self::GENERATED_TRANSACTION_PREFIX, self::GENERATED_MULTI_PREFIX, 'edd_', 'fluentcart_', 'test_' ) as $prefix ) {
+			if ( 0 === strpos( $transaction_id, $prefix ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 
