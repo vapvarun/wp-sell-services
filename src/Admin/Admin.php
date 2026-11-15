@@ -792,7 +792,7 @@ class Admin {
 	/**
 	 * Tell the owner their marketplace is taking money with no Terms page.
 	 *
-	 * Gated on wpss_has_live_gateway() rather than on the plugin being active,
+	 * Gated on wpss_terms_notice_due() (a keyed gateway or a first order) rather than on the plugin being active,
 	 * because that is the point at which this stops being a setup step and
 	 * starts being a live risk: buyers are paying and there is nothing telling
 	 * them what they agreed to. A site still being built is left alone.
@@ -825,7 +825,7 @@ class Admin {
 			return;
 		}
 
-		if ( ! wpss_has_live_gateway() ) {
+		if ( ! wpss_terms_notice_due() ) {
 			return;
 		}
 

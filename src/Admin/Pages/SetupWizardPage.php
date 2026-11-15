@@ -314,7 +314,7 @@ class SetupWizardPage {
 
 			// Orders keep the currency they were placed in, so switching the shop currency
 			// under existing orders would show their amounts in the wrong one.
-			$has_orders = array_sum( ( new \WPSellServices\Database\Repositories\OrderRepository() )->count_by_status() ) > 0;
+			$has_orders = ( new \WPSellServices\Database\Repositories\OrderRepository() )->has_any();
 
 			if ( $has_orders && ( $general['currency'] ?? 'USD' ) !== $currency ) {
 				wp_send_json_error( array( 'message' => __( 'This store already has orders, so the currency can no longer be changed from the wizard. Leave it as it is.', 'wp-sell-services' ) ) );

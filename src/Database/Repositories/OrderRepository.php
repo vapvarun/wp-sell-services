@@ -1210,6 +1210,19 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Whether the store has taken any order at all.
+	 *
+	 * One indexed probe, so it is safe on every admin screen of a big store.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @return bool
+	 */
+	public function has_any(): bool {
+		return (bool) $this->wpdb->get_var( "SELECT 1 FROM {$this->table} LIMIT 1" );
+	}
+
+	/**
 	 * Count orders by status.
 	 *
 	 * @return array<string, int> Status counts.

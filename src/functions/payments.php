@@ -355,6 +355,31 @@ function wpss_has_live_gateway(): bool {
 }
 
 /**
+ * Whether the missing-Terms-page notice is due.
+ *
+ * The Offline gateway is on from activation, so "a live gateway exists" is true
+ * on a brand-new site with nothing to warn about. The notice waits until money
+ * can really move: a gateway with keys (Stripe, PayPal, ...) or a first order.
+ *
+ * @since 1.9.3
+ *
+ * @return bool
+ */
+function wpss_terms_notice_due(): bool {
+	if ( ! wpss_has_live_gateway() ) {
+		return false;
+	}
+
+	foreach ( wpss()->get_payment_gateways() as $id => $gateway ) {
+		if ( ! in_array( $id, array( 'test', 'offline' ), true ) && $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
+			return true;
+		}
+	}
+
+	return ( new \WPSellServices\Database\Repositories\OrderRepository() )->has_any();
+}
+
+/**
  * Get the active e-commerce adapter or a specific adapter by ID.
  *
  * @since 1.1.0

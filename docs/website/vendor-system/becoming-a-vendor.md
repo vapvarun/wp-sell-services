@@ -8,7 +8,7 @@ You control how vendors join your marketplace from **Settings > Vendor Settings*
 
 ### Open Registration
 
-Anyone can sign up and start selling immediately. Their account is activated right away and they can create their first service within minutes. This is the best option for growing marketplaces where you want to attract as many vendors as possible.
+Any logged-in member can start selling immediately. Their account is activated right away and they can create their first service within minutes. This is the best option for growing marketplaces where you want to attract as many vendors as possible.
 
 ### Requires Approval
 
