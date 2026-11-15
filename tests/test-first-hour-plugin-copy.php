@@ -152,6 +152,40 @@ $check( 'closed registration refuses a buyer but never the site owner, in one he
 $wpss_set['vendor_registration'] = $wpss_vo ?: 'open';
 update_option( 'wpss_vendor', $wpss_set );
 $check( 'no door re-reads the closed mode on its own', 0 === preg_match( "/'closed' [!=]==? \\$\\w*registration_mode/", file_get_contents( $root . '/src/Frontend/UnifiedDashboard.php' ) . file_get_contents( $root . '/src/Frontend/ServiceWizard.php' ) . file_get_contents( $root . '/templates/single-request.php' ) ) );
+// Live-edit re-review: a title edit by a non-admin vendor on an approved, published service.
+$wpss_vendors = get_users( array( 'role' => 'wpss_vendor', 'capability__not_in' => array( 'manage_options' ), 'number' => 1, 'fields' => 'ID' ) );
+if ( $wpss_vendors ) {
+	$wpss_prev_user = get_current_user_id();
+	$wpss_mod       = get_option( 'wpss_vendor', array() );
+	$wpss_was_mod   = $wpss_mod;
+	$wpss_mod['require_service_moderation'] = true;
+	$wpss_mod['re_review_live_edits']       = false;
+	update_option( 'wpss_vendor', $wpss_mod );
+	( new \WPSellServices\Admin\Pages\ServiceModerationPage() )->register_guards(); // Boot ran before this test turned moderation on.
+	wp_set_current_user( (int) $wpss_vendors[0] );
+	$wpss_svc = wp_insert_post( array( 'post_type' => 'wpss_service', 'post_title' => 'Live edit probe', 'post_status' => 'draft', 'post_author' => (int) $wpss_vendors[0] ) );
+	update_post_meta( $wpss_svc, \WPSellServices\Admin\Pages\ServiceModerationPage::META_KEY, 'approved' );
+	global $wpdb;
+	$wpdb->update( $wpdb->posts, array( 'post_status' => 'publish' ), array( 'ID' => $wpss_svc ) );
+	clean_post_cache( $wpss_svc );
+	wp_update_post( array( 'ID' => $wpss_svc, 'post_title' => 'Live edit probe renamed' ) );
+	$check( 'title edit on an approved live service stays published with Re-review off', 'publish' === get_post_status( $wpss_svc ) );
+	( new \WPSellServices\Services\ModerationService() )->requeue_live_edit( $wpss_svc );
+	$check( 'meta-only (add-on) edit also stays published with Re-review off', 'publish' === get_post_status( $wpss_svc ) );
+	$wpss_mod['re_review_live_edits'] = true;
+	update_option( 'wpss_vendor', $wpss_mod );
+	wp_update_post( array( 'ID' => $wpss_svc, 'post_title' => 'Live edit probe again' ) );
+	$check( 'title edit goes to review with Re-review on', 'pending' === get_post_status( $wpss_svc ) );
+	$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $wpss_svc ) );
+	clean_post_cache( $wpss_svc );
+	$wpss_mod['re_review_live_edits'] = false;
+	update_option( 'wpss_vendor', $wpss_mod );
+	wp_update_post( array( 'ID' => $wpss_svc, 'post_status' => 'publish' ) );
+	$check( 'draft back to live still goes to review with Re-review off', 'pending' === get_post_status( $wpss_svc ) );
+	wp_delete_post( $wpss_svc, true );
+	update_option( 'wpss_vendor', $wpss_was_mod );
+	wp_set_current_user( $wpss_prev_user );
+}
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 

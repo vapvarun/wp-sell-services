@@ -1226,8 +1226,8 @@ class ServiceModerationPage {
 			return $data;
 		}
 
-		// Approved once is not approved for ever: a member bringing a draft back, or changing a live one, is reviewed again.
-		if ( get_current_user_id() && ( 'publish' !== get_post_status( $post_id ) || self::edits_live_listing( $post_id, $data, $postarr ) ) ) {
+		// Approved once is not approved for ever: a member bringing a draft back is reviewed again, and so is one changing a live listing when the owner turned Re-review Live Edits on.
+		if ( get_current_user_id() && ( 'publish' !== get_post_status( $post_id ) || ( ModerationService::re_reviews_live_edits() && self::edits_live_listing( $post_id, $data, $postarr ) ) ) ) {
 			$data['post_status'] = 'pending';
 		}
 

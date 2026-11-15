@@ -329,7 +329,7 @@ class ModerationService {
 	 * @return bool True when the service was sent to review.
 	 */
 	public function requeue_live_edit( int $service_id ): bool {
-		if ( ! self::requires_review() || 'publish' !== get_post_status( $service_id ) ) {
+		if ( ! self::requires_review() || ! self::re_reviews_live_edits() || 'publish' !== get_post_status( $service_id ) ) {
 			return false;
 		}
 
