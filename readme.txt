@@ -287,6 +287,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - When buyer cancellation is closed, the order page writes out why (window passed or work delivered) instead of leaving it in a tooltip.
 * Fix      - Re-review Live Edits off now keeps an approved live service published for title edits and add-on changes too.
 * Fix      - A made-up Transaction ID (offline cart checkout or a receipt with no typed reference) is no longer shown to the buyer on the order page or the payment receipt.
+* Fix      - With Suspended Vendors and Earnings on, a suspended vendor also reaches the Pro wallet routes the app uses, and no longer sees a Start selling panel on the dashboard.
 * Fix      - Bulk order and dispute actions now show a result message, including how many could not be changed.
 * Fix      - Buyer requests use their own capabilities, so Editors and Authors can no longer edit or delete them; administrators and shop managers keep full access, and the roles update on upgrade.
 * Fix      - When the site owner is also the seller, an offline order sends one owner email instead of two, and the wording says offline payment rather than bank transfer.

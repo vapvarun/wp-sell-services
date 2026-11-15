@@ -828,7 +828,7 @@ class UnifiedDashboard {
 						<p><?php esc_html_e( 'Your vendor application is pending admin approval. You will be notified once your application is reviewed.', 'wp-sell-services' ); ?></p>
 					</div>
 					<?php
-				elseif ( ! $is_vendor && ! $is_pending ) :
+				elseif ( ! $is_vendor && ! $is_pending && 'suspended' !== $vendor_status ) :
 					if ( ! wpss_vendor_registration_closed_for( $user_id ) ) :
 						?>
 					<div class="wpss-dashboard__become-vendor">

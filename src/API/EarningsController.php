@@ -32,16 +32,7 @@ class EarningsController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function check_vendor_permissions( WP_REST_Request $request ) {
-		$logged_in = $this->check_permissions( $request );
-		if ( is_wp_error( $logged_in ) ) {
-			return $logged_in;
-		}
-
-		if ( wpss_suspended_vendor_money_access() ) {
-			return true;
-		}
-
-		return wpss_rest_require_vendor();
+		return $this->check_vendor_money_permissions( $request );
 	}
 
 

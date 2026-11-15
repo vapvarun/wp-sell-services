@@ -116,6 +116,31 @@ abstract class RestController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Permission for routes that show a vendor their own money or let them ask for it.
+	 *
+	 * Same as check_vendor_permissions(), except a suspended vendor passes when the
+	 * owner chose to let them reach money already earned. Free's earnings routes and
+	 * Pro's wallet routes both use this, so the two never disagree.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool|WP_Error
+	 */
+	public function check_vendor_money_permissions( WP_REST_Request $request ) {
+		$logged_in = $this->check_permissions( $request );
+		if ( is_wp_error( $logged_in ) ) {
+			return $logged_in;
+		}
+
+		if ( wpss_suspended_vendor_money_access() ) {
+			return true;
+		}
+
+		return wpss_rest_require_vendor();
+	}
+
+	/**
 	 * Check if user can manage (admin).
 	 *
 	 * @param WP_REST_Request $request Request object.
