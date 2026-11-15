@@ -1096,7 +1096,7 @@ class Shortcodes {
 
 		// Closed registration is the same card for everyone, signed in or not;
 		// the logged-out form used to render before this check (Basecamp 10351455160).
-		if ( 'closed' === wpss_get_option( 'vendor', 'vendor_registration' ) && ! wpss_is_vendor() ) {
+		if ( wpss_vendor_registration_closed_for() && ! wpss_is_vendor() ) {
 			?>
 			<div class="wpss-vr">
 				<div class="wpss-vr__card">

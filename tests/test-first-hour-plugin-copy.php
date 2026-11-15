@@ -143,6 +143,16 @@ $check( 'refused Assign and Retry refund carry the reason back; Mark refund sent
 $check( 'refusal reason in the order-page link is signed', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'hash_equals( $this->error_signature(' ) );
 $check( 'wizard validates currency and refuses a change under existing orders', false !== strpos( $wizard, "array_key_exists( \$currency, wpss_get_currencies() )" ) && false !== strpos( $wizard, 'count_by_status()' ) );
 $check( 'wizard stays on a step that failed to save and confirms the demo import', false !== strpos( file_get_contents( $root . '/assets/js/admin-wizard.js' ), '!response.success' ) && false !== strpos( file_get_contents( $root . '/assets/js/admin-wizard.js' ), 'confirmDemo' ) );
+$wpss_vo = wpss_get_option( 'vendor', 'vendor_registration' );
+$wpss_set = get_option( 'wpss_vendor', array() );
+$wpss_set['vendor_registration'] = 'closed';
+update_option( 'wpss_vendor', $wpss_set );
+$wpss_admin = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) )[0];
+$wpss_buyer = get_users( array( 'role' => 'subscriber', 'number' => 1, 'fields' => 'ID' ) )[0];
+$check( 'closed registration refuses a buyer but never the site owner, in one helper', wpss_vendor_registration_closed_for( (int) $wpss_buyer ) && ! wpss_vendor_registration_closed_for( (int) $wpss_admin ) );
+$wpss_set['vendor_registration'] = $wpss_vo ?: 'open';
+update_option( 'wpss_vendor', $wpss_set );
+$check( 'no door re-reads the closed mode on its own', 0 === preg_match( "/'closed' [!=]==? \\$\\w*registration_mode/", file_get_contents( $root . '/src/Frontend/UnifiedDashboard.php' ) . file_get_contents( $root . '/src/Frontend/ServiceWizard.php' ) . file_get_contents( $root . '/templates/single-request.php' ) ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 

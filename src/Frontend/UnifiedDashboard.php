@@ -829,8 +829,7 @@ class UnifiedDashboard {
 					</div>
 					<?php
 				elseif ( ! $is_vendor && ! $is_pending ) :
-					$sb_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-					if ( 'closed' !== $sb_registration_mode ) :
+					if ( ! wpss_vendor_registration_closed_for( $user_id ) ) :
 						?>
 					<div class="wpss-dashboard__become-vendor">
 						<p><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></p>
@@ -1082,8 +1081,7 @@ class UnifiedDashboard {
 		$is_vendor = $this->vendor_service->is_vendor( $user_id );
 
 		// Check if vendor registration is open.
-		$fb_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-		$registration_is_open = 'closed' !== $fb_registration_mode || current_user_can( 'manage_options' );
+		$registration_is_open = ! wpss_vendor_registration_closed_for( $user_id );
 
 		// Vendor-only sections: show a CTA to become a vendor.
 		$vendor_only_sections = self::VENDOR_SECTIONS;
@@ -1244,8 +1242,7 @@ class UnifiedDashboard {
 		}
 
 		// Reject if vendor registration is closed.
-		$ajax_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-		if ( 'closed' === $ajax_registration_mode && ! current_user_can( 'manage_options' ) ) {
+		if ( wpss_vendor_registration_closed_for() ) {
 			wp_send_json_error( array( 'message' => __( 'Vendor registration is currently closed.', 'wp-sell-services' ) ) );
 		}
 

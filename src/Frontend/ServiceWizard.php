@@ -2406,11 +2406,9 @@ class ServiceWizard {
 	 * @return string Not vendor message HTML.
 	 */
 	private function render_not_vendor(): string {
-		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-
 		$message = esc_html__( 'You need to be a registered vendor to create services.', 'wp-sell-services' );
 
-		if ( 'closed' !== $registration_mode ) {
+		if ( ! wpss_vendor_registration_closed_for() ) {
 			$registration_url = wpss_get_page_url( 'become_vendor' );
 			if ( ! $registration_url ) {
 				$registration_url = home_url();

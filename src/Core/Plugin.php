@@ -2215,8 +2215,7 @@ final class Plugin {
 		add_filter(
 			'wpss_vendor_registration_open',
 			function ( bool $default_value ): bool {
-				$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-				return 'closed' !== $registration_mode;
+				return ! wpss_vendor_registration_closed_for();
 			}
 		);
 

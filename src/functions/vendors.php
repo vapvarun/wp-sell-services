@@ -113,6 +113,23 @@ function wpss_get_vendor_last_delivery( int $vendor_id ): ?string {
 }
 
 /**
+ * Whether vendor sign-up is closed to this user.
+ *
+ * "Closed" shuts the door on applicants, not on the site owner, who can always
+ * start selling. Every door (dashboard, shortcode, AJAX, REST, wizard) asks here.
+ *
+ * @since 1.9.3
+ *
+ * @param int|null $user_id User ID; defaults to the current user.
+ * @return bool
+ */
+function wpss_vendor_registration_closed_for( ?int $user_id = null ): bool {
+	$user_id = $user_id ?? get_current_user_id();
+
+	return 'closed' === wpss_get_option( 'vendor', 'vendor_registration' ) && ! user_can( $user_id, 'manage_options' );
+}
+
+/**
  * Check if user is a vendor.
  *
  * A vendor is a user with an ACTIVE wpss_vendor_profiles row - the record the
