@@ -514,7 +514,8 @@ class UnifiedDashboard {
 			&& ! ( $this->vendor_service->is_vendor( $user_id )
 				&& 'active' === $this->vendor_service->get_vendor_status( $user_id ) )
 			&& ! ( 'sales' === $section && $this->is_suspended_vendor( $user_id ) )
-			&& ! ( in_array( $section, array( 'earnings', 'wallet' ), true ) && wpss_suspended_vendor_money_access( $user_id ) ) ) {
+			&& ! ( in_array( $section, array( 'earnings', 'wallet' ), true ) && wpss_suspended_vendor_money_access( $user_id ) )
+			&& ! ( 'create' === $section && current_user_can( 'manage_options' ) ) ) {
 			return false;
 		}
 
@@ -1255,6 +1256,17 @@ class UnifiedDashboard {
 		// Check for existing pending application.
 		if ( $this->vendor_service->has_pending_application( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Your vendor application is already pending approval.', 'wp-sell-services' ) ) );
+		}
+
+		// The site owner sells without applying: no profile yet. It is made when they
+		// save their first service, so the click alone never lists them as a vendor.
+		if ( current_user_can( 'manage_options' ) ) {
+			wp_send_json_success(
+				array(
+					'message'  => __( 'Add your first service. You become a listed seller when you save it.', 'wp-sell-services' ),
+					'redirect' => $this->get_section_url( 'create' ),
+				)
+			);
 		}
 
 		$block = $this->vendor_service->registration_block( $user_id );

@@ -289,6 +289,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - A made-up Transaction ID (offline cart checkout or a receipt with no typed reference) is no longer shown to the buyer on the order page or the payment receipt.
 * Fix      - With Suspended Vendors and Earnings on, a suspended vendor also reaches the Pro wallet routes the app uses, and no longer sees a Start selling panel on the dashboard.
 * Fix      - The missing Terms page notice waits until a gateway with keys is on or the first order exists, instead of showing on every screen of a brand-new site.
+* Fix      - The site owner's Add your first service button opens the Create form without making them a listed vendor; the vendor profile is created when they save the first service.
 * Fix      - Bulk order and dispute actions now show a result message, including how many could not be changed.
 * Fix      - Buyer requests use their own capabilities, so Editors and Authors can no longer edit or delete them; administrators and shop managers keep full access, and the roles update on upgrade.
 * Fix      - When the site owner is also the seller, an offline order sends one owner email instead of two, and the wording says offline payment rather than bank transfer.

@@ -190,8 +190,9 @@ class ServiceWizard {
 
 		$user_id = get_current_user_id();
 
-		// The site owner sells without applying, even when registration is closed.
-		if ( ! $this->vendor_service->is_vendor( $user_id ) && ! $this->vendor_service->ensure_admin_profile( $user_id ) ) {
+		// The site owner sells without applying, even when registration is closed. Their
+		// profile is made when they save the first service (Plugin::define_auto_vendor_hooks()).
+		if ( ! $this->vendor_service->is_vendor( $user_id ) && ! current_user_can( 'manage_options' ) ) {
 			return $this->render_not_vendor();
 		}
 
