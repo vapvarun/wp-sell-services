@@ -287,6 +287,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - A backdated order's vendor earning is stamped with the same date as the order and its delivery due date counts from when work started.
 * Fix      - A relative date returned from the wpss_order_timestamp filter, such as yesterday, is saved as a real date instead of 0000-00-00.
 * Fix      - Service schema reviews now include the review text, and Yoast pages no longer log an undefined property warning.
+* Fix      - With Rank Math, the Service name is back in the structured data: the page-title blanking that keeps one heading on service pages no longer reaches the page head.
 * Fix      - A dispute ruling for the vendor sends Dispute resolved only, without a second Order completed notice or email.
 * Fix      - The bank transfer receipt picker offers the file types the store allows instead of a fixed list.
 * Improve  - Approve, Reactivate, Reject and Suspend on the Vendors screen each say what will happen in their confirmation.
