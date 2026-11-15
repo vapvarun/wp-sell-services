@@ -1932,10 +1932,11 @@ class NotificationService {
 	 *
 	 * Sends in-app notification and email to the vendor.
 	 *
-	 * @param int $user_id User ID.
+	 * @param int  $user_id     User ID.
+	 * @param bool $reactivated True when a suspended vendor is coming back, not a new approval.
 	 * @return void
 	 */
-	public function notify_vendor_approved( int $user_id ): void {
+	public function notify_vendor_approved( int $user_id, bool $reactivated = false ): void {
 		$user = get_user_by( 'id', $user_id );
 
 		if ( ! $user ) {
@@ -1948,10 +1949,13 @@ class NotificationService {
 		$this->create(
 			$user_id,
 			self::TYPE_VENDOR_APPROVED,
-			__( 'Vendor Application Approved', 'wp-sell-services' ),
+			$reactivated ? __( 'Vendor Account Reactivated', 'wp-sell-services' ) : __( 'Vendor Application Approved', 'wp-sell-services' ),
 			sprintf(
-				/* translators: %s: platform name */
-				__( 'Your vendor application on %s has been approved! You can now create services and start accepting orders.', 'wp-sell-services' ),
+				$reactivated
+					/* translators: %s: platform name */
+					? __( 'Your vendor account on %s is active again. You can create services and accept orders as before.', 'wp-sell-services' )
+					/* translators: %s: platform name */
+					: __( 'Your vendor application on %s has been approved! You can now create services and start accepting orders.', 'wp-sell-services' ),
 				$platform_name
 			),
 			array(
@@ -1964,15 +1968,19 @@ class NotificationService {
 		( new EmailService() )->send(
 			$user->user_email,
 			sprintf(
-				/* translators: %s: platform name */
-				__( 'Your Vendor Application Has Been Approved - %s', 'wp-sell-services' ),
+				$reactivated
+					/* translators: %s: platform name */
+					? __( 'Your Vendor Account Is Active Again - %s', 'wp-sell-services' )
+					/* translators: %s: platform name */
+					: __( 'Your Vendor Application Has Been Approved - %s', 'wp-sell-services' ),
 				$platform_name
 			),
 			EmailService::TYPE_VENDOR_APPROVED,
 			array(
 				'recipient'     => $user,
-				'email_heading' => __( 'Application approved', 'wp-sell-services' ),
+				'email_heading' => $reactivated ? __( 'Account reactivated', 'wp-sell-services' ) : __( 'Application approved', 'wp-sell-services' ),
 				'dashboard_url' => $dashboard_url,
+				'reactivated'   => $reactivated,
 			)
 		);
 	}

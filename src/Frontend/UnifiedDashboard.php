@@ -1095,7 +1095,8 @@ class UnifiedDashboard {
 		// Vendor-only sections: show a CTA to become a vendor.
 		$vendor_only_sections = self::VENDOR_SECTIONS;
 
-		if ( 'become-vendor' === $section && ! $is_vendor && $registration_is_open ) {
+		// A suspended vendor is not an applicant: the Start selling button would only be refused after the click.
+		if ( 'become-vendor' === $section && ! $is_vendor && $registration_is_open && 'suspended' !== wpss_get_vendor_status( $user_id ) ) {
 			// The become-vendor section should show the vendor onboarding prompt, not an error.
 			// The confirmation link lands here: say it worked.
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only flag set by the verification redirect.

@@ -457,6 +457,16 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</p>';
 		}
 
+		// A logged-out buyer following a pay link is asked to sign in and comes back here, not told they have no permission.
+		if ( ! is_user_logged_in() ) {
+			return sprintf(
+				'<p class="wpss-alert wpss-alert-info">%s</p><p><a class="wpss-btn wpss-btn--primary" href="%s">%s</a></p>',
+				esc_html__( 'Please log in to pay for this order.', 'wp-sell-services' ),
+				esc_url( wp_login_url( wpss_get_pay_order_url( $order_id, $order ) ) ),
+				esc_html__( 'Log In', 'wp-sell-services' )
+			);
+		}
+
 		// Only the customer who owns this order can pay.
 		if ( (int) $order->customer_id !== get_current_user_id() ) {
 			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'You do not have permission to pay for this order.', 'wp-sell-services' ) . '</p>';
@@ -952,9 +962,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		<div class="wpss-checkout-page">
 			<!-- Header bar -->
 			<div class="wpss-co-header">
-				<a href="<?php echo esc_url( ( $service->id > 0 ? get_permalink( $service->id ) : home_url( '/' ) ) ); ?>" class="wpss-co-header__back">
+				<?php // A proposal order has no service page to go back to: its way back is the order. ?>
+				<?php $back_to_order_view = $is_pay_order && $service->id <= 0; ?>
+				<a href="<?php echo esc_url( $back_to_order_view ? wpss_get_order_url( ! empty( $pay_order->platform_order_id ) ? (int) $pay_order->platform_order_id : (int) $pay_order->id ) : ( $service->id > 0 ? get_permalink( $service->id ) : home_url( '/' ) ) ); ?>" class="wpss-co-header__back">
 					<span aria-hidden="true">&larr;</span>
-					<?php esc_html_e( 'Back to service', 'wp-sell-services' ); ?>
+					<?php echo $back_to_order_view ? esc_html__( 'Back to order', 'wp-sell-services' ) : esc_html__( 'Back to service', 'wp-sell-services' ); ?>
 				</a>
 				<span class="wpss-co-header__secure">
 					<i data-lucide="lock" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>

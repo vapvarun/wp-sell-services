@@ -1134,6 +1134,21 @@
 	 * Initialize proposal handlers.
 	 */
 	WPSS.initProposals = function() {
+		// A heads-up, never a block: a price outside the buyer's stated budget can be a real offer, and the buyer decides.
+		// The stored shape: a lone figure is a fixed price (min), a maximum alone is a ceiling, two differing are a range.
+		$(document).on('input', '#proposal-price', function() {
+			var $note = $('#proposal-price-note');
+			if (!$note.length) {
+				return;
+			}
+			var min = parseFloat($(this).data('budget-min')) || 0;
+			var max = parseFloat($(this).data('budget-max')) || 0;
+			var low = (max > 0 && min > 0 && min !== max) ? min : 0;
+			var high = max > 0 ? max : min;
+			var value = parseFloat($(this).val());
+			$note.prop('hidden', !(value > 0 && ((high > 0 && value > high) || (low > 0 && value < low))));
+		});
+
 		// Submit proposal button - open modal.
 		$(document).on('click', '.wpss-submit-proposal-btn', function(e) {
 			e.preventDefault();

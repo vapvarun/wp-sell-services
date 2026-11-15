@@ -59,7 +59,7 @@ update_option( 'wpss_orders', array_merge( (array) $saved, array( 'allow_dispute
 wp_set_current_user( 1 );
 
 // [resolution, status before the dispute]. The in_progress row is the control: a ruling that
-// completes an order for the first time must still announce and credit it, once.
+// completes an order for the first time must still credit it, once, and is announced by the dispute mail alone.
 // 'withdraw' is the opener cancelling the dispute: the order goes back the same quiet way.
 foreach ( array( array( DisputeService::RESOLUTION_FAVOR_VENDOR, 'completed' ), array( DisputeService::RESOLUTION_MUTUAL, 'completed' ), array( 'withdraw', 'completed' ), array( DisputeService::RESOLUTION_FAVOR_VENDOR, 'in_progress' ) ) as list( $resolution, $before ) ) {
 	$first        = 'in_progress' === $before;
@@ -103,11 +103,12 @@ foreach ( array( array( DisputeService::RESOLUTION_FAVOR_VENDOR, 'completed' ), 
 	$check( "[$resolution/$before] ruling applied and order is completed", $resolved && 'completed' === $status, "resolved=" . var_export( $resolved, true ) . " status=$status" );
 	$check( "[$resolution/$before] wpss_order_completed fires " . ( $first ? 'once' : 'no second time' ), $first ? 1 === $fired : 0 === $fired, "fired $fired" );
 	$check( "[$resolution/$before] one earning row", 1 === $earning, "rows $earning" );
-	$check( "[$resolution/$before] Order completed emails: " . ( $first ? 'sent' : 'none new' ), $first ? $completed_mails() >= 1 : 0 === $completed_mails(), 'emails ' . $completed_mails() );
+	// Either way a ruling is announced once, by the "Dispute resolved" mail and notice, never by a second "Order completed" one.
+	$check( "[$resolution/$before] Order completed emails: none (the dispute mail says so)", 0 === $completed_mails(), 'emails ' . $completed_mails() );
 	if ( ! $first ) {
 		$check( "[$resolution/$before] original completed_at kept", $completed_at === $done_at, "was $completed_at now $done_at" );
 	}
-	$check( "[$resolution/$before] Order completed notices: " . ( $first ? 'one' : 'none new' ), $first ? $notices >= 1 : 0 === $notices, "notices $notices" );
+	$check( "[$resolution/$before] Order completed notices: none (the dispute notice says so)", 0 === $notices, "notices $notices" );
 }
 
 update_option( 'wpss_orders', $saved );

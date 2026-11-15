@@ -1076,6 +1076,22 @@
    "added": "2026-11-13",
    "fails_on": "1.9.3 tree before this commit (4 FAILED)",
    "check": "tests/test-request-docs-match-notifications.php"
+  },
+  {
+   "card": "10511340885",
+   "title": "a maximum-only buyer request budget read Negotiable on the request page and card while the dashboard and admin said Up to",
+   "guard": "static:request-budget-one-rule",
+   "added": "2026-11-15",
+   "fails_on": "1.9.3 tree before this commit (wpss_request_budget_html did not exist)",
+   "check": "tests/test-request-budget-one-rule.php"
+  },
+  {
+   "card": "10511340927 (moderation), 10511340942, 10511340956, 10511340970, 10511340986, 10511341012, 10511341034",
+   "title": "release-smoke polish: reactivation worded as a new approval, approved and paid withdrawals shared a title, suspended vendor offered Start selling, logged-out pay link gave a permission error, proposal order linked back to the home page, withdrawal form offered while one is open",
+   "guard": "static:smoke-1-9-3-polish",
+   "added": "2026-11-16",
+   "fails_on": "1.9.3 tree before this commit (reactivated param and the new titles did not exist)",
+   "check": "tests/test-smoke-1-9-3-polish.php"
   }
  ]
 }

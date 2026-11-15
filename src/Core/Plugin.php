@@ -1501,7 +1501,8 @@ final class Plugin {
 			'wpss_vendor_status_updated',
 			function ( int $vendor_id, string $status, ?string $from = null, string $reason = '' ) use ( $notification_service ): void {
 				if ( 'active' === $status ) {
-					$notification_service->notify_vendor_approved( $vendor_id );
+					// A suspended vendor coming back is reactivated, not newly approved: the wording must not say they applied.
+					$notification_service->notify_vendor_approved( $vendor_id, 'suspended' === $from );
 				} elseif ( 'rejected' === $status ) {
 					$notification_service->notify_vendor_rejected( $vendor_id, $reason );
 				} elseif ( 'suspended' === $status ) {

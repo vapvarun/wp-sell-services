@@ -63,7 +63,8 @@ $check( 'closed: a member cannot apply', ! ( new VendorService() )->register( $c
 $check( 'closed: the administrator can still start selling', ( new VendorService() )->register( $closed_owner ) && wpss_is_vendor( $closed_owner ) );
 $made[] = $wizard_owner = $admin();
 wp_set_current_user( $wizard_owner );
-$check( 'closed: the wizard opens for the administrator instead of a not-a-vendor notice', false === stripos( ( new \WPSellServices\Frontend\ServiceWizard() )->render_wizard(), 'must be a registered vendor' ) && wpss_is_vendor( $wizard_owner ) );
+// Opening the wizard is not selling: the owner's profile is made when they save the first service, not on the click.
+$check( 'closed: the wizard opens for the administrator instead of a not-a-vendor notice, and makes no profile', false === stripos( ( new \WPSellServices\Frontend\ServiceWizard() )->render_wizard(), 'must be a registered vendor' ) && ! wpss_is_vendor( $wizard_owner ) );
 update_option( 'wpss_vendor', (array) $settings );
 
 // 6. A suspended administrator stays suspended: the owner bypass does not reinstate.

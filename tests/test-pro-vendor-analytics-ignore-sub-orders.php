@@ -48,6 +48,15 @@ $restore = static function () use ( $wpdb, $orders, &$cloned ) {
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $vendor_id = (int) $wpdb->get_var( "SELECT vendor_id FROM {$orders} WHERE platform = 'tip' AND vendor_id IN (SELECT ID FROM {$wpdb->users}) ORDER BY id DESC LIMIT 1" );
+// A site with no tip order yet gets one staged here (and removed on exit), so the guard never depends on seeded data.
+if ( ! $vendor_id ) {
+	$vendor_id = (int) wpss_test_fixture_user( 'vendor' );
+	if ( $vendor_id ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->insert( $orders, array( 'order_number' => 'QA-TIP-' . wp_generate_password( 5, false ), 'customer_id' => 1, 'vendor_id' => $vendor_id, 'service_id' => 0, 'platform' => 'tip', 'subtotal' => 5, 'total' => 5, 'vendor_earnings' => 5, 'platform_fee' => 0, 'currency' => 'USD', 'status' => 'completed', 'payment_status' => 'paid', 'created_at' => gmdate( 'Y-m-d H:i:s' ) ) );
+		$cloned[] = (int) $wpdb->insert_id;
+	}
+}
 $check( 'a vendor with a tip order exists', $vendor_id > 0 );
 if ( ! $vendor_id ) {
 	return;

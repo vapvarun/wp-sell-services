@@ -1,68 +1,22 @@
 {
   "journey": "11",
-  "sha_free": "bc6f982f",
-  "sha_pro": "f34e07d",
+  "sha_free": "d6847d74",
+  "sha_pro": "259d27c",
   "env": {
     "site": "http://wp-sell-services.local",
-    "theme": "reign-theme",
+    "theme": "reign-theme 8.0.9 + Wbcom Essential",
+    "rail": "standalone (ecommerce_platform auto); Free + Pro (temporary licence) active",
     "wp": "7.1.3",
-    "rail": "woocommerce for the account tab (auto); standalone for the dashboard walk"
+    "free_working_tree": "d6847d74 + working tree",
+    "pro": "259d27c",
+    "browser": "Playwright 1440 and 390"
   },
-  "ran_at": "2026-10-21T20:58:00Z",
+  "ran_at": "2026-11-15T18:20:00Z",
   "checks": [
     {
-      "id": "s1-badge-equals-unread-and-drops",
+      "id": "notifications-inbox",
       "result": "pass",
-      "evidence": "Aisha: badge 71 -> 70 after Mark as read (reload still 70; Unread only page 4 has 10 rows, 3x20+10 = 70). Mark all: badge hidden, DB unread 0. Reading a row in the Woo account tab also dropped the dashboard badge (133 -> 132)."
-    },
-    {
-      "id": "s1-realtime-raises-badge",
-      "result": "untested",
-      "evidence": "wpss_realtime_settings is disabled and live delivery needs a Pusher-protocol server (soketi), which is external."
-    },
-    {
-      "id": "s2-filter-keeps-place",
-      "result": "pass",
-      "evidence": "Unread + new_message: Page 1 of 2 with 20 rows, page 2 has 16; filter kept in page links and selects; Clear filter returns to the full list; empty state 'No notifications match this filter.' shown for a type with no rows."
-    },
-    {
-      "id": "s2-390-controls-fit-and-44",
-      "result": "pass",
-      "evidence": "390px: status select 160x44, type select 216x44, Filter 68x44, Mark all 135x44, scrollWidth 390. Woo account tab as buyer: Mark all 44, Filter 44, scrollWidth 390."
-    },
-    {
-      "id": "s2-390-row-touch-targets",
-      "result": "pass",
-      "evidence": "Row mark-as-read buttons 44x44 at 390 on both the dashboard and the Woo account tab."
-    },
-    {
-      "id": "s3-same-second-rows-page-cleanly",
-      "result": "pass",
-      "evidence": "60 seeded rows with the same created_at: 3 pages of 20, 60 unique ids, 0 repeats; page 4 clamps to page 3."
-    },
-    {
-      "id": "s4-old-read-go-unread-stay",
-      "result": "pass",
-      "evidence": "Seeded read 100d order_status and read 400d dispute_opened were deleted; unread 100d, read 100d dispute_opened, read 10d and unread 400d stayed. Ran only the cleanup Action Scheduler action."
-    },
-    {
-      "id": "registry-no-generic-bell",
-      "result": "pass",
-      "evidence": "Type dropdown lists all 12 present types including 'Refund pending', 'Order late', 'Order ready to start'; per-type icons are non-generic; row counts match the DB (order_late 7, order_started 2, dispute_opened 8). Buyer (Ella) dropdown lists only received types (21) with no 'Notification' generic."
-    },
-    {
-      "id": "retention-badge-unchanged",
-      "result": "pass",
-      "evidence": "Unread count 133 before and after the cleanup run. The wpss_notification_retention_days filter itself was not exercised."
-    },
-    {
-      "id": "s5-account-page-notifications-tab",
-      "result": "pass",
-      "evidence": "/my-account/service-notifications/ exists for a vendor (Aisha) and a buyer (Ella): same list, filter and mark-read, type filter shows only received types, menu item 'Service notifications', no overflow at 390. The page itself shows no unread count (badge exists only in the dashboard nav)."
+      "evidence": "Ella inbox 1440/390 no overflow; type filter lists Delivery accepted, Dispute opened/resolved/response, New message, Order confirmation/in progress/late/update, Proposal received; withdrawal approved/paid rows appear for Maya; no 'You have a new notification'."
     }
-  ],
-  "proposed_checks": [
-    "Show an unread count on the Woo 'Service notifications' menu item.",
-    "Run the realtime badge check against a local soketi instance."
   ]
 }

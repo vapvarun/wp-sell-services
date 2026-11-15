@@ -1386,3 +1386,35 @@ function wpss_check_order_limits( float $total, string $context = '' ): ?\WP_Err
 function wpss_tips_are_taxed(): bool {
 	return ! empty( get_option( 'wpss_tax', array() )['tax_tips'] );
 }
+
+
+/**
+ * A buyer request's budget as catalog price HTML, one rule for every reader.
+ *
+ * Minimum and maximum differing is a range; one amount alone, or both equal, is
+ * a fixed price (a fixed budget is stored in the minimum); a maximum alone reads
+ * "Up to". The Negotiable fallback is the caller's, since a list row and a
+ * detail page word the empty case differently.
+ *
+ * @since 1.9.3
+ *
+ * @param float $min Stored minimum, 0 when unset.
+ * @param float $max Stored maximum, 0 when unset.
+ * @return string Price HTML, or '' when neither is set.
+ */
+function wpss_request_budget_html( float $min, float $max ): string {
+	if ( $min > 0 && $max > 0 && $min !== $max ) {
+		return wpss_catalog_price_html( $min, 'request-budget' ) . ' - ' . wpss_catalog_price_html( $max, 'request-budget' );
+	}
+
+	if ( $min > 0 ) {
+		return wpss_catalog_price_html( $min, 'request-budget' );
+	}
+
+	if ( $max > 0 ) {
+		/* translators: %s: maximum budget, as price HTML. */
+		return sprintf( __( 'Up to %s', 'wp-sell-services' ), wpss_catalog_price_html( $max, 'request-budget' ) );
+	}
+
+	return '';
+}

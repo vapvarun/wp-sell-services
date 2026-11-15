@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**582 hooks** across **806** firing sites.
+**586 hooks** across **812** firing sites.
 
-## Actions (301)
+## Actions (302)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -90,7 +90,7 @@ guide; this is the complete index.
 | `wpss_buyer_request_meta_saved` | 2 | `src/Admin/Metaboxes/BuyerRequestMetabox.php` | Fires after buyer request meta is saved. |
 | `wpss_buyer_request_status_changed` | 3 | `src/Services/BuyerRequestService.php` | Fires when request status changes. |
 | `wpss_buyer_request_updated` | 2 | `src/Services/BuyerRequestService.php` | Fires when a buyer request is updated. |
-| `wpss_cancellation_requested` | 4 | `src/Services/OrderService.php` | Fires when a buyer requests order cancellation. |
+| `wpss_cancellation_requested` | 4 | `src/Services/OrderService.php` *(+1 more)* | Fires when a buyer requests order cancellation. |
 | `wpss_commission_recorded` | 3 | `src/Services/CommissionService.php` *(+3 more)* | Fires when commission is recorded for an order. |
 | `wpss_contract_phases_proposed` | 3 | `src/Services/BuyerRequestService.php` | Fires once when an accepted phased proposal has created all of its phases. |
 | `wpss_conversation_form` | 1 | `templates/order/conversation.php` | Hook: wpss_conversation_form |
@@ -238,6 +238,7 @@ guide; this is the complete index.
 | `wpss_review_moderated` | 3 | `src/Services/ReviewService.php` | Fires after an admin moderates a review from the queue. |
 | `wpss_review_reply_created` | 1 | `src/API/ReviewsController.php` |  |
 | `wpss_revision_requested` | 2 | `src/Services/DeliveryService.php` | Fires when revision is requested. |
+| `wpss_seller_cancellation_declined` | 1 | `src/Services/OrderService.php` | Fires after a buyer declines the seller's cancellation request and the order resumes. |
 | `wpss_send_requirements_reminder_email` | 3 | `src/Services/OrderWorkflowManager.php` |  |
 | `wpss_service_approved` | 2 | `src/Services/ModerationService.php` | Fires after a service is approved. |
 | `wpss_service_archive_header` | 0 | `templates/archive-service.php` | Hook: wpss_service_archive_header |
@@ -318,7 +319,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (281)
+## Filters (284)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -390,7 +391,7 @@ guide; this is the complete index.
 | `wpss_dashboard_section_titles` | 1 | `src/Frontend/UnifiedDashboard.php` | Filter dashboard section titles. |
 | `wpss_dashboard_sections` | 3 | `src/Frontend/UnifiedDashboard.php` | Filter dashboard sections. |
 | `wpss_default_page_slugs` | 1 | `src/functions/urls.php` | Filter default page slugs. |
-| `wpss_default_service_categories` | 1 | `src/PostTypes/ServicePostType.php` | Insert the default service categories. Returns the created term IDs. |
+| `wpss_default_service_categories` | 1 | `src/PostTypes/ServicePostType.php` | The category names a fresh marketplace starts with. |
 | `wpss_delivery_allowed_file_types` | 1 | `src/functions/files.php` | Filter the file extensions allowed for order deliveries. |
 | `wpss_display_timezone` | 2 | `src/functions/time.php` | The timezone times are shown in. Return a member's own timezone to show each member their local time; every screen, email and edit field follows. |
 | `wpss_dispute_reasons` | 2 | `src/functions/moderation.php` | Filter the reasons offered for opening a dispute. |
@@ -429,7 +430,7 @@ guide; this is the complete index.
 | `wpss_locate_template` | 3 | `src/Frontend/TemplateLoader.php` |  |
 | `wpss_locked_billing_fields` | 1 | `src/functions/billing.php` | Filters the billing fields that cannot be disabled. |
 | `wpss_manual_order_currencies` | 1 | `src/Admin/Pages/ManualOrderPage.php` | Filter the currencies available on the Manual Order page dropdown. |
-| `wpss_max_order_quantity` | 2 | `src/Frontend/SingleServiceView.php` *(+1 more)* | Filters the maximum order quantity for a service. |
+| `wpss_max_order_quantity` | 2 | `src/Frontend/SingleServiceView.php` *(+2 more)* | Filters the maximum order quantity for a service. |
 | `wpss_max_upload_size` | 1 | `src/functions/files.php` | Filter the max upload size for requirements files. |
 | `wpss_max_upload_size_mb` | 3 | `src/functions/files.php` | Filter the maximum upload size, in megabytes. |
 | `wpss_member_bypasses_limits` | 2 | `src/functions/vendors.php` | Filter whether a member is exempt from vendor selling limits. |
@@ -449,6 +450,7 @@ guide; this is the complete index.
 | `wpss_open_graph_data` | 2 | `src/SEO/SEO.php` |  |
 | `wpss_order_actions` | 2 | `templates/order/order-view.php` | Filter: wpss_order_actions |
 | `wpss_order_is_refundable` | 2 | `src/functions/ledger.php` | Filter whether an order may be refunded. |
+| `wpss_order_modal_skip` | 2 | `src/Frontend/SingleServiceView.php` | Whether Continue goes straight to checkout, skipping the Order Options dialog. |
 | `wpss_order_money_rail` | 2 | `src/functions/orders.php` | Filters the platform that owns an order's money. |
 | `wpss_order_number_prefix` | 1 | `src/Database/Repositories/OrderRepository.php` *(+2 more)* | Generate a unique order number. |
 | `wpss_order_payment_reference` | 2 | `src/functions/orders.php` | Filter the payment-rail receipt reference shown on an order. |
@@ -456,6 +458,7 @@ guide; this is the complete index.
 | `wpss_order_status_label` | 3 | `templates/order/order-view.php` | Filter: wpss_order_status_label |
 | `wpss_order_status_transitions` | 3 | `src/Services/OrderService.php` | Filter allowed status transitions. |
 | `wpss_order_statuses` | 1 | `src/functions/order-status.php` | Filter order statuses. |
+| `wpss_order_timestamp` | 3 | `src/functions/orders.php` | Filters the UTC datetime stamped on an order column. |
 | `wpss_organization_schema` | 1 | `src/SEO/SchemaMarkup.php` |  |
 | `wpss_output_service_schema` | 2 | `src/SEO/SchemaMarkup.php` | Whether to print the plugin's own Service JSON-LD on a single service. |
 | `wpss_package_button_text` | 2 | `templates/partials/service-packages.php` | Filters the package button text. |
@@ -552,6 +555,7 @@ guide; this is the complete index.
 | `wpss_should_reverse_vendor_earnings` | 2 | `src/Services/OrderWorkflowManager.php` | Filters whether the vendor's wallet earnings should be reversed. |
 | `wpss_show_mini_cart` | 1 | `src/Frontend/Frontend.php` | Filter whether the floating mini-cart renders on the current request. |
 | `wpss_show_powered_by` | 1 | `src/Frontend/UnifiedDashboard.php` | Filters whether the "Powered by WP Sell Services" footer credit is rendered on the frontend dashboard. |
+| `wpss_signup_closed_message` | 1 | `src/functions/urls.php` | Filter the message shown where sign-up is closed. |
 | `wpss_single_request_layout` | 2 | `templates/single-request.php` | Filter: wpss_single_request_layout |
 | `wpss_single_service_layout` | 2 | `templates/single-service.php` | Filter: wpss_single_service_layout |
 | `wpss_sitemap_post_types` | 1 | `src/SEO/SEO.php` | Add service post type to sitemap. |

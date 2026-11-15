@@ -201,7 +201,7 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 			</div>
 
 			<div class="wpss-form-row">
-				<label for="request_deadline"><?php esc_html_e( 'Deadline', 'wp-sell-services' ); ?></label>
+				<label for="request_deadline"><?php esc_html_e( 'Open until', 'wp-sell-services' ); ?></label>
 				<input
 					type="date"
 					name="deadline"

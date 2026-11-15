@@ -513,7 +513,7 @@ class ServiceCommands extends WP_CLI_Command {
 
 		return array(
 			'post_date_gmt' => $gmt,
-			'post_date'     => get_date_from_gmt( $gmt ),
+			'post_date'     => get_date_from_gmt( $gmt ), // time-ok: post_date is the site-local column, post_date_gmt carries UTC.
 		);
 	}
 

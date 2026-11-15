@@ -290,7 +290,8 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 	<div id="wpss-withdrawal" class="wpss-earnings__withdrawal" style="margin-top: 2rem;">
 		<h3><?php esc_html_e( 'Request Withdrawal', 'wp-sell-services' ); ?></h3>
 
-		<?php if ( $earnings['available_balance'] >= $min_withdrawal ) : ?>
+		<?php // One withdrawal at a time: say so up front instead of offering a form the service refuses after submit. ?>
+		<?php if ( $earnings['available_balance'] >= $min_withdrawal && (float) $earnings['pending_withdrawal'] <= 0 ) : ?>
 			<form id="wpss-withdrawal-form" class="wpss-form">
 				<?php wp_nonce_field( 'wpss_request_withdrawal', 'wpss_withdrawal_nonce' ); ?>
 
@@ -367,6 +368,8 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 
 				<div id="wpss-withdrawal-message" class="wpss-notice" role="status" style="display: none;"></div>
 			</form>
+		<?php elseif ( $earnings['available_balance'] >= $min_withdrawal ) : ?>
+			<p class="wpss-notice wpss-notice--info" role="status"><?php esc_html_e( 'You already have a withdrawal in progress. You can request another once it is paid.', 'wp-sell-services' ); ?></p>
 		<?php elseif ( $available_balance < 0 && (float) $earnings['ledger_balance'] >= 0 ) : ?>
 			<?php // Over-committed by a withdrawal in progress, not in debt: the notice above says so. ?>
 		<?php elseif ( 'negative' === EarningsService::classify_balance( (float) $earnings['available_balance'] ) ) : ?>

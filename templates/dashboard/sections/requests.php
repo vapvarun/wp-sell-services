@@ -88,19 +88,9 @@ $active_count = (int) ( new WP_Query(
 				$budget_max    = (float) get_post_meta( $request_id, '_wpss_budget_max', true );
 				$delivery_days = (int) get_post_meta( $request_id, '_wpss_delivery_days', true );
 
-				$budget_display = '';
-				if ( $budget_min > 0 && $budget_max > 0 && $budget_min !== $budget_max ) {
-					// Budget is a pre-purchase estimate, so it goes through
-					// wpss_catalog_price_html() - the wrapper carrying
-					// data-wbcom-amount that lets the display-currency switcher
-					// convert it in the browser. HTML from here, hence
-					// wp_kses_post() rather than esc_html() at the echo.
-					$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' ) . ' – ' . wpss_catalog_price_html( (float) $budget_max, 'request-budget' );
-				} elseif ( $budget_max > 0 ) {
-					$budget_display = wpss_catalog_price_html( (float) $budget_max, 'request-budget' );
-				} elseif ( $budget_min > 0 ) {
-					$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' );
-				}
+				// One rule for every budget reader, in the display-currency-aware wrapper;
+				// HTML from here, hence wp_kses_post() rather than esc_html() at the echo.
+				$budget_display = wpss_request_budget_html( $budget_min, $budget_max );
 				$offers      = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $request_id );
 				$item_status = get_post_status();
 				?>

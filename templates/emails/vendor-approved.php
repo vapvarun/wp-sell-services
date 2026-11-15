@@ -16,11 +16,13 @@
  * @var string  $dashboard_url Vendor dashboard URL.
  * @var WP_User $recipient     Recipient user object (vendor).
  * @var string  $base_color    Brand color (provided by email settings).
+ * @var bool    $reactivated   True when a suspended vendor is coming back, not a new approval.
  */
 
 defined( 'ABSPATH' ) || exit;
 
-$base_color = $base_color ?? '#7f54b3';
+$base_color  = $base_color ?? '#7f54b3';
+$reactivated = ! empty( $reactivated );
 
 /**
  * Fires before the email content for the vendor approved email.
@@ -45,7 +47,7 @@ do_action( 'wpss_email_content_before', 'vendor_approved', $recipient ?? null );
 
 <div style="background: #d4edda; padding: 16px; border-radius: 4px; margin: 0 0 20px 0;">
 	<p style="margin: 0; font-size: 16px; color: #155724; line-height: 1.6;">
-		<?php esc_html_e( 'Congratulations! Your vendor application has been approved. You are now a vendor on our marketplace.', 'wp-sell-services' ); ?>
+		<?php echo $reactivated ? esc_html__( 'Good news! Your vendor account has been reactivated. You can sell on our marketplace again.', 'wp-sell-services' ) : esc_html__( 'Congratulations! Your vendor application has been approved. You are now a vendor on our marketplace.', 'wp-sell-services' ); ?>
 	</p>
 </div>
 
@@ -57,13 +59,13 @@ do_action( 'wpss_email_content_before', 'vendor_approved', $recipient ?? null );
 		</tr>
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; font-weight: 600; color: #28a745;"><?php esc_html_e( 'Approved', 'wp-sell-services' ); ?></td>
+			<td style="padding: 12px; font-weight: 600; color: #28a745;"><?php echo $reactivated ? esc_html__( 'Active', 'wp-sell-services' ) : esc_html__( 'Approved', 'wp-sell-services' ); ?></td>
 		</tr>
 	</tbody>
 </table>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php esc_html_e( 'You can now create services, manage orders, and start earning from your vendor dashboard. Welcome aboard!', 'wp-sell-services' ); ?>
+	<?php echo $reactivated ? esc_html__( 'Your services and orders are back in your vendor dashboard.', 'wp-sell-services' ) : esc_html__( 'You can now create services, manage orders, and start earning from your vendor dashboard. Welcome aboard!', 'wp-sell-services' ); ?>
 </p>
 
 <p style="text-align: center; margin: 30px 0;">

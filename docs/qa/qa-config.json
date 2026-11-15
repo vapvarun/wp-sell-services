@@ -759,6 +759,14 @@
    {
     "id": "request-docs-match-notifications",
     "run": "${WP_CLI:-wp} eval-file tests/test-request-docs-match-notifications.php"
+   },
+   {
+    "id": "request-budget-one-rule",
+    "run": "${WP_CLI:-wp} eval-file tests/test-request-budget-one-rule.php"
+   },
+   {
+    "id": "smoke-1-9-3-polish",
+    "run": "${WP_CLI:-wp} eval-file tests/test-smoke-1-9-3-polish.php"
    }
   ]
  }

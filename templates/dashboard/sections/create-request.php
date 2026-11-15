@@ -146,7 +146,7 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 			<p class="wpss-form-hint"><?php esc_html_e( 'Leave empty if you\'re flexible on budget', 'wp-sell-services' ); ?></p>
 
 			<div class="wpss-form-row">
-				<label for="request_deadline"><?php esc_html_e( 'Deadline', 'wp-sell-services' ); ?></label>
+				<label for="request_deadline"><?php esc_html_e( 'Open until', 'wp-sell-services' ); ?></label>
 				<input
 					type="date"
 					name="deadline"

@@ -682,7 +682,13 @@ class EarningsService {
 		$notification_service->create(
 			(int) $withdrawal->vendor_id,
 			'withdrawal_' . $status,
-			__( 'Withdrawal Update', 'wp-sell-services' ),
+			// One title per outcome, so the list and the type filter read apart: "approved" and "paid" are different news.
+			match ( $status ) {
+				self::WITHDRAWAL_COMPLETED => __( 'Withdrawal paid', 'wp-sell-services' ),
+				self::WITHDRAWAL_APPROVED  => __( 'Withdrawal approved', 'wp-sell-services' ),
+				self::WITHDRAWAL_REJECTED  => __( 'Withdrawal rejected', 'wp-sell-services' ),
+				default                    => __( 'Withdrawal Update', 'wp-sell-services' ),
+			},
 			sprintf(
 				/* translators: 1: amount, 2: status */
 				__( 'Your withdrawal request for %1$s has been %2$s.', 'wp-sell-services' ),
