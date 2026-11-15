@@ -1215,7 +1215,9 @@ class OrderService {
 
 		$delivery_days = $this->get_delivery_days( $order );
 
-		$deadline = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
+		// Counted from when work started, so an imported or backdated order does not get a due date in the future.
+		$start    = $order->started_at instanceof \DateTimeImmutable ? $order->started_at : new \DateTimeImmutable( 'now' );
+		$deadline = $start->modify( '+' . $delivery_days . ' days' );
 
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';

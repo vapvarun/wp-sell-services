@@ -674,7 +674,7 @@ document.addEventListener( 'submit', function ( e ) {
 	window.wpssConfirm( form.getAttribute( 'data-confirm' ), { tone: 'danger' } ).then( function ( ok ) {
 		if ( ok ) {
 			form.dataset.confirmed = '1';
-			form.submit();
+			HTMLFormElement.prototype.submit.call( form ); // the form's own submit property may be a button named "submit"
 		}
 	} );
 } );

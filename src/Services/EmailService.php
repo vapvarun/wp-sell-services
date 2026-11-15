@@ -284,7 +284,10 @@ class EmailService {
 				break;
 
 			case ServiceOrder::STATUS_COMPLETED:
-				$this->send_order_completed( $order );
+				// A ruling for the vendor completes the order; "Dispute resolved" already says so.
+				if ( ! DisputeWorkflowManager::is_resolving_order( $order_id ) ) {
+					$this->send_order_completed( $order );
+				}
 				break;
 
 			case ServiceOrder::STATUS_REVISION_REQUESTED:

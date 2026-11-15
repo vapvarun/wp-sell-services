@@ -409,7 +409,8 @@ class CommissionService {
 				'reference_type' => 'order',
 				'reference_id'   => $order_id,
 				'status'         => 'completed',
-				'created_at'     => current_time( 'mysql', true ),
+				// Same stamp the order's completed_at gets, so imported history lands in its own period.
+				'created_at'     => wpss_order_timestamp( 'completed_at', $order_id ),
 			)
 		);
 

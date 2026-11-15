@@ -283,6 +283,12 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - Bulk Mark as Completed / Cancelled now skips orders the workflow does not allow, and disputed orders, and reports them as not moved.
 * Fix      - Editing a live service over the REST API with status=publish follows the Re-review setting like every other edit instead of failing on listings with older gaps.
 * Fix      - EDD, FluentCart and test-gateway placeholder references are no longer shown as a payment Reference on offline receipts.
+* Fix      - Confirm on the order page (Completed, Cancelled, Mark refund sent) and on the role-cleanup, vendor and report forms now submits the form instead of doing nothing.
+* Fix      - A backdated order's vendor earning is stamped with the same date as the order and its delivery due date counts from when work started.
+* Fix      - A relative date returned from the wpss_order_timestamp filter, such as yesterday, is saved as a real date instead of 0000-00-00.
+* Fix      - Service schema reviews now include the review text, and Yoast pages no longer log an undefined property warning.
+* Fix      - A dispute ruling for the vendor sends Dispute resolved only, without a second Order completed notice or email.
+* Fix      - The bank transfer receipt picker offers the file types the store allows instead of a fixed list.
 * Improve  - Approve, Reactivate, Reject and Suspend on the Vendors screen each say what will happen in their confirmation.
 * Improve  - A dashboard order link that is missing or belongs to someone else shows a short notice above the list instead of silently ignoring it.
 * Improve  - Setting an order to Completed or Cancelled on its page asks first and says what happens to the money.

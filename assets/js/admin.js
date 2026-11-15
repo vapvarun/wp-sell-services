@@ -27,7 +27,7 @@
 		window.wpssConfirm(message.replace('%d', count), { tone: 'danger' }).then(function(ok) {
 			if (ok) {
 				form.dataset.wpssConfirmed = '1';
-				form.submit();
+				HTMLFormElement.prototype.submit.call( form ); // the form's own submit property may be a button named "submit"
 			}
 		});
 	});
@@ -46,7 +46,7 @@
 		window.wpssConfirm(message, { tone: 'danger' }).then(function(ok) {
 			if (ok) {
 				form.dataset.wpssConfirmed = '1';
-				form.submit();
+				HTMLFormElement.prototype.submit.call( form ); // the form's own submit property may be a button named "submit"
 			}
 		});
 	});
@@ -64,7 +64,7 @@
 		window.wpssConfirm(message, { tone: 'danger' }).then(function(ok) {
 			if (ok) {
 				form.dataset.wpssConfirmed = '1';
-				form.submit();
+				HTMLFormElement.prototype.submit.call( form ); // the form's own submit property may be a button named "submit"
 			}
 		});
 	});

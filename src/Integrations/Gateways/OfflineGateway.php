@@ -1493,7 +1493,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 						<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order->id ); ?>">
 						<div class="wpss-form-group">
 							<label for="wpss-receipt-file"><?php esc_html_e( 'Receipt or screenshot', 'wp-sell-services' ); ?></label>
-							<input type="file" name="attachments[]" id="wpss-receipt-file" accept="image/*,.pdf" required>
+							<input type="file" name="attachments[]" id="wpss-receipt-file" accept="<?php echo esc_attr( wpss_upload_accept( 'receipt' ) ); ?>" required>
 						</div>
 						<div class="wpss-form-group">
 							<label for="wpss-receipt-note"><?php esc_html_e( 'Reference number (optional)', 'wp-sell-services' ); ?></label>

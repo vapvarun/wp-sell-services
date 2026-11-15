@@ -1153,7 +1153,10 @@ class DisputeService {
 					return DisputeWorkflowManager::hand_back_order( $order_id, ServiceOrder::STATUS_COMPLETED );
 				}
 
-				return $this->order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
+				return DisputeWorkflowManager::while_resolving(
+					$order_id,
+					fn() => $this->order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED )
+				);
 		}
 
 		return false;

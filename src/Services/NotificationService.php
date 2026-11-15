@@ -617,6 +617,11 @@ class NotificationService {
 				break;
 
 			case 'completed':
+				// A ruling for the vendor completes the order, and "Dispute resolved" already tells both people; a second "Order completed" notice told each twice.
+				if ( DisputeWorkflowManager::is_resolving_order( (int) $order_id ) ) {
+					break;
+				}
+
 				// Notify both parties.
 				$this->create(
 					$order->customer_id,
