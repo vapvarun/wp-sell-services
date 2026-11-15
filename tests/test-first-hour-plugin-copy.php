@@ -186,6 +186,9 @@ if ( $wpss_vendors ) {
 	update_option( 'wpss_vendor', $wpss_was_mod );
 	wp_set_current_user( $wpss_prev_user );
 }
+$wpss_ov = file_get_contents( $root . '/templates/order/order-view.php' );
+$check( 'cancel request modal follows the owner window, not a fixed 24 hours', false === strpos( $wpss_ov, '<= 24' ) && 2 === substr_count( $wpss_ov, '<= wpss_cancel_window_hours()' ) );
+$check( 'closed cancellation is written out beside the button, not only a tooltip', false !== strpos( $wpss_ov, "'hint'  => \$closed_reason" ) && false !== strpos( $wpss_ov, 'wpss-order-view__action-hint' ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 

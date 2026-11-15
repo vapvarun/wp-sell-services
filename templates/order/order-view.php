@@ -403,11 +403,17 @@ do_action( 'wpss_before_order_view', $order );
 						'attrs' => 'data-order="' . esc_attr( $order_id ) . '" title="' . esc_attr( wpss_cancel_window_rule() ) . '"',
 					);
 				} else {
-					// Say why the button is gone instead of letting it vanish.
+					// Say why the button is gone instead of letting it vanish. The reason is
+					// written out, not only a tooltip: a phone has no hover.
+					$closed_reason = $has_deliveries
+						? __( 'Cancellation is closed because work has been delivered. If something is wrong, open a dispute.', 'wp-sell-services' )
+						: wpss_cancel_window_rule();
+
 					$actions['cancel_closed_notice'] = array(
 						'label' => __( 'Cancellation Closed', 'wp-sell-services' ),
 						'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
-						'attrs' => 'disabled="disabled" title="' . esc_attr( wpss_cancel_window_rule() ) . '"',
+						'attrs' => 'disabled="disabled" title="' . esc_attr( $closed_reason ) . '"',
+						'hint'  => $closed_reason,
 					);
 				}
 			}
@@ -515,6 +521,12 @@ do_action( 'wpss_before_order_view', $order );
 							<button type="button" class="<?php echo esc_attr( $action_data['class'] ); ?>" <?php echo $action_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 								<?php echo esc_html( $action_data['label'] ); ?>
 							</button>
+							<?php
+						endif;
+
+						if ( ! empty( $action_data['hint'] ) ) :
+							?>
+							<p class="wpss-order-view__action-hint"><?php echo esc_html( $action_data['hint'] ); ?></p>
 							<?php
 						endif;
 					endforeach;
