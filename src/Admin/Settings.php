@@ -4019,7 +4019,7 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['vendor_registration']     = sanitize_key( $input['vendor_registration'] ?? 'open' );
+		$sanitized['vendor_registration'] = sanitize_key( $input['vendor_registration'] ?? 'open' );
 		if ( isset( $input['max_services_per_vendor'] ) && ( ! is_numeric( $input['max_services_per_vendor'] ) || (float) $input['max_services_per_vendor'] < 0 ) ) {
 			add_settings_error( 'wpss_vendor', 'wpss_max_services_negative', __( 'Max services per vendor must be 0 or more, so the previous value was kept. Use 0 for no limit.', 'wp-sell-services' ) );
 		}
