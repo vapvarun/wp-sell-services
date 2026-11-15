@@ -499,6 +499,25 @@ class ServiceCommands extends WP_CLI_Command {
 	}
 
 	/**
+	 * Post dates for a demo service listed some days ago, so a fresh demo does not show every service as "today".
+	 *
+	 * @param int $days_ago Days back from now, 0 for no change.
+	 * @return array Date fields for wp_insert_post, empty when not backdated.
+	 */
+	private function backdated( int $days_ago ): array {
+		if ( $days_ago <= 0 ) {
+			return array();
+		}
+
+		$gmt = gmdate( 'Y-m-d H:i:s', time() - $days_ago * DAY_IN_SECONDS );
+
+		return array(
+			'post_date_gmt' => $gmt,
+			'post_date'     => get_date_from_gmt( $gmt ),
+		);
+	}
+
+	/**
 	 * Create a single service from data.
 	 *
 	 * @param array $data Service data.
@@ -514,7 +533,7 @@ class ServiceCommands extends WP_CLI_Command {
 				'post_excerpt' => $data['excerpt'] ?? '',
 				'post_status'  => 'draft', // Published below once the meta is in.
 				'post_author'  => ! empty( $data['author'] ) ? (int) $data['author'] : ( get_current_user_id() ?: 1 ),
-			)
+			) + $this->backdated( (int) ( $data['days_ago'] ?? 0 ) )
 		);
 
 		if ( is_wp_error( $post_id ) ) {

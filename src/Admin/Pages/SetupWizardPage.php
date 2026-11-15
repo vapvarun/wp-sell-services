@@ -162,6 +162,7 @@ class SetupWizardPage {
 					'allCreated'   => __( 'All Created', 'wp-sell-services' ),
 					'importing'    => __( 'Importing...', 'wp-sell-services' ),
 					'demoImported' => __( 'Demo Imported!', 'wp-sell-services' ),
+					'viewDemo'     => __( 'Click to view the services.', 'wp-sell-services' ),
 					'demoAlready'  => __( 'Already imported', 'wp-sell-services' ),
 					'importFailed' => __( 'Import failed', 'wp-sell-services' ),
 					'confirmDemo'  => __( 'Import demo content? This adds sample services, vendors and categories to this site. You can delete it later from Settings.', 'wp-sell-services' ),

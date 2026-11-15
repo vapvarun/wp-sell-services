@@ -253,8 +253,14 @@
 
 		// Import demo content.
 		$('#wpss-wizard-import-demo').on('click', function(e) {
-			e.preventDefault();
 			var card = $(this);
+
+			// Imported: the card now links to the services list.
+			if (card.data('wpssDone')) {
+				return;
+			}
+
+			e.preventDefault();
 
 			if (card.data('wpssBusy')) {
 				return;
@@ -281,6 +287,11 @@
 				if (response.success) {
 					card.find('strong').text(wpssWizard.i18n.demoImported);
 					card.find('span:last').text(response.data.message);
+					if (response.data.view_url) {
+						// The card becomes the link to the result, so the buyer is not left guessing.
+						card.data('wpssDone', true).attr('href', response.data.view_url);
+						card.find('span:last').append(' ' + wpssWizard.i18n.viewDemo);
+					}
 				} else {
 					// Refused because the demo content is already there: that is
 					// not a failure, and the card used to say "Import Failed".

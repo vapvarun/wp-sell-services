@@ -3827,6 +3827,9 @@ class Admin {
 			$turns[ $category ]     = $turn + 1;
 			$service_data['author'] = (int) ( $vendors[ $logins[ $turn % count( $logins ) ] ] ?? 0 );
 
+			// Spread over the past weeks, so the demo reads as an established marketplace.
+			$service_data['days_ago'] = 2 + ( ( $i * 5 ) % 41 );
+
 			// Mark some as featured.
 			if ( $featured < 5 && ( 0 === $i % 3 || ! empty( $service_data['featured'] ) ) ) {
 				$service_data['featured'] = true;
@@ -3853,6 +3856,7 @@ class Admin {
 				'services'   => $created,
 				'categories' => count( $categories ),
 				'vendors'    => count( $vendors ),
+				'view_url'   => admin_url( 'edit.php?post_type=wpss_service' ),
 			)
 		);
 	}

@@ -3259,6 +3259,17 @@ class Settings {
 				<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $selected, $id ); ?>><?php echo esc_html( $label ); ?></option>
 			<?php endforeach; ?>
 		</select>
+		<?php if ( '' !== (string) $selected && 'internal' !== $selected && ! isset( $providers[ $selected ] ) ) : ?>
+			<p class="notice notice-warning inline" role="alert">
+				<?php
+				printf(
+					/* translators: %s: wallet provider id saved in settings */
+					esc_html__( 'The saved wallet provider "%s" is not active, so vendor balances are being held in the Internal Wallet. Activate its plugin, or save this page to choose another provider.', 'wp-sell-services' ),
+					esc_html( (string) $selected )
+				);
+				?>
+			</p>
+		<?php endif; ?>
 		<?php
 		// Says what the free plugin already does BEFORE describing what a
 		// provider adds. The old wording opened with "wallet integration" and

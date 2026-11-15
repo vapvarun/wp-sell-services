@@ -219,5 +219,10 @@ $view = file_get_contents( $root . '/src/Frontend/SingleServiceView.php' );
 $js   = file_get_contents( $root . '/assets/js/single-service.js' );
 $check( 'Order Options dialog is skipped only when nothing can be chosen, and a failure reopens it', false !== strpos( $view, "empty( \$extras ) && ! \$has_express && \$max_quantity <= 1" ) && false !== strpos( $js, "data('direct') === 1" ) && false !== strpos( $js, 'A skipped Order Options dialog is closed when the add fails' ) );
 
+$cli = file_get_contents( $root . '/src/CLI/ServiceCommands.php' );
+$set = file_get_contents( $root . '/src/Admin/Settings.php' );
+$check( 'demo services are dated over past weeks and the wizard card links to the result', false !== strpos( $cli, 'private function backdated' ) && false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), "'days_ago'" ) && false !== strpos( file_get_contents( $root . '/assets/js/admin-wizard.js' ), 'wpssDone' ) );
+$check( 'Settings warns when the saved wallet provider is not active', false !== strpos( $set, 'is not active, so vendor balances are being held in the Internal Wallet' ) );
+
 update_option( 'users_can_register', $was_open );
 echo $fails ? "\n$fails FAILED\n" : "\nALL PASSED\n";
