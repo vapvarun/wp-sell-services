@@ -77,6 +77,7 @@ class EmailService {
 	public const TYPE_RECEIPT_SUBMITTED = 'receipt_submitted';
 	public const TYPE_RECEIPT_VERIFIED  = 'receipt_verified';
 	public const TYPE_RECEIPT_REJECTED  = 'receipt_rejected';
+	public const TYPE_CANCELLATION_DECLINED = 'cancellation_declined';
 
 	/**
 	 * A bank-transfer order was placed and is waiting for the money.
@@ -267,7 +268,7 @@ class EmailService {
 
 		// A dispute handing the order back (ruling or withdrawal) is announced by
 		// the dispute emails; the status emails would repeat an old event.
-		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) ) {
+		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) || OrderService::is_declining_cancellation( $order_id ) ) {
 			return;
 		}
 
@@ -1645,6 +1646,63 @@ class EmailService {
 	}
 
 	/**
+	 * Tell the seller the buyer declined their cancellation request, and confirm it to the buyer.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public function send_seller_cancellation_declined( int $order_id ): bool {
+		$order = wpss_get_order( $order_id );
+		if ( ! $order ) {
+			return false;
+		}
+
+		$url  = wpss_get_order_url( $order_id );
+		$site = wpss_get_platform_name();
+		$sent = false;
+
+		$vendor = get_user_by( 'id', $order->vendor_id );
+		if ( $vendor ) {
+			$sent = $this->send(
+				$vendor->user_email,
+				/* translators: 1: site name, 2: order number */
+				sprintf( __( '[%1$s] Cancellation request declined - Order #%2$s', 'wp-sell-services' ), $site, $order->order_number ),
+				self::TYPE_CANCELLATION_DECLINED,
+				array(
+					'recipient'     => $vendor,
+					'order'         => $order,
+					'email_heading' => __( 'Cancellation request declined', 'wp-sell-services' ),
+					/* translators: %s: order number */
+					'content'       => esc_html( sprintf( __( 'The buyer declined your request to cancel Order #%s. The order continues, so please carry on with the work.', 'wp-sell-services' ), $order->order_number ) ),
+					'button_url'    => $url,
+					'button_text'   => __( 'View order', 'wp-sell-services' ),
+				)
+			) || $sent;
+		}
+
+		$customer = get_user_by( 'id', $order->customer_id );
+		if ( $customer ) {
+			$sent = $this->send(
+				$customer->user_email,
+				/* translators: 1: site name, 2: order number */
+				sprintf( __( '[%1$s] You declined the cancellation - Order #%2$s', 'wp-sell-services' ), $site, $order->order_number ),
+				self::TYPE_CANCELLATION_DECLINED,
+				array(
+					'recipient'     => $customer,
+					'order'         => $order,
+					'email_heading' => __( 'You declined the cancellation', 'wp-sell-services' ),
+					/* translators: %s: order number */
+					'content'       => esc_html( sprintf( __( 'You declined the seller\'s request to cancel Order #%s. The order continues as before.', 'wp-sell-services' ), $order->order_number ) ),
+					'button_url'    => $url,
+					'button_text'   => __( 'View order', 'wp-sell-services' ),
+				)
+			) || $sent;
+		}
+
+		return $sent;
+	}
+
+	/**
 	 * Send cancellation requested emails to vendor and buyer.
 	 *
 	 * @param ServiceOrder $order Order object.
@@ -2843,6 +2901,7 @@ class EmailService {
 			self::TYPE_RECEIPT_SUBMITTED      => 'generic.php',
 			self::TYPE_RECEIPT_VERIFIED       => 'generic.php',
 			self::TYPE_RECEIPT_REJECTED       => 'generic.php',
+			self::TYPE_CANCELLATION_DECLINED  => 'generic.php',
 			self::TYPE_VENDOR_APPROVED        => 'vendor-approved.php',
 			self::TYPE_VENDOR_REJECTED        => 'vendor-rejected.php',
 			self::TYPE_VENDOR_SUSPENDED       => 'vendor-suspended.php',
@@ -2967,6 +3026,7 @@ class EmailService {
 			self::TYPE_RECEIPT_SUBMITTED      => 'orders',
 			self::TYPE_RECEIPT_VERIFIED       => 'orders',
 			self::TYPE_RECEIPT_REJECTED       => 'orders',
+			self::TYPE_CANCELLATION_DECLINED  => 'orders',
 			self::TYPE_OFFLINE_ORDER_PLACED   => 'orders',
 			// Plain (generic-template) types NotificationService sends.
 			'review_reply'                    => 'completion',

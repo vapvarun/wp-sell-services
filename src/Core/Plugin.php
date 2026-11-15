@@ -3049,6 +3049,14 @@ final class Plugin {
 		);
 
 		add_action(
+			'wpss_seller_cancellation_declined',
+			static function ( int $order_id ): void {
+				( new \WPSellServices\Services\EmailService() )->send_seller_cancellation_declined( $order_id );
+				( new \WPSellServices\Services\NotificationService() )->notify_seller_cancellation_declined( $order_id );
+			}
+		);
+
+		add_action(
 			'wpss_payment_receipt_rejected',
 			static function ( int $receipt_id, int $order_id, int $reviewer_id, string $reason = '' ): void {
 				( new \WPSellServices\Services\EmailService() )->send_receipt_rejected( $receipt_id, $order_id, $reason );

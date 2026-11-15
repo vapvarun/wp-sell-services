@@ -279,7 +279,7 @@ do_action( 'wpss_before_conversation', $order );
 				<div class="wpss-messaging__composer-input-area">
 					<label for="wpss-file-input" class="wpss-messaging__composer-btn" title="<?php esc_attr_e( 'Attach files', 'wp-sell-services' ); ?>">
 						<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
-						<input type="file" id="wpss-file-input" name="attachments[]" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt" style="display: none;">
+						<input type="file" id="wpss-file-input" name="attachments[]" multiple accept="<?php echo esc_attr( wpss_upload_accept( 'message' ) ); ?>" style="display: none;">
 					</label>
 
 					<div class="wpss-messaging__composer-input-wrapper">
@@ -564,7 +564,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 		if (!conversationId) {
 			// A 404 per lookup shows in the console, so look every third tick (30 seconds), not every one.
-			if (discoverTicks++ % 3 === 0) {
+			// A closed order can never gain a conversation, so there is nothing to find. An unpaid one still can once
+			// payment clears while the tab stays open, so it keeps looking.
+			if (<?php echo in_array( $order->status, array( 'completed', 'cancelled', 'refunded' ), true ) ? 'false' : 'true'; ?> && discoverTicks++ % 3 === 0) {
 				discoverConversation();
 			}
 			return;

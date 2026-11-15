@@ -922,7 +922,7 @@ class ServicesController extends RestController {
 		if ( ModerationService::requires_review() ) {
 			// Any field but the route id counts, as in the wizard: a gallery, add-on or category swap is as reviewable as a title.
 			// Pausing is not: it changes nothing a buyer would buy.
-			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'paused', 'context', '_locale', '_fields', '_embed' ) ) );
+			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'paused', 'context', '_locale', '_fields', '_embed', 'rest_route', '_wpnonce' ) ) );
 			// Sending status=publish for a listing that is already live is not "going live": it is a live edit, and the Re-review setting decides.
 			$is_live      = 'publish' === get_post_status( $service_id );
 			$asks_publish = 'publish' === ( $update_data['post_status'] ?? '' );

@@ -41,6 +41,11 @@ add_filter( 'wpss_order_timestamp', static fn() => 'not a date' );
 $check( 'a bad filter value falls back to now', abs( strtotime( wpss_order_timestamp( 'paid_at' ) . ' UTC' ) - time() ) < 5 );
 remove_all_filters( 'wpss_order_timestamp' );
 
+// The MySQL zero date is "no date" (legacy exports), not a date to store.
+add_filter( 'wpss_order_timestamp', static fn() => '0000-00-00 00:00:00' );
+$check( 'the MySQL zero date falls back to now', abs( strtotime( wpss_order_timestamp( 'paid_at' ) . ' UTC' ) - time() ) < 5 );
+remove_all_filters( 'wpss_order_timestamp' );
+
 // Restore the row.
 $wpdb->update( $table, array( 'status' => $before['status'], 'updated_at' => $before['updated_at'], 'started_at' => $before['started_at'], 'completed_at' => $before['completed_at'] ), array( 'id' => $id ) ); // phpcs:ignore
 

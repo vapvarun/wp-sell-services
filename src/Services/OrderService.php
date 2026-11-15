@@ -1565,6 +1565,23 @@ class OrderService {
 	}
 
 	/**
+	 * Orders being resumed by a declined seller cancellation request, so the generic status notices stay quiet.
+	 *
+	 * @var array<int,true>
+	 */
+	private static array $declining_cancellation = array();
+
+	/**
+	 * Whether the order is being resumed by a declined seller cancellation request.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public static function is_declining_cancellation( int $order_id ): bool {
+		return isset( self::$declining_cancellation[ $order_id ] );
+	}
+
+	/**
 	 * The buyer declines the seller's cancellation request; work resumes.
 	 *
 	 * @since 1.9.3
@@ -1590,7 +1607,24 @@ class OrderService {
 			$back_to = ServiceOrder::STATUS_IN_PROGRESS;
 		}
 
-		$updated = $this->update_status( $order_id, $back_to, __( 'Buyer declined the seller cancellation request.', 'wp-sell-services' ), ServiceOrder::STATUS_CANCELLATION_REQUESTED );
+		// The generic "started working" mails would tell both sides a new start; the decline notice below says what happened.
+		self::$declining_cancellation[ $order_id ] = true;
+		try {
+			$updated = $this->update_status( $order_id, $back_to, __( 'Buyer declined the seller cancellation request.', 'wp-sell-services' ), ServiceOrder::STATUS_CANCELLATION_REQUESTED );
+		} finally {
+			unset( self::$declining_cancellation[ $order_id ] );
+		}
+
+		if ( $updated ) {
+			/**
+			 * Fires after a buyer declines the seller's cancellation request and the order resumes.
+			 *
+			 * @since 1.9.4
+			 *
+			 * @param int $order_id Order ID.
+			 */
+			do_action( 'wpss_seller_cancellation_declined', $order_id );
+		}
 
 		return $updated
 			? array( 'success' => true )

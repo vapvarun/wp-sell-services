@@ -74,7 +74,6 @@ class BuyerRequestService {
 			'title'           => '',
 			'description'     => '',
 			'category_id'     => 0,
-			'budget_type'     => self::BUDGET_FIXED,
 			'budget_min'      => 0,
 			'budget_max'      => 0,
 			'delivery_days'   => 7,
@@ -271,6 +270,12 @@ class BuyerRequestService {
 	 * @return void
 	 */
 	private function save_meta( int $request_id, array $data ): void {
+		// Forms post min and max only. A max above the min is a range; leaving the type at
+		// "fixed" made the request page show the minimum alone.
+		if ( empty( $data['budget_type'] ) && isset( $data['budget_min'], $data['budget_max'] ) ) {
+			$data['budget_type'] = (float) $data['budget_max'] > (float) $data['budget_min'] ? self::BUDGET_RANGE : self::BUDGET_FIXED;
+		}
+
 		$meta_fields = array(
 			'budget_type'   => 'sanitize_key',
 			'budget_min'    => 'floatval',

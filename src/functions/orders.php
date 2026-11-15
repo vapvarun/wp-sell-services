@@ -205,7 +205,8 @@ function wpss_order_timestamp( string $field, int $order_id = 0 ): string {
 	// Any parseable value (a relative string, an offset ISO date) becomes a UTC MySQL datetime; anything else falls back to now.
 	$time = is_string( $stamp ) ? strtotime( $stamp ) : false;
 
-	return false !== $time ? gmdate( 'Y-m-d H:i:s', $time ) : $now;
+	// strtotime() accepts the MySQL zero date (a negative time), which is "no date", not a date: fall back to now.
+	return false !== $time && $time > 0 ? gmdate( 'Y-m-d H:i:s', $time ) : $now;
 }
 
 /**

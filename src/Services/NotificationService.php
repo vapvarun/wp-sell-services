@@ -467,6 +467,44 @@ class NotificationService {
 	}
 
 	/**
+	 * In-app notices after a buyer declines the seller's cancellation request.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return void
+	 */
+	public function notify_seller_cancellation_declined( int $order_id ): void {
+		$order = wpss_get_order( $order_id );
+		if ( ! $order ) {
+			return;
+		}
+
+		$data = array(
+			'order_id'     => $order_id,
+			'order_number' => (string) $order->order_number,
+		);
+
+		$this->create(
+			(int) $order->vendor_id,
+			'cancellation_declined',
+			__( 'Cancellation request declined', 'wp-sell-services' ),
+			NotificationMessage::make()
+				/* translators: %s: order number */
+				->line( __( 'The buyer declined your request to cancel Order #%s.', 'wp-sell-services' ), (string) $order->order_number )
+				->paragraph( __( 'The order continues, so please carry on with the work.', 'wp-sell-services' ) ),
+			$data
+		);
+		$this->create(
+			(int) $order->customer_id,
+			'cancellation_declined',
+			__( 'You declined the cancellation', 'wp-sell-services' ),
+			NotificationMessage::make()
+				/* translators: %s: order number */
+				->line( __( 'You declined the seller\'s request to cancel Order #%s. The order continues as before.', 'wp-sell-services' ), (string) $order->order_number ),
+			$data
+		);
+	}
+
+	/**
 	 * Notify order status change.
 	 *
 	 * @param int    $order_id   Order ID.
@@ -477,7 +515,7 @@ class NotificationService {
 	public function notify_order_status( int $order_id, string $new_status, string $old_status ): void {
 		// A dispute closed without a ruling puts the order back where it was; the dispute
 		// notice already tells both sides, so a status notice would repeat an old event.
-		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) ) {
+		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) || OrderService::is_declining_cancellation( $order_id ) ) {
 			return;
 		}
 
@@ -2109,6 +2147,7 @@ class NotificationService {
 			// Cancellation types.
 			'cancellation_requested',
 			'cancellation_submitted',
+			'cancellation_declined',
 			'cancellation_auto_approved',
 			// Events added in 1.7.1.
 			'review_reply',
@@ -2159,6 +2198,7 @@ class NotificationService {
 			'order_cancelled'             => 'cancellation',
 			'cancellation_requested'      => 'cancellation',
 			'cancellation_submitted'      => 'cancellation',
+			'cancellation_declined'       => 'cancellation',
 			'cancellation_auto_approved'  => 'cancellation',
 			self::TYPE_DISPUTE_OPENED     => 'disputes',
 			self::TYPE_DISPUTE_RESOLVED   => 'disputes',
@@ -2396,6 +2436,7 @@ class NotificationService {
 			'dispute_opened',
 			'cancellation_requested',
 			'cancellation_submitted',
+			'cancellation_declined',
 			// Specific event types (EmailService hooks dedicated actions).
 			'submit_requirements',
 			self::TYPE_DELIVERY_SUBMITTED,

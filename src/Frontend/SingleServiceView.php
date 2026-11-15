@@ -1086,9 +1086,9 @@ class SingleServiceView {
 										id="wpss-contact-attachment"
 										name="attachments[]"
 										multiple
-										accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip">
+										accept="<?php echo esc_attr( wpss_upload_accept( 'message' ) ); ?>">
 								<p class="wpss-field-hint">
-									<?php esc_html_e( 'Max 5 files. Allowed: images, PDF, Word, ZIP.', 'wp-sell-services' ); ?>
+									<?php /* translators: %s: allowed file extensions, e.g. .jpg,.pdf */ echo esc_html( sprintf( __( 'Max 5 files. Allowed: %s', 'wp-sell-services' ), ( ( $wpss_types = explode( ',', wpss_upload_accept( 'message' ) ) ) && count( $wpss_types ) > 8 ? implode( ', ', array_slice( $wpss_types, 0, 8 ) ) . ', …' : implode( ', ', $wpss_types ) ) ) ); ?>
 								</p>
 							</div>
 
