@@ -59,7 +59,7 @@ class API {
 	}
 
 	/**
-	 * Turn a stored UTC datetime in any wpss/ response into ISO 8601.
+	 * Turn a stored UTC datetime in any wpss/ or wpss-pro/ response into ISO 8601.
 	 *
 	 * Controllers that already format a date are untouched (the value is no longer a
 	 * MySQL datetime). Only keys ending _at, _on or _deadline are converted, so a
@@ -73,7 +73,7 @@ class API {
 	 * @return \WP_HTTP_Response
 	 */
 	public function normalise_response_dates( $response, $server, $request ) {
-		if ( ! $response instanceof \WP_REST_Response || 0 !== strpos( $request->get_route(), '/wpss/' ) || $response->is_error() ) {
+		if ( ! $response instanceof \WP_REST_Response || ! preg_match( '#^/wpss(-pro)?/#', $request->get_route() ) || $response->is_error() ) {
 			return $response;
 		}
 

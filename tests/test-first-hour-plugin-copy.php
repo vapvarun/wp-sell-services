@@ -205,5 +205,15 @@ $check( 'REST dates are UTC with an offset; wizard max services never turns -4 i
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 
+$norm = static function ( string $route ) {
+	$resp = new WP_REST_Response( array( 'created_at' => '2026-01-02 03:04:05', 'start_date' => '2026-01-02 03:04:05' ) );
+	$out  = ( new \WPSellServices\API\API() )->normalise_response_dates( $resp, rest_get_server(), new WP_REST_Request( 'GET', $route ) );
+	return $out->get_data();
+};
+$free_d = $norm( '/wpss/v1/x' );
+$pro_d  = $norm( '/wpss-pro/v1/x' );
+$other  = $norm( '/other/v1/x' );
+$check( 'REST dates: Pro namespace is ISO 8601 like Free, echoed filters and other plugins untouched', false !== strpos( $pro_d['created_at'], 'T' ) && $pro_d['created_at'] === $free_d['created_at'] && '2026-01-02 03:04:05' === $pro_d['start_date'] && '2026-01-02 03:04:05' === $other['created_at'] );
+
 update_option( 'users_can_register', $was_open );
 echo $fails ? "\n$fails FAILED\n" : "\nALL PASSED\n";
