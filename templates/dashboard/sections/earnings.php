@@ -31,7 +31,7 @@ do_action( 'wpss_dashboard_section_before', 'earnings', $user_id );
 $earnings_service = new EarningsService();
 $earnings         = $earnings_service->get_summary( $user_id );
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only paging parameter.
-$withdrawals_page = isset( $_GET['withdrawals_page'] ) ? max( 1, absint( wp_unslash( $_GET['withdrawals_page'] ) ) ) : 1;
+$withdrawals_page = isset( $_GET['withdrawals_page'] ) ? max( 1, (int) $_GET['withdrawals_page'] ) : 1; // (int), not absint(): -3 is page 1, not page 3.
 $withdrawals_per  = 10;
 $withdrawals_all  = $earnings_service->count_withdrawals( $user_id );
 $withdrawals_last = max( 1, (int) ceil( $withdrawals_all / $withdrawals_per ) );

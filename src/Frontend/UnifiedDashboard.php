@@ -1089,6 +1089,13 @@ class UnifiedDashboard {
 
 		if ( 'become-vendor' === $section && ! $is_vendor && $registration_is_open ) {
 			// The become-vendor section should show the vendor onboarding prompt, not an error.
+			// The confirmation link lands here: say it worked.
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only flag set by the verification redirect.
+			if ( isset( $_GET['wpss_email_verified'] ) ) :
+				?>
+				<div class="wpss-notice wpss-notice--success" role="status"><?php esc_html_e( 'Your email is confirmed. You can start selling now.', 'wp-sell-services' ); ?></div>
+				<?php
+			endif;
 			?>
 			<div class="wpss-dashboard__empty">
 				<div class="wpss-dashboard__empty-icon">

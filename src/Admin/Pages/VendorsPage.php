@@ -2125,7 +2125,7 @@ class VendorsPage {
 		global $wpdb;
 
 		$limit       = 50;
-		$wallet_page = isset( $_POST['wallet_page'] ) ? max( 1, absint( $_POST['wallet_page'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
+		$wallet_page = isset( $_POST['wallet_page'] ) ? max( 1, (int) $_POST['wallet_page'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
 
 		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
 
@@ -2135,6 +2135,10 @@ class VendorsPage {
 				$vendor_id
 			)
 		);
+
+		// A page past the end (stale tab, hand-typed number) shows the last page, not an empty table.
+		$wallet_pages = max( 1, (int) ceil( $total / $limit ) );
+		$wallet_page  = min( $wallet_page, $wallet_pages );
 
 		// Most recent transactions (read-only audit view).
 		$transactions = $wpdb->get_results(
@@ -2149,7 +2153,6 @@ class VendorsPage {
 				( $wallet_page - 1 ) * $limit
 			)
 		);
-		$wallet_pages = max( 1, (int) ceil( $total / $limit ) );
 		?>
 		<div class="wpss-tab-section">
 			<h3><?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?></h3>

@@ -267,6 +267,15 @@ class VendorService {
 			);
 		}
 
+		// Tell the member the real reason: register() refuses silently, and a retry cannot work until the link is opened.
+		if ( wpss_email_verification_pending( $user_id ) ) {
+			return array(
+				'success' => false,
+				'code'    => 'wpss_email_unverified',
+				'message' => __( 'Please confirm your email first. Open the link we sent you, then apply again.', 'wp-sell-services' ),
+			);
+		}
+
 		$success = $this->register( $user_id, $data );
 
 		if ( $success ) {

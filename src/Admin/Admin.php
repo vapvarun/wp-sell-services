@@ -2193,7 +2193,9 @@ class Admin {
 
 			<form method="get" class="wpss-orders-bulk"
 				data-wpss-confirm-mark_completed="<?php /* translators: %d: number of orders. */ echo esc_attr__( 'Mark %d selected orders as Completed? Each vendor is credited for their order.', 'wp-sell-services' ); ?>"
-				data-wpss-confirm-mark_cancelled="<?php /* translators: %d: number of orders. */ echo esc_attr__( 'Cancel %d selected orders? Buyers are refunded through the gateway and vendor earnings are taken back.', 'wp-sell-services' ); ?>">
+				data-wpss-confirm-mark_completed-one="<?php echo esc_attr__( 'Mark the selected order as Completed? The vendor is credited for it.', 'wp-sell-services' ); ?>"
+				data-wpss-confirm-mark_cancelled="<?php /* translators: %d: number of orders. */ echo esc_attr__( 'Cancel %d selected orders? Buyers are refunded through the gateway and vendor earnings are taken back.', 'wp-sell-services' ); ?>"
+				data-wpss-confirm-mark_cancelled-one="<?php echo esc_attr__( 'Cancel the selected order? The buyer is refunded through the gateway and vendor earnings are taken back.', 'wp-sell-services' ); ?>">
 				<input type="hidden" name="page" value="wpss-orders">
 				<div class="wpss-list-card">
 					<div class="wpss-list-card__filters">
@@ -2245,7 +2247,7 @@ class Admin {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Streaming CSV to the response body.
 		$out = fopen( 'php://output', 'w' );
 
-		wpss_fputcsv( $out, array( 'order_id', 'order_number', 'status', 'payment_status', 'payment_method', 'buyer_id', 'buyer_email', 'vendor_id', 'vendor_name', 'service_id', 'subtotal', 'total', 'platform_fee', 'vendor_earnings', 'refunded_amount', 'currency', 'type', 'created_at', 'completed_at' ) );
+		wpss_fputcsv( $out, array( 'order_id', 'order_number', 'status', 'payment_status', 'payment_method', 'buyer_id', 'buyer_email', 'vendor_id', 'vendor_name', 'service_id', 'subtotal', 'total', 'platform_fee', 'vendor_earnings', 'refunded_amount', 'currency', 'platform', 'created_at', 'completed_at' ) );
 
 		$batch_size = 500;
 		$last_id    = 0;
@@ -2286,7 +2288,7 @@ class Admin {
 						(int) $row->customer_id,
 						(string) ( $users[ (int) $row->customer_id ]->user_email ?? '' ),
 						(int) $row->vendor_id,
-						(string) ( $users[ (int) $row->vendor_id ]->display_name ?? '' ),
+						html_entity_decode( (string) ( $users[ (int) $row->vendor_id ]->display_name ?? '' ), ENT_QUOTES, 'UTF-8' ), // Stored HTML-encoded; a spreadsheet wants the plain name.
 						(int) $row->service_id,
 						number_format( (float) $row->subtotal, $dec, '.', '' ),
 						number_format( (float) $row->total, $dec, '.', '' ),

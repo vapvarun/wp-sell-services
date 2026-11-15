@@ -16,8 +16,8 @@
 		if (!action || '-1' === action) {
 			action = $form.find('select[name="action2"]').val();
 		}
-		var message = action ? $form.attr('data-wpss-confirm-' + action) : '';
 		var count = $form.find('input[name="order_ids[]"]:checked').length;
+		var message = action ? (count === 1 && $form.attr('data-wpss-confirm-' + action + '-one')) || $form.attr('data-wpss-confirm-' + action) : '';
 
 		if (!message || !count || form.dataset.wpssConfirmed === '1' || typeof window.wpssConfirm !== 'function') {
 			return;

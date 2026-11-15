@@ -290,6 +290,9 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - With Suspended Vendors and Earnings on, a suspended vendor also reaches the Pro wallet routes the app uses, and no longer sees a Start selling panel on the dashboard.
 * Fix      - The missing Terms page notice waits until a gateway with keys is on or the first order exists, instead of showing on every screen of a brand-new site.
 * Fix      - The site owner's Add your first service button opens the Create form without making them a listed vendor; the vendor profile is created when they save the first service.
+* Fix      - Orders CSV writes the vendor name without HTML entities and labels the platform column platform.
+* Fix      - The paging links are 44px tall on a phone, a wallet page past the end shows the last page, and a negative withdrawals page is page 1.
+* Fix      - Applying to sell through the REST route before confirming email now says so (403 wpss_email_unverified), and the confirmation link lands on a notice that it worked.
 * Fix      - Bulk order and dispute actions now show a result message, including how many could not be changed.
 * Fix      - Buyer requests use their own capabilities, so Editors and Authors can no longer edit or delete them; administrators and shop managers keep full access, and the roles update on upgrade.
 * Fix      - When the site owner is also the seller, an offline order sends one owner email instead of two, and the wording says offline payment rather than bank transfer.

@@ -3857,3 +3857,10 @@ select.wpss-input option,
 .wpss-dashboard--embedded .wpss-card-grid--4col {
 	grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
 }
+
+/* Touch target: Previous and Next are 44px tall on a phone. */
+@media (max-width: 640px) {
+	.wpss-dashboard .wpss-pagination__link {
+		min-height: 44px;
+	}
+}
