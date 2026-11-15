@@ -215,5 +215,9 @@ $pro_d  = $norm( '/wpss-pro/v1/x' );
 $other  = $norm( '/other/v1/x' );
 $check( 'REST dates: Pro namespace is ISO 8601 like Free, echoed filters and other plugins untouched', false !== strpos( $pro_d['created_at'], 'T' ) && $pro_d['created_at'] === $free_d['created_at'] && '2026-01-02 03:04:05' === $pro_d['start_date'] && '2026-01-02 03:04:05' === $other['created_at'] );
 
+$view = file_get_contents( $root . '/src/Frontend/SingleServiceView.php' );
+$js   = file_get_contents( $root . '/assets/js/single-service.js' );
+$check( 'Order Options dialog is skipped only when nothing can be chosen, and a failure reopens it', false !== strpos( $view, "empty( \$extras ) && ! \$has_express && \$max_quantity <= 1" ) && false !== strpos( $js, "data('direct') === 1" ) && false !== strpos( $js, 'A skipped Order Options dialog is closed when the add fails' ) );
+
 update_option( 'users_can_register', $was_open );
 echo $fails ? "\n$fails FAILED\n" : "\nALL PASSED\n";

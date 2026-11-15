@@ -812,8 +812,44 @@ class SingleServiceView {
 		if ( 'paused' === wpss_get_service_status( $service->id ) ) {
 			return;
 		}
+
+		/**
+		 * Filters the maximum order quantity for a service.
+		 *
+		 * Services default to quantity 1. The quantity UI is only shown when a
+		 * filter allows more than 1. (The legacy _wpss_max_quantity post meta had
+		 * no write surface, so the filter is the only supported extension point.)
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $max_quantity Maximum quantity (default 1).
+		 * @param int $service_id   Service post ID.
+		 */
+		$max_quantity = (int) apply_filters( 'wpss_max_order_quantity', 1, $service_id );
+
+		$has_express = false;
+		foreach ( wpss_get_service_packages( $service_id ) as $package ) {
+			if ( wpss_get_package_express( (array) $package ) ) {
+				$has_express = true;
+				break;
+			}
+		}
+
+		/**
+		 * Whether Continue goes straight to checkout, skipping the Order Options dialog.
+		 *
+		 * True when the buyer has nothing to choose: no add-ons, no express delivery
+		 * and a quantity fixed at 1. A plugin that injects its own fields into the
+		 * dialog returns false to keep it.
+		 *
+		 * @since 1.9.3
+		 *
+		 * @param bool $direct     Whether to skip the dialog.
+		 * @param int  $service_id Service ID.
+		 */
+		$direct = (bool) apply_filters( 'wpss_order_modal_skip', empty( $extras ) && ! $has_express && $max_quantity <= 1, $service_id );
 		?>
-		<div id="wpss-order-modal" class="wpss-modal" hidden role="dialog" aria-modal="true" aria-labelledby="wpss-order-modal-title">
+		<div id="wpss-order-modal" class="wpss-modal" hidden<?php echo $direct ? ' data-direct="1"' : ''; ?> role="dialog" aria-modal="true" aria-labelledby="wpss-order-modal-title">
 			<div class="wpss-modal__backdrop"></div>
 			<div class="wpss-modal__dialog">
 				<div class="wpss-modal__header">
@@ -910,21 +946,6 @@ class SingleServiceView {
 						<?php endif; ?>
 
 						<?php
-						/**
-						 * Filters the maximum order quantity for a service.
-						 *
-						 * Services default to quantity 1. The quantity UI is only
-						 * shown when a filter allows more than 1. (The legacy
-						 * _wpss_max_quantity post meta had no write surface, so the
-						 * filter is the only supported extension point.)
-						 *
-						 * @since 1.0.0
-						 *
-						 * @param int $max_quantity Maximum quantity (default 1).
-						 * @param int $service_id   Service post ID.
-						 */
-						$max_quantity = (int) apply_filters( 'wpss_max_order_quantity', 1, $service_id );
-
 						if ( $max_quantity > 1 ) :
 							?>
 						<div class="wpss-order-quantity">

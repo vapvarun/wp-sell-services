@@ -297,6 +297,7 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - A partial refund notice says the amount instead of a generic status update.
 * Fix      - Toast messages sit below the WordPress admin bar on a phone.
 * Fix      - The REST requirements answer and a buyer request's created_at are ISO 8601 in UTC, and the setup wizard no longer turns a negative max services into a positive one.
+* Improve  - A service with one package and nothing to choose (no add-ons, express delivery or quantity) goes from Continue straight to checkout instead of opening an Order Options dialog. A failed add reopens the dialog with the message.
 * Dev      - New wpss_order_timestamp filter lets an importer or demo installer set the created, paid, started and completed dates on orders it creates. Default behaviour is unchanged.
 * Fix      - Dates on Pro REST routes (/wpss-pro/v1) now come back as ISO 8601 UTC, the same as the core routes.
 * Fix      - Bulk order and dispute actions now show a result message, including how many could not be changed.
