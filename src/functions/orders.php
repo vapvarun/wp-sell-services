@@ -177,6 +177,35 @@ function wpss_order_number_search_sql( string $term, string $column = 'order_num
 }
 
 /**
+ * The UTC time to stamp on an order row.
+ *
+ * Always "now" unless an importer or demo installer hooks `wpss_order_timestamp`
+ * for the length of its run, so seeded and migrated orders keep their real dates.
+ *
+ * @since 1.9.3
+ *
+ * @param string $field    Column being stamped: created_at, updated_at, paid_at, started_at or completed_at.
+ * @param int    $order_id Order ID, 0 while the order is still being created.
+ * @return string UTC MySQL datetime.
+ */
+function wpss_order_timestamp( string $field, int $order_id = 0 ): string {
+	$now = current_time( 'mysql', true );
+
+	/**
+	 * Filters the UTC datetime stamped on an order column.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string $now      UTC MySQL datetime, now by default.
+	 * @param string $field    Column being stamped.
+	 * @param int    $order_id Order ID, 0 on creation.
+	 */
+	$stamp = apply_filters( 'wpss_order_timestamp', $now, $field, $order_id );
+
+	return is_string( $stamp ) && false !== strtotime( $stamp ) ? $stamp : $now;
+}
+
+/**
  * Generate a unique, human-quotable order number.
  *
  * THE single generator. Every rail calls this so one install never mixes

@@ -834,19 +834,19 @@ class OrderService {
 
 		$data = array(
 			'status'     => $new_status,
-			'updated_at' => current_time( 'mysql', true ),
+			'updated_at' => wpss_order_timestamp( 'updated_at', $order_id ),
 		);
 
 		// Set timestamps based on status.
 		if ( ServiceOrder::STATUS_IN_PROGRESS === $new_status && ! $order->started_at ) {
-			$data['started_at'] = current_time( 'mysql', true );
+			$data['started_at'] = wpss_order_timestamp( 'started_at', $order_id );
 		}
 
 		// A dispute handing a completed order back keeps its original completion
 		// time, so the review window and earnings periods do not restart.
 		if ( ServiceOrder::STATUS_COMPLETED === $new_status
 			&& ! ( $order->completed_at && DisputeWorkflowManager::is_restoring_order( $order_id ) ) ) {
-			$data['completed_at'] = current_time( 'mysql', true );
+			$data['completed_at'] = wpss_order_timestamp( 'completed_at', $order_id );
 		}
 
 		// Conditioned on the status just read: a concurrent writer that moved
@@ -1163,7 +1163,7 @@ class OrderService {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$table,
-				array( 'started_at' => current_time( 'mysql', true ) ),
+				array( 'started_at' => wpss_order_timestamp( 'started_at', (int) $order_id ) ),
 				array( 'id' => $order_id )
 			);
 		}

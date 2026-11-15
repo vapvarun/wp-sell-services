@@ -173,6 +173,6 @@ expecting any of them to be finished.
 
 ---
 
-Fuller detail: [Feature catalog](docs/website/feature-catalog.md) ·
+Fuller detail: [Feature catalog](docs/website/getting-started/feature-catalog.md) ·
 [Free vs Pro](docs/website/getting-started/free-vs-pro.md). Developer-side
 capability and role reference lives in `audit/CAPABILITIES.md`.
