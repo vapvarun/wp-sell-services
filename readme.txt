@@ -301,6 +301,11 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Improve  - Settings > Payouts warns when the saved wallet provider is not active and balances are held in the Internal Wallet.
 * Improve  - A service with one package and nothing to choose (no add-ons, express delivery or quantity) goes from Continue straight to checkout instead of opening an Order Options dialog. A failed add reopens the dialog with the message.
 * Dev      - New wpss_order_timestamp filter lets an importer or demo installer set the created, paid, started and completed dates on orders it creates. Default behaviour is unchanged.
+* Fix      - A dispute ruling that refunds money sends the Dispute resolved notice only, not a second refund notice beside it.
+* Fix      - Max services per vendor and the Offline gateway auto-cancel hours refuse a negative value and keep what was saved, and clamp a too-large one to the field's limit.
+* Fix      - POST /orders/{id}/deliver delivers the files posted with it, and refuses a bad file with a 400 instead of answering 200 and dropping it.
+* Fix      - Every CSV export writes plain names, so Diego Smith &amp; Sons reads Diego Smith & Sons in payouts and vendor sales exports.
+* Improve  - The vendor Wallet tab in wp-admin can be filtered by transaction type and jumped to a page.
 * Fix      - Dates on Pro REST routes (/wpss-pro/v1) now come back as ISO 8601 UTC, the same as the core routes.
 * Fix      - Bulk order and dispute actions now show a result message, including how many could not be changed.
 * Fix      - Buyer requests use their own capabilities, so Editors and Authors can no longer edit or delete them; administrators and shop managers keep full access, and the roles update on upgrade.

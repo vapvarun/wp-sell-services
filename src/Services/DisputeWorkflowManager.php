@@ -849,6 +849,47 @@ class DisputeWorkflowManager {
 	private static array $restoring = array();
 
 	/**
+	 * Orders whose refund is being applied by a dispute ruling right now.
+	 *
+	 * The ruling sends its own "Dispute resolved" notice with the amount, so the
+	 * order's refund notice stays quiet for the length of the call.
+	 *
+	 * @since 1.9.3
+	 * @var array<int, true>
+	 */
+	private static array $resolving = array();
+
+	/**
+	 * Run a refund that a dispute ruling caused, flagged so it does not announce itself twice.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param int      $order_id Order ID.
+	 * @param callable $apply    The refund call; its return value is passed back.
+	 * @return mixed
+	 */
+	public static function while_resolving( int $order_id, callable $apply ) {
+		self::$resolving[ $order_id ] = true;
+
+		try {
+			return $apply();
+		} finally {
+			unset( self::$resolving[ $order_id ] );
+		}
+	}
+
+	/**
+	 * Whether a dispute ruling is refunding this order right now.
+	 *
+	 * @since 1.9.3
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public static function is_resolving_order( int $order_id ): bool {
+		return isset( self::$resolving[ $order_id ] );
+	}
+
+	/**
 	 * Whether this order is being restored from a cancelled dispute right now.
 	 *
 	 * @since 1.7.1

@@ -150,6 +150,29 @@ function wpss_settings_defaults(): array {
 }
 
 /**
+ * Read a posted whole-number limit without letting a typo change what it means.
+ *
+ * Out-of-range values are clamped to the field's own min and max. A negative or
+ * non-numeric value is refused and returns $current instead, because for limits
+ * where 0 means "unlimited" or "off" a mistyped -4 must not silently become 0.
+ *
+ * @since 1.9.3
+ *
+ * @param mixed $value   Posted value.
+ * @param int   $min     Lowest allowed value.
+ * @param int   $max     Highest allowed value.
+ * @param int   $current Value already stored, kept when the posted one is refused.
+ * @return int
+ */
+function wpss_clamp_limit( $value, int $min, int $max, int $current ): int {
+	if ( ! is_numeric( $value ) || (float) $value < 0 ) {
+		return $current;
+	}
+
+	return max( $min, min( $max, (int) $value ) );
+}
+
+/**
  * Get a plugin option value, falling back to wpss_settings_defaults().
  *
  * @param string $group   Option group without the prefix ('general', 'orders').

@@ -1024,11 +1024,21 @@ class OrdersController extends RestController {
 					// never rendered, "Accept delivery" failed its own guard and
 					// the revision button was hidden. A successful call left the
 					// order unfinishable by either party.
+					// The files a client posts with the action are delivered with it, exactly as
+					// POST /orders/{id}/deliverables does; they used to be dropped without a word.
+					$files       = array();
+					$file_params = $request->get_file_params();
+					if ( ! empty( $file_params['files'] ) ) {
+						$files = wpss_normalize_uploaded_files( (array) $file_params['files'] );
+					}
+
 					$delivery = new \WPSellServices\Services\DeliveryService();
-					$result   = $delivery->submit( $order_id, (string) $request->get_param( 'message' ), array() );
+					$result   = $delivery->submit( $order_id, (string) $request->get_param( 'message' ), $files );
 
 					if ( ! $result ) {
-						$error = __( 'Delivery could not be submitted.', 'wp-sell-services' );
+						$error = '' !== $delivery->get_last_error()
+							? $delivery->get_last_error()
+							: __( 'Delivery could not be submitted.', 'wp-sell-services' );
 					}
 				}
 				break;

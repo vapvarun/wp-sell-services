@@ -463,6 +463,7 @@ function wpss_format_attachment_name( string $name, int $max = 80 ): string {
  * A leading apostrophe is the standard remedy: the spreadsheet stores the text
  * and shows it without the quote. Numeric strings are returned untouched, so a
  * negative amount stays a number the sheet can sum rather than becoming text.
+ * HTML entities are decoded first, so every export writes plain names.
  *
  * @since 1.7.2
  *
@@ -470,7 +471,9 @@ function wpss_format_attachment_name( string $name, int $max = 80 ): string {
  * @return string Safe cell value.
  */
 function wpss_csv_cell( $value ): string {
-	$value = (string) $value;
+	// Names are stored HTML-encoded ("Diego Smith &amp; Sons"); a spreadsheet wants the plain
+	// text. Decoded before the formula guard so an encoded "=" cannot slip past it.
+	$value = html_entity_decode( (string) $value, ENT_QUOTES, 'UTF-8' );
 
 	if ( '' === $value || is_numeric( $value ) ) {
 		return $value;

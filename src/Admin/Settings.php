@@ -4020,7 +4020,11 @@ class Settings {
 		$sanitized = array();
 
 		$sanitized['vendor_registration']     = sanitize_key( $input['vendor_registration'] ?? 'open' );
-		$sanitized['max_services_per_vendor'] = max( 0, (int) ( $input['max_services_per_vendor'] ?? 20 ) );
+		if ( isset( $input['max_services_per_vendor'] ) && ( ! is_numeric( $input['max_services_per_vendor'] ) || (float) $input['max_services_per_vendor'] < 0 ) ) {
+			add_settings_error( 'wpss_vendor', 'wpss_max_services_negative', __( 'Max services per vendor must be 0 or more, so the previous value was kept. Use 0 for no limit.', 'wp-sell-services' ) );
+		}
+
+		$sanitized['max_services_per_vendor'] = wpss_clamp_limit( $input['max_services_per_vendor'] ?? 20, 0, 100, (int) wpss_get_option( 'vendor', 'max_services_per_vendor', 20 ) );
 		// Vendor verification is not yet implemented — setting removed to avoid confusion.
 		$sanitized['require_service_moderation'] = ! empty( $input['require_service_moderation'] );
 		$sanitized['moderate_reviews']           = ! empty( $input['moderate_reviews'] );

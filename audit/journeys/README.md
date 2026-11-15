@@ -125,7 +125,7 @@ Each row of the public feature catalog (`docs/website/getting-started/feature-ca
 | Email notifications; white-label branding | 11, 12, 23 |
 | In-app notifications | 11 |
 | Push notifications to phones | 23 |
-| Realtime alerts | 08 |
+| Realtime alerts | 08 (channel auth), 14 (a message arrives live) |
 | Admin order, vendor, dispute, withdrawal management | 13, 02, 10 |
 | Moderation queues | 13 |
 | Analytics | 15, 13 |

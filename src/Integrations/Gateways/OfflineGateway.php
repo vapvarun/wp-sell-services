@@ -1683,7 +1683,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		$sanitized['enabled']         = ! empty( $input['enabled'] ) ? '1' : '';
 		$sanitized['title']           = sanitize_text_field( $input['title'] ?? '' );
 		$sanitized['description']     = sanitize_textarea_field( $input['description'] ?? '' );
-		$sanitized['auto_hold_hours'] = absint( $input['auto_hold_hours'] ?? 0 );
+		$sanitized['auto_hold_hours'] = wpss_clamp_limit( $input['auto_hold_hours'] ?? 0, 0, 720, (int) ( get_option( self::OPTION_NAME, array() )['auto_hold_hours'] ?? 0 ) );
 
 		$methods = $this->sanitize_methods( (array) ( $input['methods'] ?? array() ) );
 

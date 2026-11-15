@@ -2136,18 +2136,40 @@ class VendorsPage {
 			)
 		);
 
+		// The types this vendor actually has (idx_user_type_created), so the filter lists only real choices.
+		$wallet_types = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT type FROM {$wpdb->prefix}wpss_wallet_transactions WHERE user_id = %d ORDER BY type ASC LIMIT 50",
+				$vendor_id
+			)
+		);
+		$wallet_type  = isset( $_POST['wallet_type'] ) ? sanitize_key( wp_unslash( $_POST['wallet_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
+		$wallet_type  = in_array( $wallet_type, $wallet_types, true ) ? $wallet_type : '';
+
+		$matching = $total;
+		if ( '' !== $wallet_type ) {
+			$matching = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_wallet_transactions WHERE user_id = %d AND type = %s",
+					$vendor_id,
+					$wallet_type
+				)
+			);
+		}
+
 		// A page past the end (stale tab, hand-typed number) shows the last page, not an empty table.
-		$wallet_pages = max( 1, (int) ceil( $total / $limit ) );
+		$wallet_pages = max( 1, (int) ceil( $matching / $limit ) );
 		$wallet_page  = min( $wallet_page, $wallet_pages );
 
 		// Most recent transactions (read-only audit view).
+		$type_sql     = '' !== $wallet_type ? $wpdb->prepare( 'AND type = %s', $wallet_type ) : '';
 		$transactions = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, type, amount, currency, description, reference_type, reference_id, status, created_at
 				FROM {$wpdb->prefix}wpss_wallet_transactions
-				WHERE user_id = %d
+				WHERE user_id = %d {$type_sql}
 				ORDER BY created_at DESC, id DESC
-				LIMIT %d OFFSET %d",
+				LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $type_sql is a prepared fragment.
 				$vendor_id,
 				$limit,
 				( $wallet_page - 1 ) * $limit
@@ -2174,6 +2196,17 @@ class VendorsPage {
 
 		<div class="wpss-tab-section">
 			<h3><?php esc_html_e( 'Transaction History', 'wp-sell-services' ); ?></h3>
+			<?php if ( count( $wallet_types ) > 1 ) : ?>
+				<p class="wpss-wallet-filter">
+					<label for="wpss-wallet-type"><?php esc_html_e( 'Type', 'wp-sell-services' ); ?></label>
+					<select id="wpss-wallet-type">
+						<option value=""><?php esc_html_e( 'All types', 'wp-sell-services' ); ?></option>
+						<?php foreach ( $wallet_types as $type_key ) : ?>
+							<option value="<?php echo esc_attr( $type_key ); ?>" <?php selected( $wallet_type, $type_key ); ?>><?php echo esc_html( ucwords( str_replace( '_', ' ', (string) $type_key ) ) ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+			<?php endif; ?>
 			<?php if ( empty( $transactions ) ) : ?>
 				<p><?php esc_html_e( 'No wallet transactions yet.', 'wp-sell-services' ); ?></p>
 			<?php else : ?>
@@ -2209,7 +2242,10 @@ class VendorsPage {
 							<?php if ( $wallet_page > 1 ) : ?>
 								<a href="#" data-page="<?php echo esc_attr( $wallet_page - 1 ); ?>" aria-label="<?php esc_attr_e( 'Previous page', 'wp-sell-services' ); ?>">&laquo;</a>
 							<?php endif; ?>
-							<span class="paging-input"><?php echo esc_html( $wallet_page ); ?> / <?php echo esc_html( $wallet_pages ); ?></span>
+							<span class="paging-input">
+								<label class="screen-reader-text" for="wpss-wallet-jump"><?php esc_html_e( 'Go to page', 'wp-sell-services' ); ?></label>
+								<input type="number" id="wpss-wallet-jump" class="small-text" min="1" max="<?php echo esc_attr( $wallet_pages ); ?>" value="<?php echo esc_attr( $wallet_page ); ?>"> / <?php echo esc_html( $wallet_pages ); ?>
+							</span>
 							<?php if ( $wallet_page < $wallet_pages ) : ?>
 								<a href="#" data-page="<?php echo esc_attr( $wallet_page + 1 ); ?>" aria-label="<?php esc_attr_e( 'Next page', 'wp-sell-services' ); ?>">&raquo;</a>
 							<?php endif; ?>

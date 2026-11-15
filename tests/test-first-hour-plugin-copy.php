@@ -196,12 +196,12 @@ $check( 'docs no longer say anyone can sign up as a vendor', false === strpos( f
 $wpss_ud = file_get_contents( $root . '/src/Frontend/UnifiedDashboard.php' );
 $check( 'owner Start selling click makes no profile; Create opens for them; the first save makes it', false !== strpos( $wpss_ud, "'create' === \$section && current_user_can( 'manage_options' )" ) && false === strpos( file_get_contents( $root . '/src/Frontend/ServiceWizard.php' ), 'ensure_admin_profile( $user_id )' ) && false !== strpos( file_get_contents( $root . '/src/Core/Plugin.php' ), 'ensure_admin_profile( (int) $post->post_author )' ) );
 $wpss_adm = file_get_contents( $root . '/src/Admin/Admin.php' );
-$check( 'orders CSV: vendor name decoded, column is labelled platform; bulk dialog has a singular', false !== strpos( $wpss_adm, "html_entity_decode( (string) ( \$users[ (int) \$row->vendor_id ]->display_name" ) && false !== strpos( $wpss_adm, "'currency', 'platform', 'created_at'" ) && false !== strpos( $wpss_adm, 'mark_cancelled-one' ) );
+$check( 'orders CSV: names are decoded once in the shared cell writer, column is labelled platform; bulk dialog has a singular', false !== strpos( file_get_contents( $root . '/src/functions/files.php' ), "html_entity_decode( (string) \$value, ENT_QUOTES" ) && false !== strpos( $wpss_adm, "'currency', 'platform', 'created_at'" ) && false !== strpos( $wpss_adm, 'mark_cancelled-one' ) );
 $check( 'paging: out-of-range wallet page clamps, negative withdrawals page is page 1, 44px touch links', false !== strpos( file_get_contents( $root . '/src/Admin/Pages/VendorsPage.php' ), '$wallet_page  = min( $wallet_page, $wallet_pages );' ) && false !== strpos( file_get_contents( $root . '/templates/dashboard/sections/earnings.php' ), '(int) $_GET[\'withdrawals_page\']' ) && false !== strpos( file_get_contents( $root . '/assets/css/messaging.css' ), 'min-height: 44px' ) );
 $check( 'REST vendor register names an unconfirmed email (403) and the link lands on a confirmation', false !== strpos( file_get_contents( $root . '/src/API/VendorsController.php' ), "'wpss_email_unverified'" ) && false !== strpos( file_get_contents( $root . '/src/Frontend/UnifiedDashboard.php' ), 'Your email is confirmed' ) );
 $check( 'New Order mail and notice only on the payment move; partial refund says the amount', false !== strpos( file_get_contents( $root . '/src/Services/EmailService.php' ), "in_array( \$old_status, array( ServiceOrder::STATUS_PENDING_PAYMENT, '' ), true )" ) && false !== strpos( file_get_contents( $root . '/src/Services/NotificationService.php' ), "case 'partially_refunded':" ) );
 $check( 'toast container clears the admin bar', false !== strpos( file_get_contents( $root . '/assets/css/frontend.css' ), 'top: calc(20px + var(--wp-admin--admin-bar--height, 0px))' ) );
-$check( 'REST dates are UTC with an offset; wizard max services never turns -4 into 4', false !== strpos( file_get_contents( $root . '/src/API/BuyerRequestsController.php' ), 'get_gmt_from_date(' ) && false !== strpos( file_get_contents( $root . '/src/API/OrdersController.php' ), "'submitted_at' => wpss_rest_date( current_time( 'mysql', true ) )" ) && false !== strpos( $wizard, "max( 0, (int) \$_POST['max_services_per_vendor'] )" ) );
+$check( 'REST dates are UTC with an offset (request created_at is not converted twice); wizard max services never turns -4 into 4', false === strpos( file_get_contents( $root . '/src/API/BuyerRequestsController.php' ), 'get_gmt_from_date(' ) && false !== strpos( file_get_contents( $root . '/src/API/OrdersController.php' ), "'submitted_at' => wpss_rest_date( current_time( 'mysql', true ) )" ) && false !== strpos( $wizard, 'wpss_clamp_limit( $posted, 0, 100, 20 )' ) );
 $ah = file_get_contents( $root . '/src/Frontend/AjaxHandlers.php' );
 $check( 'AJAX buyer cancel is limited to pre-delivery statuses', false !== strpos( $ah, '$buyer_immediate' ) );
 
@@ -210,6 +210,8 @@ $norm = static function ( string $route ) {
 	$out  = ( new \WPSellServices\API\API() )->normalise_response_dates( $resp, rest_get_server(), new WP_REST_Request( 'GET', $route ) );
 	return $out->get_data();
 };
+$rows   = ( new \WPSellServices\API\API() )->normalise_response_dates( new WP_REST_Response( array( (object) array( 'paid_at' => '2026-01-02 03:04:05', 'note' => '2026-01-02 03:04:05' ) ) ), rest_get_server(), new WP_REST_Request( 'GET', '/wpss-pro/v1/rows' ) )->get_data();
+$check( 'REST dates: a $wpdb row (stdClass) is normalised too, other keys untouched', is_object( $rows[0] ) && false !== strpos( $rows[0]->paid_at, 'T' ) && '2026-01-02 03:04:05' === $rows[0]->note );
 $free_d = $norm( '/wpss/v1/x' );
 $pro_d  = $norm( '/wpss-pro/v1/x' );
 $other  = $norm( '/other/v1/x' );

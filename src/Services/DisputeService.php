@@ -1120,14 +1120,17 @@ class DisputeService {
 
 				// Ruling for the buyer returns everything they paid; NULL asks
 				// refund() to resolve that to the order total.
-				$refund = $this->order_service->refund(
+				$refund = DisputeWorkflowManager::while_resolving(
 					$order_id,
-					$partial ? $refund_amount : null,
-					$partial ? ServiceOrder::STATUS_PARTIALLY_REFUNDED : ServiceOrder::STATUS_REFUNDED,
-					array(
-						'origin'     => 'dispute',
-						'dispute_id' => (int) $dispute->id,
-						'resolution' => $resolution,
+					fn() => $this->order_service->refund(
+						$order_id,
+						$partial ? $refund_amount : null,
+						$partial ? ServiceOrder::STATUS_PARTIALLY_REFUNDED : ServiceOrder::STATUS_REFUNDED,
+						array(
+							'origin'     => 'dispute',
+							'dispute_id' => (int) $dispute->id,
+							'resolution' => $resolution,
+						)
 					)
 				);
 

@@ -573,30 +573,44 @@
 			});
 		}
 
-		// Wallet tab handlers (pagination).
+		// Wallet tab handlers (pagination, type filter, jump to page).
+		function loadWalletPage(page, type) {
+			delete tabCache['wallet'];
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'wpss_vendor_tab_content',
+					nonce: nonce,
+					vendor_id: vendorId,
+					tab: 'wallet',
+					wallet_page: page,
+					wallet_type: type
+				},
+				success: function(response) {
+					if (response.success) {
+						$('#wpss-tab-content').html(response.data.html);
+						wpssRefreshIcons();
+						initWalletHandlers();
+					}
+				}
+			});
+		}
+
 		function initWalletHandlers() {
+			var currentType = function() { return $('#wpss-wallet-type').val() || ''; };
+
 			$('.wpss-wallet-pagination a').off('click').on('click', function(e) {
 				e.preventDefault();
-				var page = $(this).data('page');
-				delete tabCache['wallet'];
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_vendor_tab_content',
-						nonce: nonce,
-						vendor_id: vendorId,
-						tab: 'wallet',
-						wallet_page: page
-					},
-					success: function(response) {
-						if (response.success) {
-							$('#wpss-tab-content').html(response.data.html);
-							wpssRefreshIcons();
-							initWalletHandlers();
-						}
-					}
-				});
+				loadWalletPage($(this).data('page'), currentType());
+			});
+
+			$('#wpss-wallet-type').off('change').on('change', function() {
+				loadWalletPage(1, currentType());
+			});
+
+			$('#wpss-wallet-jump').off('change').on('change', function() {
+				loadWalletPage(parseInt($(this).val(), 10) || 1, currentType());
 			});
 		}
 

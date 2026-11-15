@@ -349,7 +349,13 @@ class SetupWizardPage {
 				: 'open';
 		}
 		if ( isset( $_POST['max_services_per_vendor'] ) ) {
-			$vendor['max_services_per_vendor'] = max( 0, (int) $_POST['max_services_per_vendor'] );
+			$posted = sanitize_text_field( wp_unslash( $_POST['max_services_per_vendor'] ) );
+
+			if ( ! is_numeric( $posted ) || (float) $posted < 0 ) {
+				wp_send_json_error( array( 'message' => __( 'Max services per vendor must be 0 or more. Use 0 for no limit.', 'wp-sell-services' ) ) );
+			}
+
+			$vendor['max_services_per_vendor'] = wpss_clamp_limit( $posted, 0, 100, 20 );
 		}
 
 		// `require_verification` is deliberately NOT written. Nothing in free or
@@ -659,7 +665,7 @@ class SetupWizardPage {
 
 				<div class="wpss-wizard-field">
 					<label for="wpss-wiz-max-services"><?php esc_html_e( 'Max Services per Vendor', 'wp-sell-services' ); ?></label>
-					<input type="number" id="wpss-wiz-max-services" value="<?php echo esc_attr( $max_services ); ?>" min="1" max="999">
+					<input type="number" id="wpss-wiz-max-services" value="<?php echo esc_attr( $max_services ); ?>" min="0" max="100">
 				</div>
 
 				<div class="wpss-wizard-field">

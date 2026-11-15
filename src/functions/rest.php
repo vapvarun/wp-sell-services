@@ -475,6 +475,12 @@ function wpss_rest_normalise_dates( array $data, string $key_pattern = '/(_at|_o
 			continue;
 		}
 
+		// A $wpdb row is a stdClass: some routes return rows as they came out of the table.
+		if ( $value instanceof \stdClass ) {
+			$data[ $key ] = (object) wpss_rest_normalise_dates( get_object_vars( $value ), $key_pattern );
+			continue;
+		}
+
 		if ( ! is_string( $value ) || ! is_string( $key ) ) {
 			continue;
 		}

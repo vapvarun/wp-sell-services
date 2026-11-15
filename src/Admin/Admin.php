@@ -2288,7 +2288,7 @@ class Admin {
 						(int) $row->customer_id,
 						(string) ( $users[ (int) $row->customer_id ]->user_email ?? '' ),
 						(int) $row->vendor_id,
-						html_entity_decode( (string) ( $users[ (int) $row->vendor_id ]->display_name ?? '' ), ENT_QUOTES, 'UTF-8' ), // Stored HTML-encoded; a spreadsheet wants the plain name.
+						(string) ( $users[ (int) $row->vendor_id ]->display_name ?? '' ),
 						(int) $row->service_id,
 						number_format( (float) $row->subtotal, $dec, '.', '' ),
 						number_format( (float) $row->total, $dec, '.', '' ),

@@ -33,7 +33,7 @@ The website has no skip button (it went with the old checkout script in 1.0.x); 
 ### 4. Vendor delivers, and a bad file is refused
 As the vendor, open the order from Sales Orders. Deliver with a message and a file the site refuses (for example a `.php`), then with an allowed file.
 
-**Expect** the first delivery is refused whole and names the file; nothing is saved and the buyer is not told. The second is saved, the order shows Delivered, the buyer gets one notification and one email. REST twin: `POST /orders/{id}/deliver`.
+**Expect** the first delivery is refused whole and names the file; nothing is saved and the buyer is not told. The second is saved, the order shows Pending Approval (the label the buyer and vendor pages use for a delivered order), the buyer gets one notification and one email. REST twin: `POST /orders/{id}/deliverables` for the files; `POST /orders/{id}/deliver` is the action route the order buttons use and carries the same `files[]`, refusing a bad one with a 400.
 
 ### 5. Buyer asks for a revision
 As the buyer, request a revision with a note.

@@ -822,6 +822,12 @@ class NotificationService {
 
 			case 'refunded':
 			case 'partially_refunded':
+				// A dispute ruling sends "Dispute resolved" with the amount; a second
+				// refund notice for the same decision told each person twice.
+				if ( DisputeWorkflowManager::is_resolving_order( (int) $order_id ) ) {
+					break;
+				}
+
 				// The generic "status updated to Refunded" line said nothing about
 				// money. A partial refund (a dispute ruling, an admin refund) says the amount too. Both parties get the amount: what was refunded when the
 				// gateway has already answered, the order total otherwise.
