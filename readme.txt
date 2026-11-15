@@ -293,6 +293,9 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - Orders CSV writes the vendor name without HTML entities and labels the platform column platform.
 * Fix      - The paging links are 44px tall on a phone, a wallet page past the end shows the last page, and a negative withdrawals page is page 1.
 * Fix      - Applying to sell through the REST route before confirming email now says so (403 wpss_email_unverified), and the confirmation link lands on a notice that it worked.
+* Fix      - Moving a started order back to Pending Requirements no longer re-sends New Service Order and Order Confirmed; only payment does.
+* Fix      - A partial refund notice says the amount instead of a generic status update.
+* Fix      - Toast messages sit below the WordPress admin bar on a phone.
 * Fix      - Bulk order and dispute actions now show a result message, including how many could not be changed.
 * Fix      - Buyer requests use their own capabilities, so Editors and Authors can no longer edit or delete them; administrators and shop managers keep full access, and the roles update on upgrade.
 * Fix      - When the site owner is also the seller, an offline order sends one owner email instead of two, and the wording says offline payment rather than bank transfer.

@@ -519,7 +519,10 @@ class NotificationService {
 			// event, the same as EmailService::handle_status_change(). It fell to default
 			// and sent a second, generic "Order status updated" mail beside the branded pair.
 			case 'pending_requirements':
-				$this->notify_order_created( $order_id );
+				// Only the payment moves it here as the new-order event; an admin moving a started order back is not one.
+				if ( in_array( $old_status, array( 'pending_payment', '' ), true ) ) {
+					$this->notify_order_created( $order_id );
+				}
 				break;
 
 			// The one writer of the overdue rows: the cron sweep and a manual change both land here.
@@ -818,22 +821,27 @@ class NotificationService {
 				break;
 
 			case 'refunded':
+			case 'partially_refunded':
 				// The generic "status updated to Refunded" line said nothing about
-				// money. Both parties get the amount: what was refunded when the
+				// money. A partial refund (a dispute ruling, an admin refund) says the amount too. Both parties get the amount: what was refunded when the
 				// gateway has already answered, the order total otherwise.
 				$refunded = (float) ( $order->refunded_amount ?? 0 ) > 0
 					? (float) $order->refunded_amount
 					: (float) ( $order->total ?? 0 );
 				$amount   = wpss_format_price( $refunded, (string) ( $order->currency ?? '' ) );
+				$partial  = 'partially_refunded' === $new_status;
 
 				$this->create(
 					$order->customer_id,
 					self::TYPE_ORDER_STATUS,
-					__( 'Order refunded', 'wp-sell-services' ),
+					$partial ? __( 'Order partly refunded', 'wp-sell-services' ) : __( 'Order refunded', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
-							/* translators: 1: order number, 2: amount */
-							__( 'Order #%1$s has been refunded. %2$s is on its way back to your original payment method.', 'wp-sell-services' ),
+							$partial
+								/* translators: 1: order number, 2: amount */
+								? __( 'Order #%1$s has been partly refunded. %2$s is on its way back to your original payment method.', 'wp-sell-services' )
+								/* translators: 1: order number, 2: amount */
+								: __( 'Order #%1$s has been refunded. %2$s is on its way back to your original payment method.', 'wp-sell-services' ),
 							$order_number,
 							NotificationMessage::strong( $amount )
 						)
@@ -850,11 +858,14 @@ class NotificationService {
 				$this->create(
 					$order->vendor_id,
 					self::TYPE_ORDER_STATUS,
-					__( 'Order refunded', 'wp-sell-services' ),
+					$partial ? __( 'Order partly refunded', 'wp-sell-services' ) : __( 'Order refunded', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
-							/* translators: 1: order number, 2: buyer name, 3: amount */
-							__( 'Order #%1$s from %2$s has been refunded (%3$s).', 'wp-sell-services' ),
+							$partial
+								/* translators: 1: order number, 2: buyer name, 3: amount */
+								? __( 'Order #%1$s from %2$s has been partly refunded (%3$s).', 'wp-sell-services' )
+								/* translators: 1: order number, 2: buyer name, 3: amount */
+								: __( 'Order #%1$s from %2$s has been refunded (%3$s).', 'wp-sell-services' ),
 							$order_number,
 							$buyer_name,
 							NotificationMessage::strong( $amount )

@@ -273,7 +273,10 @@ class EmailService {
 
 		switch ( $new_status ) {
 			case ServiceOrder::STATUS_PENDING_REQUIREMENTS:
-				$this->send_new_order( $order );
+				// Only payment makes this the new-order event; an admin moving a started order back is not one.
+				if ( in_array( $old_status, array( ServiceOrder::STATUS_PENDING_PAYMENT, '' ), true ) ) {
+					$this->send_new_order( $order );
+				}
 				break;
 
 			case ServiceOrder::STATUS_IN_PROGRESS:

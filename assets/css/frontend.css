@@ -3455,7 +3455,7 @@ a.wpss-back-link:focus {
 
 #wpss-notification-container {
 	position: fixed;
-	top: 20px;
+	top: calc(20px + var(--wp-admin--admin-bar--height, 0px));
 	right: 20px;
 	z-index: 9995;
 	display: flex;
@@ -3560,7 +3560,7 @@ a.wpss-back-link:focus {
 /* Mobile responsiveness */
 @media (max-width: 480px) {
 	#wpss-notification-container {
-		top: 10px;
+		top: calc(10px + var(--wp-admin--admin-bar--height, 0px));
 		right: 10px;
 		left: 10px;
 	}
