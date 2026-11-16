@@ -105,6 +105,20 @@ class ModerationService {
 	}
 
 	/**
+	 * Whether editing an already-live service sends it back to review.
+	 *
+	 * A vendor whose service was approved has already passed review, so by
+	 * default their later edits stay live; the owner can switch re-review on.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @return bool
+	 */
+	public static function re_reviews_live_edits(): bool {
+		return (bool) wpss_get_option( 'vendor', 're_review_live_edits' );
+	}
+
+	/**
 	 * Whether a service this member saves goes to review instead of live.
 	 *
 	 * The one rule for the wizard and REST: an admin's save is the approval, so
@@ -315,7 +329,7 @@ class ModerationService {
 	 * @return bool True when the service was sent to review.
 	 */
 	public function requeue_live_edit( int $service_id ): bool {
-		if ( ! self::requires_review() || 'publish' !== get_post_status( $service_id ) ) {
+		if ( ! self::requires_review() || ! self::re_reviews_live_edits() || 'publish' !== get_post_status( $service_id ) ) {
 			return false;
 		}
 
@@ -453,21 +467,19 @@ Thank you for being a valued vendor on our platform.',
 		);
 
 		// Also add platform notification.
-		if ( function_exists( 'wpss_add_notification' ) ) {
-			wpss_add_notification(
-				$vendor->ID,
-				'service_approved',
-				sprintf(
-					/* translators: %s: Service title */
-					__( 'Your service "%s" has been approved and is now live.', 'wp-sell-services' ),
-					$post->post_title
-				),
-				array(
-					'service_id' => $service_id,
-					'link'       => get_permalink( $service_id ),
-				)
-			);
-		}
+		wpss_add_notification(
+			$vendor->ID,
+			'service_approved',
+			sprintf(
+				/* translators: %s: Service title */
+				__( 'Your service "%s" has been approved and is now live.', 'wp-sell-services' ),
+				$post->post_title
+			),
+			array(
+				'service_id' => $service_id,
+				'link'       => get_permalink( $service_id ),
+			)
+		);
 	}
 
 	/**
@@ -542,22 +554,20 @@ If you have any questions, please contact our support team.',
 		);
 
 		// Also add platform notification.
-		if ( function_exists( 'wpss_add_notification' ) ) {
-			wpss_add_notification(
-				$vendor->ID,
-				'service_rejected',
-				sprintf(
-					/* translators: %s: Service title */
-					__( 'Your service "%s" requires changes before approval.', 'wp-sell-services' ),
-					$post->post_title
-				),
-				array(
-					'service_id' => $service_id,
-					'reason'     => $reason,
-					'link'       => $edit_url,
-				)
-			);
-		}
+		wpss_add_notification(
+			$vendor->ID,
+			'service_rejected',
+			sprintf(
+				/* translators: %s: Service title */
+				__( 'Your service "%s" requires changes before approval.', 'wp-sell-services' ),
+				$post->post_title
+			),
+			array(
+				'service_id' => $service_id,
+				'reason'     => $reason,
+				'link'       => $edit_url,
+			)
+		);
 	}
 
 	/**
@@ -603,7 +613,7 @@ Review this service: %3$s',
 				'wp-sell-services'
 			),
 			$post->post_title,
-			$vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ),
+			wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) ),
 			$review_url
 		);
 
@@ -617,7 +627,7 @@ Review this service: %3$s',
 				array(
 					'recipient'     => get_user_by( 'email', $admin_email ),
 					'service_title' => $post->post_title,
-					'vendor_name'   => $vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ),
+					'vendor_name'   => wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) ),
 					'review_url'    => $review_url,
 				)
 			);

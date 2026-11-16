@@ -93,7 +93,7 @@ Both plugins are architecturally solid and feature-complete at ~95%. The code qu
 
 5. **Tiered Commission** — Volume-based, category-based, seller-level-based rules. Professional marketplace operators need this flexibility.
 
-6. **Vendor Subscriptions** — Charge vendors monthly/yearly to sell on your platform. Revenue model for marketplace owners.
+6. **Vendor Subscriptions** — Charge vendors weekly, monthly or yearly to sell on your platform. Revenue model for marketplace owners.
 
 7. **Recurring Services** — *Deferred, do not promote.* The code ships but `RecurringSettingsRenderer::is_feature_available()` returns false: a recurring order creates a Stripe subscription with no saved payment method, so renewals never charge. Every surface is hidden behind that switch. It becomes a value proposition when renewals work, not before.
 

@@ -59,13 +59,13 @@ function wpss_get_active_store_page_id( string $key ): int {
  * @return string
  */
 function wpss_get_dashboard_url( string $section = '' ): string {
-	// First check wpss_pages option (newer, preferred).
-	$pages          = get_option( 'wpss_pages', array() );
-	$dashboard_page = (int) ( $pages['dashboard'] ?? 0 );
+	// wpss_get_page_id() drops a trashed or drafted page, so no link points at a 404.
+	$dashboard_page = wpss_get_page_id( 'dashboard' );
 
 	// Fallback to legacy option for backward compatibility.
 	if ( ! $dashboard_page ) {
-		$dashboard_page = (int) get_option( 'wpss_dashboard_page' );
+		$legacy         = (int) get_option( 'wpss_dashboard_page' );
+		$dashboard_page = $legacy && 'publish' === get_post_status( $legacy ) ? $legacy : 0;
 	}
 
 	if ( ! $dashboard_page ) {
@@ -837,6 +837,35 @@ function wpss_marketplace_register_url( string $url ): string {
 add_filter( 'register_url', 'wpss_marketplace_register_url' );
 
 /**
+ * What a buyer reads when this site is not taking sign-ups.
+ *
+ * "Registration is currently disabled." on its own left a buyer who was sent
+ * to log in or sign up with no next step. The sentence now says what to do,
+ * and the site can put its own contact details in through the filter. It
+ * reads the WordPress registration setting and never changes it.
+ *
+ * @since 1.9.3
+ *
+ * @return string Plain text, escaped by the caller.
+ */
+function wpss_signup_closed_message(): string {
+	$message = sprintf(
+		/* translators: %s: site name. */
+		__( 'New accounts are not open on %s. To get an account, please contact the site owner.', 'wp-sell-services' ),
+		wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
+	);
+
+	/**
+	 * Filter the message shown where sign-up is closed.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string $message Message text.
+	 */
+	return (string) apply_filters( 'wpss_signup_closed_message', $message );
+}
+
+/**
  * Point Sign in at the marketplace's own login page when one is mapped.
  *
  * Every Sign in link (ours and the theme's) is built with wp_login_url(), so
@@ -1064,10 +1093,7 @@ function wpss_ensure_pay_order( int $order_id ): string {
 		&& (
 			in_array( $wpss_pay_order->status ?? '', array( 'cancelled', 'refunded' ), true )
 			|| wpss_is_extension_on_hold( $wpss_pay_order )
-			|| (
-				\WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $wpss_pay_order->platform ?? '' )
-				&& ( new \WPSellServices\Services\MilestoneService() )->is_locked( $order_id )
-			)
+			|| wpss_is_order_phase_locked( $wpss_pay_order )
 		)
 	) {
 		// A closed order is never offered for payment either: a stale link to a declined phase
@@ -1231,4 +1257,27 @@ function wpss_get_legal_links(): array {
 		'terms_url'          => '' !== $terms ? $terms : null,
 		'privacy_policy_url' => '' !== $privacy ? $privacy : null,
 	);
+}
+
+/**
+ * The one address every "Upgrade to Pro" call-to-action points at.
+ *
+ * It was spelled out in six places across two hosts, so the wizard, the
+ * settings sidebar and the Upgrade page sent an owner to different sites.
+ *
+ * @return string
+ */
+function wpss_pro_upgrade_url(): string {
+	/** This filter is documented in docs/website/developer-guide/hooks-filters.md. */
+	return (string) apply_filters( 'wpss_pro_upgrade_url', 'https://wbcomdesigns.com/downloads/wp-sell-services-pro/' );
+}
+
+/**
+ * The one address every documentation link points at.
+ *
+ * @return string
+ */
+function wpss_docs_url(): string {
+	/** This filter is documented in docs/website/developer-guide/hooks-filters.md. */
+	return (string) apply_filters( 'wpss_docs_url', 'https://wbcomdesigns.com/docs/wp-sell-services/' );
 }

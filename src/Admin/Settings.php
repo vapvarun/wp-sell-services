@@ -811,8 +811,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_payouts',
 				'field'       => 'min_withdrawal',
-				'min'         => 0,
-				'max'         => 1000,
+				'min'         => self::NUMBER_LIMITS['min_withdrawal'][0],
+				'max'         => self::NUMBER_LIMITS['min_withdrawal'][1],
 				'step'        => 1,
 				'description' => __( 'Two rules, one number. A vendor needs at least this much in available earnings before they can request a withdrawal at all, and every individual request must also be for at least this amount. Recommended: $50-$100 for most marketplaces.', 'wp-sell-services' ),
 			)
@@ -878,8 +878,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_payouts',
 				'field'       => 'auto_withdrawal_threshold',
-				'min'         => 100,
-				'max'         => 10000,
+				'min'         => self::NUMBER_LIMITS['auto_withdrawal_threshold'][0],
+				'max'         => self::NUMBER_LIMITS['auto_withdrawal_threshold'][1],
 				'step'        => 50,
 				'description' => __( 'A withdrawal request is created for any vendor whose available balance is above this amount, on the schedule below. You still approve and pay each request - no money leaves your account on its own. To stop, untick Enable Auto-Withdrawal above.', 'wp-sell-services' ),
 			)
@@ -1017,7 +1017,7 @@ class Settings {
 				'option_name' => 'wpss_vendor',
 				'field'       => 'vendor_registration',
 				'options'     => array(
-					'open'     => __( 'Open (anyone can register)', 'wp-sell-services' ),
+					'open'     => __( 'Open (any member can start selling at once)', 'wp-sell-services' ),
 					'approval' => __( 'Requires Approval', 'wp-sell-services' ),
 					'closed'   => __( 'Closed (admin only)', 'wp-sell-services' ),
 				),
@@ -1052,6 +1052,76 @@ class Settings {
 				'field'       => 'require_service_moderation',
 				'label'       => __( 'Require admin approval before services are published', 'wp-sell-services' ),
 				'description' => __( 'New services require admin approval before becoming visible to buyers. Manage pending services in the Moderation page.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'signup_notify_admin',
+			__( 'Sign-up Notice', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_vendor',
+			'wpss_vendor_section',
+			array(
+				'option_name' => 'wpss_vendor',
+				'field'       => 'signup_notify_admin',
+				'label'       => __( 'Email the site admin when someone signs up through the plugin', 'wp-sell-services' ),
+				'description' => __( 'The same "New user registration" email WordPress sends for its own sign-up form.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'verify_email_for_vendors',
+			__( 'Verify Email Before Selling', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_vendor',
+			'wpss_vendor_section',
+			array(
+				'option_name' => 'wpss_vendor',
+				'field'       => 'verify_email_for_vendors',
+				'label'       => __( 'Members who sign up here must confirm their email before they can become vendors', 'wp-sell-services' ),
+				'description' => __( 'Off: sign-up works as before. On: new members get a confirmation link, and the Start selling button asks them to use it first. Members who joined earlier are not affected.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'application_fields',
+			__( 'Vendor Application Questions', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_vendor',
+			'wpss_vendor_section',
+			array(
+				'option_name' => 'wpss_vendor',
+				'field'       => 'application_fields',
+				'label'       => __( 'Ask applicants what they sell', 'wp-sell-services' ),
+				'description' => __( 'Off: members become vendors with one click. On: the Start selling panel asks for a tagline and a short description, which you see on the Vendors screen when you approve.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'suspended_money_access',
+			__( 'Suspended Vendors and Earnings', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_vendor',
+			'wpss_vendor_section',
+			array(
+				'option_name' => 'wpss_vendor',
+				'field'       => 'suspended_money_access',
+				'label'       => __( 'Let suspended vendors view their earnings and request withdrawals', 'wp-sell-services' ),
+				'description' => __( 'Off: a suspended vendor keeps Sales Orders only, and money already earned is held until you reactivate them or pay it by hand. On: they can still see their balance, request a withdrawal and update payout details. You still approve every withdrawal.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			're_review_live_edits',
+			__( 'Re-review Live Edits', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_vendor',
+			'wpss_vendor_section',
+			array(
+				'option_name' => 'wpss_vendor',
+				'field'       => 're_review_live_edits',
+				'label'       => __( 'Send a live service back for approval when its vendor edits it', 'wp-sell-services' ),
+				'description' => __( 'Off: once a service is approved, its edits stay live. On: every edit takes it offline until you approve it again. New services always wait for approval when moderation is on.', 'wp-sell-services' ),
 			)
 		);
 
@@ -1099,6 +1169,21 @@ class Settings {
 		);
 
 		add_settings_field(
+			'cancel_window_hours',
+			__( 'Buyer Cancellation Window (Hours)', 'wp-sell-services' ),
+			array( $this, 'render_number_field' ),
+			'wpss_orders',
+			'wpss_orders_section',
+			array(
+				'option_name' => 'wpss_orders',
+				'field'       => 'cancel_window_hours',
+				'min'         => self::NUMBER_LIMITS['cancel_window_hours'][0],
+				'max'         => self::NUMBER_LIMITS['cancel_window_hours'][1],
+				'description' => __( 'Hours after work starts during which a buyer can ask to cancel an in-progress order, if nothing has been delivered. The vendor still answers the request. Set to 0 to turn it off; buyers then use a dispute.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
 			'auto_complete_days',
 			__( 'Auto-Complete Days', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
@@ -1107,8 +1192,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'auto_complete_days',
-				'min'         => 0,
-				'max'         => 30,
+				'min'         => self::NUMBER_LIMITS['auto_complete_days'][0],
+				'max'         => self::NUMBER_LIMITS['auto_complete_days'][1],
 				'description' => __( 'Days after vendor submits delivery before the order auto-completes if buyer does not respond. Set to 0 to require buyer action.', 'wp-sell-services' ),
 			)
 		);
@@ -1160,8 +1245,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'dispute_window_days',
-				'min'         => 1,
-				'max'         => 90,
+				'min'         => self::NUMBER_LIMITS['dispute_window_days'][0],
+				'max'         => self::NUMBER_LIMITS['dispute_window_days'][1],
 				'description' => __( 'Days after order completion during which buyers can open a dispute. After this window, disputes are locked.', 'wp-sell-services' ),
 			)
 		);
@@ -1175,8 +1260,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'auto_dispute_late_days',
-				'min'         => 0,
-				'max'         => 30,
+				'min'         => self::NUMBER_LIMITS['auto_dispute_late_days'][0],
+				'max'         => self::NUMBER_LIMITS['auto_dispute_late_days'][1],
 				'description' => __( 'Automatically open a dispute if delivery is overdue by this many days past the deadline. Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
@@ -1204,8 +1289,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'requirements_timeout_days',
-				'min'         => 0,
-				'max'         => 30,
+				'min'         => self::NUMBER_LIMITS['requirements_timeout_days'][0],
+				'max'         => self::NUMBER_LIMITS['requirements_timeout_days'][1],
 				'description' => __( 'Days to wait for buyer to submit requirements before the order auto-starts or auto-cancels (see next setting). Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
@@ -1233,8 +1318,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'review_window_days',
-				'min'         => 0,
-				'max'         => 365,
+				'min'         => self::NUMBER_LIMITS['review_window_days'][0],
+				'max'         => self::NUMBER_LIMITS['review_window_days'][1],
 				'description' => __( 'Days after an order completes during which the buyer can leave a review. Set to 0 for no limit.', 'wp-sell-services' ),
 			)
 		);
@@ -1468,8 +1553,8 @@ class Settings {
 			array(
 				'option_name' => 'wpss_advanced',
 				'field'       => 'max_file_size',
-				'min'         => 1,
-				'max'         => 100,
+				'min'         => self::NUMBER_LIMITS['max_file_size'][0],
+				'max'         => self::NUMBER_LIMITS['max_file_size'][1],
 				'step'        => 1,
 				'description' => __( 'Maximum file size in megabytes for uploads.', 'wp-sell-services' ),
 			)
@@ -1742,12 +1827,12 @@ class Settings {
 			<?php endforeach; ?>
 
 			<div class="wpss-settings-nav-group" style="margin-top:auto;padding-top:12px;border-top:1px solid var(--wpss-admin-border);">
-				<a class="wpss-settings-nav-item" href="https://store.wbcomdesigns.com/wp-sell-services/docs/" target="_blank" rel="noopener noreferrer" style="color:var(--wpss-admin-text-light);">
+				<a class="wpss-settings-nav-item" href="<?php echo esc_url( wpss_docs_url() ); ?>" target="_blank" rel="noopener noreferrer" style="color:var(--wpss-admin-text-light);">
 					<i data-lucide="book-open"></i>
 					<?php esc_html_e( 'Documentation', 'wp-sell-services' ); ?>
 				</a>
 				<?php if ( ! defined( 'WPSS_PRO_VERSION' ) ) : ?>
-					<a class="wpss-settings-nav-item" href="https://store.wbcomdesigns.com/wp-sell-services-pro/" target="_blank" rel="noopener noreferrer" style="color:#EA580C;font-weight:600;">
+					<a class="wpss-settings-nav-item" href="<?php echo esc_url( wpss_pro_upgrade_url() ); ?>" target="_blank" rel="noopener noreferrer" style="color:#EA580C;font-weight:600;">
 						<i data-lucide="zap"></i>
 						<?php esc_html_e( 'Get Pro', 'wp-sell-services' ); ?>
 					</a>
@@ -1852,7 +1937,7 @@ class Settings {
 					do_settings_sections( 'wpss_general' );
 					?>
 					<div class="wpss-settings-section__footer">
-						<?php submit_button( __( 'Save General Settings', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+						<?php submit_button( __( 'Save General Settings', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-save-general' ) ); ?>
 					</div>
 				</form>
 			</div>
@@ -1876,7 +1961,7 @@ class Settings {
 					do_settings_sections( 'wpss_pages' );
 					?>
 					<div class="wpss-settings-section__footer">
-						<?php submit_button( __( 'Save Page Settings', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+						<?php submit_button( __( 'Save Page Settings', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-save-pages' ) ); ?>
 					</div>
 				</form>
 			</div>
@@ -2014,7 +2099,7 @@ class Settings {
 		// A saved setting that silently does nothing is worse than one that is
 		// not offered.
 		if ( ! wpss_uses_standalone_payments() ) {
-			$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+			$adapter = wpss_get_ecommerce_adapter();
 			$rail    = $adapter ? $adapter->get_name() : __( 'your store plugin', 'wp-sell-services' );
 
 			printf(
@@ -2132,7 +2217,8 @@ class Settings {
 							),
 							'primary',
 							'submit',
-							false
+							false,
+							array( 'id' => 'wpss-save-gateway-' . sanitize_html_class( $gateway_id ) )
 						);
 						?>
 					</div>
@@ -2222,7 +2308,7 @@ class Settings {
 
 		// Same source the checkout uses, so the placeholders an owner sees are
 		// exactly what buyers get when a row is left blank.
-		$defaults = function_exists( 'wpss_get_checkout_badge_defaults' ) ? wpss_get_checkout_badge_defaults() : array();
+		$defaults = wpss_get_checkout_badge_defaults();
 
 		echo '<table class="widefat striped wpss-badge-editor"><thead><tr>';
 		echo '<th class="wpss-badge-editor__item">' . esc_html__( 'Item', 'wp-sell-services' ) . '</th>';
@@ -2581,7 +2667,8 @@ class Settings {
 								),
 								'primary',
 								'submit',
-								false
+								false,
+								array( 'id' => 'wpss-save-' . sanitize_html_class( (string) ( $section['id'] ?? $section['option_group'] ) ) )
 							);
 							?>
 						</div>
@@ -2718,7 +2805,7 @@ class Settings {
 				</button>
 			<?php else : ?>
 				<p style="margin-bottom: 10px;">
-					<?php esc_html_e( 'Creates 20 sample services across 6 categories with 4 demo vendors.', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Creates sample services across 6 categories with 4 demo vendors.', 'wp-sell-services' ); ?>
 				</p>
 				<button type="button" class="button button-primary wpss-import-demo" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 					<?php esc_html_e( 'Import Demo Content', 'wp-sell-services' ); ?>
@@ -3172,6 +3259,17 @@ class Settings {
 				<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $selected, $id ); ?>><?php echo esc_html( $label ); ?></option>
 			<?php endforeach; ?>
 		</select>
+		<?php if ( '' !== (string) $selected && 'internal' !== $selected && ! isset( $providers[ $selected ] ) ) : ?>
+			<p class="notice notice-warning inline" role="alert">
+				<?php
+				printf(
+					/* translators: %s: wallet provider id saved in settings */
+					esc_html__( 'The saved wallet provider "%s" is not active, so vendor balances are being held in the Internal Wallet. Activate its plugin, or save this page to choose another provider.', 'wp-sell-services' ),
+					esc_html( (string) $selected )
+				);
+				?>
+			</p>
+		<?php endif; ?>
 		<?php
 		// Says what the free plugin already does BEFORE describing what a
 		// provider adds. The old wording opened with "wallet integration" and
@@ -3199,8 +3297,9 @@ class Settings {
 				$option,
 				array(
 					// Clamp to the field's own min/max: the HTML attributes are client-only.
+					// (int), not absint(): absint() turned -4 into 4 before the clamp saw it.
 					'sanitize_callback' => static function ( $value ) use ( $args ) {
-						$value = ( $args['float'] ?? false ) ? (float) $value : absint( $value );
+						$value = ( $args['float'] ?? false ) ? (float) $value : (int) $value;
 						return max( $args['min'] ?? $value, min( $args['max'] ?? $value, $value ) );
 					},
 				)
@@ -3866,7 +3965,7 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['min_withdrawal'] = max( 0, (int) ( $input['min_withdrawal'] ?? 50 ) );
+		$sanitized['min_withdrawal'] = $this->clamp_number( 'min_withdrawal', $input['min_withdrawal'] ?? 50 );
 
 		// 0 is a legitimate, supported value: pay vendors out the moment an
 		// order completes (owner decision 2026-07-23 — see the field definition
@@ -3875,7 +3974,7 @@ class Settings {
 		// a browser hint a posted value can sail straight past.
 		$sanitized['clearance_days']            = min( 90, max( 0, (int) ( $input['clearance_days'] ?? 0 ) ) );
 		$sanitized['auto_withdrawal_enabled']   = ! empty( $input['auto_withdrawal_enabled'] );
-		$sanitized['auto_withdrawal_threshold'] = max( 0, (int) ( $input['auto_withdrawal_threshold'] ?? 500 ) );
+		$sanitized['auto_withdrawal_threshold'] = $this->clamp_number( 'auto_withdrawal_threshold', $input['auto_withdrawal_threshold'] ?? 500 );
 		$sanitized['auto_withdrawal_schedule']  = sanitize_key( $input['auto_withdrawal_schedule'] ?? 'monthly' );
 
 		// Validate schedule.
@@ -3920,13 +4019,58 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['vendor_registration']     = sanitize_key( $input['vendor_registration'] ?? 'open' );
-		$sanitized['max_services_per_vendor'] = max( 0, (int) ( $input['max_services_per_vendor'] ?? 20 ) );
+		$sanitized['vendor_registration'] = sanitize_key( $input['vendor_registration'] ?? 'open' );
+		if ( isset( $input['max_services_per_vendor'] ) && ( ! is_numeric( $input['max_services_per_vendor'] ) || (float) $input['max_services_per_vendor'] < 0 ) ) {
+			add_settings_error( 'wpss_vendor', 'wpss_max_services_negative', __( 'Max services per vendor must be 0 or more, so the previous value was kept. Use 0 for no limit.', 'wp-sell-services' ) );
+		}
+
+		$sanitized['max_services_per_vendor'] = wpss_clamp_limit( $input['max_services_per_vendor'] ?? 20, 0, 100, (int) wpss_get_option( 'vendor', 'max_services_per_vendor', 20 ) );
 		// Vendor verification is not yet implemented — setting removed to avoid confusion.
 		$sanitized['require_service_moderation'] = ! empty( $input['require_service_moderation'] );
 		$sanitized['moderate_reviews']           = ! empty( $input['moderate_reviews'] );
+		$sanitized['re_review_live_edits']       = ! empty( $input['re_review_live_edits'] );
+		$sanitized['suspended_money_access']     = ! empty( $input['suspended_money_access'] );
+		$sanitized['application_fields']         = ! empty( $input['application_fields'] );
+		$sanitized['verify_email_for_vendors']   = ! empty( $input['verify_email_for_vendors'] );
+		$sanitized['signup_notify_admin']        = ! empty( $input['signup_notify_admin'] );
 
 		return $sanitized;
+	}
+
+	/**
+	 * Min and max of the number fields on the Orders, Payouts and Advanced screens.
+	 *
+	 * The field definitions and clamp_number() both read this table, so the limit
+	 * a browser shows and the limit the server enforces cannot drift apart.
+	 *
+	 * @var array<string, array{0:int, 1:int}>
+	 */
+	private const NUMBER_LIMITS = array(
+		'auto_complete_days'        => array( 0, 30 ),
+		'dispute_window_days'       => array( 1, 90 ),
+		'cancel_window_hours'       => array( 0, 720 ),
+		'auto_dispute_late_days'    => array( 0, 30 ),
+		'requirements_timeout_days' => array( 0, 30 ),
+		'review_window_days'        => array( 0, 365 ),
+		'min_withdrawal'            => array( 0, 1000 ),
+		'auto_withdrawal_threshold' => array( 100, 10000 ),
+		'max_file_size'             => array( 1, 100 ),
+	);
+
+	/**
+	 * Clamp a posted number to its field's limits.
+	 *
+	 * The raw integer is clamped, never absint()'d first, so -4 stores the
+	 * minimum and not 4. The HTML min and max attributes are a browser hint only.
+	 *
+	 * @param string $field Key in NUMBER_LIMITS.
+	 * @param mixed  $value Posted value.
+	 * @return int
+	 */
+	private function clamp_number( string $field, $value ): int {
+		[ $min, $max ] = self::NUMBER_LIMITS[ $field ];
+
+		return max( $min, min( $max, (int) $value ) );
 	}
 
 	/**
@@ -3939,15 +4083,16 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['auto_complete_days'] = max( 0, (int) ( $input['auto_complete_days'] ?? 3 ) );
+		$sanitized['auto_complete_days'] = $this->clamp_number( 'auto_complete_days', $input['auto_complete_days'] ?? 3 );
 		// Revision limits are defined per-package in service packages, not as a global setting.
+		$sanitized['cancel_window_hours']       = $this->clamp_number( 'cancel_window_hours', $input['cancel_window_hours'] ?? 24 );
 		$sanitized['allow_disputes']            = ! empty( $input['allow_disputes'] );
-		$sanitized['dispute_window_days']       = max( 0, (int) ( $input['dispute_window_days'] ?? 14 ) );
-		$sanitized['auto_dispute_late_days']    = max( 0, (int) ( $input['auto_dispute_late_days'] ?? 3 ) );
+		$sanitized['dispute_window_days']       = $this->clamp_number( 'dispute_window_days', $input['dispute_window_days'] ?? 14 );
+		$sanitized['auto_dispute_late_days']    = $this->clamp_number( 'auto_dispute_late_days', $input['auto_dispute_late_days'] ?? 3 );
 		$sanitized['allow_late_requirements']   = ! empty( $input['allow_late_requirements'] );
-		$sanitized['requirements_timeout_days'] = max( 0, (int) ( $input['requirements_timeout_days'] ?? 0 ) );
+		$sanitized['requirements_timeout_days'] = $this->clamp_number( 'requirements_timeout_days', $input['requirements_timeout_days'] ?? 0 );
 		$sanitized['auto_start_on_timeout']     = ! empty( $input['auto_start_on_timeout'] );
-		$sanitized['review_window_days']        = max( 0, (int) ( $input['review_window_days'] ?? 30 ) );
+		$sanitized['review_window_days']        = $this->clamp_number( 'review_window_days', $input['review_window_days'] ?? 30 );
 
 		return $sanitized;
 	}
@@ -4072,7 +4217,7 @@ class Settings {
 		$sanitized['delete_data_on_uninstall'] = ! empty( $input['delete_data_on_uninstall'] );
 		$sanitized['enable_debug_mode']        = ! empty( $input['enable_debug_mode'] );
 
-		$sanitized['max_file_size']      = max( 0, (int) ( $input['max_file_size'] ?? 10 ) );
+		$sanitized['max_file_size']      = $this->clamp_number( 'max_file_size', $input['max_file_size'] ?? 10 );
 		$sanitized['allowed_file_types'] = sanitize_text_field( $input['allowed_file_types'] ?? 'jpg,jpeg,png,gif,pdf,doc,docx' );
 
 		// Keep stored keys this form does not own. currency_position moved to
@@ -4113,7 +4258,7 @@ class Settings {
 		$cluster              = sanitize_text_field( $input['cluster'] ?? 'mt1' );
 		$sanitized['cluster'] = '' !== $cluster ? $cluster : 'mt1';
 
-		$port              = absint( $input['port'] ?? 443 );
+		$port              = (int) ( $input['port'] ?? 443 ); // A negative falls back to 443, never flips to its positive twin.
 		$sanitized['port'] = ( $port >= 1 && $port <= 65535 ) ? $port : 443;
 
 		$sanitized['use_tls'] = ! empty( $input['use_tls'] );

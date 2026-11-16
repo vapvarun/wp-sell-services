@@ -680,10 +680,12 @@ class VendorsController extends RestController {
 		$result = $vendor_service->register_vendor( $user_id, $data );
 
 		if ( ! $result['success'] ) {
+			$unverified = 'wpss_email_unverified' === ( $result['code'] ?? '' );
+
 			return new WP_Error(
-				'rest_registration_failed',
+				$unverified ? 'wpss_email_unverified' : 'rest_registration_failed',
 				$result['message'],
-				array( 'status' => 400 )
+				array( 'status' => $unverified ? 403 : 400 )
 			);
 		}
 

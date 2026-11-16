@@ -1,0 +1,40 @@
+{
+  "journey": "21-plans-commission",
+  "mode": "combo",
+  "sha_free": "d89202674c64b8c21b46f63e05e177636061685e",
+  "sha_pro": "259d27cbb676d2370b8a852873a6c1206e5ad446",
+  "ran_at": "2026-11-16T04:30:00Z",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme 8.1.0-beta.5 (brief said 8.0.9)",
+    "rail": "standalone"
+  },
+  "checks": [
+    {
+      "id": "21-plan-setup-gate",
+      "result": "pass",
+      "evidence": "Free + paid plan created, subscriptions enabled + required: Maya (no plan) at /dashboard/create/ sees 'A subscription plan is required to create services'; subscribing to free plan allows the wizard; cancel of free plan ended at once."
+    },
+    {
+      "id": "21-paid-plan-no-price-id",
+      "result": "pass",
+      "evidence": "Subscribe on paid plan without Stripe Price ID shows 'This plan is not available for purchase yet.' (400 plan_not_billable). Subscribe button is still offered (UX nit)."
+    },
+    {
+      "id": "21-commission-rule",
+      "result": "pass",
+      "evidence": "Vendor Level 'New vendor' rule 20%: new order 120765 stored commission_rate 20.00, platform fee 12 on 60. Rule later deleted."
+    },
+    {
+      "id": "21-dashboard-pro-card",
+      "result": "fail",
+      "evidence": "Journey says Sell Services > Dashboard Pro card shows Tiered Commission active while a rule exists; the admin dashboard renders no Pro card at all."
+    },
+    {
+      "id": "21-stripe-purchase-renewal",
+      "result": "skipped",
+      "evidence": "No Stripe keys / webhooks."
+    }
+  ],
+  "artifacts": "/Users/vapvarun/Local Sites/wp-sell-services/app/qa-artifacts/"
+}

@@ -312,7 +312,7 @@ class TestGateway extends AbstractPaymentGateway {
 			delete_user_meta( $customer_id, '_wpss_cart' );
 
 			$dashboard_url = wpss_get_page_url( 'dashboard' );
-			$redirect      = $dashboard_url ? add_query_arg( 'tab', 'orders', $dashboard_url ) : home_url();
+			$redirect      = $dashboard_url ? wpss_get_dashboard_url( 'orders' ) : home_url();
 
 			wp_send_json_success(
 				array(
@@ -381,7 +381,7 @@ class TestGateway extends AbstractPaymentGateway {
 			array(
 				'service_id'     => $service_id,
 				'package_id'     => $package_id,
-				'quantity'       => $quantity,
+				'quantity'       => (int) $line['quantity'],
 				'customer_id'    => get_current_user_id(),
 				'subtotal'       => $price,
 				'addons'         => $addon_data['addons'],
@@ -399,8 +399,8 @@ class TestGateway extends AbstractPaymentGateway {
 		// Immediately mark as paid.
 		$order_provider->mark_as_paid( $order->id, $transaction_id, 'test' );
 
-		// Clear cart after successful order creation.
-		delete_user_meta( get_current_user_id(), '_wpss_cart' );
+		// Drop only the purchased line; other saved items stay in the cart.
+		\WPSellServices\Checkout\ServiceCart::remove_line( get_current_user_id(), $service_id, $package_id );
 
 		wpss_log( sprintf( 'Test payment completed: Order #%d, Transaction: %s', $order->id, $transaction_id ), 'info' );
 

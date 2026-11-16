@@ -158,7 +158,7 @@ class ProposalService {
 			$proposed_price  = (float) array_sum( array_column( $milestones, 'amount' ) );
 			$proposed_days   = (int) array_sum( array_column( $milestones, 'days' ) );
 		} else {
-			if ( empty( $data['price'] ) ) {
+			if ( empty( $data['price'] ) || (float) $data['price'] <= 0 ) {
 				return false;
 			}
 			$proposed_price = (float) $data['price'];
@@ -341,6 +341,9 @@ class ProposalService {
 				$update_data['milestones'] = null;
 			}
 			if ( isset( $data['price'] ) ) {
+				if ( (float) $data['price'] <= 0 ) {
+					return false;
+				}
 				$update_data['proposed_price'] = (float) $data['price'];
 			}
 			if ( isset( $data['delivery_days'] ) ) {
@@ -451,10 +454,14 @@ class ProposalService {
 				'status'     => self::STATUS_REJECTED,
 				'updated_at' => current_time( 'mysql', true ),
 			),
-			array( 'id' => $proposal_id )
+			array(
+				'id'     => $proposal_id,
+				'status' => self::STATUS_PENDING,
+			)
 		);
 
-		if ( $result !== false ) {
+		// A proposal already accepted, withdrawn or rejected is final: 0 rows means nothing changed.
+		if ( $result ) {
 			/**
 			 * Fires when a proposal is rejected.
 			 *
@@ -519,9 +526,8 @@ class ProposalService {
 	/**
 	 * Record the order a proposal produced.
 	 *
-	 * The proposals table has always carried an order_id column, the Proposal
-	 * model reads it, and Proposal::to_array() publishes it in every REST
-	 * response — but no code path ever wrote it, so every consumer saw null
+	 * The proposals table has always carried an order_id column and every REST
+	 * response publishes it — but no code path ever wrote it, so every consumer saw null
 	 * forever and nothing could get from an accepted proposal to the order it
 	 * created. Verified on 2026-08-01: proposals #16 and #17 both minted real
 	 * orders (#61 and #106) while their order_id stayed NULL.
@@ -725,7 +731,7 @@ class ProposalService {
 		$sql = $wpdb->prepare(
 			"SELECT * FROM {$this->table}
 			WHERE {$where_clause}
-			ORDER BY {$order_by} {$order}
+			ORDER BY {$order_by} {$order}, id {$order}
 			LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 			$values
 		);
@@ -784,6 +790,21 @@ class ProposalService {
 		$proposals = $wpdb->get_results( $sql );
 
 		return array_map( array( $this, 'format_proposal' ), $proposals );
+	}
+
+	/**
+	 * Count every proposal on a request, the same rows get_by_request() pages through.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param int $request_id Request ID.
+	 * @return int
+	 */
+	public function count_by_request( int $request_id ): int {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is the class property.
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$this->table} WHERE request_id = %d", $request_id ) );
 	}
 
 	/**

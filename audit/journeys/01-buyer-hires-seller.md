@@ -84,6 +84,11 @@ Then confirm it is not a dead end: wp-admin → the order → the
 **Mark as Paid**. That box is gated on `payment_method === 'offline'`, so if the
 checkout failed to record the rail the order can never be confirmed by anyone.
 Mark as Paid → status `pending_requirements`, `payment_status = paid`.
+Each party gets exactly one mail: the branded **Order Confirmed** (buyer) and
+**New Service Order** (vendor), and the in-app rows are Order Confirmed / New
+Order Received. A third "Order status updated" mail or row is the bug
+(card:10475484149); the same holds on every rail, because Woo, EDD and
+FluentCart settle through the same `mark_as_paid()`.
 
 Vendor earnings are NOT credited here. `CommissionService::record()` runs on
 transition to `completed` (escrow), so an empty `wpss_wallet_transactions` at

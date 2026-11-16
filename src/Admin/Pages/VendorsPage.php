@@ -236,7 +236,11 @@ class VendorsPage {
 					/* translators: 1: bulk action label, 2: number of vendors. */
 					'bulkConfirm'                        => __( '%1$s %2$d vendor(s)? This applies to every selected row.', 'wp-sell-services' ),
 					'confirmStatusChange'                => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
-					'areYouSureYouWantToChangeThisVendorSStatus' => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
+					'reject'                             => __( 'Reject', 'wp-sell-services' ),
+					'rejectTitle'                        => __( 'Reject vendor application', 'wp-sell-services' ),
+					'suspendTitle'                       => __( 'Suspend vendor', 'wp-sell-services' ),
+					'statusReason'                       => __( 'Reason (optional)', 'wp-sell-services' ),
+					'statusReasonPlaceholder'            => __( 'The vendor sees this in their email. Say what needs to change.', 'wp-sell-services' ),
 					'pleaseEnterACommissionRate'         => __( 'Please enter a commission rate.', 'wp-sell-services' ),
 					'resetThisVendorsCommission'         => __( 'Reset this vendor\'s commission rate to the global rate?', 'wp-sell-services' ),
 					'resetToGlobalCommissionRate'        => __( 'Reset to global commission rate?', 'wp-sell-services' ),
@@ -565,9 +569,7 @@ class VendorsPage {
 			 * deliberately cut back to the two totals that appear nowhere else,
 			 * and this is an exception that needs reading, not a number.
 			 */
-			$wpss_negative = function_exists( 'wpss_get_negative_ledger_balances' )
-				? wpss_get_negative_ledger_balances( 20 )
-				: array();
+			$wpss_negative = wpss_get_negative_ledger_balances( 20 );
 
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display of the redirect result only.
 			$wpss_wo = isset( $_GET['wpss_write_off'] ) ? sanitize_key( wp_unslash( $_GET['wpss_write_off'] ) ) : '';
@@ -617,10 +619,13 @@ class VendorsPage {
 						<?php foreach ( $wpss_negative as $wpss_row ) : ?>
 							<?php
 							$wpss_user = get_userdata( $wpss_row['user_id'] );
-							$wpss_name = $wpss_user ? $wpss_user->display_name : sprintf(
+							$wpss_name = wpss_get_member_display_name(
+								(int) $wpss_row['user_id'],
+								sprintf(
 								/* translators: %d: user ID of a deleted account. */
-								__( 'Deleted user #%d', 'wp-sell-services' ),
-								$wpss_row['user_id']
+									__( 'Deleted user #%d', 'wp-sell-services' ),
+									$wpss_row['user_id']
+								)
 							);
 							?>
 							<li>
@@ -734,9 +739,9 @@ class VendorsPage {
 						<?php echo \WPSellServices\Services\Icon::render( 'users' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					</div>
 					<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No vendors yet', 'wp-sell-services' ); ?></h2>
-					<p class="wpss-empty-state__body"><?php esc_html_e( 'Invite site users to register as vendors, or let them self-register via the /become-a-vendor page.', 'wp-sell-services' ); ?></p>
+					<p class="wpss-empty-state__body"><?php esc_html_e( 'Invite site users to register as vendors, or let them self-register on the vendor registration page.', 'wp-sell-services' ); ?></p>
 					<p class="wpss-empty-state__actions">
-						<a href="<?php echo esc_url( home_url( '/become-a-vendor/' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Open vendor registration', 'wp-sell-services' ); ?></a>
+						<a href="<?php echo esc_url( wpss_get_become_vendor_url() ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Open vendor registration', 'wp-sell-services' ); ?></a>
 						<a href="https://wbcomdesigns.com/docs/wp-sell-services/vendor-registration-wpss" class="wpss-empty-state__learn" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
 					</p>
 				</div>
@@ -1032,13 +1037,15 @@ class VendorsPage {
 						<span class="trash">
 							| <button type="button" class="button-link wpss-change-status"
 									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-									data-status="suspended"><?php esc_html_e( 'Suspend', 'wp-sell-services' ); ?></button>
+									data-status="suspended"
+									data-confirm="<?php echo esc_attr( wpss_get_option( 'vendor', 'suspended_money_access' ) ? __( 'Suspend this vendor? They stop taking new work but can still see their earnings and request withdrawals.', 'wp-sell-services' ) : __( 'Suspend this vendor? They stop taking new work and keep Sales Orders only; money already earned is held until you reactivate them.', 'wp-sell-services' ) ); ?>"><?php esc_html_e( 'Suspend', 'wp-sell-services' ); ?></button>
 						</span>
 					<?php elseif ( 'suspended' === $status ) : ?>
 						<span class="untrash">
 							| <button type="button" class="button-link wpss-change-status"
 									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-									data-status="active"><?php esc_html_e( 'Activate', 'wp-sell-services' ); ?></button>
+									data-status="active"
+									data-confirm="<?php esc_attr_e( 'Reactivate this vendor? They can sell again.', 'wp-sell-services' ); ?>"><?php esc_html_e( 'Activate', 'wp-sell-services' ); ?></button>
 						</span>
 					<?php elseif ( 'pending' === $status ) : ?>
 						<?php
@@ -1061,7 +1068,8 @@ class VendorsPage {
 						<span class="wpss-approve">
 							| <button type="button" class="button-link wpss-change-status"
 									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-									data-status="active"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></button>
+									data-status="active"
+									data-confirm="<?php esc_attr_e( 'Approve this vendor? They can start selling and will be emailed.', 'wp-sell-services' ); ?>"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></button>
 						</span>
 						<span class="trash">
 							| <button type="button" class="button-link wpss-change-status"
@@ -1087,7 +1095,7 @@ class VendorsPage {
 			<td class="column-rating" data-colname="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
 				<?php if ( $reviews > 0 ) : ?>
 					<span class="wpss-rating-stars">
-						<?php echo esc_html( number_format( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
+						<?php echo esc_html( number_format_i18n( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 					</span>
 					<span class="wpss-rating-count">
 						(<?php echo esc_html( number_format_i18n( $reviews ) ); ?>)
@@ -1236,7 +1244,7 @@ class VendorsPage {
 				<div class="wpss-detail-stat-card">
 					<span class="wpss-detail-stat-number">
 						<?php if ( $reviews > 0 ) : ?>
-							<?php echo esc_html( number_format( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
+							<?php echo esc_html( number_format_i18n( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 						<?php else : ?>
 							-
 						<?php endif; ?>
@@ -1319,7 +1327,10 @@ class VendorsPage {
 			wp_send_json_error( array( 'message' => __( 'Invalid status.', 'wp-sell-services' ) ) );
 		}
 
-		if ( ! $this->vendor_service->set_status( $vendor_id, $status ) ) {
+		// Optional, for a rejection or suspension: it reaches the vendor's email and the audit log.
+		$reason = mb_substr( sanitize_textarea_field( wp_unslash( (string) ( $_POST['reason'] ?? '' ) ) ), 0, 500 );
+
+		if ( ! $this->vendor_service->set_status( $vendor_id, $status, $reason ) ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to update vendor status.', 'wp-sell-services' ) ) );
 		}
 
@@ -1364,11 +1375,12 @@ class VendorsPage {
 		}
 
 		$status  = $status_map[ $bulk_action ];
+		$reason  = 'suspended' === $status ? mb_substr( sanitize_textarea_field( wp_unslash( (string) ( $_POST['reason'] ?? '' ) ) ), 0, 500 ) : '';
 		$success = 0;
 		$failed  = array();
 
 		foreach ( $ids as $vendor_id ) {
-			if ( $this->vendor_service->set_status( $vendor_id, $status ) ) {
+			if ( $this->vendor_service->set_status( $vendor_id, $status, $reason ) ) {
 				++$success;
 			} else {
 				$failed[] = sprintf( '#%d', $vendor_id );
@@ -1651,7 +1663,7 @@ class VendorsPage {
 			<div class="wpss-info-grid">
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'On-Time Delivery Rate', 'wp-sell-services' ); ?></span>
-					<span class="wpss-info-value"><?php echo esc_html( number_format( (float) ( $profile->on_time_delivery_rate ?? 0 ), 1 ) ); ?>%</span>
+					<span class="wpss-info-value"><?php echo esc_html( number_format_i18n( (float) ( $profile->on_time_delivery_rate ?? 0 ), 1 ) ); ?>%</span>
 				</div>
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Completed Orders', 'wp-sell-services' ); ?></span>
@@ -2001,7 +2013,7 @@ class VendorsPage {
 					printf(
 						/* translators: %s: global commission rate */
 						esc_html__( 'Global platform commission: %s%%. Customize the rate for this vendor below.', 'wp-sell-services' ),
-						esc_html( number_format( $global_rate, 1 ) )
+						esc_html( number_format_i18n( $global_rate, 1 ) )
 					);
 					?>
 				</p>
@@ -2028,7 +2040,7 @@ class VendorsPage {
 							printf(
 								/* translators: %s: custom commission rate */
 								esc_html__( 'Using custom rate: %s%%', 'wp-sell-services' ),
-								esc_html( number_format( $effective_rate['rate'], 2 ) )
+								esc_html( number_format_i18n( $effective_rate['rate'], 2 ) )
 							);
 							?>
 						</span>
@@ -2112,7 +2124,8 @@ class VendorsPage {
 	private function render_tab_wallet( int $vendor_id ): void {
 		global $wpdb;
 
-		$limit = 50;
+		$limit       = 50;
+		$wallet_page = isset( $_POST['wallet_page'] ) ? max( 1, (int) $_POST['wallet_page'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
 
 		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
 
@@ -2123,16 +2136,43 @@ class VendorsPage {
 			)
 		);
 
+		// The types this vendor actually has (idx_user_type_created), so the filter lists only real choices.
+		$wallet_types = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT type FROM {$wpdb->prefix}wpss_wallet_transactions WHERE user_id = %d ORDER BY type ASC LIMIT 50",
+				$vendor_id
+			)
+		);
+		$wallet_type  = isset( $_POST['wallet_type'] ) ? sanitize_key( wp_unslash( $_POST['wallet_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
+		$wallet_type  = in_array( $wallet_type, $wallet_types, true ) ? $wallet_type : '';
+
+		$matching = $total;
+		if ( '' !== $wallet_type ) {
+			$matching = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_wallet_transactions WHERE user_id = %d AND type = %s",
+					$vendor_id,
+					$wallet_type
+				)
+			);
+		}
+
+		// A page past the end (stale tab, hand-typed number) shows the last page, not an empty table.
+		$wallet_pages = max( 1, (int) ceil( $matching / $limit ) );
+		$wallet_page  = min( $wallet_page, $wallet_pages );
+
 		// Most recent transactions (read-only audit view).
+		$type_sql     = '' !== $wallet_type ? $wpdb->prepare( 'AND type = %s', $wallet_type ) : '';
 		$transactions = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, type, amount, currency, description, reference_type, reference_id, status, created_at
 				FROM {$wpdb->prefix}wpss_wallet_transactions
-				WHERE user_id = %d
+				WHERE user_id = %d {$type_sql}
 				ORDER BY created_at DESC, id DESC
-				LIMIT %d",
+				LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $type_sql is a prepared fragment.
 				$vendor_id,
-				$limit
+				$limit,
+				( $wallet_page - 1 ) * $limit
 			)
 		);
 		?>
@@ -2156,15 +2196,15 @@ class VendorsPage {
 
 		<div class="wpss-tab-section">
 			<h3><?php esc_html_e( 'Transaction History', 'wp-sell-services' ); ?></h3>
-			<?php if ( $total > $limit ) : ?>
-				<p class="description">
-					<?php
-					printf(
-						/* translators: %d: number of transactions shown */
-						esc_html__( 'Showing the %d most recent transactions.', 'wp-sell-services' ),
-						(int) $limit
-					);
-					?>
+			<?php if ( count( $wallet_types ) > 1 ) : ?>
+				<p class="wpss-wallet-filter">
+					<label for="wpss-wallet-type"><?php esc_html_e( 'Type', 'wp-sell-services' ); ?></label>
+					<select id="wpss-wallet-type">
+						<option value=""><?php esc_html_e( 'All types', 'wp-sell-services' ); ?></option>
+						<?php foreach ( $wallet_types as $type_key ) : ?>
+							<option value="<?php echo esc_attr( $type_key ); ?>" <?php selected( $wallet_type, $type_key ); ?>><?php echo esc_html( ucwords( str_replace( '_', ' ', (string) $type_key ) ) ); ?></option>
+						<?php endforeach; ?>
+					</select>
 				</p>
 			<?php endif; ?>
 			<?php if ( empty( $transactions ) ) : ?>
@@ -2186,7 +2226,7 @@ class VendorsPage {
 								<td><?php echo esc_html( wpss_datetime_label( $txn->created_at ) ); ?></td>
 								<td><?php echo esc_html( ucwords( str_replace( '_', ' ', (string) $txn->type ) ) ); ?></td>
 								<td><?php echo esc_html( (string) ( $txn->description ?? '' ) ); ?></td>
-								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount ) ); ?></td>
+								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount, (string) $txn->currency ) ); ?></td>
 								<td>
 									<span class="<?php echo esc_attr( wpss_status_class( $txn->status ) ); ?>">
 										<?php echo esc_html( ucfirst( (string) $txn->status ) ); ?>
@@ -2196,6 +2236,22 @@ class VendorsPage {
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+				<?php if ( $wallet_pages > 1 ) : ?>
+					<div class="tablenav wpss-wallet-pagination">
+						<div class="tablenav-pages">
+							<?php if ( $wallet_page > 1 ) : ?>
+								<a href="#" data-page="<?php echo esc_attr( $wallet_page - 1 ); ?>" aria-label="<?php esc_attr_e( 'Previous page', 'wp-sell-services' ); ?>">&laquo;</a>
+							<?php endif; ?>
+							<span class="paging-input">
+								<label class="screen-reader-text" for="wpss-wallet-jump"><?php esc_html_e( 'Go to page', 'wp-sell-services' ); ?></label>
+								<input type="number" id="wpss-wallet-jump" class="small-text" min="1" max="<?php echo esc_attr( (string) $wallet_pages ); ?>" value="<?php echo esc_attr( (string) $wallet_page ); ?>"> / <?php echo esc_html( (string) $wallet_pages ); ?>
+							</span>
+							<?php if ( $wallet_page < $wallet_pages ) : ?>
+								<a href="#" data-page="<?php echo esc_attr( (string) ( $wallet_page + 1 ) ); ?>" aria-label="<?php esc_attr_e( 'Next page', 'wp-sell-services' ); ?>">&raquo;</a>
+							<?php endif; ?>
+						</div>
+					</div>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 		<?php
@@ -2323,7 +2379,7 @@ class VendorsPage {
 							</span>
 							<span class="pagination-links">
 								<?php if ( $page > 1 ) : ?>
-									<a href="#" class="wpss-reviews-page" data-page="<?php echo esc_attr( $page - 1 ); ?>">&laquo;</a>
+									<a href="#" class="wpss-reviews-page" data-page="<?php echo esc_attr( (string) ( $page - 1 ) ); ?>">&laquo;</a>
 								<?php endif; ?>
 								<span class="paging-input">
 									<?php echo esc_html( $page ); ?> / <?php echo esc_html( $total_pages ); ?>
@@ -2463,7 +2519,7 @@ class VendorsPage {
 					printf(
 						/* translators: %s: global commission rate */
 						esc_html__( 'Global platform commission: %s%%. Set a custom rate for this vendor.', 'wp-sell-services' ),
-						esc_html( number_format( $global_rate, 1 ) )
+						esc_html( number_format_i18n( $global_rate, 1 ) )
 					);
 					?>
 				</p>
@@ -2491,7 +2547,7 @@ class VendorsPage {
 							printf(
 								/* translators: %s: custom commission rate */
 								esc_html__( 'Using custom rate: %s%%', 'wp-sell-services' ),
-								esc_html( number_format( $effective_rate['rate'], 2 ) )
+								esc_html( number_format_i18n( $effective_rate['rate'], 2 ) )
 							);
 							?>
 						</span>

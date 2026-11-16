@@ -95,6 +95,48 @@ class AjaxHandlers {
 	private const VALID_FILTERABLE_TABS = array( 'orders', 'sales', 'services', 'requests', 'messages', 'earnings' );
 
 	/**
+	 * Actions no shipped script, template or Pro file calls any more.
+	 *
+	 * The REST API replaced them. They keep working for one more release and log
+	 * a deprecation notice when called (WP_DEBUG on); they are removed at the next
+	 * major. Still live and not listed: accept/reject/withdraw_proposal (called by
+	 * a built name in frontend.js) and update_request.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @var array<int, string>
+	 */
+	public const DEPRECATED_ACTIONS = array(
+		'wpss_accept_cancellation',
+		'wpss_accept_delivery',
+		'wpss_add_portfolio_item',
+		'wpss_cancel_order',
+		'wpss_delete_portfolio_item',
+		'wpss_export_data',
+		'wpss_favorite_service',
+		'wpss_filter_dashboard',
+		'wpss_get_dashboard_tab',
+		'wpss_get_favorites',
+		'wpss_get_messages',
+		'wpss_get_new_messages',
+		'wpss_get_notifications',
+		'wpss_load_services',
+		'wpss_mark_messages_read',
+		'wpss_paginate_dashboard',
+		'wpss_reject_cancellation',
+		'wpss_remove_requirement_file',
+		'wpss_search_dashboard',
+		'wpss_send_direct_message',
+		'wpss_skip_requirements',
+		'wpss_start_work',
+		'wpss_unfavorite_service',
+		'wpss_update_cart_item',
+		'wpss_update_portfolio_item',
+		'wpss_update_vendor_profile',
+		'wpss_upload_file',
+	);
+
+	/**
 	 * Initialize AJAX handlers.
 	 *
 	 * @return void
@@ -204,6 +246,30 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_add_portfolio_item', array( $this, 'add_portfolio_item' ) );
 		add_action( 'wp_ajax_wpss_update_portfolio_item', array( $this, 'update_portfolio_item' ) );
 		add_action( 'wp_ajax_wpss_delete_portfolio_item', array( $this, 'delete_portfolio_item' ) );
+
+		// Log callers of the dead actions before their handler runs. Only the
+		// logged-out door that already exists is hooked, so no new nopriv action appears.
+		foreach ( self::DEPRECATED_ACTIONS as $action ) {
+			add_action( 'wp_ajax_' . $action, array( $this, 'note_deprecated_ajax' ), 1 );
+			if ( has_action( 'wp_ajax_nopriv_' . $action ) ) {
+				add_action( 'wp_ajax_nopriv_' . $action, array( $this, 'note_deprecated_ajax' ), 1 );
+			}
+		}
+	}
+
+	/**
+	 * Log a call to a deprecated admin-ajax action, then let its handler run.
+	 *
+	 * _deprecated_function() fires the deprecated_function_run action every time
+	 * and shows the notice only when WP_DEBUG is on.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @return void
+	 */
+	public function note_deprecated_ajax(): void {
+		$action = preg_replace( '/^wp_ajax_(nopriv_)?/', '', (string) current_action() );
+		_deprecated_function( esc_html( 'admin-ajax action ' . $action ), '1.9.3', esc_html__( 'the wpss/v1 REST API', 'wp-sell-services' ) );
 	}
 
 	/**
@@ -391,8 +457,34 @@ class AjaxHandlers {
 			return;
 		}
 
+		// A seller on paid work in flight asks; the buyer decides.
+		if ( (int) $order->vendor_id === $user_id && in_array( $order->status, OrderService::seller_cancellation_statuses(), true ) ) {
+			$reason = sanitize_textarea_field( wp_unslash( $_POST['reason'] ?? '' ) );
+			if ( '' === $reason ) {
+				wp_send_json_error( array( 'message' => __( 'Reason is required for cancellation.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			$result = $order_service->request_seller_cancellation( $order_id, $user_id, $reason, sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) ) );
+
+			if ( $result['success'] ) {
+				wp_send_json_success( array( 'message' => __( 'Your cancellation request has been sent to the buyer.', 'wp-sell-services' ) ) );
+			}
+
+			wp_send_json_error( $result );
+			return;
+		}
+
 		// Vendors can only cancel orders in pending status via AJAX — all other cancellations go through REST API.
 		if ( (int) $order->vendor_id === $user_id && 'pending' !== $order->status ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot cancel this order in its current status.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		// Same gate as the REST cancel route: a buyer cancels outright only before work starts. Later statuses
+		// (delivered, disputed, revision, late...) would refund the buyer and reverse the vendor's earnings with no consent.
+		$buyer_immediate = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted', 'requirements_submitted', 'in_progress' );
+		if ( (int) $order->customer_id === $user_id && ! in_array( $order->status, $buyer_immediate, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'You cannot cancel this order in its current status.', 'wp-sell-services' ) ) );
 			return;
 		}
@@ -444,7 +536,11 @@ class AjaxHandlers {
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
 
-		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
+		// The other party answers: the buyer for a seller's request, the vendor for a buyer's.
+		$by_vendor = $order && $order->is_cancellation_requested_by_vendor();
+		$responder = $order ? ( $by_vendor ? (int) $order->customer_id : (int) $order->vendor_id ) : 0;
+
+		if ( ! $order || $responder !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-sell-services' ) ) );
 			return;
 		}
@@ -454,7 +550,7 @@ class AjaxHandlers {
 			return;
 		}
 
-		$result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
+		$result = $order_service->cancel( $order_id, $user_id, $by_vendor ? __( 'Buyer accepted cancellation request.', 'wp-sell-services' ) : __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
 
 		if ( $result['success'] ) {
 			wp_send_json_success( array( 'message' => __( 'Cancellation accepted. Order has been cancelled.', 'wp-sell-services' ) ) );
@@ -481,20 +577,31 @@ class AjaxHandlers {
 
 		if ( ! $order_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-			return;
 		}
 
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
 
-		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
+		$by_vendor = $order && $order->is_cancellation_requested_by_vendor();
+		$responder = $order ? ( $by_vendor ? (int) $order->customer_id : (int) $order->vendor_id ) : 0;
+
+		if ( ! $order || $responder !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-sell-services' ) ) );
-			return;
 		}
 
 		if ( 'cancellation_requested' !== $order->status ) {
 			wp_send_json_error( array( 'message' => __( 'This order does not have a pending cancellation request.', 'wp-sell-services' ) ) );
-			return;
+		}
+
+		// The buyer declining a seller's request just resumes the work.
+		if ( $by_vendor ) {
+			$resumed = $order_service->decline_seller_cancellation( $order_id, $user_id );
+
+			if ( $resumed['success'] ) {
+				wp_send_json_success( array( 'message' => __( 'Request declined. The order is back in progress.', 'wp-sell-services' ) ) );
+			}
+
+			wp_send_json_error( $resumed );
 		}
 
 		// Escalate to dispute.
@@ -511,7 +618,7 @@ class AjaxHandlers {
 		if ( $dispute_result ) {
 			wp_send_json_success( array( 'message' => __( 'Cancellation disputed. The order has been escalated for admin review.', 'wp-sell-services' ) ) );
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to create dispute. Please try again.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => $dispute_service->last_error() ?: __( 'Failed to create dispute. Please try again.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -1952,7 +2059,12 @@ class AjaxHandlers {
 		$conversation = $conversation_service->create_direct( $user_id, $vendor_id, $conv_subject, $service_id );
 
 		if ( $conversation ) {
+			// The bell entry and branded mail above are this inquiry's notice. Without
+			// this the message hook adds a second bell entry and a second email.
+			$mute_first_message = static fn(): bool => false;
+			add_filter( 'wpss_notify_message_participants', $mute_first_message );
 			$conversation_service->send_message( $conversation->id, $user_id, $message, $attachments );
+			remove_filter( 'wpss_notify_message_participants', $mute_first_message );
 		}
 
 		/**
@@ -2462,8 +2574,9 @@ class AjaxHandlers {
 			'start'               => array( array( 'vendor' ), ServiceOrder::STATUS_IN_PROGRESS ),
 			'cancel'              => array( array( 'buyer', 'admin' ), ServiceOrder::STATUS_CANCELLED ),
 			'refund'              => array( array( 'admin' ), ServiceOrder::STATUS_REFUNDED ),
-			'accept-cancellation' => array( array( 'vendor' ), ServiceOrder::STATUS_CANCELLED ),
-			'reject-cancellation' => array( array( 'vendor' ), ServiceOrder::STATUS_DISPUTED ),
+			// Either party can be the one answering; the case below checks it is the OTHER party from the requester.
+			'accept-cancellation' => array( array( 'vendor', 'buyer' ), ServiceOrder::STATUS_CANCELLED ),
+			'reject-cancellation' => array( array( 'vendor', 'buyer' ), ServiceOrder::STATUS_DISPUTED ),
 		);
 
 		if ( ! isset( $allowed[ $action ] ) ) {
@@ -2551,14 +2664,27 @@ class AjaxHandlers {
 
 			case 'accept-cancellation':
 				if ( 'cancellation_requested' === $order->status ) {
-					$result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
+					$by_vendor = $order->is_cancellation_requested_by_vendor();
+					if ( ( $by_vendor ? 'buyer' : 'vendor' ) !== $actor ) {
+						wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+					}
+					$result = $order_service->cancel( $order_id, $user_id, $by_vendor ? __( 'Buyer accepted cancellation request.', 'wp-sell-services' ) : __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
 				} else {
 					wp_send_json_error( array( 'message' => __( 'Cannot accept cancellation.', 'wp-sell-services' ) ) );
 				}
 				break;
 
 			case 'reject-cancellation':
-				if ( 'cancellation_requested' === $order->status ) {
+				if ( 'cancellation_requested' === $order->status && $order->is_cancellation_requested_by_vendor() ) {
+					// The buyer declines the seller's request: work resumes.
+					if ( 'buyer' !== $actor ) {
+						wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+					}
+					$result = $order_service->decline_seller_cancellation( $order_id, $user_id );
+				} elseif ( 'cancellation_requested' === $order->status ) {
+					if ( 'vendor' !== $actor ) {
+						wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+					}
 					$dispute_service = new DisputeService();
 					$dispute_result  = $dispute_service->open(
 						$order_id,
@@ -2744,13 +2870,12 @@ class AjaxHandlers {
 			);
 
 			foreach ( $orders as $order ) {
-				$customer = get_userdata( $order->customer_id );
 				wpss_fputcsv(
 					$output,
 					array(
 						$order->id,
 						self::sanitize_csv_cell( wpss_get_order_title( $order ) ?: 'N/A' ),
-						self::sanitize_csv_cell( $customer ? $customer->display_name : 'N/A' ),
+						self::sanitize_csv_cell( wpss_get_member_display_name( (int) $order->customer_id, 'N/A' ) ),
 						$order->status,
 						$order->total,
 						$order->created_at,

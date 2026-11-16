@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.1
+ * @version 1.9.3
  *
  * @var array $orders  Service orders.
  * @var int   $user_id Current user ID.
@@ -59,7 +59,7 @@ do_action( 'wpss_service_orders_before', $user_id );
 				</div>
 				<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-empty-state__text"><?php esc_html_e( 'You haven\'t placed any service orders yet. Browse our marketplace to find services.', 'wp-sell-services' ); ?></p>
-				<a href="<?php echo esc_url( home_url( '/services/' ) ); ?>" class="wpss-btn wpss-btn--primary">
+				<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?>
 				</a>
 			</div>

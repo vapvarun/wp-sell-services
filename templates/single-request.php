@@ -43,7 +43,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.2
+ * @version 1.9.3
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -58,8 +58,6 @@ $is_buyer           = $current_user_id === $buyer_id;
 $is_vendor          = wpss_is_vendor( $current_user_id );
 $request_status_raw = get_post_meta( $request_id, '_wpss_status', true );
 $request_status     = $request_status_raw ? $request_status_raw : 'open';
-$budget_type_raw    = get_post_meta( $request_id, '_wpss_budget_type', true );
-$budget_type        = $budget_type_raw ? $budget_type_raw : 'fixed';
 $budget_min         = (float) get_post_meta( $request_id, '_wpss_budget_min', true );
 $budget_max         = (float) get_post_meta( $request_id, '_wpss_budget_max', true );
 $delivery_days      = (int) get_post_meta( $request_id, '_wpss_delivery_days', true );
@@ -98,16 +96,13 @@ if ( $is_buyer ) {
 $proposal_count = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $request_id );
 
 // Format budget display.
-if ( 'range' === $budget_type && $budget_min && $budget_max ) {
-	// Budget is a pre-purchase estimate, so it goes through
-	// wpss_catalog_price_html() - the wrapper that carries data-wbcom-amount and
-	// lets the display-currency switcher convert it in the browser. Built as HTML
-	// from here on, so the 'Negotiable' fallback is escaped at assignment and the
-	// echo sites pass it through wp_kses_post() instead of esc_html().
-	$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' ) . ' - ' . wpss_catalog_price_html( (float) $budget_max, 'request-budget' );
-} elseif ( $budget_min ) {
-	$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' );
-} else {
+// Budget is a pre-purchase estimate, so it goes through wpss_request_budget_html()
+// (wpss_catalog_price_html under the hood: it carries data-wbcom-amount so the
+// display-currency switcher can convert it in the browser). HTML from here on, so
+// the 'Negotiable' fallback is escaped at assignment and the echo sites pass it
+// through wp_kses_post() instead of esc_html().
+$budget_display = wpss_request_budget_html( (float) $budget_min, (float) $budget_max );
+if ( '' === $budget_display ) {
 	$budget_display = esc_html__( 'Negotiable', 'wp-sell-services' );
 }
 
@@ -320,13 +315,13 @@ do_action( 'wpss_before_single_request', $request_id );
 													class="wpss-vendor-avatar">
 												<div class="wpss-vendor-info">
 													<a href="<?php echo esc_url( wpss_get_vendor_url( $proposal->vendor_id ) ); ?>" class="wpss-vendor-name">
-														<?php echo esc_html( $vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?>
+														<?php echo esc_html( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) ) ); ?>
 													</a>
 													<div class="wpss-vendor-stats">
 														<?php if ( $vendor_rating > 0 ) : ?>
 															<span class="wpss-vendor-rating">
 																<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
-																<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
+																<?php echo esc_html( number_format_i18n( $vendor_rating, 1 ) ); ?>
 															</span>
 														<?php endif; ?>
 														<span class="wpss-vendor-orders">
@@ -457,24 +452,11 @@ do_action( 'wpss_before_single_request', $request_id );
 								<span class="wpss-detail-value wpss-detail-budget"><?php echo wp_kses_post( $budget_display ); ?></span>
 							</div>
 
-							<?php if ( $delivery_days ) : ?>
-								<div class="wpss-detail-item">
-									<span class="wpss-detail-label"><?php esc_html_e( 'Expected Delivery', 'wp-sell-services' ); ?></span>
-									<span class="wpss-detail-value">
-										<?php
-										printf(
-											/* translators: %d: number of days */
-											esc_html( _n( '%d day', '%d days', $delivery_days, 'wp-sell-services' ) ),
-											esc_html( $delivery_days )
-										);
-										?>
-									</span>
-								</div>
-							<?php endif; ?>
+							<?php // The buyer never types a delivery time (the form only asks for Open until), so none is shown: the old row printed a stored default of 7 days. ?>
 
 							<?php if ( $expires_at ) : ?>
 								<div class="wpss-detail-item">
-									<span class="wpss-detail-label"><?php esc_html_e( 'Deadline', 'wp-sell-services' ); ?></span>
+									<span class="wpss-detail-label"><?php esc_html_e( 'Open until', 'wp-sell-services' ); ?></span>
 									<span class="wpss-detail-value">
 										<?php echo esc_html( wpss_deadline_label( $expires_at ) ); ?>
 									</span>
@@ -509,8 +491,8 @@ do_action( 'wpss_before_single_request', $request_id );
 							</a>
 							<?php
 						elseif ( ! $is_vendor && ! $is_buyer ) :
-							$tpl_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-							if ( 'closed' !== $tpl_registration_mode ) :
+							// A suspended vendor cannot re-apply: the account is theirs, held, and the gate refuses them after the click.
+							if ( ! wpss_vendor_registration_closed_for() && 'suspended' !== wpss_get_vendor_status( get_current_user_id() ) ) :
 								?>
 							<a href="<?php echo esc_url( wpss_get_become_vendor_url() ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--block">
 								<?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?>
@@ -532,7 +514,7 @@ do_action( 'wpss_before_single_request', $request_id );
 								class="wpss-buyer-avatar">
 							<div class="wpss-buyer-info">
 								<span class="wpss-buyer-name" title="<?php echo esc_attr( $buyer ? $buyer->display_name : '' ); ?>">
-									<?php echo esc_html( $buyer ? $buyer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
+									<?php echo esc_html( wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'Anonymous', 'wp-sell-services' ) ) ); ?>
 								</span>
 								<span class="wpss-buyer-member-since">
 									<?php
@@ -608,6 +590,7 @@ do_action( 'wpss_before_single_request', $request_id );
 							</label>
 							<div class="wpss-input-group">
 								<input type="number" id="proposal-price" name="price" class="wpss-form-input" min="1" step="0.01"
+										data-budget-min="<?php echo esc_attr( (float) $budget_min ); ?>" data-budget-max="<?php echo esc_attr( (float) $budget_max ); ?>"
 										placeholder="<?php echo esc_attr( $budget_min ? $budget_min : '100' ); ?>">
 							</div>
 							<?php if ( $budget_min || $budget_max ) : ?>
@@ -616,6 +599,18 @@ do_action( 'wpss_before_single_request', $request_id );
 									printf(
 										/* translators: %s: budget amount or range */
 										esc_html__( 'Budget: %s', 'wp-sell-services' ),
+										wp_kses_post( $budget_display )
+									);
+									?>
+								</p>
+							<?php endif; ?>
+							<?php if ( $budget_min || $budget_max ) : ?>
+								<?php // A heads-up, never a block: a price over or under the stated budget can be a real offer, and the buyer decides. ?>
+								<p class="wpss-form-help wpss-form-help--warning" id="proposal-price-note" role="status" hidden>
+									<?php
+									printf(
+										/* translators: %s: the buyer's budget, as price HTML. */
+										esc_html__( 'This price is outside the buyer\'s budget (%s). You can still send it; the buyer decides.', 'wp-sell-services' ),
 										wp_kses_post( $budget_display )
 									);
 									?>

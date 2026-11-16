@@ -261,7 +261,7 @@
 					WPSS.performOrderAction(orderId, action, reason);
 				}, { submitText: wpssData.i18n.submit, placeholder: wpssData.i18n.enterReason });
 			} else {
-				WPSS.showConfirm(WPSS.getActionConfirm(action), function() {
+				WPSS.showConfirm($btn.data('confirm') || WPSS.getActionConfirm(action), function() {
 					WPSS.performOrderAction(orderId, action);
 				});
 			}
@@ -1134,6 +1134,21 @@
 	 * Initialize proposal handlers.
 	 */
 	WPSS.initProposals = function() {
+		// A heads-up, never a block: a price outside the buyer's stated budget can be a real offer, and the buyer decides.
+		// The stored shape: a lone figure is a fixed price (min), a maximum alone is a ceiling, two differing are a range.
+		$(document).on('input', '#proposal-price', function() {
+			var $note = $('#proposal-price-note');
+			if (!$note.length) {
+				return;
+			}
+			var min = parseFloat($(this).data('budget-min')) || 0;
+			var max = parseFloat($(this).data('budget-max')) || 0;
+			var low = (max > 0 && min > 0 && min !== max) ? min : 0;
+			var high = max > 0 ? max : min;
+			var value = parseFloat($(this).val());
+			$note.prop('hidden', !(value > 0 && ((high > 0 && value > high) || (low > 0 && value < low))));
+		});
+
 		// Submit proposal button - open modal.
 		$(document).on('click', '.wpss-submit-proposal-btn', function(e) {
 			e.preventDefault();
@@ -1391,9 +1406,9 @@
 			total += parseFloat($(this).find('[data-milestone-amount]').val()) || 0;
 			days  += parseInt($(this).find('[data-milestone-days]').val(), 10) || 0;
 		});
-		const symbol = (wpssData && wpssData.currencySymbol) || '$';
+		const format = (wpssData && wpssData.currencyFormat) || '$%s';
 		const decimals = (wpssData && typeof wpssData.currencyDecimals !== 'undefined') ? wpssData.currencyDecimals : 2;
-		$('#wpss-proposal-modal [data-milestones-total]').text(symbol + total.toFixed(decimals));
+		$('#wpss-proposal-modal [data-milestones-total]').text(format.replace('%s', total.toFixed(decimals)));
 		$('#wpss-proposal-modal [data-milestones-days]').text(days);
 	};
 

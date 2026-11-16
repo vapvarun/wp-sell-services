@@ -336,7 +336,7 @@ class UpgradePage {
 		 *
 		 * @param string $url Product site URL.
 		 */
-		$upgrade_url = apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' );
+		$upgrade_url = wpss_pro_upgrade_url();
 
 		/**
 		 * Filters the documentation URL shown on the upgrade screen.
@@ -345,7 +345,7 @@ class UpgradePage {
 		 *
 		 * @param string $url Documentation URL.
 		 */
-		$docs_url = apply_filters( 'wpss_docs_url', 'https://wpsellservices.com/docs/' );
+		$docs_url = wpss_docs_url();
 		?>
 		<div class="wrap wpss-admin wpss-upgrade-wrap">
 			<div class="wpss-page-header">

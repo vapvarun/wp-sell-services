@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.3.0
- * @version 1.9.1
+ * @version 1.9.3
  *
  * @var WPSellServices\Models\ServiceOrder $order Service order object.
  * @var WP_User $recipient     Recipient user object (vendor).
@@ -47,13 +47,25 @@ do_action( 'wpss_email_content_before', 'cancellation_requested', $order, $recip
 	printf(
 		/* translators: %s: recipient name */
 		esc_html__( 'Hi %s,', 'wp-sell-services' ),
-		esc_html( $recipient ? $recipient->display_name : __( 'there', 'wp-sell-services' ) )
+		esc_html( wpss_get_member_display_name( (int) ( $recipient->ID ?? 0 ), __( 'there', 'wp-sell-services' ) ) )
 	);
 	?>
 </p>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php if ( ! empty( $is_customer ) ) : ?>
+	<?php if ( ! empty( $requested_by_vendor ) ) : ?>
+		<?php
+		if ( ! empty( $is_customer ) ) {
+			printf(
+				/* translators: %s: vendor name */
+				esc_html__( '%s has asked to cancel the following order. You decide: accept to cancel and refund it, or decline to continue the work.', 'wp-sell-services' ),
+				'<strong>' . esc_html( $vendor_name ?? '' ) . '</strong>'
+			);
+		} else {
+			esc_html_e( 'Your request to cancel the following order has been sent to the buyer. The order stays as it is until they answer.', 'wp-sell-services' );
+		}
+		?>
+	<?php elseif ( ! empty( $is_customer ) ) : ?>
 		<?php esc_html_e( 'Your cancellation request has been submitted for the following order. The vendor has 48 hours to respond.', 'wp-sell-services' ); ?>
 	<?php else : ?>
 		<?php
@@ -98,6 +110,7 @@ do_action( 'wpss_email_content_before', 'cancellation_requested', $order, $recip
 	<?php endif; ?>
 </div>
 
+<?php if ( empty( $requested_by_vendor ) ) : ?>
 <div style="background: #fef2f2; padding: 16px; border-radius: 4px; margin: 20px 0; border-left: 4px solid #ef4444;">
 	<p style="margin: 0; color: #991b1b; font-weight: 600;">
 		<?php
@@ -112,14 +125,21 @@ do_action( 'wpss_email_content_before', 'cancellation_requested', $order, $recip
 		<?php esc_html_e( 'If you do not respond, the order will be automatically cancelled.', 'wp-sell-services' ); ?>
 	</p>
 </div>
+<?php endif; ?>
 
+<?php if ( empty( $requested_by_vendor ) || ! empty( $is_customer ) ) : ?>
 <p style="margin: 0 0 10px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php esc_html_e( 'You can:', 'wp-sell-services' ); ?>
 </p>
 <ul style="margin: 0 0 20px 0; padding-left: 20px; color: #3c3c3c; line-height: 1.8;">
 	<li><strong><?php esc_html_e( 'Accept Cancellation', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'the order will be cancelled and a refund may be initiated.', 'wp-sell-services' ); ?></li>
-	<li><strong><?php esc_html_e( 'Dispute Cancellation', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'the case will be escalated to admin mediation.', 'wp-sell-services' ); ?></li>
+	<?php if ( ! empty( $requested_by_vendor ) ) : ?>
+		<li><strong><?php esc_html_e( 'Decline Cancellation', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'the work continues.', 'wp-sell-services' ); ?></li>
+	<?php else : ?>
+		<li><strong><?php esc_html_e( 'Dispute Cancellation', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'the case will be escalated to admin mediation.', 'wp-sell-services' ); ?></li>
+	<?php endif; ?>
 </ul>
+<?php endif; ?>
 
 <p style="text-align: center; margin: 30px 0;">
 	<?php

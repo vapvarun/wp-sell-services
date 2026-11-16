@@ -60,58 +60,21 @@ $conversation = $wpdb->get_row(
 	)
 );
 
-// Get messages from the messages table.
-$messages = array();
+// Newest page of the thread; "Show earlier messages" asks for the page before the oldest shown.
+$messages     = array();
+$has_older    = false;
+$before_msg   = 0;
+$thread_limit = 50;
 if ( $conversation ) {
-	$messages = $wpdb->get_results(
-		$wpdb->prepare(
-			"SELECT m.*, u.display_name as sender_name
-			FROM {$wpdb->prefix}wpss_messages m
-			LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
-			WHERE m.conversation_id = %d
-			ORDER BY m.created_at ASC",
-			$conversation->id
-		)
-	);
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only paging parameter.
+	$before_msg = isset( $_GET['before_msg'] ) ? absint( wp_unslash( $_GET['before_msg'] ) ) : 0;
+	$thread     = ( new \WPSellServices\Services\ConversationService() )->get_thread_page( (int) $conversation->id, $before_msg, $thread_limit );
+	$messages   = $thread['messages'];
+	$has_older  = $thread['has_older'];
 
-	// Mark messages as read via read_by JSON field.
-	if ( ! empty( $messages ) ) {
-		$unread_ids = array();
-		foreach ( $messages as $message ) {
-			if ( (int) $message->sender_id !== $user_id ) {
-				$read_by = $message->read_by ? json_decode( $message->read_by, true ) : array();
-				if ( ! isset( $read_by[ $user_id ] ) ) {
-					$unread_ids[] = (int) $message->id;
-				}
-			}
-		}
-		if ( ! empty( $unread_ids ) ) {
-			foreach ( $unread_ids as $msg_id ) {
-				$msg_row             = $wpdb->get_row( $wpdb->prepare( "SELECT read_by FROM {$wpdb->prefix}wpss_messages WHERE id = %d", $msg_id ) );
-				$read_by             = $msg_row && $msg_row->read_by ? json_decode( $msg_row->read_by, true ) : array();
-				$read_by[ $user_id ] = current_time( 'mysql', true );
-				$wpdb->update(
-					$wpdb->prefix . 'wpss_messages',
-					array( 'read_by' => wp_json_encode( $read_by ) ),
-					array( 'id' => $msg_id ),
-					array( '%s' ),
-					array( '%d' )
-				);
-			}
-
-			// Also reset the unread count for this user in the conversation record.
-			$unread_counts                      = $conversation->unread_counts ? json_decode( $conversation->unread_counts, true ) : array();
-			$unread_counts[ (string) $user_id ] = 0;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$wpdb->prefix . 'wpss_conversations',
-				array( 'unread_counts' => wp_json_encode( $unread_counts ) ),
-				array( 'id' => $conversation->id ),
-				array( '%s' ),
-				array( '%d' )
-			);
-		}
-	}
+	// Mark the thread read: one lookup of what is unread for this member, then one write per unread
+	// message (the repository does this for the dashboard thread too).
+	( new \WPSellServices\Database\Repositories\ConversationRepository() )->mark_read( (int) $conversation->id, $user_id );
 }
 
 // Can send messages? Allow messaging for every status where the order is still
@@ -216,6 +179,11 @@ do_action( 'wpss_before_conversation', $order );
 				?>
 			</div>
 		<?php else : ?>
+			<?php if ( $has_older ) : ?>
+				<p class="wpss-messaging__earlier">
+					<a class="wpss-btn wpss-btn--sm wpss-btn--outline" href="<?php echo esc_url( add_query_arg( 'before_msg', (int) $messages[0]->id ) ); ?>"><?php esc_html_e( 'Show earlier messages', 'wp-sell-services' ); ?></a>
+				</p>
+			<?php endif; ?>
 			<?php
 			// CB7 (plans/ORDER-FLOW-AUDIT.md): friendlier date dividers so long
 			// threads are easy to scan. "Today" / "Yesterday" for the most
@@ -279,6 +247,11 @@ do_action( 'wpss_before_conversation', $order );
 				}
 				?>
 			<?php endforeach; ?>
+			<?php if ( $before_msg ) : ?>
+				<p class="wpss-messaging__earlier">
+					<a class="wpss-btn wpss-btn--sm wpss-btn--outline" href="<?php echo esc_url( remove_query_arg( 'before_msg' ) ); ?>"><?php esc_html_e( 'Back to the latest messages', 'wp-sell-services' ); ?></a>
+				</p>
+			<?php endif; ?>
 		<?php endif; ?>
 	</div>
 
@@ -306,7 +279,7 @@ do_action( 'wpss_before_conversation', $order );
 				<div class="wpss-messaging__composer-input-area">
 					<label for="wpss-file-input" class="wpss-messaging__composer-btn" title="<?php esc_attr_e( 'Attach files', 'wp-sell-services' ); ?>">
 						<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
-						<input type="file" id="wpss-file-input" name="attachments[]" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt" style="display: none;">
+						<input type="file" id="wpss-file-input" name="attachments[]" multiple accept="<?php echo esc_attr( wpss_upload_accept( 'message' ) ); ?>" style="display: none;">
 					</label>
 
 					<div class="wpss-messaging__composer-input-wrapper">
@@ -564,13 +537,14 @@ document.addEventListener('DOMContentLoaded', function() {
 	var lastMessageId = $messagesContainer.find('[data-message-id]:last').data('message-id') || 0;
 
 	// The conversation row is created by the first message, so a page opened before that has no id. Look it up
-	// (404 until it exists) instead of staying silent for the rest of the visit.
+	// (soft: id 0 until it exists) instead of staying silent for the rest of the visit.
 	var discoverTicks = 0;
 
 	function discoverConversation() {
 		$.ajax({
 			url: restBase + 'orders/' + $conversation.data('order-id') + '/conversation',
 			method: 'GET',
+			data: { soft: 1 },
 			beforeSend: function(xhr) {
 				xhr.setRequestHeader('X-WP-Nonce', wpss.restNonce);
 			},
@@ -585,13 +559,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	function pollMessages() {
 		// Only while the tab is on screen: a background tab polling every 10 seconds is pure server load.
-		if (!$conversation.length || $conversation.is(':hidden') || document.visibilityState !== 'visible') {
-			return;
+		if (!$conversation.length || $conversation.is(':hidden') || document.visibilityState !== 'visible' || <?php echo $before_msg ? 'true' : 'false'; ?>) {
+			return; // Also idle while reading an older page: new messages belong at the end of the latest page.
 		}
 
 		if (!conversationId) {
 			// A 404 per lookup shows in the console, so look every third tick (30 seconds), not every one.
-			if (discoverTicks++ % 3 === 0) {
+			// A closed order can never gain a conversation, so there is nothing to find. An unpaid one still can once
+			// payment clears while the tab stays open, so it keeps looking.
+			if (<?php echo in_array( $order->status, array( 'completed', 'cancelled', 'refunded' ), true ) ? 'false' : 'true'; ?> && discoverTicks++ % 3 === 0) {
 				discoverConversation();
 			}
 			return;

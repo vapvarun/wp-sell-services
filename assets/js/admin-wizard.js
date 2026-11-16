@@ -16,7 +16,12 @@
 		type = type || 'error';
 		var cls = type === 'success' ? 'notice-success' : 'notice-error';
 		var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
-		jQuery('.wrap h1, .wrap h2').first().after($notice);
+		var $anchor = jQuery('.wrap h1, .wrap h2').first();
+		if ($anchor.length) {
+			$anchor.after($notice);
+		} else {
+			jQuery('#wpss-wizard-wrap').prepend($notice);
+		}
 		$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
 		setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
 	}
@@ -116,8 +121,13 @@
 				data.require_service_moderation = $('#wpss-wiz-moderation').is(':checked') ? 1 : 0;
 			}
 
-			$.post(ajaxUrl, data, function() {
+			$.post(ajaxUrl, data, function(response) {
 				btn.prop('disabled', false);
+				if (response && !response.success) {
+					// Stay on the step: advancing would hide that nothing was saved.
+					wpssAdminNotice((response.data && response.data.message) || wpssWizard.i18n.importFailed, 'error');
+					return;
+				}
 				goToStep(step + 1);
 			}).fail(function() {
 				btn.prop('disabled', false);
@@ -243,10 +253,33 @@
 
 		// Import demo content.
 		$('#wpss-wizard-import-demo').on('click', function(e) {
-			e.preventDefault();
 			var card = $(this);
-			card.find('strong').text(wpssWizard.i18n.importing);
 
+			// Imported: the card now links to the services list.
+			if (card.data('wpssDone')) {
+				return;
+			}
+
+			e.preventDefault();
+
+			if (card.data('wpssBusy')) {
+				return;
+			}
+
+			var run = function() {
+				card.data('wpssBusy', true);
+				card.find('strong').text(wpssWizard.i18n.importing);
+				importDemo(card);
+			};
+
+			if (typeof window.wpssConfirm === 'function') {
+				window.wpssConfirm(wpssWizard.i18n.confirmDemo).then(function(ok) { if (ok) { run(); } });
+			} else {
+				run();
+			}
+		});
+
+		function importDemo(card) {
 			$.post(ajaxUrl, {
 				action: 'wpss_import_demo_content',
 				nonce: demoNonce
@@ -254,6 +287,11 @@
 				if (response.success) {
 					card.find('strong').text(wpssWizard.i18n.demoImported);
 					card.find('span:last').text(response.data.message);
+					if (response.data.view_url) {
+						// The card becomes the link to the result, so the buyer is not left guessing.
+						card.data('wpssDone', true).attr('href', response.data.view_url);
+						card.find('span:last').append(' ' + wpssWizard.i18n.viewDemo);
+					}
 				} else {
 					// Refused because the demo content is already there: that is
 					// not a failure, and the card used to say "Import Failed".
@@ -265,8 +303,10 @@
 				}
 			}).fail(function() {
 				card.find('strong').text(wpssWizard.i18n.importFailed);
+			}).always(function() {
+				card.data('wpssBusy', false);
 			});
-		});
+		}
 	});
 
 }( jQuery ) );

@@ -802,7 +802,7 @@ class Shortcodes {
 							<tr>
 								<td>#<?php echo esc_html( $order->order_number ?: $order->id ); ?></td>
 								<td><?php echo esc_html( wpss_get_order_title( $order ) ); ?></td>
-								<td><?php echo wp_kses_post( function_exists( 'wpss_format_currency' ) ? wpss_format_currency( (float) $order->total, $order->currency ) : '$' . number_format( (float) $order->total, 2 ) ); ?></td>
+								<td><?php echo wp_kses_post( wpss_format_currency( (float) $order->total, $order->currency ) ); ?></td>
 								<td><span class="<?php echo esc_attr( wpss_status_class( (string) $order->status ) ); ?>"><?php echo esc_html( wpss_get_order_status_label( (string) $order->status ) ); ?></span></td>
 								<td>
 									<?php
@@ -841,7 +841,7 @@ class Shortcodes {
 					</div>
 					<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h3>
 					<p class="wpss-empty-state__body"><?php esc_html_e( 'Your orders will show here once you purchase a service.', 'wp-sell-services' ); ?></p>
-					<a href="<?php echo esc_url( home_url( '/services/' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?></a>
+					<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?></a>
 				</div>
 			<?php endif; ?>
 		</div>
@@ -868,7 +868,7 @@ class Shortcodes {
 			) . '</div>';
 		}
 
-		$order_id = function_exists( 'wpss_resolve_request_order_id' ) ? wpss_resolve_request_order_id() : 0;
+		$order_id = wpss_resolve_request_order_id();
 
 		if ( ! $order_id ) {
 			return '<div class="wpss-notice wpss-notice--error">' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</div>';
@@ -890,7 +890,7 @@ class Shortcodes {
 		$user_id = get_current_user_id();
 
 		// Check permission.
-		if ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+		if ( ! wpss_user_can_view_order( $order, $user_id ) ) {
 			return '<div class="wpss-notice wpss-notice--error">' . esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ) . '</div>';
 		}
 
@@ -978,6 +978,8 @@ class Shortcodes {
 							<?php esc_html_e( 'New here?', 'wp-sell-services' ); ?>
 							<a href="<?php echo esc_url( wp_registration_url() ); ?>"><?php esc_html_e( 'Create an account', 'wp-sell-services' ); ?></a>
 						</p>
+					<?php elseif ( ! wpss_checkout_creates_accounts() ) : ?>
+						<p class="wpss-signup-form__signin"><?php echo esc_html( wpss_signup_closed_message() ); ?></p>
 					<?php endif; ?>
 				</form>
 			</div>
@@ -1002,7 +1004,7 @@ class Shortcodes {
 		}
 
 		if ( ! get_option( 'users_can_register' ) ) {
-			return '<div class="wpss-notice wpss-notice--error">' . esc_html__( 'Registration is currently disabled.', 'wp-sell-services' ) . '</div>';
+			return '<div class="wpss-notice wpss-notice--error"><div><p>' . esc_html( wpss_signup_closed_message() ) . '</p><p style="margin-top:12px"><a class="wpss-btn wpss-btn--primary" href="' . esc_url( wp_login_url() ) . '">' . esc_html__( 'Sign in', 'wp-sell-services' ) . '</a></p></div></div>';
 		}
 
 		/*
@@ -1094,7 +1096,7 @@ class Shortcodes {
 
 		// Closed registration is the same card for everyone, signed in or not;
 		// the logged-out form used to render before this check (Basecamp 10351455160).
-		if ( 'closed' === wpss_get_option( 'vendor', 'vendor_registration' ) && ! wpss_is_vendor() ) {
+		if ( wpss_vendor_registration_closed_for() && ! wpss_is_vendor() ) {
 			?>
 			<div class="wpss-vr">
 				<div class="wpss-vr__card">
@@ -1103,6 +1105,20 @@ class Shortcodes {
 					</div>
 					<h2 class="wpss-vr__title"><?php esc_html_e( 'Registration is closed', 'wp-sell-services' ); ?></h2>
 					<p class="wpss-vr__desc"><?php esc_html_e( 'We\'re not accepting new vendors at the moment. Please check back later.', 'wp-sell-services' ); ?></p>
+				</div>
+			</div>
+			<?php
+			return ob_get_clean();
+		}
+
+		// The sign-up handler refuses when WordPress registration is off, so do not print a form that always fails.
+		if ( ! is_user_logged_in() && ! get_option( 'users_can_register' ) ) {
+			?>
+			<div class="wpss-vr">
+				<div class="wpss-vr__card">
+					<h2 class="wpss-vr__title"><?php esc_html_e( 'Sign-up is closed', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-vr__desc"><?php echo esc_html( wpss_signup_closed_message() ); ?></p>
+					<p><a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"><?php esc_html_e( 'Sign in', 'wp-sell-services' ); ?></a></p>
 				</div>
 			</div>
 			<?php
@@ -1176,6 +1192,19 @@ class Shortcodes {
 							<?php esc_html_e( 'Go to Dashboard', 'wp-sell-services' ); ?>
 						</a>
 					</div>
+				</div>
+			</div>
+			<?php
+			return ob_get_clean();
+		}
+
+		// A suspended vendor is not offered registration: it would only toast a refusal.
+		if ( 'suspended' === wpss_get_vendor_status( $user_id ) ) {
+			?>
+			<div class="wpss-vr">
+				<div class="wpss-vr__card">
+					<h2 class="wpss-vr__title"><?php esc_html_e( 'Vendor account suspended', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-vr__desc"><?php esc_html_e( 'You cannot register again while the suspension is in place. Please contact the site owner.', 'wp-sell-services' ); ?></p>
 				</div>
 			</div>
 			<?php
@@ -1679,7 +1708,7 @@ class Shortcodes {
 			// real payment page instead of a generic (empty) checkout.
 			$pay_order = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect of a public link.
 
-			$target = $pay_order > 0 && function_exists( 'wpss_ensure_pay_order' )
+			$target = $pay_order > 0
 				? wpss_ensure_pay_order( $pay_order )
 				: wpss_get_checkout_base_url();
 

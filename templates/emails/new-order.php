@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
- * @version 1.9.2
+ * @version 1.9.3
  *
  * @var WPSellServices\Models\ServiceOrder $order Service order object.
  * @var WP_User $recipient     Recipient user object (vendor).
@@ -26,7 +26,7 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 
 $base_color    = $base_color ?? '#7f54b3';
 $customer      = get_user_by( 'id', $order->customer_id );
-$customer_name = $customer ? $customer->display_name : __( 'A buyer', 'wp-sell-services' );
+$customer_name = wpss_get_member_display_name( (int) ( $customer->ID ?? 0 ), __( 'A buyer', 'wp-sell-services' ) );
 $recipient     = ( $recipient ?? null ) ?: get_user_by( 'id', $order->vendor_id );
 $vendor        = $recipient;
 
@@ -46,7 +46,7 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 	printf(
 		/* translators: %s: recipient name */
 		esc_html__( 'Hi %s,', 'wp-sell-services' ),
-		esc_html( $recipient ? $recipient->display_name : __( 'there', 'wp-sell-services' ) )
+		esc_html( wpss_get_member_display_name( (int) ( $recipient->ID ?? 0 ), __( 'there', 'wp-sell-services' ) ) )
 	);
 	?>
 </p>
@@ -121,7 +121,7 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 	 * @param WPSellServices\Models\ServiceOrder $order Service order object.
 	 */
 	if ( ! empty( $is_customer ) ) {
-		$default_url  = function_exists( 'wpss_get_order_requirements_url' ) ? wpss_get_order_requirements_url( $order->id ) : wpss_get_order_url( $order->id );
+		$default_url  = wpss_get_order_requirements_url( $order->id );
 		$default_text = __( 'Submit requirements', 'wp-sell-services' );
 	} else {
 		$default_url  = wpss_get_order_url( $order->id );

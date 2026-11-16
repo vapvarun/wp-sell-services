@@ -27,6 +27,8 @@ Buyer messages the vendor from a service (pre-sale) and from an order.
 
 **Expect** both threads appear for both parties, unread counts clear when read, attachments respect size and type limits, a suspended vendor cannot start a new pre-sale thread but can still answer an order thread (card:10384354109).
 
+**Realtime.** With the buyer and the vendor open on the same order thread in two browsers, send a message from one: it appears on the other without a reload, and the unread badge updates on a page that is not the thread.
+
 ### 5. Where reviews and FAQs show
 A service page lists approved reviews (`partials/service-reviews`) and the vendor's FAQs (`partials/service-faqs`); a service with neither shows no empty heading. Reviews held for moderation never appear.
 

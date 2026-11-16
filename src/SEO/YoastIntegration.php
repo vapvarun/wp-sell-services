@@ -58,6 +58,7 @@ class YoastIntegration extends AbstractSeoIntegration {
 		// Schema.
 		add_filter( 'wpseo_schema_graph_pieces', array( $this, 'add_schema_pieces' ), 10, 2 );
 		add_filter( 'wpseo_schema_webpage', array( $this, 'modify_webpage_schema' ), 10, 1 );
+		add_filter( 'wpss_output_service_schema', array( $this, 'keep_own_service_schema' ) );
 
 		// Breadcrumbs.
 		add_filter( 'wpseo_breadcrumb_links', array( $this, 'modify_breadcrumbs' ), 10, 1 );
@@ -152,7 +153,8 @@ class YoastIntegration extends AbstractSeoIntegration {
 	 */
 	public function add_schema_pieces( array $pieces, $context ): array {
 		if ( is_singular( 'wpss_service' ) ) {
-			$pieces[] = new ServiceSchemaPiece( $context );
+			$pieces[]                   = new ServiceSchemaPiece( $context );
+			$this->service_schema_added = true;
 		}
 
 		return $pieces;

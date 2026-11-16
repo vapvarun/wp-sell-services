@@ -415,7 +415,10 @@
 			const $button = $(e.currentTarget);
 			const originalText = $button.text();
 
-			WPSS.showConfirm(wpssUnifiedDashboard.i18n.becomeVendorConfirm, function () {
+			// The site owner is joining their own marketplace: one click, no dialog.
+			const confirmFirst = $button.data('skipConfirm') ? function (message, go) { go(); } : WPSS.showConfirm;
+
+			confirmFirst(wpssUnifiedDashboard.i18n.becomeVendorConfirm, function () {
 				$button
 					.prop('disabled', true)
 					.text(wpssUnifiedDashboard.i18n.processing);
@@ -425,7 +428,10 @@
 				type: 'POST',
 				data: {
 					action: 'wpss_become_vendor',
-					nonce: wpssUnifiedDashboard.nonce
+					nonce: wpssUnifiedDashboard.nonce,
+					// Read from this button's own panel: the sidebar and the page can both carry one.
+					tagline: $button.parent().find('[name="tagline"]').val() || '',
+					bio: $button.parent().find('[name="bio"]').val() || ''
 				},
 				success: function (response) {
 					if (response.success) {

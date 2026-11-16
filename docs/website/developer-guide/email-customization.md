@@ -123,6 +123,7 @@ Modify email content programmatically without overriding template files. These f
 |--------|-----------|---------|
 | `wpss_email_subject` | `string $subject, string $type, string $to` | Change the email subject line |
 | `wpss_email_from_name` | `string $from_name` | Change the sender display name |
+| `wpss_email_from_address` | `string $from_email` | Change the sender address. Emails come from the site admin address by default, or from WooCommerce > Emails when WooCommerce is the active rail |
 | `wpss_email_before_send` | `array $email, string $type` | Modify the whole payload (`to`, `subject`, `content`, `headers`) before it is sent |
 | `wpss_notification_email_content` | `string $content, string $subject, int $user_id, array $data` | Modify the body of any notification email (the HTML fragment rendered inside `generic.php`) |
 

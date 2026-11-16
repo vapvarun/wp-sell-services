@@ -1,0 +1,25 @@
+{
+  "journey": "B-free-lifecycle",
+  "mode": "combo",
+  "sha_free": "d89202674c64b8c21b46f63e05e177636061685e",
+  "sha_pro": "259d27cbb676d2370b8a852873a6c1206e5ad446",
+  "ran_at": "2026-11-16T04:30:00Z",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme 8.1.0-beta.5 (brief said 8.0.9)",
+    "rail": "standalone"
+  },
+  "checks": [
+    {
+      "id": "B1-request-to-review",
+      "result": "pass",
+      "evidence": "Request 975 -> proposal 66 -> accept (confirm dialog) -> pay offline -> admin Mark as paid -> buyer submits requirements -> vendor delivers -> buyer Accept & Complete -> 5-star review (order 120758, review 250 approved)."
+    },
+    {
+      "id": "B2-catalog-with-revision",
+      "result": "pass",
+      "evidence": "Order 120759 (service 128): paid, delivered, revision requested via modal (1 of 1 used), 'Deliver revision', Accept & Complete -> completed."
+    }
+  ],
+  "artifacts": "/Users/vapvarun/Local Sites/wp-sell-services/app/qa-artifacts/"
+}

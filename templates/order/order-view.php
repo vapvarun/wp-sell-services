@@ -10,7 +10,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.2
+ * @version 1.9.3
  *
  * @var int $order_id Order ID passed from parent template.
  *
@@ -180,7 +180,7 @@ do_action( 'wpss_before_order_view', $order );
 			// has committed to anything until the money moves, so "5 of 5
 			// revisions left" on an unpaid order describes a promise nobody has
 			// made yet. The badge earns its place from the moment payment does.
-			$show_revision_badge = ! in_array( $order->status, array( 'pending_payment', 'cancelled', 'refunded' ), true )
+			$show_revision_badge = ! in_array( $order->status, array( 'pending_payment', 'completed', 'cancelled', 'refunded' ), true )
 				&& ( (int) $order->revisions_included > 0 || -1 === (int) $order->revisions_included );
 			if ( $show_revision_badge ) :
 				$rev_used      = (int) $order->revisions_used;
@@ -372,7 +372,8 @@ do_action( 'wpss_before_order_view', $order );
 				);
 			}
 
-			if ( 'cancellation_requested' === $order->status ) {
+			// Only the buyer's own request waits on the vendor; a seller's request waits on the buyer, who has the answer buttons.
+			if ( 'cancellation_requested' === $order->status && ! $order->is_cancellation_requested_by_vendor() ) {
 				$actions['cancel_pending_notice'] = array(
 					'label' => __( 'Cancellation Pending', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
@@ -395,27 +396,52 @@ do_action( 'wpss_before_order_view', $order );
 				$hours_since_start = ( time() - $order->started_at->getTimestamp() ) / 3600;
 				$has_deliveries    = ! empty( $deliveries );
 
-				if ( $hours_since_start <= 24 && ! $has_deliveries ) {
+				if ( $hours_since_start <= wpss_cancel_window_hours() && ! $has_deliveries ) {
 					$actions['cancel'] = array(
 						'label' => __( 'Request Cancellation', 'wp-sell-services' ),
 						'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
-						'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+						'attrs' => 'data-order="' . esc_attr( $order_id ) . '" title="' . esc_attr( wpss_cancel_window_rule() ) . '"',
+					);
+				} else {
+					// Say why the button is gone instead of letting it vanish. The reason is
+					// written out, not only a tooltip: a phone has no hover.
+					$closed_reason = $has_deliveries
+						? __( 'Cancellation is closed because work has been delivered. If something is wrong, open a dispute.', 'wp-sell-services' )
+						: wpss_cancel_window_rule();
+
+					$actions['cancel_closed_notice'] = array(
+						'label' => __( 'Cancellation Closed', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
+						'attrs' => 'disabled="disabled" title="' . esc_attr( $closed_reason ) . '"',
+						'hint'  => $closed_reason,
 					);
 				}
 			}
 		}
 
-			// Vendor: accept/reject cancellation.
-		if ( $is_vendor && 'cancellation_requested' === $order->status ) {
+		// Seller: ask the buyer to cancel an order they cannot complete.
+		if ( $is_vendor && in_array( $order->status, \WPSellServices\Services\OrderService::seller_cancellation_statuses(), true ) ) {
+			$actions['cancel'] = array(
+				'label' => __( 'Ask Buyer to Cancel', 'wp-sell-services' ),
+				'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
+				'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+			);
+		}
+
+		// The OTHER party answers a cancellation request: the buyer for a seller's, the vendor for a buyer's.
+		$wpss_cancel_by_vendor = 'cancellation_requested' === $order->status && $order->is_cancellation_requested_by_vendor();
+		if ( 'cancellation_requested' === $order->status && ( $wpss_cancel_by_vendor ? $is_customer : $is_vendor ) ) {
 			$actions['accept-cancellation'] = array(
 				'label' => __( 'Accept Cancellation', 'wp-sell-services' ),
 				'class' => 'wpss-btn wpss-btn--success wpss-order-action',
 				'attrs' => 'data-action="accept-cancellation" data-order="' . esc_attr( $order_id ) . '"',
 			);
 			$actions['reject-cancellation'] = array(
-				'label' => __( 'Dispute Cancellation', 'wp-sell-services' ),
+				'label' => $wpss_cancel_by_vendor ? __( 'Decline Cancellation', 'wp-sell-services' ) : __( 'Dispute Cancellation', 'wp-sell-services' ),
 				'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
-				'attrs' => 'data-action="reject-cancellation" data-order="' . esc_attr( $order_id ) . '"',
+				'attrs' => 'data-action="reject-cancellation" data-order="' . esc_attr( $order_id ) . '"'
+					// Declining a seller's request only keeps the order going; it is not a dispute, so the confirm must not say so.
+					. ( $wpss_cancel_by_vendor ? ' data-confirm="' . esc_attr__( 'Decline this cancellation request? The order goes back to its previous status and the seller keeps working on it.', 'wp-sell-services' ) . '"' : '' ),
 			);
 		}
 
@@ -497,6 +523,12 @@ do_action( 'wpss_before_order_view', $order );
 							<button type="button" class="<?php echo esc_attr( $action_data['class'] ); ?>" <?php echo $action_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 								<?php echo esc_html( $action_data['label'] ); ?>
 							</button>
+							<?php
+						endif;
+
+						if ( ! empty( $action_data['hint'] ) ) :
+							?>
+							<p class="wpss-order-view__action-hint"><?php echo esc_html( $action_data['hint'] ); ?></p>
 							<?php
 						endif;
 					endforeach;
@@ -889,7 +921,7 @@ do_action( 'wpss_before_order_view', $order );
 							<?php if ( $vendor_count > 0 ) : ?>
 								<div class="wpss-party-info__rating">
 									<i data-lucide="star" class="wpss-icon wpss-star-icon" aria-hidden="true"></i>
-									<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
+									<?php echo esc_html( number_format_i18n( $vendor_rating, 1 ) ); ?>
 									<span class="wpss-party-info__rating-count">(<?php echo esc_html( $vendor_count ); ?> <?php esc_html_e( 'reviews', 'wp-sell-services' ); ?>)</span>
 								</div>
 							<?php endif; ?>
@@ -995,7 +1027,8 @@ do_action( 'wpss_before_order_view', $order );
 		$requested_at_iso         = $cancel_data['requested_at'] ?? '';
 		$cancellation_deadline_ts = 0;
 		$time_remaining_label     = '';
-		if ( $requested_at_iso ) {
+		// A seller's request has no timer: a silent buyer never loses the order.
+		if ( $requested_at_iso && ! $order->is_cancellation_requested_by_vendor() ) {
 			// requested_at is stored in UTC, the same value the 48h cron in
 			// OrderWorkflowManager reads, so the countdown and the cron agree.
 			$requested_ts             = strtotime( $requested_at_iso . ' UTC' );
@@ -1033,7 +1066,13 @@ do_action( 'wpss_before_order_view', $order );
 					<div>
 						<p style="margin: 0 0 8px 0; font-weight: 600;">
 							<?php
-							if ( $is_vendor ) {
+							if ( $order->is_cancellation_requested_by_vendor() ) {
+								if ( $is_vendor ) {
+									esc_html_e( 'You asked the buyer to cancel this order. Waiting for their answer.', 'wp-sell-services' );
+								} else {
+									esc_html_e( 'The seller has asked to cancel this order. Accept to cancel and refund it, or decline to continue the work.', 'wp-sell-services' );
+								}
+							} elseif ( $is_vendor ) {
 								esc_html_e( 'The buyer has requested to cancel this order.', 'wp-sell-services' );
 							} else {
 								esc_html_e( 'Your cancellation request has been submitted. Waiting for vendor response.', 'wp-sell-services' );
@@ -1730,9 +1769,7 @@ do_action( 'wpss_before_order_view', $order );
 						<p class="wpss-tip-receipt__amount">
 							<?php
 							echo esc_html(
-								function_exists( 'wpss_format_price' )
-									? wpss_format_price( (float) $tip_order_row->total, $currency )
-									: number_format_i18n( (float) $tip_order_row->total, 2 ) . ' ' . $currency
+								wpss_format_price( (float) $tip_order_row->total, $currency )
 							);
 							?>
 						</p>
@@ -1772,7 +1809,7 @@ do_action( 'wpss_before_order_view', $order );
 						sprintf(
 							/* translators: %s: vendor display name */
 							__( 'Send a tip to %s. It goes to their wallet, less any marketplace fee on tips.', 'wp-sell-services' ),
-							$other_party ? $other_party->display_name : __( 'the vendor', 'wp-sell-services' )
+							wpss_get_member_display_name( (int) ( $other_party->ID ?? 0 ), __( 'the vendor', 'wp-sell-services' ) )
 						)
 					);
 					?>
@@ -1786,9 +1823,7 @@ do_action( 'wpss_before_order_view', $order );
 						<button type="button" class="wpss-tip-form__preset" data-amount="<?php echo esc_attr( (string) $preset ); ?>">
 							<?php
 							echo esc_html(
-								function_exists( 'wpss_format_price' )
-									? wpss_format_price( (float) $preset, $currency )
-									: number_format_i18n( (float) $preset, 0 ) . ' ' . $currency
+								wpss_format_price( (float) $preset, $currency )
 							);
 							?>
 						</button>
@@ -1838,9 +1873,11 @@ $can_cancel_request    = false;
 if ( $is_customer && 'in_progress' === $order->status && $order->started_at ) {
 	$hours_since_start  = ( time() - $order->started_at->getTimestamp() ) / 3600;
 	$has_any_deliveries = ! empty( $deliveries );
-	$can_cancel_request = $hours_since_start <= 24 && ! $has_any_deliveries;
+	$can_cancel_request = $hours_since_start <= wpss_cancel_window_hours() && ! $has_any_deliveries;
 }
-$can_cancel = $can_cancel_immediate || $can_cancel_request;
+// A seller on paid work in flight can ask the buyer to cancel; the buyer decides.
+$seller_can_request = $is_vendor && in_array( $order->status, \WPSellServices\Services\OrderService::seller_cancellation_statuses(), true );
+$can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_can_request;
 ?>
 
 <?php if ( $can_deliver ) : ?>
@@ -2114,7 +2151,12 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 			<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
 
 			<div class="wpss-modal__body">
-				<?php if ( $can_cancel_request ) : ?>
+				<?php if ( $seller_can_request ) : ?>
+					<div class="wpss-alert wpss-alert--info">
+						<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
+						<p><?php esc_html_e( 'Your request goes to the buyer, who can accept it (the order is cancelled and refunded) or decline it (work continues). If they do not answer you can still open a dispute.', 'wp-sell-services' ); ?></p>
+					</div>
+				<?php elseif ( $can_cancel_request ) : ?>
 					<div class="wpss-alert wpss-alert--info">
 						<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
 						<p><?php esc_html_e( 'Since work has already started, your cancellation request will be sent to the vendor for review. They have 48 hours to respond.', 'wp-sell-services' ); ?></p>
@@ -2128,11 +2170,18 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					</label>
 					<select name="reason" id="cancel-reason" class="wpss-select" required>
 						<option value=""><?php esc_html_e( 'Select a reason', 'wp-sell-services' ); ?></option>
-						<option value="changed_mind"><?php esc_html_e( 'I changed my mind', 'wp-sell-services' ); ?></option>
-						<option value="found_alternative"><?php esc_html_e( 'Found an alternative', 'wp-sell-services' ); ?></option>
-						<option value="taking_too_long"><?php esc_html_e( 'Taking too long', 'wp-sell-services' ); ?></option>
-						<option value="wrong_order"><?php esc_html_e( 'Ordered by mistake', 'wp-sell-services' ); ?></option>
-						<option value="communication_issues"><?php esc_html_e( 'Communication issues with vendor', 'wp-sell-services' ); ?></option>
+						<?php if ( $seller_can_request ) : ?>
+							<option value="cannot_complete"><?php esc_html_e( 'I cannot complete this work', 'wp-sell-services' ); ?></option>
+							<option value="scope_changed"><?php esc_html_e( 'The scope changed', 'wp-sell-services' ); ?></option>
+							<option value="buyer_unresponsive"><?php esc_html_e( 'The buyer is not responding', 'wp-sell-services' ); ?></option>
+							<option value="order_mistake"><?php esc_html_e( 'This order was a mistake', 'wp-sell-services' ); ?></option>
+						<?php else : ?>
+							<option value="changed_mind"><?php esc_html_e( 'I changed my mind', 'wp-sell-services' ); ?></option>
+							<option value="found_alternative"><?php esc_html_e( 'Found an alternative', 'wp-sell-services' ); ?></option>
+							<option value="taking_too_long"><?php esc_html_e( 'Taking too long', 'wp-sell-services' ); ?></option>
+							<option value="wrong_order"><?php esc_html_e( 'Ordered by mistake', 'wp-sell-services' ); ?></option>
+							<option value="communication_issues"><?php esc_html_e( 'Communication issues with vendor', 'wp-sell-services' ); ?></option>
+						<?php endif; ?>
 						<option value="other"><?php esc_html_e( 'Other (please specify)', 'wp-sell-services' ); ?></option>
 					</select>
 				</div>
@@ -2152,7 +2201,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 				</button>
 				<button type="submit" class="wpss-btn wpss-btn--danger">
 					<?php
-					if ( $can_cancel_request ) {
+					if ( $can_cancel_request || $seller_can_request ) {
 						esc_html_e( 'Submit Cancellation Request', 'wp-sell-services' );
 					} else {
 						esc_html_e( 'Cancel Order', 'wp-sell-services' );
@@ -2310,7 +2359,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 					<div class="wpss-modal__footer">
 						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
-						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send Payment Link', 'wp-sell-services' ); ?></button>
+						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send quote to buyer', 'wp-sell-services' ); ?></button>
 					</div>
 				</form>
 			</div>

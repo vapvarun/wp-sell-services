@@ -387,6 +387,8 @@ function wpss_flush_order_aggregates(): void {
 }
 
 // A second partial refund is not a status change, so the refund hooks are listed too.
-foreach ( array( 'wpss_order_created', 'wpss_order_paid', 'wpss_order_status_changed', 'wpss_order_status_refunded', 'wpss_order_status_partially_refunded' ) as $wpss_aggregates_hook ) {
+// Declining an unpaid milestone, extension or tip closes it without the status hook, on purpose
+// (no "order cancelled" mail for a tip nobody paid), so it has its own hook here.
+foreach ( array( 'wpss_order_created', 'wpss_order_paid', 'wpss_order_status_changed', 'wpss_order_status_refunded', 'wpss_order_status_partially_refunded', 'wpss_unpaid_sub_order_closed' ) as $wpss_aggregates_hook ) {
 	add_action( $wpss_aggregates_hook, 'wpss_flush_order_aggregates' );
 }

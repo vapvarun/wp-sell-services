@@ -35,7 +35,7 @@ Send `invoice.payment_failed`.
 ### 6. Commission rules
 Settings > Commission: add a Category rule and a Vendor Level rule with different priorities; place an order in that category from a Top Rated vendor.
 
-**Expect** the first active rule by priority sets the rate, it overrides the vendor's own rate, and the rate is frozen on the order (changing the rule later does not change that order). Sell Services > Dashboard's Pro card shows Tiered Commission active while an active rule exists.
+**Expect** the first active rule by priority sets the rate, it overrides the vendor's own rate, and the rate is frozen on the order (changing the rule later does not change that order). The active rule is visible on its own Tiered Commission settings screen.
 
 **Known gap:** there is no admin list of vendor subscriptions (the Subscriptions menu is Recurring Services, switched off). An owner cannot see who is on which plan without the database.
 

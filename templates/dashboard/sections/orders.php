@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.1
+ * @version 1.9.3
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
 do_action( 'wpss_dashboard_section_before', 'orders', $user_id );
 
 // Check if viewing a specific order.
-$order_id = function_exists( 'wpss_resolve_request_order_id' ) ? wpss_resolve_request_order_id() : 0;
+$order_id = wpss_resolve_request_order_id();
 
 if ( $order_id ) {
 	// Verify user has access to this order (buyer or vendor).
@@ -59,7 +59,7 @@ if ( $order_id ) {
 			return;
 		}
 
-		$order_action = function_exists( 'wpss_resolve_request_order_action' ) ? wpss_resolve_request_order_action() : '';
+		$order_action = wpss_resolve_request_order_action();
 
 		switch ( $order_action ) {
 			case 'requirements':
@@ -71,6 +71,14 @@ if ( $order_id ) {
 		}
 		return;
 	}
+
+	// A missing order and someone else's order get the same words, so the page
+	// never tells a buyer which order numbers belong to other people.
+	?>
+	<div class="wpss-notice wpss-notice--info" role="status">
+		<?php esc_html_e( 'That order was not found, or it is not yours.', 'wp-sell-services' ); ?>
+	</div>
+	<?php
 }
 
 $order_repo = new OrderRepository();

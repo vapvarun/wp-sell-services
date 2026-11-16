@@ -1949,7 +1949,7 @@ class StripeGateway extends AbstractPaymentGateway {
 			'address'  => array(),
 		);
 
-		if ( ! function_exists( 'wpss_get_billing_address' ) || ! is_user_logged_in() ) {
+		if ( ! is_user_logged_in() ) {
 			return $empty;
 		}
 

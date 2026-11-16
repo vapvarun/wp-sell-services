@@ -414,7 +414,8 @@ function wpss_time_ago( string $datetime ): string {
 		return '';
 	}
 
-	return human_time_diff( $timestamp, time() ) . ' ' . __( 'ago', 'wp-sell-services' );
+	/* translators: %s: human-readable time difference, e.g. "2 hours" */
+	return sprintf( __( '%s ago', 'wp-sell-services' ), human_time_diff( $timestamp, time() ) );
 }
 
 /**

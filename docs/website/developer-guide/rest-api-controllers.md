@@ -102,7 +102,11 @@ over `/services` when you only need cards.
 `PUT /services/{id}` takes `paused` (boolean) to pause or resume a service: it
 stays published and listed but takes no new orders, and every card carries
 `paused`. `status` (`publish` or `draft`) is the separate publish control; a
-draft is not listed.
+draft is not listed. When a draft cannot go live yet (no main image, no category,
+a short description), a PUT that asks for `publish` still saves its other fields,
+leaves the service a draft and answers `400 wpss_not_publishable` with the reasons
+in `data.errors`. A POST that is held back as a draft returns those reasons in
+`notices`.
 
 `/services/limits` returns the ceilings a single service may not exceed, so a
 client can build its create-service form without discovering each one by being
@@ -648,7 +652,7 @@ without persisting anything -- use it to explain a rate in your own UI.
 
 | Method | Route |
 |--------|-------|
-| GET, POST | `/recurring-services` |
+| GET | `/recurring-services` |
 | GET | `/recurring-services/(?P<id>[\d]+)` |
 | GET | `/recurring-services/my-subscriptions` |
 | GET | `/recurring-services/vendor-subscriptions` |
@@ -657,7 +661,10 @@ without persisting anything -- use it to explain a rate in your own UI.
 | POST | `/recurring-services/(?P<id>[\d]+)/resume` |
 
 Recurring services sit behind a default-off feature flag in 1.3.0. The routes
-register, but the feature's UI is hidden until you opt in -- see
+register, but while the flag is off every route except `/{id}/cancel` answers
+`403 wpss_recurring_unavailable` (since 1.9.3), so a buyer can always cancel an
+existing subscription. `GET /recurring-services` takes optional `status` and
+`vendor_id` filters. See
 [Recurring Services](../order-management/recurring-services.md).
 
 ### Analytics

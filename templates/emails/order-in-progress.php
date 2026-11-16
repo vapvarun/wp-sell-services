@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
- * @version 1.9.1
+ * @version 1.9.3
  *
  * @var WPSellServices\Models\ServiceOrder $order Service order object.
  * @var WP_User $recipient     Recipient user object.
@@ -48,7 +48,7 @@ do_action( 'wpss_email_content_before', 'order_in_progress', $order, $recipient 
 	printf(
 		/* translators: %s: recipient name */
 		esc_html__( 'Hi %s,', 'wp-sell-services' ),
-		esc_html( $recipient ? $recipient->display_name : __( 'there', 'wp-sell-services' ) )
+		esc_html( wpss_get_member_display_name( (int) ( $recipient->ID ?? 0 ), __( 'there', 'wp-sell-services' ) ) )
 	);
 	?>
 </p>

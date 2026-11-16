@@ -26,6 +26,17 @@ use WP_Error;
 class EarningsController extends RestController {
 
 	/**
+	 * Vendor permission, relaxed for suspended vendors only when the owner allows money access.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool|WP_Error
+	 */
+	public function check_vendor_permissions( WP_REST_Request $request ) {
+		return $this->check_vendor_money_permissions( $request );
+	}
+
+
+	/**
 	 * Resource type.
 	 *
 	 * @var string
@@ -636,7 +647,7 @@ class EarningsController extends RestController {
 
 			if ( $is_admin ) {
 				$user              = get_user_by( 'id', $item['vendor_id'] );
-				$wd['vendor_name'] = $user ? $user->display_name : __( 'Unknown', 'wp-sell-services' );
+				$wd['vendor_name'] = wpss_get_member_display_name( (int) ( $user->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) );
 			}
 
 			$withdrawals[] = $wd;

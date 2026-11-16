@@ -77,6 +77,10 @@ over REST:
 All four require an authenticated user. See
 [REST API Controllers](../developer-guide/rest-api-controllers.md).
 
+The old `wpss_favorite_service`, `wpss_unfavorite_service` and `wpss_get_favorites`
+admin-ajax actions are deprecated since 1.9.3 and will be removed in the next major
+release; use the routes above.
+
 ## Related
 
 - [Buyer Dashboard](buyer-dashboard.md)

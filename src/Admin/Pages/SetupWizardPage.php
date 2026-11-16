@@ -138,7 +138,7 @@ class SetupWizardPage {
 		wp_enqueue_script(
 			'wpss-admin-wizard',
 			\WPSS_PLUGIN_URL . 'assets/js/admin-wizard.js',
-			array( 'jquery' ),
+			array( 'jquery', 'wpss-ui' ),
 			\WPSS_VERSION,
 			true
 		);
@@ -162,8 +162,10 @@ class SetupWizardPage {
 					'allCreated'   => __( 'All Created', 'wp-sell-services' ),
 					'importing'    => __( 'Importing...', 'wp-sell-services' ),
 					'demoImported' => __( 'Demo Imported!', 'wp-sell-services' ),
+					'viewDemo'     => __( 'Click to view the services.', 'wp-sell-services' ),
 					'demoAlready'  => __( 'Already imported', 'wp-sell-services' ),
 					'importFailed' => __( 'Import failed', 'wp-sell-services' ),
+					'confirmDemo'  => __( 'Import demo content? This adds sample services, vendors and categories to this site. You can delete it later from Settings.', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -224,9 +226,7 @@ class SetupWizardPage {
 	 * @return bool
 	 */
 	private function site_is_configured(): bool {
-		$pages = (array) get_option( 'wpss_pages', array() );
-
-		$has_core_pages = ! empty( $pages['services_page'] ) && ! empty( $pages['dashboard'] );
+		$has_core_pages = wpss_get_page_id( 'services_page' ) && wpss_get_page_id( 'dashboard' );
 
 		if ( ! $has_core_pages ) {
 			return false;
@@ -307,7 +307,21 @@ class SetupWizardPage {
 			$general['platform_name'] = sanitize_text_field( wp_unslash( $_POST['platform_name'] ) );
 		}
 		if ( isset( $_POST['currency'] ) ) {
-			$general['currency'] = sanitize_text_field( wp_unslash( $_POST['currency'] ) );
+			$currency = strtoupper( sanitize_text_field( wp_unslash( $_POST['currency'] ) ) );
+
+			if ( ! array_key_exists( $currency, wpss_get_currencies() ) ) {
+				wp_send_json_error( array( 'message' => __( 'That currency is not supported. Pick one from the list.', 'wp-sell-services' ) ) );
+			}
+
+			// Orders keep the currency they were placed in, so switching the shop currency
+			// under existing orders would show their amounts in the wrong one.
+			$has_orders = ( new \WPSellServices\Database\Repositories\OrderRepository() )->has_any();
+
+			if ( $has_orders && ( $general['currency'] ?? 'USD' ) !== $currency ) {
+				wp_send_json_error( array( 'message' => __( 'This store already has orders, so the currency can no longer be changed from the wizard. Leave it as it is.', 'wp-sell-services' ) ) );
+			}
+
+			$general['currency'] = $currency;
 		}
 		if ( isset( $_POST['commission_rate'] ) ) {
 			$commission['commission_rate'] = max( 0, min( 100, (float) $_POST['commission_rate'] ) );
@@ -335,7 +349,13 @@ class SetupWizardPage {
 				: 'open';
 		}
 		if ( isset( $_POST['max_services_per_vendor'] ) ) {
-			$vendor['max_services_per_vendor'] = absint( $_POST['max_services_per_vendor'] );
+			$posted = sanitize_text_field( wp_unslash( $_POST['max_services_per_vendor'] ) );
+
+			if ( ! is_numeric( $posted ) || (float) $posted < 0 ) {
+				wp_send_json_error( array( 'message' => __( 'Max services per vendor must be 0 or more. Use 0 for no limit.', 'wp-sell-services' ) ) );
+			}
+
+			$vendor['max_services_per_vendor'] = wpss_clamp_limit( $posted, 0, 100, 20 );
 		}
 
 		// `require_verification` is deliberately NOT written. Nothing in free or
@@ -414,13 +434,10 @@ class SetupWizardPage {
 
 		// Validate that all required pages exist before completing.
 		$required_pages = wpss_get_required_pages();
-
-		$pages   = get_option( 'wpss_pages', array() );
-		$missing = array();
+		$missing        = array();
 
 		foreach ( $required_pages as $key => $label ) {
-			$page_id = (int) ( $pages[ $key ] ?? 0 );
-			if ( ! $page_id || ! get_post( $page_id ) || 'publish' !== get_post_status( $page_id ) ) {
+			if ( ! wpss_get_page_id( $key ) ) {
 				$missing[] = $label;
 			}
 		}
@@ -586,17 +603,14 @@ class SetupWizardPage {
 
 				<div class="wpss-wizard-chips" id="wpss-wizard-chips">
 					<?php
-					$presets = array(
-						__( 'Web Development', 'wp-sell-services' ),
-						__( 'Graphic Design', 'wp-sell-services' ),
-						__( 'Writing', 'wp-sell-services' ),
-						__( 'Digital Marketing', 'wp-sell-services' ),
-						__( 'Video', 'wp-sell-services' ),
-						__( 'Music', 'wp-sell-services' ),
-						__( 'Programming', 'wp-sell-services' ),
-						__( 'Business', 'wp-sell-services' ),
-						__( 'Photography', 'wp-sell-services' ),
-						__( 'Data', 'wp-sell-services' ),
+					// The plugin's own starter categories first (shown as already
+					// added), then extras it does not create, so no chip duplicates one.
+					$presets = array_merge(
+						( new \WPSellServices\PostTypes\ServicePostType() )->get_default_category_names(),
+						array(
+							__( 'Photography', 'wp-sell-services' ),
+							__( 'Data', 'wp-sell-services' ),
+						)
 					);
 					foreach ( $presets as $preset ) :
 						$exists = term_exists( $preset, 'wpss_service_category' );
@@ -640,7 +654,7 @@ class SetupWizardPage {
 					<div class="wpss-wizard-radio-group">
 						<label class="wpss-wizard-radio-inline">
 							<input type="radio" name="wpss_vendor_reg" value="open" <?php checked( 'open', $vendor_registration ); ?>>
-							<?php esc_html_e( 'Open — Anyone can register', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Open — any member can start selling at once', 'wp-sell-services' ); ?>
 						</label>
 						<label class="wpss-wizard-radio-inline">
 							<input type="radio" name="wpss_vendor_reg" value="approval" <?php checked( 'approval', $vendor_registration ); ?>>
@@ -651,7 +665,7 @@ class SetupWizardPage {
 
 				<div class="wpss-wizard-field">
 					<label for="wpss-wiz-max-services"><?php esc_html_e( 'Max Services per Vendor', 'wp-sell-services' ); ?></label>
-					<input type="number" id="wpss-wiz-max-services" value="<?php echo esc_attr( $max_services ); ?>" min="1" max="999">
+					<input type="number" id="wpss-wiz-max-services" value="<?php echo esc_attr( $max_services ); ?>" min="0" max="100">
 				</div>
 
 				<div class="wpss-wizard-field">

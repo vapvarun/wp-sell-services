@@ -64,7 +64,9 @@ $meta_before = array(
 // The guards register at boot only when moderation is on; switch them on for this run if it was off.
 $guards = ModerationService::is_enabled() ? null : new ServiceModerationPage();
 
-$restore = static function () use ( $service_id, $post_before, $meta_before, $guards ) {
+// Re-review Live Edits is opt-in (default off); the cases below run with it on, the off case is separate.
+$re_review_on = static fn( $opt ) => array_merge( is_array( $opt ) ? $opt : array(), array( 're_review_live_edits' => 1 ) );
+$restore = static function () use ( $service_id, $post_before, $meta_before, $guards, $re_review_on ) {
 	// As nobody, so neither the publish rules nor the moderation guards re-judge the put-back.
 	wp_set_current_user( 0 );
 	foreach ( $meta_before as $key => $value ) {
@@ -82,6 +84,7 @@ $restore = static function () use ( $service_id, $post_before, $meta_before, $gu
 		)
 	);
 	remove_filter( 'wpss_require_service_moderation', '__return_true' );
+	remove_filter( 'option_wpss_vendor', $re_review_on );
 	if ( $guards ) {
 		remove_action( 'save_post_wpss_service', array( $guards, 'set_default_moderation_status' ), 10 );
 		remove_action( 'pre_get_posts', array( $guards, 'filter_frontend_queries' ) );
@@ -91,6 +94,7 @@ $restore = static function () use ( $service_id, $post_before, $meta_before, $gu
 };
 
 add_filter( 'wpss_require_service_moderation', '__return_true' );
+add_filter( 'option_wpss_vendor', $re_review_on );
 if ( $guards ) {
 	$guards->register_guards();
 }
@@ -162,6 +166,35 @@ rest_do_request( $request );
 clean_post_cache( $service_id );
 $check( 'status=publish with moderation on does not go live', 'publish' !== get_post_status( $service_id ), (string) get_post_status( $service_id ) );
 $check( 'a service already queued is not re-announced', 0 === $fired, (string) $fired );
+
+// Setting off (the default): a vendor's edit of a live service stays live.
+remove_filter( 'option_wpss_vendor', $re_review_on );
+$make_live();
+wp_set_current_user( $vendor_id );
+$request = new WP_REST_Request( 'PUT', '/wpss/v1/services/' . $service_id );
+$request->set_param( 'title', $post_before->post_title . ' ' );
+rest_do_request( $request );
+clean_post_cache( $service_id );
+$check( 're-review off: a live edit stays live', 'publish' === get_post_status( $service_id ), (string) get_post_status( $service_id ) );
+add_filter( 'option_wpss_vendor', $re_review_on );
+
+// A service that went live before moderation was switched on has no record: Re-review off keeps it live, on holds a content edit.
+remove_filter( 'option_wpss_vendor', $re_review_on );
+$make_live();
+delete_post_meta( $service_id, ModerationService::META_MODERATION_STATUS );
+wp_set_current_user( $vendor_id );
+$request = new WP_REST_Request( 'PUT', '/wpss/v1/services/' . $service_id );
+$request->set_param( 'title', $post_before->post_title . ' ' );
+$request->set_param( 'status', 'publish' );
+rest_do_request( $request );
+clean_post_cache( $service_id );
+$check( 'legacy live service (no record), re-review off: an edit stays live', 'publish' === get_post_status( $service_id ), (string) get_post_status( $service_id ) );
+add_filter( 'option_wpss_vendor', $re_review_on );
+$make_live();
+delete_post_meta( $service_id, ModerationService::META_MODERATION_STATUS );
+rest_do_request( $request );
+clean_post_cache( $service_id );
+$check( 'legacy live service (no record), re-review on: a content edit is held', 'pending' === get_post_status( $service_id ), (string) get_post_status( $service_id ) );
 
 // An admin is not held up.
 $make_live();

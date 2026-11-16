@@ -8,6 +8,67 @@
 (function($) {
 	'use strict';
 
+	// Bulk order status changes move money: ask first, naming the count and the effect.
+	$(document).on('submit', 'form.wpss-orders-bulk', function(e) {
+		var form = this;
+		var $form = $(form);
+		var action = $form.find('select[name="action"]').val();
+		if (!action || '-1' === action) {
+			action = $form.find('select[name="action2"]').val();
+		}
+		var count = $form.find('input[name="order_ids[]"]:checked').length;
+		var message = action ? (count === 1 && $form.attr('data-wpss-confirm-' + action + '-one')) || $form.attr('data-wpss-confirm-' + action) : '';
+
+		if (!message || !count || form.dataset.wpssConfirmed === '1' || typeof window.wpssConfirm !== 'function') {
+			return;
+		}
+
+		e.preventDefault();
+		window.wpssConfirm(message.replace('%d', count), { tone: 'danger' }).then(function(ok) {
+			if (ok) {
+				form.dataset.wpssConfirmed = '1';
+				HTMLFormElement.prototype.submit.call( form ); // the form's own submit property may be a button named "submit"
+			}
+		});
+	});
+
+	// A single order's Completed / Cancelled also moves money: ask first, same as the bulk bar.
+	$(document).on('submit', 'form.wpss-order-status-form', function(e) {
+		var form = this;
+		var $form = $(form);
+		var message = $form.attr('data-wpss-confirm-' + $form.find('select[name="order_status"]').val());
+
+		if (!message || form.dataset.wpssConfirmed === '1' || typeof window.wpssConfirm !== 'function') {
+			return;
+		}
+
+		e.preventDefault();
+		window.wpssConfirm(message, { tone: 'danger' }).then(function(ok) {
+			if (ok) {
+				form.dataset.wpssConfirmed = '1';
+				HTMLFormElement.prototype.submit.call( form ); // the form's own submit property may be a button named "submit"
+			}
+		});
+	});
+
+	// Irreversible order-page forms (e.g. Mark refund sent) carry their own question.
+	$(document).on('submit', 'form[data-wpss-order-confirm]', function(e) {
+		var form = this;
+		var message = form.getAttribute('data-wpss-order-confirm');
+
+		if (!message || form.dataset.wpssConfirmed === '1' || typeof window.wpssConfirm !== 'function') {
+			return;
+		}
+
+		e.preventDefault();
+		window.wpssConfirm(message, { tone: 'danger' }).then(function(ok) {
+			if (ok) {
+				form.dataset.wpssConfirmed = '1';
+				HTMLFormElement.prototype.submit.call( form ); // the form's own submit property may be a button named "submit"
+			}
+		});
+	});
+
 	/**
 	 * Instantiate Lucide icons in markup added after page load.
 	 *

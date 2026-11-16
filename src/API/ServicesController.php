@@ -547,19 +547,13 @@ class ServicesController extends RestController {
 		// A client that stores an index sends the wrong tier the moment a vendor
 		// reorders their packages, which is the bug that release repaired on ten
 		// live orders.
-		$packages = function_exists( 'wpss_get_service_packages' )
-			? (array) wpss_get_service_packages( $service_id )
-			: array();
+		$packages = (array) wpss_get_service_packages( $service_id );
 
 		return array(
 			'content'        => apply_filters( 'the_content', $service->post_content ),
 			'packages'       => array_values( $packages ),
-			'extras'         => function_exists( 'wpss_get_service_extras' )
-				? array_values( (array) wpss_get_service_extras( $service_id ) )
-				: array(),
-			'requirements'   => function_exists( 'wpss_get_service_requirements' )
-				? array_values( (array) wpss_get_service_requirements( $service_id ) )
-				: array(),
+			'extras'         => array_values( (array) wpss_get_service_extras( $service_id ) ),
+			'requirements'   => array_values( (array) wpss_get_service_requirements( $service_id ) ),
 			// The full vendor profile, not the compact actor shape already on the
 			// card. A service page shows the seller's tagline, rating and
 			// completed orders; without this a client had to make a second call
@@ -577,7 +571,7 @@ class ServicesController extends RestController {
 	 * @return array<string, mixed>|null
 	 */
 	private function get_vendor_profile( int $vendor_id ): ?array {
-		if ( $vendor_id <= 0 || ! function_exists( 'wpss_get_vendor' ) ) {
+		if ( $vendor_id <= 0 ) {
 			return null;
 		}
 
@@ -745,9 +739,14 @@ class ServicesController extends RestController {
 			wp_set_object_terms( $service_id, $tags, 'wpss_service_tag' );
 		}
 
-		$to_review = wpss_settle_service_status( $service_id, $post_status ) === 'pending';
+		$settled   = wpss_settle_service_status( $service_id, $post_status );
+		$to_review = 'pending' === $settled;
 		if ( $to_review ) {
 			( new ModerationService() )->submit( $service_id );
+		}
+		// Saved, but held back (no main image, say): say why instead of a silent draft.
+		if ( $settled !== $post_status ) {
+			$notices = array_merge( $notices, wpss_get_service_publish_errors( $service_id ) );
 		}
 		$service = get_post( $service_id );
 
@@ -825,6 +824,18 @@ class ServicesController extends RestController {
 		}
 
 		/*
+		 * Taking a service live is settled AFTER its meta, terms and gallery are
+		 * written, and refused with the reasons when it cannot go live. Writing
+		 * the status first let ServiceMetabox::enforce_publish_rules() demote it
+		 * before this request's own image or category landed, and the client got
+		 * 200 with status draft and no word why (Basecamp 10475574103).
+		 */
+		$going_live = 'publish' === ( $update_data['post_status'] ?? '' ) && 'publish' !== get_post_status( $service_id );
+		if ( $going_live ) {
+			unset( $update_data['post_status'] );
+		}
+
+		/*
 		 * Anything that ends up live has to clear the same bar as the wizard.
 		 *
 		 * The gate used to hang off the status parameter, so it only ran when a
@@ -875,7 +886,8 @@ class ServicesController extends RestController {
 			 * Going live is unchanged: a draft asking for publish, or any
 			 * request that sets status, must clear the whole bar.
 			 */
-			$edits_a_live_listing = ! isset( $update_data['post_status'] ) && 'publish' === get_post_status( $service_id );
+			// status=publish on a listing that is already live changes nothing about its status, so it is an edit too.
+			$edits_a_live_listing = 'publish' === get_post_status( $service_id ) && ( ! isset( $update_data['post_status'] ) || 'publish' === $update_data['post_status'] );
 
 			if ( $publish_errors && $edits_a_live_listing ) {
 				$existing_errors = wpss_validate_service_publishable(
@@ -910,13 +922,18 @@ class ServicesController extends RestController {
 		if ( ModerationService::requires_review() ) {
 			// Any field but the route id counts, as in the wizard: a gallery, add-on or category swap is as reviewable as a title.
 			// Pausing is not: it changes nothing a buyer would buy.
-			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'paused', 'context', '_locale', '_fields', '_embed' ) ) );
-			$goes_live     = 'publish' === ( $update_data['post_status'] ?? '' );
-			$edits_live    = ! isset( $update_data['post_status'] ) && $edits_content && 'publish' === get_post_status( $service_id );
+			$edits_content = (bool) array_diff_key( $request->get_params(), array_flip( array( 'id', 'status', 'paused', 'context', '_locale', '_fields', '_embed', 'rest_route', '_wpnonce' ) ) );
+			// Sending status=publish for a listing that is already live is not "going live": it is a live edit, and the Re-review setting decides.
+			$is_live      = 'publish' === get_post_status( $service_id );
+			$asks_publish = 'publish' === ( $update_data['post_status'] ?? '' );
+			$goes_live    = $going_live || ( $asks_publish && ! $is_live );
+			$edits_live   = $is_live && $edits_content && ( ! isset( $update_data['post_status'] ) || $asks_publish ) && ModerationService::re_reviews_live_edits();
 
 			if ( $goes_live || $edits_live ) {
-				$update_data['post_status'] = 'pending';
-				$to_review                  = true;
+				if ( ! $going_live ) {
+					$update_data['post_status'] = 'pending';
+				}
+				$to_review = true;
 			}
 		}
 
@@ -926,7 +943,7 @@ class ServicesController extends RestController {
 			return $result;
 		}
 
-		if ( $to_review ) {
+		if ( $to_review && ! $going_live ) {
 			( new ModerationService() )->submit( $service_id );
 		}
 
@@ -948,6 +965,15 @@ class ServicesController extends RestController {
 			wp_set_object_terms( $service_id, $capped_tags, 'wpss_service_tag' );
 		}
 
+		// The edits above are saved either way; only the status change is refused.
+		$publish_errors = $going_live ? wpss_get_service_publish_errors( $service_id ) : array();
+		if ( $going_live && ! $publish_errors ) {
+			wpss_settle_service_status( $service_id, $to_review ? 'pending' : 'publish' );
+			if ( $to_review ) {
+				( new ModerationService() )->submit( $service_id );
+			}
+		}
+
 		/**
 		 * Fires after a service is updated via REST API.
 		 *
@@ -955,6 +981,17 @@ class ServicesController extends RestController {
 		 * @param WP_REST_Request $request    Request object.
 		 */
 		do_action( 'wpss_rest_service_updated', $service_id, $request );
+
+		if ( $publish_errors ) {
+			return new WP_Error(
+				'wpss_not_publishable',
+				implode( ' ', $publish_errors ),
+				array(
+					'status' => 400,
+					'errors' => array_values( $publish_errors ),
+				)
+			);
+		}
 
 		$response = $this->prepare_item_for_response( get_post( $service_id ), $request );
 		$response->set_data( $this->with_review_notice( $this->with_limit_notices( $response->get_data(), $notices ), $to_review ) );

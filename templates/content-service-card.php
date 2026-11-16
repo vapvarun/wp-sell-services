@@ -21,7 +21,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.2
+ * @version 1.9.3
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -151,7 +151,7 @@ do_action( 'wpss_before_service_card', $service_id );
 					alt="<?php echo esc_attr( $vendor ? $vendor->display_name : '' ); ?>"
 					class="wpss-service-card__vendor-avatar">
 				<span class="wpss-service-card__vendor-name">
-					<?php echo esc_html( $vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?>
+					<?php echo esc_html( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) ) ); ?>
 				</span>
 				<?php
 				// Verified state derives from the canonical wpss_vendor_profiles
@@ -228,7 +228,7 @@ do_action( 'wpss_before_service_card', $service_id );
 			<div class="wpss-service-card__rating">
 				<?php if ( $rating_count > 0 ) : ?>
 					<i data-lucide="star" class="wpss-icon wpss-icon--sm wpss-service-card__star" aria-hidden="true"></i>
-					<span class="wpss-service-card__rating-value"><?php echo esc_html( number_format( $rating_avg, 1 ) ); ?></span>
+					<span class="wpss-service-card__rating-value"><?php echo esc_html( number_format_i18n( $rating_avg, 1 ) ); ?></span>
 					<span class="wpss-service-card__rating-count">
 						<?php
 						printf(

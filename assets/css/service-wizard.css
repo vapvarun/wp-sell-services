@@ -107,18 +107,6 @@
 	transition: color var(--wpss-transition, 0.2s ease);
 }
 
-/* Active state */
-.wpss-wizard__progress-item--active .wpss-wizard__progress-icon {
-	background: var(--wpss-primary, #4f46e5);
-	border-color: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-on-primary);
-}
-
-.wpss-wizard__progress-item--active .wpss-wizard__progress-label {
-	color: var(--wpss-primary-accent, #4f46e5);
-	font-weight: 600;
-}
-
 /* Completed state */
 .wpss-wizard__progress-item--completed .wpss-wizard__progress-icon {
 	background: var(--wpss-success, #10b981);
@@ -128,6 +116,20 @@
 
 .wpss-wizard__progress-item--completed .wpss-wizard__progress-label {
 	color: var(--wpss-success, #10b981);
+}
+
+/* Active state. After Completed on purpose: a finished step you are on (editing a
+   service) carries both classes, and the current step must read as current
+   (Basecamp 10475157221). */
+.wpss-wizard__progress-item--active .wpss-wizard__progress-icon {
+	background: var(--wpss-primary, #4f46e5);
+	border-color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-on-primary);
+}
+
+.wpss-wizard__progress-item--active .wpss-wizard__progress-label {
+	color: var(--wpss-primary-accent, #4f46e5);
+	font-weight: 600;
 }
 
 /* ==========================================================================

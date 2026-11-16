@@ -74,9 +74,10 @@ class EmailService {
 	 * @since 1.6.0
 	 * @var string
 	 */
-	public const TYPE_RECEIPT_SUBMITTED = 'receipt_submitted';
-	public const TYPE_RECEIPT_VERIFIED  = 'receipt_verified';
-	public const TYPE_RECEIPT_REJECTED  = 'receipt_rejected';
+	public const TYPE_RECEIPT_SUBMITTED     = 'receipt_submitted';
+	public const TYPE_RECEIPT_VERIFIED      = 'receipt_verified';
+	public const TYPE_RECEIPT_REJECTED      = 'receipt_rejected';
+	public const TYPE_CANCELLATION_DECLINED = 'cancellation_declined';
 
 	/**
 	 * A bank-transfer order was placed and is waiting for the money.
@@ -162,6 +163,16 @@ class EmailService {
 	 */
 	private static bool $release_due = false;
 
+	/**
+	 * Orders whose vendor got the "Requirements Submitted" mail in this request.
+	 *
+	 * Submitting requirements starts the order, so the In Progress mail would
+	 * reach the vendor a second time for the same event; it is skipped for them.
+	 *
+	 * @var array<int, true>
+	 */
+	private static array $requirements_mailed = array();
+
 
 	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
@@ -196,11 +207,15 @@ class EmailService {
 	 * @return array
 	 */
 	private function get_email_settings(): array {
-		// Use WooCommerce mailer settings when available, otherwise fall back to platform name.
+		// The marketplace's own sender by default. A store that runs on WooCommerce
+		// already set a sender in WooCommerce > Emails, so only that rail borrows
+		// it; WooCommerce merely being installed beside a standalone marketplace
+		// must not change who these mails come from.
 		$from_name  = wpss_get_platform_name();
 		$from_email = get_option( 'admin_email' );
+		$adapter    = wpss_get_active_adapter();
 
-		if ( function_exists( 'WC' ) && WC()->mailer() ) {
+		if ( $adapter && 'woocommerce' === $adapter->get_id() && function_exists( 'WC' ) && WC()->mailer() ) {
 			$from_name  = WC()->mailer()->get_from_name();
 			$from_email = WC()->mailer()->get_from_address();
 		}
@@ -253,13 +268,16 @@ class EmailService {
 
 		// A dispute handing the order back (ruling or withdrawal) is announced by
 		// the dispute emails; the status emails would repeat an old event.
-		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) ) {
+		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) || OrderService::is_declining_cancellation( $order_id ) ) {
 			return;
 		}
 
 		switch ( $new_status ) {
 			case ServiceOrder::STATUS_PENDING_REQUIREMENTS:
-				$this->send_new_order( $order );
+				// Only payment makes this the new-order event; an admin moving a started order back is not one.
+				if ( in_array( $old_status, array( ServiceOrder::STATUS_PENDING_PAYMENT, '' ), true ) ) {
+					$this->send_new_order( $order );
+				}
 				break;
 
 			case ServiceOrder::STATUS_IN_PROGRESS:
@@ -267,7 +285,10 @@ class EmailService {
 				break;
 
 			case ServiceOrder::STATUS_COMPLETED:
-				$this->send_order_completed( $order );
+				// A ruling for the vendor completes the order; "Dispute resolved" already says so.
+				if ( ! DisputeWorkflowManager::is_resolving_order( $order_id ) ) {
+					$this->send_order_completed( $order );
+				}
 				break;
 
 			case ServiceOrder::STATUS_REVISION_REQUESTED:
@@ -433,7 +454,7 @@ class EmailService {
 
 		$note = sprintf(
 			/* translators: 1: order number, 2: service title, 3: total */
-			__( 'Order #%1$s for %2$s (%3$s) was placed by bank transfer and is waiting for payment. It starts once the payment is marked as received.', 'wp-sell-services' ),
+			__( 'Order #%1$s for %2$s (%3$s) was placed with offline payment and is waiting for payment. It starts once the payment is marked as received.', 'wp-sell-services' ),
 			esc_html( $order->order_number ),
 			esc_html( $title ),
 			esc_html( $total )
@@ -450,7 +471,7 @@ class EmailService {
 			self::TYPE_OFFLINE_ORDER_PLACED,
 			array(
 				'recipient'     => get_user_by( 'email', $admin ) ?: null,
-				'email_heading' => __( 'A bank-transfer order is waiting for payment', 'wp-sell-services' ),
+				'email_heading' => __( 'An offline-payment order is waiting for payment', 'wp-sell-services' ),
 				'content'       => $note,
 				'button_url'    => admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order_id ),
 				'button_text'   => __( 'Open the order', 'wp-sell-services' ),
@@ -458,7 +479,8 @@ class EmailService {
 			)
 		) || $sent;
 
-		if ( $vendor ) {
+		// A solo owner is both the admin and the seller: the admin email above already told them.
+		if ( $vendor && 0 !== strcasecmp( (string) $vendor->user_email, $admin ) ) {
 			$sent = $this->send(
 				$vendor->user_email,
 				sprintf(
@@ -520,7 +542,13 @@ class EmailService {
 			'reply_to_name'   => $customer ? $customer->display_name : '',
 		);
 
-		return $this->send( $vendor->user_email, $subject, self::TYPE_REQUIREMENTS_SUBMITTED, $template_vars );
+		$sent = $this->send( $vendor->user_email, $subject, self::TYPE_REQUIREMENTS_SUBMITTED, $template_vars );
+
+		if ( $sent ) {
+			self::$requirements_mailed[ $order_id ] = true;
+		}
+
+		return $sent;
 	}
 
 	/**
@@ -559,8 +587,9 @@ class EmailService {
 			);
 		}
 
-		// Send to vendor (requirements received, start working).
-		if ( $vendor ) {
+		// Send to vendor (requirements received, start working), unless the
+		// Requirements Submitted mail already told them in this request.
+		if ( $vendor && empty( self::$requirements_mailed[ (int) $order->id ] ) ) {
 			$this->send(
 				$vendor->user_email,
 				$subject,
@@ -709,7 +738,7 @@ class EmailService {
 		}
 
 		$customer     = get_user_by( 'id', $tip_order->customer_id );
-		$buyer_name   = $customer ? $customer->display_name : __( 'A buyer', 'wp-sell-services' );
+		$buyer_name   = wpss_get_member_display_name( (int) ( $customer->ID ?? 0 ), __( 'A buyer', 'wp-sell-services' ) );
 		$parent_id    = (int) ( $tip_order->platform_order_id ?? 0 );
 		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
 
@@ -911,7 +940,7 @@ class EmailService {
 		}
 
 		$vendor       = get_user_by( 'id', $milestone->vendor_id );
-		$vendor_name  = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
+		$vendor_name  = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Your vendor', 'wp-sell-services' ) );
 		$parent_id    = (int) ( $milestone->platform_order_id ?? 0 );
 		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
 		$meta         = $this->decode_order_meta( $milestone );
@@ -988,7 +1017,7 @@ class EmailService {
 		$content = sprintf(
 			/* translators: 1: vendor name, 2: number of phases, 3: contract total */
 			__( '%1$s accepted your project and split it into %2$d phases, %3$s in total. Phases are paid one at a time, in this order.', 'wp-sell-services' ),
-			esc_html( $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' ) ),
+			esc_html( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Your vendor', 'wp-sell-services' ) ) ),
 			count( $milestone_ids ),
 			esc_html( wpss_format_price( $total, $currency ) )
 		) . '</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f9f9f9;border-radius:4px;font-size:16px;color:#3c3c3c;">' . $rows . '</table><p style="margin:16px 0 0 0;font-size:16px;color:#3c3c3c;line-height:1.6;">'
@@ -1033,7 +1062,7 @@ class EmailService {
 		}
 
 		$buyer      = get_user_by( 'id', $milestone->customer_id );
-		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+		$buyer_name = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'The buyer', 'wp-sell-services' ) );
 		$meta       = $this->decode_order_meta( $milestone );
 
 		$subject = sprintf(
@@ -1078,11 +1107,11 @@ class EmailService {
 		}
 
 		$vendor      = get_user_by( 'id', $milestone->vendor_id );
-		$vendor_name = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
+		$vendor_name = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Your vendor', 'wp-sell-services' ) );
 		$meta        = $this->decode_order_meta( $milestone );
 
 		$parent_id     = (int) ( $milestone->platform_order_id ?? 0 );
-		$dashboard_url = wpss_get_dashboard_url() ?: home_url( '/dashboard/' );
+		$dashboard_url = wpss_get_dashboard_url() ?: wpss_get_page_url( 'dashboard' );
 		$review_url    = add_query_arg(
 			array(
 				'section'  => $parent_id ? 'orders' : 'orders',
@@ -1132,7 +1161,7 @@ class EmailService {
 		}
 
 		$buyer      = get_user_by( 'id', $milestone->customer_id );
-		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+		$buyer_name = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'The buyer', 'wp-sell-services' ) );
 		$meta       = $this->decode_order_meta( $milestone );
 
 		$subject = sprintf(
@@ -1191,7 +1220,7 @@ class EmailService {
 				'recipient'     => $vendor,
 				'email_heading' => __( 'Revision requested', 'wp-sell-services' ),
 				'vendor_name'   => $vendor->display_name,
-				'buyer_name'    => $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' ),
+				'buyer_name'    => wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'The buyer', 'wp-sell-services' ) ),
 				'phase_title'   => (string) ( $meta['title'] ?? '' ),
 				'reason'        => $reason,
 				'order_url'     => add_query_arg(
@@ -1199,7 +1228,7 @@ class EmailService {
 						'section'  => 'sales',
 						'order_id' => (int) $milestone->id,
 					),
-					wpss_get_dashboard_url() ?: home_url( '/dashboard/' )
+					wpss_get_dashboard_url() ?: wpss_get_page_url( 'dashboard' )
 				),
 			)
 		);
@@ -1222,7 +1251,7 @@ class EmailService {
 		}
 
 		$vendor      = get_user_by( 'id', $extension->vendor_id );
-		$vendor_name = $vendor ? $vendor->display_name : __( 'Your vendor', 'wp-sell-services' );
+		$vendor_name = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Your vendor', 'wp-sell-services' ) );
 		$reason      = (string) ( $extension->vendor_notes ?? '' );
 
 		$pay_url = wpss_ensure_pay_order( (int) $extension->id );
@@ -1271,7 +1300,7 @@ class EmailService {
 		}
 
 		$buyer      = get_user_by( 'id', $extension->customer_id );
-		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+		$buyer_name = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'The buyer', 'wp-sell-services' ) );
 
 		$subject = sprintf(
 			/* translators: %s: site name */
@@ -1327,7 +1356,7 @@ class EmailService {
 		}
 
 		$buyer      = get_user_by( 'id', $extension->customer_id );
-		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+		$buyer_name = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'The buyer', 'wp-sell-services' ) );
 
 		$subject = sprintf(
 			/* translators: %s: site name */
@@ -1617,6 +1646,63 @@ class EmailService {
 	}
 
 	/**
+	 * Tell the seller the buyer declined their cancellation request, and confirm it to the buyer.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public function send_seller_cancellation_declined( int $order_id ): bool {
+		$order = wpss_get_order( $order_id );
+		if ( ! $order ) {
+			return false;
+		}
+
+		$url  = wpss_get_order_url( $order_id );
+		$site = wpss_get_platform_name();
+		$sent = false;
+
+		$vendor = get_user_by( 'id', $order->vendor_id );
+		if ( $vendor ) {
+			$sent = $this->send(
+				$vendor->user_email,
+				/* translators: 1: site name, 2: order number */
+				sprintf( __( '[%1$s] Cancellation request declined - Order #%2$s', 'wp-sell-services' ), $site, $order->order_number ),
+				self::TYPE_CANCELLATION_DECLINED,
+				array(
+					'recipient'     => $vendor,
+					'order'         => $order,
+					'email_heading' => __( 'Cancellation request declined', 'wp-sell-services' ),
+					/* translators: %s: order number */
+					'content'       => esc_html( sprintf( __( 'The buyer declined your request to cancel Order #%s. The order continues, so please carry on with the work.', 'wp-sell-services' ), $order->order_number ) ),
+					'button_url'    => $url,
+					'button_text'   => __( 'View order', 'wp-sell-services' ),
+				)
+			);
+		}
+
+		$customer = get_user_by( 'id', $order->customer_id );
+		if ( $customer ) {
+			$sent = $this->send(
+				$customer->user_email,
+				/* translators: 1: site name, 2: order number */
+				sprintf( __( '[%1$s] You declined the cancellation - Order #%2$s', 'wp-sell-services' ), $site, $order->order_number ),
+				self::TYPE_CANCELLATION_DECLINED,
+				array(
+					'recipient'     => $customer,
+					'order'         => $order,
+					'email_heading' => __( 'You declined the cancellation', 'wp-sell-services' ),
+					/* translators: %s: order number */
+					'content'       => esc_html( sprintf( __( 'You declined the seller\'s request to cancel Order #%s. The order continues as before.', 'wp-sell-services' ), $order->order_number ) ),
+					'button_url'    => $url,
+					'button_text'   => __( 'View order', 'wp-sell-services' ),
+				)
+			) || $sent;
+		}
+
+		return $sent;
+	}
+
+	/**
 	 * Send cancellation requested emails to vendor and buyer.
 	 *
 	 * @param ServiceOrder $order Order object.
@@ -1642,6 +1728,58 @@ class EmailService {
 		}
 		$deadline    = $requested_at->modify( '+48 hours' );
 		$deadline_ts = $deadline->getTimestamp();
+
+		// A seller's request goes to the buyer, who decides; there is no deadline.
+		if ( $order->is_cancellation_requested_by_vendor() ) {
+			$site = wpss_get_platform_name();
+
+			if ( $customer ) {
+				$this->send(
+					$customer->user_email,
+					/* translators: 1: site name, 2: order number */
+					sprintf( __( '[%1$s] The seller asked to cancel - Order #%2$s', 'wp-sell-services' ), $site, $order->order_number ),
+					self::TYPE_CANCELLATION_REQUESTED,
+					array(
+						'order'               => $order,
+						'recipient'           => $customer,
+						'email_heading'       => __( 'The seller asked to cancel', 'wp-sell-services' ),
+						'buyer_name'          => $this->get_customer_name( $order->customer_id ),
+						'vendor_name'         => $this->get_vendor_name( $order->vendor_id ),
+						'reason'              => $reason_label,
+						'note'                => $note,
+						'deadline'            => '',
+						'is_customer'         => true,
+						'requested_by_vendor' => true,
+						'reply_to_email'      => $vendor ? $vendor->user_email : '',
+						'reply_to_name'       => $vendor ? $vendor->display_name : '',
+					)
+				);
+			}
+
+			if ( $vendor ) {
+				$this->send(
+					$vendor->user_email,
+					/* translators: 1: site name, 2: order number */
+					sprintf( __( '[%1$s] Cancellation request sent - Order #%2$s', 'wp-sell-services' ), $site, $order->order_number ),
+					self::TYPE_CANCELLATION_REQUESTED,
+					array(
+						'order'               => $order,
+						'recipient'           => $vendor,
+						'email_heading'       => __( 'Cancellation request sent', 'wp-sell-services' ),
+						'buyer_name'          => $this->get_customer_name( $order->customer_id ),
+						'reason'              => $reason_label,
+						'note'                => $note,
+						'deadline'            => '',
+						'is_customer'         => false,
+						'requested_by_vendor' => true,
+						'reply_to_email'      => $customer ? $customer->user_email : '',
+						'reply_to_name'       => $customer ? $customer->display_name : '',
+					)
+				);
+			}
+
+			return true;
+		}
 
 		// Send to vendor.
 		if ( $vendor ) {
@@ -2393,10 +2531,25 @@ class EmailService {
 		 */
 		$from_name = sanitize_text_field( (string) apply_filters( 'wpss_email_from_name', $this->settings()['from_name'] ) );
 
+		/**
+		 * Filter the email "from" address, for a plugin-specific sender.
+		 *
+		 * Use an address on the site's own domain (and one the mail host allows):
+		 * a sender from another domain is often rejected as spoofed.
+		 *
+		 * @since 1.9.3
+		 *
+		 * @param string $from_email The sender address.
+		 */
+		$from_email = sanitize_email( (string) apply_filters( 'wpss_email_from_address', $this->settings()['from_email'] ) );
+		if ( ! is_email( $from_email ) ) {
+			$from_email = (string) get_option( 'admin_email' );
+		}
+
 		// Set headers.
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
-			sprintf( 'From: %s <%s>', $from_name, $this->settings()['from_email'] ),
+			sprintf( 'From: %s <%s>', $from_name, $from_email ),
 		);
 
 		// Add Reply-To header when reply_to_email is provided by the sending method.
@@ -2748,6 +2901,7 @@ class EmailService {
 			self::TYPE_RECEIPT_SUBMITTED      => 'generic.php',
 			self::TYPE_RECEIPT_VERIFIED       => 'generic.php',
 			self::TYPE_RECEIPT_REJECTED       => 'generic.php',
+			self::TYPE_CANCELLATION_DECLINED  => 'generic.php',
 			self::TYPE_VENDOR_APPROVED        => 'vendor-approved.php',
 			self::TYPE_VENDOR_REJECTED        => 'vendor-rejected.php',
 			self::TYPE_VENDOR_SUSPENDED       => 'vendor-suspended.php',
@@ -2787,8 +2941,7 @@ class EmailService {
 	 * @return string
 	 */
 	private function get_customer_name( int $customer_id ): string {
-		$customer = get_user_by( 'id', $customer_id );
-		return $customer ? $customer->display_name : __( 'Buyer', 'wp-sell-services' );
+		return wpss_get_member_display_name( $customer_id, __( 'Buyer', 'wp-sell-services' ) );
 	}
 
 	/**
@@ -2798,8 +2951,7 @@ class EmailService {
 	 * @return string
 	 */
 	private function get_vendor_name( int $vendor_id ): string {
-		$vendor = get_user_by( 'id', $vendor_id );
-		return $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
+		return wpss_get_member_display_name( $vendor_id, __( 'Vendor', 'wp-sell-services' ) );
 	}
 
 	/**
@@ -2874,6 +3026,7 @@ class EmailService {
 			self::TYPE_RECEIPT_SUBMITTED      => 'orders',
 			self::TYPE_RECEIPT_VERIFIED       => 'orders',
 			self::TYPE_RECEIPT_REJECTED       => 'orders',
+			self::TYPE_CANCELLATION_DECLINED  => 'orders',
 			self::TYPE_OFFLINE_ORDER_PLACED   => 'orders',
 			// Plain (generic-template) types NotificationService sends.
 			'review_reply'                    => 'completion',

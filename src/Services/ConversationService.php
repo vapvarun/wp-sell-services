@@ -232,6 +232,52 @@ class ConversationService {
 	}
 
 	/**
+	 * One page of a thread for display: the newest messages, oldest first.
+	 *
+	 * The order page and the dashboard thread used to load every message (or the oldest 100),
+	 * so a long order showed its start and hid its end. This returns the newest `$limit`
+	 * (or the `$limit` before `$before_id` when the reader asked for earlier ones) in reading
+	 * order, and says whether anything older exists. Rows carry `sender_name` like the
+	 * template's old query did. One extra row is fetched to answer "is there more" without a COUNT.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param int $conversation_id Conversation ID.
+	 * @param int $before_id       Only messages older than this id; 0 for the newest page.
+	 * @param int $limit           Page size.
+	 * @return array{messages: object[], has_older: bool}
+	 */
+	public function get_thread_page( int $conversation_id, int $before_id = 0, int $limit = 50 ): array {
+		global $wpdb;
+
+		$limit    = max( 1, min( 200, $limit ) );
+		$messages = $wpdb->prefix . 'wpss_messages';
+		$before   = $before_id > 0 ? $wpdb->prepare( 'AND m.id < %d', $before_id ) : '';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT m.*, u.display_name AS sender_name
+				FROM {$messages} m
+				LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
+				WHERE m.conversation_id = %d {$before}
+				ORDER BY m.id DESC
+				LIMIT %d",
+				$conversation_id,
+				$limit + 1
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$has_older = count( $rows ) > $limit;
+
+		return array(
+			'messages'  => array_reverse( array_slice( $rows, 0, $limit ) ),
+			'has_older' => $has_older,
+		);
+	}
+
+	/**
 	 * Why a member may not start or continue a pre-sale conversation.
 	 *
 	 * A suspended or closed account stops NEW activity (contact-seller and other

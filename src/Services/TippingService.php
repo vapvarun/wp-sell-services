@@ -332,7 +332,7 @@ class TippingService {
 		}
 
 		$tip_order_id = (int) $wpdb->insert_id;
-		$base_url     = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
+		$base_url     = wpss_get_checkout_base_url();
 		// Resolve through the shared seam so a cart-based rail (WooCommerce)
 		// can hand back its own order-pay URL instead of a query arg only the
 		// standalone checkout understands.

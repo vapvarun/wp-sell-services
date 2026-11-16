@@ -95,6 +95,11 @@ class ConversationsController extends RestController {
 					'callback'            => array( $this, 'get_by_order' ),
 					'permission_callback' => array( $this, 'check_order_permission' ),
 					'args'                => array(
+						'soft'     => array(
+							'description' => __( 'Answer 200 with id 0 when the order has no conversation yet, instead of 404.', 'wp-sell-services' ),
+							'type'        => 'boolean',
+							'default'     => false,
+						),
 						'order_id' => array(
 							'validate_callback' => array( $this, 'validate_id' ),
 						),
@@ -302,6 +307,11 @@ class ConversationsController extends RestController {
 	public function get_by_order( $request ) {
 		$order_id     = (int) $request->get_param( 'order_id' );
 		$conversation = $this->conversation_service->get_by_order( $order_id );
+
+		if ( ! $conversation && $request->get_param( 'soft' ) ) {
+			// The order page asks before the first message exists: a normal state, not a console error.
+			return new WP_REST_Response( array( 'id' => 0 ) );
+		}
 
 		if ( ! $conversation ) {
 			return new WP_Error(

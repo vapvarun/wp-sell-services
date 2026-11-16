@@ -27,6 +27,41 @@ defined( 'ABSPATH' ) || exit;
  * @since 1.0.0
  */
 class OfflineGateway extends AbstractPaymentGateway {
+	/**
+	 * Prefix of the reference made when the owner marks an order paid without typing a transaction ID.
+	 * Kept for the record; screens that show a Transaction ID to the buyer and seller skip it.
+	 *
+	 * @since 1.9.3
+	 */
+	public const GENERATED_TRANSACTION_PREFIX = 'offline_manual_';
+
+	/**
+	 * Prefix of the placeholder an Offline cart checkout stores for all its orders.
+	 */
+	public const GENERATED_MULTI_PREFIX = 'offline_multi_';
+
+	/**
+	 * Whether a transaction ID was made up by the plugin rather than typed by the owner.
+	 *
+	 * The buyer only ever sees an ID someone entered; every reader asks here.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string $transaction_id Stored transaction ID.
+	 * @return bool
+	 */
+	public static function is_generated_transaction_id( string $transaction_id ): bool {
+		// Offline's own ids, and the references the EDD and FluentCart rails and the test gateway stamp
+		// when no gateway has issued anything: none of them is a payment reference a buyer can quote.
+		foreach ( array( self::GENERATED_TRANSACTION_PREFIX, self::GENERATED_MULTI_PREFIX, 'edd_', 'fluentcart_', 'test_' ) as $prefix ) {
+			if ( 0 === strpos( $transaction_id, $prefix ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 
 	/**
 	 * Gateway ID.
@@ -750,7 +785,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			}
 
 			// For offline payments there is no shared transaction ID yet — generate a placeholder.
-			$transaction_id = 'offline_multi_' . wp_generate_uuid4();
+			$transaction_id = self::GENERATED_MULTI_PREFIX . wp_generate_uuid4();
 
 			$order_ids = $order_provider->create_orders_from_cart( $cart, 'offline', $transaction_id, $customer_id );
 
@@ -779,7 +814,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			wp_send_json_success(
 				array(
 					'order_ids'    => $order_ids,
-					'redirect_url' => add_query_arg( 'tab', 'orders', wpss_get_page_url( 'dashboard' ) ),
+					'redirect_url' => wpss_get_dashboard_url( 'orders' ),
 					'message'      => __( 'Your orders have been placed. Please complete your payment using the instructions for each order.', 'wp-sell-services' ),
 				)
 			);
@@ -824,8 +859,8 @@ class OfflineGateway extends AbstractPaymentGateway {
 		 */
 		do_action( 'wpss_offline_order_created', $order->id, $order );
 
-		// Clear cart after successful order creation.
-		delete_user_meta( get_current_user_id(), '_wpss_cart' );
+		// Drop only the purchased line; other saved items stay in the cart.
+		\WPSellServices\Checkout\ServiceCart::remove_line( get_current_user_id(), $service_id, (int) ( $order->package_id ?? $package_id ) );
 
 		// Return success with order view redirect (shows payment instructions).
 		wp_send_json_success(
@@ -895,7 +930,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			array(
 				'service_id'     => $service_id,
 				'package_id'     => (int) $line['package_id'],
-				'quantity'       => max( 1, $quantity ),
+				'quantity'       => (int) $line['quantity'],
 				'customer_id'    => get_current_user_id(),
 				'subtotal'       => (float) $line['subtotal'],
 				'addons'         => $line['addons'],
@@ -980,7 +1015,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			);
 		}
 
-		$transaction_id = '' === $transaction_id ? 'offline_manual_' . time() : $transaction_id;
+		$transaction_id = '' === $transaction_id ? self::GENERATED_TRANSACTION_PREFIX . time() : $transaction_id;
 
 		if ( ! wpss_get_order_provider()->mark_as_paid( $order_id, $transaction_id, $payment_method ) ) {
 			return new \WP_Error( 'wpss_mark_paid_failed', __( 'Failed to mark order as paid.', 'wp-sell-services' ), array( 'status' => 409 ) );
@@ -1173,7 +1208,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 					sprintf(
 						/* translators: 1: uploader name, 2: date */
 						__( 'uploaded by %1$s on %2$s', 'wp-sell-services' ),
-						$who ? $who->display_name : __( 'a buyer', 'wp-sell-services' ),
+						wpss_get_member_display_name( (int) ( $who->ID ?? 0 ), __( 'a buyer', 'wp-sell-services' ) ),
 						wpss_date_label( (string) $receipt->created_at )
 					)
 				)
@@ -1458,7 +1493,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 						<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order->id ); ?>">
 						<div class="wpss-form-group">
 							<label for="wpss-receipt-file"><?php esc_html_e( 'Receipt or screenshot', 'wp-sell-services' ); ?></label>
-							<input type="file" name="attachments[]" id="wpss-receipt-file" accept="image/*,.pdf" required>
+							<input type="file" name="attachments[]" id="wpss-receipt-file" accept="<?php echo esc_attr( wpss_upload_accept( 'receipt' ) ); ?>" required>
 						</div>
 						<div class="wpss-form-group">
 							<label for="wpss-receipt-note"><?php esc_html_e( 'Reference number (optional)', 'wp-sell-services' ); ?></label>
@@ -1584,7 +1619,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 							<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Method', 'wp-sell-services' ); ?></th>
 							<td style="text-align:right;"><?php esc_html_e( 'Offline payment', 'wp-sell-services' ); ?></td>
 						</tr>
-						<?php if ( ! empty( $order->transaction_id ) ) : ?>
+						<?php if ( ! empty( $order->transaction_id ) && ! self::is_generated_transaction_id( (string) $order->transaction_id ) ) : ?>
 							<tr>
 								<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Reference', 'wp-sell-services' ); ?></th>
 								<td style="text-align:right;"><?php echo esc_html( (string) $order->transaction_id ); ?></td>
@@ -1656,7 +1691,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		$sanitized['enabled']         = ! empty( $input['enabled'] ) ? '1' : '';
 		$sanitized['title']           = sanitize_text_field( $input['title'] ?? '' );
 		$sanitized['description']     = sanitize_textarea_field( $input['description'] ?? '' );
-		$sanitized['auto_hold_hours'] = absint( $input['auto_hold_hours'] ?? 0 );
+		$sanitized['auto_hold_hours'] = wpss_clamp_limit( $input['auto_hold_hours'] ?? 0, 0, 720, (int) ( get_option( self::OPTION_NAME, array() )['auto_hold_hours'] ?? 0 ) );
 
 		$methods = $this->sanitize_methods( (array) ( $input['methods'] ?? array() ) );
 

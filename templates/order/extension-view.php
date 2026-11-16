@@ -14,7 +14,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.1
+ * @version 1.9.3
  *
  * @var \WPSellServices\Models\ServiceOrder $current_order Extension sub-order row.
  * @var int                                 $user_id       Current user ID.
@@ -55,9 +55,7 @@ $counterparty_id = $is_buyer ? (int) $current_order->vendor_id : (int) $current_
 $counterparty    = get_userdata( $counterparty_id );
 
 $format = static function ( float $amount ) use ( $currency ): string {
-	return function_exists( 'wpss_format_price' )
-		? wpss_format_price( $amount, $currency )
-		: number_format_i18n( $amount, 2 ) . ' ' . $currency;
+	return wpss_format_price( $amount, $currency );
 };
 
 /**

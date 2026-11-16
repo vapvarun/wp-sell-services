@@ -1,0 +1,14 @@
+{
+  "journey": "10",
+  "mode": "free",
+  "ran_at": "2026-11-16T08:25:00Z",
+  "ran_against": "d14dbb8971d86a375a705180fc434b7fbe7980d8",
+  "env": "wp-sell-services.local, Reign, standalone rail, offline gateway, Mailpit on 127.0.0.1:10040",
+  "counts": {
+    "pass": 9,
+    "fail": 0,
+    "skipped": 2
+  },
+  "failures": [],
+  "note": "Maya requested 60, admin approve then Mark paid with Mailpit: admin New Withdrawal Request, Approved mail, Paid mail; one ledger debit (80180), replay PUT 400 wpss_already_finalised; Withdrawal Paid switch off suppressed only the Paid mail (withdrawal 10041); negative -5 POST saved as 0 for min withdrawal, clearance days and message delay; auto payouts monthly pending Dec 1 02:00 single non-repeating, Run Now completed and re-queued Dec 1, weekly moved to Mon Nov 23, off leaves none; reject with reason 'R3 walk reject' mailed with reason, funds returned, history row shows Reason; 390 earnings no overflow, no control under 40px. Untested: step 8 negative balance and write-off, Jan 1 rollover, withdrawal-auto mail to vendor (code sends admin only)."
+}

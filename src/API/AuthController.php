@@ -454,42 +454,15 @@ class AuthController extends RestController {
 		$username = sanitize_user( $request->get_param( 'username' ) );
 		$password = $request->get_param( 'password' );
 
-		/*
-		 * Per-ACCOUNT lockout, alongside the per-IP counter above.
-		 *
-		 * The IP limiter alone let one account be guessed at from as many
-		 * addresses as the attacker had, five tries each. The counter is keyed
-		 * on the resolved login so "sofia" and "sofia@example.com" share one
-		 * budget, and it is checked before wp_authenticate() so a locked
-		 * account is not even verified.
-		 *
-		 * The counting itself is NOT done here. wp_authenticate() fires
-		 * wp_login_failed, which Plugin.php binds to wpss_login_record_failure()
-		 * - one counter for this route and for wp-login.php alike, because the
-		 * two rails disagreeing is the bug this replaced (Basecamp 10267994010).
-		 * Only the answer is chosen here, so the app keeps its 423.
-		 */
-		if ( wpss_login_is_locked( $username ) ) {
-			return wpss_login_lock_error();
-		}
-
 		$user = wp_authenticate( $username, $password );
 
 		if ( is_wp_error( $user ) ) {
-			if ( wpss_login_is_locked( $username ) ) {
-				return wpss_login_lock_error();
-			}
-
 			return new WP_Error(
 				'invalid_credentials',
 				__( 'Invalid username or password.', 'wp-sell-services' ),
 				array( 'status' => 401 )
 			);
 		}
-
-		// wp_authenticate() does not fire wp_login - only wp_signon() does - so
-		// a correct password over REST clears the counter here.
-		wpss_login_clear_failures( $user->user_login );
 
 		/*
 		 * A token must not be able to mint more tokens (Basecamp 10154918753).
@@ -519,8 +492,7 @@ class AuthController extends RestController {
 		 * The seam for a second factor. Return a WP_Error to refuse the sign-in
 		 * with that error (status and code of the plugin's choosing, e.g. a 401
 		 * carrying `wpss_2fa_required` and a challenge id in its data); return
-		 * null to issue the token as normal. Runs after the password and the
-		 * account lockout have both passed, so a challenge is never offered for
+		 * null to issue the token as normal. Runs after the password has passed, so a challenge is never offered for
 		 * a wrong password.
 		 *
 		 * @since 1.7.1

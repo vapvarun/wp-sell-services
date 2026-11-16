@@ -54,11 +54,30 @@ function wpss_get_order_payment_refusal( $order ): string {
 		return wpss_get_order_not_payable_message( $order );
 	}
 
+	if ( wpss_is_order_phase_locked( $order ) ) {
+		return __( 'This phase is locked. Pay the previous phase first - once it is approved or cancelled, this one will unlock.', 'wp-sell-services' );
+	}
+
 	if ( wpss_is_extension_on_hold( $order ) ) {
 		return __( 'This quote for extra work is on hold while the order is not active, so it cannot be paid now.', 'wp-sell-services' );
 	}
 
 	return '';
+}
+
+/**
+ * Whether a milestone phase is still locked behind an earlier, unapproved phase.
+ *
+ * The one test every pay door uses, so a crafted request cannot fund a phase out of order.
+ *
+ * @since 1.9.3
+ *
+ * @param object $order ServiceOrder or order row.
+ * @return bool
+ */
+function wpss_is_order_phase_locked( $order ): bool {
+	return \WPSellServices\Services\MilestoneService::ORDER_TYPE === (string) ( $order->platform ?? '' )
+		&& ( new \WPSellServices\Services\MilestoneService() )->is_locked( (int) ( $order->id ?? 0 ) );
 }
 
 /**
@@ -119,19 +138,7 @@ function wpss_get_order_title( object $order ): string {
  * @return \WPSellServices\Models\ServiceOrder|null
  */
 function wpss_get_order( int $order_id ): ?\WPSellServices\Models\ServiceOrder {
-	global $wpdb;
-
-	$table = $wpdb->prefix . 'wpss_orders';
-
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$row = $wpdb->get_row(
-		$wpdb->prepare(
-			"SELECT * FROM {$table} WHERE id = %d",
-			$order_id
-		)
-	);
-
-	return $row ? \WPSellServices\Models\ServiceOrder::from_db( $row ) : null;
+	return \WPSellServices\Models\ServiceOrder::find( $order_id );
 }
 
 /**
@@ -167,6 +174,39 @@ function wpss_order_number_search_sql( string $term, string $column = 'order_num
 	$sql = implode( ' OR ', array_fill( 0, count( $params ), "{$column} LIKE %s" ) );
 
 	return array( "({$sql})", $params );
+}
+
+/**
+ * The UTC time to stamp on an order row.
+ *
+ * Always "now" unless an importer or demo installer hooks `wpss_order_timestamp`
+ * for the length of its run, so seeded and migrated orders keep their real dates.
+ *
+ * @since 1.9.3
+ *
+ * @param string $field    Column being stamped: created_at, updated_at, paid_at, started_at or completed_at.
+ * @param int    $order_id Order ID, 0 while the order is still being created.
+ * @return string UTC MySQL datetime.
+ */
+function wpss_order_timestamp( string $field, int $order_id = 0 ): string {
+	$now = current_time( 'mysql', true );
+
+	/**
+	 * Filters the UTC datetime stamped on an order column.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string $now      UTC MySQL datetime, now by default.
+	 * @param string $field    Column being stamped.
+	 * @param int    $order_id Order ID, 0 on creation.
+	 */
+	$stamp = apply_filters( 'wpss_order_timestamp', $now, $field, $order_id );
+
+	// Any parseable value (a relative string, an offset ISO date) becomes a UTC MySQL datetime; anything else falls back to now.
+	$time = is_string( $stamp ) ? strtotime( $stamp ) : false;
+
+	// strtotime() accepts the MySQL zero date (a negative time), which is "no date", not a date: fall back to now.
+	return false !== $time && $time > 0 ? gmdate( 'Y-m-d H:i:s', $time ) : $now;
 }
 
 /**
@@ -216,11 +256,17 @@ function wpss_generate_order_number(): string {
 /**
  * Check if user can view order.
  *
- * @param int      $order_id Order ID.
- * @param int|null $user_id  User ID. Defaults to current user.
+ * Anyone wpss_order_actor_role() names: the buyer, the vendor, an administrator
+ * or a member who manages orders (the shop manager). One answer for the order
+ * page, the shortcode and GET /orders/{id}.
+ *
+ * @since 1.9.3 Also admits wpss_manage_orders and takes an order row.
+ *
+ * @param int|object $order   Order ID or an order row with customer_id and vendor_id.
+ * @param int|null   $user_id User ID. Defaults to current user.
  * @return bool
  */
-function wpss_user_can_view_order( int $order_id, ?int $user_id = null ): bool {
+function wpss_user_can_view_order( $order, ?int $user_id = null ): bool {
 	if ( null === $user_id ) {
 		$user_id = get_current_user_id();
 	}
@@ -229,19 +275,11 @@ function wpss_user_can_view_order( int $order_id, ?int $user_id = null ): bool {
 		return false;
 	}
 
-	// Admins can view all orders.
-	if ( user_can( $user_id, 'manage_options' ) ) {
-		return true;
+	if ( ! is_object( $order ) ) {
+		$order = wpss_get_order( (int) $order );
 	}
 
-	$order = wpss_get_order( $order_id );
-
-	if ( ! $order ) {
-		return false;
-	}
-
-	// Order participants can view.
-	return (int) $order->customer_id === $user_id || (int) $order->vendor_id === $user_id;
+	return $order && '' !== wpss_order_actor_role( $order, $user_id );
 }
 
 /**
@@ -1197,5 +1235,48 @@ function wpss_get_reorder_plan( \WPSellServices\Models\ServiceOrder $order, int 
 		'price_changed'  => $changed,
 		'previous_total' => $previous,
 		'current_total'  => $current,
+	);
+}
+
+
+/**
+ * Hours after work starts during which a buyer may ask to cancel an in-progress order.
+ *
+ * One reader for the order page, the REST route and the service, so the rule the
+ * buyer is shown is the rule that is enforced. 0 turns the request off.
+ *
+ * @since 1.9.3
+ *
+ * @return int Hours, 0 to 720.
+ */
+function wpss_cancel_window_hours(): int {
+	$hours = wpss_get_option( 'orders', 'cancel_window_hours' );
+
+	return null === $hours || '' === $hours ? 24 : max( 0, min( 720, (int) $hours ) );
+}
+
+/**
+ * The cancellation rule in words, for buttons, notices and errors.
+ *
+ * @since 1.9.3
+ *
+ * @return string
+ */
+function wpss_cancel_window_rule(): string {
+	$hours = wpss_cancel_window_hours();
+
+	if ( 0 === $hours ) {
+		return __( 'Once work has started this order cannot be cancelled by request. If something is wrong, open a dispute.', 'wp-sell-services' );
+	}
+
+	return sprintf(
+		/* translators: %d: hours. */
+		_n(
+			'You can request cancellation within %d hour of work starting, before any delivery. After that, open a dispute.',
+			'You can request cancellation within %d hours of work starting, before any delivery. After that, open a dispute.',
+			$hours,
+			'wp-sell-services'
+		),
+		$hours
 	);
 }

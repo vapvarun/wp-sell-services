@@ -442,7 +442,7 @@ class AbilitiesRegistrar {
 				),
 				'execute_callback'    => array( $this, 'execute_view_earnings' ),
 				'permission_callback' => static function (): bool {
-					return current_user_can( 'wpss_manage_services' );
+					return current_user_can( 'wpss_manage_services' ) || wpss_suspended_vendor_money_access();
 				},
 				'meta'                => array(
 					'annotations'  => array(
@@ -495,7 +495,7 @@ class AbilitiesRegistrar {
 				),
 				'execute_callback'    => array( $this, 'execute_request_withdrawal' ),
 				'permission_callback' => static function (): bool {
-					return current_user_can( 'wpss_manage_services' );
+					return current_user_can( 'wpss_manage_services' ) || wpss_suspended_vendor_money_access();
 				},
 				'meta'                => array(
 					'annotations'  => array(

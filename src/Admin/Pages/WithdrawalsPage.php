@@ -165,8 +165,8 @@ class WithdrawalsPage {
 				// Currency parts for the settlement total shown in the bulk
 				// mark-paid confirmation. Same pair Admin::enqueue_scripts
 				// localizes; wpss_format_price() always prefixes the symbol.
-				'currencySymbol'   => wpss_get_currency_symbol(),
-				'currencyDecimals' => wpss_get_currency_decimals(),
+				'currencyFormat'   => wpss_get_currency_format(),
+				'currencyDecimals' => wpss_get_decimal_places(),
 				'i18n'             => array(
 					'error'        => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'selectFirst'  => __( 'Select at least one withdrawal first.', 'wp-sell-services' ),

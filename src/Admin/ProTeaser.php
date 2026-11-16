@@ -212,7 +212,7 @@ class ProTeaser {
 		 *
 		 * @param string $url Public upgrade URL.
 		 */
-		return (string) apply_filters( 'wpss_pro_upgrade_url', 'https://store.wbcomdesigns.com/wp-sell-services-pro/' );
+		return wpss_pro_upgrade_url();
 	}
 
 	/**

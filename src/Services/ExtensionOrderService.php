@@ -743,6 +743,6 @@ class ExtensionOrderService {
 	 * @return ServiceOrder|null
 	 */
 	private function get_order( int $order_id ): ?ServiceOrder {
-		return function_exists( 'wpss_get_order' ) ? wpss_get_order( $order_id ) : null;
+		return wpss_get_order( $order_id );
 	}
 }

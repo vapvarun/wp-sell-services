@@ -499,6 +499,25 @@ class ServiceCommands extends WP_CLI_Command {
 	}
 
 	/**
+	 * Post dates for a demo service listed some days ago, so a fresh demo does not show every service as "today".
+	 *
+	 * @param int $days_ago Days back from now, 0 for no change.
+	 * @return array<string, string> Date fields for wp_insert_post, empty when not backdated.
+	 */
+	private function backdated( int $days_ago ): array {
+		if ( $days_ago <= 0 ) {
+			return array();
+		}
+
+		$gmt = gmdate( 'Y-m-d H:i:s', time() - $days_ago * DAY_IN_SECONDS );
+
+		return array(
+			'post_date_gmt' => $gmt,
+			'post_date'     => get_date_from_gmt( $gmt ), // time-ok: post_date is the site-local column, post_date_gmt carries UTC.
+		);
+	}
+
+	/**
 	 * Create a single service from data.
 	 *
 	 * @param array $data Service data.
@@ -513,8 +532,8 @@ class ServiceCommands extends WP_CLI_Command {
 				'post_content' => $data['content'],
 				'post_excerpt' => $data['excerpt'] ?? '',
 				'post_status'  => 'draft', // Published below once the meta is in.
-				'post_author'  => get_current_user_id() ?: 1,
-			)
+				'post_author'  => ! empty( $data['author'] ) ? (int) $data['author'] : ( get_current_user_id() ?: 1 ),
+			) + $this->backdated( (int) ( $data['days_ago'] ?? 0 ) )
 		);
 
 		if ( is_wp_error( $post_id ) ) {
@@ -592,7 +611,7 @@ class ServiceCommands extends WP_CLI_Command {
 		// in Draft (Basecamp 10350889943, 10375511072). Same bundled demo
 		// media the marketplace seeder uses.
 		if ( ! has_post_thumbnail( $post_id ) ) {
-			$image = ( new \WPSellServices\Demo\MarketplaceSeeder() )->sideload_image( 'wpss-demo-service-' . $post_id, 800, 600, (int) $post_id, (string) $data['title'] );
+			$image = ( new \WPSellServices\Demo\MarketplaceSeeder() )->sideload_image( 'wpss-demo-service-' . $post_id, 800, 600, (int) $post_id, (string) $data['title'], (string) ( $data['category'] ?? '' ) );
 			if ( $image ) {
 				update_post_meta( $post_id, '_wpss_gallery', array( $image ) );
 				set_post_thumbnail( $post_id, $image );
@@ -2206,10 +2225,22 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'wpss service', ServiceCommands::class, array( 'shortdesc' => 'Manage services.' ) );
 	WP_CLI::add_command( 'wpss validate', ValidateCommand::class, array( 'shortdesc' => 'Validate models and schema.' ) );
 	WP_CLI::add_command( 'wpss preflight', PreflightCommand::class, array( 'shortdesc' => 'Run release-readiness preflight checks.' ) );
-	WP_CLI::add_command( 'wpss test:flow', TestFlowCommand::class, array( 'shortdesc' => 'Run end-to-end data flow tests.' ) );
-	WP_CLI::add_command( 'wpss scale', ScaleCommand::class, array( 'shortdesc' => 'Seed, benchmark and teardown a production-shape scale dataset.' ) );
-	WP_CLI::add_command( 'wpss rest:contract', RestContractCommand::class, array( 'shortdesc' => 'Assert the REST 401/403/404 contract the client depends on.' ) );
-	WP_CLI::add_command( 'wpss api:shapes', array( ApiShapeCommand::class, 'shapes' ), array( 'shortdesc' => 'Audit every GET payload for ISO dates and the shared actor shape.' ) );
+
+	// Developer tools: in the repo, left out of the release zip (.distignore and
+	// Gruntfile copy:dist), so they register only where their file exists.
+	if ( class_exists( TestFlowCommand::class ) ) {
+		WP_CLI::add_command( 'wpss test:flow', TestFlowCommand::class, array( 'shortdesc' => 'Run end-to-end data flow tests.' ) );
+	}
+	if ( class_exists( ScaleCommand::class ) ) {
+		WP_CLI::add_command( 'wpss scale', ScaleCommand::class, array( 'shortdesc' => 'Seed, benchmark and teardown a production-shape scale dataset.' ) );
+	}
+	if ( class_exists( RestContractCommand::class ) ) {
+		WP_CLI::add_command( 'wpss rest:contract', RestContractCommand::class, array( 'shortdesc' => 'Assert the REST 401/403/404 contract the client depends on.' ) );
+	}
+	if ( class_exists( ApiShapeCommand::class ) ) {
+		WP_CLI::add_command( 'wpss api:shapes', array( ApiShapeCommand::class, 'shapes' ), array( 'shortdesc' => 'Audit every GET payload for ISO dates and the shared actor shape.' ) );
+	}
+
 	WP_CLI::add_command( 'wpss utc-migrate', UtcMigrateCommand::class, array( 'shortdesc' => 'Convert pre-1.8.0 datetimes to UTC (--dry-run to preview).' ) );
 	WP_CLI::add_command( 'wpss refunds', RefundsCommand::class, array( 'shortdesc' => 'List and assign refunds that wait for a gig.' ) );
 	WP_CLI::add_command( 'wpss repair:stripe-tax', array( RepairCommand::class, 'stripe_tax' ), array( 'shortdesc' => 'Correct Stripe orders whose tax was counted twice (dry run unless --apply).' ) );

@@ -479,7 +479,7 @@ class ServiceOrder {
 	/**
 	 * Update order fields.
 	 *
-	 * When updating status, validates the transition is allowed.
+	 * A status change goes through OrderService::update_status().
 	 *
 	 * @param array $data Fields to update.
 	 * @return bool
@@ -488,11 +488,16 @@ class ServiceOrder {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		// If updating status, validate the transition.
-		if ( isset( $data['status'] ) && $data['status'] !== $this->status ) {
-			$order_service = new \WPSellServices\Services\OrderService();
-			if ( ! $order_service->can_transition( $this->status, $data['status'] ) ) {
+		// Status has one writer: OrderService::update_status() guards the
+		// transition, stamps the dates and fires the status hooks.
+		if ( isset( $data['status'] ) ) {
+			if ( $data['status'] !== $this->status && ! ( new \WPSellServices\Services\OrderService() )->update_status( $this->id, (string) $data['status'] ) ) {
 				return false;
+			}
+			$this->status = (string) $data['status'];
+			unset( $data['status'] );
+			if ( ! $data ) {
+				return true;
 			}
 		}
 
@@ -500,46 +505,8 @@ class ServiceOrder {
 		$data['updated_at'] = current_time( 'mysql', true );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update( $table, $data, array( 'id' => $this->id ) );
-
-		if ( false === $result ) {
+		if ( false === $wpdb->update( $table, $data, array( 'id' => $this->id ) ) ) {
 			return false;
-		}
-
-		// Fire status change hook and record history if status changed.
-		if ( isset( $data['status'] ) && $data['status'] !== $this->status ) {
-			$old_status   = $this->status;
-			$this->status = $data['status'];
-
-			// Record status change in meta for timeline.
-			$meta    = $this->meta;
-			$history = $meta['status_history'] ?? array();
-
-			$history[] = array(
-				'status'    => $data['status'],
-				'timestamp' => current_time( 'mysql', true ),
-				'note'      => '',
-			);
-
-			$meta['status_history'] = $history;
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$table,
-				array( 'meta' => wp_json_encode( $meta ) ),
-				array( 'id' => $this->id )
-			);
-			$this->meta = $meta;
-
-			/**
-			 * Fires when order status changes.
-			 *
-			 * @param int    $order_id   Order ID.
-			 * @param string $new_status New status.
-			 * @param string $old_status Old status.
-			 */
-			do_action( 'wpss_order_status_changed', $this->id, $data['status'], $old_status );
-			do_action( "wpss_order_status_{$data['status']}", $this->id, $old_status );
 		}
 
 		// Update instance properties.
@@ -623,26 +590,8 @@ class ServiceOrder {
 	 * @return array<string, string>
 	 */
 	public static function get_statuses(): array {
-		return array(
-			self::STATUS_PENDING_PAYMENT        => __( 'Pending Payment', 'wp-sell-services' ),
-			self::STATUS_PENDING                => __( 'Pending', 'wp-sell-services' ),
-			self::STATUS_ACCEPTED               => __( 'Accepted', 'wp-sell-services' ),
-			self::STATUS_REJECTED               => __( 'Rejected', 'wp-sell-services' ),
-			self::STATUS_PENDING_REQUIREMENTS   => __( 'Waiting for Requirements', 'wp-sell-services' ),
-			self::STATUS_REQUIREMENTS_SUBMITTED => __( 'Requirements submitted', 'wp-sell-services' ),
-			self::STATUS_IN_PROGRESS            => __( 'In Progress', 'wp-sell-services' ),
-			self::STATUS_DELIVERED              => __( 'Delivered', 'wp-sell-services' ),
-			self::STATUS_PENDING_APPROVAL       => __( 'Pending Approval', 'wp-sell-services' ),
-			self::STATUS_REVISION_REQUESTED     => __( 'Revision requested', 'wp-sell-services' ),
-			self::STATUS_COMPLETED              => __( 'Completed', 'wp-sell-services' ),
-			self::STATUS_CANCELLED              => __( 'Cancelled', 'wp-sell-services' ),
-			self::STATUS_DISPUTED               => __( 'Disputed', 'wp-sell-services' ),
-			self::STATUS_ON_HOLD                => __( 'On Hold', 'wp-sell-services' ),
-			self::STATUS_LATE                   => __( 'Late', 'wp-sell-services' ),
-			self::STATUS_CANCELLATION_REQUESTED => __( 'Cancellation requested', 'wp-sell-services' ),
-			self::STATUS_REFUNDED               => __( 'Refunded', 'wp-sell-services' ),
-			self::STATUS_PARTIALLY_REFUNDED     => __( 'Partially Refunded', 'wp-sell-services' ),
-		);
+		// One list, filterable through wpss_order_statuses, for admin, email and dashboard alike.
+		return wpss_get_order_statuses();
 	}
 
 	/**
@@ -1251,11 +1200,18 @@ class ServiceOrder {
 	}
 
 	/**
-	 * Get order status history (stored in meta JSON).
+	 * Whether the pending cancellation request came from the seller.
 	 *
-	 * @return array<array{status: string, timestamp: string, note: string}>
+	 * The other party answers: the buyer for a seller's request, the vendor for
+	 * a buyer's.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @return bool
 	 */
-	public function get_status_history(): array {
-		return $this->meta['status_history'] ?? array();
+	public function is_cancellation_requested_by_vendor(): bool {
+		$request = $this->get_cancellation_request();
+
+		return null !== $request && (int) ( $request['requested_by'] ?? 0 ) === (int) $this->vendor_id;
 	}
 }

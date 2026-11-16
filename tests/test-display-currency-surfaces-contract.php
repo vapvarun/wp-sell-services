@@ -70,7 +70,8 @@ $surfaces = array(
 
 foreach ( $surfaces as $label => $file ) {
 	$src = (string) file_get_contents( WPSS_PLUGIN_DIR . $file );
-	wpss_t( false !== strpos( $src, 'wpss_catalog_price_html(' ), "{$label} emits a convertible price" );
+	// wpss_request_budget_html() wraps wpss_catalog_price_html(), so either call emits data-wbcom-amount.
+	wpss_t( false !== strpos( $src, 'wpss_catalog_price_html(' ) || false !== strpos( $src, 'wpss_request_budget_html(' ), "{$label} emits a convertible price" );
 }
 
 // 4. Surfaces that must NOT convert. These show money that has already moved,

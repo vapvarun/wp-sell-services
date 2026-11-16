@@ -8,6 +8,8 @@ Sell services that bill on a schedule: weekly, monthly, quarterly, or yearly. Th
 >
 > The code ships (including its REST routes and Stripe webhook handling) so the feature can be finished and turned on without a migration, but it is **not supported for production use** and we do not recommend selling recurring services on 1.7.0.
 >
+> Since 1.9.3 the recurring REST routes answer `403` with the code `wpss_recurring_unavailable` while the feature is off. Cancelling (`POST /wpss/v1/recurring-services/{id}/cancel`) stays open, so a buyer who already has a subscription can always stop it.
+>
 > Developers can opt in on a staging site:
 >
 > ```php

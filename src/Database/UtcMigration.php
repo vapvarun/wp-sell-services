@@ -156,7 +156,7 @@ class UtcMigration {
 		} while ( 500 === $batch );
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		wp_cache_flush_group( 'post_meta' );
+		self::flush_meta_cache( 'post_meta' );
 		update_option( 'wpss_request_deadlines_utc', gmdate( 'Y-m-d H:i:s' ), false );
 
 		return $changed;
@@ -804,8 +804,20 @@ class UtcMigration {
 		}
 
 		if ( ! $dry_run ) {
-			wp_cache_flush_group( 'user_meta' );
-			wp_cache_flush_group( 'post_meta' );
+			self::flush_meta_cache( 'user_meta' );
+			self::flush_meta_cache( 'post_meta' );
+		}
+	}
+
+	/**
+	 * Flush one cache group, only where the object cache can (core warns otherwise).
+	 *
+	 * @param string $group Cache group.
+	 * @return void
+	 */
+	private static function flush_meta_cache( string $group ): void {
+		if ( wp_cache_supports( 'flush_group' ) ) {
+			wp_cache_flush_group( $group );
 		}
 	}
 }

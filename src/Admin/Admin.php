@@ -441,6 +441,7 @@ class Admin {
 		add_action( 'admin_notices', array( $this, 'deferred_notices_summary' ), 99 );
 		add_action( 'wp_ajax_wpss_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
+		add_action( 'admin_post_wpss_export_orders', array( $this, 'export_orders_csv' ) );
 		add_action( 'admin_post_wpss_mark_refund_sent', array( $this, 'handle_mark_refund_sent' ) );
 		add_action( 'admin_post_wpss_retry_refund', array( $this, 'handle_retry_refund' ) );
 		add_action( 'admin_post_wpss_assign_pending_refund', array( $this, 'handle_assign_pending_refund' ) );
@@ -469,7 +470,7 @@ class Admin {
 	 * @return void
 	 */
 	public function order_files_public_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_order_files_are_public' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
@@ -681,6 +682,8 @@ class Admin {
 
 		if ( $result['ok'] ) {
 			$args['updated'] = '1';
+		} else {
+			$args += $this->signed_error_args( (string) ( $result['message'] ?? '' ) );
 		}
 
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
@@ -778,6 +781,8 @@ class Admin {
 
 		if ( $result['ok'] ) {
 			$args['updated'] = '1';
+		} else {
+			$args += $this->signed_error_args( (string) ( $result['message'] ?? '' ) );
 		}
 
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
@@ -787,7 +792,7 @@ class Admin {
 	/**
 	 * Tell the owner their marketplace is taking money with no Terms page.
 	 *
-	 * Gated on wpss_has_live_gateway() rather than on the plugin being active,
+	 * Gated on wpss_terms_notice_due() (a keyed gateway or a first order) rather than on the plugin being active,
 	 * because that is the point at which this stops being a setup step and
 	 * starts being a live risk: buyers are paying and there is nothing telling
 	 * them what they agreed to. A site still being built is left alone.
@@ -802,7 +807,7 @@ class Admin {
 	 * @return void
 	 */
 	public function missing_terms_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_has_live_gateway' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
@@ -820,7 +825,7 @@ class Admin {
 			return;
 		}
 
-		if ( ! wpss_has_live_gateway() ) {
+		if ( ! wpss_terms_notice_due() ) {
 			return;
 		}
 
@@ -838,7 +843,7 @@ class Admin {
 			'<div class="notice notice-warning is-dismissible wpss-dismissible-notice" data-notice="terms" data-signature="%s" data-nonce="%s"><p><strong>%s</strong> %s</p><p><a class="button" href="%s">%s</a></p></div>',
 			esc_attr( $signature ),
 			esc_attr( wp_create_nonce( 'wpss_dismiss_notice' ) ),
-			esc_html__( 'Buyers are paying on this site, but no Terms page is mapped.', 'wp-sell-services' ),
+			esc_html__( 'Checkout can take payments on this site, but no Terms page is mapped.', 'wp-sell-services' ),
 			esc_html__( 'Checkout has nothing to link to, so buyers agree to nothing in writing - which is the gap owners usually find out about during a dispute. Map a page you have written; we never publish one for you.', 'wp-sell-services' ),
 			esc_url( wpss_get_settings_url( 'pages' ) ),
 			esc_html__( 'Map a Terms page', 'wp-sell-services' )
@@ -1080,7 +1085,7 @@ class Admin {
 		// Rail: the setting names a store plugin that is not running.
 		$manager    = wpss()->get_integration_manager();
 		$active     = $manager ? $manager->get_active_adapter() : null;
-		$configured = (string) wpss_get_option( 'wpss_general', 'ecommerce_platform', 'auto' );
+		$configured = (string) wpss_get_option( 'general', 'ecommerce_platform', 'auto' );
 
 		if ( $active && 'auto' !== $configured && $configured !== $active->get_id() ) {
 			$wanted           = $manager->get_adapter( $configured );
@@ -1604,8 +1609,8 @@ class Admin {
 			array(
 				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
 				'nonce'            => wp_create_nonce( 'wpss_admin_nonce' ),
-				'currencyFormat'   => wpss_get_currency_symbol() . '%s',
-				'currencyDecimals' => wpss_get_currency_decimals(),
+				'currencyFormat'   => wpss_get_currency_format(),
+				'currencyDecimals' => wpss_get_decimal_places(),
 				'i18n'             => array(
 					'selectImage'  => __( 'Select Image', 'wp-sell-services' ),
 					'selectImages' => __( 'Select Images', 'wp-sell-services' ),
@@ -1976,7 +1981,7 @@ class Admin {
 				'icon'  => 'user-check',
 			),
 			array(
-				'count' => wpss_count_pending_services(),
+				'count' => \WPSellServices\Services\ModerationService::is_enabled() ? wpss_count_pending_services() : 0, // With moderation off there is no queue to act on.
 				'label' => __( 'Services awaiting moderation', 'wp-sell-services' ),
 				'url'   => admin_url( 'admin.php?page=wpss-moderation&status=pending' ),
 				'icon'  => 'badge-check',
@@ -2177,10 +2182,20 @@ class Admin {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-create-order' ) ); ?>" class="page-title-action">
 					<?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?>
 				</a>
+				<?php
+				// Export the CURRENT filter, so the file is what the owner is looking at.
+				$export_args = array_intersect_key( wp_unslash( $_GET ), array_flip( array( 'group', 'status', 'm', 'suborder_type', 's', 'vendor_id', 'customer_id' ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only filters, sanitized in the handler.
+				$export_url  = wp_nonce_url( add_query_arg( array_merge( array( 'action' => 'wpss_export_orders' ), $export_args ), admin_url( 'admin-post.php' ) ), 'wpss_export_orders' );
+				?>
+				<a href="<?php echo esc_url( $export_url ); ?>" class="page-title-action"><?php esc_html_e( 'Export CSV', 'wp-sell-services' ); ?></a>
 			<?php endif; ?>
 			<hr class="wp-header-end">
 
-			<form method="get">
+			<form method="get" class="wpss-orders-bulk"
+				data-wpss-confirm-mark_completed="<?php /* translators: %d: number of orders. */ echo esc_attr__( 'Mark %d selected orders as Completed? Each vendor is credited for their order.', 'wp-sell-services' ); ?>"
+				data-wpss-confirm-mark_completed-one="<?php echo esc_attr__( 'Mark the selected order as Completed? The vendor is credited for it.', 'wp-sell-services' ); ?>"
+				data-wpss-confirm-mark_cancelled="<?php /* translators: %d: number of orders. */ echo esc_attr__( 'Cancel %d selected orders? Buyers are refunded through the gateway and vendor earnings are taken back.', 'wp-sell-services' ); ?>"
+				data-wpss-confirm-mark_cancelled-one="<?php echo esc_attr__( 'Cancel the selected order? The buyer is refunded through the gateway and vendor earnings are taken back.', 'wp-sell-services' ); ?>">
 				<input type="hidden" name="page" value="wpss-orders">
 				<div class="wpss-list-card">
 					<div class="wpss-list-card__filters">
@@ -2202,6 +2217,97 @@ class Admin {
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Stream the filtered Orders list as CSV.
+	 *
+	 * Same filter SQL as the list (OrdersListTable::get_filter_sql), keyset paged
+	 * on id so a 50,000-order store streams in constant memory. Admin-only; it
+	 * never changes an order.
+	 *
+	 * @return void
+	 */
+	public function export_orders_csv(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), 403 );
+		}
+
+		check_admin_referer( 'wpss_export_orders' );
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		[ $where, $params ] = ( new OrdersListTable() )->get_filter_sql();
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=wpss-orders-' . gmdate( 'Ymd-His' ) . '.csv' );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Streaming CSV to the response body.
+		$out = fopen( 'php://output', 'w' );
+
+		wpss_fputcsv( $out, array( 'order_id', 'order_number', 'status', 'payment_status', 'payment_method', 'buyer_id', 'buyer_email', 'vendor_id', 'vendor_name', 'service_id', 'subtotal', 'total', 'platform_fee', 'vendor_earnings', 'refunded_amount', 'currency', 'platform', 'created_at', 'completed_at' ) );
+
+		$batch_size = 500;
+		$last_id    = 0;
+
+		do {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM {$table} WHERE {$where} AND id > %d ORDER BY id ASC LIMIT %d",
+					array_merge( $params, array( $last_id, $batch_size ) )
+				)
+			);
+
+			// One user lookup per batch, not per row.
+			$user_ids = array_unique( array_merge( wp_list_pluck( $rows, 'customer_id' ), wp_list_pluck( $rows, 'vendor_id' ) ) );
+			$users    = array();
+			foreach ( $user_ids ? get_users(
+				array(
+					'include' => array_map( 'intval', $user_ids ),
+					'fields'  => array( 'ID', 'user_email', 'display_name' ),
+				)
+			) : array() as $u ) {
+				$users[ (int) $u->ID ] = $u;
+			}
+
+			foreach ( $rows as $row ) {
+				$last_id = (int) $row->id;
+				// The row's own currency precision, so a three-decimal or zero-decimal store exports what was charged.
+				$dec = wpss_get_currency_decimals( (string) $row->currency );
+				wpss_fputcsv(
+					$out,
+					array(
+						(int) $row->id,
+						(string) $row->order_number,
+						(string) $row->status,
+						(string) $row->payment_status,
+						(string) $row->payment_method,
+						(int) $row->customer_id,
+						(string) ( $users[ (int) $row->customer_id ]->user_email ?? '' ),
+						(int) $row->vendor_id,
+						(string) ( $users[ (int) $row->vendor_id ]->display_name ?? '' ),
+						(int) $row->service_id,
+						number_format( (float) $row->subtotal, $dec, '.', '' ),
+						number_format( (float) $row->total, $dec, '.', '' ),
+						number_format( (float) $row->platform_fee, $dec, '.', '' ),
+						number_format( (float) $row->vendor_earnings, $dec, '.', '' ),
+						number_format( (float) $row->refunded_amount, $dec, '.', '' ),
+						(string) $row->currency,
+						(string) $row->platform,
+						(string) $row->created_at,
+						(string) ( $row->completed_at ?? '' ),
+					)
+				);
+			}
+			$row_count = count( $rows );
+		} while ( $row_count === $batch_size );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		fclose( $out );
+		exit;
 	}
 
 	/**
@@ -2239,27 +2345,60 @@ class Admin {
 
 		$new_status    = $status_map[ $action ];
 		$updated       = 0;
+		$failed        = 0;
 		$order_service = new OrderService();
 
 		foreach ( $order_ids as $id ) {
-			$result = $order_service->update_status( (int) $id, $new_status );
+			$order = $order_service->get( (int) $id );
 
-			if ( $result ) {
+			// Re-running or reloading the URL must not count an order already in the target status as updated.
+			if ( ! $order || $new_status === $order->status ) {
+				continue;
+			}
+
+			// A bulk run acts on orders nobody looked at one by one, so it follows the natural workflow only. The admin override stays on the single order screen, where the admin sees the order first.
+			// A disputed order ends through the dispute resolution, which sizes refunds and payouts; a bulk status flip would skip it.
+			if ( 'disputed' !== $order->status && $order_service->can_transition_naturally( $order->status, $new_status ) && $order_service->update_status( (int) $id, $new_status ) ) {
 				++$updated;
+			} else {
+				++$failed;
 			}
 		}
 
-		if ( $updated > 0 ) {
-			add_action(
-				'admin_notices',
-				function () use ( $updated ) {
-					printf(
-						'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
-						/* translators: %d: number of orders updated */
-						esc_html( sprintf( _n( '%d order updated.', '%d orders updated.', $updated, 'wp-sell-services' ), $updated ) )
-					);
-				}
-			);
+		$this->print_bulk_notice(
+			sprintf(
+				/* translators: %d: number of orders updated */
+				_n( '%d order updated.', '%d orders updated.', $updated, 'wp-sell-services' ),
+				$updated
+			),
+			sprintf(
+				/* translators: %d: number of orders that could not be moved to the chosen status */
+				_n( '%d order could not be moved to that status from its current one.', '%d orders could not be moved to that status from their current one.', $failed, 'wp-sell-services' ),
+				$failed
+			),
+			$updated,
+			$failed
+		);
+	}
+
+	/**
+	 * Print a bulk-action result right away.
+	 *
+	 * The list page callback runs after core has already printed admin_notices,
+	 * so a hooked closure would never show.
+	 *
+	 * @param string $ok_text     Success message.
+	 * @param string $failed_text Failure message.
+	 * @param int    $ok          Success count.
+	 * @param int    $failed      Failure count.
+	 * @return void
+	 */
+	private function print_bulk_notice( string $ok_text, string $failed_text, int $ok, int $failed ): void {
+		if ( $ok > 0 ) {
+			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $ok_text ) );
+		}
+		if ( $failed > 0 ) {
+			printf( '<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html( $failed_text ) );
 		}
 	}
 
@@ -2300,6 +2439,7 @@ class Admin {
 		$new_status      = $status_map[ $action ];
 		$dispute_service = new DisputeService();
 		$updated         = 0;
+		$failed          = 0;
 
 		foreach ( $dispute_ids as $dispute_id ) {
 			// Closing restores the order and escalating notifies everyone, so both
@@ -2315,21 +2455,50 @@ class Admin {
 
 			if ( $ok ) {
 				++$updated;
+			} else {
+				++$failed;
 			}
 		}
 
-		if ( $updated > 0 ) {
-			add_action(
-				'admin_notices',
-				function () use ( $updated ) {
-					printf(
-						'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
-						/* translators: %d: number of disputes updated */
-						esc_html( sprintf( _n( '%d dispute updated.', '%d disputes updated.', $updated, 'wp-sell-services' ), $updated ) )
-					);
-				}
-			);
-		}
+		$this->print_bulk_notice(
+			sprintf(
+				/* translators: %d: number of disputes updated */
+				_n( '%d dispute updated.', '%d disputes updated.', $updated, 'wp-sell-services' ),
+				$updated
+			),
+			sprintf(
+				/* translators: %d: number of disputes that could not be changed */
+				_n( '%d dispute could not be changed from its current status.', '%d disputes could not be changed from their current status.', $failed, 'wp-sell-services' ),
+				$failed
+			),
+			$updated,
+			$failed
+		);
+	}
+
+	/**
+	 * Query args that carry a refusal reason to the order page, signed for this user.
+	 *
+	 * @param string $message Reason text.
+	 * @return array<string, string>
+	 */
+	private function signed_error_args( string $message ): array {
+		$message = mb_substr( sanitize_text_field( $message ), 0, 300 );
+
+		return array(
+			'wpss_error' => rawurlencode( $message ),
+			'wpss_sig'   => $this->error_signature( $message ),
+		);
+	}
+
+	/**
+	 * Signature binding a refusal reason to the signed-in user.
+	 *
+	 * @param string $message Reason text.
+	 * @return string
+	 */
+	private function error_signature( string $message ): string {
+		return wp_hash( get_current_user_id() . '|' . $message, 'auth' );
 	}
 
 	/**
@@ -2342,6 +2511,18 @@ class Admin {
 	private function render_order_update_notice(): void {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$result = isset( $_GET['updated'] ) ? sanitize_key( wp_unslash( $_GET['updated'] ) ) : '';
+
+		// A refused refund or assignment says why, in the words the gateway or service gave.
+		// The text rides in the link, so it is signed: a hand-made link cannot put its own words in the notice.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$wpss_error = isset( $_GET['wpss_error'], $_GET['wpss_sig'] ) ? sanitize_text_field( wp_unslash( $_GET['wpss_error'] ) ) : '';
+		$wpss_sig   = isset( $_GET['wpss_sig'] ) ? (string) wp_unslash( $_GET['wpss_sig'] ) : '';
+		// phpcs:enable
+
+		if ( '' !== $wpss_error && hash_equals( $this->error_signature( $wpss_error ), $wpss_sig ) ) {
+			printf( '<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html( $wpss_error ) );
+			return;
+		}
 
 		$notices = array(
 			'1'         => array( 'notice-success', __( 'Order status updated', 'wp-sell-services' ) ),
@@ -2499,7 +2680,7 @@ class Admin {
 							(<?php echo esc_html( $wpss_order_dispute->dispute_number ); ?>)
 						<?php endif; ?>
 						<a href="<?php echo esc_url( $wpss_dispute_url ); ?>" class="button button-small" style="margin-inline-start: 8px;">
-							<?php esc_html_e( 'Open dispute', 'wp-sell-services' ); ?>
+							<?php echo $wpss_dispute_live ? esc_html__( 'Open dispute', 'wp-sell-services' ) : esc_html__( 'View Dispute', 'wp-sell-services' ); ?>
 						</a>
 					</p>
 					<?php if ( $wpss_dispute_live && 'completed' === $order->status ) : ?>
@@ -2713,11 +2894,10 @@ class Admin {
 							<?php if ( ! empty( $messages ) ) : ?>
 								<div class="wpss-order-messages" style="max-height: 400px; overflow-y: auto;">
 									<?php foreach ( $messages as $message ) : ?>
-										<?php $msg_user = ! empty( $message->sender_id ) ? get_userdata( (int) $message->sender_id ) : null; ?>
 										<div class="wpss-message" style="padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-left: 3px solid #0073aa;">
 											<div style="margin-bottom: 5px;">
 												<?php // No sender means the plugin wrote it (a status change, a note) - not an "Unknown" person. ?>
-												<strong><?php echo esc_html( $msg_user ? $msg_user->display_name : ( empty( $message->sender_id ) ? __( 'System', 'wp-sell-services' ) : __( 'Deleted user', 'wp-sell-services' ) ) ); ?></strong>
+												<strong><?php echo esc_html( empty( $message->sender_id ) ? __( 'System', 'wp-sell-services' ) : wpss_get_member_display_name( (int) $message->sender_id ) ); ?></strong>
 												<span style="color: #666; margin-left: 10px;">
 													<?php echo esc_html( wpss_datetime_label( $message->created_at ) ); ?>
 												</span>
@@ -2777,7 +2957,9 @@ class Admin {
 						<div class="postbox">
 							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Update Order', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
-								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<form method="post" class="wpss-order-status-form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+									data-wpss-confirm-completed="<?php echo esc_attr__( 'Mark this order as Completed? The vendor is credited for it.', 'wp-sell-services' ); ?>"
+									data-wpss-confirm-cancelled="<?php echo esc_attr__( 'Cancel this order? The buyer is refunded through the gateway (or it is listed for a manual refund) and vendor earnings are taken back.', 'wp-sell-services' ); ?>">
 									<?php wp_nonce_field( 'wpss_update_order', 'wpss_order_nonce' ); ?>
 									<input type="hidden" name="action" value="wpss_update_order">
 									<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
@@ -2799,7 +2981,7 @@ class Admin {
 										<li><?php esc_html_e( 'Any other status moves no money.', 'wp-sell-services' ); ?></li>
 									</ul>
 
-									<?php submit_button( __( 'Update Status', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+									<?php submit_button( __( 'Update Status', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-order-update-status' ) ); ?>
 								</form>
 							</div>
 						</div>
@@ -2854,7 +3036,7 @@ class Admin {
 										<label for="wpss-assign-refund-<?php echo esc_attr( (string) $order_id ); ?>"><strong><?php esc_html_e( 'Amount for this service', 'wp-sell-services' ); ?></strong></label><br>
 										<input type="number" id="wpss-assign-refund-<?php echo esc_attr( (string) $order_id ); ?>" name="amount" min="0" step="0.01" max="<?php echo esc_attr( (string) $wpss_unassigned['remaining'] ); ?>" value="<?php echo esc_attr( (string) $wpss_unassigned['remaining'] ); ?>" style="width: 140px;">
 									</p>
-									<?php submit_button( __( 'Assign to this service', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+									<?php submit_button( __( 'Assign to this service', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-order-assign-service' ) ); ?>
 								</form>
 							</div>
 						</div>
@@ -2913,11 +3095,11 @@ class Admin {
 									);
 									?>
 								</p>
-								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-wpss-order-confirm="<?php echo esc_attr__( 'Mark this refund as sent? This clears the pending refund and cannot be undone. Only do this after the money has gone back to the buyer.', 'wp-sell-services' ); ?>">
 									<input type="hidden" name="action" value="wpss_mark_refund_sent">
 									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
 									<?php wp_nonce_field( 'wpss_mark_refund_sent_' . $order_id, 'wpss_refund_sent_nonce' ); ?>
-									<?php submit_button( __( 'Mark refund sent', 'wp-sell-services' ), 'secondary', 'submit', false ); ?>
+									<?php submit_button( __( 'Mark refund sent', 'wp-sell-services' ), 'secondary', 'submit', false, array( 'id' => 'wpss-order-mark-refund-sent' ) ); ?>
 								</form>
 							</div>
 						</div>
@@ -2953,7 +3135,7 @@ class Admin {
 									<input type="hidden" name="action" value="wpss_retry_refund">
 									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
 									<?php wp_nonce_field( 'wpss_retry_refund_' . $order_id, 'wpss_retry_refund_nonce' ); ?>
-									<?php submit_button( __( 'Retry refund', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+									<?php submit_button( __( 'Retry refund', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-order-retry-refund' ) ); ?>
 								</form>
 							</div>
 						</div>
@@ -3174,7 +3356,7 @@ class Admin {
 	private function render_dispute_resolution_fields( object $dispute, ?object $order, array $resolutions, string $id ): void {
 		$selected = (string) ( $dispute->resolution ?? '' );
 		$total    = $order ? (float) $order->total : 0.0;
-		$decimals = function_exists( 'wpss_get_currency_decimals' ) ? wpss_get_currency_decimals( $order->currency ?? '' ) : 2;
+		$decimals = wpss_get_currency_decimals( $order->currency ?? '' );
 		$step     = $decimals > 0 ? '0.' . str_repeat( '0', $decimals - 1 ) . '1' : '1';
 		$existing = isset( $dispute->refund_amount ) ? (float) $dispute->refund_amount : 0.0;
 		$partial  = DisputeService::RESOLUTION_PARTIAL_REFUND;
@@ -3576,7 +3758,7 @@ class Admin {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		// One import at a time: a second click added 20 more services.
+		// One import at a time: a second click added a second set of services.
 		if ( wpss_has_demo_content() ) {
 			wp_send_json_error(
 				array(
@@ -3609,8 +3791,7 @@ class Admin {
 		$ref_templates = $ref_class->getProperty( 'service_templates' );
 		$templates     = $ref_templates->getValue( $commands );
 
-		$ref_create    = $ref_class->getMethod( 'create_service' );
-		$ref_variation = $ref_class->getMethod( 'apply_variation' );
+		$ref_create = $ref_class->getMethod( 'create_service' );
 
 		// Create categories first.
 		$categories = array_unique( array_column( $templates, 'category' ) );
@@ -3624,20 +3805,35 @@ class Admin {
 			}
 		}
 
-		// Create 20 services (cycling through templates).
-		$count          = 20;
-		$created        = 0;
-		$featured       = 0;
-		$template_count = count( $templates );
+		// Vendors first, so every service is filed under the seller of its category, never the admin.
+		$vendors = $this->create_demo_vendors();
+		$sellers = array(
+			'Graphics & Design'     => array( 'sarah_designer' ),
+			'Programming & Tech'    => array( 'mike_developer' ),
+			'Writing & Translation' => array( 'emma_writer' ),
+			'Digital Marketing'     => array( 'alex_marketer' ),
+			'Video & Animation'     => array( 'sarah_designer', 'mike_developer' ),
+			'Business'              => array( 'emma_writer', 'alex_marketer' ),
+		);
 
-		for ( $i = 0; $i < $count; $i++ ) {
-			$template  = $templates[ $i % $template_count ];
-			$variation = (int) floor( $i / $template_count );
+		// Each template once: reworded copies ("expertly ... that converts") read as filler.
+		$created  = 0;
+		$featured = 0;
+		$turns    = array();
 
-			$service_data = $ref_variation->invoke( $commands, $template, $variation );
+		foreach ( array_values( $templates ) as $i => $service_data ) {
+			$category = (string) $service_data['category'];
+			$logins   = $sellers[ $category ] ?? array( 'sarah_designer' );
+			$turn     = $turns[ $category ] ?? 0;
+
+			$turns[ $category ]     = $turn + 1;
+			$service_data['author'] = (int) ( $vendors[ $logins[ $turn % count( $logins ) ] ] ?? 0 );
+
+			// Spread over the past weeks, so the demo reads as an established marketplace.
+			$service_data['days_ago'] = 2 + ( ( $i * 5 ) % 41 );
 
 			// Mark some as featured.
-			if ( $featured < 5 && ( $i % 4 === 0 || ! empty( $template['featured'] ) ) ) {
+			if ( $featured < 5 && ( 0 === $i % 3 || ! empty( $service_data['featured'] ) ) ) {
 				$service_data['featured'] = true;
 				++$featured;
 			}
@@ -3650,9 +3846,6 @@ class Admin {
 			}
 		}
 
-		// Create demo vendor profiles.
-		$vendors_created = $this->create_demo_vendors();
-
 		wp_send_json_success(
 			array(
 				'message'    => sprintf(
@@ -3660,21 +3853,22 @@ class Admin {
 					__( 'Imported %1$d services, %2$d categories, and %3$d vendor profiles.', 'wp-sell-services' ),
 					$created,
 					count( $categories ),
-					$vendors_created
+					count( $vendors )
 				),
 				'services'   => $created,
 				'categories' => count( $categories ),
-				'vendors'    => $vendors_created,
+				'vendors'    => count( $vendors ),
+				'view_url'   => admin_url( 'edit.php?post_type=wpss_service' ),
 			)
 		);
 	}
 
 	/**
-	 * Create demo vendor profiles.
+	 * Create the demo vendors, or reuse the ones a partial delete left behind.
 	 *
-	 * @return int Number of vendors created.
+	 * @return array<string, int> User id per demo login.
 	 */
-	private function create_demo_vendors(): int {
+	private function create_demo_vendors(): array {
 		$vendors = array(
 			array(
 				'login'   => 'sarah_designer',
@@ -3710,77 +3904,56 @@ class Admin {
 			),
 		);
 
-		$created = 0;
+		$ids      = array();
+		$profiles = new \WPSellServices\Database\Repositories\VendorProfileRepository();
 
 		foreach ( $vendors as $vendor_data ) {
-			// Skip if user exists.
-			if ( username_exists( $vendor_data['login'] ) ) {
+			$user_id = username_exists( $vendor_data['login'] );
+
+			// A real member who happens to share a demo login is not ours to take over.
+			if ( $user_id && ! get_user_meta( (int) $user_id, '_wpss_demo_content', true ) ) {
 				continue;
 			}
 
-			$user_id = wp_insert_user(
-				array(
-					'user_login'   => $vendor_data['login'],
-					'user_email'   => $vendor_data['email'],
-					'user_pass'    => wp_generate_password(),
-					'display_name' => $vendor_data['name'],
-					'role'         => 'wpss_vendor',
-				)
-			);
-
-			if ( is_wp_error( $user_id ) ) {
-				continue;
-			}
-
-			// Mark as demo user.
-			update_user_meta( $user_id, '_wpss_demo_content', 1 );
-			update_user_meta( $user_id, '_wpss_is_vendor', true );
-
-			// Create vendor profile in DB.
-			global $wpdb;
-			$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$wpdb->insert(
-				$profiles_table,
-				array(
-					'user_id'      => $user_id,
-					'display_name' => $vendor_data['name'],
-					'tagline'      => $vendor_data['tagline'],
-					'bio'          => $vendor_data['bio'],
-					'status'       => 'active',
-					'country'      => $vendor_data['country'],
-					'is_available' => 1,
-					'created_at'   => current_time( 'mysql', true ),
-				),
-				array( '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
-			);
-
-			// Assign some services to this vendor.
-			$services = get_posts(
-				array(
-					'post_type'      => 'wpss_service',
-					'posts_per_page' => 3,
-					'orderby'        => 'rand',
-					'meta_key'       => '_wpss_demo_content',
-					'meta_value'     => '1',
-					'author'         => 0, // Only unassigned.
-					'fields'         => 'ids',
-				)
-			);
-
-			foreach ( $services as $service_id ) {
-				wp_update_post(
+			if ( ! $user_id ) {
+				$user_id = wp_insert_user(
 					array(
-						'ID'          => $service_id,
-						'post_author' => $user_id,
+						'user_login'   => $vendor_data['login'],
+						'user_email'   => $vendor_data['email'],
+						'user_pass'    => wp_generate_password(),
+						'display_name' => $vendor_data['name'],
+						'role'         => 'wpss_vendor',
+					)
+				);
+
+				if ( is_wp_error( $user_id ) ) {
+					continue;
+				}
+
+				// Mark as demo user.
+				update_user_meta( $user_id, '_wpss_demo_content', 1 );
+				update_user_meta( $user_id, '_wpss_is_vendor', true );
+			}
+
+			if ( ! $profiles->get_by_user( (int) $user_id ) ) {
+				$profiles->upsert(
+					(int) $user_id,
+					array(
+						'display_name' => $vendor_data['name'],
+						'tagline'      => $vendor_data['tagline'],
+						'bio'          => $vendor_data['bio'],
+						'status'       => 'active',
+						'country'      => $vendor_data['country'],
+						'is_available' => 1,
+						'created_at'   => current_time( 'mysql', true ),
 					)
 				);
 			}
 
-			++$created;
+			$ids[ $vendor_data['login'] ] = (int) $user_id;
 		}
 
-		return $created;
+		return $ids;
 	}
 
 	/**

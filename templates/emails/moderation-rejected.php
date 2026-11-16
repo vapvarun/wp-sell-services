@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.3
  *
  * @var string   $service_title     Service title.
  * @var string   $rejection_reason  Reason the service was rejected.
@@ -36,7 +36,7 @@ do_action( 'wpss_email_content_before', 'moderation_rejected', $service_title, $
 	printf(
 		/* translators: %s: recipient name */
 		esc_html__( 'Hi %s,', 'wp-sell-services' ),
-		esc_html( $recipient ? $recipient->display_name : __( 'there', 'wp-sell-services' ) )
+		esc_html( wpss_get_member_display_name( (int) ( $recipient->ID ?? 0 ), __( 'there', 'wp-sell-services' ) ) )
 	);
 	?>
 </p>

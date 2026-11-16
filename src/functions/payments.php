@@ -52,7 +52,7 @@ function wpss_get_active_adapter(): ?\WPSellServices\Integrations\Contracts\Ecom
  * @return bool True when new payments are taken through our own gateways.
  */
 function wpss_uses_standalone_payments(): bool {
-	$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+	$adapter = wpss_get_ecommerce_adapter();
 
 	return ! $adapter || 'standalone' === $adapter->get_id();
 }
@@ -355,6 +355,31 @@ function wpss_has_live_gateway(): bool {
 }
 
 /**
+ * Whether the missing-Terms-page notice is due.
+ *
+ * The Offline gateway is on from activation, so "a live gateway exists" is true
+ * on a brand-new site with nothing to warn about. The notice waits until money
+ * can really move: a gateway with keys (Stripe, PayPal, ...) or a first order.
+ *
+ * @since 1.9.3
+ *
+ * @return bool
+ */
+function wpss_terms_notice_due(): bool {
+	if ( ! wpss_has_live_gateway() ) {
+		return false;
+	}
+
+	foreach ( wpss()->get_payment_gateways() as $id => $gateway ) {
+		if ( ! in_array( $id, array( 'test', 'offline' ), true ) && $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
+			return true;
+		}
+	}
+
+	return ( new \WPSellServices\Database\Repositories\OrderRepository() )->has_any();
+}
+
+/**
  * Get the active e-commerce adapter or a specific adapter by ID.
  *
  * @since 1.1.0
@@ -501,7 +526,7 @@ function wpss_record_pending_payment_method( int $order_id, string $method ): bo
  * @return bool
  */
 function wpss_is_payment_page(): bool {
-	$checkout_page_id = (int) ( get_option( 'wpss_pages', array() )['checkout'] ?? 0 );
+	$checkout_page_id = wpss_get_page_id( 'checkout' );
 
 	return ( $checkout_page_id && is_page( $checkout_page_id ) )
 		|| (bool) get_query_var( 'wpss_checkout' )

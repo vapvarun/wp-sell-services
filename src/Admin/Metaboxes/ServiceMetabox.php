@@ -543,7 +543,7 @@ class ServiceMetabox {
 				<div class="wpss-stat-item">
 					<i data-lucide="star" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 					<div class="wpss-stat-data">
-						<span class="wpss-stat-value"><?php echo esc_html( number_format( (float) $average_rating, 1 ) ); ?></span>
+						<span class="wpss-stat-value"><?php echo esc_html( number_format_i18n( (float) $average_rating, 1 ) ); ?></span>
 						<span class="wpss-stat-label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></span>
 					</div>
 				</div>

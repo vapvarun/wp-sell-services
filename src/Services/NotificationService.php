@@ -378,9 +378,9 @@ class NotificationService {
 		// notices in string functions, which would corrupt AJAX JSON responses).
 		$service_name = wpss_get_order_title( $order ) ?: __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
-		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
+		$buyer_name   = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'Buyer', 'wp-sell-services' ) );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
-		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
+		$vendor_name  = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Vendor', 'wp-sell-services' ) );
 		$order_number = (string) ( $order->order_number ?? '' );
 		$amount       = wpss_format_price( (float) ( $order->total ?? 0 ) );
 
@@ -467,6 +467,44 @@ class NotificationService {
 	}
 
 	/**
+	 * In-app notices after a buyer declines the seller's cancellation request.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return void
+	 */
+	public function notify_seller_cancellation_declined( int $order_id ): void {
+		$order = wpss_get_order( $order_id );
+		if ( ! $order ) {
+			return;
+		}
+
+		$data = array(
+			'order_id'     => $order_id,
+			'order_number' => (string) $order->order_number,
+		);
+
+		$this->create(
+			(int) $order->vendor_id,
+			'cancellation_declined',
+			__( 'Cancellation request declined', 'wp-sell-services' ),
+			NotificationMessage::make()
+				/* translators: %s: order number */
+				->line( __( 'The buyer declined your request to cancel Order #%s.', 'wp-sell-services' ), (string) $order->order_number )
+				->paragraph( __( 'The order continues, so please carry on with the work.', 'wp-sell-services' ) ),
+			$data
+		);
+		$this->create(
+			(int) $order->customer_id,
+			'cancellation_declined',
+			__( 'You declined the cancellation', 'wp-sell-services' ),
+			NotificationMessage::make()
+				/* translators: %s: order number */
+				->line( __( 'You declined the seller\'s request to cancel Order #%s. The order continues as before.', 'wp-sell-services' ), (string) $order->order_number ),
+			$data
+		);
+	}
+
+	/**
 	 * Notify order status change.
 	 *
 	 * @param int    $order_id   Order ID.
@@ -477,7 +515,7 @@ class NotificationService {
 	public function notify_order_status( int $order_id, string $new_status, string $old_status ): void {
 		// A dispute closed without a ruling puts the order back where it was; the dispute
 		// notice already tells both sides, so a status notice would repeat an old event.
-		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) ) {
+		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) || OrderService::is_declining_cancellation( $order_id ) ) {
 			return;
 		}
 
@@ -505,9 +543,9 @@ class NotificationService {
 		// Get service and user details (null-safe for PHP 8.1+ compat).
 		$service_name = wpss_get_order_title( $order ) ?: __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
-		$buyer_name   = $buyer ? $buyer->display_name : __( 'Buyer', 'wp-sell-services' );
+		$buyer_name   = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'Buyer', 'wp-sell-services' ) );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
-		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
+		$vendor_name  = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Vendor', 'wp-sell-services' ) );
 		$order_number = (string) ( $order->order_number ?? '' );
 
 		$statuses     = \WPSellServices\Models\ServiceOrder::get_statuses();
@@ -515,16 +553,48 @@ class NotificationService {
 
 		// Generate context-specific messages based on status.
 		switch ( $new_status ) {
+			// A paid order (any rail: payment moves pending_payment here) is the new-order
+			// event, the same as EmailService::handle_status_change(). It fell to default
+			// and sent a second, generic "Order status updated" mail beside the branded pair.
+			case 'pending_requirements':
+				// Only the payment moves it here as the new-order event; an admin moving a started order back is not one.
+				if ( in_array( $old_status, array( 'pending_payment', '' ), true ) ) {
+					$this->notify_order_created( $order_id );
+				}
+				break;
+
+			// The one writer of the overdue rows: the cron sweep and a manual change both land here.
+			case 'late':
+				$this->create(
+					(int) $order->vendor_id,
+					'order_late',
+					__( 'Order Overdue', 'wp-sell-services' ),
+					__( 'Your order is past the delivery deadline. Please deliver as soon as possible.', 'wp-sell-services' ),
+					array( 'order_id' => $order_id )
+				);
+				$this->create(
+					(int) $order->customer_id,
+					'order_late',
+					__( 'Order Delayed', 'wp-sell-services' ),
+					__( 'Your order is past the expected delivery date. We have notified the vendor.', 'wp-sell-services' ),
+					array( 'order_id' => $order_id )
+				);
+				break;
+
 			case 'in_progress':
-				// Notify vendor that requirements are received.
+				// No requirement questions, or the buyer skipped them: nothing was "submitted" to name.
+				$has_brief = wpss_order_needs_requirements( $order ) && ! get_post_meta( $order_id, '_wpss_requirements_skipped', true );
 				$this->create(
 					$order->vendor_id,
 					'order_started',
 					__( 'Order ready to start', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
-							/* translators: 1: buyer name, 2: order number */
-							__( '%1$s has submitted the requirements for Order #%2$s.', 'wp-sell-services' ),
+							$has_brief
+								/* translators: 1: buyer name, 2: order number */
+								? __( '%1$s has submitted the requirements for Order #%2$s.', 'wp-sell-services' )
+								/* translators: 1: buyer name, 2: order number */
+								: __( '%1$s has paid for Order #%2$s.', 'wp-sell-services' ),
 							$buyer_name,
 							$order_number
 						)
@@ -543,8 +613,11 @@ class NotificationService {
 					__( 'Your Order is In Progress', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
-							/* translators: 1: vendor name, 2: order number */
-							__( '%1$s has received your requirements and started working on Order #%2$s.', 'wp-sell-services' ),
+							$has_brief
+								/* translators: 1: vendor name, 2: order number */
+								? __( '%1$s has received your requirements and started working on Order #%2$s.', 'wp-sell-services' )
+								/* translators: 1: vendor name, 2: order number */
+								: __( '%1$s has started working on Order #%2$s.', 'wp-sell-services' ),
 							$vendor_name,
 							$order_number
 						)
@@ -582,6 +655,11 @@ class NotificationService {
 				break;
 
 			case 'completed':
+				// A ruling for the vendor completes the order, and "Dispute resolved" already tells both people; a second "Order completed" notice told each twice.
+				if ( DisputeWorkflowManager::is_resolving_order( (int) $order_id ) ) {
+					break;
+				}
+
 				// Notify both parties.
 				$this->create(
 					$order->customer_id,
@@ -651,6 +729,49 @@ class NotificationService {
 				$cancel_data  = \WPSellServices\Models\ServiceOrder::find( (int) $order->id )?->get_cancellation_request() ?? array();
 				$reason       = $cancel_data['reason'] ?? '';
 				$reason_label = wpss_get_cancellation_reason_label( (string) $reason );
+
+				// A seller's request goes to the buyer, who decides.
+				if ( \WPSellServices\Models\ServiceOrder::find( (int) $order->id )?->is_cancellation_requested_by_vendor() ) {
+					$this->create(
+						$order->customer_id,
+						'cancellation_requested',
+						__( 'The seller asked to cancel', 'wp-sell-services' ),
+						NotificationMessage::make()
+							->line(
+								/* translators: 1: vendor name, 2: order number */
+								__( '%1$s has asked to cancel Order #%2$s.', 'wp-sell-services' ),
+								$vendor_name,
+								$order_number
+							)
+							->block()
+							->field( __( 'Service:', 'wp-sell-services' ), $service_name )
+							->field( __( 'Reason:', 'wp-sell-services' ), $reason_label )
+							->paragraph( __( 'Accept to cancel and refund the order, or decline to continue the work.', 'wp-sell-services' ) ),
+						array(
+							'order_id'     => $order_id,
+							'order_number' => $order_number,
+						)
+					);
+					$this->create(
+						$order->vendor_id,
+						'cancellation_submitted',
+						__( 'Cancellation Request Submitted', 'wp-sell-services' ),
+						NotificationMessage::make()
+							->line(
+								/* translators: %s: order number */
+								__( 'Your cancellation request for Order #%s has been sent to the buyer.', 'wp-sell-services' ),
+								$order_number
+							)
+							->block()
+							->field( __( 'Service:', 'wp-sell-services' ), $service_name )
+							->paragraph( __( 'The order stays as it is until the buyer answers.', 'wp-sell-services' ) ),
+						array(
+							'order_id'     => $order_id,
+							'order_number' => $order_number,
+						)
+					);
+					break;
+				}
 
 				// Notify vendor.
 				$this->create(
@@ -743,22 +864,33 @@ class NotificationService {
 				break;
 
 			case 'refunded':
+			case 'partially_refunded':
+				// A dispute ruling sends "Dispute resolved" with the amount; a second
+				// refund notice for the same decision told each person twice.
+				if ( DisputeWorkflowManager::is_resolving_order( (int) $order_id ) ) {
+					break;
+				}
+
 				// The generic "status updated to Refunded" line said nothing about
-				// money. Both parties get the amount: what was refunded when the
+				// money. A partial refund (a dispute ruling, an admin refund) says the amount too. Both parties get the amount: what was refunded when the
 				// gateway has already answered, the order total otherwise.
 				$refunded = (float) ( $order->refunded_amount ?? 0 ) > 0
 					? (float) $order->refunded_amount
 					: (float) ( $order->total ?? 0 );
 				$amount   = wpss_format_price( $refunded, (string) ( $order->currency ?? '' ) );
+				$partial  = 'partially_refunded' === $new_status;
 
 				$this->create(
 					$order->customer_id,
 					self::TYPE_ORDER_STATUS,
-					__( 'Order refunded', 'wp-sell-services' ),
+					$partial ? __( 'Order partly refunded', 'wp-sell-services' ) : __( 'Order refunded', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
-							/* translators: 1: order number, 2: amount */
-							__( 'Order #%1$s has been refunded. %2$s is on its way back to your original payment method.', 'wp-sell-services' ),
+							$partial
+								/* translators: 1: order number, 2: amount */
+								? __( 'Order #%1$s has been partly refunded. %2$s is on its way back to your original payment method.', 'wp-sell-services' )
+								/* translators: 1: order number, 2: amount */
+								: __( 'Order #%1$s has been refunded. %2$s is on its way back to your original payment method.', 'wp-sell-services' ),
 							$order_number,
 							NotificationMessage::strong( $amount )
 						)
@@ -775,11 +907,14 @@ class NotificationService {
 				$this->create(
 					$order->vendor_id,
 					self::TYPE_ORDER_STATUS,
-					__( 'Order refunded', 'wp-sell-services' ),
+					$partial ? __( 'Order partly refunded', 'wp-sell-services' ) : __( 'Order refunded', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
-							/* translators: 1: order number, 2: buyer name, 3: amount */
-							__( 'Order #%1$s from %2$s has been refunded (%3$s).', 'wp-sell-services' ),
+							$partial
+								/* translators: 1: order number, 2: buyer name, 3: amount */
+								? __( 'Order #%1$s from %2$s has been partly refunded (%3$s).', 'wp-sell-services' )
+								/* translators: 1: order number, 2: buyer name, 3: amount */
+								: __( 'Order #%1$s from %2$s has been refunded (%3$s).', 'wp-sell-services' ),
 							$order_number,
 							$buyer_name,
 							NotificationMessage::strong( $amount )
@@ -836,7 +971,7 @@ class NotificationService {
 		global $wpdb;
 
 		$sender      = get_user_by( 'id', $sender_id );
-		$sender_name = $sender ? $sender->display_name : __( 'Someone', 'wp-sell-services' );
+		$sender_name = wpss_get_member_display_name( (int) ( $sender->ID ?? 0 ), __( 'Someone', 'wp-sell-services' ) );
 
 		// Get conversation details for context.
 		$conversation = $wpdb->get_row(
@@ -1032,11 +1167,9 @@ class NotificationService {
 		$currency  = $tip_order ? ( $tip_order->currency ?? wpss_get_currency() ) : wpss_get_currency();
 
 		$buyer      = get_user_by( 'id', $customer_id );
-		$buyer_name = $buyer ? $buyer->display_name : __( 'A buyer', 'wp-sell-services' );
+		$buyer_name = wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'A buyer', 'wp-sell-services' ) );
 
-		$net_display = function_exists( 'wpss_format_price' )
-			? wpss_format_price( $net_amount, $currency )
-			: number_format_i18n( $net_amount, 2 ) . ' ' . $currency;
+		$net_display = wpss_format_price( $net_amount, $currency );
 
 		$message = NotificationMessage::make()->line(
 			/* translators: 1: buyer name, 2: net amount credited */
@@ -1068,9 +1201,7 @@ class NotificationService {
 
 		// The buyer's receipt. Plain path: in-app row plus the generic mail.
 		$vendor       = get_user_by( 'id', $vendor_id );
-		$gross_amount = function_exists( 'wpss_format_price' )
-			? wpss_format_price( $gross, $currency )
-			: number_format_i18n( $gross, 2 ) . ' ' . $currency;
+		$gross_amount = wpss_format_price( $gross, $currency );
 		$this->create(
 			$customer_id,
 			'tip_receipt',
@@ -1079,7 +1210,7 @@ class NotificationService {
 				/* translators: 1: amount, 2: vendor name, 3: order number */
 				__( 'Your tip of %1$s to %2$s on Order #%3$s has been paid.', 'wp-sell-services' ),
 				NotificationMessage::strong( $gross_amount ),
-				NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'your vendor', 'wp-sell-services' ) ),
+				NotificationMessage::strong( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'your vendor', 'wp-sell-services' ) ) ),
 				$this->order_ref( $parent_order_id )
 			),
 			array(
@@ -1218,7 +1349,7 @@ class NotificationService {
 			case 'dispute_opened':
 				$title       = __( 'Dispute opened', 'wp-sell-services' );
 				$opener      = get_user_by( 'id', $data['opened_by'] ?? 0 );
-				$opener_name = $opener ? $opener->display_name : __( 'The other party', 'wp-sell-services' );
+				$opener_name = wpss_get_member_display_name( (int) ( $opener->ID ?? 0 ), __( 'The other party', 'wp-sell-services' ) );
 				$message->line(
 					/* translators: 1: opener name, 2: order ID */
 					__( '%1$s has opened a dispute for Order #%2$s.', 'wp-sell-services' ),
@@ -1257,7 +1388,7 @@ class NotificationService {
 			case 'dispute_response_received':
 				$title     = __( 'Dispute Response Received', 'wp-sell-services' );
 				$from_user = get_user_by( 'id', $data['from_user'] ?? 0 );
-				$from_name = $from_user ? $from_user->display_name : __( 'The other party', 'wp-sell-services' );
+				$from_name = wpss_get_member_display_name( (int) ( $from_user->ID ?? 0 ), __( 'The other party', 'wp-sell-services' ) );
 				$message->line(
 					/* translators: 1: responder name, 2: order ID */
 					__( '%1$s has responded to the dispute for Order #%2$s.', 'wp-sell-services' ),
@@ -1310,7 +1441,7 @@ class NotificationService {
 				$message->line(
 					/* translators: 1: net amount, 2: extra days, 3: parent order ID */
 					__( 'Buyer approved your quote. %1$s credited to your wallet, deadline on Order #%3$s extended by %2$d days.', 'wp-sell-services' ),
-					function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ) : (string) ( $data['net_amount'] ?? 0 ),
+					wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ),
 					(int) ( $data['extra_days'] ?? 0 ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
@@ -1341,7 +1472,7 @@ class NotificationService {
 				$message->line(
 					/* translators: 1: net amount, 2: parent order ID */
 					__( 'Buyer paid the phase on Order #%2$s, so you can start work. %1$s is credited to your wallet when the buyer approves it.', 'wp-sell-services' ),
-					function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ) : (string) ( $data['net_amount'] ?? 0 ),
+					wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
@@ -1412,13 +1543,13 @@ class NotificationService {
 				$message->line(
 					/* translators: 1: vendor name, 2: request title */
 					__( '%1$s sent a proposal on your request "%2$s".', 'wp-sell-services' ),
-					NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'A vendor', 'wp-sell-services' ) ),
+					NotificationMessage::strong( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'A vendor', 'wp-sell-services' ) ) ),
 					(string) ( $data['request_title'] ?? '' )
 				);
 				if ( ! empty( $data['bid_amount'] ) ) {
 					$message->block()->field(
 						__( 'Their price:', 'wp-sell-services' ),
-						function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) $data['bid_amount'] ) : (string) $data['bid_amount']
+						wpss_format_price( (float) $data['bid_amount'] )
 					);
 				}
 				$message->paragraph( __( 'Open the request to compare proposals and hire when you are ready.', 'wp-sell-services' ) );
@@ -1722,7 +1853,7 @@ class NotificationService {
 		$content = sprintf(
 			/* translators: 1: member display name, 2: what it is about */
 			$is_case ? __( '%1$s opened a dispute: %2$s', 'wp-sell-services' ) : __( '%1$s filed a report: %2$s', 'wp-sell-services' ),
-			$member ? $member->display_name : __( 'A member', 'wp-sell-services' ),
+			wpss_get_member_display_name( (int) ( $member->ID ?? 0 ), __( 'A member', 'wp-sell-services' ) ),
 			$detail
 		);
 
@@ -1801,10 +1932,11 @@ class NotificationService {
 	 *
 	 * Sends in-app notification and email to the vendor.
 	 *
-	 * @param int $user_id User ID.
+	 * @param int  $user_id     User ID.
+	 * @param bool $reactivated True when a suspended vendor is coming back, not a new approval.
 	 * @return void
 	 */
-	public function notify_vendor_approved( int $user_id ): void {
+	public function notify_vendor_approved( int $user_id, bool $reactivated = false ): void {
 		$user = get_user_by( 'id', $user_id );
 
 		if ( ! $user ) {
@@ -1817,10 +1949,13 @@ class NotificationService {
 		$this->create(
 			$user_id,
 			self::TYPE_VENDOR_APPROVED,
-			__( 'Vendor Application Approved', 'wp-sell-services' ),
+			$reactivated ? __( 'Vendor Account Reactivated', 'wp-sell-services' ) : __( 'Vendor Application Approved', 'wp-sell-services' ),
 			sprintf(
-				/* translators: %s: platform name */
-				__( 'Your vendor application on %s has been approved! You can now create services and start accepting orders.', 'wp-sell-services' ),
+				$reactivated
+					/* translators: %s: platform name */
+					? __( 'Your vendor account on %s is active again. You can create services and accept orders as before.', 'wp-sell-services' )
+					/* translators: %s: platform name */
+					: __( 'Your vendor application on %s has been approved! You can now create services and start accepting orders.', 'wp-sell-services' ),
 				$platform_name
 			),
 			array(
@@ -1833,15 +1968,19 @@ class NotificationService {
 		( new EmailService() )->send(
 			$user->user_email,
 			sprintf(
-				/* translators: %s: platform name */
-				__( 'Your Vendor Application Has Been Approved - %s', 'wp-sell-services' ),
+				$reactivated
+					/* translators: %s: platform name */
+					? __( 'Your Vendor Account Is Active Again - %s', 'wp-sell-services' )
+					/* translators: %s: platform name */
+					: __( 'Your Vendor Application Has Been Approved - %s', 'wp-sell-services' ),
 				$platform_name
 			),
 			EmailService::TYPE_VENDOR_APPROVED,
 			array(
 				'recipient'     => $user,
-				'email_heading' => __( 'Application approved', 'wp-sell-services' ),
+				'email_heading' => $reactivated ? __( 'Account reactivated', 'wp-sell-services' ) : __( 'Application approved', 'wp-sell-services' ),
 				'dashboard_url' => $dashboard_url,
+				'reactivated'   => $reactivated,
 			)
 		);
 	}
@@ -1872,7 +2011,7 @@ class NotificationService {
 				/* translators: %s: platform name */
 				__( 'Your vendor application on %s was not approved at this time.', 'wp-sell-services' ),
 				$platform_name
-			),
+			) . $this->reason_suffix( $reason ),
 			array( 'user_id' => $user_id )
 		);
 
@@ -1890,6 +2029,17 @@ class NotificationService {
 				'rejection_reason' => $reason,
 			)
 		);
+	}
+
+	/**
+	 * The admin's reason as a trailing sentence for an in-app message, or ''.
+	 *
+	 * @param string $reason Reason given by the admin.
+	 * @return string
+	 */
+	private function reason_suffix( string $reason ): string {
+		/* translators: %s: reason the admin gave */
+		return '' !== $reason ? ' ' . sprintf( __( 'Reason: %s', 'wp-sell-services' ), $reason ) : '';
 	}
 
 	/**
@@ -1921,7 +2071,7 @@ class NotificationService {
 				/* translators: %s: platform name */
 				__( 'Your vendor account on %s has been suspended. Your services are hidden and you cannot take new orders until it is reinstated.', 'wp-sell-services' ),
 				$platform_name
-			),
+			) . $this->reason_suffix( $reason ),
 			array( 'user_id' => $user_id )
 		);
 
@@ -2005,6 +2155,7 @@ class NotificationService {
 			// Cancellation types.
 			'cancellation_requested',
 			'cancellation_submitted',
+			'cancellation_declined',
 			'cancellation_auto_approved',
 			// Events added in 1.7.1.
 			'review_reply',
@@ -2055,6 +2206,7 @@ class NotificationService {
 			'order_cancelled'             => 'cancellation',
 			'cancellation_requested'      => 'cancellation',
 			'cancellation_submitted'      => 'cancellation',
+			'cancellation_declined'       => 'cancellation',
 			'cancellation_auto_approved'  => 'cancellation',
 			self::TYPE_DISPUTE_OPENED     => 'disputes',
 			self::TYPE_DISPUTE_RESOLVED   => 'disputes',
@@ -2083,7 +2235,7 @@ class NotificationService {
 	 * @return string Phase name with amount, or a generic fallback.
 	 */
 	private function milestone_label( $milestone_id ): string {
-		$milestone = ( (int) $milestone_id > 0 && function_exists( 'wpss_get_order' ) )
+		$milestone = ( (int) $milestone_id > 0 )
 			? wpss_get_order( (int) $milestone_id )
 			: null;
 
@@ -2094,9 +2246,7 @@ class NotificationService {
 		// ServiceOrder decodes meta on load, so it is already an array here.
 		$meta  = (array) $milestone->meta;
 		$name  = (string) ( $meta['title'] ?? '' );
-		$price = function_exists( 'wpss_format_price' )
-			? wpss_format_price( (float) $milestone->total, (string) $milestone->currency )
-			: (string) $milestone->total;
+		$price = wpss_format_price( (float) $milestone->total, (string) $milestone->currency );
 
 		if ( '' === $name ) {
 			/* translators: %s: formatted amount */
@@ -2131,7 +2281,7 @@ class NotificationService {
 			return '';
 		}
 
-		$order = function_exists( 'wpss_get_order' ) ? wpss_get_order( $order_id ) : null;
+		$order = wpss_get_order( $order_id );
 
 		return ( $order && ! empty( $order->order_number ) ) ? (string) $order->order_number : (string) $order_id;
 	}
@@ -2294,6 +2444,7 @@ class NotificationService {
 			'dispute_opened',
 			'cancellation_requested',
 			'cancellation_submitted',
+			'cancellation_declined',
 			// Specific event types (EmailService hooks dedicated actions).
 			'submit_requirements',
 			self::TYPE_DELIVERY_SUBMITTED,

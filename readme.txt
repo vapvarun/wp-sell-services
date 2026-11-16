@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.9.2
+Stable tag: 1.9.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -264,6 +264,119 @@ Three auto-calculated levels plus one admin-granted: New Vendor (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.9.3 - November 2026 =
+
+Clearer emails, honest publish errors, and a demo that looks like a marketplace.
+
+* New      - Export CSV on the Orders screen downloads the orders matching the current filters, streamed in batches so large stores do not run out of memory.
+* New      - A Buyer Cancellation Window (Hours) setting replaces the fixed 24 hours, and the order page says why Request Cancellation is gone once the window or a delivery has closed it. 0 turns the request off.
+* New      - A Suspended Vendors and Earnings setting lets suspended vendors see their balance, request withdrawals and update payout details; off by default, and the Suspend dialog says which applies.
+* New      - A Vendor Application Questions setting asks applicants what they sell and for a short description on the Start selling panel; the answers fill the vendor profile you review before approving. Off by default.
+* New      - A Verify Email Before Selling setting makes members who sign up through the plugin confirm their email with a one-time link before they can become vendors; off by default, and earlier members are not affected.
+* New      - A Sign-up Notice setting emails the site admin when someone signs up through the plugin, using WordPress's own New User Registration email; off by default.
+* New      - A seller who cannot finish paid work can ask the buyer to cancel from the order page; the buyer accepts (cancelled and refunded) or declines (work continues), both get an email and a notification, and there is no auto-cancel timer on a seller's request.
+* Improve  - Rejecting or suspending a vendor asks for an optional reason, shown in their email and notification and kept in the audit log.
+* Improve  - An administrator becomes a vendor the first time they create a service or click Start Selling, so the site owner is no longer listed and counted as a vendor by default. Existing vendor profiles are unchanged.
+* Improve  - Import Demo Content creates 14 distinct services, each sold by a demo vendor for its category, never by the administrator.
+* Improve  - Demo service images can be matched to their category by adding category-named files to the demo media folder.
+* Improve  - GET /buyer-requests/{id}/proposals accepts page and per_page and returns X-WP-Total, and still returns up to 50 when not paged.
+* Improve  - A new wpss_email_from_address filter sets a plugin-specific sender address, and WooCommerce's sender is used only when WooCommerce is the active store rail, not whenever it is installed.
+* Improve  - The sign-in lockout is removed: wrong passwords no longer lock an account on wp-login.php or in the app, so a security plugin or your host owns that. The app login keeps its per-address rate limit, and the wpss_web_login_lock filter is now a deprecated no-op.
+* Improve  - When WordPress sign-up is closed, the Log In and Create account pages tell the buyer to contact the site owner and link to Sign in, and the new wpss_signup_closed_message filter lets the store add its own contact details.
+* Improve  - On the front-end dashboard an administrator adds their first service in one click, with no confirmation dialog.
+* Improve  - Declining a seller's cancellation request asks a plain confirmation instead of the dispute wording.
+* Improve  - With "suspended vendors keep money access" on, a suspended vendor still sees Earnings & Payouts in the dashboard menu.
+* Improve  - Approve, Reactivate, Reject and Suspend on the Vendors screen each say what will happen in their confirmation.
+* Improve  - A dashboard order link that is missing or belongs to someone else shows a short notice above the list instead of silently ignoring it.
+* Improve  - Setting an order to Completed or Cancelled on its page asks first and says what happens to the money.
+* Improve  - A request's budget reads one way everywhere: a range, a fixed price, or Up to a maximum, and a seller who bids outside it sees a note before sending.
+* Improve  - The request deadline is labelled Open until, with a helper that says sellers can send proposals until that date.
+* Improve  - A vendor who is reactivated after a suspension is told so, instead of getting the new-vendor welcome.
+* Improve  - Demo import spreads the services over the past weeks, and the setup card links to the imported services.
+* Improve  - Settings > Payouts warns when the saved wallet provider is not active and balances are held in the Internal Wallet.
+* Improve  - A service with one package and nothing to choose (no add-ons, express delivery or quantity) goes from Continue straight to checkout instead of opening an Order Options dialog. A failed add reopens the dialog with the message.
+* Improve  - The vendor Wallet tab in wp-admin can be filtered by transaction type and jumped to a page.
+* Improve  - With service moderation on, editing an approved live service no longer takes it offline; a new Re-review Live Edits setting under Vendors brings the old behaviour back. New services still wait for approval.
+* Improve  - Opening an order conversation marks messages read with one lookup instead of one query per message.
+* Improve  - Withdrawal History on the seller dashboard pages through every request, and the vendor Wallet tab in wp-admin pages through the full ledger and shows each row in its own currency.
+* Improve  - Bulk Mark as Completed and Mark as Cancelled on Orders ask first, naming the number of orders and the money effect, and skip orders already in that status.
+* Fix      - Bulk Mark as Completed / Cancelled now skips orders the workflow does not allow, and disputed orders, and reports them as not moved.
+* Fix      - Editing a live service over the REST API with status=publish follows the Re-review setting like every other edit instead of failing on listings with older gaps.
+* Fix      - EDD, FluentCart and test-gateway placeholder references are no longer shown as a payment Reference on offline receipts.
+* Fix      - Confirm on the order page (Completed, Cancelled, Mark refund sent) and on the role-cleanup, vendor and report forms now submits the form instead of doing nothing.
+* Fix      - A backdated order's vendor earning is stamped with the same date as the order and its delivery due date counts from when work started.
+* Fix      - A relative date returned from the wpss_order_timestamp filter, such as yesterday, is saved as a real date instead of 0000-00-00.
+* Fix      - Service schema reviews now include the review text, and Yoast pages no longer log an undefined property warning.
+* Fix      - With Rank Math, the Service name is back in the structured data: the page-title blanking that keeps one heading on service pages no longer reaches the page head.
+* Fix      - A dispute ruling for the vendor sends Dispute resolved only, without a second Order completed notice or email.
+* Fix      - The bank transfer receipt picker offers the file types the store allows instead of a fixed list.
+* Fix      - A refused Assign refund or Retry refund on an order now shows the reason, and Mark refund sent asks before it clears the pending refund.
+* Fix      - The setup wizard stays on a step that failed to save and says why, rejects an unsupported currency, will not change the currency once orders exist, and asks before importing demo content.
+* Fix      - With vendor registration closed, the site owner can still start selling from the dashboard sidebar, the Become a Vendor page and the REST register route, not only the AJAX button.
+* Fix      - When buyer cancellation is closed, the order page writes out why (window passed or work delivered) instead of leaving it in a tooltip.
+* Fix      - Re-review Live Edits off now keeps an approved live service published for title edits and add-on changes too.
+* Fix      - A service that was already live before moderation was turned on stays live when its vendor edits it.
+* Fix      - A suspended vendor no longer sees Send Proposal, Register as Vendor or Start selling prompts that lead nowhere.
+* Fix      - A pay link opened while logged out asks the buyer to log in, and the pay page for a proposal order links back to the order.
+* Fix      - Withdrawal notices say Paid, Approved or Rejected, and the withdrawal form explains that one is already in progress.
+* Fix      - The Moderation menu badge and the dashboard queue no longer count pending services while moderation is off.
+* Fix      - A resolved dispute on the admin order screen links as View dispute instead of Open dispute.
+* Fix      - A made-up Transaction ID (offline cart checkout or a receipt with no typed reference) is no longer shown to the buyer on the order page or the payment receipt.
+* Fix      - With Suspended Vendors and Earnings on, a suspended vendor also reaches the Pro wallet routes the app uses, and no longer sees a Start selling panel on the dashboard.
+* Fix      - The missing Terms page notice waits until a gateway with keys is on or the first order exists, instead of showing on every screen of a brand-new site.
+* Fix      - The site owner's Add your first service button opens the Create form without making them a listed vendor; the vendor profile is created when they save the first service.
+* Fix      - Orders CSV writes the vendor name without HTML entities and labels the platform column platform.
+* Fix      - The paging links are 44px tall on a phone, a wallet page past the end shows the last page, and a negative withdrawals page is page 1.
+* Fix      - Applying to sell through the REST route before confirming email now says so (403 wpss_email_unverified), and the confirmation link lands on a notice that it worked.
+* Fix      - Moving a started order back to Pending Requirements no longer re-sends New Service Order and Order Confirmed; only payment does.
+* Fix      - A partial refund notice says the amount instead of a generic status update.
+* Fix      - Toast messages sit below the WordPress admin bar on a phone.
+* Fix      - The REST requirements answer and a buyer request's created_at are ISO 8601 in UTC, and the setup wizard no longer turns a negative max services into a positive one.
+* Fix      - A dispute ruling that refunds money sends the Dispute resolved notice only, not a second refund notice beside it.
+* Fix      - Max services per vendor and the Offline gateway auto-cancel hours refuse a negative value and keep what was saved, and clamp a too-large one to the field's limit.
+* Fix      - POST /orders/{id}/deliver delivers the files posted with it, and refuses a bad file with a 400 instead of answering 200 and dropping it.
+* Fix      - Every CSV export writes plain names, so Diego Smith &amp; Sons reads Diego Smith & Sons in payouts and vendor sales exports.
+* Fix      - Dates on Pro REST routes (/wpss-pro/v1) now come back as ISO 8601 UTC, the same as the core routes.
+* Fix      - Bulk order and dispute actions now show a result message, including how many could not be changed.
+* Fix      - Buyer requests use their own capabilities, so Editors and Authors can no longer edit or delete them; administrators and shop managers keep full access, and the roles update on upgrade.
+* Fix      - When the site owner is also the seller, an offline order sends one owner email instead of two, and the wording says offline payment rather than bank transfer.
+* Fix      - The order payment details no longer show a Transaction ID the plugin generated itself; an ID the owner typed still shows.
+* Fix      - A buyer can no longer pay a milestone phase out of order through the offline or test payment methods.
+* Fix      - With disputes switched off in settings, a dispute can no longer be opened through the app or by rejecting a cancellation request.
+* Fix      - A proposal that was already accepted, withdrawn or rejected can no longer be rejected again.
+* Fix      - A service sold one at a time now enforces that limit at checkout, not only on the service page.
+* Fix      - Buying one service with Buy Now no longer empties the rest of the buyer's cart.
+* Fix      - Double-clicking Deliver no longer creates two deliveries, and an empty delivery is refused.
+* Fix      - Proposals with a zero or negative price are refused.
+* Fix      - Order and dashboard conversations open at the newest 50 messages with a Show earlier messages link, instead of loading the whole thread or only the oldest 100.
+* Fix      - The Become a Vendor page tells a logged-out visitor sign-up is closed, with a Sign in link, instead of showing a form that always fails when WordPress registration is off.
+* Fix      - With vendor registration closed, the site owner can still start selling from the dashboard.
+* Fix      - A name typed once on the Create account form is split into first and last name, so checkout no longer shows "Casey Buyer" in First name and "Buyer" in Last name.
+* Fix      - The setup wizard suggests the same eight starter categories the plugin creates, so it no longer adds near-duplicates such as Graphic Design beside Graphics & Design.
+* Fix      - The Terms page notice says checkout can take payments instead of claiming buyers are paying, and the Open vendor registration label says any member can start selling instead of anyone can register.
+* Fix      - Marking an order paid no longer sends buyer and vendor a third "Order status updated" email beside the order confirmation, on every payment rail.
+* Fix      - The vendor gets one email when the buyer submits requirements, not a second "Now In Progress" email.
+* Fix      - Publishing an incomplete service from the vendor dashboard or the REST API now says what is missing; updating through the REST API answers 400 with the reasons, and creating one returns the draft with the reasons in notices.
+* Fix      - Every REST date is ISO 8601 over HTTP, including dispute status notes, and buyer request dates are UTC.
+* Fix      - A negative number posted to an Orders & Disputes setting saves as the field minimum instead of its positive value.
+* Fix      - Each Save button on the Settings page and the order screen has its own id.
+* Fix      - The order number search field and its Search button are the same height on My Orders, Sales and the notifications filter.
+* Fix      - The service wizard highlights the step you are on when editing a service, and marks it for screen readers.
+* Fix      - Ratings and percentages follow the site's number format, and the proposal price on the admin buyer request screen shows its currency.
+* Fix      - Relative times such as "2 hours ago" follow the translation's word order, and the dashboard messages list now says "ago".
+* Fix      - Member names in emails, notifications, admin screens and exports all go through one helper, so the wpss_member_display_name filter applies everywhere and a blank display name falls back to the username.
+* Fix      - Links to the services, dashboard and become-a-vendor pages follow the pages mapped in Settings, so a trashed or drafted page is no longer linked from emails, the setup wizard or the app, and both Become a vendor buttons lead to the same page.
+* Fix      - With Yoast SEO or Rank Math active, a service page carries its service structured data once instead of twice; category, archive and vendor structured data is unchanged.
+* Fix      - PayPal checkout and refunds work in Japanese yen, Hungarian forint and New Taiwan dollar, which PayPal takes only as whole amounts, and send three decimals for currencies that have them.
+* Security - A buyer can no longer cancel and refund a disputed or revision-stage order through the legacy cancel AJAX action; it now follows the same pre-delivery rule as the REST route.
+* Security - Changing an order's status or refunding from the order screen is administrator-only on every path, so a shop manager can no longer run it through the AJAX action.
+* Dev      - New wpss_order_timestamp filter lets an importer or demo installer set the created, paid, started and completed dates on orders it creates. Default behaviour is unchanged.
+* Dev      - 27 admin-ajax actions that the plugin and app no longer call are deprecated and log a notice when WP_DEBUG is on; they keep working until the next major release. The list is in the REST API overview.
+* Dev      - The developer tools wp wpss scale, test:flow, rest:contract and api:shapes are no longer in the plugin zip; they stay in the source repository.
+* Dev      - Removed unused code: the Proposal model (use ProposalService), wpss_sanitize_html(), OrderRepository::update_status(), ServiceOrder::get_status_history() and ServicePackage::get_formatted_price().
+* Dev      - ServiceOrder::update() hands a status change to OrderService::update_status(), so the transition rules and status hooks apply on every path.
+* Dev      - The wpss_vendor_status_updated action passes the admin's reason as a fourth argument, and wpss_submit_button() accepts an optional button id.
 
 = 1.9.2 - November 2026 =
 

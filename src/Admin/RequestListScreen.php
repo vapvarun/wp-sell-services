@@ -60,7 +60,7 @@ class RequestListScreen {
 				$out['wpss_request_status'] = __( 'Status', 'wp-sell-services' );
 				$out['wpss_budget']         = __( 'Budget', 'wp-sell-services' );
 				$out['wpss_proposals']      = __( 'Proposals', 'wp-sell-services' );
-				$out['wpss_deadline']       = __( 'Deadline', 'wp-sell-services' );
+				$out['wpss_deadline']       = __( 'Open until', 'wp-sell-services' );
 			}
 		}
 

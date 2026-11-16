@@ -346,7 +346,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$package_id = isset( $_GET['package'] ) ? absint( wp_unslash( $_GET['package'] ) ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$quantity = isset( $_GET['quantity'] ) ? absint( wp_unslash( $_GET['quantity'] ) ) : 1;
-		$quantity = max( 1, min( $quantity, 10 ) ); // Clamp 1-10.
+		$quantity = max( 1, $quantity ); // The pricer applies the service's ceiling (wpss_max_order_quantity).
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$addon_ids_raw = isset( $_GET['addons'] ) ? sanitize_text_field( wp_unslash( $_GET['addons'] ) ) : '';
@@ -457,6 +457,16 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</p>';
 		}
 
+		// A logged-out buyer following a pay link is asked to sign in and comes back here, not told they have no permission.
+		if ( ! is_user_logged_in() ) {
+			return sprintf(
+				'<p class="wpss-alert wpss-alert-info">%s</p><p><a class="wpss-btn wpss-btn--primary" href="%s">%s</a></p>',
+				esc_html__( 'Please log in to pay for this order.', 'wp-sell-services' ),
+				esc_url( wp_login_url( wpss_get_pay_order_url( $order_id, $order ) ) ),
+				esc_html__( 'Log In', 'wp-sell-services' )
+			);
+		}
+
 		// Only the customer who owns this order can pay.
 		if ( (int) $order->customer_id !== get_current_user_id() ) {
 			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'You do not have permission to pay for this order.', 'wp-sell-services' ) . '</p>';
@@ -473,21 +483,6 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				esc_url( $back_to_order ),
 				esc_html__( 'Back to order', 'wp-sell-services' )
 			);
-		}
-
-		// Lock-step backstop on milestone sub-orders: even though the on-page
-		// timeline hides the Pay button on locked phases, a buyer could craft
-		// the URL by hand to skip ahead. The server is the only authority.
-		if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
-			$milestones = new \WPSellServices\Services\MilestoneService();
-			if ( $milestones->is_locked( $order_id ) ) {
-				return sprintf(
-					'<p class="wpss-alert wpss-alert-info">%s</p><p><a class="wpss-btn wpss-btn--secondary" href="%s">%s</a></p>',
-					esc_html__( 'This phase is locked. Pay the previous phase first — once it is approved or cancelled, this one will unlock.', 'wp-sell-services' ),
-					esc_url( $back_to_order ),
-					esc_html__( 'Back to order', 'wp-sell-services' )
-				);
-			}
 		}
 
 		// Sub-orders (tip, extension, milestone) are one-shot credits or
@@ -616,6 +611,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				return;
 			}
 
+			// Show the quantity the pricer used, not the one asked for.
+			$quantity         = (int) $line['quantity'];
 			$selected_package = $line['package'];
 			$package_id       = (int) $line['package_id'];
 			$addon_lines      = $line['addons'];
@@ -925,7 +922,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			 * the column is taller than the viewport it scrolls inside itself, so the
 			 * top (total) and the bottom card are both reachable.
 			 */
-			.wpss-checkout-page .wpss-co-aside { position: sticky; top: var(--wpss-sticky-top, 32px); align-self: start; max-height: calc(100vh - var(--wpss-sticky-top, 32px) - 16px); overflow-y: auto; overscroll-behavior: contain; }
+			.wpss-checkout-page .wpss-co-aside { align-self: start; }
+			/* Sticky only when the viewport is tall enough to show the whole column: a shorter one would clip the cards below the fold with no scroll cue. */
+			@media (min-height: 1100px) { .wpss-checkout-page .wpss-co-aside { position: sticky; top: var(--wpss-sticky-top, 32px); } }
 			.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { position: static; }
 
 			@media (max-width: 1024px) {
@@ -965,9 +964,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		<div class="wpss-checkout-page">
 			<!-- Header bar -->
 			<div class="wpss-co-header">
-				<a href="<?php echo esc_url( ( $service->id > 0 ? get_permalink( $service->id ) : home_url( '/' ) ) ); ?>" class="wpss-co-header__back">
+				<?php // A proposal order has no service page to go back to: its way back is the order. ?>
+				<?php $back_to_order_view = $is_pay_order && ( $service->id <= 0 || $is_sub_order ); ?>
+				<a href="<?php echo esc_url( $back_to_order_view ? wpss_get_order_url( $is_sub_order && ! empty( $pay_order->platform_order_id ) ? (int) $pay_order->platform_order_id : (int) $pay_order->id ) : ( $service->id > 0 ? get_permalink( $service->id ) : home_url( '/' ) ) ); ?>" class="wpss-co-header__back">
 					<span aria-hidden="true">&larr;</span>
-					<?php esc_html_e( 'Back to service', 'wp-sell-services' ); ?>
+					<?php echo $back_to_order_view ? esc_html__( 'Back to order', 'wp-sell-services' ) : esc_html__( 'Back to service', 'wp-sell-services' ); ?>
 				</a>
 				<span class="wpss-co-header__secure">
 					<i data-lucide="lock" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
@@ -1104,7 +1105,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 												<?php if ( $review_count > 0 ) : ?>
 													<span class="wpss-co-meta__item">
 														<i data-lucide="star" class="wpss-icon wpss-icon--sm wpss-co-stars" aria-hidden="true"></i>
-														<strong><?php echo esc_html( number_format( $review_avg, 1 ) ); ?></strong>
+														<strong><?php echo esc_html( number_format_i18n( $review_avg, 1 ) ); ?></strong>
 														<span>(<?php echo esc_html( $review_count ); ?>)</span>
 													</span>
 												<?php endif; ?>
@@ -1224,7 +1225,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 										<div class="wpss-co-seller-stat">
 											<span class="wpss-co-seller-stat__value">
 												<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
-												<?php echo esc_html( number_format( $review_avg, 1 ) ); ?>
+												<?php echo esc_html( number_format_i18n( $review_avg, 1 ) ); ?>
 											</span>
 											<span class="wpss-co-seller-stat__label">
 												<?php
@@ -1414,6 +1415,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				continue;
 			}
 
+			$quantity         = (int) $line['quantity'];
 			$selected_package = $line['package'];
 			$unit_price       = (float) ( $selected_package['price'] ?? 0 );
 			$line_price       = (float) $line['subtotal'];
@@ -1665,9 +1667,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					<input type="hidden" name="currency" value="<?php echo esc_attr( $currency ); ?>">
 
 					<?php foreach ( $enriched_items as $key => $ei ) : ?>
-						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][service_id]" value="<?php echo esc_attr( $ei['service_id'] ); ?>">
-						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][package_id]" value="<?php echo esc_attr( $ei['package_id'] ); ?>">
-						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][quantity]" value="<?php echo esc_attr( $ei['quantity'] ); ?>">
+						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][service_id]" value="<?php echo esc_attr( (string) $ei['service_id'] ); ?>">
+						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][package_id]" value="<?php echo esc_attr( (string) $ei['package_id'] ); ?>">
+						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][quantity]" value="<?php echo esc_attr( (string) $ei['quantity'] ); ?>">
 					<?php endforeach; ?>
 
 					<!-- Two-column layout -->

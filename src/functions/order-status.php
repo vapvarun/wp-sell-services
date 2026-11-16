@@ -29,6 +29,10 @@ function wpss_get_cancellation_reason_label( string $reason ): string {
 		'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
 		'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
 		'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
+		'cannot_complete'      => __( 'Seller cannot complete the work', 'wp-sell-services' ),
+		'scope_changed'        => __( 'The scope changed', 'wp-sell-services' ),
+		'buyer_unresponsive'   => __( 'The buyer is not responding', 'wp-sell-services' ),
+		'order_mistake'        => __( 'This order was a mistake', 'wp-sell-services' ),
 		'other'                => __( 'Other', 'wp-sell-services' ),
 	);
 

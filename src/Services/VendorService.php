@@ -97,6 +97,11 @@ class VendorService {
 			return false;
 		}
 
+		// The owner asked for a confirmed email first; the member confirms, then applies.
+		if ( wpss_email_verification_pending( $user_id ) ) {
+			return false;
+		}
+
 		// Check if user already has a pending application.
 		if ( $this->has_pending_application( $user_id ) ) {
 			return false;
@@ -111,8 +116,8 @@ class VendorService {
 		// Determine vendor status based on registration mode setting.
 		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
-		// If registration is closed, reject immediately.
-		if ( 'closed' === $registration_mode ) {
+		// If registration is closed, reject immediately. The site owner is not an applicant.
+		if ( 'closed' === $registration_mode && ! user_can( $user_id, 'manage_options' ) ) {
 			return false;
 		}
 
@@ -128,6 +133,9 @@ class VendorService {
 		 * @param bool $auto_approve Whether the vendor activates without admin review.
 		 */
 		$auto_approve = (bool) apply_filters( 'wpss_auto_approve_vendors', 'approval' !== $registration_mode );
+
+		// The site owner does not apply to their own marketplace.
+		$auto_approve = $auto_approve || user_can( $user_id, 'manage_options' );
 
 		$needs_approval = ! $auto_approve;
 		$default_status = $needs_approval ? 'pending' : 'active';
@@ -212,7 +220,7 @@ class VendorService {
 	 *
 	 * @param int                  $user_id User ID.
 	 * @param array<string, mixed> $data    Profile data.
-	 * @return array{success: bool, message: string} Response array.
+	 * @return array{success: bool, message: string, code?: string} Response array.
 	 */
 	public function register_vendor( int $user_id, array $data = array() ): array {
 		$user = get_userdata( $user_id );
@@ -227,7 +235,7 @@ class VendorService {
 		// Check if registration is closed.
 		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
-		if ( 'closed' === $registration_mode ) {
+		if ( 'closed' === $registration_mode && ! user_can( $user_id, 'manage_options' ) ) {
 			return array(
 				'success' => false,
 				'message' => __( 'Vendor registration is currently closed.', 'wp-sell-services' ),
@@ -259,10 +267,19 @@ class VendorService {
 			);
 		}
 
+		// Tell the member the real reason: register() refuses silently, and a retry cannot work until the link is opened.
+		if ( wpss_email_verification_pending( $user_id ) ) {
+			return array(
+				'success' => false,
+				'code'    => 'wpss_email_unverified',
+				'message' => __( 'Please confirm your email first. Open the link we sent you, then apply again.', 'wp-sell-services' ),
+			);
+		}
+
 		$success = $this->register( $user_id, $data );
 
 		if ( $success ) {
-			if ( 'approval' === $registration_mode ) {
+			if ( ! $this->is_active_vendor( $user_id ) ) {
 				return array(
 					'success'          => true,
 					'pending_approval' => true,
@@ -304,6 +321,50 @@ class VendorService {
 	 */
 	public function is_vendor( int $user_id ): bool {
 		return wpss_is_vendor( $user_id );
+	}
+
+	/**
+	 * Give a site administrator an active vendor profile the first time they sell.
+	 *
+	 * Administrators used to get one on their first wp-admin page load, so every
+	 * owner was listed and counted as a vendor whether they sold or not. Now it
+	 * is made when an administrator authors a service. No role change and no
+	 * application mail: the owner does not apply to their own marketplace. An
+	 * existing row, whatever its status, is left alone.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param int $user_id Administrator user ID.
+	 * @return bool True when the member has a profile afterwards.
+	 */
+	public function ensure_admin_profile( int $user_id ): bool {
+		$user = get_userdata( $user_id );
+
+		if ( ! $user || ! user_can( $user, 'manage_options' ) ) {
+			return false;
+		}
+
+		if ( null !== $this->get_profile( $user_id ) ) {
+			return true;
+		}
+
+		$created = $this->profile_repo->upsert(
+			$user_id,
+			array(
+				'display_name'      => $user->display_name,
+				'status'            => 'active',
+				'verification_tier' => VendorProfile::TIER_NEW,
+			)
+		);
+
+		if ( ! $created ) {
+			return false;
+		}
+
+		update_user_meta( $user_id, '_wpss_is_vendor', true );
+		update_user_meta( $user_id, '_wpss_vendor_since', current_time( 'mysql', true ) );
+
+		return true;
 	}
 
 	/**
@@ -377,9 +438,12 @@ class VendorService {
 	 *
 	 * @param int    $user_id User ID.
 	 * @param string $status  active, pending, suspended or rejected.
+	 * @param string $reason  Why, as the admin typed it (since 1.9.3). Not stored on
+	 *                        the profile: it travels in the email, the in-app row
+	 *                        and the audit row.
 	 * @return bool True when the profile row was updated.
 	 */
-	public function set_status( int $user_id, string $status ): bool {
+	public function set_status( int $user_id, string $status, string $reason = '' ): bool {
 		$from = $this->get_vendor_status( $user_id );
 
 		if ( ! isset( self::STATUS_EVENTS[ $status ] ) || null === $from ) {
@@ -415,8 +479,9 @@ class VendorService {
 		 * @param int    $vendor_id Vendor user ID.
 		 * @param string $status    New status.
 		 * @param string $from      Status before (since 1.9.2).
+		 * @param string $reason    Reason the admin gave, or '' (since 1.9.3).
 		 */
-		do_action( 'wpss_vendor_status_updated', $user_id, $status, $from );
+		do_action( 'wpss_vendor_status_updated', $user_id, $status, $from, $reason );
 
 		return true;
 	}

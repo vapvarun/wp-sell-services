@@ -76,7 +76,10 @@ class BuyerRequestPostType {
 				'slug'       => $this->get_slug(),
 				'with_front' => false,
 			],
-			'capability_type'    => 'post',
+			// Own capability set (edit_wpss_requests...), like services. On the plain
+			// post caps every editor could edit or delete any customer's request and
+			// every author could add one in wp-admin or over /wp/v2.
+			'capability_type'    => array( 'wpss_request', 'wpss_requests' ),
 			'map_meta_cap'       => true,
 			'has_archive'        => true,
 			'hierarchical'       => false,

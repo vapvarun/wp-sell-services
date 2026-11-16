@@ -52,8 +52,42 @@ class DeliveryService {
 	 * @return bool
 	 */
 	public function submit( int $order_id, string $message, array $files = array() ): bool {
+		global $wpdb;
+
 		$this->last_error = '';
-		$order            = wpss_get_order( $order_id );
+
+		// A delivery with no words and no files tells the buyer nothing and, once accepted, releases the money.
+		if ( '' === trim( wp_strip_all_tags( $message ) ) && empty( $files ) ) {
+			$this->last_error = __( 'Add a message or a file to deliver.', 'wp-sell-services' );
+			return false;
+		}
+
+		// One delivery per order at a time: a double click passed the status check twice and wrote
+		// two rows with the same version. The named lock is released when the request ends.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 10 )', wpss_lock_name( 'wpss_delivery_' . $order_id ) ) ) ) {
+			$this->last_error = __( 'This order is already being delivered. Please wait a moment.', 'wp-sell-services' );
+			return false;
+		}
+
+		try {
+			return $this->submit_locked( $order_id, $message, $files );
+		} finally {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', wpss_lock_name( 'wpss_delivery_' . $order_id ) ) );
+		}
+	}
+
+	/**
+	 * The delivery itself, run while submit() holds the order's lock.
+	 *
+	 * @param int                      $order_id Order ID.
+	 * @param string                   $message  Delivery message.
+	 * @param array<int|string, mixed> $files Delivery files.
+	 * @return bool
+	 */
+	private function submit_locked( int $order_id, string $message, array $files ): bool {
+		$order = wpss_get_order( $order_id );
 
 		if ( ! $order ) {
 			return false;
@@ -61,6 +95,9 @@ class DeliveryService {
 
 		// Validate order status allows delivery.
 		if ( ! in_array( $order->status, array( ServiceOrder::STATUS_IN_PROGRESS, ServiceOrder::STATUS_REVISION_REQUESTED, ServiceOrder::STATUS_LATE ), true ) ) {
+			$this->last_error = ServiceOrder::STATUS_PENDING_APPROVAL === $order->status
+				? __( 'This order has already been delivered and is waiting for the buyer.', 'wp-sell-services' )
+				: __( 'This order cannot receive a delivery in its current status.', 'wp-sell-services' );
 			return false;
 		}
 
@@ -173,7 +210,11 @@ class DeliveryService {
 		$status_updated = $order_service->update_status( $order_id, ServiceOrder::STATUS_PENDING_APPROVAL );
 
 		if ( ! $status_updated ) {
-			wpss_log( "Delivery created (ID: {$delivery_id}) but status update to pending_approval failed for order {$order_id}.", 'error' );
+			// Roll the row back so a retry does not leave two deliveries with one version.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->delete( $deliveries_table, array( 'id' => $delivery_id ), array( '%d' ) );
+			wpss_log( "Delivery {$delivery_id} rolled back: status update to pending_approval failed for order {$order_id}.", 'error' );
+			return false;
 		}
 
 		/**

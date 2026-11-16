@@ -24,7 +24,7 @@ Choose how vendors join your marketplace:
 
 | Mode | What Happens |
 |------|-------------|
-| **Open** | Anyone can sign up as a vendor and start selling immediately |
+| **Open** | Any logged-in member can start selling immediately (the member needs an account first; WordPress registration controls who can create one) |
 | **Requires Approval** | People apply to become vendors, and you approve or decline each application |
 | **Closed** | Only you (the admin) can create vendor accounts |
 
@@ -109,7 +109,7 @@ Tax lives with commission, in **Sell Services > Settings > Commission & Tax**:
 
 Before going live, run through a quick test:
 
-1. **Create a test vendor account** -- Visit the "Become a Vendor" page and register (or use your admin account, which is automatically a vendor)
+1. **Create a test vendor account** -- Visit the "Become a Vendor" page and register. Your admin account becomes a vendor the first time it creates a service, or at once when you click **Start Selling**, even with vendor approval on
 2. **Create a test service** -- Go to the Dashboard and walk through the service creation wizard
 3. **Place a test order** -- Log in as a different user, find the test service, and purchase it
 4. **Complete the order** -- Submit a delivery as the vendor, accept it as the buyer, and leave a review

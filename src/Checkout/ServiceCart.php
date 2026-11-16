@@ -67,6 +67,36 @@ final class ServiceCart {
 	}
 
 	/**
+	 * Drop the one purchased line from the buyer's cart and leave the rest.
+	 *
+	 * A single-service ("Buy now") purchase must not wipe other items the buyer saved.
+	 *
+	 * @param int $user_id    Buyer.
+	 * @param int $service_id Purchased service.
+	 * @param int $package_id Purchased package.
+	 * @return void
+	 */
+	public static function remove_line( int $user_id, int $service_id, int $package_id ): void {
+		$cart = get_user_meta( $user_id, '_wpss_cart', true );
+
+		if ( ! is_array( $cart ) || ! $cart ) {
+			return;
+		}
+
+		foreach ( $cart as $key => $item ) {
+			if ( (int) ( $item['service_id'] ?? 0 ) === $service_id && (int) ( $item['package_id'] ?? 0 ) === $package_id ) {
+				unset( $cart[ $key ] );
+			}
+		}
+
+		if ( $cart ) {
+			update_user_meta( $user_id, '_wpss_cart', $cart );
+		} else {
+			delete_user_meta( $user_id, '_wpss_cart' );
+		}
+	}
+
+	/**
 	 * Add a priced line to the buyer's cart.
 	 *
 	 * @param int                  $user_id    Buyer.

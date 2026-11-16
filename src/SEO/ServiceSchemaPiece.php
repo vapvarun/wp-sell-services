@@ -247,7 +247,7 @@ class ServiceSchemaPiece extends Abstract_Schema_Piece {
 					'name'  => $review->reviewer_display_name ?: __( 'Anonymous', 'wp-sell-services' ),
 				),
 				'datePublished' => gmdate( 'c', strtotime( $review->created_at ) ),
-				'reviewBody'    => $review->comment,
+				'reviewBody'    => (string) $review->review,
 				'reviewRating'  => array(
 					'@type'       => 'Rating',
 					'ratingValue' => (int) $review->rating,

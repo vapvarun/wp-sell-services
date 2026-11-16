@@ -93,7 +93,7 @@ When a buyer accepts your proposal:
 
 ## Withdrawing a Proposal
 
-Changed your mind? Go to **Dashboard > My Proposals**, find the proposal, and click **Withdraw**. The buyer is notified, and you can submit a fresh proposal if the request is still open.
+Changed your mind? Go to **Dashboard > My Proposals**, find the proposal, and click **Withdraw**. The proposal leaves the buyer's list (they are not sent a notification), and you can submit a fresh proposal if the request is still open.
 
 Good reasons to withdraw: schedule changed, project scope is unclear, or you found a better opportunity.
 

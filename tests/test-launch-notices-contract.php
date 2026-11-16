@@ -89,8 +89,14 @@ $admin_src = file_get_contents( dirname( __DIR__ ) . '/src/Admin/Admin.php' );
 
 // Gated on money actually moving. A site still being built must not be nagged.
 wpss_t(
-	false !== strpos( $admin_src, 'if ( ! wpss_has_live_gateway() ) {' ),
-	'it only fires once a real gateway is live, not on a half-built site'
+	false !== strpos( $admin_src, 'if ( ! wpss_terms_notice_due() ) {' ),
+	'it only fires once wpss_terms_notice_due() says so, not on a half-built site'
+);
+
+$pay_src = file_get_contents( dirname( __DIR__ ) . '/src/functions/payments.php' );
+wpss_t(
+	1 === preg_match( '/function wpss_terms_notice_due\(\): bool \{\s*if \( ! wpss_has_live_gateway\(\) \) \{\s*return false;/', $pay_src ),
+	'the due-gate returns false while no real gateway is live'
 );
 
 // Dismissible, unlike the demo-payments notice - and the dismissal is scoped

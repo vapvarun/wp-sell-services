@@ -66,10 +66,21 @@ function wpss_settings_defaults(): array {
 			// launch day. Consistent with open registration above.
 			'require_service_moderation' => false,
 			'moderate_reviews'           => false,
+			// An approved, live service stays live when its vendor edits it.
+			're_review_live_edits'       => false,
+			// A suspended vendor's earned balance stays held unless the owner opens it.
+			'suspended_money_access'     => false,
+			// One-click applications unless the owner asks applicants what they sell.
+			'application_fields'         => false,
+			// Confirm the email before a new member can apply to sell.
+			'verify_email_for_vendors'   => false,
+			// Email the admin when someone signs up here, as WordPress core does.
+			'signup_notify_admin'        => false,
 		),
 		// Revision limits are per-package, not a global setting.
 		'wpss_orders'        => array(
 			'auto_complete_days'        => 3,
+			'cancel_window_hours'       => 24,
 			'allow_disputes'            => true,
 			'dispute_window_days'       => 14,
 			'auto_dispute_late_days'    => 3,
@@ -136,6 +147,29 @@ function wpss_settings_defaults(): array {
 	);
 
 	return $defaults;
+}
+
+/**
+ * Read a posted whole-number limit without letting a typo change what it means.
+ *
+ * Out-of-range values are clamped to the field's own min and max. A negative or
+ * non-numeric value is refused and returns $current instead, because for limits
+ * where 0 means "unlimited" or "off" a mistyped -4 must not silently become 0.
+ *
+ * @since 1.9.3
+ *
+ * @param mixed $value   Posted value.
+ * @param int   $min     Lowest allowed value.
+ * @param int   $max     Highest allowed value.
+ * @param int   $current Value already stored, kept when the posted one is refused.
+ * @return int
+ */
+function wpss_clamp_limit( $value, int $min, int $max, int $current ): int {
+	if ( ! is_numeric( $value ) || (float) $value < 0 ) {
+		return $current;
+	}
+
+	return max( $min, min( $max, (int) $value ) );
 }
 
 /**

@@ -1,0 +1,4 @@
+{
+ "walk": "combo2-full",
+ "see": ".qa-results/last-smoke-pass.json"
+}

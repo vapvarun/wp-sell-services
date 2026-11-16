@@ -682,7 +682,13 @@ class EarningsService {
 		$notification_service->create(
 			(int) $withdrawal->vendor_id,
 			'withdrawal_' . $status,
-			__( 'Withdrawal Update', 'wp-sell-services' ),
+			// One title per outcome, so the list and the type filter read apart: "approved" and "paid" are different news.
+			match ( $status ) {
+				self::WITHDRAWAL_COMPLETED => __( 'Withdrawal paid', 'wp-sell-services' ),
+				self::WITHDRAWAL_APPROVED  => __( 'Withdrawal approved', 'wp-sell-services' ),
+				self::WITHDRAWAL_REJECTED  => __( 'Withdrawal rejected', 'wp-sell-services' ),
+				default                    => __( 'Withdrawal Update', 'wp-sell-services' ),
+			},
 			sprintf(
 				/* translators: 1: amount, 2: status */
 				__( 'Your withdrawal request for %1$s has been %2$s.', 'wp-sell-services' ),
@@ -1015,6 +1021,28 @@ class EarningsService {
 				self::WITHDRAWAL_APPROVED
 			)
 		);
+	}
+
+	/**
+	 * Count a vendor's withdrawals (for paging the history), optionally by status.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param int    $vendor_id Vendor user ID.
+	 * @param string $status    Optional status.
+	 * @return int
+	 */
+	public function count_withdrawals( int $vendor_id, string $status = '' ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_withdrawals';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( '' !== $status ) {
+			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND status = %s", $vendor_id, $status ) );
+		}
+
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d", $vendor_id ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**

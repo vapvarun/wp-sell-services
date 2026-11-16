@@ -1,0 +1,35 @@
+{
+  "journey": "22-seller-levels",
+  "mode": "combo",
+  "sha_free": "d89202674c64b8c21b46f63e05e177636061685e",
+  "sha_pro": "259d27cbb676d2370b8a852873a6c1206e5ad446",
+  "ran_at": "2026-11-16T04:30:00Z",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme 8.1.0-beta.5 (brief said 8.0.9)",
+    "rail": "standalone"
+  },
+  "checks": [
+    {
+      "id": "22-badges",
+      "result": "pass",
+      "evidence": "New vendor on service card, vendor card, profile (Sofia); Pro Vendor on directory and profile (Maya, admin-set)."
+    },
+    {
+      "id": "22-rest",
+      "result": "pass",
+      "evidence": "GET /seller-levels, /seller-levels/rising, /vendors/5/level -> 200 matching; /vendors/me/level logged out 401."
+    },
+    {
+      "id": "22-next-level-note",
+      "result": "fail",
+      "evidence": "Public vendor profile shows no 'what the next level needs' note."
+    },
+    {
+      "id": "22-promotion-recalc",
+      "result": "skipped",
+      "evidence": "Not seeded to just under Rising."
+    }
+  ],
+  "artifacts": "/Users/vapvarun/Local Sites/wp-sell-services/app/qa-artifacts/"
+}

@@ -125,24 +125,13 @@ Only sign-ins this plugin issued are expired or listed. An application password
 a member created by hand in their WordPress profile belongs to whatever script
 they built with it and is left alone.
 
-**Repeated wrong passwords lock the account.** Five failed sign-ins for one
-account within 15 minutes lock it for 15 minutes, answered with
-`423 wpss_account_locked`. The counter is per account, not per address - it
-does not matter how many IPs the attempts came from - and it sits alongside
-the per-IP limiter (`429 rate_limit_exceeded`, 5 attempts per 5 minutes). A
-successful sign-in clears the counter. Show the message and stop; retrying
-will not help.
+**Repeated wrong passwords are rate limited, not locked.** `/auth/login` is
+held to 5 attempts per address per 5 minutes (`429 rate_limit_exceeded`). The
+plugin does not lock accounts, on the app or on `wp-login.php`: that belongs to
+a security plugin or the host. (Before 1.9.3 an account locked for 15 minutes
+after five wrong passwords, `423 wpss_account_locked`.)
 
-**The website counts against the same total.** Wrong passwords at
-`wp-login.php` and wrong passwords at `/auth/login` feed one counter, so five
-of either - or a mix - lock the account on both rails, and a correct password
-is refused in a browser while the app reports it locked. A site whose security
-plugin already limits failed sign-ins can hand the login form back to it with
-`add_filter( 'wpss_web_login_lock', '__return_false' )`; the API lockout above
-is unaffected.
-
-**A second factor plugs in after the password.** Once the password and the
-lockout have both passed, `wpss_auth_login_challenge` runs before a token is
+**A second factor plugs in after the password.** Once the password has passed, `wpss_auth_login_challenge` runs before a token is
 issued:
 
 ```php
@@ -294,7 +283,8 @@ Adding a key is not a bump. Changing a date's format is not a bump. Changing
 
 ## Checking the conventions yourself
 
-They are enforced by a committed command rather than by review:
+They are enforced by a committed command rather than by review. It is a
+developer tool in the source repository, not in the plugin zip:
 
 ```
 wp wpss api:shapes            # every GET route
@@ -811,6 +801,14 @@ add_filter( 'wpss_api_controllers', function( $controllers ) {
 ```
 
 See [Custom Integrations](custom-integrations.md) for detailed examples.
+
+## Deprecated admin-ajax actions
+
+Since 1.9.3, 27 admin-ajax actions are deprecated. The plugin's own screens and the app no longer call them; the REST API above does the same work. They still work in 1.9.x, and each call logs a "deprecated since version 1.9.3" notice in your debug log when `WP_DEBUG` is on. They will be removed in the next major release, so move any custom code that posts to them to the matching REST route.
+
+`wpss_accept_cancellation`, `wpss_accept_delivery`, `wpss_add_portfolio_item`, `wpss_cancel_order`, `wpss_delete_portfolio_item`, `wpss_export_data`, `wpss_favorite_service`, `wpss_filter_dashboard`, `wpss_get_dashboard_tab`, `wpss_get_favorites`, `wpss_get_messages`, `wpss_get_new_messages`, `wpss_get_notifications`, `wpss_load_services`, `wpss_mark_messages_read`, `wpss_paginate_dashboard`, `wpss_reject_cancellation`, `wpss_remove_requirement_file`, `wpss_search_dashboard`, `wpss_send_direct_message`, `wpss_skip_requirements`, `wpss_start_work`, `wpss_unfavorite_service`, `wpss_update_cart_item`, `wpss_update_portfolio_item`, `wpss_update_vendor_profile`, `wpss_upload_file`.
+
+`wpss_accept_proposal`, `wpss_reject_proposal`, `wpss_withdraw_proposal` and `wpss_update_request` are still in use and are not deprecated. The list lives in `AjaxHandlers::DEPRECATED_ACTIONS`.
 
 ## Related Documentation
 

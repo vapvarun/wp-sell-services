@@ -394,6 +394,15 @@ class PublicSignup {
 			$display_name = (string) ( strstr( $email, '@', true ) ?: $email );
 		}
 
+		// The sign-up form asks for one name. Stored whole as the first name it
+		// came back at checkout as "Casey Buyer" / "Buyer", so split it the way
+		// the checkout prefill splits a display name: first space only.
+		if ( '' === $first_name && '' === $last_name ) {
+			$parts      = explode( ' ', trim( $display_name ), 2 );
+			$first_name = $parts[0];
+			$last_name  = $parts[1] ?? '';
+		}
+
 		// No password means the buyer was never asked for one. Generate a strong
 		// one they will never see and send a set-password link, so nobody has to
 		// invent a password in the middle of a purchase.
@@ -430,7 +439,7 @@ class PublicSignup {
 				'user_email'           => $email,
 				'user_pass'            => $password,
 				'display_name'         => $display_name,
-				'first_name'           => '' !== $first_name ? $first_name : $display_name,
+				'first_name'           => $first_name,
 				'last_name'            => $last_name,
 				'role'                 => 'subscriber',
 				// `show_admin_bar_front` is stored as a string ('true'/'false') in
@@ -445,6 +454,15 @@ class PublicSignup {
 		}
 
 		$user_id = (int) $user_id;
+
+		// Owner settings, both off by default: confirm the address before vendor promotion, and tell the admin.
+		if ( wpss_get_option( 'vendor', 'verify_email_for_vendors' ) ) {
+			wpss_send_email_verification( $user_id );
+		}
+
+		if ( wpss_get_option( 'vendor', 'signup_notify_admin' ) ) {
+			wp_new_user_notification( $user_id, null, 'admin' );
+		}
 
 		/*
 		 * Sign in immediately - and make the session token visible to THIS request.
@@ -498,7 +516,7 @@ class PublicSignup {
 		 */
 		// The one place a vendor intent is promoted, so the signup form, checkout
 		// and the REST register all follow the site's vendor registration mode.
-		if ( 'vendor' === $intent ) {
+		if ( 'vendor' === $intent && ! wpss_email_verification_pending( $user_id ) ) {
 			( new VendorService() )->register( $user_id );
 			// The current user object was built before the vendor role was granted;
 			// rebuild it so this request, its hooks and the response see the new caps.

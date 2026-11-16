@@ -171,7 +171,7 @@ class Message {
 		}
 
 		$user = $this->get_sender();
-		return $user ? $user->display_name : __( 'Unknown', 'wp-sell-services' );
+		return wpss_get_member_display_name( (int) ( $user->ID ?? 0 ), __( 'Unknown', 'wp-sell-services' ) );
 	}
 
 	/**
@@ -236,18 +236,5 @@ class Message {
 		}
 
 		return wpss_datetime_label( $this->created_at->getTimestamp() );
-	}
-
-	/**
-	 * Get relative time (e.g., "2 hours ago").
-	 *
-	 * @return string
-	 */
-	public function get_relative_time(): string {
-		if ( ! $this->created_at ) {
-			return '';
-		}
-
-		return human_time_diff( $this->created_at->getTimestamp(), time() ) . ' ' . __( 'ago', 'wp-sell-services' );
 	}
 }

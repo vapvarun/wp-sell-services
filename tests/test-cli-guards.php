@@ -81,7 +81,29 @@ $run = static function ( string $args, string $env_type ) use ( $wp_bin ): array
 	return array( proc_close( $proc ), (string) $out );
 };
 
-$check = static function ( string $label, string $args, string $env_type, array $expect ) use ( &$failures, $run, $counts ): void {
+/*
+ * scale, test:flow, rest:contract and api:shapes are developer tools left out of
+ * the release zip, so on a zip install they are not registered. Their cases run
+ * only where the command file exists.
+ */
+$dev_tools = array(
+	'scale'         => 'ScaleCommand',
+	'test:flow'     => 'TestFlowCommand',
+	'rest:contract' => 'RestContractCommand',
+	'api:shapes'    => 'ApiShapeCommand',
+);
+$ships     = static function ( string $args ) use ( $dev_tools ): bool {
+	$command = strtok( (string) preg_replace( '/^(help )?wpss /', '', $args ), ' ' );
+	return ! isset( $dev_tools[ $command ] ) || file_exists( WPSS_PLUGIN_DIR . 'src/CLI/' . $dev_tools[ $command ] . '.php' );
+};
+
+$ran   = 0;
+$check = static function ( string $label, string $args, string $env_type, array $expect ) use ( &$failures, &$ran, $run, $counts, $ships ): void {
+	if ( ! $ships( $args ) ) {
+		WP_CLI::log( '  skip ' . $label . ' (developer tool, not in this install)' );
+		return;
+	}
+	++$ran;
 	$before             = $counts();
 	$already            = count( $failures );
 	list( $code, $out ) = $run( $args, $env_type );
@@ -229,4 +251,4 @@ if ( $failures ) {
 	WP_CLI::error( count( $failures ) . ' CLI guard check(s) failed.' );
 }
 
-WP_CLI::success( 'CLI guard contract holds: 27 checks, nothing but the fixture written or deleted.' );
+WP_CLI::success( 'CLI guard contract holds: ' . ( $ran + 1 ) . ' checks, nothing but the fixture written or deleted.' );

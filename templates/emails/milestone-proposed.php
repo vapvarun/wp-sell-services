@@ -12,7 +12,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.1
+ * @version 1.9.3
  *
  * @var \WPSellServices\Models\ServiceOrder      $milestone    Milestone sub-order.
  * @var \WPSellServices\Models\ServiceOrder|null $parent_order Parent order (may be null).
@@ -30,9 +30,7 @@
 defined( 'ABSPATH' ) || exit;
 
 $format = static function ( float $amt ) use ( $currency ): string {
-	return function_exists( 'wpss_format_price' )
-		? wpss_format_price( $amt, $currency )
-		: number_format_i18n( $amt, 2 ) . ' ' . $currency;
+	return wpss_format_price( $amt, $currency );
 };
 
 do_action( 'wpss_email_content_before', 'milestone_proposed', $milestone, $recipient );

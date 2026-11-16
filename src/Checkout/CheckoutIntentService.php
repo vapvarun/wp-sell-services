@@ -16,8 +16,6 @@ declare(strict_types=1);
 
 namespace WPSellServices\Checkout;
 
-use WPSellServices\Services\MilestoneService;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -82,6 +80,11 @@ class CheckoutIntentService {
 			return new \WP_Error( 'wpss_invalid_order', __( 'Invalid order.', 'wp-sell-services' ) );
 		}
 
+		// A locked phase keeps its own documented code.
+		if ( wpss_is_order_phase_locked( $order ) ) {
+			return new \WP_Error( 'wpss_phase_locked', __( 'This phase is locked. Pay the previous phase first.', 'wp-sell-services' ) );
+		}
+
 		$refusal = wpss_get_order_payment_refusal( $order );
 		if ( '' !== $refusal ) {
 			if ( 'pending_payment' === $order->status ) {
@@ -90,15 +93,6 @@ class CheckoutIntentService {
 				$code = in_array( $order->status, array( 'cancelled', 'refunded' ), true ) ? 'wpss_order_closed' : 'wpss_already_paid';
 			}
 			return new \WP_Error( $code, $refusal );
-		}
-
-		// A locked milestone phase cannot be funded before the previous phase is
-		// approved. The server is the only authority against a crafted request.
-		if ( MilestoneService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
-			$milestones = new MilestoneService();
-			if ( $milestones->is_locked( $order_id ) ) {
-				return new \WP_Error( 'wpss_phase_locked', __( 'This phase is locked. Pay the previous phase first.', 'wp-sell-services' ) );
-			}
 		}
 
 		$amount = (float) $order->total;
@@ -275,9 +269,12 @@ class CheckoutIntentService {
 			return new \WP_Error( 'wpss_invalid_package', __( 'Invalid package.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		$quantity = max( 1, $quantity );
-		$subtotal = round( (float) ( $resolved['package']['price'] ?? 0 ) * $quantity, wpss_get_currency_decimals() );
-		$addons   = wpss_price_addons( $service_id, $selection, $subtotal, $resolved['package'] );
+		// The owner's per-service ceiling (filter, default 1) is enforced here, so cart, checkout, REST and
+		// every gateway agree with the quantity box the service page draws.
+		$max_quantity = max( 1, (int) apply_filters( 'wpss_max_order_quantity', 1, $service_id ) );
+		$quantity     = min( max( 1, $quantity ), $max_quantity );
+		$subtotal     = round( (float) ( $resolved['package']['price'] ?? 0 ) * $quantity, wpss_get_currency_decimals() );
+		$addons       = wpss_price_addons( $service_id, $selection, $subtotal, $resolved['package'] );
 
 		if ( is_wp_error( $addons ) ) {
 			return $addons;
@@ -981,7 +978,7 @@ class CheckoutIntentService {
 		return array(
 			'success'      => true,
 			'order_ids'    => array_map( 'intval', $order_ids ),
-			'redirect_url' => add_query_arg( 'tab', 'orders', wpss_get_page_url( 'dashboard' ) ),
+			'redirect_url' => wpss_get_dashboard_url( 'orders' ),
 		);
 	}
 
@@ -1047,21 +1044,7 @@ class CheckoutIntentService {
 		// on service_id + package_id) and leave any unrelated items intact.
 		// Without this, a single Stripe checkout left the item in the cart —
 		// PayPal and Offline already cleared it (re-checkout risk).
-		$cart = wpss_get_user_cart( (int) $intent->buyer_id );
-		if ( ! empty( $cart ) ) {
-			foreach ( $cart as $key => $item ) {
-				if ( (int) ( $item['service_id'] ?? 0 ) === $intent->service_id
-					&& (int) ( $item['package_id'] ?? 0 ) === $intent->package_id ) {
-					unset( $cart[ $key ] );
-				}
-			}
-
-			if ( empty( $cart ) ) {
-				delete_user_meta( $intent->buyer_id, '_wpss_cart' );
-			} else {
-				update_user_meta( $intent->buyer_id, '_wpss_cart', $cart );
-			}
-		}
+		ServiceCart::remove_line( (int) $intent->buyer_id, (int) $intent->service_id, (int) $intent->package_id );
 
 		return array(
 			'success'      => true,

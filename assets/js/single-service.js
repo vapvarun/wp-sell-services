@@ -326,6 +326,16 @@
 
             // Update modal content (required add-ons are pre-ticked).
             this.updateExtras();
+
+            // Nothing to choose (no add-ons, express or quantity): the dialog would
+            // only repeat the package, so go straight to checkout. A failure opens
+            // the dialog with the message (see showError).
+            if ($modal.data('direct') === 1) {
+                this.state.quantity = 1;
+                this.addToCart();
+                return;
+            }
+
             this.updateOrderSummary();
 
             // Show modal.
@@ -730,7 +740,15 @@
          * Show error message.
          */
         showError: function(message) {
-            const $modal = $('.wpss-modal.wpss-modal-open');
+            let $modal = $('.wpss-modal.wpss-modal-open');
+
+            // A skipped Order Options dialog is closed when the add fails: open it
+            // so the buyer sees why and can retry.
+            if (!$modal.length && $(this.config.orderModal).length) {
+                this.updateOrderSummary();
+                window.wpssModal.open($(this.config.orderModal)[0]);
+                $modal = $(this.config.orderModal);
+            }
 
             if ($modal.length) {
                 const $error = $('<div class="wpss-modal__feedback wpss-modal__feedback--error" role="alert">' + this.escapeHtml(message) + '</div>');

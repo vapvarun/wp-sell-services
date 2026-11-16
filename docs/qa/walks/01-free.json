@@ -1,0 +1,25 @@
+{
+  "journey": "01",
+  "mode": "free",
+  "ran_at": "2026-11-16T03:21:13Z",
+  "env": "wp-sell-services 1.9.3 free-only, reign 8.0.9, Playwright 1440+390",
+  "counts": {
+    "pass": 8,
+    "fail": 1,
+    "skipped": 2
+  },
+  "failures": [
+    "F1 Proposal-order pay page: 'Back to order' link has an empty href",
+    "F2 Suspended vendor still sees a 'Register as Vendor' CTA on /become-a-vendor/",
+    "F3 Suspended vendor still gets 'Send Proposal' buttons on the buyer-request archive",
+    "F4 Standalone checkout: sidebar cards clipped, 'What happens next?' never visible",
+    "F5 Moderation badge '12' and dashboard 'Services awaiting moderation 12' while Moderation screen says moderation is disabled and offers no action",
+    "F6 Admin order screen labels the link to a RESOLVED dispute 'Open dispute'",
+    "F7 Console 404 on order page load before a conversation exists",
+    "F8 Free-mode Pro upsells point at two destinations",
+    "F9 Public service page 'Edit service' opens the wp-admin classic editor; dashboard Edit opens the wizard",
+    "F10 Vendor Reviews list shows no project title for a request-order review",
+    "F11 Post-a-request copy: 'Open until' helper says 'When do you need this completed?'; saved request shows 'Expected Delivery 7 days' never entered"
+  ],
+  "note": "Per-check detail in .qa-results/last-smoke-pass-free.json"
+}

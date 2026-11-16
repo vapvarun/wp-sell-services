@@ -54,6 +54,7 @@ class RankMathIntegration extends AbstractSeoIntegration {
 
 		// Schema.
 		add_filter( 'rank_math/json_ld', array( $this, 'add_schema' ), 99, 2 );
+		add_filter( 'wpss_output_service_schema', array( $this, 'keep_own_service_schema' ) );
 
 		// Breadcrumbs.
 		add_filter( 'rank_math/frontend/breadcrumb/items', array( $this, 'modify_breadcrumbs' ), 10, 2 );
@@ -157,7 +158,8 @@ class RankMathIntegration extends AbstractSeoIntegration {
 		}
 
 		// Add to schema data.
-		$data['Service'] = $service_schema;
+		$data['Service']            = $service_schema;
+		$this->service_schema_added = true;
 
 		return $data;
 	}

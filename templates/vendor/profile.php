@@ -43,7 +43,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.2
+ * @version 1.9.3
  *
  * @var int $vendor_id Vendor user ID.
  */
@@ -134,7 +134,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 	<div class="wpss-container">
 		<?php
 		// Home > Vendors > this vendor; with no directory page the Vendors crumb is dropped.
-		$vendors_page = function_exists( 'wpss_get_vendors_page_id' ) ? wpss_get_vendors_page_id() : 0;
+		$vendors_page = wpss_get_vendors_page_id();
 		$crumbs       = $vendors_page ? array( array( (string) get_post_field( 'post_title', $vendors_page ), (string) get_permalink( $vendors_page ) ) ) : array();
 		$crumbs[]     = array( $vendor->display_name, '' );
 		wpss_render_breadcrumb( $crumbs );
@@ -210,7 +210,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 						<?php if ( $rating_count > 0 ) : ?>
 							<span class="wpss-meta-item wpss-rating">
 								<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
-								<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
+								<?php echo esc_html( number_format_i18n( $rating_avg, 1 ) ); ?>
 								<span class="wpss-rating-count">
 									<?php
 									printf(
@@ -359,7 +359,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							</div>
 							<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No services yet', 'wp-sell-services' ); ?></h3>
 							<p class="wpss-empty-state__body"><?php esc_html_e( 'This vendor hasn\'t published any services. Check back soon or browse other vendors.', 'wp-sell-services' ); ?></p>
-							<a href="<?php echo esc_url( home_url( '/services/' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?></a>
+							<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?></a>
 						</div>
 					<?php endif; ?>
 				</section>
@@ -393,7 +393,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 						<?php esc_html_e( 'Reviews', 'wp-sell-services' ); ?>
 						<?php if ( $rating_count > 0 ) : ?>
 							<span class="wpss-section-meta">
-								<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
+								<?php echo esc_html( number_format_i18n( $rating_avg, 1 ) ); ?>
 								<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 								(<?php echo esc_html( $rating_count ); ?>)
 							</span>
@@ -670,9 +670,9 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 								id="wpss-contact-attachment"
 								name="attachments[]"
 								multiple
-								accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip">
+								accept="<?php echo esc_attr( wpss_upload_accept( 'message' ) ); ?>">
 						<p class="wpss-field-hint">
-							<?php esc_html_e( 'Max 5 files. Allowed: images, PDF, Word, ZIP.', 'wp-sell-services' ); ?>
+							<?php /* translators: %s: allowed file extensions, e.g. .jpg,.pdf */ echo esc_html( sprintf( __( 'Max 5 files. Allowed: %s', 'wp-sell-services' ), ( ( $wpss_types = explode( ',', wpss_upload_accept( 'message' ) ) ) && count( $wpss_types ) > 8 ? implode( ', ', array_slice( $wpss_types, 0, 8 ) ) . ', …' : implode( ', ', $wpss_types ) ) ) ); ?>
 						</p>
 					</div>
 

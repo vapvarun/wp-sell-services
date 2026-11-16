@@ -92,7 +92,8 @@ class ProposalsController extends RestController {
 							'default' => ProposalService::CONTRACT_TYPE_FIXED,
 						],
 						'price'         => [
-							'type' => 'number',
+							'type'    => 'number',
+							'minimum' => 0.01,
 						],
 						'delivery_days' => [
 							'type' => 'integer',
@@ -143,6 +144,7 @@ class ProposalsController extends RestController {
 						],
 						'price'         => [
 							'type'              => 'number',
+							'minimum'           => 0.01,
 							'sanitize_callback' => function ( $value ) {
 								return (float) $value; },
 						],

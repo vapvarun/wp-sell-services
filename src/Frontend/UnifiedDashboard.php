@@ -243,6 +243,17 @@ class UnifiedDashboard {
 				),
 			)
 		);
+
+		/**
+		 * Fires once the dashboard's own assets are enqueued, wherever it renders.
+		 *
+		 * An add-on that styles or scripts dashboard sections hooks here instead of
+		 * guessing which page the dashboard is on: it may sit in any page, synced
+		 * pattern or widget.
+		 *
+		 * @since 1.9.3
+		 */
+		do_action( 'wpss_dashboard_assets_enqueued' );
 	}
 
 	/**
@@ -378,9 +389,7 @@ class UnifiedDashboard {
 	 * @return int Order ID, or 0 when the URL names no order.
 	 */
 	private function resolve_requested_order_id(): int {
-		return function_exists( 'wpss_resolve_request_order_id' )
-			? wpss_resolve_request_order_id()
-			: 0;
+		return wpss_resolve_request_order_id();
 	}
 
 	/**
@@ -458,6 +467,34 @@ class UnifiedDashboard {
 	}
 
 	/**
+	 * Optional application fields on the Start selling panel.
+	 *
+	 * Off by default (one click, as before). When the owner turns on "Ask
+	 * applicants about what they sell", a member sees a tagline and a short
+	 * description, saved to the vendor profile the owner reviews. The site
+	 * owner joining their own marketplace is never asked.
+	 *
+	 * @return void
+	 */
+	private function render_application_fields(): void {
+		if ( ! wpss_get_option( 'vendor', 'application_fields' ) || current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		?>
+		<div class="wpss-application-fields">
+			<p>
+				<label><?php esc_html_e( 'What do you sell?', 'wp-sell-services' ); ?>
+				<input type="text" name="tagline" class="wpss-input" maxlength="100" placeholder="<?php esc_attr_e( 'e.g. Logo design for small businesses', 'wp-sell-services' ); ?>"></label>
+			</p>
+			<p>
+				<label><?php esc_html_e( 'Tell us about your work', 'wp-sell-services' ); ?>
+				<textarea name="bio" class="wpss-input" rows="3" maxlength="1000" placeholder="<?php esc_attr_e( 'Experience, a portfolio link, anything that helps us approve you.', 'wp-sell-services' ); ?>"></textarea></label>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Check if user can access a section.
 	 *
 	 * Vendor-only sections require an active (approved) vendor. Pending vendors
@@ -476,7 +513,9 @@ class UnifiedDashboard {
 		if ( in_array( $section, $vendor_only_sections, true )
 			&& ! ( $this->vendor_service->is_vendor( $user_id )
 				&& 'active' === $this->vendor_service->get_vendor_status( $user_id ) )
-			&& ! ( 'sales' === $section && $this->is_suspended_vendor( $user_id ) ) ) {
+			&& ! ( 'sales' === $section && $this->is_suspended_vendor( $user_id ) )
+			&& ! ( in_array( $section, array( 'earnings', 'wallet' ), true ) && wpss_suspended_vendor_money_access( $user_id ) )
+			&& ! ( 'create' === $section && current_user_can( 'manage_options' ) ) ) {
 			return false;
 		}
 
@@ -539,6 +578,14 @@ class UnifiedDashboard {
 					),
 				),
 			);
+
+			// Owner setting: a suspended vendor can still reach the money they already earned.
+			if ( wpss_suspended_vendor_money_access( $user_id ) ) {
+				$sections['selling']['items']['earnings'] = array(
+					'icon'  => 'wallet',
+					'label' => __( 'Earnings & Payouts', 'wp-sell-services' ),
+				);
+			}
 		}
 
 		if ( $is_active ) {
@@ -604,6 +651,32 @@ class UnifiedDashboard {
 		 * @param bool  $is_vendor Whether user is a vendor (active).
 		 */
 		return apply_filters( 'wpss_dashboard_sections', $sections, $user_id, $is_active );
+	}
+
+	/**
+	 * Label for the become-vendor button.
+	 *
+	 * The site owner is already the seller (decision of 2026-11-14), so for an
+	 * administrator the button says what happens next instead of asking them to
+	 * join their own marketplace.
+	 *
+	 * @since 1.9.3
+	 * @return string
+	 */
+	private function become_vendor_label(): string {
+		return current_user_can( 'manage_options' )
+			? __( 'Add your first service', 'wp-sell-services' )
+			: __( 'Start selling', 'wp-sell-services' );
+	}
+
+	/**
+	 * Attribute that lets the script skip the confirm dialog for an administrator.
+	 *
+	 * @since 1.9.3
+	 * @return string Empty, or a fixed attribute literal.
+	 */
+	private function become_vendor_attrs(): string {
+		return current_user_can( 'manage_options' ) ? ' data-skip-confirm="1"' : '';
 	}
 
 	/**
@@ -764,14 +837,14 @@ class UnifiedDashboard {
 						<p><?php esc_html_e( 'Your vendor application is pending admin approval. You will be notified once your application is reviewed.', 'wp-sell-services' ); ?></p>
 					</div>
 					<?php
-				elseif ( ! $is_vendor && ! $is_pending ) :
-					$sb_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-					if ( 'closed' !== $sb_registration_mode ) :
+				elseif ( ! $is_vendor && ! $is_pending && 'suspended' !== $vendor_status ) :
+					if ( ! wpss_vendor_registration_closed_for( $user_id ) ) :
 						?>
 					<div class="wpss-dashboard__become-vendor">
 						<p><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></p>
-						<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--full" data-action="become-vendor">
-							<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
+						<?php $this->render_application_fields(); ?>
+						<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--full" data-action="become-vendor"<?php echo $this->become_vendor_attrs(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed literal. ?>>
+							<?php echo esc_html( $this->become_vendor_label() ); ?>
 						</button>
 					</div>
 					<?php endif; ?>
@@ -1017,14 +1090,21 @@ class UnifiedDashboard {
 		$is_vendor = $this->vendor_service->is_vendor( $user_id );
 
 		// Check if vendor registration is open.
-		$fb_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-		$registration_is_open = 'closed' !== $fb_registration_mode;
+		$registration_is_open = ! wpss_vendor_registration_closed_for( $user_id );
 
 		// Vendor-only sections: show a CTA to become a vendor.
 		$vendor_only_sections = self::VENDOR_SECTIONS;
 
-		if ( 'become-vendor' === $section && ! $is_vendor && $registration_is_open ) {
+		// A suspended vendor is not an applicant: the Start selling button would only be refused after the click.
+		if ( 'become-vendor' === $section && ! $is_vendor && $registration_is_open && 'suspended' !== wpss_get_vendor_status( $user_id ) ) {
 			// The become-vendor section should show the vendor onboarding prompt, not an error.
+			// The confirmation link lands here: say it worked.
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only flag set by the verification redirect.
+			if ( isset( $_GET['wpss_email_verified'] ) ) :
+				?>
+				<div class="wpss-notice wpss-notice--success" role="status"><?php esc_html_e( 'Your email is confirmed. You can start selling now.', 'wp-sell-services' ); ?></div>
+				<?php
+			endif;
 			?>
 			<div class="wpss-dashboard__empty">
 				<div class="wpss-dashboard__empty-icon">
@@ -1032,8 +1112,9 @@ class UnifiedDashboard {
 				</div>
 				<h3><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></h3>
 				<p><?php esc_html_e( 'Start selling your services on this marketplace. Click the button below to register as a vendor and begin offering your skills.', 'wp-sell-services' ); ?></p>
-				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor">
-					<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
+				<?php $this->render_application_fields(); ?>
+				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor"<?php echo $this->become_vendor_attrs(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed literal. ?>>
+					<?php echo esc_html( $this->become_vendor_label() ); ?>
 				</button>
 			</div>
 			<?php
@@ -1047,8 +1128,9 @@ class UnifiedDashboard {
 				<h3><?php esc_html_e( 'Vendor Access Required', 'wp-sell-services' ); ?></h3>
 				<p><?php esc_html_e( 'This section is available to vendors. Become a vendor to access this feature and start selling your services.', 'wp-sell-services' ); ?></p>
 				<?php if ( $registration_is_open ) : ?>
-				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor">
-					<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
+					<?php $this->render_application_fields(); ?>
+				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor"<?php echo $this->become_vendor_attrs(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed literal. ?>>
+					<?php echo esc_html( $this->become_vendor_label() ); ?>
 				</button>
 				<?php endif; ?>
 			</div>
@@ -1177,8 +1259,7 @@ class UnifiedDashboard {
 		}
 
 		// Reject if vendor registration is closed.
-		$ajax_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-		if ( 'closed' === $ajax_registration_mode ) {
+		if ( wpss_vendor_registration_closed_for() ) {
 			wp_send_json_error( array( 'message' => __( 'Vendor registration is currently closed.', 'wp-sell-services' ) ) );
 		}
 
@@ -1193,18 +1274,40 @@ class UnifiedDashboard {
 			wp_send_json_error( array( 'message' => __( 'Your vendor application is already pending approval.', 'wp-sell-services' ) ) );
 		}
 
+		// The site owner sells without applying: no profile yet. It is made when they
+		// save their first service, so the click alone never lists them as a vendor.
+		if ( current_user_can( 'manage_options' ) ) {
+			wp_send_json_success(
+				array(
+					'message'  => __( 'Add your first service. You become a listed seller when you save it.', 'wp-sell-services' ),
+					'redirect' => $this->get_section_url( 'create' ),
+				)
+			);
+		}
+
 		$block = $this->vendor_service->registration_block( $user_id );
 		if ( $block ) {
 			wp_send_json_error( array( 'message' => $block->get_error_message() ) );
 		}
 
-		$result = $this->vendor_service->register( $user_id );
+		// "Verify email before vendor promotion" is on and this member has not confirmed yet.
+		if ( wpss_email_verification_pending( $user_id ) ) {
+			wpss_send_email_verification( $user_id );
+			wp_send_json_error( array( 'message' => __( 'Please confirm your email first. We sent you a link; open it, then click Start selling again.', 'wp-sell-services' ) ) );
+		}
+
+		// The optional application fields (empty when the owner has not switched them on).
+		$application = array(
+			// The limits the form states (maxlength 100 and 1000), enforced here too.
+			'tagline' => isset( $_POST['tagline'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_POST['tagline'] ) ), 0, 100 ) : '',
+			'bio'     => isset( $_POST['bio'] ) ? mb_substr( sanitize_textarea_field( wp_unslash( $_POST['bio'] ) ), 0, 1000 ) : '',
+		);
+
+		$result = $this->vendor_service->register( $user_id, wpss_get_option( 'vendor', 'application_fields' ) ? $application : array() );
 
 		if ( $result ) {
-			// Check if approval is required (vendor will be in pending state).
-			$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-
-			if ( 'approval' === $registration_mode ) {
+			// Pending when approval is required; an administrator is approved at once.
+			if ( ! $this->vendor_service->is_active_vendor( $user_id ) ) {
 				wp_send_json_success(
 					array(
 						'message'          => __( 'Your vendor application has been submitted! It is pending admin approval.', 'wp-sell-services' ),

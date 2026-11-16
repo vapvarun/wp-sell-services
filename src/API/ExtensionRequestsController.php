@@ -423,7 +423,7 @@ class ExtensionRequestsController extends RestController {
 
 		$pay_order_id = isset( $item['pay_order_id'] ) ? (int) $item['pay_order_id'] : 0;
 
-		if ( $pay_order_id <= 0 || ! function_exists( 'wpss_get_pay_order_url' ) ) {
+		if ( $pay_order_id <= 0 ) {
 			return null;
 		}
 

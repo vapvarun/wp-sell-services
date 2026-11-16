@@ -4,10 +4,10 @@
  *
  * Run: wp eval-file tests/test-rest-app-surface.php
  *
- * Four things the mobile app could not do (Basecamp 10264288331): reset a
- * password by username, download a private order file with its token, be
- * protected by a per-account lockout rather than a per-IP counter, and list
- * a page of orders without one query per row.
+ * Three things the mobile app could not do (Basecamp 10264288331): reset a
+ * password by username, download a private order file with its token, and list
+ * a page of orders without one query per row. (The per-account lockout it also
+ * covered was removed in 1.9.3, Basecamp 10504362544.)
  *
  * No strict_types: wp eval-file eval()s the file, and a declare must be the
  * first statement in a script.
@@ -61,36 +61,7 @@ $response = $call( 'POST', '/wpss/v1/auth/forgot-password', array() );
 $check( 'forgot-password with neither answers 400', 400 === $response->get_status() );
 remove_filter( 'pre_wp_mail', '__return_true' );
 
-// --- 2. Per-account lockout, independent of IP ---------------------------
-$login = 'wpss-f14-lock-' . wp_rand( 1000, 9999 );
-$lock_user = wp_create_user( $login, wp_generate_password( 20 ), $login . '@example.test' );
-
-if ( is_wp_error( $lock_user ) ) {
-	$check( 'could create a throwaway user for the lockout check', false, $lock_user->get_error_message() );
-} else {
-	$last = null;
-	for ( $i = 1; $i <= 6; $i++ ) {
-		// Three attempts from each of two addresses: the per-IP limiter (5 per
-		// 300s) never trips, so only an account counter can lock this.
-		$_SERVER['REMOTE_ADDR'] = $i <= 3 ? '198.51.100.1' : '198.51.100.2';
-		$last                   = $call( 'POST', '/wpss/v1/auth/login', array( 'username' => $login, 'password' => 'wrong-' . $i ) );
-	}
-	$code = $last instanceof WP_REST_Response && $last->get_data() ? ( $last->get_data()['code'] ?? '' ) : '';
-	$check( 'sixth wrong password for one account is refused as locked', 'wpss_account_locked' === $code, (string) $last->get_status() . ' ' . $code );
-	$check( 'lockout answers 423', 423 === $last->get_status(), (string) $last->get_status() );
-
-	foreach ( array( '198.51.100.1', '198.51.100.2', '203.0.113.10' ) as $ip ) {
-		foreach ( array( 'login', 'forgot_password' ) as $action ) {
-			delete_transient( 'wpss_rate_auth_' . $action . '_ip_' . md5( $ip ) );
-		}
-	}
-	delete_transient( 'wpss_login_lock_' . md5( strtolower( $login ) ) );
-	delete_transient( 'wpss_login_fails_' . md5( strtolower( $login ) ) );
-	require_once ABSPATH . 'wp-admin/includes/user.php';
-	wp_delete_user( (int) $lock_user );
-}
-
-// --- 3. Private order file over REST -------------------------------------
+// --- 2. Private order file over REST -------------------------------------
 $file_id = wp_generate_uuid4();
 $dir     = wpss_get_order_files_dir() . $order_id . '/';
 if ( ! is_dir( $dir ) ) {

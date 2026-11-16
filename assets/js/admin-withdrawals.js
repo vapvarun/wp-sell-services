@@ -45,10 +45,10 @@
 				decimals = 2;
 			}
 
-			return settings.currencySymbol + ( Number( amount ) || 0 ).toLocaleString( undefined, {
+			return ( settings.currencyFormat || '$%s' ).replace( '%s', ( Number( amount ) || 0 ).toLocaleString( undefined, {
 				minimumFractionDigits: decimals,
 				maximumFractionDigits: decimals
-			} );
+			} ) );
 		}
 
 		/**

@@ -190,7 +190,9 @@ class ServiceWizard {
 
 		$user_id = get_current_user_id();
 
-		if ( ! $this->vendor_service->is_vendor( $user_id ) ) {
+		// The site owner sells without applying, even when registration is closed. Their
+		// profile is made when they save the first service (Plugin::define_auto_vendor_hooks()).
+		if ( ! $this->vendor_service->is_vendor( $user_id ) && ! current_user_can( 'manage_options' ) ) {
 			return $this->render_not_vendor();
 		}
 
@@ -380,6 +382,7 @@ class ServiceWizard {
 						'wpss-wizard__progress-item--active': currentStep === '<?php echo esc_attr( $key ); ?>',
 						'wpss-wizard__progress-item--completed': isStepCompleted('<?php echo esc_attr( $key ); ?>')
 					}"
+					:aria-current="currentStep === '<?php echo esc_attr( $key ); ?>' ? 'step' : false"
 					@click="goToStep('<?php echo esc_attr( $key ); ?>')">
 					<span class="wpss-wizard__progress-icon">
 						<i data-lucide="<?php echo esc_attr( $step['icon'] ); ?>" class="wpss-icon" aria-hidden="true"></i>
@@ -1009,7 +1012,7 @@ class ServiceWizard {
 			<div class="wpss-form-hint" x-show="!canAddRequirement()" x-cloak>
 				<span class="wpss-limit-notice"><?php esc_html_e( 'Requirement limit reached.', 'wp-sell-services' ); ?></span>
 				<?php if ( ! $this->is_pro_active() ) : ?>
-				<a href="<?php echo esc_url( apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' ) ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
+				<a href="<?php echo esc_url( wpss_pro_upgrade_url() ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
 					<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
 				</a>
 				<?php endif; ?>
@@ -1141,7 +1144,7 @@ class ServiceWizard {
 				<div class="wpss-form-hint" x-show="!canAddExtra()" x-cloak>
 					<span class="wpss-limit-notice"><?php esc_html_e( 'Extras limit reached.', 'wp-sell-services' ); ?></span>
 					<?php if ( ! $this->is_pro_active() ) : ?>
-					<a href="<?php echo esc_url( apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' ) ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
+					<a href="<?php echo esc_url( wpss_pro_upgrade_url() ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
 						<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
 					</a>
 					<?php endif; ?>
@@ -1192,7 +1195,7 @@ class ServiceWizard {
 				<div class="wpss-form-hint" x-show="!canAddFaq()" x-cloak>
 					<span class="wpss-limit-notice"><?php esc_html_e( 'FAQ limit reached.', 'wp-sell-services' ); ?></span>
 					<?php if ( ! $this->is_pro_active() ) : ?>
-					<a href="<?php echo esc_url( apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' ) ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
+					<a href="<?php echo esc_url( wpss_pro_upgrade_url() ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
 						<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
 					</a>
 					<?php endif; ?>
@@ -1888,6 +1891,11 @@ class ServiceWizard {
 		// Determine post status based on moderation setting.
 		$post_status = ModerationService::requires_review( (int) $user_id ) ? 'pending' : 'publish';
 
+		// An approved, live service keeps its status when edited unless the owner asked for re-review.
+		if ( 'pending' === $post_status && $service_id && 'publish' === get_post_status( $service_id ) && ! ModerationService::re_reviews_live_edits() ) {
+			$post_status = 'publish';
+		}
+
 		// Create or update post. A new service starts as a draft and an existing
 		// one keeps its status until its meta is written; the status is settled
 		// last, by wpss_settle_service_status() below.
@@ -2399,11 +2407,9 @@ class ServiceWizard {
 	 * @return string Not vendor message HTML.
 	 */
 	private function render_not_vendor(): string {
-		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-
 		$message = esc_html__( 'You need to be a registered vendor to create services.', 'wp-sell-services' );
 
-		if ( 'closed' !== $registration_mode ) {
+		if ( ! wpss_vendor_registration_closed_for() ) {
 			$registration_url = wpss_get_page_url( 'become_vendor' );
 			if ( ! $registration_url ) {
 				$registration_url = home_url();

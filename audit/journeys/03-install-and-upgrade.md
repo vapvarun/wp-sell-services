@@ -56,6 +56,8 @@ adopted, never duplicated.
   missing from `sanitize_pages_settings()`, which has bitten twice.
 
 ### 5. Setup wizard
+**Expect** the administrator who runs it is not made a vendor: Sell Services > Vendors stays empty until they create a service or click Start Selling (card:10475419083). Import Demo Content creates 14 services, each title once, sold by the 4 demo vendors and never by the admin; a second import says it is already imported (card:10478804193). The first-run onboarding tour starts once and does not come back after it is dismissed.
+
 **Expect** labels read "Service Checkout" and "Become a Vendor" — matching the
 installer. "Checkout" / "Vendor Registration" means a label list has drifted
 again.

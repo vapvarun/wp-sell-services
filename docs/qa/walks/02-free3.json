@@ -1,0 +1,14 @@
+{
+  "journey": "02",
+  "mode": "free",
+  "ran_at": "2026-11-16T08:25:00Z",
+  "ran_against": "d14dbb8971d86a375a705180fc434b7fbe7980d8",
+  "env": "wp-sell-services.local, Reign, standalone rail, offline gateway, Mailpit on 127.0.0.1:10040",
+  "counts": {
+    "pass": 9,
+    "fail": 0,
+    "skipped": 2
+  },
+  "failures": [],
+  "note": "Dispute opened by buyer on order 120890 (dispute 85); buyer thread shows opening statement, no 'No messages yet'; evidence PNG renders as image (naturalWidth 1440) and downloads via wpss_order_file; vendor sees the same and replies; admin sees full thread, resolves favor_vendor with a decision note, order Completed, no blank rows; View Dispute link styled (1px solid red border) on admin and vendor order screens, Open Dispute not offered again; second dispute REST 400; cancel on resolved 400; outsider buyer 403 on get/respond/cancel/escalate and assign. Untested: successful REST respond/escalate/assign/resolve with one audit row each (no further disputable order), pre-1.6.0 upgrade check."
+}

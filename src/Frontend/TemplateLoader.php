@@ -160,7 +160,7 @@ class TemplateLoader {
 		$vendor_slug    = get_query_var( 'wpss_vendor' );
 		$from_directory = false;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public link.
-		if ( ! $vendor_slug && isset( $_GET['vendor'] ) && function_exists( 'wpss_get_vendors_page_id' ) && wpss_get_vendors_page_id() && is_page( wpss_get_vendors_page_id() ) ) {
+		if ( ! $vendor_slug && isset( $_GET['vendor'] ) && wpss_get_vendors_page_id() && is_page( wpss_get_vendors_page_id() ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public link.
 			$vendor_slug    = sanitize_title( wp_unslash( $_GET['vendor'] ) );
 			$from_directory = true;
@@ -446,7 +446,7 @@ class TemplateLoader {
 
 		// Check user has access (customer, vendor, or admin).
 		$user_id = get_current_user_id();
-		if ( $order->customer_id !== $user_id && $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+		if ( ! wpss_user_can_view_order( $order, $user_id ) ) {
 			wp_die( esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ), '', array( 'response' => 403 ) );
 		}
 

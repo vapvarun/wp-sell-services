@@ -734,7 +734,7 @@ class AuditLogService {
 
 		add_action(
 			'wpss_vendor_status_updated',
-			function ( int $user_id, string $status, ?string $from = null ): void {
+			function ( int $user_id, string $status, ?string $from = null, string $reason = '' ): void {
 				if ( ! isset( VendorService::STATUS_EVENTS[ $status ] ) ) {
 					return;
 				}
@@ -746,11 +746,12 @@ class AuditLogService {
 						'action'     => $status,
 						'from_value' => (string) $from,
 						'to_value'   => $status,
+						'context'    => '' !== $reason ? array( 'note' => $reason ) : array(),
 					)
 				);
 			},
 			10,
-			3
+			4
 		);
 
 		add_action(
@@ -925,18 +926,16 @@ class AuditLogService {
 		);
 
 		if ( false === $inserted ) {
-			if ( function_exists( 'wpss_log' ) ) {
-				wpss_log(
-					sprintf(
-						'AuditLogService::log failed for %s/%d (%s): %s',
-						$object_type,
-						$object_id,
-						$event_type,
-						$wpdb->last_error
-					),
-					'error'
-				);
-			}
+			wpss_log(
+				sprintf(
+					'AuditLogService::log failed for %s/%d (%s): %s',
+					$object_type,
+					$object_id,
+					$event_type,
+					$wpdb->last_error
+				),
+				'error'
+			);
 			return 0;
 		}
 

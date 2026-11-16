@@ -171,10 +171,6 @@ class DisputeService {
 	 * @return bool
 	 */
 	public function can_open_dispute( object $order ): bool {
-		if ( ! wpss_get_option( 'orders', 'allow_disputes' ) ) {
-			return false;
-		}
-
 		return null === $this->open_guard( $order );
 	}
 
@@ -190,6 +186,10 @@ class DisputeService {
 	 * @return string|null Translated refusal, or null when a dispute may be opened.
 	 */
 	private function open_guard( object $order ): ?string {
+		if ( ! wpss_get_option( 'orders', 'allow_disputes' ) ) {
+			return __( 'Disputes are turned off on this site.', 'wp-sell-services' );
+		}
+
 		if ( $this->get_by_order( (int) $order->id ) ) {
 			return __( 'A dispute already exists for this order.', 'wp-sell-services' );
 		}
@@ -1120,14 +1120,17 @@ class DisputeService {
 
 				// Ruling for the buyer returns everything they paid; NULL asks
 				// refund() to resolve that to the order total.
-				$refund = $this->order_service->refund(
+				$refund = DisputeWorkflowManager::while_resolving(
 					$order_id,
-					$partial ? $refund_amount : null,
-					$partial ? ServiceOrder::STATUS_PARTIALLY_REFUNDED : ServiceOrder::STATUS_REFUNDED,
-					array(
-						'origin'     => 'dispute',
-						'dispute_id' => (int) $dispute->id,
-						'resolution' => $resolution,
+					fn() => $this->order_service->refund(
+						$order_id,
+						$partial ? $refund_amount : null,
+						$partial ? ServiceOrder::STATUS_PARTIALLY_REFUNDED : ServiceOrder::STATUS_REFUNDED,
+						array(
+							'origin'     => 'dispute',
+							'dispute_id' => (int) $dispute->id,
+							'resolution' => $resolution,
+						)
 					)
 				);
 
@@ -1150,7 +1153,10 @@ class DisputeService {
 					return DisputeWorkflowManager::hand_back_order( $order_id, ServiceOrder::STATUS_COMPLETED );
 				}
 
-				return $this->order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
+				return DisputeWorkflowManager::while_resolving(
+					$order_id,
+					fn() => $this->order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED )
+				);
 		}
 
 		return false;
@@ -1346,8 +1352,8 @@ class DisputeService {
 		return array(
 			self::STATUS_OPEN      => __( 'Open', 'wp-sell-services' ),
 			self::STATUS_PENDING   => __( 'Pending review', 'wp-sell-services' ),
-			self::STATUS_RESOLVED  => __( 'Resolved', 'wp-sell-services' ),
 			self::STATUS_ESCALATED => __( 'Escalated', 'wp-sell-services' ),
+			self::STATUS_RESOLVED  => __( 'Resolved', 'wp-sell-services' ),
 			self::STATUS_CLOSED    => __( 'Closed', 'wp-sell-services' ),
 		);
 	}

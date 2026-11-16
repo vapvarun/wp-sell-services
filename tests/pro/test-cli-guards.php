@@ -78,7 +78,17 @@ $run = static function ( string $args, string $env_type ) use ( $wp_bin ): array
 	return array( proc_close( $proc ), (string) $out );
 };
 
-$check = static function ( string $label, string $args, string $env_type, array $expect ) use ( &$failures, $run, $counts ): void {
+// `wpsspro test:flow` is a developer tool left out of the Pro zip and registered
+// behind class_exists(), so its cases run only where its file exists.
+$ships = static fn( string $args ): bool => ! str_contains( $args, 'wpsspro test:flow' ) || file_exists( WPSS_PRO_PLUGIN_DIR . 'src/CLI/TestFlowCommand.php' );
+
+$ran   = 0;
+$check = static function ( string $label, string $args, string $env_type, array $expect ) use ( &$failures, &$ran, $run, $counts, $ships ): void {
+	if ( ! $ships( $args ) ) {
+		WP_CLI::log( '  skip ' . $label . ' (developer tool, not in this install)' );
+		return;
+	}
+	++$ran;
 	$before             = $counts();
 	$already            = count( $failures );
 	list( $code, $out ) = $run( $args, $env_type );
@@ -121,4 +131,4 @@ if ( $failures ) {
 	WP_CLI::error( count( $failures ) . ' Pro CLI guard check(s) failed.' );
 }
 
-WP_CLI::success( 'Pro CLI guard contract holds: 9 checks, nothing written or deleted.' );
+WP_CLI::success( 'Pro CLI guard contract holds: ' . $ran . ' checks, nothing written or deleted.' );

@@ -52,6 +52,16 @@ $check( 'nested rows are normalised too', '2026-10-21T09:30:00+00:00' === $out['
 $check( 'a filter echoed back (start_date) keeps what the caller sent', '2026-10-21 09:30:00' === $out['start_date'] && '2026-10-21 09:30:00' === $out['note'] );
 $check( 'another plugin\'s route is left alone', '2026-10-21 09:30:00' === $respond( '/other/v1/x', array( 'created_at' => '2026-10-21 09:30:00' ) )['created_at'] );
 $check( 'an already formatted date is not touched twice', '2026-10-21T09:30:00+00:00' === $respond( '/wpss/v1/x', array( 'created_at' => '2026-10-21T09:30:00+00:00' ) )['created_at'] );
+// The normaliser must be HOOKED, not just exist: it was only wired from the never-called
+// API::init(), so no route was normalised over real HTTP (Basecamp 10475573764).
+$hooked = false;
+foreach ( $GLOBALS['wp_filter']['rest_post_dispatch']->callbacks ?? array() as $callbacks ) {
+	foreach ( $callbacks as $cb ) {
+		$hooked = $hooked || ( is_array( $cb['function'] ) && $cb['function'][0] instanceof \WPSellServices\API\API && 'normalise_response_dates' === $cb['function'][1] );
+	}
+}
+$check( 'normalise_response_dates is hooked on rest_post_dispatch', $hooked );
+$check( 'buyer request created_at is the UTC column', false !== strpos( $read( 'src/Services/BuyerRequestService.php' ), "'created_at'      => \$post->post_date_gmt" ) );
 
 // --- input boundaries follow the display timezone ----------------------------
 $set( 'Asia/Kolkata' );

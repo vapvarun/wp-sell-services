@@ -287,7 +287,7 @@ class ServiceModerationPage {
 	 * @return int
 	 */
 	public function get_pending_count(): int {
-		return wpss_count_pending_services();
+		return ModerationService::is_enabled() ? wpss_count_pending_services() : 0; // Moderation off: no queue, so no badge.
 	}
 
 	/**
@@ -1221,13 +1221,17 @@ class ServiceModerationPage {
 			return $data;
 		}
 
-		if ( ! $post_id || ModerationService::STATUS_APPROVED !== get_post_meta( $post_id, self::META_KEY, true ) ) {
+		// A listing already live with no record went live while moderation was off (approval always writes one), so
+		// it is judged as a live edit below, not held as unapproved: turning moderation on does not pull every existing service.
+		$already_live = $post_id && 'publish' === get_post_status( $post_id );
+
+		if ( ! $post_id || ( ModerationService::STATUS_APPROVED !== get_post_meta( $post_id, self::META_KEY, true ) && ! $already_live ) ) {
 			$data['post_status'] = 'pending';
 			return $data;
 		}
 
-		// Approved once is not approved for ever: a member bringing a draft back, or changing a live one, is reviewed again.
-		if ( get_current_user_id() && ( 'publish' !== get_post_status( $post_id ) || self::edits_live_listing( $post_id, $data, $postarr ) ) ) {
+		// Approved once is not approved for ever: a member bringing a draft back is reviewed again, and so is one changing a live listing when the owner turned Re-review Live Edits on.
+		if ( get_current_user_id() && ( 'publish' !== get_post_status( $post_id ) || ( ModerationService::re_reviews_live_edits() && self::edits_live_listing( $post_id, $data, $postarr ) ) ) ) {
 			$data['post_status'] = 'pending';
 		}
 

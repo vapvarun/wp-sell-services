@@ -374,6 +374,12 @@
 }
 
 /* Date Divider */
+.wpss-messaging__earlier {
+	display: flex;
+	justify-content: center;
+	margin: 12px 0;
+}
+
 .wpss-messaging__date-divider {
 	display: flex;
 	align-items: center;
@@ -1217,4 +1223,13 @@
 	border-color: var(--wpss-primary, #4f46e5);
 	color: var(--wpss-primary-accent, #4f46e5);
 	box-shadow: 0 0 0 var(--wpss-ring-width, 3px) var(--wpss-ring-color, rgb(79 70 229 / 25%));
+}
+
+/* Touch target: the paging links are 44px tall on a phone. */
+@media (max-width: 640px) {
+	.wpss-messaging__earlier .wpss-btn {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
 }

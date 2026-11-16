@@ -19,7 +19,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.3
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -29,8 +29,6 @@ $buyer_id           = (int) get_post_field( 'post_author', $request_id );
 $buyer              = get_userdata( $buyer_id );
 $request_status_raw = get_post_meta( $request_id, '_wpss_status', true );
 $request_status     = $request_status_raw ? $request_status_raw : 'open';
-$budget_type_raw    = get_post_meta( $request_id, '_wpss_budget_type', true );
-$budget_type        = $budget_type_raw ? $budget_type_raw : 'fixed';
 $budget_min         = (float) get_post_meta( $request_id, '_wpss_budget_min', true );
 $budget_max         = (float) get_post_meta( $request_id, '_wpss_budget_max', true );
 $delivery_days      = (int) get_post_meta( $request_id, '_wpss_delivery_days', true );
@@ -44,16 +42,13 @@ $categories         = wp_get_post_terms( $request_id, 'wpss_service_category', a
 $card_classes = apply_filters( 'wpss_request_card_classes', array( 'wpss-request-card' ), $request_id );
 
 // Format budget display.
-// Budget is a pre-purchase estimate, so it goes through
-// wpss_catalog_price_html() - the wrapper that carries data-wbcom-amount and
-// lets the display-currency switcher convert it in the browser. Built as HTML
-// from here on, so the 'Negotiable' fallback is escaped at assignment and the
-// echo sites pass it through wp_kses_post() instead of esc_html().
-if ( 'range' === $budget_type && $budget_min && $budget_max ) {
-	$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' ) . ' - ' . wpss_catalog_price_html( (float) $budget_max, 'request-budget' );
-} elseif ( $budget_min ) {
-	$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' );
-} else {
+// Budget is a pre-purchase estimate, so it goes through wpss_request_budget_html()
+// (wpss_catalog_price_html under the hood: it carries data-wbcom-amount so the
+// display-currency switcher can convert it in the browser). HTML from here on, so
+// the 'Negotiable' fallback is escaped at assignment and the echo sites pass it
+// through wp_kses_post() instead of esc_html().
+$budget_display = wpss_request_budget_html( (float) $budget_min, (float) $budget_max );
+if ( '' === $budget_display ) {
 	$budget_display = esc_html__( 'Negotiable', 'wp-sell-services' );
 }
 
@@ -110,7 +105,7 @@ do_action( 'wpss_before_request_card', $request_id );
 				class="wpss-request-card__buyer-avatar">
 			<div class="wpss-request-card__buyer-info">
 				<span class="wpss-request-card__buyer-name">
-					<?php echo esc_html( $buyer ? $buyer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
+					<?php echo esc_html( wpss_get_member_display_name( (int) ( $buyer->ID ?? 0 ), __( 'Anonymous', 'wp-sell-services' ) ) ); ?>
 				</span>
 				<span class="wpss-request-card__date">
 					<?php
@@ -235,7 +230,7 @@ do_action( 'wpss_before_request_card', $request_id );
 			?>
 			<?php if ( $expires_at || $delivery_days ) : ?>
 				<div class="wpss-request-card__meta-item">
-					<span class="wpss-request-card__meta-label"><?php echo esc_html( $expires_at ? __( 'Deadline', 'wp-sell-services' ) : __( 'Needed within', 'wp-sell-services' ) ); ?></span>
+					<span class="wpss-request-card__meta-label"><?php echo esc_html( $expires_at ? __( 'Open until', 'wp-sell-services' ) : __( 'Needed within', 'wp-sell-services' ) ); ?></span>
 					<span class="wpss-request-card__meta-value">
 						<?php
 						if ( $expires_at ) {
@@ -268,8 +263,9 @@ do_action( 'wpss_before_request_card', $request_id );
 
 			<?php // A visitor is told what it takes, as on the request page itself (Basecamp 10337197376). ?>
 			<?php if ( is_user_logged_in() ) : ?>
+				<?php // A suspended vendor cannot send a proposal, so the card only offers the request itself. ?>
 				<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
-					<?php esc_html_e( 'Send Proposal', 'wp-sell-services' ); ?>
+					<?php echo 'suspended' === wpss_get_vendor_status( get_current_user_id() ) ? esc_html__( 'View Request', 'wp-sell-services' ) : esc_html__( 'Send Proposal', 'wp-sell-services' ); ?>
 				</a>
 			<?php else : ?>
 				<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">

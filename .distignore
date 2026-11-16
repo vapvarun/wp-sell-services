@@ -11,6 +11,12 @@ build
 assets/css/src
 assets/js/src
 
+# Developer-only WP-CLI tools (registered behind class_exists())
+src/CLI/TestFlowCommand.php
+src/CLI/ScaleCommand.php
+src/CLI/RestContractCommand.php
+src/CLI/ApiShapeCommand.php
+
 # Config
 Gruntfile.js
 package.json

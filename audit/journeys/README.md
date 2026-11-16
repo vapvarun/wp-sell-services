@@ -90,7 +90,7 @@ Walk dates and results are recorded in `.qa-results/walks.json`, not in these fi
 
 ## Every published feature has a journey
 
-Each row of the public feature catalog (`docs/website/feature-catalog.md`) and the journey that walks it.
+Each row of the public feature catalog (`docs/website/getting-started/feature-catalog.md`) and the journey that walks it.
 
 | Feature catalog row | Journey |
 |---|---|
@@ -125,7 +125,7 @@ Each row of the public feature catalog (`docs/website/feature-catalog.md`) and t
 | Email notifications; white-label branding | 11, 12, 23 |
 | In-app notifications | 11 |
 | Push notifications to phones | 23 |
-| Realtime alerts | 08 |
+| Realtime alerts | 08 (channel auth), 14 (a message arrives live) |
 | Admin order, vendor, dispute, withdrawal management | 13, 02, 10 |
 | Moderation queues | 13 |
 | Analytics | 15, 13 |
@@ -138,7 +138,7 @@ Each row of the public feature catalog (`docs/website/feature-catalog.md`) and t
 ## Not yet written
 
 Recurring services only: switched off, with no setting to turn them on, so there is nothing an owner can walk.
-Every other feature in `docs/website/feature-catalog.md` has a journey above; `docs/qa/FEATURE-CATALOG.md` maps each row to it.
+Every other feature in `docs/website/getting-started/feature-catalog.md` has a journey above; `docs/qa/FEATURE-CATALOG.md` maps each row to it.
 
 ## Two things these journeys have taught, the hard way
 

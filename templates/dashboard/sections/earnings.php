@@ -30,7 +30,19 @@ do_action( 'wpss_dashboard_section_before', 'earnings', $user_id );
 
 $earnings_service = new EarningsService();
 $earnings         = $earnings_service->get_summary( $user_id );
-$withdrawals      = $earnings_service->get_withdrawals( $user_id, array( 'limit' => 10 ) );
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only paging parameter.
+$withdrawals_page = isset( $_GET['withdrawals_page'] ) ? max( 1, (int) $_GET['withdrawals_page'] ) : 1; // (int), not absint(): -3 is page 1, not page 3.
+$withdrawals_per  = 10;
+$withdrawals_all  = $earnings_service->count_withdrawals( $user_id );
+$withdrawals_last = max( 1, (int) ceil( $withdrawals_all / $withdrawals_per ) );
+$withdrawals_page = min( $withdrawals_page, $withdrawals_last );
+$withdrawals      = $earnings_service->get_withdrawals(
+	$user_id,
+	array(
+		'limit'  => $withdrawals_per,
+		'offset' => ( $withdrawals_page - 1 ) * $withdrawals_per,
+	)
+);
 $methods          = EarningsService::get_withdrawal_methods();
 $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
 
@@ -278,7 +290,8 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 	<div id="wpss-withdrawal" class="wpss-earnings__withdrawal" style="margin-top: 2rem;">
 		<h3><?php esc_html_e( 'Request Withdrawal', 'wp-sell-services' ); ?></h3>
 
-		<?php if ( $earnings['available_balance'] >= $min_withdrawal ) : ?>
+		<?php // One withdrawal at a time: say so up front instead of offering a form the service refuses after submit. ?>
+		<?php if ( $earnings['available_balance'] >= $min_withdrawal && (float) $earnings['pending_withdrawal'] <= 0 ) : ?>
 			<form id="wpss-withdrawal-form" class="wpss-form">
 				<?php wp_nonce_field( 'wpss_request_withdrawal', 'wpss_withdrawal_nonce' ); ?>
 
@@ -355,6 +368,8 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 
 				<div id="wpss-withdrawal-message" class="wpss-notice" role="status" style="display: none;"></div>
 			</form>
+		<?php elseif ( $earnings['available_balance'] >= $min_withdrawal ) : ?>
+			<p class="wpss-notice wpss-notice--info" role="status"><?php esc_html_e( 'You already have a withdrawal in progress. You can request another once it is paid.', 'wp-sell-services' ); ?></p>
 		<?php elseif ( $available_balance < 0 && (float) $earnings['ledger_balance'] >= 0 ) : ?>
 			<?php // Over-committed by a withdrawal in progress, not in debt: the notice above says so. ?>
 		<?php elseif ( 'negative' === EarningsService::classify_balance( (float) $earnings['available_balance'] ) ) : ?>
@@ -551,6 +566,32 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 					</tbody>
 				</table>
 			</div>
+			<?php if ( $withdrawals_last > 1 ) : ?>
+				<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Withdrawal history pages', 'wp-sell-services' ); ?>">
+					<?php if ( $withdrawals_page > 1 ) : ?>
+						<a href="<?php echo esc_url( $withdrawals_page > 2 ? add_query_arg( 'withdrawals_page', $withdrawals_page - 1 ) : remove_query_arg( 'withdrawals_page' ) ); ?>" class="wpss-pagination__link wpss-pagination__link--prev">
+							<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>
+							<?php esc_html_e( 'Previous', 'wp-sell-services' ); ?>
+						</a>
+					<?php endif; ?>
+					<span class="wpss-pagination__current">
+						<?php
+						printf(
+							/* translators: 1: current page, 2: total pages */
+							esc_html__( 'Page %1$d of %2$d', 'wp-sell-services' ),
+							(int) $withdrawals_page,
+							(int) $withdrawals_last
+						);
+						?>
+					</span>
+					<?php if ( $withdrawals_page < $withdrawals_last ) : ?>
+						<a href="<?php echo esc_url( add_query_arg( 'withdrawals_page', $withdrawals_page + 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--next">
+							<?php esc_html_e( 'Next', 'wp-sell-services' ); ?>
+							<i data-lucide="chevron-right" class="wpss-icon" aria-hidden="true"></i>
+						</a>
+					<?php endif; ?>
+				</nav>
+			<?php endif; ?>
 		<?php else : ?>
 			<p class="wpss-text-muted"><?php esc_html_e( 'No withdrawal requests yet.', 'wp-sell-services' ); ?></p>
 		<?php endif; ?>

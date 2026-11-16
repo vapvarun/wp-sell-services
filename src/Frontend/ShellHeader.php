@@ -237,6 +237,11 @@ class ShellHeader {
 			return $title;
 		}
 
+		// The head is no heading: SEO plugins read the title there for their schema, Open Graph and breadcrumb data, and a blank name made Rank Math drop the Service name from its JSON-LD.
+		if ( \doing_action( 'wp_head' ) ) {
+			return $title;
+		}
+
 		if ( ! self::is_shell_surface() ) {
 			return $title;
 		}

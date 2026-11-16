@@ -834,19 +834,19 @@ class OrderService {
 
 		$data = array(
 			'status'     => $new_status,
-			'updated_at' => current_time( 'mysql', true ),
+			'updated_at' => wpss_order_timestamp( 'updated_at', $order_id ),
 		);
 
 		// Set timestamps based on status.
 		if ( ServiceOrder::STATUS_IN_PROGRESS === $new_status && ! $order->started_at ) {
-			$data['started_at'] = current_time( 'mysql', true );
+			$data['started_at'] = wpss_order_timestamp( 'started_at', $order_id );
 		}
 
 		// A dispute handing a completed order back keeps its original completion
 		// time, so the review window and earnings periods do not restart.
 		if ( ServiceOrder::STATUS_COMPLETED === $new_status
 			&& ! ( $order->completed_at && DisputeWorkflowManager::is_restoring_order( $order_id ) ) ) {
-			$data['completed_at'] = current_time( 'mysql', true );
+			$data['completed_at'] = wpss_order_timestamp( 'completed_at', $order_id );
 		}
 
 		// Conditioned on the status just read: a concurrent writer that moved
@@ -987,20 +987,27 @@ class OrderService {
 				ServiceOrder::STATUS_CANCELLED,
 				// Past the revision's own deadline (check_late_orders()).
 				ServiceOrder::STATUS_LATE,
+				// The seller may ask the buyer to cancel (request_seller_cancellation()).
+				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
 			),
 			ServiceOrder::STATUS_LATE                   => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_DELIVERED,
+				// The seller may ask the buyer to cancel (request_seller_cancellation()).
+				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
 			),
 			ServiceOrder::STATUS_ON_HOLD                => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_CANCELLED,
 			),
+			// A declined seller request restores the status the order had (late, revision requested).
 			ServiceOrder::STATUS_CANCELLATION_REQUESTED => array(
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_IN_PROGRESS,
+				ServiceOrder::STATUS_LATE,
+				ServiceOrder::STATUS_REVISION_REQUESTED,
 			),
 			// The four rulings, plus every status a dispute can be opened from:
 			// a dispute closed without a ruling hands the order back to where
@@ -1156,7 +1163,7 @@ class OrderService {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$table,
-				array( 'started_at' => current_time( 'mysql', true ) ),
+				array( 'started_at' => wpss_order_timestamp( 'started_at', (int) $order_id ) ),
 				array( 'id' => $order_id )
 			);
 		}
@@ -1208,7 +1215,9 @@ class OrderService {
 
 		$delivery_days = $this->get_delivery_days( $order );
 
-		$deadline = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
+		// Counted from when work started, so an imported or backdated order does not get a due date in the future.
+		$start    = $order->started_at instanceof \DateTimeImmutable ? $order->started_at : new \DateTimeImmutable( 'now' );
+		$deadline = $start->modify( '+' . $delivery_days . ' days' );
 
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
@@ -1346,7 +1355,7 @@ class OrderService {
 	 * @return string|null The meta JSON as it was, to put back if the status
 	 *                     change is refused; null when the write failed.
 	 */
-	private function store_cancellation( int $order_id, string $reason, string $note, int $user_id ): ?string {
+	private function store_cancellation( int $order_id, string $reason, string $note, int $user_id, string $from_status = '' ): ?string {
 		global $wpdb;
 
 		$table    = $wpdb->prefix . 'wpss_orders';
@@ -1360,6 +1369,11 @@ class OrderService {
 			'requested_by' => $user_id,
 			'requested_at' => current_time( 'mysql', true ),
 		);
+
+		// Where the order was, so a declined request puts it back there.
+		if ( '' !== $from_status ) {
+			$meta['cancellation_request']['from_status'] = $from_status;
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$written = $wpdb->update( $table, array( 'meta' => wp_json_encode( $meta ) ), array( 'id' => $order_id ) );
@@ -1406,10 +1420,10 @@ class OrderService {
 		$now         = new \DateTimeImmutable( 'now', $order->started_at->getTimezone() );
 		$hours_since = ( $now->getTimestamp() - $order->started_at->getTimestamp() ) / 3600;
 
-		if ( $hours_since > 24 ) {
+		if ( $hours_since > wpss_cancel_window_hours() ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Cancellation window has expired. You can only request cancellation within 24 hours of work starting.', 'wp-sell-services' ),
+				'message' => wpss_cancel_window_rule(),
 			);
 		}
 
@@ -1472,6 +1486,152 @@ class OrderService {
 		do_action( 'wpss_cancellation_requested', $order_id, $user_id, $reason, $note );
 
 		return array( 'success' => true );
+	}
+
+	/**
+	 * Statuses in which a seller may ask the buyer to cancel an order.
+	 *
+	 * Paid work in flight only: pre-work orders the seller can still cancel
+	 * outright, and a delivered order has its own accept / revise / dispute path.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @return string[]
+	 */
+	public static function seller_cancellation_statuses(): array {
+		return array(
+			ServiceOrder::STATUS_IN_PROGRESS,
+			ServiceOrder::STATUS_LATE,
+			ServiceOrder::STATUS_REVISION_REQUESTED,
+		);
+	}
+
+	/**
+	 * A seller asks the buyer to cancel an order they cannot complete.
+	 *
+	 * The mirror of request_cancellation(): the buyer accepts (cancel and refund)
+	 * or declines (back to work). There is no timer. A silent buyer does not
+	 * lose the order; the owner can step in or the seller can open a dispute.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param int    $user_id  The vendor asking.
+	 * @param string $reason   Cancellation reason key.
+	 * @param string $note     Optional details.
+	 * @return array{success: bool, message?: string}
+	 */
+	public function request_seller_cancellation( int $order_id, int $user_id, string $reason, string $note = '' ): array {
+		$order = $this->get( $order_id );
+
+		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Order not found.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( ! in_array( $order->status, self::seller_cancellation_statuses(), true ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'You cannot ask to cancel this order in its current status.', 'wp-sell-services' ),
+			);
+		}
+
+		global $wpdb;
+		$old_meta = $this->store_cancellation( $order_id, sanitize_key( $reason ), $note, $user_id, (string) $order->status );
+
+		if ( null === $old_meta ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to save cancellation details.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( ! $this->update_status( $order_id, ServiceOrder::STATUS_CANCELLATION_REQUESTED, $reason ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update( $wpdb->prefix . 'wpss_orders', array( 'meta' => '' === $old_meta ? null : $old_meta ), array( 'id' => $order_id ) );
+
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to request cancellation.', 'wp-sell-services' ),
+			);
+		}
+
+		/** This action is documented in OrderService::request_cancellation(). */
+		do_action( 'wpss_cancellation_requested', $order_id, $user_id, $reason, $note );
+
+		return array( 'success' => true );
+	}
+
+	/**
+	 * Orders being resumed by a declined seller cancellation request, so the generic status notices stay quiet.
+	 *
+	 * @var array<int,true>
+	 */
+	private static array $declining_cancellation = array();
+
+	/**
+	 * Whether the order is being resumed by a declined seller cancellation request.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public static function is_declining_cancellation( int $order_id ): bool {
+		return isset( self::$declining_cancellation[ $order_id ] );
+	}
+
+	/**
+	 * The buyer declines the seller's cancellation request; work resumes.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param int $order_id Order ID.
+	 * @param int $user_id  The buyer (or an admin) declining.
+	 * @return array{success: bool, message?: string}
+	 */
+	public function decline_seller_cancellation( int $order_id, int $user_id ): array {
+		$order = $this->get( $order_id );
+
+		if ( ! $order || ServiceOrder::STATUS_CANCELLATION_REQUESTED !== $order->status || ! $order->is_cancellation_requested_by_vendor() ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This order has no seller cancellation request to decline.', 'wp-sell-services' ),
+			);
+		}
+
+		// Back to where the order was (a revision request or a late order must not vanish), else in progress.
+		$request = $order->get_cancellation_request() ?? array();
+		$back_to = (string) ( $request['from_status'] ?? '' );
+		if ( ! in_array( $back_to, self::seller_cancellation_statuses(), true ) ) {
+			$back_to = ServiceOrder::STATUS_IN_PROGRESS;
+		}
+
+		// The generic "started working" mails would tell both sides a new start; the decline notice below says what happened.
+		self::$declining_cancellation[ $order_id ] = true;
+		try {
+			$updated = $this->update_status( $order_id, $back_to, __( 'Buyer declined the seller cancellation request.', 'wp-sell-services' ), ServiceOrder::STATUS_CANCELLATION_REQUESTED );
+		} finally {
+			unset( self::$declining_cancellation[ $order_id ] );
+		}
+
+		if ( $updated ) {
+			/**
+			 * Fires after a buyer declines the seller's cancellation request and the order resumes.
+			 *
+			 * @since 1.9.4
+			 *
+			 * @param int $order_id Order ID.
+			 */
+			do_action( 'wpss_seller_cancellation_declined', $order_id );
+		}
+
+		return $updated
+			? array( 'success' => true )
+			: array(
+				'success' => false,
+				'message' => __( 'Failed to resume the order.', 'wp-sell-services' ),
+			);
 	}
 
 	/**

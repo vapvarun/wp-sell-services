@@ -10,7 +10,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.2.0
- * @version 1.9.0
+ * @version 1.9.3
  *
  * @var WP_User $recipient     Recipient user object.
  * @var string  $email_heading Email heading.
@@ -32,7 +32,7 @@ do_action( 'wpss_email_content_before', 'generic', $recipient ?? null );
 	printf(
 		/* translators: %s: recipient name */
 		esc_html__( 'Hi %s,', 'wp-sell-services' ),
-		esc_html( isset( $recipient ) && $recipient ? $recipient->display_name : __( 'there', 'wp-sell-services' ) )
+		esc_html( wpss_get_member_display_name( (int) ( $recipient->ID ?? 0 ), __( 'there', 'wp-sell-services' ) ) )
 	);
 	?>
 </p>

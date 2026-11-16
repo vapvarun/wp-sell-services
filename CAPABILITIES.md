@@ -3,7 +3,7 @@
 Buyer-level truth for the store listing and for anyone deciding whether this
 plugin fits. Written to be read before purchase, not after.
 
-**Version**: 1.9.0 · **Last verified**: 2026-10-19 (rows changed in 1.9.0 checked against the release smoke walk)
+**Version**: 1.9.3 · **Last verified**: 2026-11-12 (header refreshed; rows were last walked for 1.9.0, and the 1.9.3 fixes are covered by contract tests, not yet by a release smoke walk)
 
 `YES` — ships and is exercised · `PARTIAL` — ships with a stated limit ·
 `NO` — does not ship, whatever a roadmap says.
@@ -153,8 +153,26 @@ them.
 **YES** in the general case. The frontend is token-driven with dark-mode and RTL
 support, and does not require one of our themes.
 
+## What is frozen?
+
+These features work today and keep working, but they are frozen: no new
+providers, regions or features will be added to them. Bugs in what already
+ships are still fixed.
+
+- Display currency (Pro): no new currency sources or rate providers.
+- Cloud storage (Pro): no new storage providers.
+- Wallets (Pro): no new wallet providers beyond the four that ship (Internal
+  Wallet, TeraWallet, WooCommerce Wallet, MyCred).
+- Flat tax (Free): one flat rate, no tax regions or tax tables.
+- Menu visibility (Free): the current role rules, no new menu features.
+
+Three features that do not ship are frozen too, with no new work planned:
+recurring services (Pro, switched off), and the Easy Digital Downloads and
+FluentCart rails (Pro, beta behind `wpss_pro_beta_rails`). Do not buy Pro
+expecting any of them to be finished.
+
 ---
 
-Fuller detail: [Feature catalog](docs/website/feature-catalog.md) ·
+Fuller detail: [Feature catalog](docs/website/getting-started/feature-catalog.md) ·
 [Free vs Pro](docs/website/getting-started/free-vs-pro.md). Developer-side
 capability and role reference lives in `audit/CAPABILITIES.md`.

@@ -56,14 +56,10 @@ class API {
 
 		// Filter REST response.
 		add_filter( 'rest_pre_serve_request', [ $this, 'serve_request' ], 10, 4 );
-
-		// One place that guarantees ISO 8601 on every wpss route, so a new endpoint
-		// cannot ship a bare MySQL datetime (Time Standard rule 7).
-		add_filter( 'rest_post_dispatch', [ $this, 'normalise_response_dates' ], 10, 3 );
 	}
 
 	/**
-	 * Turn a stored UTC datetime in any wpss/ response into ISO 8601.
+	 * Turn a stored UTC datetime in any wpss/ or wpss-pro/ response into ISO 8601.
 	 *
 	 * Controllers that already format a date are untouched (the value is no longer a
 	 * MySQL datetime). Only keys ending _at, _on or _deadline are converted, so a
@@ -77,7 +73,7 @@ class API {
 	 * @return \WP_HTTP_Response
 	 */
 	public function normalise_response_dates( $response, $server, $request ) {
-		if ( ! $response instanceof \WP_REST_Response || 0 !== strpos( $request->get_route(), '/wpss/' ) || $response->is_error() ) {
+		if ( ! $response instanceof \WP_REST_Response || ! preg_match( '#^/wpss(-pro)?/#', $request->get_route() ) || $response->is_error() ) {
 			return $response;
 		}
 
@@ -591,17 +587,16 @@ class API {
 	 *
 	 * @since 1.4.0
 	 *
-	 * @param array<string, mixed> $pages_settings Stored page map.
 	 * @return array<string, int|null>
 	 */
-	private function get_page_ids( array $pages_settings ): array {
+	private function get_page_ids(): array {
 		$ids = array(
-			'services'      => (int) ( $pages_settings['services_page'] ?? 0 ),
-			'vendors'       => function_exists( 'wpss_get_vendors_page_id' ) ? wpss_get_vendors_page_id() : (int) ( $pages_settings['vendors_page'] ?? 0 ),
-			'dashboard'     => (int) ( $pages_settings['dashboard'] ?? 0 ),
-			'checkout'      => function_exists( 'wpss_get_active_store_page_id' ) ? wpss_get_active_store_page_id( 'checkout' ) : (int) ( $pages_settings['checkout'] ?? 0 ),
-			'cart'          => function_exists( 'wpss_get_active_store_page_id' ) ? wpss_get_active_store_page_id( 'cart' ) : (int) ( $pages_settings['cart'] ?? 0 ),
-			'become_vendor' => (int) ( $pages_settings['become_vendor'] ?? 0 ),
+			'services'      => wpss_get_page_id( 'services_page' ),
+			'vendors'       => wpss_get_vendors_page_id(),
+			'dashboard'     => wpss_get_page_id( 'dashboard' ),
+			'checkout'      => wpss_get_active_store_page_id( 'checkout' ),
+			'cart'          => wpss_get_active_store_page_id( 'cart' ),
+			'become_vendor' => wpss_get_page_id( 'become_vendor' ),
 			'terms'         => (int) get_option( 'wpss_terms_page' ),
 		);
 
@@ -617,13 +612,12 @@ class API {
 	 *
 	 * @since 1.4.0
 	 *
-	 * @param array<string, mixed> $pages_settings Stored page map.
 	 * @return array<string, string|null>
 	 */
-	private function get_page_urls( array $pages_settings ): array {
+	private function get_page_urls(): array {
 		$urls = array();
 
-		foreach ( $this->get_page_ids( $pages_settings ) as $key => $id ) {
+		foreach ( $this->get_page_ids() as $key => $id ) {
 			$url = $id ? get_permalink( $id ) : '';
 
 			$urls[ $key ] = $url ?: null;
@@ -633,17 +627,11 @@ class API {
 		// them through the same resolvers the rest of the plugin uses rather
 		// than trusting our own page map — on a WooCommerce site these point at
 		// WooCommerce's pages, not the standalone ones.
-		if ( function_exists( 'wpss_get_checkout_base_url' ) ) {
-			$urls['checkout'] = wpss_get_checkout_base_url() ?: $urls['checkout'];
-		}
+		$urls['checkout'] = wpss_get_checkout_base_url() ?: $urls['checkout'];
 
-		if ( function_exists( 'wpss_get_cart_url' ) ) {
-			$urls['cart'] = wpss_get_cart_url() ?: $urls['cart'];
-		}
+		$urls['cart'] = wpss_get_cart_url() ?: $urls['cart'];
 
-		if ( function_exists( 'wpss_get_vendors_url' ) ) {
-			$urls['vendors'] = wpss_get_vendors_url() ?: $urls['vendors'];
-		}
+		$urls['vendors'] = wpss_get_vendors_url() ?: $urls['vendors'];
 
 		return $urls;
 	}
@@ -654,8 +642,6 @@ class API {
 	 * @return \WP_REST_Response
 	 */
 	public function get_public_settings(): \WP_REST_Response {
-		$pages_settings = get_option( 'wpss_pages', array() );
-
 		$settings = [
 			'currency'            => wpss_get_currency(),
 			'currency_symbol'     => wpss_get_currency_symbol(),
@@ -672,16 +658,16 @@ class API {
 			// key. `vendors` and `terms` are never created by the installer, so
 			// they are null on a stock install until the owner maps them —
 			// never 0, which is not a post id a client can open.
-			'pages'               => $this->get_page_ids( $pages_settings ),
+			'pages'               => $this->get_page_ids(),
 			// Resolved URLs for the same keys, because an ID of 0 is not
 			// something a client can navigate to and an ID alone still needs a
 			// second round trip. NULL where the site genuinely has no such page,
 			// so a client can hide the entry rather than link to nowhere.
-			'page_urls'           => $this->get_page_urls( $pages_settings ),
+			'page_urls'           => $this->get_page_urls(),
 			// Non-sensitive realtime (WebSocket) client config — never the secret.
 			'realtime'            => ( new \WPSellServices\Services\RealtimeService() )->get_client_config(),
 			// Bootstrap contract for native app clients.
-			'app'                 => $this->get_app_contract( $pages_settings ),
+			'app'                 => $this->get_app_contract(),
 		];
 
 		/**
@@ -711,11 +697,10 @@ class API {
 	 *
 	 * @since 1.5.1
 	 *
-	 * @param array<string,mixed> $pages_settings Configured page mapping.
 	 * @return array<string,mixed>
 	 */
-	private function get_app_contract( array $pages_settings ): array {
-		$page_urls = $this->get_page_urls( $pages_settings );
+	private function get_app_contract(): array {
+		$page_urls = $this->get_page_urls();
 		$legal     = wpss_get_legal_links();
 
 		$branding = array(

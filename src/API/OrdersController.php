@@ -1024,11 +1024,21 @@ class OrdersController extends RestController {
 					// never rendered, "Accept delivery" failed its own guard and
 					// the revision button was hidden. A successful call left the
 					// order unfinishable by either party.
+					// The files a client posts with the action are delivered with it, exactly as
+					// POST /orders/{id}/deliverables does; they used to be dropped without a word.
+					$files       = array();
+					$file_params = $request->get_file_params();
+					if ( ! empty( $file_params['files'] ) ) {
+						$files = wpss_normalize_uploaded_files( (array) $file_params['files'] );
+					}
+
 					$delivery = new \WPSellServices\Services\DeliveryService();
-					$result   = $delivery->submit( $order_id, (string) $request->get_param( 'message' ), array() );
+					$result   = $delivery->submit( $order_id, (string) $request->get_param( 'message' ), $files );
 
 					if ( ! $result ) {
-						$error = __( 'Delivery could not be submitted.', 'wp-sell-services' );
+						$error = '' !== $delivery->get_last_error()
+							? $delivery->get_last_error()
+							: __( 'Delivery could not be submitted.', 'wp-sell-services' );
 					}
 				}
 				break;
@@ -1179,18 +1189,33 @@ class OrdersController extends RestController {
 							$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );
 						}
 					}
+				} elseif ( $is_vendor && in_array( $order->status, OrderService::seller_cancellation_statuses(), true ) ) {
+					// The seller asks, the buyer decides.
+					if ( empty( $reason ) ) {
+						$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
+					} else {
+						$cancel_result = $order_service->request_seller_cancellation( $order_id, $user_id, $reason, sanitize_textarea_field( $request->get_param( 'note' ) ?? '' ) );
+						$result        = $cancel_result['success'] ?? false;
+						if ( ! $result ) {
+							$error = $cancel_result['message'] ?? __( 'Failed to request cancellation.', 'wp-sell-services' );
+						}
+					}
 				} else {
 					$error = __( 'You cannot cancel this order in its current status.', 'wp-sell-services' );
 				}
 				break;
 
 			case 'accept-cancellation':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor can accept cancellation requests.', 'wp-sell-services' );
+				// The other party answers: the buyer for a seller's request, the vendor for a buyer's.
+				$by_vendor = 'cancellation_requested' === $order->status && $order->is_cancellation_requested_by_vendor();
+				if ( ! $is_admin && ! ( $by_vendor ? $is_customer : $is_vendor ) ) {
+					$error = $by_vendor
+						? __( 'Only the buyer can accept the seller\'s cancellation request.', 'wp-sell-services' )
+						: __( 'Only the vendor can accept cancellation requests.', 'wp-sell-services' );
 				} elseif ( 'cancellation_requested' !== $order->status ) {
 					$error = __( 'No cancellation request to accept.', 'wp-sell-services' );
 				} else {
-					$cancel_result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
+					$cancel_result = $order_service->cancel( $order_id, $user_id, $by_vendor ? __( 'Buyer accepted cancellation request.', 'wp-sell-services' ) : __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
 					$result        = $cancel_result['success'] ?? false;
 					if ( ! $result ) {
 						$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );
@@ -1199,10 +1224,18 @@ class OrdersController extends RestController {
 				break;
 
 			case 'reject-cancellation':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor can respond to cancellation requests.', 'wp-sell-services' );
+				$by_vendor = 'cancellation_requested' === $order->status && $order->is_cancellation_requested_by_vendor();
+				if ( ! $is_admin && ! ( $by_vendor ? $is_customer : $is_vendor ) ) {
+					$error = __( 'Only the other party can respond to a cancellation request.', 'wp-sell-services' );
 				} elseif ( 'cancellation_requested' !== $order->status ) {
 					$error = __( 'No cancellation request to respond to.', 'wp-sell-services' );
+				} elseif ( $by_vendor ) {
+					// Buyer declines the seller's request: work resumes, nothing to dispute.
+					$decline = $order_service->decline_seller_cancellation( $order_id, $user_id );
+					$result  = $decline['success'];
+					if ( ! $result ) {
+						$error = $decline['message'] ?? __( 'Failed to resume the order.', 'wp-sell-services' );
+					}
 				} else {
 					// Vendor disputes the cancellation — escalate to dispute.
 					//
@@ -1223,7 +1256,7 @@ class OrdersController extends RestController {
 						$result = true;
 						do_action( 'wpss_order_disputed', $order_id, 'vendor', $dispute_note );
 					} else {
-						$error = __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
+						$error = $dispute_service->last_error() ?: __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
 					}
 				}
 				break;
@@ -1364,7 +1397,7 @@ class OrdersController extends RestController {
 				'success'      => true,
 				'message'      => $result['message'],
 				'submitted'    => $result['submitted'],
-				'submitted_at' => current_time( 'mysql', true ),
+				'submitted_at' => wpss_rest_date( current_time( 'mysql', true ) ),
 			)
 		);
 	}
@@ -1730,23 +1763,18 @@ class OrdersController extends RestController {
 			);
 		}
 
+		// A locked phase keeps its own documented code (mobile shows the "previous phase first" hint).
+		if ( wpss_is_order_phase_locked( $order ) ) {
+			return new WP_Error(
+				'wpss_milestone_locked',
+				__( 'This phase is locked. Pay the previous phase first — once it is approved or cancelled, this one will unlock.', 'wp-sell-services' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		$refusal = wpss_get_order_payment_refusal( $order );
 		if ( '' !== $refusal ) {
 			return new WP_Error( 'wpss_order_not_payable', $refusal, array( 'status' => 409 ) );
-		}
-
-		// Lock-step guard on milestone sub-orders — HTTP 409 with the same
-		// error code the UI surfaces, so the mobile client shows the
-		// "previous phase first" hint identically to the website.
-		if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
-			$milestone_service = new \WPSellServices\Services\MilestoneService();
-			if ( $milestone_service->is_locked( $order_id ) ) {
-				return new WP_Error(
-					'wpss_milestone_locked',
-					__( 'This phase is locked. Pay the previous phase first — once it is approved or cancelled, this one will unlock.', 'wp-sell-services' ),
-					array( 'status' => 409 )
-				);
-			}
 		}
 
 		$checkout_url = wpss_ensure_pay_order( $order_id );
@@ -1845,10 +1873,6 @@ class OrdersController extends RestController {
 				__( 'Order not found.', 'wp-sell-services' ),
 				array( 'status' => 404 )
 			);
-		}
-
-		if ( current_user_can( 'manage_options' ) ) {
-			return true;
 		}
 
 		if ( ! $this->user_owns_resource( $order_id, 'order' ) ) {
@@ -2189,9 +2213,7 @@ class OrdersController extends RestController {
 			// may have been edited or re-priced since, and what the buyer paid
 			// for is the authoritative answer.
 			'package'             => $this->get_package_snapshot( $order ),
-			'requirements'        => function_exists( 'wpss_get_order_requirements' )
-				? wpss_get_order_requirements( (int) $order->id )
-				: array(),
+			'requirements'        => wpss_get_order_requirements( (int) $order->id ),
 			'due_date'            => $this->format_datetime( $order->delivery_deadline ),
 			'started_at'          => $this->format_datetime( $order->started_at ),
 			'completed_at'        => $this->format_datetime( $order->completed_at ),
@@ -2333,13 +2355,17 @@ class OrdersController extends RestController {
 				if ( $is_customer && 'in_progress' === $order->status && $this->can_buyer_cancel_in_progress( $order ) ) {
 					$actions[] = 'cancel';
 				}
+				if ( $is_vendor && in_array( $order->status, OrderService::seller_cancellation_statuses(), true ) ) {
+					$actions[] = 'cancel';
+				}
 				if ( $is_customer || $is_vendor ) {
 					$actions[] = 'dispute';
 				}
 				break;
 
 			case 'cancellation_requested':
-				if ( $is_vendor || $is_admin ) {
+				// The other party answers the request.
+				if ( $is_admin || ( $order->is_cancellation_requested_by_vendor() ? $is_customer : $is_vendor ) ) {
 					$actions[] = 'accept-cancellation';
 					$actions[] = 'reject-cancellation';
 				}
@@ -2351,6 +2377,9 @@ class OrdersController extends RestController {
 			case 'revision_requested':
 				if ( $is_vendor || $is_admin ) {
 					$actions[] = 'deliver';
+				}
+				if ( $is_vendor ) {
+					$actions[] = 'cancel';
 				}
 				if ( $is_customer || $is_vendor ) {
 					$actions[] = 'dispute';
@@ -2403,7 +2432,7 @@ class OrdersController extends RestController {
 		$now         = new \DateTimeImmutable();
 		$hours_since = ( $now->getTimestamp() - $order->started_at->getTimestamp() ) / 3600;
 
-		if ( $hours_since > 24 ) {
+		if ( $hours_since > wpss_cancel_window_hours() ) {
 			return false;
 		}
 

@@ -46,7 +46,7 @@ Counts from the 2026-10-18 browser walk, Free and Pro active. Guards are scripts
 | Section | Journey | Guards | Gap |
 |---|---|---|---|
 | My Services, create and edit wizard | 05 | `test-package-ids-on-save`, `test-addon-pricing-contract`, `test-form-state-and-feedback` | wizard image remove cross |
-| Sales Orders, deliveries, revisions | 24, 01, 02 | `test-order-write-integrity`, `test-accept-needs-delivery`, `test-revisions-from-snapshot`, `test-delivery-refuses-bad-file` | Skip requirements is API only; `wp_ajax_wpss_skip_requirements` has had no caller since 1.0.x |
+| Sales Orders, deliveries, revisions | 24, 01, 02 | `test-order-write-integrity`, `test-accept-needs-delivery`, `test-revisions-from-snapshot`, `test-delivery-refuses-bad-file` | Skip requirements is API only; `wp_ajax_wpss_skip_requirements` has had no caller since 1.0.x and logs a deprecation since 1.9.3 (27 such actions, `AjaxHandlers::DEPRECATED_ACTIONS`, `test-dead-ajax-actions-deprecated`) |
 | Buyer Requests, Proposals | 01 | `test-proposal-count-contract`, `test-request-deadline-utc` | |
 | Reviews | 14 | `test-review-status-rest`, `test-review-window-and-reply` | |
 | Earnings & Payouts | 10, 15 | `test-ledger-balance-contract`, `test-negative-balance-contract` | |
