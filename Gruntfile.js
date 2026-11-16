@@ -430,6 +430,38 @@ module.exports = function ( grunt ) {
 	// package paths leaked into dist/<plugin>/vendor/composer/. If this trips,
 	// composer:nodev did not run (or did not complete) before copy:dist —
 	// ship-blocker per Basecamp #9828326478.
+	// prune:dist-classmap - drop autoloader entries whose file is not in the zip.
+	//
+	// copy:dist leaves developer-only CLI tools out, but the optimised classmap
+	// still lists them, so WP-CLI's class_exists() guard tried to include a missing
+	// file and logged a warning per command on every customer site with debug
+	// logging on. Found by the pristine install of 1.9.3.
+	grunt.registerTask( 'prune:dist-classmap', 'Remove classmap entries for files left out of the zip', function () {
+		const fs = require( 'fs' );
+		const path = require( 'path' );
+		const root = path.join( 'dist', pkg.name );
+		let removed = 0;
+		[ 'autoload_classmap.php', 'autoload_static.php' ].forEach( ( name ) => {
+			const file = path.join( root, 'vendor', 'composer', name );
+			if ( ! fs.existsSync( file ) ) {
+				return;
+			}
+			const kept = fs.readFileSync( file, 'utf8' ).split( '\n' ).filter( ( line ) => {
+				const m = line.match( /\$baseDir \. '(\/src\/[^']+\.php)'|__DIR__ \. '\/\.\.\/\.\.' \. '(\/src\/[^']+\.php)'/ );
+				if ( ! m ) {
+					return true;
+				}
+				if ( fs.existsSync( path.join( root, m[ 1 ] || m[ 2 ] ) ) ) {
+					return true;
+				}
+				removed++;
+				return false;
+			} );
+			fs.writeFileSync( file, kept.join( '\n' ) );
+		} );
+		grunt.log.ok( 'pruned ' + removed + ' classmap entries for files not in the zip.' );
+	} );
+
 	grunt.registerTask( 'verify:dist-autoloader', 'Assert no dev refs in dist autoloader', function () {
 		const fs = require( 'fs' );
 		const path = require( 'path' );
@@ -508,6 +540,7 @@ module.exports = function ( grunt ) {
 		'composer:nodev',
 		'clean:dist',
 		'copy:dist',
+		'prune:dist-classmap',
 		'verify:dist-autoloader',
 		'compress:dist',
 		'composer:dev',
