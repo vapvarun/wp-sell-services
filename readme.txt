@@ -298,6 +298,15 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - With vendor registration closed, the site owner can still start selling from the dashboard sidebar, the Become a Vendor page and the REST register route, not only the AJAX button.
 * Fix      - When buyer cancellation is closed, the order page writes out why (window passed or work delivered) instead of leaving it in a tooltip.
 * Fix      - Re-review Live Edits off now keeps an approved live service published for title edits and add-on changes too.
+* Improve  - A request's budget reads one way everywhere: a range, a fixed price, or Up to a maximum, and a seller who bids outside it sees a note before sending.
+* Improve  - The request deadline is labelled Open until, with a helper that says sellers can send proposals until that date.
+* Improve  - A vendor who is reactivated after a suspension is told so, instead of getting the new-vendor welcome.
+* Fix      - A service that was already live before moderation was turned on stays live when its vendor edits it.
+* Fix      - A suspended vendor no longer sees Send Proposal, Register as Vendor or Start selling prompts that lead nowhere.
+* Fix      - A pay link opened while logged out asks the buyer to log in, and the pay page for a proposal order links back to the order.
+* Fix      - Withdrawal notices say Paid, Approved or Rejected, and the withdrawal form explains that one is already in progress.
+* Fix      - The Moderation menu badge and the dashboard queue no longer count pending services while moderation is off.
+* Fix      - A resolved dispute on the admin order screen links as View dispute instead of Open dispute.
 * Fix      - A made-up Transaction ID (offline cart checkout or a receipt with no typed reference) is no longer shown to the buyer on the order page or the payment receipt.
 * Fix      - With Suspended Vendors and Earnings on, a suspended vendor also reaches the Pro wallet routes the app uses, and no longer sees a Start selling panel on the dashboard.
 * Fix      - The missing Terms page notice waits until a gateway with keys is on or the first order exists, instead of showing on every screen of a brand-new site.

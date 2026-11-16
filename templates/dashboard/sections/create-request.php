@@ -154,7 +154,7 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 					class="wpss-input"
 					min="<?php echo esc_attr( wpss_date_label( time() + DAY_IN_SECONDS, '', 'Y-m-d' ) ); ?>"
 				>
-				<p class="wpss-form-hint"><?php esc_html_e( 'When do you need this completed?', 'wp-sell-services' ); ?></p>
+				<p class="wpss-form-hint"><?php esc_html_e( 'Sellers can send proposals until this date.', 'wp-sell-services' ); ?></p>
 			</div>
 
 			<div class="wpss-form-row">
