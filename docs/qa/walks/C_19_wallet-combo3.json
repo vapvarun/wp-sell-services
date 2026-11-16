@@ -1,0 +1,15 @@
+{
+  "journey": "C_19_wallet",
+  "mode": "combo",
+  "ran_at": "2026-11-16T08:25:00Z",
+  "ran_against": "d14dbb8971d86a375a705180fc434b7fbe7980d8",
+  "pro_ran_against": "6604062ba30fb393939ba83c9e6c86cd945722c4",
+  "env": "wp-sell-services.local, Reign, standalone rail, offline gateway, Pro active, Mailpit 127.0.0.1:10040",
+  "counts": {
+    "pass": 6,
+    "fail": 0,
+    "skipped": 1
+  },
+  "failures": [],
+  "note": "Provider fallback: seeded terawallet, Settings > Payouts showed the not-active notice (twice, see N4-3) and the select stayed Internal; profile Balance 954.30 equals ledger sum; credit 10 and debit 5 each wrote one ledger row 'Admin adjustment by QA wpss_qa_admin: <reason>' and one wpss_audit_log row naming actor 7; debit 5000 refused with 'The debit was refused ... Nothing was changed' and wrote nothing. Untested: non-admin reach (nonce + capability) by browser."
+}

@@ -1,0 +1,15 @@
+{
+  "journey": "C_22_seller_levels",
+  "mode": "combo",
+  "ran_at": "2026-11-16T08:25:00Z",
+  "ran_against": "d14dbb8971d86a375a705180fc434b7fbe7980d8",
+  "pro_ran_against": "6604062ba30fb393939ba83c9e6c86cd945722c4",
+  "env": "wp-sell-services.local, Reign, standalone rail, offline gateway, Pro active, Mailpit 127.0.0.1:10040",
+  "counts": {
+    "pass": 5,
+    "fail": 0,
+    "skipped": 1
+  },
+  "failures": [],
+  "note": "Admin override on Vendors > view > Settings set Mateo to Pro Vendor (calculated level New vendor); Run Now of wpss_recalculate_seller_levels kept it Pro; GET /vendors/35/level returns pro, /seller-levels lists thresholds, /vendors/me/level 401 logged out; Pro Vendor badge shown on service page, services archive card and vendor directory card next to New vendor badges. Untested: level promotion email and notification on a completion that crosses Rising (needs a vendor seeded just under 5 orders)."
+}

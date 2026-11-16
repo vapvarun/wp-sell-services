@@ -1,0 +1,14 @@
+{
+  "journey": "09",
+  "mode": "free",
+  "ran_at": "2026-11-16T08:25:00Z",
+  "ran_against": "d14dbb8971d86a375a705180fc434b7fbe7980d8",
+  "env": "wp-sell-services.local, Reign, standalone rail, offline gateway, Mailpit on 127.0.0.1:10040",
+  "counts": {
+    "pass": 6,
+    "fail": 0,
+    "skipped": 1
+  },
+  "failures": [],
+  "note": "Buyer posted request 1136 with PNG (listed, downloads 200); vendor proposal 79, buyer accepted, order 120892 platform=request, marked paid by admin; vendor opens order via Messages card and Sales order, files listed and 200, page complete at 1440 and 390 (no overflow); admin view lists file, cover and description; REST requirements status submitted, file 200; second buyer 403 on requirements, file, download and POST. Untested: second uploaded file on submit (request orders render no requirements form once the brief is auto-submitted), foreign media id on own order."
+}

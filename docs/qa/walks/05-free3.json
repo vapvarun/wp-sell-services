@@ -1,0 +1,14 @@
+{
+ "journey": "05",
+ "mode": "free",
+ "ran_at": "2026-11-16T07:50:00Z",
+ "ran_against": "d14dbb8971d86a375a705180fc434b7fbe7980d8",
+ "env": "wp-sell-services 1.9.3 free-only, reign, Playwright 1440+390",
+ "counts": {
+  "pass": 3,
+  "fail": 0,
+  "skipped": 2
+ },
+ "failures": [],
+ "note": "Per-check detail in .qa-results/last-smoke-pass-free.json"
+}

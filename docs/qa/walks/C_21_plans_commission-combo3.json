@@ -1,0 +1,15 @@
+{
+  "journey": "C_21_plans_commission",
+  "mode": "combo",
+  "ran_at": "2026-11-16T08:25:00Z",
+  "ran_against": "d14dbb8971d86a375a705180fc434b7fbe7980d8",
+  "pro_ran_against": "6604062ba30fb393939ba83c9e6c86cd945722c4",
+  "env": "wp-sell-services.local, Reign, standalone rail, offline gateway, Pro active, Mailpit 127.0.0.1:10040",
+  "counts": {
+    "pass": 8,
+    "fail": 0,
+    "skipped": 4
+  },
+  "failures": [],
+  "note": "Settings > Vendor Settings: enabled and required subscriptions; vendor dashboard gains Subscription section, Create Service refused with the required-subscription banner; paid plan without Price ID shows Subscribe, click returns 400 with toast 'This plan is not available for purchase yet'; free plan Smoke Starter (2 services) subscribed, shows 1 of 2 used; Maya (more than 2 services) on that plan gets 'You have reached your service limit' on Create; cancel of a free plan ends it at once; Category rule 5% priority 1 beats Vendor Level rule 12% priority 2, order 120893 got commission_rate 5.00 and stayed 5.00 after the rule was edited to 7. Untested: paid purchase on Stripe hosted page, cancel keeping paid period, invoice.payment_failed, plan commission override beating rules, active rule visible on the Tiered Commission screen."
+}

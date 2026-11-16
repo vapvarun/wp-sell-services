@@ -1,0 +1,15 @@
+{
+  "journey": "C_16_milestones_extensions_tips",
+  "mode": "combo",
+  "ran_at": "2026-11-16T08:25:00Z",
+  "ran_against": "d14dbb8971d86a375a705180fc434b7fbe7980d8",
+  "pro_ran_against": "6604062ba30fb393939ba83c9e6c86cd945722c4",
+  "env": "wp-sell-services.local, Reign, standalone rail, offline gateway, Pro active, Mailpit 127.0.0.1:10040",
+  "counts": {
+    "pass": 9,
+    "fail": 0,
+    "skipped": 4
+  },
+  "failures": [],
+  "note": "Extension on catalog order 120893: vendor quote, buyer Decline changes nothing (parent in_progress, deadline unchanged, sub-order cancelled, mails Quote and Declined); second quote accepted, awaiting-confirmation page reads 'Payment submitted - awaiting confirmation' not 'Quote declined', admin Mark paid pushed deadline Nov 19 to Nov 22 (+3 days) and credited vendor once (27.90 at 7% category rule); pending-card inset 26.5px at 1440 and 18px at 390 equal to section padding; tip 10 on completed order 120890 by double click made one tip order, receipt page 200 with amount and 'not sent yet' state, after Mark paid one credit 9.30 and 'Tip sent' mail; milestones on request order 120892: two phases proposed, buyer sees phase 1 Accept & Pay and phase 2 'Locked - finish the earlier phase first', direct pay URL of phase 2 refused with 'This phase is locked'. Untested: pay, deliver, approve of phase 1 and unlock of phase 2, parent completion, 48h abandon; deadline-extension request UI (only the quote UI exists; REST only); tax matrix on three rails; tip refund reverse."
+}

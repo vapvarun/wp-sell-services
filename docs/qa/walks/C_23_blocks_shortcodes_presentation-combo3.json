@@ -1,0 +1,15 @@
+{
+ "journey": "C_23_blocks_shortcodes_presentation",
+ "mode": "combo",
+ "ran_at": "2026-11-16T07:50:00Z",
+ "ran_against": "d14dbb8971d86a375a705180fc434b7fbe7980d8",
+ "env": "wp-sell-services 1.9.3 + pro 1.9.3 combo, reign, Playwright 1440",
+ "counts": {
+  "pass": 1,
+  "fail": 0,
+  "skipped": 2
+ },
+ "failures": [],
+ "note": "Per-check detail in .qa-results/last-smoke-pass.json",
+ "pro_ran_against": "6604062ba30fb393939ba83c9e6c86cd945722c4"
+}
