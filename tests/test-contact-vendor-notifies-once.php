@@ -46,6 +46,7 @@ $_POST['vendor_id'] = $vendor_id;
 $_POST['message']   = 'Hello, is this still available?';
 $_REQUEST           = $_POST;
 
+$notes_before = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wpss_notifications WHERE user_id = %d ", $vendor_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 ob_start();
 try {
 	( new \WPSellServices\Frontend\AjaxHandlers() )->contact_vendor();
@@ -54,7 +55,8 @@ try {
 }
 $out = (string) ob_get_clean();
 
-$notes = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wpss_notifications WHERE user_id = %d AND created_at >= %s", $vendor_id, gmdate( 'Y-m-d H:i:s', time() - 60 ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$notes_now = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wpss_notifications WHERE user_id = %d", $vendor_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$notes     = $notes_now - $notes_before; // delta: earlier scripts in one CI run leave bell rows for this vendor.
 $to_vendor = array_filter( $mails, static fn( $m ) => in_array( get_userdata( $vendor_id )->user_email, (array) $m['to'], true ) );
 
 $check( 'the contact call succeeded', false !== strpos( $out, '"success":true' ), substr( $out, 0, 200 ) );

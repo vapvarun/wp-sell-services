@@ -2680,7 +2680,7 @@ class Admin {
 							(<?php echo esc_html( $wpss_order_dispute->dispute_number ); ?>)
 						<?php endif; ?>
 						<a href="<?php echo esc_url( $wpss_dispute_url ); ?>" class="button button-small" style="margin-inline-start: 8px;">
-							<?php echo $wpss_dispute_live ? esc_html__( 'Open dispute', 'wp-sell-services' ) : esc_html__( 'View dispute', 'wp-sell-services' ); ?>
+							<?php echo $wpss_dispute_live ? esc_html__( 'Open dispute', 'wp-sell-services' ) : esc_html__( 'View Dispute', 'wp-sell-services' ); ?>
 						</a>
 					</p>
 					<?php if ( $wpss_dispute_live && 'completed' === $order->status ) : ?>

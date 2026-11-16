@@ -1203,7 +1203,7 @@ class Shortcodes {
 			?>
 			<div class="wpss-vr">
 				<div class="wpss-vr__card">
-					<h2 class="wpss-vr__title"><?php esc_html_e( 'Your vendor account is suspended', 'wp-sell-services' ); ?></h2>
+					<h2 class="wpss-vr__title"><?php esc_html_e( 'Vendor account suspended', 'wp-sell-services' ); ?></h2>
 					<p class="wpss-vr__desc"><?php esc_html_e( 'You cannot register again while the suspension is in place. Please contact the site owner.', 'wp-sell-services' ); ?></p>
 				</div>
 			</div>
