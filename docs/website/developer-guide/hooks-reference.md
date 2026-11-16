@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**586 hooks** across **812** firing sites.
+**586 hooks** across **808** firing sites.
 
 ## Actions (302)
 
@@ -395,7 +395,7 @@ guide; this is the complete index.
 | `wpss_delivery_allowed_file_types` | 1 | `src/functions/files.php` | Filter the file extensions allowed for order deliveries. |
 | `wpss_display_timezone` | 2 | `src/functions/time.php` | The timezone times are shown in. Return a member's own timezone to show each member their local time; every screen, email and edit field follows. |
 | `wpss_dispute_reasons` | 2 | `src/functions/moderation.php` | Filter the reasons offered for opening a dispute. |
-| `wpss_docs_url` | 1 | `src/Admin/Pages/UpgradePage.php` | Filters the documentation URL shown on the upgrade screen. |
+| `wpss_docs_url` | 1 | `src/functions/urls.php` |  |
 | `wpss_earnings_ledger_range` | 2 | `templates/dashboard/sections/earnings.php` | Filter the ledger's time window, so the list follows the same period selector as the CSV export. |
 | `wpss_ecommerce_adapters` | 1 | `src/CLI/PreflightCommand.php` *(+1 more)* |  |
 | `wpss_ecommerce_platform_description` | 1 | `src/Admin/Settings.php` | Filter the platform field description. |
@@ -491,7 +491,7 @@ guide; this is the complete index.
 | `wpss_pro_push_provider` | 2 | `src/Push/PushNotificationService.php` **[PRO]** | Filter the push provider. |
 | `wpss_pro_push_should_send` | 5 | `src/Push/PushNotificationService.php` **[PRO]** | Filter whether a push is sent for this notification. |
 | `wpss_pro_recurring_feature_available` | 1 | `src/RecurringServices/RecurringSettingsRenderer.php` **[PRO]** | Whether the recurring-services feature is available in this version. |
-| `wpss_pro_upgrade_url` | 1 | `src/Frontend/ServiceWizard.php` *(+4 more)* |  |
+| `wpss_pro_upgrade_url` | 1 | `src/functions/urls.php` |  |
 | `wpss_product_types` | 1 | `src/Core/Plugin.php` | Filter the registered product types. |
 | `wpss_proposal_order_revisions` | 3 | `src/Services/BuyerRequestService.php` |  |
 | `wpss_rail_status_map` | 2 | `src/functions/order-status.php` | Filters the rail status map. |

@@ -49,6 +49,14 @@ wp_localize_script(
 
 $requirements    = wpss_get_service_requirements( (int) $order->service_id );
 $submitted       = wpss_get_order_requirements( (int) $order_id );
+
+// A request order starts from the brief the buyer already wrote: asking for the description again made them type it twice.
+if ( empty( $submitted['description'] ) && 'request' === ( $order->platform ?? '' ) && ! empty( $order->platform_order_id ) ) {
+	$wpss_brief = get_post( (int) $order->platform_order_id );
+	if ( $wpss_brief && 'wpss_request' === $wpss_brief->post_type ) {
+		$submitted = array_merge( (array) $submitted, array( 'description' => wp_strip_all_tags( $wpss_brief->post_content ) ) );
+	}
+}
 $compact         = ! empty( $compact );
 $late_submission = ! empty( $late_submission );
 $form_id         = 'wpss-requirements-form-' . $order_id;

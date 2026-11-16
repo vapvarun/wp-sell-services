@@ -69,6 +69,11 @@ $avg_rating   = $profile ? (float) $profile->rating : 0.0;
 			<?php
 			foreach ( $reviews as $wpss_review ) :
 				$service_title = $wpss_review->service_id ? get_the_title( $wpss_review->service_id ) : '';
+				// A request order has no service: name the review after the project, as the order page does.
+				if ( '' === $service_title && $wpss_review->order_id ) {
+					$wpss_review_order = wpss_get_order( (int) $wpss_review->order_id );
+					$service_title     = $wpss_review_order ? wpss_get_order_title( $wpss_review_order ) : '';
+				}
 				?>
 				<article class="wpss-review" id="wpss-review-<?php echo esc_attr( (string) $wpss_review->id ); ?>">
 					<?php if ( '' !== $service_title ) : ?>

@@ -1258,3 +1258,26 @@ function wpss_get_legal_links(): array {
 		'privacy_policy_url' => '' !== $privacy ? $privacy : null,
 	);
 }
+
+/**
+ * The one address every "Upgrade to Pro" call-to-action points at.
+ *
+ * It was spelled out in six places across two hosts, so the wizard, the
+ * settings sidebar and the Upgrade page sent an owner to different sites.
+ *
+ * @return string
+ */
+function wpss_pro_upgrade_url(): string {
+	/** This filter is documented in docs/website/developer-guide/hooks-filters.md. */
+	return (string) apply_filters( 'wpss_pro_upgrade_url', 'https://wbcomdesigns.com/downloads/wp-sell-services-pro/' );
+}
+
+/**
+ * The one address every documentation link points at.
+ *
+ * @return string
+ */
+function wpss_docs_url(): string {
+	/** This filter is documented in docs/website/developer-guide/hooks-filters.md. */
+	return (string) apply_filters( 'wpss_docs_url', 'https://wbcomdesigns.com/docs/wp-sell-services/' );
+}

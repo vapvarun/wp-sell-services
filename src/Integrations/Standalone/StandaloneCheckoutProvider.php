@@ -922,7 +922,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			 * the column is taller than the viewport it scrolls inside itself, so the
 			 * top (total) and the bottom card are both reachable.
 			 */
-			.wpss-checkout-page .wpss-co-aside { position: sticky; top: var(--wpss-sticky-top, 32px); align-self: start; max-height: calc(100vh - var(--wpss-sticky-top, 32px) - 16px); overflow-y: auto; overscroll-behavior: contain; }
+			.wpss-checkout-page .wpss-co-aside { align-self: start; }
+			/* Sticky only when the viewport is tall enough to show the whole column: a shorter one would clip the cards below the fold with no scroll cue. */
+			@media (min-height: 1100px) { .wpss-checkout-page .wpss-co-aside { position: sticky; top: var(--wpss-sticky-top, 32px); } }
 			.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { position: static; }
 
 			@media (max-width: 1024px) {
@@ -963,7 +965,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			<!-- Header bar -->
 			<div class="wpss-co-header">
 				<?php // A proposal order has no service page to go back to: its way back is the order. ?>
-				<?php $back_to_order_view = $is_pay_order && $service->id <= 0; ?>
+				<?php $back_to_order_view = $is_pay_order && ( $service->id <= 0 || $is_sub_order ); ?>
 				<a href="<?php echo esc_url( $back_to_order_view ? wpss_get_order_url( $is_sub_order && ! empty( $pay_order->platform_order_id ) ? (int) $pay_order->platform_order_id : (int) $pay_order->id ) : ( $service->id > 0 ? get_permalink( $service->id ) : home_url( '/' ) ) ); ?>" class="wpss-co-header__back">
 					<span aria-hidden="true">&larr;</span>
 					<?php echo $back_to_order_view ? esc_html__( 'Back to order', 'wp-sell-services' ) : esc_html__( 'Back to service', 'wp-sell-services' ); ?>

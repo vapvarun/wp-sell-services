@@ -452,20 +452,7 @@ do_action( 'wpss_before_single_request', $request_id );
 								<span class="wpss-detail-value wpss-detail-budget"><?php echo wp_kses_post( $budget_display ); ?></span>
 							</div>
 
-							<?php if ( $delivery_days ) : ?>
-								<div class="wpss-detail-item">
-									<span class="wpss-detail-label"><?php esc_html_e( 'Expected Delivery', 'wp-sell-services' ); ?></span>
-									<span class="wpss-detail-value">
-										<?php
-										printf(
-											/* translators: %d: number of days */
-											esc_html( _n( '%d day', '%d days', $delivery_days, 'wp-sell-services' ) ),
-											esc_html( $delivery_days )
-										);
-										?>
-									</span>
-								</div>
-							<?php endif; ?>
+							<?php // The buyer never types a delivery time (the form only asks for Open until), so none is shown: the old row printed a stored default of 7 days. ?>
 
 							<?php if ( $expires_at ) : ?>
 								<div class="wpss-detail-item">

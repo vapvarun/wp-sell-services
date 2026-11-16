@@ -354,8 +354,8 @@ These hooks fire in the WordPress admin area for order management, service meta,
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_service_meta_fields` | `array $fields, int $post_id` | `src/Admin/Metaboxes/ServiceMetabox.php:195` |
-| `wpss_pro_upgrade_url` | `string $url` (default `https://wpsellservices.com/`) | `UpgradePage.php`, `ServiceWizard.php:961` |
-| `wpss_docs_url` | `string $url` (default `https://wpsellservices.com/docs/`) | `src/Admin/Pages/UpgradePage.php:347` |
+| `wpss_pro_upgrade_url` | `string $url` (default `https://wbcomdesigns.com/downloads/wp-sell-services-pro/`) | `src/functions/urls.php:1271` |
+| `wpss_docs_url` | `string $url` (default `https://wbcomdesigns.com/docs/wp-sell-services/`) | `src/functions/urls.php:1281` |
 
 _`wpss_pro_upgrade_url` (added 1.3.0) controls where every "Upgrade to Pro" call-to-action points - the admin upgrade screen and the in-wizard prompts. Point it at your own landing page or an in-site URL:_
 

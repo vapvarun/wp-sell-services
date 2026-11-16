@@ -2359,7 +2359,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 					<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 					<div class="wpss-modal__footer">
 						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
-						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send Payment Link', 'wp-sell-services' ); ?></button>
+						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send quote to buyer', 'wp-sell-services' ); ?></button>
 					</div>
 				</form>
 			</div>

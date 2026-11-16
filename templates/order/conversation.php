@@ -537,13 +537,14 @@ document.addEventListener('DOMContentLoaded', function() {
 	var lastMessageId = $messagesContainer.find('[data-message-id]:last').data('message-id') || 0;
 
 	// The conversation row is created by the first message, so a page opened before that has no id. Look it up
-	// (404 until it exists) instead of staying silent for the rest of the visit.
+	// (soft: id 0 until it exists) instead of staying silent for the rest of the visit.
 	var discoverTicks = 0;
 
 	function discoverConversation() {
 		$.ajax({
 			url: restBase + 'orders/' + $conversation.data('order-id') + '/conversation',
 			method: 'GET',
+			data: { soft: 1 },
 			beforeSend: function(xhr) {
 				xhr.setRequestHeader('X-WP-Nonce', wpss.restNonce);
 			},

@@ -68,6 +68,16 @@ $check( 'the proposal-order back link uses the order id, the parent id only for 
 $check( 'the request card does not invite a suspended vendor to send a proposal', str_contains( $src( 'templates/content-request-card.php' ), "'suspended' === wpss_get_vendor_status" ) );
 $check( 'the become-a-vendor page does not offer registration to a suspended vendor', str_contains( $src( 'src/Frontend/Shortcodes.php' ), "A suspended vendor is not offered registration" ) );
 $check( 'the moderation badge and dashboard queue count nothing while moderation is off', str_contains( $src( 'src/Admin/Pages/ServiceModerationPage.php' ), 'ModerationService::is_enabled() ? wpss_count_pending_services() : 0' ) && str_contains( $src( 'src/Admin/Admin.php' ), 'ModerationService::is_enabled() ? wpss_count_pending_services() : 0' ) );
+$checkout = $src( 'src/Integrations/Standalone/StandaloneCheckoutProvider.php' );
+$check( 'an extension or tip pay page goes back to the order, not the service', str_contains( $checkout, '$is_pay_order && ( $service->id <= 0 || $is_sub_order )' ) );
+$check( 'the checkout sidebar is sticky only on a viewport tall enough to show it whole', (bool) preg_match( '/@media \(min-height: 1100px\)[^}]*co-aside[^}]*position: sticky/', $checkout ) && ! str_contains( $checkout, 'overscroll-behavior: contain' ) );
+$check( 'the order page looks for a not-yet-created conversation without a 404', str_contains( $src( 'src/API/ConversationsController.php' ), "get_param( 'soft' )" ) && str_contains( $src( 'templates/order/conversation.php' ), 'data: { soft: 1 }' ) );
+$check( 'upgrade and docs links come from one helper each', 0 === preg_match( '#https://(wpsellservices\.com|store\.wbcomdesigns\.com)#', $src( 'src/Admin/Settings.php' ) . $src( 'src/Frontend/ServiceWizard.php' ) . $src( 'src/Admin/Pages/UpgradePage.php' ) . $src( 'src/Admin/ProTeaser.php' ) ) && function_exists( 'wpss_pro_upgrade_url' ) && function_exists( 'wpss_docs_url' ) );
+$check( 'a review of a request order is titled with the project', str_contains( $src( 'templates/dashboard/sections/reviews.php' ), 'wpss_get_order_title' ) );
+$check( 'a request shows no delivery time the buyer never entered', ! str_contains( $src( 'templates/single-request.php' ), "'Expected Delivery'" ) );
+$check( 'a phased contract parent does not read Paid beside a Paid so far of zero', str_contains( $src( 'templates/order/payment.php' ), 'Paid phase by phase' ) );
+$check( 'the extension modal submit matches its opener', ! str_contains( $src( 'templates/order/order-view.php' ), 'Send Payment Link' ) );
+$check( 'a request order requirements form starts from the stored brief', str_contains( $src( 'templates/order/requirements-form.php' ), "'wpss_request' === \$wpss_brief->post_type" ) );
 
 // Remove only what this run wrote.
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$notes} WHERE user_id = %d AND id > %d", $vendor, $start ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
