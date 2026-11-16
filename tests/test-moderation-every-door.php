@@ -65,9 +65,10 @@ $queued = static function () use ( $sid ) {
 };
 
 try {
-	// Moderation on, guards registered as at boot.
+	// Moderation and Re-review Live Edits on, guards registered as at boot.
 	$opts                               = is_array( $vendor_opts ) ? $vendor_opts : array();
 	$opts['require_service_moderation'] = 1;
+	$opts['re_review_live_edits']       = 1; // 1.9.3: a live edit queues only when this is on.
 	update_option( 'wpss_vendor', $opts );
 	if ( ! ModerationService::is_enabled() ) {
 		echo "FAIL  fixture: moderation did not switch on\n";

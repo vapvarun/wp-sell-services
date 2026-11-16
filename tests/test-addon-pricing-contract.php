@@ -69,8 +69,15 @@ try {
 	$l = $line( array( 1 ) );
 	$check( sprintf( 'percentage add-on is 10%% of the package: 50 + 5 = 55 (got %s)', $l['total'] ), $money( $l['total'], 55 ) );
 
+	// The per-service ceiling defaults to 1 (1.9.3), so the quantity is clamped until the owner raises it.
 	$l = $line( array( 1 ), 2 );
-	$check( '  and of the package x quantity: 100 + 10 = 110', $money( $l['total'], 110 ) );
+	$check( sprintf( 'quantity is clamped to the default ceiling of 1: 55 (got %s)', $l['total'] ), $money( $l['total'], 55 ) );
+
+	$raise = static fn() => 4;
+	add_filter( 'wpss_max_order_quantity', $raise );
+	$l = $line( array( 1 ), 2 );
+	$check( sprintf( '  and with the ceiling raised, of the package x quantity: 100 + 10 = 110 (got %s)', $l['total'] ), $money( $l['total'], 110 ) );
+	remove_filter( 'wpss_max_order_quantity', $raise );
 
 	$l = $line( array( array( 'id' => 2, 'quantity' => 3 ) ) );
 	$check( 'per-quantity add-on: 50 + 3 x 5 = 65', $money( $l['total'], 65 ) );

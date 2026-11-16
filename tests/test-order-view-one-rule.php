@@ -27,7 +27,8 @@ if ( ! $order ) {
 }
 
 $make = static fn( string $role ): int => (int) wp_insert_user( array( 'user_login' => 'qa_ov_' . $role . wp_generate_password( 5, false, false ), 'user_pass' => wp_generate_password(), 'role' => $role ) );
-$manager  = $make( 'shop_manager' );
+$manager  = $make( 'subscriber' ); // shop_manager is WooCommerce's role and is absent without it; the capability is what the rule reads.
+( new WP_User( $manager ) )->add_cap( 'wpss_manage_orders' );
 $stranger = $make( 'subscriber' );
 $admin    = $make( 'administrator' );
 
