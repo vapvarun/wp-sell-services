@@ -1,0 +1,14 @@
+{
+  "journey": "15",
+  "mode": "free",
+  "ran_at": "2026-11-16T06:15:00Z",
+  "ran_against": "ae4d99fa4eaab11a579db1221e3328860c7b4ac6",
+  "env": "wp-sell-services 1.9.3 free-only, reign, Playwright 1440+390",
+  "counts": {
+    "pass": 5,
+    "fail": 0,
+    "skipped": 2
+  },
+  "failures": [],
+  "note": "Final-SHA re-walk (ae4d99fa). Per-check detail in .qa-results/last-smoke-pass-free.json"
+}

@@ -1,0 +1,60 @@
+{
+  "journey": "A-fixes-193",
+  "mode": "combo",
+  "sha_free": "d89202674c64b8c21b46f63e05e177636061685e",
+  "sha_pro": "259d27cbb676d2370b8a852873a6c1206e5ad446",
+  "ran_at": "2026-11-16T04:30:00Z",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme 8.1.0-beta.5 (brief said 8.0.9)",
+    "rail": "standalone"
+  },
+  "checks": [
+    {
+      "id": "A1-budget-one-rule",
+      "result": "pass",
+      "evidence": "Requests 975 range 100-300 -> '$100.00 - $300.00'; 976 fixed -> '$200.00'; 977 max-only -> 'Up to $250.00'; no 'Negotiable' anywhere on list or single (logged out). combo-A-requests-list-1440.png"
+    },
+    {
+      "id": "A2-open-until",
+      "result": "pass",
+      "evidence": "Form label 'Open until', helper 'Sellers can send proposals until this date.'; single page and cards read 'Open until'."
+    },
+    {
+      "id": "A3-out-of-budget-note",
+      "result": "pass",
+      "evidence": "Maya price 500 on 100-300: note 'outside the buyer's budget ... You can still send it'; submit succeeded (proposal 66 stored). combo-A-oob-note-1440.png"
+    },
+    {
+      "id": "A4-suspended-vendor",
+      "result": "pass",
+      "evidence": "Sofia suspended via admin Vendors: request page has no proposal CTA, cards read 'View Request', /become-a-vendor/ shows 'Your vendor account is suspended' with no Register, dashboard has no create/proposal CTA. Restored to Active."
+    },
+    {
+      "id": "A5-loggedout-pay",
+      "result": "pass",
+      "evidence": "/service-checkout/pay/12/ logged out -> 'Please log in to pay for this order.' + Log In."
+    },
+    {
+      "id": "A6-back-to-order",
+      "result": "pass",
+      "evidence": "Proposal-order pay page 120758 header reads 'Back to order' href /dashboard/orders/120758/."
+    },
+    {
+      "id": "A7-withdrawal-notice",
+      "result": "pass",
+      "evidence": "Pending withdrawal -> form hidden, 'You already have a withdrawal in progress...'; notifications titled 'Withdrawal requested / rejected / approved / paid'."
+    },
+    {
+      "id": "A8-live-edit-stays-published",
+      "result": "pass",
+      "evidence": "Service 128 edited by vendor through the wizard with moderation off and on (re_review_live_edits off): status stays publish both times; settings and title restored."
+    },
+    {
+      "id": "A9-moderation-badge-and-dispute-link",
+      "result": "pass",
+      "evidence": "Moderation off: menu 'Moderation' no count, queue 0 with 12 pending services in DB; on: 'Moderation 12' and queue 12. Admin order 47 shows 'View dispute' -> dispute_id=64."
+    }
+  ],
+  "artifacts": "/Users/vapvarun/Local Sites/wp-sell-services/app/qa-artifacts/"
+}

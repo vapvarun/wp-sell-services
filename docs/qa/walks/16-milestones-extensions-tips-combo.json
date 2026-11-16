@@ -1,0 +1,35 @@
+{
+  "journey": "16-milestones-extensions-tips",
+  "mode": "combo",
+  "sha_free": "d89202674c64b8c21b46f63e05e177636061685e",
+  "sha_pro": "259d27cbb676d2370b8a852873a6c1206e5ad446",
+  "ran_at": "2026-11-16T04:30:00Z",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme 8.1.0-beta.5 (brief said 8.0.9)",
+    "rail": "standalone"
+  },
+  "checks": [
+    {
+      "id": "16-milestones",
+      "result": "pass",
+      "evidence": "Phased proposal 2 phases 50+40 on request 976 -> order 120760 total $90; phase 2 pay page shows locked message; phase 1 paid/delivered/approved then phase 2 pay page renders; Maya wallet row milestone +45."
+    },
+    {
+      "id": "16-paid-extension",
+      "result": "pass",
+      "evidence": "Sofia quote $30/3 days on late order 36; buyer Accept & Pay -> order 120763; after paid parent due Aug 4 -> Aug 7; wallet extension +27."
+    },
+    {
+      "id": "16-tip",
+      "result": "pass",
+      "evidence": "Double click on Send tip created exactly one TIP order 120764; paid -> wallet tip +9 (10% fee); buyer order page 200 with tip receipt."
+    },
+    {
+      "id": "16-copy-nits",
+      "result": "fail",
+      "evidence": "Parent phase order shows 'PAYMENT Paid / PAID ON' while 'PAID SO FAR $0.00 of $90.00'; extension opener 'Send quote to buyer' submits as 'Send Payment Link'; extension pay page header 'Back to service' not order."
+    }
+  ],
+  "artifacts": "/Users/vapvarun/Local Sites/wp-sell-services/app/qa-artifacts/"
+}

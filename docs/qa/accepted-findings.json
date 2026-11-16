@@ -25,8 +25,14 @@
   "was not run, the entry must say exactly how the fix was verified instead, so a",
   "reader can weigh that evidence rather than assume a walk covered it."
  ],
- "version": "1.9.2",
- "accepted": [],
+ "version": "1.9.3",
+ "accepted": [
+  {
+   "id": "F9",
+   "card": "10337190248",
+   "reason": "By design, decided in Basecamp 10337190248: services are edited on the classic screen so one content format is kept and the Service Data box shows open. The admin-bar Edit service link is WordPress core's edit link and opens that screen, while the dashboard Edit opens the vendor wizard. Both reach the same service; changing the admin-bar target is a product decision for a later release."
+  }
+ ],
  "resolved": [
   {
    "id": "PRO:admin-js-init-throws-initStorageSettings",

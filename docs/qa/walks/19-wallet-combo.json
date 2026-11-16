@@ -1,0 +1,30 @@
+{
+  "journey": "19-wallet",
+  "mode": "combo",
+  "sha_free": "d89202674c64b8c21b46f63e05e177636061685e",
+  "sha_pro": "259d27cbb676d2370b8a852873a6c1206e5ad446",
+  "ran_at": "2026-11-16T04:30:00Z",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme 8.1.0-beta.5 (brief said 8.0.9)",
+    "rail": "standalone"
+  },
+  "checks": [
+    {
+      "id": "19-provider-fallback",
+      "result": "pass",
+      "evidence": "wpss_wallet_provider=terawallet: admin notice + payouts note say it fell back to Internal. Restored to internal."
+    },
+    {
+      "id": "19-balance-agrees",
+      "result": "pass",
+      "evidence": "Sofia $230.00 on admin profile and on her Earnings page; ledger 225 before adjustments."
+    },
+    {
+      "id": "19-adjustments",
+      "result": "pass",
+      "evidence": "credit 10 and debit 5 each wrote one ledger row 'Admin adjustment by QA wpss_qa_admin: <reason>' and an audit ledger.insert row; debit 99999 refused 'Failed to debit balance. Insufficient funds?' and wrote nothing."
+    }
+  ],
+  "artifacts": "/Users/vapvarun/Local Sites/wp-sell-services/app/qa-artifacts/"
+}

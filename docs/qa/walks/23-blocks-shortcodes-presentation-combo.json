@@ -1,0 +1,40 @@
+{
+  "journey": "23-blocks-shortcodes-presentation",
+  "mode": "combo",
+  "sha_free": "d89202674c64b8c21b46f63e05e177636061685e",
+  "sha_pro": "259d27cbb676d2370b8a852873a6c1206e5ad446",
+  "ran_at": "2026-11-16T04:30:00Z",
+  "env": {
+    "site": "http://wp-sell-services.local",
+    "theme": "reign-theme 8.1.0-beta.5 (brief said 8.0.9)",
+    "rail": "standalone"
+  },
+  "checks": [
+    {
+      "id": "23-blocks",
+      "result": "pass",
+      "evidence": "Page with all 6 blocks logged out at 1440 and 390: grid honours columns/perPage (4 cards), search, categories, featured, buyer requests render real data; seller-card renders nothing; no overflow."
+    },
+    {
+      "id": "23-shortcodes-visitor",
+      "result": "pass",
+      "evidence": "dashboard, my_orders, order_details, post_request, service_wizard, account all show log-in prompts logged out."
+    },
+    {
+      "id": "23-white-label",
+      "result": "pass",
+      "evidence": "Enabled 'QA Brand Co': admin menu and member dashboard carry the brand; option removed afterwards. Emails not checked (no mail catcher)."
+    },
+    {
+      "id": "23-pause-resume",
+      "result": "pass",
+      "evidence": "Vendor Pause: visitor page shows 'paused and not accepting new orders', Continue disabled, direct checkout refuses; Resume restores. Dashboard row shows no Paused badge (nit)."
+    },
+    {
+      "id": "23-cloud-currency-push",
+      "result": "skipped",
+      "evidence": "No bucket, exchange-rate App ID or Firebase credentials."
+    }
+  ],
+  "artifacts": "/Users/vapvarun/Local Sites/wp-sell-services/app/qa-artifacts/"
+}
