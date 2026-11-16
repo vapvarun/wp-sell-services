@@ -81,8 +81,8 @@ class DeliveryService {
 	/**
 	 * The delivery itself, run while submit() holds the order's lock.
 	 *
-	 * @param int    $order_id Order ID.
-	 * @param string $message  Delivery message.
+	 * @param int                      $order_id Order ID.
+	 * @param string                   $message  Delivery message.
 	 * @param array<int|string, mixed> $files Delivery files.
 	 * @return bool
 	 */
