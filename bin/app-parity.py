@@ -33,7 +33,7 @@ CONFIG = {
     # Repo-relative; free is the anchor, pro is resolved as a sibling.
     "free_dir": os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "pro_dirname": "wp-sell-services-pro",
-    "catalog": "docs/website/feature-catalog.md",
+    "catalog": "docs/qa/FEATURE-CATALOG.md",
     "api_globs": ["src/API", "src/Frontend"],
     # Feature rows whose delivery is intentionally not an API surface. Listing
     # them here is a claim someone can argue with, which is the point — silence

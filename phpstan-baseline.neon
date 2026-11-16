@@ -211,12 +211,6 @@ parameters:
 			path: src/API/RestController.php
 
 		-
-			message: '#^Strict comparison using \!\=\= between '''' and non\-falsy\-string will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: src/API/RestController.php
-
-		-
 			message: '#^Method WPSellServices\\API\\ReviewsController\:\:get_collection_params\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -2085,13 +2079,7 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
 			identifier: argument.type
-			count: 6
-			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
-
-		-
-			message: '#^Parameter \#1 \$text of function esc_attr expects string, int\<1, max\> given\.$#'
-			identifier: argument.type
-			count: 1
+			count: 4
 			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
 
 		-
@@ -2357,12 +2345,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Models/Notification.php
-
-		-
-			message: '#^Method WPSellServices\\Models\\Proposal\:\:to_array\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Models/Proposal.php
 
 		-
 			message: '#^Property WPSellServices\\Models\\Service\:\:\$requirements type has no value type specified in iterable type array\.$#'

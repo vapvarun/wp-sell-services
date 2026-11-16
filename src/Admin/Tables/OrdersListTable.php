@@ -447,7 +447,7 @@ class OrdersListTable extends \WP_List_Table {
 	 * One definition for the table rows and the CSV export, so the file always
 	 * holds exactly what the owner was looking at.
 	 *
-	 * @return array{0: string, 1: array} Where fragment and its parameters.
+	 * @return array{0: string, 1: array<int, mixed>} Where fragment and its parameters.
 	 */
 	public function get_filter_sql(): array {
 		// Build query.

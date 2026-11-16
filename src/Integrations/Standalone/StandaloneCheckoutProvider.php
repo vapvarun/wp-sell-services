@@ -1667,9 +1667,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					<input type="hidden" name="currency" value="<?php echo esc_attr( $currency ); ?>">
 
 					<?php foreach ( $enriched_items as $key => $ei ) : ?>
-						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][service_id]" value="<?php echo esc_attr( $ei['service_id'] ); ?>">
-						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][package_id]" value="<?php echo esc_attr( $ei['package_id'] ); ?>">
-						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][quantity]" value="<?php echo esc_attr( $ei['quantity'] ); ?>">
+						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][service_id]" value="<?php echo esc_attr( (string) $ei['service_id'] ); ?>">
+						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][package_id]" value="<?php echo esc_attr( (string) $ei['package_id'] ); ?>">
+						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][quantity]" value="<?php echo esc_attr( (string) $ei['quantity'] ); ?>">
 					<?php endforeach; ?>
 
 					<!-- Two-column layout -->

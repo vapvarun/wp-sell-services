@@ -220,7 +220,7 @@ class VendorService {
 	 *
 	 * @param int                  $user_id User ID.
 	 * @param array<string, mixed> $data    Profile data.
-	 * @return array{success: bool, message: string} Response array.
+	 * @return array{success: bool, message: string, code?: string} Response array.
 	 */
 	public function register_vendor( int $user_id, array $data = array() ): array {
 		$user = get_userdata( $user_id );

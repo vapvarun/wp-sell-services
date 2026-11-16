@@ -2244,10 +2244,10 @@ class VendorsPage {
 							<?php endif; ?>
 							<span class="paging-input">
 								<label class="screen-reader-text" for="wpss-wallet-jump"><?php esc_html_e( 'Go to page', 'wp-sell-services' ); ?></label>
-								<input type="number" id="wpss-wallet-jump" class="small-text" min="1" max="<?php echo esc_attr( $wallet_pages ); ?>" value="<?php echo esc_attr( $wallet_page ); ?>"> / <?php echo esc_html( $wallet_pages ); ?>
+								<input type="number" id="wpss-wallet-jump" class="small-text" min="1" max="<?php echo esc_attr( (string) $wallet_pages ); ?>" value="<?php echo esc_attr( (string) $wallet_page ); ?>"> / <?php echo esc_html( (string) $wallet_pages ); ?>
 							</span>
 							<?php if ( $wallet_page < $wallet_pages ) : ?>
-								<a href="#" data-page="<?php echo esc_attr( $wallet_page + 1 ); ?>" aria-label="<?php esc_attr_e( 'Next page', 'wp-sell-services' ); ?>">&raquo;</a>
+								<a href="#" data-page="<?php echo esc_attr( (string) ( $wallet_page + 1 ) ); ?>" aria-label="<?php esc_attr_e( 'Next page', 'wp-sell-services' ); ?>">&raquo;</a>
 							<?php endif; ?>
 						</div>
 					</div>
@@ -2379,7 +2379,7 @@ class VendorsPage {
 							</span>
 							<span class="pagination-links">
 								<?php if ( $page > 1 ) : ?>
-									<a href="#" class="wpss-reviews-page" data-page="<?php echo esc_attr( $page - 1 ); ?>">&laquo;</a>
+									<a href="#" class="wpss-reviews-page" data-page="<?php echo esc_attr( (string) ( $page - 1 ) ); ?>">&laquo;</a>
 								<?php endif; ?>
 								<span class="paging-input">
 									<?php echo esc_html( $page ); ?> / <?php echo esc_html( $total_pages ); ?>

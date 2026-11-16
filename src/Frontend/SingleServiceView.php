@@ -1088,7 +1088,11 @@ class SingleServiceView {
 										multiple
 										accept="<?php echo esc_attr( wpss_upload_accept( 'message' ) ); ?>">
 								<p class="wpss-field-hint">
-									<?php /* translators: %s: allowed file extensions, e.g. .jpg,.pdf */ echo esc_html( sprintf( __( 'Max 5 files. Allowed: %s', 'wp-sell-services' ), ( ( $wpss_types = explode( ',', wpss_upload_accept( 'message' ) ) ) && count( $wpss_types ) > 8 ? implode( ', ', array_slice( $wpss_types, 0, 8 ) ) . ', …' : implode( ', ', $wpss_types ) ) ) ); ?>
+									<?php
+									$wpss_types = explode( ',', wpss_upload_accept( 'message' ) );
+									/* translators: %s: allowed file extensions, e.g. .jpg,.pdf */
+									echo esc_html( sprintf( __( 'Max 5 files. Allowed: %s', 'wp-sell-services' ), count( $wpss_types ) > 8 ? implode( ', ', array_slice( $wpss_types, 0, 8 ) ) . ', …' : implode( ', ', $wpss_types ) ) );
+									?>
 								</p>
 							</div>
 

@@ -91,8 +91,8 @@ $active_count = (int) ( new WP_Query(
 				// One rule for every budget reader, in the display-currency-aware wrapper;
 				// HTML from here, hence wp_kses_post() rather than esc_html() at the echo.
 				$budget_display = wpss_request_budget_html( $budget_min, $budget_max );
-				$offers      = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $request_id );
-				$item_status = get_post_status();
+				$offers         = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $request_id );
+				$item_status    = get_post_status();
 				?>
 				<div class="wpss-request-card">
 					<div class="wpss-request-card__main">

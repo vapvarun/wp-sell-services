@@ -47,8 +47,8 @@ wp_localize_script(
 	)
 );
 
-$requirements    = wpss_get_service_requirements( (int) $order->service_id );
-$submitted       = wpss_get_order_requirements( (int) $order_id );
+$requirements = wpss_get_service_requirements( (int) $order->service_id );
+$submitted    = wpss_get_order_requirements( (int) $order_id );
 
 // A request order starts from the brief the buyer already wrote: asking for the description again made them type it twice.
 if ( empty( $submitted['description'] ) && 'request' === ( $order->platform ?? '' ) && ! empty( $order->platform_order_id ) ) {

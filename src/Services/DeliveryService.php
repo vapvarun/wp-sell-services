@@ -83,7 +83,7 @@ class DeliveryService {
 	 *
 	 * @param int    $order_id Order ID.
 	 * @param string $message  Delivery message.
-	 * @param array  $files    Delivery files.
+	 * @param array<int|string, mixed> $files Delivery files.
 	 * @return bool
 	 */
 	private function submit_locked( int $order_id, string $message, array $files ): bool {

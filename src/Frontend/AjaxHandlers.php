@@ -577,7 +577,6 @@ class AjaxHandlers {
 
 		if ( ! $order_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-			return;
 		}
 
 		$order_service = new OrderService();
@@ -588,12 +587,10 @@ class AjaxHandlers {
 
 		if ( ! $order || $responder !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-sell-services' ) ) );
-			return;
 		}
 
 		if ( 'cancellation_requested' !== $order->status ) {
 			wp_send_json_error( array( 'message' => __( 'This order does not have a pending cancellation request.', 'wp-sell-services' ) ) );
-			return;
 		}
 
 		// The buyer declining a seller's request just resumes the work.
@@ -605,7 +602,6 @@ class AjaxHandlers {
 			}
 
 			wp_send_json_error( $resumed );
-			return;
 		}
 
 		// Escalate to dispute.

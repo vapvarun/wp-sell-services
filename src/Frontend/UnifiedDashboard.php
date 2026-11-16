@@ -1329,7 +1329,7 @@ class UnifiedDashboard {
 				 */
 				$redirect_url = apply_filters(
 					'wpss_after_become_vendor_redirect',
-					$this->get_section_url( current_user_can( 'manage_options' ) ? 'create' : 'services' ),
+					$this->get_section_url( 'services' ),
 					$user_id
 				);
 

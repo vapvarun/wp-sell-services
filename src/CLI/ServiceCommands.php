@@ -502,7 +502,7 @@ class ServiceCommands extends WP_CLI_Command {
 	 * Post dates for a demo service listed some days ago, so a fresh demo does not show every service as "today".
 	 *
 	 * @param int $days_ago Days back from now, 0 for no change.
-	 * @return array Date fields for wp_insert_post, empty when not backdated.
+	 * @return array<string, string> Date fields for wp_insert_post, empty when not backdated.
 	 */
 	private function backdated( int $days_ago ): array {
 		if ( $days_ago <= 0 ) {

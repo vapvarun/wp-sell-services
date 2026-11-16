@@ -74,9 +74,9 @@ class EmailService {
 	 * @since 1.6.0
 	 * @var string
 	 */
-	public const TYPE_RECEIPT_SUBMITTED = 'receipt_submitted';
-	public const TYPE_RECEIPT_VERIFIED  = 'receipt_verified';
-	public const TYPE_RECEIPT_REJECTED  = 'receipt_rejected';
+	public const TYPE_RECEIPT_SUBMITTED     = 'receipt_submitted';
+	public const TYPE_RECEIPT_VERIFIED      = 'receipt_verified';
+	public const TYPE_RECEIPT_REJECTED      = 'receipt_rejected';
 	public const TYPE_CANCELLATION_DECLINED = 'cancellation_declined';
 
 	/**
@@ -1677,7 +1677,7 @@ class EmailService {
 					'button_url'    => $url,
 					'button_text'   => __( 'View order', 'wp-sell-services' ),
 				)
-			) || $sent;
+			);
 		}
 
 		$customer = get_user_by( 'id', $order->customer_id );
