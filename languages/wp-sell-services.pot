@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-16T06:20:13+00:00\n"
+"POT-Creation-Date: 2026-11-16T06:57:31+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -177,21 +177,21 @@ msgstr ""
 #: src/Admin/Settings.php:313
 #: src/Admin/Settings.php:407
 #: src/Admin/Settings.php:1741
-#: src/Frontend/AjaxHandlers.php:1422
-#: src/Frontend/AjaxHandlers.php:1503
-#: src/Frontend/AjaxHandlers.php:1539
-#: src/Frontend/AjaxHandlers.php:1836
-#: src/Frontend/AjaxHandlers.php:2429
-#: src/Frontend/AjaxHandlers.php:2460
-#: src/Frontend/AjaxHandlers.php:2598
-#: src/Frontend/AjaxHandlers.php:2673
-#: src/Frontend/AjaxHandlers.php:2685
-#: src/Frontend/AjaxHandlers.php:2690
-#: src/Frontend/AjaxHandlers.php:3018
-#: src/Frontend/AjaxHandlers.php:3028
-#: src/Frontend/AjaxHandlers.php:3074
-#: src/Frontend/AjaxHandlers.php:3084
-#: src/Frontend/AjaxHandlers.php:3153
+#: src/Frontend/AjaxHandlers.php:1418
+#: src/Frontend/AjaxHandlers.php:1499
+#: src/Frontend/AjaxHandlers.php:1535
+#: src/Frontend/AjaxHandlers.php:1832
+#: src/Frontend/AjaxHandlers.php:2425
+#: src/Frontend/AjaxHandlers.php:2456
+#: src/Frontend/AjaxHandlers.php:2594
+#: src/Frontend/AjaxHandlers.php:2669
+#: src/Frontend/AjaxHandlers.php:2681
+#: src/Frontend/AjaxHandlers.php:2686
+#: src/Frontend/AjaxHandlers.php:3014
+#: src/Frontend/AjaxHandlers.php:3024
+#: src/Frontend/AjaxHandlers.php:3070
+#: src/Frontend/AjaxHandlers.php:3080
+#: src/Frontend/AjaxHandlers.php:3149
 #: src/Integrations/Gateways/OfflineGateway.php:955
 msgid "Permission denied."
 msgstr ""
@@ -201,8 +201,8 @@ msgstr ""
 #: src/Admin/Admin.php:768
 #: src/Admin/Admin.php:1365
 #: src/Admin/Admin.php:1422
-#: src/Frontend/AjaxHandlers.php:638
-#: src/Frontend/AjaxHandlers.php:2552
+#: src/Frontend/AjaxHandlers.php:634
+#: src/Frontend/AjaxHandlers.php:2548
 #: src/Integrations/Gateways/OfflineGateway.php:637
 #: src/Integrations/Gateways/TestGateway.php:246
 #: src/Integrations/PayPal/PayPalGateway.php:847
@@ -344,16 +344,16 @@ msgstr ""
 #: src/Admin/OrderScreen.php:160
 #: src/Admin/OrderScreen.php:246
 #: src/Admin/Pages/VendorsPage.php:2816
-#: src/Frontend/AjaxHandlers.php:1130
-#: src/Frontend/AjaxHandlers.php:1416
-#: src/Frontend/AjaxHandlers.php:1497
-#: src/Frontend/AjaxHandlers.php:1533
-#: src/Frontend/AjaxHandlers.php:1766
-#: src/Frontend/AjaxHandlers.php:1791
-#: src/Frontend/AjaxHandlers.php:1830
-#: src/Frontend/AjaxHandlers.php:2423
-#: src/Frontend/AjaxHandlers.php:2453
-#: src/Frontend/AjaxHandlers.php:2560
+#: src/Frontend/AjaxHandlers.php:1126
+#: src/Frontend/AjaxHandlers.php:1412
+#: src/Frontend/AjaxHandlers.php:1493
+#: src/Frontend/AjaxHandlers.php:1529
+#: src/Frontend/AjaxHandlers.php:1762
+#: src/Frontend/AjaxHandlers.php:1787
+#: src/Frontend/AjaxHandlers.php:1826
+#: src/Frontend/AjaxHandlers.php:2419
+#: src/Frontend/AjaxHandlers.php:2449
+#: src/Frontend/AjaxHandlers.php:2556
 #: src/Frontend/ServiceWizard.php:2001
 #: src/Integrations/PayPal/PayPalGateway.php:906
 msgid "Invalid request."
@@ -361,7 +361,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:1385
 #: src/Admin/Pages/VendorsPage.php:1327
-#: src/Frontend/AjaxHandlers.php:1508
+#: src/Frontend/AjaxHandlers.php:1504
 #: src/Services/EarningsService.php:1126
 msgid "Invalid status."
 msgstr ""
@@ -916,7 +916,7 @@ msgstr ""
 #: src/Admin/Admin.php:2331
 #: src/Admin/Admin.php:2423
 #: src/Frontend/AjaxHandlers.php:544
-#: src/Frontend/AjaxHandlers.php:590
+#: src/Frontend/AjaxHandlers.php:589
 msgid "You do not have permission to perform this action."
 msgstr ""
 
@@ -985,10 +985,10 @@ msgstr ""
 #: src/API/RestController.php:364
 #: src/API/ReviewsController.php:376
 #: src/API/TippingController.php:338
-#: src/Frontend/AjaxHandlers.php:763
-#: src/Frontend/AjaxHandlers.php:925
-#: src/Frontend/AjaxHandlers.php:1254
-#: src/Frontend/AjaxHandlers.php:2567
+#: src/Frontend/AjaxHandlers.php:759
+#: src/Frontend/AjaxHandlers.php:921
+#: src/Frontend/AjaxHandlers.php:1250
+#: src/Frontend/AjaxHandlers.php:2563
 #: src/Frontend/Shortcodes.php:874
 #: src/Frontend/Shortcodes.php:887
 #: src/Integrations/Gateways/OfflineGateway.php:995
@@ -1061,7 +1061,8 @@ msgid "Open dispute"
 msgstr ""
 
 #: src/Admin/Admin.php:2683
-msgid "View dispute"
+#: templates/order/order-view.php:461
+msgid "View Dispute"
 msgstr ""
 
 #: src/Admin/Admin.php:2688
@@ -1496,7 +1497,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:3465
 #: src/API/DisputesController.php:373
-#: src/Frontend/AjaxHandlers.php:1242
+#: src/Frontend/AjaxHandlers.php:1238
 #: src/Services/DisputeService.php:798
 #: src/Services/DisputeService.php:968
 #: src/Services/DisputeWorkflowManager.php:109
@@ -3016,8 +3017,8 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:659
 #: src/Admin/Pages/ServiceModerationPage.php:687
 #: src/Checkout/CheckoutIntentService.php:383
-#: src/Frontend/AjaxHandlers.php:2251
-#: src/Frontend/AjaxHandlers.php:2382
+#: src/Frontend/AjaxHandlers.php:2247
+#: src/Frontend/AjaxHandlers.php:2378
 #: src/Integrations/Gateways/OfflineGateway.php:832
 #: src/Integrations/Gateways/TestGateway.php:334
 msgid "Invalid service."
@@ -4501,7 +4502,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1140
 #: src/API/VendorsController.php:394
 #: src/API/VendorsController.php:406
-#: src/Frontend/AjaxHandlers.php:1970
+#: src/Frontend/AjaxHandlers.php:1966
 #: src/Frontend/Shortcodes.php:535
 #: src/Frontend/Shortcodes.php:546
 #: src/Services/EarningsService.php:441
@@ -4627,10 +4628,10 @@ msgid "Commission rate updated successfully."
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1539
-#: src/Frontend/AjaxHandlers.php:2517
-#: src/Frontend/AjaxHandlers.php:2727
-#: src/Frontend/AjaxHandlers.php:2759
-#: src/Frontend/AjaxHandlers.php:2791
+#: src/Frontend/AjaxHandlers.php:2513
+#: src/Frontend/AjaxHandlers.php:2723
+#: src/Frontend/AjaxHandlers.php:2755
+#: src/Frontend/AjaxHandlers.php:2787
 msgid "Invalid tab."
 msgstr ""
 
@@ -7506,22 +7507,22 @@ msgid "Request created successfully."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:628
-#: src/Frontend/AjaxHandlers.php:1480
+#: src/Frontend/AjaxHandlers.php:1476
 msgid "Failed to update request."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:637
-#: src/Frontend/AjaxHandlers.php:1475
+#: src/Frontend/AjaxHandlers.php:1471
 msgid "Request updated successfully."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:653
-#: src/Frontend/AjaxHandlers.php:1548
+#: src/Frontend/AjaxHandlers.php:1544
 msgid "This request has proposals, so it cannot be deleted. You can close it instead."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:661
-#: src/Frontend/AjaxHandlers.php:1552
+#: src/Frontend/AjaxHandlers.php:1548
 #: src/Frontend/UnifiedDashboard.php:221
 msgid "Failed to delete request."
 msgstr ""
@@ -7536,7 +7537,7 @@ msgstr ""
 
 #: src/API/BuyerRequestsController.php:735
 #: src/API/ProposalsController.php:385
-#: src/Frontend/AjaxHandlers.php:1618
+#: src/Frontend/AjaxHandlers.php:1614
 msgid "Proposal submitted successfully."
 msgstr ""
 
@@ -7614,8 +7615,8 @@ msgstr ""
 
 #: src/API/CartController.php:142
 #: src/Checkout/CheckoutIntentService.php:389
-#: src/Frontend/AjaxHandlers.php:2268
-#: src/Frontend/AjaxHandlers.php:2388
+#: src/Frontend/AjaxHandlers.php:2264
+#: src/Frontend/AjaxHandlers.php:2384
 #: src/Integrations/Gateways/OfflineGateway.php:902
 #: src/Integrations/Gateways/TestGateway.php:341
 msgid "You cannot purchase your own service."
@@ -7675,8 +7676,8 @@ msgid "Failed to start the conversation for this order."
 msgstr ""
 
 #: src/API/ConversationsController.php:513
-#: src/Frontend/AjaxHandlers.php:755
-#: src/Frontend/AjaxHandlers.php:1959
+#: src/Frontend/AjaxHandlers.php:751
+#: src/Frontend/AjaxHandlers.php:1955
 msgid "Please enter a message or attach a file."
 msgstr ""
 
@@ -7713,13 +7714,13 @@ msgid "No dispute found for this order."
 msgstr ""
 
 #: src/API/DisputesController.php:471
-#: src/Frontend/AjaxHandlers.php:1182
+#: src/Frontend/AjaxHandlers.php:1178
 msgid "Disputes are not enabled on this platform."
 msgstr ""
 
 #: src/API/DisputesController.php:486
 #: src/API/OrdersController.php:1286
-#: src/Frontend/AjaxHandlers.php:1214
+#: src/Frontend/AjaxHandlers.php:1210
 #: src/Frontend/Frontend.php:318
 #: src/Services/DisputeService.php:333
 msgid "Failed to open dispute."
@@ -7730,27 +7731,27 @@ msgid "Dispute opened successfully."
 msgstr ""
 
 #: src/API/DisputesController.php:563
-#: src/Frontend/AjaxHandlers.php:1246
+#: src/Frontend/AjaxHandlers.php:1242
 msgid "This dispute is no longer accepting evidence."
 msgstr ""
 
 #: src/API/DisputesController.php:579
-#: src/Frontend/AjaxHandlers.php:1284
+#: src/Frontend/AjaxHandlers.php:1280
 msgid "Could not store the file."
 msgstr ""
 
 #: src/API/DisputesController.php:586
-#: src/Frontend/AjaxHandlers.php:1294
+#: src/Frontend/AjaxHandlers.php:1290
 msgid "Please provide a message or attach a file."
 msgstr ""
 
 #: src/API/DisputesController.php:594
-#: src/Frontend/AjaxHandlers.php:1308
+#: src/Frontend/AjaxHandlers.php:1304
 msgid "Failed to add evidence."
 msgstr ""
 
 #: src/API/DisputesController.php:602
-#: src/Frontend/AjaxHandlers.php:1329
+#: src/Frontend/AjaxHandlers.php:1325
 msgid "Evidence added successfully."
 msgstr ""
 
@@ -7858,7 +7859,7 @@ msgstr ""
 #: src/API/ServicesController.php:780
 #: src/API/ServicesController.php:1015
 #: src/API/ServicesController.php:1886
-#: src/Frontend/AjaxHandlers.php:2263
+#: src/Frontend/AjaxHandlers.php:2259
 #: src/Frontend/ServiceWizard.php:247
 #: src/functions/services.php:500
 #: src/Integrations/Gateways/OfflineGateway.php:898
@@ -8188,13 +8189,13 @@ msgstr ""
 
 #: src/API/OrdersController.php:1218
 #: src/Frontend/AjaxHandlers.php:553
-#: src/Frontend/AjaxHandlers.php:2675
+#: src/Frontend/AjaxHandlers.php:2671
 msgid "Buyer accepted cancellation request."
 msgstr ""
 
 #: src/API/OrdersController.php:1218
 #: src/Frontend/AjaxHandlers.php:553
-#: src/Frontend/AjaxHandlers.php:2675
+#: src/Frontend/AjaxHandlers.php:2671
 msgid "Vendor accepted cancellation request."
 msgstr ""
 
@@ -8232,12 +8233,12 @@ msgid "Action could not be completed. The order status transition may not be all
 msgstr ""
 
 #: src/API/OrdersController.php:1432
-#: src/Frontend/AjaxHandlers.php:2465
+#: src/Frontend/AjaxHandlers.php:2461
 msgid "This order is no longer waiting for requirements."
 msgstr ""
 
 #: src/API/OrdersController.php:1449
-#: src/Frontend/AjaxHandlers.php:2478
+#: src/Frontend/AjaxHandlers.php:2474
 msgid "Requirements skipped. You can submit them later."
 msgstr ""
 
@@ -8250,12 +8251,12 @@ msgid "You do not have permission to delete this file."
 msgstr ""
 
 #: src/API/OrdersController.php:1501
-#: src/Frontend/AjaxHandlers.php:2435
+#: src/Frontend/AjaxHandlers.php:2431
 msgid "This file cannot be deleted. It may belong to a request that already has proposals."
 msgstr ""
 
 #: src/API/OrdersController.php:1511
-#: src/Frontend/AjaxHandlers.php:2438
+#: src/Frontend/AjaxHandlers.php:2434
 msgid "File removed."
 msgstr ""
 
@@ -8410,7 +8411,7 @@ msgstr ""
 #: src/API/PortfolioController.php:273
 #: src/API/PortfolioController.php:415
 #: src/API/PortfolioController.php:462
-#: src/Frontend/AjaxHandlers.php:3098
+#: src/Frontend/AjaxHandlers.php:3094
 #: src/Services/PortfolioService.php:222
 #: src/Services/PortfolioService.php:324
 #: src/Services/PortfolioService.php:438
@@ -8424,8 +8425,8 @@ msgstr ""
 
 #: src/API/ProposalsController.php:222
 #: src/API/ProposalsController.php:270
-#: src/Frontend/AjaxHandlers.php:1647
-#: src/Frontend/AjaxHandlers.php:1711
+#: src/Frontend/AjaxHandlers.php:1643
+#: src/Frontend/AjaxHandlers.php:1707
 #: src/Services/BuyerRequestService.php:902
 msgid "Proposal not found."
 msgstr ""
@@ -8468,7 +8469,7 @@ msgid "Proposal updated successfully."
 msgstr ""
 
 #: src/API/ProposalsController.php:520
-#: src/Frontend/AjaxHandlers.php:1750
+#: src/Frontend/AjaxHandlers.php:1746
 msgid "Failed to withdraw proposal."
 msgstr ""
 
@@ -8641,7 +8642,7 @@ msgstr ""
 
 #: src/API/ReviewsController.php:871
 #: src/API/ReviewsController.php:919
-#: src/Frontend/AjaxHandlers.php:1412
+#: src/Frontend/AjaxHandlers.php:1408
 msgid "You must be logged in."
 msgstr ""
 
@@ -8713,7 +8714,7 @@ msgid "Status must be either publish or draft."
 msgstr ""
 
 #: src/API/ServicesController.php:1037
-#: src/Frontend/AjaxHandlers.php:1840
+#: src/Frontend/AjaxHandlers.php:1836
 msgid "Failed to delete service."
 msgstr ""
 
@@ -8912,7 +8913,7 @@ msgid "You are not registered as a vendor."
 msgstr ""
 
 #: src/API/VendorsController.php:537
-#: src/Frontend/AjaxHandlers.php:2984
+#: src/Frontend/AjaxHandlers.php:2980
 msgid "Your profile could not be saved. Please try again or contact support."
 msgstr ""
 
@@ -9155,9 +9156,9 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:441
 #: src/Frontend/AjaxHandlers.php:532
 #: src/Frontend/AjaxHandlers.php:579
-#: src/Frontend/AjaxHandlers.php:650
-#: src/Frontend/AjaxHandlers.php:742
-#: src/Frontend/AjaxHandlers.php:917
+#: src/Frontend/AjaxHandlers.php:646
+#: src/Frontend/AjaxHandlers.php:738
+#: src/Frontend/AjaxHandlers.php:913
 #: src/Integrations/Gateways/OfflineGateway.php:672
 #: src/Integrations/Gateways/TestGateway.php:266
 msgid "Invalid order."
@@ -9225,7 +9226,7 @@ msgid "this store platform"
 msgstr ""
 
 #: src/Checkout/ServiceCart.php:124
-#: src/Frontend/AjaxHandlers.php:2257
+#: src/Frontend/AjaxHandlers.php:2253
 msgid "No e-commerce platform is active. Please check your settings."
 msgstr ""
 
@@ -9354,7 +9355,7 @@ msgstr ""
 
 #: src/Core/AbilitiesRegistrar.php:364
 #: src/Frontend/SingleServiceView.php:145
-#: src/Frontend/SingleServiceView.php:1097
+#: src/Frontend/SingleServiceView.php:1101
 #: templates/order/conversation.php:296
 msgid "Send message"
 msgstr ""
@@ -9696,7 +9697,7 @@ msgid "Your cancellation request has been submitted. The vendor has 48 hours to 
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:549
-#: src/Frontend/AjaxHandlers.php:595
+#: src/Frontend/AjaxHandlers.php:593
 msgid "This order does not have a pending cancellation request."
 msgstr ""
 
@@ -9704,379 +9705,379 @@ msgstr ""
 msgid "Cancellation accepted. Order has been cancelled."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:604
+#: src/Frontend/AjaxHandlers.php:601
 msgid "Request declined. The order is back in progress."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:619
-#: src/Frontend/AjaxHandlers.php:2698
+#: src/Frontend/AjaxHandlers.php:615
+#: src/Frontend/AjaxHandlers.php:2694
 msgid "Vendor disputed the buyer cancellation request."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:623
+#: src/Frontend/AjaxHandlers.php:619
 msgid "Cancellation disputed. The order has been escalated for admin review."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:625
+#: src/Frontend/AjaxHandlers.php:621
 msgid "Failed to create dispute. Please try again."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:657
+#: src/Frontend/AjaxHandlers.php:653
 msgid "You do not have permission to submit requirements."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:713
+#: src/Frontend/AjaxHandlers.php:709
 #: src/Services/RequirementsService.php:162
 #: src/Services/RequirementsService.php:213
 msgid "Requirements submitted successfully. The vendor will start working on your order."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:771
+#: src/Frontend/AjaxHandlers.php:767
 msgid "You do not have permission to send messages in this order."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:795
+#: src/Frontend/AjaxHandlers.php:791
 msgid "Failed to create conversation."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:807
-#: src/Frontend/AjaxHandlers.php:863
+#: src/Frontend/AjaxHandlers.php:803
+#: src/Frontend/AjaxHandlers.php:859
 #: src/Frontend/Frontend.php:295
 #: templates/dashboard/sections/messages.php:203
 #: templates/order/conversation.php:524
 msgid "Failed to send message."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:817
-#: src/Frontend/AjaxHandlers.php:866
+#: src/Frontend/AjaxHandlers.php:813
+#: src/Frontend/AjaxHandlers.php:862
 msgid "Message sent."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:842
-#: src/Frontend/AjaxHandlers.php:2523
-#: src/Frontend/AjaxHandlers.php:2733
-#: src/Frontend/AjaxHandlers.php:2765
-#: src/Frontend/AjaxHandlers.php:2797
-#: src/Frontend/AjaxHandlers.php:2831
-#: src/Frontend/AjaxHandlers.php:2938
-#: src/Frontend/AjaxHandlers.php:3230
-#: src/Frontend/AjaxHandlers.php:3271
-#: src/Frontend/AjaxHandlers.php:3300
-#: src/Frontend/AjaxHandlers.php:3339
-#: src/Frontend/AjaxHandlers.php:3363
-#: src/Frontend/AjaxHandlers.php:3388
-#: src/Frontend/AjaxHandlers.php:3412
-#: src/Frontend/AjaxHandlers.php:3435
+#: src/Frontend/AjaxHandlers.php:838
+#: src/Frontend/AjaxHandlers.php:2519
+#: src/Frontend/AjaxHandlers.php:2729
+#: src/Frontend/AjaxHandlers.php:2761
+#: src/Frontend/AjaxHandlers.php:2793
+#: src/Frontend/AjaxHandlers.php:2827
+#: src/Frontend/AjaxHandlers.php:2934
+#: src/Frontend/AjaxHandlers.php:3226
+#: src/Frontend/AjaxHandlers.php:3267
+#: src/Frontend/AjaxHandlers.php:3296
+#: src/Frontend/AjaxHandlers.php:3335
+#: src/Frontend/AjaxHandlers.php:3359
+#: src/Frontend/AjaxHandlers.php:3384
+#: src/Frontend/AjaxHandlers.php:3408
+#: src/Frontend/AjaxHandlers.php:3431
 msgid "Please log in."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:846
+#: src/Frontend/AjaxHandlers.php:842
 msgid "Please enter a message."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:852
-#: src/Frontend/AjaxHandlers.php:888
+#: src/Frontend/AjaxHandlers.php:848
+#: src/Frontend/AjaxHandlers.php:884
 msgid "You do not have access to this conversation."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:882
-#: src/Frontend/AjaxHandlers.php:1031
+#: src/Frontend/AjaxHandlers.php:878
+#: src/Frontend/AjaxHandlers.php:1027
 msgid "Invalid conversation."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:932
+#: src/Frontend/AjaxHandlers.php:928
 msgid "Access denied."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1040
+#: src/Frontend/AjaxHandlers.php:1036
 msgid "Failed to mark messages as read. Please try again."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1063
+#: src/Frontend/AjaxHandlers.php:1059
 msgid "You must be logged in to submit a review."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1067
+#: src/Frontend/AjaxHandlers.php:1063
 msgid "Please provide a rating."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1071
+#: src/Frontend/AjaxHandlers.php:1067
 msgid "Invalid rating."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1097
+#: src/Frontend/AjaxHandlers.php:1093
 msgid "Review submitted successfully."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1102
+#: src/Frontend/AjaxHandlers.php:1098
 msgid "Failed to submit review. Please try again."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1196
+#: src/Frontend/AjaxHandlers.php:1192
 msgid "You must be logged in to open a dispute."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1200
-#: src/Frontend/AjaxHandlers.php:1578
-#: src/Frontend/AjaxHandlers.php:1586
+#: src/Frontend/AjaxHandlers.php:1196
+#: src/Frontend/AjaxHandlers.php:1574
+#: src/Frontend/AjaxHandlers.php:1582
 msgid "Please fill in all required fields."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1209
+#: src/Frontend/AjaxHandlers.php:1205
 #: src/Frontend/Frontend.php:317
 msgid "Dispute opened successfully. Our team will review your case."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1231
+#: src/Frontend/AjaxHandlers.php:1227
 msgid "You must be logged in to add evidence."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1235
+#: src/Frontend/AjaxHandlers.php:1231
 msgid "Invalid dispute."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1262
+#: src/Frontend/AjaxHandlers.php:1258
 msgid "You do not have permission to add evidence to this dispute."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1347
+#: src/Frontend/AjaxHandlers.php:1343
 msgid "You must be logged in to post a request."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1378
-#: src/Frontend/AjaxHandlers.php:1455
+#: src/Frontend/AjaxHandlers.php:1374
+#: src/Frontend/AjaxHandlers.php:1451
 msgid "Title and description are required."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1391
+#: src/Frontend/AjaxHandlers.php:1387
 msgid "Request posted successfully."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1396
+#: src/Frontend/AjaxHandlers.php:1392
 msgid "Failed to create request."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1518
+#: src/Frontend/AjaxHandlers.php:1514
 #: src/PostTypes/BuyerRequestPostType.php:138
 msgid "Request updated."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1555
+#: src/Frontend/AjaxHandlers.php:1551
 #: src/Frontend/UnifiedDashboard.php:220
 msgid "Request deleted."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1590
+#: src/Frontend/AjaxHandlers.php:1586
 #: src/Frontend/Frontend.php:274
 msgid "Add at least one milestone phase."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1623
+#: src/Frontend/AjaxHandlers.php:1619
 msgid "Failed to submit proposal. You may have already submitted a proposal for this request."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1639
-#: src/Frontend/AjaxHandlers.php:1704
-#: src/Frontend/AjaxHandlers.php:1741
+#: src/Frontend/AjaxHandlers.php:1635
+#: src/Frontend/AjaxHandlers.php:1700
+#: src/Frontend/AjaxHandlers.php:1737
 msgid "Invalid proposal."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1655
+#: src/Frontend/AjaxHandlers.php:1651
 msgid "You do not have permission to accept this proposal."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1670
+#: src/Frontend/AjaxHandlers.php:1666
 msgid "Proposal accepted — your project is set up. Opening the order…"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1673
+#: src/Frontend/AjaxHandlers.php:1669
 msgid "Proposal accepted! Redirecting to payment…"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1685
+#: src/Frontend/AjaxHandlers.php:1681
 #: src/Services/BuyerRequestService.php:1086
 msgid "Failed to create order. Please try again."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1717
+#: src/Frontend/AjaxHandlers.php:1713
 msgid "You are not authorized to decline this proposal."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1723
+#: src/Frontend/AjaxHandlers.php:1719
 msgid "Proposal declined."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1725
+#: src/Frontend/AjaxHandlers.php:1721
 msgid "Failed to decline proposal."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1748
+#: src/Frontend/AjaxHandlers.php:1744
 msgid "Proposal withdrawn."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1773
+#: src/Frontend/AjaxHandlers.php:1769
 msgid "Added to favorites."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1798
+#: src/Frontend/AjaxHandlers.php:1794
 #: src/Frontend/Frontend.php:350
 msgid "Removed from favorites."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1843
+#: src/Frontend/AjaxHandlers.php:1839
 msgid "Service deleted."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1855
+#: src/Frontend/AjaxHandlers.php:1851
 msgid "You must be logged in to upload files."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1864
+#: src/Frontend/AjaxHandlers.php:1860
 msgid "No file uploaded."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1928
+#: src/Frontend/AjaxHandlers.php:1924
 msgid "You must be logged in to contact vendors."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1946
+#: src/Frontend/AjaxHandlers.php:1942
 msgid "Invalid vendor."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1964
+#: src/Frontend/AjaxHandlers.php:1960
 msgid "You cannot contact yourself."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:1976
+#: src/Frontend/AjaxHandlers.php:1972
 msgid "This vendor is not taking new messages right now."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2008
+#: src/Frontend/AjaxHandlers.php:2004
 msgid "Your session has expired. Please sign in again."
 msgstr ""
 
 #. translators: %s: sender name
-#: src/Frontend/AjaxHandlers.php:2016
+#: src/Frontend/AjaxHandlers.php:2012
 #, php-format
 msgid "New message from %s"
 msgstr ""
 
 #. translators: 1: sender name, 2: service title
-#: src/Frontend/AjaxHandlers.php:2023
+#: src/Frontend/AjaxHandlers.php:2019
 #, php-format
 msgid "%1$s sent you a message about \"%2$s\""
 msgstr ""
 
 #. translators: %s: sender name
-#: src/Frontend/AjaxHandlers.php:2029
+#: src/Frontend/AjaxHandlers.php:2025
 #, php-format
 msgid "%s sent you a message"
 msgstr ""
 
 #. translators: %s: service title
-#: src/Frontend/AjaxHandlers.php:2058
+#: src/Frontend/AjaxHandlers.php:2054
 #, php-format
 msgid "Inquiry about \"%s\""
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2061
+#: src/Frontend/AjaxHandlers.php:2057
 #: templates/dashboard/sections/messages.php:97
 #: templates/dashboard/sections/messages.php:381
 #: templates/dashboard/sections/messages.php:472
 msgid "Direct Message"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2085
+#: src/Frontend/AjaxHandlers.php:2081
 msgid "Your message has been sent successfully!"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2151
+#: src/Frontend/AjaxHandlers.php:2147
 msgid "Please log in to continue to checkout."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2280
+#: src/Frontend/AjaxHandlers.php:2276
 #: src/Frontend/Frontend.php:310
 #: src/Frontend/SingleServiceView.php:132
 msgid "Added to cart!"
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2344
+#: src/Frontend/AjaxHandlers.php:2340
 msgid "Invalid notification."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2365
+#: src/Frontend/AjaxHandlers.php:2361
 msgid "All notifications marked as read."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2403
-#: src/Frontend/AjaxHandlers.php:2408
+#: src/Frontend/AjaxHandlers.php:2399
+#: src/Frontend/AjaxHandlers.php:2404
 msgid "Cart updated."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2531
+#: src/Frontend/AjaxHandlers.php:2527
 msgid "Tab content not found."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2587
+#: src/Frontend/AjaxHandlers.php:2583
 msgid "Unknown action."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2615
+#: src/Frontend/AjaxHandlers.php:2611
 msgid "This action is not available in the order's current status."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2665
+#: src/Frontend/AjaxHandlers.php:2661
 msgid "Order cannot be refunded in its current status."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2677
+#: src/Frontend/AjaxHandlers.php:2673
 msgid "Cannot accept cancellation."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2702
+#: src/Frontend/AjaxHandlers.php:2698
 msgid "Failed to create dispute."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2705
+#: src/Frontend/AjaxHandlers.php:2701
 msgid "Cannot dispute cancellation."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2711
+#: src/Frontend/AjaxHandlers.php:2707
 msgid "Order updated."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2713
+#: src/Frontend/AjaxHandlers.php:2709
 msgid "Action failed."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:2824
+#: src/Frontend/AjaxHandlers.php:2820
 msgid "Invalid export type."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3005
+#: src/Frontend/AjaxHandlers.php:3001
 #: src/Frontend/UnifiedDashboard.php:203
 msgid "Profile updated successfully."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3090
-#: src/Frontend/AjaxHandlers.php:3159
+#: src/Frontend/AjaxHandlers.php:3086
+#: src/Frontend/AjaxHandlers.php:3155
 msgid "Invalid portfolio item."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3188
+#: src/Frontend/AjaxHandlers.php:3184
 msgid "Invalid cart item."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3210
+#: src/Frontend/AjaxHandlers.php:3206
 msgid "Item removed from cart."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3239
-#: src/Frontend/AjaxHandlers.php:3311
+#: src/Frontend/AjaxHandlers.php:3235
+#: src/Frontend/AjaxHandlers.php:3307
 msgid "Missing order."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3278
+#: src/Frontend/AjaxHandlers.php:3274
 msgid "Missing request."
 msgstr ""
 
@@ -11627,7 +11628,7 @@ msgid "Go to Dashboard"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1206
-msgid "Your vendor account is suspended"
+msgid "Vendor account suspended"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1207
@@ -11958,7 +11959,7 @@ msgid "Attach Files (optional)"
 msgstr ""
 
 #. translators: %s: allowed file extensions, e.g. .jpg,.pdf
-#: src/Frontend/SingleServiceView.php:1091
+#: src/Frontend/SingleServiceView.php:1094
 #, php-format
 msgid "Max 5 files. Allowed: %s"
 msgstr ""
@@ -22546,10 +22547,6 @@ msgstr ""
 
 #: templates/order/order-view.php:444
 msgid "Decline this cancellation request? The order goes back to its previous status and the seller keeps working on it."
-msgstr ""
-
-#: templates/order/order-view.php:461
-msgid "View Dispute"
 msgstr ""
 
 #: templates/order/order-view.php:587
