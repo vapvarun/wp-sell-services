@@ -1981,7 +1981,7 @@ class Admin {
 				'icon'  => 'user-check',
 			),
 			array(
-				'count' => wpss_count_pending_services(),
+				'count' => \WPSellServices\Services\ModerationService::is_enabled() ? wpss_count_pending_services() : 0, // With moderation off there is no queue to act on.
 				'label' => __( 'Services awaiting moderation', 'wp-sell-services' ),
 				'url'   => admin_url( 'admin.php?page=wpss-moderation&status=pending' ),
 				'icon'  => 'badge-check',

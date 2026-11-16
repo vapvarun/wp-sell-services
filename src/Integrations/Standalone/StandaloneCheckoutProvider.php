@@ -964,7 +964,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			<div class="wpss-co-header">
 				<?php // A proposal order has no service page to go back to: its way back is the order. ?>
 				<?php $back_to_order_view = $is_pay_order && $service->id <= 0; ?>
-				<a href="<?php echo esc_url( $back_to_order_view ? wpss_get_order_url( ! empty( $pay_order->platform_order_id ) ? (int) $pay_order->platform_order_id : (int) $pay_order->id ) : ( $service->id > 0 ? get_permalink( $service->id ) : home_url( '/' ) ) ); ?>" class="wpss-co-header__back">
+				<a href="<?php echo esc_url( $back_to_order_view ? wpss_get_order_url( $is_sub_order && ! empty( $pay_order->platform_order_id ) ? (int) $pay_order->platform_order_id : (int) $pay_order->id ) : ( $service->id > 0 ? get_permalink( $service->id ) : home_url( '/' ) ) ); ?>" class="wpss-co-header__back">
 					<span aria-hidden="true">&larr;</span>
 					<?php echo $back_to_order_view ? esc_html__( 'Back to order', 'wp-sell-services' ) : esc_html__( 'Back to service', 'wp-sell-services' ); ?>
 				</a>

@@ -287,7 +287,7 @@ class ServiceModerationPage {
 	 * @return int
 	 */
 	public function get_pending_count(): int {
-		return wpss_count_pending_services();
+		return ModerationService::is_enabled() ? wpss_count_pending_services() : 0; // Moderation off: no queue, so no badge.
 	}
 
 	/**

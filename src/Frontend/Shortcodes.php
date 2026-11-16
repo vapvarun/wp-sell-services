@@ -1198,6 +1198,19 @@ class Shortcodes {
 			return ob_get_clean();
 		}
 
+		// A suspended vendor is not offered registration: it would only toast a refusal.
+		if ( 'suspended' === wpss_get_vendor_status( $user_id ) ) {
+			?>
+			<div class="wpss-vr">
+				<div class="wpss-vr__card">
+					<h2 class="wpss-vr__title"><?php esc_html_e( 'Your vendor account is suspended', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-vr__desc"><?php esc_html_e( 'You cannot register again while the suspension is in place. Please contact the site owner.', 'wp-sell-services' ); ?></p>
+				</div>
+			</div>
+			<?php
+			return ob_get_clean();
+		}
+
 		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
 		$approval_required = 'approval' === $registration_mode;

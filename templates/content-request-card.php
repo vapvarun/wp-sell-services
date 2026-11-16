@@ -263,8 +263,9 @@ do_action( 'wpss_before_request_card', $request_id );
 
 			<?php // A visitor is told what it takes, as on the request page itself (Basecamp 10337197376). ?>
 			<?php if ( is_user_logged_in() ) : ?>
+				<?php // A suspended vendor cannot send a proposal, so the card only offers the request itself. ?>
 				<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
-					<?php esc_html_e( 'Send Proposal', 'wp-sell-services' ); ?>
+					<?php echo 'suspended' === wpss_get_vendor_status( get_current_user_id() ) ? esc_html__( 'View Request', 'wp-sell-services' ) : esc_html__( 'Send Proposal', 'wp-sell-services' ); ?>
 				</a>
 			<?php else : ?>
 				<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
