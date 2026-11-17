@@ -462,7 +462,8 @@ JS;
 			</td>
 			<td class="column-review">
 				<?php if ( '' !== trim( $content ) ) : ?>
-					<?php echo esc_html( wp_trim_words( wp_strip_all_tags( $content ), 30 ) ); ?>
+					<?php // Moderation needs the whole review: an admin cannot approve what they cannot read. ?>
+					<?php echo nl2br( esc_html( wp_strip_all_tags( $content ) ) ); ?>
 				<?php else : ?>
 					<em><?php esc_html_e( 'No written review.', 'wp-sell-services' ); ?></em>
 				<?php endif; ?>
