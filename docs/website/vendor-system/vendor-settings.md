@@ -64,6 +64,41 @@ This is useful for maintaining marketplace quality, especially in the early days
 
 ![Full vendor settings panel](../images/settings-vendors-tab.webp)
 
+## Re-review Live Edits
+
+**Default: Disabled**
+
+Controls what happens when a vendor edits a service that is already live. When it is off, an approved service stays live while the vendor edits it. When it is on, every edit takes the service offline until you approve it again. New services always wait for approval when Require Service Moderation is on.
+
+## Vendor Application Questions
+
+**Default: Disabled**
+
+When it is off, a member becomes a vendor with one click on the Start selling panel. When it is on, the panel first asks for a tagline and a short description, and you see both on the Vendors screen when you approve the application.
+
+## Verify Email Before Selling
+
+**Default: Disabled**
+
+Applies to members who sign up through the plugin's own sign-up form. When it is off, sign-up works as before. When it is on, new members get a confirmation link by email, and the Start selling button asks them to use it before they can become a vendor. Members who joined earlier, or another way, are not affected.
+
+## Sign-up Notice
+
+**Default: Disabled**
+
+Emails the site admin when someone signs up through the plugin. It is the same "New user registration" email WordPress sends for its own sign-up form.
+
+## Suspended Vendors and Earnings
+
+**Default: Disabled**
+
+Suspending a vendor stops new work. This setting decides whether it also holds money the vendor has already earned.
+
+- **Off:** a suspended vendor keeps Sales Orders only. Money already earned is held until you reactivate them or pay it by hand.
+- **On:** a suspended vendor can still see their balance, request a withdrawal and update payout details. You still approve every withdrawal.
+
+An account-level suspension or ban is never relaxed by this setting.
+
 ## Registration Form Fields
 
 The vendor registration form collects:

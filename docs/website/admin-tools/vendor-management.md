@@ -90,7 +90,7 @@ If a vendor violates your policies or you need to temporarily restrict their acc
 
 You can give an optional reason when you suspend; it is shown in the suspension email and notification, and kept in the audit log.
 
-Suspended vendors cannot receive new orders, but their existing active orders continue to completion. You can reactivate them at any time by setting their status back to **Active**.
+Suspended vendors cannot receive new orders, but their existing active orders continue to completion. Whether they can still see their earnings and request withdrawals is a setting: see [Suspended Vendors and Earnings](../vendor-system/vendor-settings.md#suspended-vendors-and-earnings). You can reactivate them at any time by setting their status back to **Active**.
 
 ## Vendor Verification Tiers
 

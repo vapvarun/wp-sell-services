@@ -55,6 +55,15 @@ The order has been stopped. This can happen for several reasons -- payment failu
 
 When someone cancels an order they choose a reason and can add details. Both are kept with the order and shown as **Cancellation reason** and **Cancellation details** in the order summary, to the buyer, the vendor, and the admin on the wp-admin order screen. The Audit Log shows them next to the status change. Orders cancelled before 1.8.0 have no stored reason and show nothing.
 
+### Cancellation Requests
+
+Once work has started, neither side can cancel on its own. Whoever wants out asks, and the other side answers.
+
+- **A buyer asks** while the order is In Progress, before anything is delivered and inside the [Buyer Cancellation Window](order-settings.md#buyer-cancellation-window). The vendor accepts or declines.
+- **A seller asks** when they cannot finish paid work that is In Progress, Late or in Revision Requested. The seller gives a reason and the buyer decides. If the buyer accepts, the order is cancelled and refunded. If the buyer declines, the order goes back to work.
+
+A seller's request has no timer, so a silent buyer does not lose the order. The site owner can step in, or the seller can open a dispute. Orders that have not started can still be cancelled outright by the seller, and a delivered order uses its own accept, revision or dispute path.
+
 ### Disputed
 
 A formal dispute has been opened. The order is paused while both parties submit evidence and the admin mediates. See [Opening a Dispute](../disputes-resolution/opening-a-dispute.md) for details.
