@@ -676,7 +676,7 @@ class SingleServiceView {
 	 * Render vendor portfolio items related to this service.
 	 *
 	 * Shows items linked to the service first; falls back to the vendor's
-	 * featured portfolio items when no service-specific items exist.
+	 * portfolio items (featured first) when no service-specific items exist.
 	 *
 	 * @since 1.1.0
 	 *
@@ -686,11 +686,11 @@ class SingleServiceView {
 	public function render_portfolio( Service $service ): void {
 		$portfolio_service = new \WPSellServices\Services\PortfolioService();
 
-		// First try items linked to this service, then fall back to vendor's featured items.
+		// First try items linked to this service, then fall back to the vendor's items, featured first.
 		$items = $portfolio_service->get_by_service( $service->id, 6 );
 
 		if ( empty( $items ) ) {
-			$items = $portfolio_service->get_featured( $service->vendor_id, 6 );
+			$items = $portfolio_service->get_by_vendor( $service->vendor_id, array( 'limit' => 6 ) );
 		}
 
 		if ( empty( $items ) ) {
