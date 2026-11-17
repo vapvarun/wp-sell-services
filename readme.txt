@@ -369,6 +369,8 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - Links to the services, dashboard and become-a-vendor pages follow the pages mapped in Settings, so a trashed or drafted page is no longer linked from emails, the setup wizard or the app, and both Become a vendor buttons lead to the same page.
 * Fix      - With Yoast SEO or Rank Math active, a service page carries its service structured data once instead of twice; category, archive and vendor structured data is unchanged.
 * Fix      - PayPal checkout and refunds work in Japanese yen, Hungarian forint and New Taiwan dollar, which PayPal takes only as whole amounts, and send three decimals for currencies that have them.
+* Fix      - Review moderation shows the whole review, not the first 30 words, so an admin reads it before approving.
+* Fix      - A vendor project in the public portfolio opens to show every image, the full description, tags and link, instead of the first image and a short excerpt.
 * Security - A buyer can no longer cancel and refund a disputed or revision-stage order through the legacy cancel AJAX action; it now follows the same pre-delivery rule as the REST route.
 * Security - Changing an order's status or refunding from the order screen is administrator-only on every path, so a shop manager can no longer run it through the AJAX action.
 * Dev      - New wpss_order_timestamp filter lets an importer or demo installer set the created, paid, started and completed dates on orders it creates. Default behaviour is unchanged.
