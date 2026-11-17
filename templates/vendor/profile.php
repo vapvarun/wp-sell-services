@@ -367,7 +367,16 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 				<?php
 				// Portfolio section.
 				$portfolio_service = new \WPSellServices\Services\PortfolioService();
-				$portfolio_items   = $portfolio_service->get_featured( $vendor_id, 6 );
+				// Every item the vendor added, featured ones pinned first (get_by_vendor orders by is_featured DESC).
+				/**
+				 * Filters how many portfolio items the public vendor profile shows.
+				 *
+				 * @since 1.9.3
+				 *
+				 * @param int $limit     Items to show, 24 by default.
+				 * @param int $vendor_id Vendor user ID.
+				 */
+				$portfolio_items   = $portfolio_service->get_by_vendor( $vendor_id, array( 'limit' => (int) apply_filters( 'wpss_profile_portfolio_limit', 24, $vendor_id ) ) );
 
 				if ( ! empty( $portfolio_items ) ) :
 				?>
