@@ -143,6 +143,7 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 
 .wpss-portfolio-public__desc {
 	margin: 0 0 var( --wpss-space-3, 12px );
+	white-space: pre-line;
 	font-size: var( --wpss-text-xs, 12px );
 	line-height: 1.5;
 	color: rgba(255,255,255,.82);
@@ -233,6 +234,9 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 }
 
 .wpss-portfolio-public--list .wpss-portfolio-public__desc {
+	display: block;
+	-webkit-line-clamp: unset;
+	overflow: visible;
 	color: var( --wpss-text-secondary, #374151 );
 }
 
@@ -244,6 +248,66 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 .wpss-portfolio-public--list .wpss-portfolio-public__ext-link:hover {
 	background: var( --wpss-bg-muted, #f3f4f6 );
 	color: var(--wpss-primary-accent, #4f46e5);
+}
+
+/* Whole card opens the full project: every image, the whole description. */
+.wpss-portfolio-public__open {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+}
+
+.wpss-portfolio-public__open:focus-visible {
+	outline: 2px solid var( --wpss-primary-accent, #4f46e5 );
+	outline-offset: -2px;
+}
+
+.wpss-portfolio-public__overlay,
+.wpss-portfolio-public__title-bar {
+	pointer-events: none;
+	z-index: 2;
+}
+
+.wpss-portfolio-public__ext-link {
+	pointer-events: auto;
+}
+
+.wpss-portfolio-public__dialog {
+	width: min( 720px, calc( 100vw - 32px ) );
+	max-height: calc( 100vh - 32px );
+	padding: var( --wpss-space-5, 20px );
+	border: 1px solid var( --wpss-border, #e5e7eb );
+	border-radius: var( --wpss-radius, 8px );
+	background: var( --wpss-surface, #fff );
+	color: var( --wpss-text, #111827 );
+}
+
+.wpss-portfolio-public__dialog::backdrop {
+	background: rgba( 15, 10, 40, .6 );
+}
+
+.wpss-portfolio-public__dialog-images img {
+	display: block;
+	width: 100%;
+	height: auto;
+	margin-bottom: var( --wpss-space-3, 12px );
+	border-radius: var( --wpss-radius-sm, 6px );
+}
+
+.wpss-portfolio-public__dialog-text {
+	white-space: pre-line;
+	line-height: 1.6;
+}
+
+.wpss-portfolio-public__dialog-close {
+	float: inline-end;
+	min-height: 40px;
+	min-width: 40px;
 }
 
 /* Responsive */
@@ -299,6 +363,11 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 
 			// Trim description for overlay.
 			$desc_excerpt = $description ? wp_trim_words( $description, 20 ) : '';
+			// Fewer than three items render as rows with no hover, so they show the whole text.
+			$is_list = count( $portfolio_items ) < 3;
+			if ( $is_list ) {
+				$desc_excerpt = (string) $description;
+			}
 			?>
 			<?php
 			// The card is a display container, not a control — it must NOT be a
@@ -324,6 +393,10 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 						<i data-lucide="image" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 				<?php endif; ?>
+
+				<button type="button" class="wpss-portfolio-public__open" data-wpss-portfolio-open="wpss-portfolio-dialog-<?php echo esc_attr( (string) $item_id ); ?>" aria-haspopup="dialog">
+					<span class="screen-reader-text"><?php echo esc_html( sprintf( /* translators: %s: portfolio project title */ __( 'View project: %s', 'wp-sell-services' ), $title ) ); ?></span>
+				</button>
 
 				<?php if ( $is_featured ) : ?>
 					<span class="wpss-portfolio-public__featured">
@@ -365,9 +438,52 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 					<?php endif; ?>
 				</div>
 			</div>
+			<dialog class="wpss-portfolio-public__dialog" id="wpss-portfolio-dialog-<?php echo esc_attr( (string) $item_id ); ?>" aria-label="<?php echo esc_attr( $title ); ?>">
+				<button type="button" class="button wpss-portfolio-public__dialog-close" data-wpss-portfolio-close aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
+				<h3><?php echo esc_html( $title ); ?></h3>
+				<?php if ( ! empty( $media ) ) : ?>
+					<div class="wpss-portfolio-public__dialog-images">
+						<?php foreach ( $media as $media_entry ) : ?>
+							<?php $m_url = $media_entry['large'] ?? $media_entry['url'] ?? ''; ?>
+							<?php if ( $m_url ) : ?>
+								<img src="<?php echo esc_url( $m_url ); ?>" alt="<?php echo esc_attr( $title ); ?>" loading="lazy">
+							<?php endif; ?>
+						<?php endforeach; ?>
+					</div>
+				<?php endif; ?>
+				<?php if ( $description ) : ?>
+					<p class="wpss-portfolio-public__dialog-text"><?php echo esc_html( $description ); ?></p>
+				<?php endif; ?>
+				<?php if ( ! empty( $tags ) ) : ?>
+					<div class="wpss-portfolio-public__tags">
+						<?php foreach ( $tags as $tag_label ) : ?>
+							<span class="wpss-portfolio-public__tag"><?php echo esc_html( $tag_label ); ?></span>
+						<?php endforeach; ?>
+					</div>
+				<?php endif; ?>
+				<?php if ( $external ) : ?>
+					<a href="<?php echo esc_url( $external ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View Project', 'wp-sell-services' ); ?></a>
+				<?php endif; ?>
+			</dialog>
 		<?php endforeach; ?>
 	</div>
 </div>
+<script>
+document.addEventListener( 'click', function ( e ) {
+	var open = e.target.closest( '[data-wpss-portfolio-open]' );
+	var dlg;
+	if ( open ) {
+		dlg = document.getElementById( open.getAttribute( 'data-wpss-portfolio-open' ) );
+		if ( dlg && dlg.showModal ) { dlg.showModal(); }
+		return;
+	}
+	if ( e.target.closest( '[data-wpss-portfolio-close]' ) ) {
+		e.target.closest( 'dialog' ).close();
+	} else if ( e.target.matches && e.target.matches( 'dialog.wpss-portfolio-public__dialog' ) ) {
+		e.target.close(); // Click on the backdrop.
+	}
+} );
+</script>
 
 <?php
 /**
