@@ -371,6 +371,8 @@ Clearer emails, honest publish errors, and a demo that looks like a marketplace.
 * Fix      - PayPal checkout and refunds work in Japanese yen, Hungarian forint and New Taiwan dollar, which PayPal takes only as whole amounts, and send three decimals for currencies that have them.
 * Fix      - Review moderation shows the whole review, not the first 30 words, so an admin reads it before approving.
 * Fix      - A vendor project in the public portfolio opens to show every image, the full description, tags and link, instead of the first image and a short excerpt.
+* Fix      - The vendor order page no longer offers "Respond to this review" while the review is still awaiting moderation.
+* Fix      - About the vendor on a service page shows the country name instead of its code.
 * Security - A buyer can no longer cancel and refund a disputed or revision-stage order through the legacy cancel AJAX action; it now follows the same pre-delivery rule as the REST route.
 * Security - Changing an order's status or refunding from the order screen is administrator-only on every path, so a shop manager can no longer run it through the AJAX action.
 * Dev      - New wpss_order_timestamp filter lets an importer or demo installer set the created, paid, started and completed dates on orders it creates. Default behaviour is unchanged.
