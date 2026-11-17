@@ -4,6 +4,14 @@ Control how orders behave on your marketplace -- from auto-completion timing to 
 
 ![Order settings tab in WP Sell Services settings panel](../images/settings-orders-disputes.webp)
 
+## Buyer Cancellation Window
+
+**Default: 24 hours** (range 0-720)
+
+How long after work starts a buyer can ask to cancel an in-progress order, as long as nothing has been delivered. The vendor still answers the request. Once the window or a delivery has closed it, the order page tells the buyer why Request Cancellation is no longer offered.
+
+Set it to **0** to turn buyer cancellation requests off. Buyers then use a dispute instead.
+
 ## Auto-Complete Days
 
 **Default: 3 days**
@@ -71,6 +79,7 @@ When an order is overdue by this many days, the system automatically opens a dis
 
 | Setting | Default | Range | What It Does |
 |---------|---------|-------|--------------|
+| Buyer Cancellation Window | 24 hours | 0-720 | Hours after work starts when a buyer can request cancellation (0 turns it off) |
 | Auto-Complete Days | 3 | 0-30 | Days after delivery to auto-complete |
 | Allow Disputes | Enabled | On/Off | Enable the dispute system |
 | Dispute Window | 14 days | 1-90 | Days after completion to allow disputes |
