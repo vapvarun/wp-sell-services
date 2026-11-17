@@ -1248,7 +1248,8 @@ do_action( 'wpss_before_order_view', $order );
 						<?php esc_html_e( 'This review is awaiting moderation and is not public yet.', 'wp-sell-services' ); ?>
 					</p>
 				<?php endif; ?>
-				<?php if ( $is_vendor && '' === $wpss_order_review->response ) : ?>
+				<?php // The vendor Reviews section lists approved reviews only, so the link leads nowhere while this one is pending. ?>
+				<?php if ( $is_vendor && $wpss_order_review->is_approved() && '' === $wpss_order_review->response ) : ?>
 					<p class="wpss-text-muted wpss-review-respond-hint">
 						<a href="<?php echo esc_url( wpss_get_dashboard_url( 'reviews' ) ); ?>"><?php esc_html_e( 'Respond to this review from your Reviews section.', 'wp-sell-services' ); ?></a>
 					</p>

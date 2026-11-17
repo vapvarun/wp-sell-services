@@ -503,7 +503,7 @@ class SingleServiceView {
 						?>
 						<div class="wpss-vendor-meta-item">
 							<span class="wpss-meta-label"><?php esc_html_e( 'From', 'wp-sell-services' ); ?></span>
-							<span class="wpss-meta-value"><?php echo esc_html( $country ); ?></span>
+							<span class="wpss-meta-value"><?php echo esc_html( wpss_get_country_name( (string) $country ) ); ?></span>
 						</div>
 					<?php endif; ?>
 
