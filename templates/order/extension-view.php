@@ -14,7 +14,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.3
+ * @version 1.9.4
  *
  * @var \WPSellServices\Models\ServiceOrder $current_order Extension sub-order row.
  * @var int                                 $user_id       Current user ID.
@@ -41,7 +41,10 @@ $parent_url            = $parent_id ? wpss_get_order_url( $parent_id ) : '';
 // payment page only on the standalone rail. On WooCommerce it lands on the
 // store cart and bounces the buyer away, so this button was dead on every
 // Woo site. wpss_get_pay_order_url() returns an order-pay URL there instead.
-$pay_url = wpss_get_pay_order_url( (int) $current_order->id, $current_order );
+// An extension on hold (its order is not active) cannot be paid: no pay
+// button, the reason instead. Same rule the pay page applies.
+$pay_refusal = wpss_get_order_payment_refusal( $current_order );
+$pay_url     = '' === $pay_refusal ? wpss_get_pay_order_url( (int) $current_order->id, $current_order ) : '';
 
 // Extension metadata lives on the sub-order's `meta` JSON plus the linked
 // wpss_extension_requests row. Prefer the JSON for extra_days and reason
@@ -177,6 +180,9 @@ do_action( 'wpss_before_extension_view', $current_order );
 		</dl>
 
 		<div class="wpss-tip-view__actions">
+			<?php if ( $is_buyer && $is_pending && '' !== $pay_refusal ) : ?>
+				<p class="wpss-alert wpss-alert-info"><?php echo esc_html( $pay_refusal ); ?></p>
+			<?php endif; ?>
 			<?php if ( $is_buyer && $is_pending && '' !== $pay_url ) : ?>
 				<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php
@@ -187,6 +193,8 @@ do_action( 'wpss_before_extension_view', $current_order );
 					);
 					?>
 				</a>
+			<?php endif; ?>
+			<?php if ( $is_buyer && $is_pending ) : ?>
 				<button type="button" class="wpss-btn wpss-btn--secondary wpss-extension-decline-btn"
 					data-order="<?php echo esc_attr( (int) $current_order->id ); ?>"
 					data-parent="<?php echo esc_attr( $parent_id ); ?>">

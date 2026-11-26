@@ -2110,7 +2110,7 @@ class OrdersController extends RestController {
 	}
 
 	/**
-	 * Where the buyer pays this order, when it is still unpaid.
+	 * Where the buyer pays this order, when it can still be paid.
 	 *
 	 * Resolved through the shared seam, so it is correct on whichever rail the
 	 * site runs — the standalone checkout, or a real WooCommerce order-pay URL.
@@ -2121,7 +2121,10 @@ class OrdersController extends RestController {
 	 * @return string|null
 	 */
 	private function get_checkout_url_for( $order ): ?string {
-		if ( 'paid' === (string) ( $order->payment_status ?? '' ) ) {
+		// Cancelled, refunded, a locked phase or an extension on hold: the pay
+		// page refuses it, so no link is offered. Only pending_payment rows get
+		// past the status check, so the lock/hold lookups run for those alone.
+		if ( 'paid' === (string) ( $order->payment_status ?? '' ) || '' !== wpss_get_order_payment_refusal( $order ) ) {
 			return null;
 		}
 
