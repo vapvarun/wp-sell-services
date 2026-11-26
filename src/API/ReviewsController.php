@@ -561,11 +561,6 @@ class ReviewsController extends RestController {
 				 */
 				do_action( 'wpss_review_edited', $review_id, 'reviewer_name', $old_name, (string) $updates['reviewer_name'] );
 			}
-
-			// Update rating cache if rating changed.
-			if ( isset( $updates['rating'] ) ) {
-				self::update_rating_cache( (int) $review->service_id, (int) $review->vendor_id );
-			}
 		}
 
 		// A status change goes through the one moderation writer: star averages, audit row, hook.
@@ -882,7 +877,7 @@ class ReviewsController extends RestController {
 		if ( ! $review || (int) $review->customer_id !== get_current_user_id() ) {
 			return new WP_Error(
 				'wpss_not_owner',
-				__( 'You can only edit your own reviews.', 'wp-sell-services' ),
+				__( 'Only the site owner can change a review.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -1100,16 +1095,18 @@ class ReviewsController extends RestController {
 					'readonly'    => true,
 				),
 				'rating'       => array(
-					'description' => __( 'Rating (1-5).', 'wp-sell-services' ),
+					'description' => __( 'Rating (1-5). Set when the review is created; final afterwards.', 'wp-sell-services' ),
 					'type'        => 'integer',
 					'context'     => array( 'view', 'edit' ),
 					'minimum'     => 1,
 					'maximum'     => 5,
+					'readonly'    => true,
 				),
 				'review'       => array(
-					'description' => __( 'Review text.', 'wp-sell-services' ),
+					'description' => __( 'Review text. Set when the review is created; final afterwards.', 'wp-sell-services' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
 				),
 				'status'       => array(
 					'description' => __( 'Review status.', 'wp-sell-services' ),
