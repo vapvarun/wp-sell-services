@@ -1034,8 +1034,12 @@
 	box-shadow: var(--wpss-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05));
 }
 
-.admin-bar .wpss-request-sidebar.wpss-request-sidebar {
-	top: 32px;
+/* Drawer only (the desktop column pins at --wpss-sticky-top): left unscoped, this beat the
+   desktop rule and pinned the column under the theme's header (Basecamp 10550835232). */
+@media (max-width: 1023px) {
+	.admin-bar .wpss-request-sidebar.wpss-request-sidebar {
+		top: 32px;
+	}
 }
 
 /* ==========================================================================

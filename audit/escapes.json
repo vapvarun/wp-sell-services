@@ -1300,6 +1300,14 @@
    "added": "2026-11-26",
    "fails_on": "cd9fba2c (4 FAIL)",
    "check": "tests/test-request-sidebar-under-header.php"
+  },
+  {
+   "card": "10550835232",
+   "title": "archive filter columns tucked under the theme's sticky header (fixed 2rem, and an unscoped .admin-bar drawer offset)",
+   "guard": "static:archive-sidebars-clear-header",
+   "added": "2026-11-26",
+   "fails_on": "09b98163 (12 FAIL)",
+   "check": "tests/test-archive-sidebars-clear-header.php"
   }
  ]
 }

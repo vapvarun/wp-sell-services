@@ -371,8 +371,12 @@
 	box-shadow: var(--wpss-shadow-lg);
 }
 
-.admin-bar .wpss-archive-sidebar {
-	top: 32px;
+/* Drawer only (the desktop column pins at --wpss-sticky-top): left unscoped, this beat the
+   desktop rule and pinned the column under the theme's header (Basecamp 10550835232). */
+@media (max-width: 1024px) {
+	.admin-bar .wpss-archive-sidebar {
+		top: 32px;
+	}
 }
 
 @media (max-width: 782px) {
@@ -676,7 +680,8 @@ body.wpss-sidebar-open::after {
 
 	.wpss-archive-sidebar {
 		position: sticky;
-		top: 2rem;
+		/* Measured below the admin bar and the theme's sticky header (frontend.js syncStickyTop). */
+		top: var(--wpss-sticky-top, 2rem);
 		inset-inline-start: auto;
 		width: 100%;
 		height: auto;

@@ -1116,6 +1116,14 @@ round trip in front of every visitor.
 Use `wpss_sticky_top_offset` when a theme has its own sticky header that the
 plugin's measurement cannot see.
 
+Every sticky surface pins at the CSS variable `--wpss-sticky-top`: the services
+and buyer-request filter columns, the single service order box, the order
+sidebar and the dashboard menu. The plugin measures the admin bar plus any fixed
+or sticky theme header (Reign, BuddyX and most other themes) and writes the total
+to `body`, plus the filter's value. A theme stylesheet can also set
+`--wpss-sticky-top` on `body` directly; the measurement treats that value as a
+floor and never pins higher than it.
+
 ## Categories (1.6.0)
 
 | Filter | Parameters | File |
