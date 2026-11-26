@@ -720,6 +720,8 @@ function wpssServiceWizard(existingData = {}) {
 						id: attachment.id,
 						url: attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url
 					};
+					// The main tile's remove button is drawn by Alpine after load.
+					this.refreshIcons();
 				} else if (type === 'images') {
 					// The gallery strip is keyed on image.id. The same attachment
 					// twice means the same key twice, which breaks Alpine's x-for
@@ -774,6 +776,8 @@ function wpssServiceWizard(existingData = {}) {
 			} else if (type === 'images' && index !== null) {
 				this.data.gallery.images.splice(index, 1);
 			}
+			// Removing the main image brings back the upload placeholder, whose icon Alpine re-adds raw.
+			this.refreshIcons();
 		},
 
 		/**
