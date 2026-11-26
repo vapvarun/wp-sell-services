@@ -166,6 +166,8 @@ foreach ( array_filter( array( $order_id, $legacy_id ) ) as $oid ) {
 	$wpdb->delete( $wpdb->prefix . 'wpss_conversations', array( 'order_id' => $oid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->delete( $wpdb->prefix . 'wpss_order_requirements', array( 'order_id' => $oid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->delete( $wpdb->prefix . 'wpss_wallet_transactions', array( 'order_id' => $oid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	// The vendor's notifications about this order (new order, revision request) go with it.
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}wpss_notifications WHERE data LIKE %s", '%"order_id":' . (int) $oid . ',%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$wpdb->delete( $orders, array( 'id' => $oid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 }
 $wpdb->delete( $wpdb->prefix . 'wpss_notifications', array( 'user_id' => $buyer_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
