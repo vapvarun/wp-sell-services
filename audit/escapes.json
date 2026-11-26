@@ -1260,6 +1260,14 @@
    "added": "2026-11-26",
    "fails_on": "b47d93c2 (6 FAIL); 8d0f12ed with default role Vendor (2 FAIL)",
    "check": "tests/test-uninstall-strips-every-cap.php"
+  },
+  {
+   "card": "10549397728",
+   "title": "closing a request from the dashboard left its status Open in the admin list",
+   "guard": "static:request-close-records-status",
+   "added": "2026-11-26",
+   "fails_on": "91575683 (1 FAIL)",
+   "check": "tests/test-request-close-records-status.php"
   }
  ]
 }

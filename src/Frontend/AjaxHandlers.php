@@ -1515,6 +1515,17 @@ class AjaxHandlers {
 			)
 		);
 
+		// Record it where the request status lives too, so the admin list does not read Open
+		// for a closed request (Basecamp 10549397728). Only open <-> closed: a hired or
+		// expired request keeps its state.
+		$service = new BuyerRequestService();
+		$current = (string) get_post_meta( $request_id, '_wpss_status', true );
+		if ( 'draft' === $status && BuyerRequestService::STATUS_OPEN === $current ) {
+			$service->update_status( $request_id, BuyerRequestService::STATUS_CLOSED );
+		} elseif ( 'publish' === $status && BuyerRequestService::STATUS_CLOSED === $current ) {
+			$service->update_status( $request_id, BuyerRequestService::STATUS_OPEN );
+		}
+
 		wp_send_json_success( array( 'message' => __( 'Request updated.', 'wp-sell-services' ) ) );
 	}
 

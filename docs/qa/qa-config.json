@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "request-close-records-status",
+    "run": "${WP_CLI:-wp} eval-file tests/test-request-close-records-status.php"
+   },
+   {
     "id": "uninstall-strips-every-cap",
     "run": "${WP_CLI:-wp} eval-file tests/test-uninstall-strips-every-cap.php"
    },
