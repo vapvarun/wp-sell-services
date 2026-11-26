@@ -291,7 +291,7 @@ In Standalone mode, Pro includes direct integrations:
 
 **Unlimited service creation limits**
 
-Free version has conservative limits: 4 gallery images, 1 video, 3 add-ons, 5 FAQs per service. Pro removes these limits. Unlimited gallery images, 3 videos, unlimited add-ons and FAQs.
+Free version has conservative limits: 4 gallery images, 1 video, 3 add-ons, 5 FAQs per service. Pro raises these limits: unlimited gallery images, add-ons and FAQs. Videos stay at 1 per service in both versions.
 
 **Wallet provider integrations**
 

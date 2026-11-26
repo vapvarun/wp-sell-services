@@ -63,7 +63,7 @@ This is where vendors show off their work. Strong visuals make a big difference 
 
 **Additional images** -- Showcase more work samples. You can add up to 4 in the free version, or unlimited with **[PRO]**.
 
-**Video embeds** -- Add YouTube or Vimeo links to demo your work. 1 video in the free version, up to 3 with **[PRO]**.
+**Video embeds** -- Add YouTube or Vimeo links to demo your work. 1 video per service, in both Free and Pro.
 
 Supported image formats: JPG, PNG, GIF, and WebP. Maximum 5MB per image.
 

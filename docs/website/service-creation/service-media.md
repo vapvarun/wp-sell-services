@@ -10,7 +10,7 @@ Your service gallery is one of the first things buyers look at. Strong images an
 |-----------|------|-----|
 | Main image | 1 (required) | 1 (required) |
 | Additional images | Up to 4 | Unlimited **[PRO]** |
-| Video embeds | 1 | Up to 3 **[PRO]** |
+| Video embeds | 1 | 1 (Pro does not raise this) |
 
 ## Main Image
 
