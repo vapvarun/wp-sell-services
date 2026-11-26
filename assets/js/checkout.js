@@ -36,6 +36,24 @@
 	};
 
 	/*
+	 * Quantity and the full add-on selection, for every gateway that builds its
+	 * own create-payment request. Without them the server priced quantity 1 and
+	 * dropped dropdown/text add-ons, so the charge did not match the page.
+	 * Named fields only: posting the whole form would also send amount,
+	 * tax_amount and cart lines, which the server must never read.
+	 */
+	window.wpssCheckoutSelection = function() {
+		var out = {};
+		['quantity', 'addon_sel'].forEach(function(name) {
+			var el = document.querySelector('input[name="' + name + '"]');
+			if (el && el.value) {
+				out[name] = el.value;
+			}
+		});
+		return out;
+	};
+
+	/*
 	 * Create the buyer's account BEFORE paying, when they are logged out and
 	 * the owner has enabled account-at-checkout.
 	 *

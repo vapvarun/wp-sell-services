@@ -1062,13 +1062,11 @@ class StripeGateway extends AbstractPaymentGateway {
 	/**
 	 * REST: Confirm payment and create order (called by PaymentController).
 	 *
-	 * @param array $params Validated request params (payment_intent_id, service_id, package_id).
+	 * @param array $params Validated request params (payment_intent_id). What it buys is read from the intent itself.
 	 * @return array Result array.
 	 */
 	public function confirm_payment( array $params ): array {
 		$payment_intent_id = sanitize_text_field( $params['payment_intent_id'] ?? '' );
-		$service_id        = (int) ( $params['service_id'] ?? 0 );
-		$package_id        = (int) ( $params['package_id'] ?? 0 );
 
 		if ( ! $payment_intent_id ) {
 			return array(
@@ -1098,48 +1096,31 @@ class StripeGateway extends AbstractPaymentGateway {
 		 * vendor was asked to deliver premium work against it
 		 * (Basecamp 10321653352).
 		 *
-		 * resolve() prices the intent on the server from the requested service
-		 * and package, and settle() refuses unless the charge matches it - so
+		 * settle_from_metadata() prices the intent on the server from what this
+		 * site stored on the charge, and settle() refuses unless the charge
+		 * matches it and belongs to the caller - so
 		 * the mismatch is caught by the same guard that closed the AJAX rail,
 		 * rather than by a second copy of the check written here. settle() also
 		 * carries the one-charge-one-order dedupe (Basecamp 10321653385).
 		 */
-		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
-		$meta     = (array) ( $payment['metadata'] ?? array() );
-		$intent   = $checkout->resolve(
-			array(
-				'service_id' => $service_id,
-				'package_id' => $package_id,
-				// Quantity and add-ons as charged, from the intent's own metadata:
-				// without them a purchase with add-ons never matched its charge.
-				'quantity'   => max( 1, (int) ( $meta['quantity'] ?? 1 ) ),
-				'addon_sel'  => (string) ( $meta['addon_sel'] ?? '' ),
-				'addon_ids'  => (string) ( $meta['addon_ids'] ?? '' ),
-			)
-		);
-
-		if ( is_wp_error( $intent ) ) {
-			$this->refund_unsettled_charge( $payment_intent_id );
-
-			return array(
-				'success' => false,
-				'error'   => $intent->get_error_message(),
-			);
-		}
-
-		$settle = $checkout->settle(
-			$intent,
+		$settle = ( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_from_metadata(
 			'stripe',
 			$payment_intent_id,
 			(float) $payment['amount'],
-			(string) $payment['currency']
+			(string) $payment['currency'],
+			(array) ( $payment['metadata'] ?? array() ),
+			get_current_user_id()
 		);
 
 		if ( empty( $settle['success'] ) ) {
-			$this->refund_unsettled_charge( $payment_intent_id );
+			// Another member's payment is refused, never given back by this caller.
+			if ( \WPSellServices\Checkout\CheckoutIntentService::PAYMENT_NOT_YOURS !== ( $settle['code'] ?? '' ) ) {
+				$this->refund_unsettled_charge( $payment_intent_id );
+			}
 
 			return array(
 				'success' => false,
+				'code'    => $settle['code'] ?? '',
 				'error'   => $settle['error'] ?? __( 'Failed to create order.', 'wp-sell-services' ),
 			);
 		}
@@ -1242,20 +1223,21 @@ class StripeGateway extends AbstractPaymentGateway {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		wpss_save_billing_from_request( $_POST );
 
-		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
-		$intent   = $checkout->resolve( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked above.
-
-		// Resolve failed after a successful charge — refund and bail.
-		if ( is_wp_error( $intent ) ) {
-			$this->refund_unsettled_charge( $payment_intent_id );
-			wp_send_json_error( array( 'message' => $intent->get_error_message() ) );
-			return;
-		}
-
-		$settle = $checkout->settle( $intent, 'stripe', $payment_intent_id, (float) $payment['amount'], (string) $payment['currency'] );
+		// Re-priced from what this site stored on the charge, for the member
+		// who started it - the posted service, package and add-ons are not read.
+		$settle = ( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_from_metadata(
+			'stripe',
+			$payment_intent_id,
+			(float) $payment['amount'],
+			(string) $payment['currency'],
+			(array) ( $payment['metadata'] ?? array() ),
+			get_current_user_id()
+		);
 
 		if ( empty( $settle['success'] ) ) {
-			$this->refund_unsettled_charge( $payment_intent_id );
+			if ( \WPSellServices\Checkout\CheckoutIntentService::PAYMENT_NOT_YOURS !== ( $settle['code'] ?? '' ) ) {
+				$this->refund_unsettled_charge( $payment_intent_id );
+			}
 			wp_send_json_error( array( 'message' => $settle['error'] ?? __( 'Failed to create order.', 'wp-sell-services' ) ) );
 			return;
 		}
@@ -1492,28 +1474,14 @@ class StripeGateway extends AbstractPaymentGateway {
 		// added twice and add-ons and Express were lost - whenever the webhook
 		// won the race with the browser.
 		if ( ! empty( $metadata['customer_id'] ) ) {
-			$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
-			$intent   = $checkout->resolve(
-				array(
-					'is_multi_checkout' => ! empty( $metadata['is_multi_checkout'] ),
-					'service_id'        => (int) ( $metadata['service_id'] ?? 0 ),
-					'package_id'        => (int) ( $metadata['package_id'] ?? 0 ),
-					'quantity'          => max( 1, (int) ( $metadata['quantity'] ?? 1 ) ),
-					'addon_sel'         => (string) ( $metadata['addon_sel'] ?? '' ),
-					'addon_ids'         => (string) ( $metadata['addon_ids'] ?? '' ),
-				),
+			$settle = ( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_from_metadata(
+				'stripe',
+				(string) $payment_intent['id'],
+				$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ), $payment_intent['currency'] ?? 'usd' ),
+				strtoupper( $payment_intent['currency'] ?? 'usd' ),
+				(array) $metadata,
 				(int) $metadata['customer_id']
 			);
-
-			$settle = is_wp_error( $intent )
-				? array( 'error' => $intent->get_error_message() )
-				: $checkout->settle(
-					$intent,
-					'stripe',
-					(string) $payment_intent['id'],
-					$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ), $payment_intent['currency'] ?? 'usd' ),
-					strtoupper( $payment_intent['currency'] ?? 'usd' )
-				);
 
 			if ( ! empty( $settle['success'] ) ) {
 				$ids = ! empty( $settle['order_ids'] ) ? array_map( 'intval', (array) $settle['order_ids'] ) : array( (int) ( $settle['order_id'] ?? 0 ) );
@@ -2135,8 +2103,6 @@ class StripeGateway extends AbstractPaymentGateway {
 	 */
 	public function rest_confirm_payment( array $params ) {
 		$payment_id = (string) ( $params['payment_id'] ?? '' );
-		$service_id = (int) ( $params['service_id'] ?? 0 );
-		$package_id = (int) ( $params['package_id'] ?? 0 );
 		$pay_order  = (int) ( $params['pay_order'] ?? 0 );
 
 		// For existing orders (pay_order), verify the payment without creating a new
@@ -2185,14 +2151,16 @@ class StripeGateway extends AbstractPaymentGateway {
 				return new WP_Error( 'wpss_payment_not_for_order', __( 'This payment was not made for this order.', 'wp-sell-services' ), array( 'status' => 409 ) );
 			}
 
-			$settled = $this->settle_pay_order( $order, 'stripe', $payment_id, (float) ( $payment['amount'] ?? 0 ), (string) ( $payment['currency'] ?? '' ) );
+			$settled = $this->settle_pay_order( $order, 'stripe', $payment_id, (float) ( $payment['amount'] ?? 0 ), (string) ( $payment['currency'] ?? '' ), (int) ( $meta['customer_id'] ?? 0 ) );
 
 			// The charge is captured and cannot pay this order (cancelled or repriced since
 			// the intent, phase locked, spent elsewhere): give it back. The payment was
 			// proved to be this member's for this order above, so it is theirs to refund;
 			// a charge that already paid an order is left alone by refund_unsettled().
 			if ( is_wp_error( $settled ) ) {
-				$this->refund_unsettled_charge( $payment_id );
+				if ( \WPSellServices\Checkout\CheckoutIntentService::PAYMENT_NOT_YOURS !== $settled->get_error_code() ) {
+					$this->refund_unsettled_charge( $payment_id );
+				}
 
 				return $settled;
 			}
@@ -2213,13 +2181,13 @@ class StripeGateway extends AbstractPaymentGateway {
 		$result = $this->confirm_payment(
 			array(
 				'payment_intent_id' => $payment_id,
-				'service_id'        => $service_id,
-				'package_id'        => $package_id,
 			)
 		);
 
 		if ( empty( $result['success'] ) ) {
-			return new WP_Error( 'stripe_confirm_error', $result['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+			$not_yours = \WPSellServices\Checkout\CheckoutIntentService::PAYMENT_NOT_YOURS === ( $result['code'] ?? '' );
+
+			return new WP_Error( $not_yours ? $result['code'] : 'stripe_confirm_error', $result['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => $not_yours ? 403 : 400 ) );
 		}
 
 		return new WP_REST_Response(

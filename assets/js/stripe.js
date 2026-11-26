@@ -201,6 +201,7 @@
 						// authoritative amount from the cart. Parity with the confirm path
 						// so the multi-cart Payment Element mounts (BC 10134360287).
 						is_multi_checkout: (this.form && this.form.id === 'wpss-multi-checkout-form') ? 1 : '',
+						...(window.wpssCheckoutSelection ? window.wpssCheckoutSelection() : {}),
 					},
 					success: resolve,
 					error: () => {

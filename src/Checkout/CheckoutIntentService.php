@@ -26,6 +26,16 @@ defined( 'ABSPATH' ) || exit;
 class CheckoutIntentService {
 
 	/**
+	 * Error code for a verified charge started by another member.
+	 *
+	 * A charge with this refusal is never refunded by the member who tried to
+	 * confirm it: it is not theirs to give back.
+	 *
+	 * @since 1.9.4
+	 */
+	public const PAYMENT_NOT_YOURS = 'wpss_payment_not_yours';
+
+	/**
 	 * Resolve the current checkout request into an authoritative CheckoutIntent.
 	 *
 	 * Pricing is ALWAYS computed server-side (live post meta / stored order /
@@ -533,13 +543,97 @@ class CheckoutIntentService {
 	 * @param string         $transaction_id  Gateway transaction / intent ID.
 	 * @param float          $charged_amount  Verified charged amount.
 	 * @param string         $charged_currency Verified charged currency.
+	 * @param int            $charged_buyer_id Member the gateway's stored metadata says started the charge.
 	 * @return array<string,mixed> { success:bool, ... }
 	 */
-	public function settle( CheckoutIntent $intent, string $gateway_id, string $transaction_id, float $charged_amount, string $charged_currency ): array {
+	public function settle( CheckoutIntent $intent, string $gateway_id, string $transaction_id, float $charged_amount, string $charged_currency, int $charged_buyer_id ): array {
 		return $this->locked(
 			$gateway_id,
 			$transaction_id,
-			fn() => $this->settle_once( $intent, $gateway_id, $transaction_id, $charged_amount, $charged_currency )
+			fn() => $this->settle_once( $intent, $gateway_id, $transaction_id, $charged_amount, $charged_currency, $charged_buyer_id )
+		);
+	}
+
+	/**
+	 * Settle a verified charge from what this server stored on it when it was created.
+	 *
+	 * The one confirm path for rails that keep the intent's metadata on the
+	 * charge (Stripe metadata, Razorpay notes): the purchase is re-priced from
+	 * that metadata, never from the confirm request, and only for the member
+	 * who started the charge. Buyer B confirming buyer A's payment id is
+	 * refused before anything is looked up, created or refunded.
+	 *
+	 * @since 1.9.4
+	 *
+	 * @param string              $gateway_id     Gateway slug.
+	 * @param string              $transaction_id Verified gateway payment id.
+	 * @param float               $amount         Verified charged amount.
+	 * @param string              $currency       Verified charged currency.
+	 * @param array<string,mixed> $metadata       Metadata the gateway holds for the charge.
+	 * @param int                 $buyer_id       Member settling it (the caller; the payer on a webhook).
+	 * @return array<string,mixed> settle() result; on failure { success:false, error, code? }.
+	 */
+	public function settle_from_metadata( string $gateway_id, string $transaction_id, float $amount, string $currency, array $metadata, int $buyer_id ): array {
+		$charged_buyer = (int) ( $metadata['customer_id'] ?? 0 );
+		$refusal       = self::foreign_charge( $charged_buyer, $buyer_id, $gateway_id, $transaction_id );
+
+		if ( null !== $refusal ) {
+			return $refusal;
+		}
+
+		// A replay of a charge that already paid answers with its order. The
+		// stamped order_id would otherwise read as a pay-order request below.
+		$existing = $this->existing_result( $gateway_id, $transaction_id );
+
+		if ( null !== $existing ) {
+			return $existing;
+		}
+
+		$intent = $this->resolve(
+			array(
+				'pay_order'         => absint( $metadata['order_id'] ?? 0 ),
+				'is_multi_checkout' => ! empty( $metadata['is_multi_checkout'] ),
+				'service_id'        => absint( $metadata['service_id'] ?? 0 ),
+				'package_id'        => absint( $metadata['package_id'] ?? 0 ),
+				'quantity'          => max( 1, absint( $metadata['quantity'] ?? 1 ) ),
+				'addon_sel'         => (string) ( $metadata['addon_sel'] ?? '' ),
+				'addon_ids'         => (string) ( $metadata['addon_ids'] ?? '' ),
+			),
+			$buyer_id
+		);
+
+		if ( is_wp_error( $intent ) ) {
+			return array(
+				'success' => false,
+				'error'   => $intent->get_error_message(),
+			);
+		}
+
+		return $this->settle( $intent, $gateway_id, $transaction_id, $amount, $currency, $charged_buyer );
+	}
+
+	/**
+	 * Refusal for a charge someone other than $buyer_id started, else null.
+	 *
+	 * @since 1.9.4
+	 *
+	 * @param int    $charged_buyer_id Member stored on the charge.
+	 * @param int    $buyer_id         Member settling it.
+	 * @param string $gateway_id       Gateway slug, for the log.
+	 * @param string $transaction_id   Payment id, for the log.
+	 * @return array<string,mixed>|null
+	 */
+	public static function foreign_charge( int $charged_buyer_id, int $buyer_id, string $gateway_id, string $transaction_id ): ?array {
+		if ( $charged_buyer_id > 0 && $charged_buyer_id === $buyer_id ) {
+			return null;
+		}
+
+		wpss_log( sprintf( '%s payment %s was started by member %d; member %d tried to confirm it. Refused, not refunded.', $gateway_id, $transaction_id, $charged_buyer_id, $buyer_id ), 'warning' );
+
+		return array(
+			'success' => false,
+			'code'    => self::PAYMENT_NOT_YOURS,
+			'error'   => __( 'This payment was made from a different account. Sign in to the account that paid, or contact the site owner.', 'wp-sell-services' ),
 		);
 	}
 
@@ -758,9 +852,18 @@ class CheckoutIntentService {
 	 * @param string         $transaction_id   Gateway transaction / intent ID.
 	 * @param float          $charged_amount   Verified charged amount.
 	 * @param string         $charged_currency Verified charged currency.
+	 * @param int            $charged_buyer_id Member stored on the charge.
 	 * @return array<string,mixed>
 	 */
-	private function settle_once( CheckoutIntent $intent, string $gateway_id, string $transaction_id, float $charged_amount, string $charged_currency ): array {
+	private function settle_once( CheckoutIntent $intent, string $gateway_id, string $transaction_id, float $charged_amount, string $charged_currency, int $charged_buyer_id ): array {
+		// Whose charge it is comes first: answering with the order it already
+		// paid would show another member's order to whoever holds the id.
+		$refusal = self::foreign_charge( $charged_buyer_id, (int) $intent->buyer_id, $gateway_id, $transaction_id );
+
+		if ( null !== $refusal ) {
+			return $refusal;
+		}
+
 		// A charge that already paid an order answers with that order, before
 		// anything about THIS request is judged. Checked after the amount
 		// used to mean a replay whose cart had since changed failed the amount

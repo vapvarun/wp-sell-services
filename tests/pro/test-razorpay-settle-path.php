@@ -78,8 +78,8 @@ wpss_t(
 	'REST verify_payment() no longer creates or marks the order itself'
 );
 wpss_t(
-	false !== strpos( wpss_rzp_method_source( $shared ), '->settle(' ),
-	"{$shared}() settles through CheckoutIntentService::settle()"
+	false !== strpos( wpss_rzp_method_source( $shared ), '->settle_from_metadata(' ),
+	"{$shared}() settles through CheckoutIntentService::settle_from_metadata()"
 );
 
 // 2. One webhook event marks the order paid.

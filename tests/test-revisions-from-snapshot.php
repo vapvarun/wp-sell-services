@@ -90,7 +90,7 @@ $order_id = 0;
 if ( is_wp_error( $intent ) ) {
 	$failures[] = 'resolve(): ' . $intent->get_error_message();
 } else {
-	$settled = $intents->settle( $intent, 'offline', 'rev-probe-' . time(), $intent->amount, $intent->currency );
+	$settled = $intents->settle( $intent, 'offline', 'rev-probe-' . time(), $intent->amount, $intent->currency, $buyer_id );
 	if ( empty( $settled['success'] ) ) {
 		$failures[] = 'settle(): ' . ( $settled['error'] ?? 'failed' );
 	} else {

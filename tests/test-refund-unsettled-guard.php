@@ -83,7 +83,7 @@ try {
 
 	// Given back, it cannot pay for an order afterwards.
 	$intent = CheckoutIntent::order( $order_id, 23.60, $currency, 1, array() );
-	$result = $service->settle( $intent, 'stripe', $loose, 23.60, $currency );
+	$result = $service->settle( $intent, 'stripe', $loose, 23.60, $currency, 1 );
 	$check( '  and cannot settle an order afterwards', empty( $result['success'] ) );
 	$wpdb->update( $table, array( 'payment_status' => 'pending', 'status' => 'pending_payment', 'transaction_id' => null ), array( 'id' => $order_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$check( '  nor through the webhook settle path', false === $service->settle_webhook_order( $order_id, 'stripe', $loose, 23.60, $currency ) && 'pending' === (string) $wpdb->get_var( $wpdb->prepare( "SELECT payment_status FROM {$table} WHERE id = %d", $order_id ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -96,7 +96,7 @@ try {
 
 	// A replay of the settled charge answers with the order it paid, even
 	// when the amount no longer matches what the request would price.
-	$replay = $service->settle( CheckoutIntent::order( $order_id, 99.00, $currency, 1, array() ), 'stripe', $settled, 23.60, $currency );
+	$replay = $service->settle( CheckoutIntent::order( $order_id, 99.00, $currency, 1, array() ), 'stripe', $settled, 23.60, $currency, 1 );
 	$check( 'a replay of a settled charge returns its order instead of failing the amount check', ! empty( $replay['success'] ) && $order_id === (int) $replay['order_id'] );
 } finally {
 	remove_filter( 'pre_http_request', $stub, 10 );

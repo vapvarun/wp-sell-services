@@ -814,7 +814,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 			);
 		}
 
-		$settle = $checkout->settle( $intent, 'paypal', $txn, (float) $payment['amount'], (string) $payment['currency'] );
+		$settle = $checkout->settle( $intent, 'paypal', $txn, (float) $payment['amount'], (string) $payment['currency'], $buyer_id );
 
 		if ( empty( $settle['success'] ) ) {
 			$refunded = false;

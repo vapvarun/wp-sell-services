@@ -106,9 +106,10 @@ abstract class AbstractPaymentGateway implements PaymentGatewayInterface {
 	 * @param string $transaction_id Verified gateway payment id.
 	 * @param float  $amount         Verified paid amount.
 	 * @param string $currency       Verified paid currency.
+	 * @param int    $charged_buyer  Member the gateway's stored metadata says started the payment.
 	 * @return true|\WP_Error
 	 */
-	protected function settle_pay_order( object $order, string $gateway_id, string $transaction_id, float $amount, string $currency ) {
+	protected function settle_pay_order( object $order, string $gateway_id, string $transaction_id, float $amount, string $currency, int $charged_buyer ) {
 		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
 		$intent   = $checkout->resolve( array( 'pay_order' => (int) $order->id ), (int) $order->customer_id );
 
@@ -116,7 +117,11 @@ abstract class AbstractPaymentGateway implements PaymentGatewayInterface {
 			return new \WP_Error( $intent->get_error_code(), $intent->get_error_message(), array( 'status' => 400 ) );
 		}
 
-		$settle = $checkout->settle( $intent, $gateway_id, $transaction_id, $amount, $currency );
+		$settle = $checkout->settle( $intent, $gateway_id, $transaction_id, $amount, $currency, $charged_buyer );
+
+		if ( \WPSellServices\Checkout\CheckoutIntentService::PAYMENT_NOT_YOURS === ( $settle['code'] ?? '' ) ) {
+			return new \WP_Error( $settle['code'], $settle['error'], array( 'status' => 403 ) );
+		}
 
 		if ( empty( $settle['success'] ) ) {
 			return new \WP_Error( 'rest_amount_mismatch', $settle['error'] ?? __( 'The paid amount does not match the order total.', 'wp-sell-services' ), array( 'status' => 400 ) );
