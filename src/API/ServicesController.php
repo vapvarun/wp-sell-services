@@ -554,6 +554,7 @@ class ServicesController extends RestController {
 			'packages'       => array_values( $packages ),
 			'extras'         => array_values( (array) wpss_get_service_extras( $service_id ) ),
 			'requirements'   => array_values( (array) wpss_get_service_requirements( $service_id ) ),
+			'faqs'           => array_values( (array) ( get_post_meta( $service_id, '_wpss_faqs', true ) ?: array() ) ),
 			// The full vendor profile, not the compact actor shape already on the
 			// card. A service page shows the seller's tagline, rating and
 			// completed orders; without this a client had to make a second call
@@ -1616,6 +1617,7 @@ class ServicesController extends RestController {
 				'extras'       => wpss_normalize_service_addons( (array) $request->get_param( 'addons' ) ),
 				'requirements' => wpss_normalize_service_requirements( (array) $request->get_param( 'requirements' ) ),
 				'tags'         => (array) $request->get_param( 'tags' ),
+				'faqs'         => (array) $request->get_param( 'faqs' ),
 			)
 		);
 
@@ -1690,6 +1692,11 @@ class ServicesController extends RestController {
 
 		if ( $request->has_param( 'requirements' ) ) {
 			wpss_save_service_requirements( $service_id, $capped['meta']['requirements'] );
+		}
+
+		// The app edits FAQs here too; `faqs: []` clears them, an absent key leaves them alone.
+		if ( $request->has_param( 'faqs' ) ) {
+			( new \WPSellServices\Services\ServiceManager() )->save_faqs( $service_id, array_values( array_filter( $capped['meta']['faqs'], 'is_array' ) ) );
 		}
 
 		return array_values( $capped['truncated'] );

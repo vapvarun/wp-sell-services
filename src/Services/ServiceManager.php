@@ -474,11 +474,14 @@ class ServiceManager {
 	/**
 	 * Save service FAQs.
 	 *
+	 * Also the REST services writer (ServicesController::save_service_meta).
+	 * Callers cap the list with wpss_enforce_service_limits() first.
+	 *
 	 * @param int                        $service_id Service post ID.
 	 * @param array<array<string,mixed>> $faqs       FAQ data.
 	 * @return void
 	 */
-	private function save_faqs( int $service_id, array $faqs ): void {
+	public function save_faqs( int $service_id, array $faqs ): void {
 		// Sanitize FAQs before saving.
 		$sanitized_faqs = array();
 		foreach ( $faqs as $faq ) {
