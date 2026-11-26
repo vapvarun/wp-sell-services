@@ -1228,6 +1228,14 @@
    "added": "2026-11-26",
    "fails_on": "b18e6ebd (18 FAIL)",
    "check": "tests/test-featured-carousel-columns.php"
+  },
+  {
+   "card": "10545751953",
+   "title": "a button whose only handler was an inline script on a different page (Decline on the extension page)",
+   "guard": "static:extension-decline-wired",
+   "added": "2026-11-26",
+   "fails_on": "a07607ff (6 FAIL)",
+   "check": "tests/test-extension-decline-wired.php"
   }
  ]
 }

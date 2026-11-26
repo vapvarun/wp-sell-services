@@ -10,7 +10,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.3
+ * @version 1.9.4
  *
  * @var int $order_id Order ID passed from parent template.
  *
@@ -2408,42 +2408,6 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 				feedback.hidden = false;
 				feedback.className = 'wpss-modal__feedback wpss-modal__feedback--error';
 				feedback.textContent = '<?php echo esc_js( __( 'Network error. Try again.', 'wp-sell-services' ) ); ?>';
-			});
-		});
-	}());
-	</script>
-<?php endif; ?>
-
-<?php if ( $is_customer && null !== ( $pending_extension ?? null ) ) : ?>
-	<script>
-	(function () {
-		var buttons = document.querySelectorAll('.wpss-extension-decline-btn');
-		if (!buttons.length) return;
-		buttons.forEach(function (btn) {
-			btn.addEventListener('click', function () {
-				( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Decline this extra-work quote?', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Decline this extra-work quote?', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
-					if (!ok) return;
-				btn.disabled = true;
-				var data = new FormData();
-				data.append('action', 'wpss_decline_extension');
-				data.append('request_id', btn.dataset.request || '');
-				data.append('_ajax_nonce', '<?php echo esc_js( wp_create_nonce( 'wpss_decline_extension' ) ); ?>');
-				fetch(window.ajaxurl || '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>', {
-					method: 'POST',
-					credentials: 'include',
-					body: data
-				}).then(function (r) { return r.json(); }).then(function (res) {
-					if (res && res.success) {
-						window.location.reload();
-					} else {
-						btn.disabled = false;
-						alert((res && res.data && res.data.message) || '<?php echo esc_js( __( 'Could not decline.', 'wp-sell-services' ) ); ?>');
-					}
-				}).catch(function () {
-					btn.disabled = false;
-					alert('<?php echo esc_js( __( 'Network error.', 'wp-sell-services' ) ); ?>');
-				});
-				});
 			});
 		});
 	}());

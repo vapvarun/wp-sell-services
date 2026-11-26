@@ -20,6 +20,7 @@
 		WPSS.initFAQs();
 		WPSS.initMessages();
 		WPSS.initOrderActions();
+		WPSS.initExtensionDecline();
 		WPSS.initReviews();
 		WPSS.initModals();
 		WPSS.initContactVendor();
@@ -1612,6 +1613,42 @@
 				$notification.remove();
 			}, 300);
 		}, duration);
+	};
+
+	/**
+	 * Buyer declines a pending extra-work quote.
+	 *
+	 * One handler for every Decline button: the order page and the extension
+	 * page. The button carries the extension request id in data-request.
+	 */
+	WPSS.initExtensionDecline = function() {
+		$(document).on('click', '.wpss-extension-decline-btn', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var i18n = wpssData.i18n || {};
+
+			WPSS.showConfirm(i18n.confirmDeclineExtension, function() {
+				var fail = function(message) {
+					$btn.prop('disabled', false);
+					WPSS.showNotification(message || i18n.declineFailed, 'error');
+				};
+
+				$btn.prop('disabled', true);
+				$.post(wpssData.ajaxUrl, {
+					action: 'wpss_decline_extension',
+					request_id: $btn.data('request') || '',
+					_ajax_nonce: wpssData.declineExtensionNonce
+				}).done(function(res) {
+					if (res && res.success) {
+						location.reload();
+						return;
+					}
+					fail(res && res.data && res.data.message);
+				}).fail(function(xhr) {
+					fail(xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message);
+				});
+			}, { tone: 'danger', confirmText: i18n.decline });
+		});
 	};
 
 	/**

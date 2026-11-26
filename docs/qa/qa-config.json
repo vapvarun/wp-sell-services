@@ -835,6 +835,10 @@
    {
     "id": "featured-carousel-columns",
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-columns.php"
+   },
+   {
+    "id": "extension-decline-wired",
+    "run": "${WP_CLI:-wp} eval-file tests/test-extension-decline-wired.php"
    }
   ]
  }

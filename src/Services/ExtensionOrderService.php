@@ -720,7 +720,7 @@ class ExtensionOrderService {
 	 * @param int $pay_order_id Sub-order ID on wpss_orders.
 	 * @return object|null Raw DB row or null.
 	 */
-	private function get_request_by_pay_order( int $pay_order_id ): ?object {
+	public function get_request_by_pay_order( int $pay_order_id ): ?object {
 		global $wpdb;
 		$extensions_table = $wpdb->prefix . 'wpss_extension_requests';
 

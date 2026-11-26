@@ -220,26 +220,27 @@ class Frontend {
 			'wpss-frontend',
 			'wpssData',
 			array(
-				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-				'apiUrl'           => rest_url( 'wpss/v1/' ),
+				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
+				'apiUrl'                => rest_url( 'wpss/v1/' ),
 				// The site's own sign-in address. frontend.js reads this for a
 				// logged-out click on the favourite heart; it was never sent,
 				// so the script fell back to /wp-login.php (Basecamp 10352980066).
-				'loginUrl'         => wp_login_url(),
-				'nonce'            => wp_create_nonce( 'wpss_proposal_action' ),
-				'proposalNonce'    => wp_create_nonce( 'wpss_proposal_action' ),
-				'orderNonce'       => wp_create_nonce( 'wpss_order_action' ),
-				'contactNonce'     => wp_create_nonce( 'wpss_service_nonce' ),
-				'serviceNonce'     => wp_create_nonce( 'wpss_service_nonce' ),
-				'messageNonce'     => wp_create_nonce( 'wpss_message_nonce' ),
-				'sendMessageNonce' => wp_create_nonce( 'wpss_send_message' ),
-				'restNonce'        => wp_create_nonce( 'wp_rest' ),
-				'pollingInterval'  => 10000,
-				'currencyFormat'   => wpss_get_currency_format(),
-				'currencyDecimals' => wpss_get_decimal_places(),
-				'cartCount'        => $cart_count,
-				'checkoutUrl'      => wpss_get_checkout_base_url(),
-				'cartNonce'        => wp_create_nonce( 'wpss_cart_nonce' ),
+				'loginUrl'              => wp_login_url(),
+				'nonce'                 => wp_create_nonce( 'wpss_proposal_action' ),
+				'proposalNonce'         => wp_create_nonce( 'wpss_proposal_action' ),
+				'orderNonce'            => wp_create_nonce( 'wpss_order_action' ),
+				'contactNonce'          => wp_create_nonce( 'wpss_service_nonce' ),
+				'serviceNonce'          => wp_create_nonce( 'wpss_service_nonce' ),
+				'messageNonce'          => wp_create_nonce( 'wpss_message_nonce' ),
+				'sendMessageNonce'      => wp_create_nonce( 'wpss_send_message' ),
+				'restNonce'             => wp_create_nonce( 'wp_rest' ),
+				'pollingInterval'       => 10000,
+				'currencyFormat'        => wpss_get_currency_format(),
+				'currencyDecimals'      => wpss_get_decimal_places(),
+				'cartCount'             => $cart_count,
+				'checkoutUrl'           => wpss_get_checkout_base_url(),
+				'cartNonce'             => wp_create_nonce( 'wpss_cart_nonce' ),
+				'declineExtensionNonce' => wp_create_nonce( 'wpss_decline_extension' ),
 				/**
 				 * Extra pixels to add above every sticky WPSS surface.
 				 *
@@ -257,8 +258,8 @@ class Frontend {
 				 *
 				 * @param int $offset Extra offset in pixels. Default 0.
 				 */
-				'stickyTopOffset'  => (int) apply_filters( 'wpss_sticky_top_offset', 0 ),
-				'i18n'             => array(
+				'stickyTopOffset'       => (int) apply_filters( 'wpss_sticky_top_offset', 0 ),
+				'i18n'                  => array(
 					'loading'                        => __( 'Loading...', 'wp-sell-services' ),
 					'error'                          => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'tipAmountRequired'              => __( 'Enter a tip amount greater than zero.', 'wp-sell-services' ),
@@ -322,6 +323,9 @@ class Frontend {
 					'sellerResponse'                 => __( 'Vendor Response:', 'wp-sell-services' ),
 					'justNow'                        => __( 'Just now', 'wp-sell-services' ),
 					'confirm'                        => __( 'Confirm', 'wp-sell-services' ),
+					'decline'                        => __( 'Decline', 'wp-sell-services' ),
+					'confirmDeclineExtension'        => __( 'Decline this extra-work quote?', 'wp-sell-services' ),
+					'declineFailed'                  => __( 'Could not decline.', 'wp-sell-services' ),
 					'cancel'                         => __( 'Cancel', 'wp-sell-services' ),
 					'submit'                         => __( 'Submit', 'wp-sell-services' ),
 					'promptRequired'                 => __( 'Please provide a response.', 'wp-sell-services' ),

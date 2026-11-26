@@ -194,8 +194,12 @@ do_action( 'wpss_before_extension_view', $current_order );
 					?>
 				</a>
 			<?php endif; ?>
-			<?php if ( $is_buyer && $is_pending ) : ?>
+			<?php
+			$extension_request = $is_buyer && $is_pending ? ( new \WPSellServices\Services\ExtensionOrderService() )->get_request_by_pay_order( (int) $current_order->id ) : null;
+			if ( $extension_request ) :
+				?>
 				<button type="button" class="wpss-btn wpss-btn--secondary wpss-extension-decline-btn"
+					data-request="<?php echo esc_attr( (int) $extension_request->id ); ?>"
 					data-order="<?php echo esc_attr( (int) $current_order->id ); ?>"
 					data-parent="<?php echo esc_attr( $parent_id ); ?>">
 					<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
