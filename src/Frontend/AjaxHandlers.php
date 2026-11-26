@@ -1464,6 +1464,7 @@ class AjaxHandlers {
 					'post_status' => $new_status,
 				)
 			);
+			$this->sync_request_status( $request_id, $new_status );
 		}
 
 		$request_service = new BuyerRequestService();
@@ -1515,18 +1516,29 @@ class AjaxHandlers {
 			)
 		);
 
-		// Record it where the request status lives too, so the admin list does not read Open
-		// for a closed request (Basecamp 10549397728). Only open <-> closed: a hired or
-		// expired request keeps its state.
-		$service = new BuyerRequestService();
-		$current = (string) get_post_meta( $request_id, '_wpss_status', true );
-		if ( 'draft' === $status && BuyerRequestService::STATUS_OPEN === $current ) {
-			$service->update_status( $request_id, BuyerRequestService::STATUS_CLOSED );
-		} elseif ( 'publish' === $status && BuyerRequestService::STATUS_CLOSED === $current ) {
-			$service->update_status( $request_id, BuyerRequestService::STATUS_OPEN );
-		}
+		$this->sync_request_status( $request_id, $status );
 
 		wp_send_json_success( array( 'message' => __( 'Request updated.', 'wp-sell-services' ) ) );
+	}
+
+	/**
+	 * Record a buyer's draft / publish switch as the request's status, so the admin list does
+	 * not read Open for a request the buyer closed (Basecamp 10549397728). Only open <-> closed:
+	 * a hired or expired request keeps its state.
+	 *
+	 * @param int    $request_id  Request post ID.
+	 * @param string $post_status The post status just set: draft closes, publish reopens.
+	 * @return void
+	 */
+	private function sync_request_status( int $request_id, string $post_status ): void {
+		$service = new BuyerRequestService();
+		$current = (string) get_post_meta( $request_id, '_wpss_status', true );
+
+		if ( 'draft' === $post_status && BuyerRequestService::STATUS_OPEN === $current ) {
+			$service->update_status( $request_id, BuyerRequestService::STATUS_CLOSED );
+		} elseif ( 'publish' === $post_status && BuyerRequestService::STATUS_CLOSED === $current ) {
+			$service->update_status( $request_id, BuyerRequestService::STATUS_OPEN );
+		}
 	}
 
 	/**

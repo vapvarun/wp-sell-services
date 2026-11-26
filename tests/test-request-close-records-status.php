@@ -2,8 +2,8 @@
 /**
  * Closing a buyer request from the dashboard records it as closed (Basecamp 10549397728).
  *
- * The dashboard Close only set post_status to draft, so the admin Buyer Requests list read
- * "Draft ... Open". The handler now also writes the status through BuyerRequestService,
+ * The dashboard Close, and the edit form's Draft status, only set post_status to draft, so the
+ * admin Buyer Requests list read "Draft ... Open". Both now also write the status through BuyerRequestService,
  * open <-> closed only, so a hired request keeps its state, and vendors are not notified.
  *
  * Run: wp eval-file tests/test-request-close-records-status.php
@@ -62,6 +62,25 @@ $send         = static function ( string $status ) use ( $request ): void {
 	clean_post_cache( $request );
 };
 $state = static fn() => get_post_status( $request ) . '/' . get_post_meta( $request, '_wpss_status', true );
+$edit  = static function ( string $post_status ) use ( $request ): void {
+	$_POST    = array(
+		'wpss_request_nonce' => wp_create_nonce( 'wpss_edit_request' ),
+		'request_id'         => $request,
+		'title'              => 'QA-RFT close records status',
+		'description'        => 'QA test request, deleted after the run.',
+		'budget_min'         => 100,
+		'budget_max'         => 200,
+		'post_status'        => $post_status,
+	);
+	$_REQUEST = $_POST;
+	ob_start();
+	try {
+		( new AjaxHandlers() )->update_request();
+	} catch ( RuntimeException $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
+	}
+	ob_end_clean();
+	clean_post_cache( $request );
+};
 
 try {
 	wp_set_current_user( $f->buyer );
@@ -73,6 +92,11 @@ try {
 
 	$send( 'publish' );
 	$check( 'Reopen: the request is published and open again', 'publish/' . BuyerRequestService::STATUS_OPEN === $state(), $state() );
+
+	$edit( 'draft' );
+	$check( 'Edit form, Status Draft: the request reads closed too', 'draft/' . BuyerRequestService::STATUS_CLOSED === $state(), $state() );
+	$edit( 'publish' );
+	$check( 'Edit form, Status Published: it is open again', 'publish/' . BuyerRequestService::STATUS_OPEN === $state(), $state() );
 
 	update_post_meta( $request, '_wpss_status', BuyerRequestService::STATUS_HIRED );
 	$send( 'draft' );
