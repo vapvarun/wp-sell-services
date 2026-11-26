@@ -69,7 +69,7 @@ Vendors can update their published services at any time through the Dashboard.
 - Requirements and FAQs
 - Add-ons
 
-**Important:** If moderation is turned on, editing a published service and republishing it sends it back through the review queue. The service is temporarily hidden from the marketplace until the admin re-approves it.
+**Important:** By default, an edited published service stays live, even when moderation is on. It goes back through the review queue only when the admin turns on **Re-review Live Edits** (off by default, see [Vendor Settings](../vendor-system/vendor-settings.md#re-review-live-edits)). It is then hidden from the marketplace until the admin re-approves it. New services always wait for approval when moderation is on.
 
 **Note:** Active orders are not affected by edits. Changes only apply to new orders going forward.
 

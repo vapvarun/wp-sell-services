@@ -131,8 +131,9 @@ returns 400 after saving.
 With moderation on, a vendor's create or update that lands in the review queue instead
 of going live says so: the response's `status` is `pending` and its `notices` array
 carries "Service submitted for review. You will be notified once it is approved." The
-add-on routes (`/services/{id}/addons`) do the same, because changing an add-on on a
-live service sends it back to review. Sending `paused` alone does not.
+add-on routes (`/services/{id}/addons`) do the same. An update to a live service lands
+in the queue only when **Re-review Live Edits** is on (off by default); a new service
+always does. Sending `paused` alone never does.
 
 `-1` means unlimited. The numbers above are the Free defaults; Pro raises
 `max_gallery`, `max_extras`, `max_faq` and `max_requirements` to `-1` and leaves

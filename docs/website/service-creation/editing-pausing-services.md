@@ -30,14 +30,17 @@ Click **Edit** next to any service to open the service editor. You can update:
 
 ### What Happens After Editing
 
-The behavior depends on whether the marketplace requires service moderation:
+The behavior depends on two admin settings, Require Service Moderation and Re-review Live Edits (both off by default, see [Vendor Settings](../vendor-system/vendor-settings.md#re-review-live-edits)):
 
 | Moderation Setting | What Happens |
 |--------------------|-------------|
 | **Moderation off** | Changes go live immediately |
-| **Moderation on** | Your service is set to "Pending" and goes back into the approval queue. It is temporarily hidden from the marketplace until an admin approves it. |
+| **Moderation on, Re-review Live Edits off** | Changes go live immediately. Your service stays published. |
+| **Moderation on, Re-review Live Edits on** | Your service is set to "Pending" and goes back into the approval queue. It is temporarily hidden from the marketplace until an admin approves it. |
 
-**Tip:** If moderation is enabled, avoid making frequent small edits to a published service. Batch your changes and submit them all at once to minimize time spent waiting for re-approval.
+New services always wait for approval when moderation is on.
+
+**Tip:** If re-review of live edits is enabled, avoid making frequent small edits to a published service. Batch your changes and submit them all at once to minimize time spent waiting for re-approval.
 
 ### Active Orders Are Not Affected
 
