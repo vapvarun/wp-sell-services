@@ -30,9 +30,9 @@ class ReviewService {
 	 * @param int   $order_id    Order ID.
 	 * @param int   $reviewer_id Reviewer user ID.
 	 * @param array $data        Review data.
-	 * @return Review|null
+	 * @return Review|\WP_Error|null The review, WP_Error with a reason the buyer can act on, or null when refused.
 	 */
-	public function create( int $order_id, int $reviewer_id, array $data ): ?Review {
+	public function create( int $order_id, int $reviewer_id, array $data ): Review|\WP_Error|null {
 		// One eligibility rule for every door (REST, AJAX, direct calls): can_review().
 		if ( ! $this->can_review( $order_id, $reviewer_id )['can_review'] ) {
 			return null;
@@ -57,6 +57,12 @@ class ReviewService {
 		 * @param int   $order_id Order ID the review belongs to.
 		 */
 		$data = apply_filters( 'wpss_pre_create_review', $data, $order_id );
+
+		// A review says something: blank or whitespace-only text is refused with a reason
+		// (owner decision: no character minimum). Checked after the filter, which may fill it.
+		if ( '' === trim( wp_strip_all_tags( (string) ( $data['content'] ?? '' ) ) ) ) {
+			return new \WP_Error( 'wpss_review_empty', __( 'Please write a few words about your experience.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
 
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_reviews';

@@ -1087,6 +1087,10 @@ class AjaxHandlers {
 			)
 		);
 
+		if ( is_wp_error( $review ) ) {
+			wp_send_json_error( array( 'message' => $review->get_error_message() ) );
+		}
+
 		if ( $review ) {
 			wp_send_json_success(
 				array(

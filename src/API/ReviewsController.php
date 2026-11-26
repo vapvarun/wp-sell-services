@@ -463,6 +463,10 @@ class ReviewsController extends RestController {
 			)
 		);
 
+		if ( is_wp_error( $created ) ) {
+			return $created;
+		}
+
 		if ( ! $created ) {
 			return new WP_Error(
 				'rest_review_failed',
