@@ -73,9 +73,7 @@ class ReviewModerationPage {
 		$pending_count = $this->get_status_counts()[ Review::STATUS_PENDING ] ?? 0;
 		$menu_title    = __( 'Review Moderation', 'wp-sell-services' );
 
-		if ( $pending_count > 0 ) {
-			$menu_title .= sprintf( ' <span class="awaiting-mod">%d</span>', (int) $pending_count );
-		}
+		$menu_title = wpss_admin_menu_title( $menu_title, (int) $pending_count );
 
 		$hook = add_submenu_page(
 			'wp-sell-services',

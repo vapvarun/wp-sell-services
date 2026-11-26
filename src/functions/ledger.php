@@ -777,3 +777,17 @@ function wpss_has_wallet(): bool {
 
 	return null !== $wallet && method_exists( $wallet, 'get_balance' );
 }
+
+/**
+ * Withdrawal requests waiting for the owner's approval: the Dashboard card and the Withdrawals menu bubble.
+ *
+ * @since 1.9.4
+ *
+ * @return int
+ */
+function wpss_count_withdrawals_to_approve(): int {
+	global $wpdb;
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- COUNT on the indexed status column.
+	return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wpss_withdrawals WHERE status = %s", 'pending' ) );
+}

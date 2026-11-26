@@ -1354,3 +1354,14 @@ function wpss_handle_email_verification(): void {
 	wp_die( esc_html__( 'This confirmation link is invalid or has already been used. Request a new one from the Start selling button.', 'wp-sell-services' ), '', array( 'response' => 410 ) );
 }
 add_action( 'init', 'wpss_handle_email_verification' );
+
+/**
+ * Vendor applications waiting for the owner's approval: the Dashboard card and the Vendors menu bubble.
+ *
+ * @since 1.9.4
+ *
+ * @return int
+ */
+function wpss_count_vendors_awaiting_approval(): int {
+	return ( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->count( array( 'status' => 'pending' ) );
+}

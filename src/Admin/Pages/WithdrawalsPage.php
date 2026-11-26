@@ -72,7 +72,7 @@ class WithdrawalsPage {
 		$hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Withdrawals', 'wp-sell-services' ),
-			__( 'Withdrawals', 'wp-sell-services' ),
+			wpss_admin_menu_title( __( 'Withdrawals', 'wp-sell-services' ), wpss_count_withdrawals_to_approve() ),
 			'manage_options',
 			'wpss-withdrawals',
 			array( $this, 'render_page' )

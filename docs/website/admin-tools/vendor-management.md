@@ -6,7 +6,7 @@ The vendor management page gives you a bird's-eye view of everyone selling on yo
 
 ## Where to Find It
 
-Go to **Sell Services > Vendors** in your WordPress admin. You will see a dashboard with key stats at the top and a searchable list of all vendors below.
+Go to **Sell Services > Vendors** in your WordPress admin. You will see a dashboard with key stats at the top and a searchable list of all vendors below. While applications wait for your approval, the Vendors menu shows a count, the same number as the **Vendors awaiting approval** card on the WP Sell Services Dashboard.
 
 ## Dashboard Stats
 

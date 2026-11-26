@@ -1906,7 +1906,7 @@ class Admin {
 		$orders_hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Orders', 'wp-sell-services' ),
-			__( 'Orders', 'wp-sell-services' ) . ( $to_confirm ? sprintf( ' <span class="awaiting-mod">%s</span>', number_format_i18n( $to_confirm ) ) : '' ),
+			wpss_admin_menu_title( __( 'Orders', 'wp-sell-services' ), $to_confirm ),
 			'wpss_manage_orders',
 			'wpss-orders',
 			array( $this, 'render_orders_page' )
@@ -1919,7 +1919,7 @@ class Admin {
 		$disputes_hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Disputes', 'wp-sell-services' ),
-			__( 'Disputes', 'wp-sell-services' ),
+			wpss_admin_menu_title( __( 'Disputes', 'wp-sell-services' ), wpss_count_disputes_awaiting_admin() ),
 			'wpss_manage_disputes',
 			'wpss-disputes',
 			array( $this, 'render_disputes_page' )
@@ -2043,14 +2043,10 @@ class Admin {
 			)
 		);
 
-		// The owner's queues: the same counts as each screen's own tab (and the
-		// menu bubbles), each linking to that tab (Basecamp 10337159668).
-		$disputes_table      = $wpdb->prefix . 'wpss_disputes';
-		$withdrawals_table   = $wpdb->prefix . 'wpss_withdrawals';
-		$vendor_profiles     = $wpdb->prefix . 'wpss_vendor_profiles';
+		// The owner's queues: the same counts as each screen's own tab and its menu bubble (one
+		// wpss_count_* helper per queue, Basecamp 10550910764), each linking to that tab (10337159668).
 		$payments_to_confirm = wpss_count_payments_to_confirm();
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- COUNT(*) on indexed status columns.
 		$queues = array(
 			array(
 				'count' => $payments_to_confirm,
@@ -2059,7 +2055,7 @@ class Admin {
 				'icon'  => 'hand-coins',
 			),
 			array(
-				'count' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$vendor_profiles} WHERE status = 'pending'" ),
+				'count' => wpss_count_vendors_awaiting_approval(),
 				'label' => __( 'Vendors awaiting approval', 'wp-sell-services' ),
 				'url'   => admin_url( 'admin.php?page=wpss-vendors&status=pending' ),
 				'icon'  => 'user-check',
@@ -2079,19 +2075,18 @@ class Admin {
 			array(
 				// Escalated is the one waiting on the owner; open and pending
 				// review wait on the parties.
-				'count' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$disputes_table} WHERE status = 'escalated'" ),
+				'count' => wpss_count_disputes_awaiting_admin(),
 				'label' => __( 'Disputes waiting on you', 'wp-sell-services' ),
 				'url'   => admin_url( 'admin.php?page=wpss-disputes&status=escalated' ),
 				'icon'  => 'shield-alert',
 			),
 			array(
-				'count' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$withdrawals_table} WHERE status = 'pending'" ),
+				'count' => wpss_count_withdrawals_to_approve(),
 				'label' => __( 'Withdrawals to approve', 'wp-sell-services' ),
 				'url'   => admin_url( 'admin.php?page=wpss-withdrawals&status=pending' ),
 				'icon'  => 'banknote',
 			),
 		);
-		// phpcs:enable
 
 		// Offline orders wait for the owner's Mark as paid; the card goes once nothing offline can arrive.
 		$offline = wpss()->get_payment_gateways()['offline'] ?? null;

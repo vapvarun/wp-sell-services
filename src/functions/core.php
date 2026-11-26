@@ -277,3 +277,19 @@ function wpss_validate_registry( $items, string $contract, string $filter ): arr
 
 	return $valid;
 }
+
+/**
+ * An admin submenu title with WordPress's count bubble when something is waiting.
+ *
+ * Every WP Sell Services menu with a queue draws its bubble here, from the same count as that
+ * queue's Dashboard card (Basecamp 10550910764).
+ *
+ * @since 1.9.4
+ *
+ * @param string $title Menu title.
+ * @param int    $count Items waiting on the owner.
+ * @return string
+ */
+function wpss_admin_menu_title( string $title, int $count ): string {
+	return $count > 0 ? sprintf( '%s <span class="awaiting-mod">%s</span>', $title, esc_html( number_format_i18n( $count ) ) ) : $title;
+}

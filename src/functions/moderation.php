@@ -515,3 +515,18 @@ add_action(
 	},
 	90
 );
+
+/**
+ * Disputes waiting on the owner: escalated ones (open and pending review wait on the parties).
+ * The Dashboard card and the Disputes menu bubble.
+ *
+ * @since 1.9.4
+ *
+ * @return int
+ */
+function wpss_count_disputes_awaiting_admin(): int {
+	global $wpdb;
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- COUNT on the indexed status column.
+	return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wpss_disputes WHERE status = %s", 'escalated' ) );
+}

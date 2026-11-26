@@ -18,7 +18,7 @@ Stay impartial. Base every decision on evidence, not assumptions. Apply your mar
 
 ## Accessing Disputes
 
-Go to **Sell Services > Disputes** to see all disputes on your marketplace. The list shows each dispute's status, order reference, the parties involved, and the date it was opened.
+Go to **Sell Services > Disputes** to see all disputes on your marketplace. The list shows each dispute's status, order reference, the parties involved, and the date it was opened. While escalated disputes wait for your decision, the Disputes menu shows a count, the same number as the **Disputes waiting on you** card on the WP Sell Services Dashboard.
 
 Click any dispute to view the full details: the reason, description, all submitted evidence, the message thread, and the complete order history.
 

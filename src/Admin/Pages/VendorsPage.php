@@ -126,7 +126,7 @@ class VendorsPage {
 		$hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Vendors', 'wp-sell-services' ),
-			__( 'Vendors', 'wp-sell-services' ),
+			wpss_admin_menu_title( __( 'Vendors', 'wp-sell-services' ), wpss_count_vendors_awaiting_approval() ),
 			'manage_options',
 			'wpss-vendors',
 			array( $this, 'render_page' )

@@ -167,9 +167,7 @@ class ReportsPage {
 		// The bubble is the whole point of putting this in the menu: an owner
 		// who has to open a screen to discover there is nothing to do will stop
 		// opening it, and then miss the day there is.
-		if ( $open > 0 ) {
-			$menu_title .= sprintf( ' <span class="awaiting-mod">%d</span>', (int) $open );
-		}
+		$menu_title = wpss_admin_menu_title( $menu_title, (int) $open );
 
 		add_submenu_page(
 			'wp-sell-services',

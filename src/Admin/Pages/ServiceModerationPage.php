@@ -131,9 +131,7 @@ class ServiceModerationPage {
 		$pending_count = $this->get_pending_count();
 		$menu_title    = __( 'Moderation', 'wp-sell-services' );
 
-		if ( $pending_count > 0 ) {
-			$menu_title .= sprintf( ' <span class="awaiting-mod">%d</span>', $pending_count );
-		}
+		$menu_title = wpss_admin_menu_title( $menu_title, (int) $pending_count );
 
 		$hook = add_submenu_page(
 			'wp-sell-services',
