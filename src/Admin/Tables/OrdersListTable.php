@@ -474,6 +474,14 @@ class OrdersListTable extends \WP_List_Table {
 			}
 		}
 
+		// Payment method: the Dashboard's Payments to confirm card links here with payment_method=offline.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! empty( $_GET['payment_method'] ) ) {
+			$where .= ' AND payment_method = %s';
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$params[] = sanitize_key( wp_unslash( $_GET['payment_method'] ) );
+		}
+
 		// Vendor and buyer filters (admins only; a vendor is already scoped above).
 		if ( current_user_can( 'manage_options' ) ) {
 			foreach ( array( 'vendor_id', 'customer_id' ) as $party ) {

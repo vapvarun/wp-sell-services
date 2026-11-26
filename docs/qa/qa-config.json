@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "offline-payments-to-confirm",
+    "run": "${WP_CLI:-wp} eval-file tests/test-offline-payments-to-confirm.php"
+   },
+   {
     "id": "signup-switch-matches-vendor-registration",
     "run": "${WP_CLI:-wp} eval-file tests/test-signup-switch-matches-vendor-registration.php"
    },

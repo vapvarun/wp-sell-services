@@ -1836,10 +1836,12 @@ class Admin {
 		// Note: Buyer Requests CPT menus are automatically added
 		// since show_in_menu is set to 'wp-sell-services' in BuyerRequestPostType.
 
+		// Same count as the Dashboard's Payments to confirm card (Basecamp 10550842399).
+		$to_confirm  = current_user_can( 'manage_options' ) ? wpss_count_payments_to_confirm() : 0;
 		$orders_hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Orders', 'wp-sell-services' ),
-			__( 'Orders', 'wp-sell-services' ),
+			__( 'Orders', 'wp-sell-services' ) . ( $to_confirm ? sprintf( ' <span class="awaiting-mod">%s</span>', number_format_i18n( $to_confirm ) ) : '' ),
 			'wpss_manage_orders',
 			'wpss-orders',
 			array( $this, 'render_orders_page' )
@@ -1978,12 +1980,19 @@ class Admin {
 
 		// The owner's queues: the same counts as each screen's own tab (and the
 		// menu bubbles), each linking to that tab (Basecamp 10337159668).
-		$disputes_table    = $wpdb->prefix . 'wpss_disputes';
-		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
-		$vendor_profiles   = $wpdb->prefix . 'wpss_vendor_profiles';
+		$disputes_table      = $wpdb->prefix . 'wpss_disputes';
+		$withdrawals_table   = $wpdb->prefix . 'wpss_withdrawals';
+		$vendor_profiles     = $wpdb->prefix . 'wpss_vendor_profiles';
+		$payments_to_confirm = wpss_count_payments_to_confirm();
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- COUNT(*) on indexed status columns.
 		$queues = array(
+			array(
+				'count' => $payments_to_confirm,
+				'label' => __( 'Payments to confirm', 'wp-sell-services' ),
+				'url'   => admin_url( 'admin.php?page=wpss-orders&status=pending_payment&payment_method=offline' ),
+				'icon'  => 'hand-coins',
+			),
 			array(
 				'count' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$vendor_profiles} WHERE status = 'pending'" ),
 				'label' => __( 'Vendors awaiting approval', 'wp-sell-services' ),
@@ -2018,6 +2027,12 @@ class Admin {
 			),
 		);
 		// phpcs:enable
+
+		// Offline orders wait for the owner's Mark as paid; the card goes once nothing offline can arrive.
+		$offline = wpss()->get_payment_gateways()['offline'] ?? null;
+		if ( ! $payments_to_confirm && ! ( $offline && $offline->is_enabled() ) ) {
+			array_shift( $queues );
+		}
 		?>
 		<div class="wrap wpss-dashboard-wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'WP Sell Services Dashboard', 'wp-sell-services' ); ?></h1>

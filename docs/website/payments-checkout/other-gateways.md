@@ -154,8 +154,10 @@ Offline payments let you accept bank transfers, checks, or any manual payment me
 2. Order is created with **Pending Payment** status
 3. Buyer sees your payment instructions and sends money
 4. You check your bank statement and verify the payment
-5. In the order, click **Confirm Payment**
+5. In the order, click **Mark as paid**
 6. Order moves to **In Progress** and the vendor is notified to begin work
+
+Orders waiting for you are counted on the **Sell Services > Dashboard** under Action items as **Payments to confirm**, and on the **Orders** menu item. The card links to the Orders list filtered to those orders.
 
 ### When to Use Offline Payments
 

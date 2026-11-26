@@ -1324,6 +1324,14 @@
    "added": "2026-11-26",
    "fails_on": "664b2155 (3 FAIL)",
    "check": "tests/test-signup-switch-matches-vendor-registration.php"
+  },
+  {
+   "card": "10550842399",
+   "title": "offline orders waiting for Mark as paid were counted on no Action items card or menu bubble",
+   "guard": "static:offline-payments-to-confirm",
+   "added": "2026-11-26",
+   "fails_on": "88e42ea7 (4 FAIL)",
+   "check": "tests/test-offline-payments-to-confirm.php"
   }
  ]
 }

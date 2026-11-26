@@ -676,3 +676,27 @@ function wpss_checkout_button_label( object $gateway, float $total, string $curr
 	 */
 	return (string) apply_filters( 'wpss_gateway_checkout_button_label', $label, method_exists( $gateway, 'get_id' ) ? (string) $gateway->get_id() : '', $total, $currency );
 }
+
+/**
+ * Offline payments the owner still has to confirm: orders whose buyer chose the offline
+ * gateway and that wait in pending_payment for Mark as paid (Basecamp 10550842399).
+ *
+ * One count for the Dashboard's Action items card and the Orders menu bubble. COUNT(*) on
+ * idx_status, then a filter on the few pending rows.
+ *
+ * @since 1.9.4
+ *
+ * @return int
+ */
+function wpss_count_payments_to_confirm(): int {
+	global $wpdb;
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	return (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_orders WHERE status = %s AND payment_method = %s",
+			\WPSellServices\Models\ServiceOrder::STATUS_PENDING_PAYMENT,
+			'offline'
+		)
+	);
+}
