@@ -1557,6 +1557,21 @@ class NotificationService {
 
 			case 'proposal_accepted':
 				$title = __( 'Your proposal was accepted', 'wp-sell-services' );
+				$order = wpss_get_order( (int) ( $data['order_id'] ?? 0 ) );
+				// A hire that still needs the buyer's payment must not tell the vendor to start.
+				if ( $order && \WPSellServices\Models\ServiceOrder::STATUS_PENDING_PAYMENT === $order->status ) {
+					$message->line(
+						/* translators: %s: request title */
+						__( 'The buyer accepted your proposal on "%s".', 'wp-sell-services' ),
+						(string) ( $data['request_title'] ?? '' )
+					);
+					$message->paragraph(
+						/* translators: %s: order number */
+						__( 'Order #%s is waiting for the buyer\'s payment. Start work once it is paid.', 'wp-sell-services' ),
+						$this->order_ref( $data['order_id'] ?? 0 )
+					);
+					break;
+				}
 				$message->line(
 					/* translators: %s: request title */
 					__( 'The buyer accepted your proposal on "%s" and the order is now open.', 'wp-sell-services' ),
