@@ -1284,6 +1284,14 @@
    "added": "2026-11-26",
    "fails_on": "a604d408 (2 FAIL)",
    "check": "tests/test-settings-bare-hash-stays.cjs"
+  },
+  {
+   "card": "10549300372",
+   "title": "request cards offered Send Proposal to the request's own buyer and to non-vendors",
+   "guard": "static:request-card-proposal-cta",
+   "added": "2026-11-26",
+   "fails_on": "c6ff2357 (4 FAIL)",
+   "check": "tests/test-request-card-proposal-cta.php"
   }
  ]
 }
