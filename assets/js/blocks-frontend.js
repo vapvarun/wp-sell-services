@@ -95,22 +95,21 @@
 	};
 
 	/**
-	 * Get number of slides per view based on viewport.
+	 * Number of slides in view, measured from the layout.
+	 *
+	 * The stylesheet sizes slides from the block's Columns and the viewport,
+	 * so reading the result keeps paging in step with what is on screen.
 	 *
 	 * @return {number}
 	 */
 	WPSSBlocks.Carousel.prototype.getSlidesPerView = function() {
-		const viewportWidth = window.innerWidth;
+		const slideWidth = this.$slideItems.first().outerWidth(true);
 
-		if (viewportWidth <= 480) {
+		if (!slideWidth) {
 			return 1;
-		} else if (viewportWidth <= 768) {
-			return 2;
-		} else if (viewportWidth <= 1024) {
-			return 3;
 		}
 
-		return 4;
+		return Math.max(1, Math.round(this.$track.width() / slideWidth));
 	};
 
 	/**

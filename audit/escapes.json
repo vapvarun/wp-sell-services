@@ -1220,6 +1220,14 @@
    "added": "2026-11-26",
    "fails_on": "1.9.4 tree with the two files at HEAD (6 FAIL)",
    "check": "tests/test-pay-link-only-when-payable.php"
+  },
+  {
+   "card": "10549241541",
+   "title": "the stylesheet and the script each worked out slides per view from the window width and ignored the block's Columns",
+   "guard": "static:featured-carousel-columns",
+   "added": "2026-11-26",
+   "fails_on": "b18e6ebd (18 FAIL)",
+   "check": "tests/test-featured-carousel-columns.php"
   }
  ]
 }

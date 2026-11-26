@@ -108,7 +108,8 @@
 }
 
 .wpss-grid-cols-5 .wpss-services-grid,
-.wpss-grid-cols-5 .wpss-categories-list {
+.wpss-grid-cols-5 .wpss-categories-list,
+.wpss-grid-cols-5 .wpss-featured-slides {
 	grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
@@ -519,7 +520,21 @@
 
 .wpss-featured-slide {
 	flex: 0 0 25%;
+	min-width: 0; /* honour the column width; a card's content must not widen it */
 	padding: 0 0.75rem;
+}
+
+/* Carousel: the block's Columns sets how many slides show (blocks-frontend.js measures this). */
+.wpss-grid-cols-2 .wpss-featured-slide {
+	flex-basis: 50%;
+}
+
+.wpss-grid-cols-3 .wpss-featured-slide {
+	flex-basis: 33.333%;
+}
+
+.wpss-grid-cols-5 .wpss-featured-slide {
+	flex-basis: 20%;
 }
 
 .wpss-featured-card {
@@ -581,6 +596,12 @@
 
 .wpss-featured-seller img {
 	border-radius: 50%;
+}
+
+/* A long display name wraps inside the card instead of being cut at its edge. */
+.wpss-featured-seller span {
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .wpss-featured-service-title {
@@ -1090,8 +1111,9 @@
 		grid-template-columns: repeat(4, minmax(0, 1fr));
 	}
 
-	.wpss-featured-slide {
-		flex: 0 0 33.333%;
+	.wpss-grid-cols-4 .wpss-featured-slide,
+	.wpss-grid-cols-5 .wpss-featured-slide {
+		flex-basis: 33.333%;
 	}
 }
 
@@ -1108,8 +1130,10 @@
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
-	.wpss-featured-slide {
-		flex: 0 0 50%;
+	.wpss-grid-cols-3 .wpss-featured-slide,
+	.wpss-grid-cols-4 .wpss-featured-slide,
+	.wpss-grid-cols-5 .wpss-featured-slide {
+		flex-basis: 50%;
 	}
 
 	.wpss-search-fields {
@@ -1157,8 +1181,11 @@
 		grid-template-columns: minmax(0, 1fr);
 	}
 
-	.wpss-featured-slide {
-		flex: 0 0 100%;
+	.wpss-grid-cols-2 .wpss-featured-slide,
+	.wpss-grid-cols-3 .wpss-featured-slide,
+	.wpss-grid-cols-4 .wpss-featured-slide,
+	.wpss-grid-cols-5 .wpss-featured-slide {
+		flex-basis: 100%;
 	}
 
 	.wpss-carousel-arrow {

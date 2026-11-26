@@ -831,6 +831,10 @@
    {
     "id": "pay-link-only-when-payable",
     "run": "${WP_CLI:-wp} eval-file tests/test-pay-link-only-when-payable.php"
+   },
+   {
+    "id": "featured-carousel-columns",
+    "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-columns.php"
    }
   ]
  }
