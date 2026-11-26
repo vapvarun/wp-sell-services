@@ -1356,6 +1356,14 @@
    "added": "2026-11-27",
    "fails_on": "2c7fb46e (4 FAIL)",
    "check": "tests/test-empty-services-next-step.php"
+  },
+  {
+   "card": "10550887879",
+   "title": "no screen tied the 0-day clearance default to the dispute window, so disputes could land after a withdrawal unannounced",
+   "guard": "static:clearance-names-dispute-window",
+   "added": "2026-11-27",
+   "fails_on": "09120c15 (5 FAIL)",
+   "check": "tests/test-clearance-names-dispute-window.php"
   }
  ]
 }

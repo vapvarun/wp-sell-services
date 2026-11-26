@@ -58,6 +58,8 @@ Set `7`, `14` or `30` if you want a refund buffer:
 | `14` | Fortnightly hold |
 | `30` | Monthly hold |
 
+**Match it to your dispute window.** Buyers can open a dispute for a number of days after an order completes (**Settings > Orders & Disputes > Dispute Window (Days)**, 14 by default). With a shorter clearance period, a dispute can arrive after the vendor has already withdrawn the money, and a refund then comes out of your pocket until their future earnings cover it. The field's help text and the setup wizard's last screen quote your current dispute window so you can match it. The default stays `0`; the choice is yours.
+
 **What a hold buys you.** If a refund arrives inside the window, the money is
 still unpaid and nothing has to be clawed back.
 

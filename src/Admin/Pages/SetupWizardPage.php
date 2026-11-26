@@ -721,6 +721,15 @@ class SetupWizardPage {
 						<i data-lucide="credit-card" class="wpss-icon" aria-hidden="true"></i>
 						<strong><?php esc_html_e( 'Set Up Payment Methods', 'wp-sell-services' ); ?></strong>
 						<span><?php esc_html_e( 'Offline payment works out of the box. Add Stripe, PayPal or your gateway keys to accept card payments.', 'wp-sell-services' ); ?></span>
+						<?php $wpss_dispute_days = wpss_post_completion_dispute_days(); ?>
+						<?php if ( $wpss_dispute_days ) : ?>
+							<span>
+							<?php
+							/* translators: %d: dispute window in days. */
+							echo esc_html( sprintf( _n( 'Buyers can dispute for %d day after completion, so set Payouts > Clearance Period at least that long.', 'Buyers can dispute for %d days after completion, so set Payouts > Clearance Period at least that long.', $wpss_dispute_days, 'wp-sell-services' ), $wpss_dispute_days ) );
+							?>
+							</span>
+						<?php endif; ?>
 					</a>
 					<a href="#" class="wpss-wizard-card" id="wpss-wizard-import-demo">
 						<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>

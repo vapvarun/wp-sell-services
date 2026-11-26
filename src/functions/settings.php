@@ -214,3 +214,37 @@ function wpss_detect_currency_from_locale(): string {
 
 	return $map[ get_locale() ] ?? 'USD';
 }
+
+/**
+ * How many days after completion a buyer can still open a dispute; 0 when they cannot.
+ *
+ * The same rule DisputeService::get_dispute_block_reason() enforces. The money settings quote it so
+ * an owner sees that a clearance period shorter than this lets a dispute arrive after the vendor
+ * has withdrawn (Basecamp 10550887879).
+ *
+ * @since 1.9.4
+ *
+ * @return int
+ */
+function wpss_post_completion_dispute_days(): int {
+	return wpss_get_option( 'orders', 'allow_disputes' ) ? max( 0, (int) wpss_get_option( 'orders', 'dispute_window_days' ) ) : 0;
+}
+
+/**
+ * One sentence tying the clearance period to the dispute window, or '' when no dispute can follow.
+ *
+ * @since 1.9.4
+ *
+ * @return string
+ */
+function wpss_clearance_dispute_note(): string {
+	$days = wpss_post_completion_dispute_days();
+
+	return $days
+		? sprintf(
+			/* translators: %d: dispute window in days. */
+			_n( 'Buyers can open a dispute for %d day after an order completes, so a clearance period at least that long keeps a dispute from arriving after the vendor has withdrawn the money.', 'Buyers can open a dispute for %d days after an order completes, so a clearance period at least that long keeps a dispute from arriving after the vendor has withdrawn the money.', $days, 'wp-sell-services' ),
+			$days
+		)
+		: '';
+}

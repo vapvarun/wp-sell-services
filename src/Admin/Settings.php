@@ -845,7 +845,7 @@ class Settings {
 				'min'         => 0,
 				'max'         => 90,
 				'step'        => 1,
-				'description' => __( 'Days to hold earnings after an order completes, before a vendor can be paid. 0 pays out as soon as an order completes. A hold is your refund window: if a refund lands after you have already paid the vendor, their balance goes negative and future earnings clear it — a hold avoids that situation entirely. 7 = weekly, 14 = fortnightly, 30 = monthly.', 'wp-sell-services' ),
+				'description' => trim( __( 'Days to hold earnings after an order completes, before a vendor can be paid. 0 pays out as soon as an order completes. A hold is your refund window: if a refund lands after you have already paid the vendor, their balance goes negative and future earnings clear it — a hold avoids that situation entirely. 7 = weekly, 14 = fortnightly, 30 = monthly.', 'wp-sell-services' ) . ' ' . wpss_clearance_dispute_note() ),
 			)
 		);
 
