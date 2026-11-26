@@ -52,6 +52,9 @@ $res = $put( array( 'faqs' => array_fill( 0, 4, array( 'question' => 'QA-RFT q',
 remove_filter( 'wpss_service_max_faq', $limit, 999 );
 $check( 'the FAQ cap applies over REST', 2 === count( $stored() ), (string) count( $stored() ) );
 
+$put( array( 'faqs' => array( array( 'question' => 'QA-RFT kept', 'answer' => 'yes' ), array( 'question' => '', 'answer' => ' <p></p> ' ) ) ) );
+$check( 'a blank FAQ row is dropped, not stored', 1 === count( $stored() ) && 'QA-RFT kept' === ( $stored()[0]['question'] ?? '' ), wp_json_encode( $stored() ) );
+
 $put( array( 'faqs' => array() ) );
 $check( 'faqs: [] clears them', array() === $stored() );
 
