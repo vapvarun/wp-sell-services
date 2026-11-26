@@ -135,7 +135,7 @@ class BuyerRequest {
 		$request->status         = get_post_meta( $post->ID, '_wpss_status', true ) ?: self::STATUS_OPEN;
 		$request->budget_min     = (float) get_post_meta( $post->ID, '_wpss_budget_min', true );
 		$request->budget_max     = (float) get_post_meta( $post->ID, '_wpss_budget_max', true );
-		$request->deadline       = get_post_meta( $post->ID, '_wpss_deadline', true ) ?: null;
+		$request->deadline       = \WPSellServices\Services\BuyerRequestService::get_expires_at( $post->ID ) ?: null;
 		$request->attachments    = get_post_meta( $post->ID, '_wpss_attachments', true ) ?: [];
 		$request->proposal_count = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $post->ID );
 		$request->created_at     = $post->post_date;

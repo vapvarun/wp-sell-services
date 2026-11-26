@@ -115,8 +115,7 @@ class RequestListScreen {
 				break;
 
 			case 'wpss_deadline':
-				$deadline = (string) get_post_meta( $post_id, '_wpss_deadline', true );
-				echo esc_html( wpss_calendar_date_label( $deadline ) );
+				echo esc_html( wpss_date_label( BuyerRequestService::get_expires_at( $post_id ) ) );
 				break;
 		}
 	}

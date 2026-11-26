@@ -604,7 +604,7 @@ class ProposalsController extends RestController {
 					'budget_max'       => $budget_max,
 					'budget_max_minor' => wpss_amount_to_minor_units( $budget_max, $currency ),
 					'currency'         => $currency,
-					'deadline'         => get_post_meta( $request->ID, '_wpss_deadline', true ),
+					'deadline'         => wpss_rest_date( \WPSellServices\Services\BuyerRequestService::get_expires_at( $request->ID ) ),
 				];
 			}
 

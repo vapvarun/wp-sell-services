@@ -1423,6 +1423,25 @@ class BuyerRequestService {
 	}
 
 	/**
+	 * When a request stops taking proposals: the one reader for every surface.
+	 *
+	 * _wpss_expires_at (UTC) is what the request form, REST and the expiry sweep
+	 * write. Older demo data carried only _wpss_deadline (Y-m-d), so it is the
+	 * fallback; the admin list, the model and the proposals API read it alone and
+	 * showed an em dash for every real request (Basecamp 10511341034).
+	 *
+	 * @since 1.9.4
+	 *
+	 * @param int $request_id Request post ID.
+	 * @return string Stored expiry, '' when none.
+	 */
+	public static function get_expires_at( int $request_id ): string {
+		$expires = (string) get_post_meta( $request_id, '_wpss_expires_at', true );
+
+		return '' !== $expires ? $expires : (string) get_post_meta( $request_id, '_wpss_deadline', true );
+	}
+
+	/**
 	 * Get available statuses.
 	 *
 	 * @return array<string, string> Status slugs and labels.
