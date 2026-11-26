@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "uninstall-strips-every-cap",
+    "run": "${WP_CLI:-wp} eval-file tests/test-uninstall-strips-every-cap.php"
+   },
+   {
     "id": "uninstall-loads-what-it-calls",
     "run": "${WP_CLI:-wp} eval-file tests/test-uninstall-loads-what-it-calls.php --skip-plugins=wp-sell-services,wp-sell-services-pro"
    },

@@ -1252,6 +1252,14 @@
    "added": "2026-11-26",
    "fails_on": "7c06c3bb (4 FAIL)",
    "check": "tests/test-block-theme-shim-prints-module-map.php"
+  },
+  {
+   "card": "10545751792",
+   "title": "uninstall left wpss caps on administrator and vendors with no role",
+   "guard": "static:uninstall-strips-every-cap",
+   "added": "2026-11-26",
+   "fails_on": "b47d93c2 (3 FAIL)",
+   "check": "tests/test-uninstall-strips-every-cap.php"
   }
  ]
 }

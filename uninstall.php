@@ -104,25 +104,31 @@ $wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE 'wpss\_%'" );
 // Delete post meta.
 $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_wpss\_%'" );
 
-// Remove capabilities.
-$capabilities = array(
-	'wpss_manage_services',
-	'wpss_manage_orders',
-	'wpss_view_analytics',
-	'wpss_respond_to_requests',
-	'wpss_manage_settings',
-	'wpss_manage_disputes',
-	'wpss_manage_vendors',
-);
-
-$roles = array( 'administrator', 'shop_manager', 'author', 'editor' );
-
-foreach ( $roles as $role_name ) {
-	$role = get_role( $role_name );
-	if ( $role ) {
-		foreach ( $capabilities as $cap ) {
+// Remove capabilities. Activator grants about thirty (wpss_* plus the service and
+// request post-type caps, all containing "wpss_") on several roles, so a fixed list
+// always missed some; strip by name from every role instead.
+foreach ( wp_roles()->role_objects as $role ) {
+	foreach ( array_keys( $role->capabilities ) as $cap ) {
+		if ( false !== strpos( $cap, 'wpss_' ) ) {
 			$role->remove_cap( $cap );
 		}
+	}
+}
+
+// Members keep the role key and any per-user cap after remove_role(). Strip them,
+// and give anyone left with no role the site's default one so they keep their account.
+$cap_key  = $wpdb->get_blog_prefix() . 'capabilities';
+$user_ids = $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value LIKE %s", $cap_key, '%wpss\\_%' ) );
+
+foreach ( $user_ids as $user_id ) {
+	$user = new WP_User( (int) $user_id );
+	foreach ( array_keys( $user->caps ) as $cap ) {
+		if ( false !== strpos( $cap, 'wpss_' ) ) {
+			$user->remove_cap( $cap );
+		}
+	}
+	if ( ! $user->roles ) {
+		$user->set_role( get_option( 'default_role', 'subscriber' ) );
 	}
 }
 
