@@ -38,32 +38,39 @@ $roles_before = get_option( $wpdb->get_blog_prefix() . 'user_roles' );
 $admin_before = $wpss_caps( get_role( 'administrator' )->capabilities );
 $check( 'administrator holds wpss caps before (fixture sanity)', count( $admin_before ) > 7, implode( ',', $admin_before ) );
 
-$wpdb->query( 'START TRANSACTION' );
+$default_before = get_option( 'default_role' );
 
-$vendor = wp_insert_user( array( 'user_login' => 'qa_rft_uninstall_' . wp_generate_password( 6, false ), 'user_pass' => wp_generate_password(), 'role' => 'wpss_vendor' ) );
-( new WP_User( $vendor ) )->add_cap( 'wpss_vendor_orders' );
+// Eleanor's bounce: a site whose New User Default Role is Vendor must not hand vendors the removed role.
+foreach ( array( 'subscriber', 'wpss_vendor' ) as $default_role ) {
+	echo "-- New User Default Role: {$default_role}\n";
+	$wpdb->query( 'START TRANSACTION' );
+	update_option( 'default_role', $default_role );
 
-eval( $section ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- runs the shipped section itself, not a copy.
+	$vendor = wp_insert_user( array( 'user_login' => 'qa_rft_uninstall_' . wp_generate_password( 6, false ), 'user_pass' => wp_generate_password(), 'role' => 'wpss_vendor' ) );
+	( new WP_User( $vendor ) )->add_cap( 'wpss_vendor_orders' );
 
-wp_roles()->for_site(); // Re-read roles the section changed.
-$left = array();
-foreach ( wp_roles()->roles as $name => $role ) {
-	foreach ( $wpss_caps( $role['capabilities'] ) as $cap ) {
-		$left[] = "$name:$cap";
+	eval( $section ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- runs the shipped section itself, not a copy.
+
+	wp_roles()->for_site(); // Re-read roles the section changed.
+	$left = array();
+	foreach ( wp_roles()->roles as $name => $role ) {
+		foreach ( $wpss_caps( $role['capabilities'] ) as $cap ) {
+			$left[] = "$name:$cap";
+		}
 	}
+	$check( 'no role keeps a wpss cap', array() === $left, implode( ',', $left ) );
+
+	clean_user_cache( $vendor );
+	$member = new WP_User( $vendor );
+	$check( 'the vendor keeps no wpss role or cap', array() === $wpss_caps( $member->caps ), wp_json_encode( $member->caps ) );
+	$check( 'the vendor has a real role, so they keep their account', array() !== $member->roles && user_can( $member, 'read' ), wp_json_encode( $member->caps ) );
+
+	$wpdb->query( 'ROLLBACK' );
+	wp_cache_flush();
+	wp_roles()->for_site();
 }
-$check( 'no role keeps a wpss cap', array() === $left, implode( ',', $left ) );
-
-clean_user_cache( $vendor );
-$member = new WP_User( $vendor );
-$check( 'the vendor keeps no wpss role or cap', array() === $wpss_caps( $member->caps ), wp_json_encode( $member->caps ) );
-$check( 'the vendor is given the default role, so they keep their account', in_array( get_option( 'default_role', 'subscriber' ), $member->roles, true ) && user_can( $member, 'read' ), wp_json_encode( $member->roles ) );
-
-$wpdb->query( 'ROLLBACK' );
-wp_cache_flush();
-wp_roles()->for_site();
 
 $check( 'rollback restored the site roles', get_option( $wpdb->get_blog_prefix() . 'user_roles' ) === $roles_before && $wpss_caps( get_role( 'administrator' )->capabilities ) === $admin_before );
-$check( 'rollback removed the fixture user', false === get_userdata( $vendor ) );
+$check( 'rollback removed the fixture users and kept the default role', false === get_userdata( $vendor ) && get_option( 'default_role' ) === $default_before );
 
 echo $fails ? "\n{$fails} FAILED\n" : "\nall passed\n";

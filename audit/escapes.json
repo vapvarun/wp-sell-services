@@ -1255,10 +1255,10 @@
   },
   {
    "card": "10545751792",
-   "title": "uninstall left wpss caps on administrator and vendors with no role",
+   "title": "uninstall left wpss caps on administrator and vendors with no role, including when the default role was Vendor",
    "guard": "static:uninstall-strips-every-cap",
    "added": "2026-11-26",
-   "fails_on": "b47d93c2 (3 FAIL)",
+   "fails_on": "b47d93c2 (6 FAIL); 8d0f12ed with default role Vendor (2 FAIL)",
    "check": "tests/test-uninstall-strips-every-cap.php"
   }
  ]

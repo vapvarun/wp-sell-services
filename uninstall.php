@@ -115,6 +115,11 @@ foreach ( wp_roles()->role_objects as $role ) {
 	}
 }
 
+// Remove the wpss_vendor role first: core then resets a New User Default Role of
+// Vendor to subscriber, so the fallback below can never be the removed role.
+remove_role( 'wpss_vendor' );
+$fallback_role = (string) get_option( 'default_role', 'subscriber' );
+
 // Members keep the role key and any per-user cap after remove_role(). Strip them,
 // and give anyone left with no role the site's default one so they keep their account.
 $cap_key  = $wpdb->get_blog_prefix() . 'capabilities';
@@ -128,12 +133,9 @@ foreach ( $user_ids as $user_id ) {
 		}
 	}
 	if ( ! $user->roles ) {
-		$user->set_role( get_option( 'default_role', 'subscriber' ) );
+		$user->set_role( $fallback_role );
 	}
 }
-
-// Remove the wpss_vendor role.
-remove_role( 'wpss_vendor' );
 
 // Clear any remaining transients.
 $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_wpss\_%'" );
