@@ -54,9 +54,9 @@ This adds an extra quality gate -- vendors must be verified before they can list
 
 ## Require Service Moderation
 
-**Default: Enabled**
+**Default: Disabled**
 
-When enabled, every new service a vendor creates goes into "Pending Review" status instead of being published immediately. You review each service and approve or reject it.
+When it is off, new services publish immediately. When enabled, every new service a vendor creates goes into "Pending Review" status instead of being published immediately. You review each service and approve or reject it. Only administrators can moderate.
 
 To review pending services, go to **Sell Services > Moderation** - the queue carries a pending count in the menu. To browse everything else, go to **Sell Services > All Services** and filter by status.
 
