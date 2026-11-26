@@ -81,6 +81,21 @@ do_action( 'wpss_email_content_before', 'delivery_ready', $order, $recipient );
 	<?php esc_html_e( 'Please review the delivery and either accept it to complete the order, or request a revision if changes are needed.', 'wp-sell-services' ); ?>
 </p>
 
+<?php
+$wpss_auto_complete_at = wpss_get_auto_complete_at( $order );
+if ( $wpss_auto_complete_at ) :
+	?>
+<p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
+	<?php
+	printf(
+		/* translators: %s: date and time the order completes automatically. */
+		esc_html__( 'If you don\'t respond by %s, this order completes automatically.', 'wp-sell-services' ),
+		esc_html( wpss_datetime_label( $wpss_auto_complete_at, '', (int) $order->customer_id ) )
+	);
+	?>
+</p>
+<?php endif; ?>
+
 <p style="text-align: center; margin: 30px 0;">
 	<?php
 	/**

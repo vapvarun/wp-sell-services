@@ -1280,3 +1280,32 @@ function wpss_cancel_window_rule(): string {
 		$hours
 	);
 }
+
+/**
+ * When a delivered order completes on its own if the buyer does nothing (Basecamp 10550841989).
+ *
+ * The auto-complete sweep (OrderWorkflowManager::auto_complete_orders()) completes an order
+ * awaiting approval once its latest delivery is auto_complete_days old, which can free the
+ * vendor's money at once. The order page, the Delivery Ready email and the REST order read this
+ * so buyer and vendor see the same deadline the sweep acts on.
+ *
+ * @since 1.9.4
+ *
+ * @param object $order Order with id and status.
+ * @return string|null UTC MySQL datetime, or null when nothing will auto-complete.
+ */
+function wpss_get_auto_complete_at( object $order ): ?string {
+	$days = (int) wpss_get_option( 'orders', 'auto_complete_days' );
+
+	if ( $days <= 0 || ! in_array( (string) ( $order->status ?? '' ), array( \WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL, \WPSellServices\Models\ServiceOrder::STATUS_DELIVERED ), true ) ) {
+		return null;
+	}
+
+	global $wpdb;
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one indexed MAX per order view.
+	$delivered = $wpdb->get_var( $wpdb->prepare( "SELECT MAX( created_at ) FROM {$wpdb->prefix}wpss_deliveries WHERE order_id = %d", (int) $order->id ) );
+	$timestamp = wpss_utc_timestamp( $delivered );
+
+	return $timestamp ? gmdate( 'Y-m-d H:i:s', $timestamp + $days * DAY_IN_SECONDS ) : null;
+}

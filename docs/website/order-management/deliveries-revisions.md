@@ -42,6 +42,8 @@ If there is a serious problem that cannot be resolved through revisions, the buy
 
 If the buyer does not respond to a delivery within the auto-complete window, the order completes automatically. The default is 3 days, but admins can change this in **Settings > Orders & Disputes**. Setting it to 0 disables auto-completion entirely.
 
+While a delivery waits for the buyer, the order page shows both the buyer and the vendor the date and time it will complete automatically, and the Delivery Ready email gives the buyer the same date. Apps read it from the order's `auto_complete_at` field in the REST API. With auto-completion off, none of these appear.
+
 This protects vendors from orders that sit in limbo because a buyer never responds.
 
 ## How Revisions Work

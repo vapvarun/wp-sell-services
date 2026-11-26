@@ -2220,6 +2220,7 @@ class OrdersController extends RestController {
 			'due_date'            => $this->format_datetime( $order->delivery_deadline ),
 			'started_at'          => $this->format_datetime( $order->started_at ),
 			'completed_at'        => $this->format_datetime( $order->completed_at ),
+			'auto_complete_at'    => $this->format_datetime( wpss_get_auto_complete_at( $order ) ),
 			'created_at'          => $this->format_datetime( $order->created_at ),
 			'updated_at'          => $this->format_datetime( $order->updated_at ),
 			'available_actions'   => $this->get_available_actions( $order ),

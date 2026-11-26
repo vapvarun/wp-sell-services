@@ -66,6 +66,21 @@ $wpss_viewer     = $wpss_viewer ?? 'buyer';
 			</h2>
 		</div>
 		<div class="wpss-order-section__body">
+			<?php
+			// The deadline the auto-complete sweep acts on, for both parties (Basecamp 10550841989).
+			$wpss_auto_complete_at = wpss_get_auto_complete_at( $wpss_order );
+			if ( $wpss_auto_complete_at ) :
+				?>
+				<p class="wpss-notice wpss-notice--info wpss-order-auto-complete">
+					<?php
+					printf(
+						/* translators: %s: date and time the order completes automatically. */
+						esc_html( 'buyer' === $wpss_viewer ? __( 'If you don\'t accept the delivery or ask for a revision by %s, this order completes automatically.', 'wp-sell-services' ) : __( 'If the buyer doesn\'t respond by %s, this order completes automatically.', 'wp-sell-services' ) ),
+						esc_html( wpss_datetime_label( $wpss_auto_complete_at, '', 'buyer' === $wpss_viewer ? (int) $wpss_order->customer_id : 0 ) )
+					);
+					?>
+				</p>
+			<?php endif; ?>
 			<?php foreach ( $wpss_deliveries as $delivery ) : ?>
 				<div class="wpss-delivery-item">
 					<div class="wpss-delivery-item__header">

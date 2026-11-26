@@ -1332,6 +1332,14 @@
    "added": "2026-11-26",
    "fails_on": "88e42ea7 (4 FAIL)",
    "check": "tests/test-offline-payments-to-confirm.php"
+  },
+  {
+   "card": "10550841989",
+   "title": "buyers and vendors were never told a delivered order completes on its own after auto_complete_days",
+   "guard": "static:auto-complete-date-shown",
+   "added": "2026-11-26",
+   "fails_on": "52e59055 (7 FAIL)",
+   "check": "tests/test-auto-complete-date-shown.php"
   }
  ]
 }
