@@ -69,8 +69,10 @@ $message = apply_filters( 'wpss_no_services_message', $default_message );
 
 			<?php
 			// One next step per viewer, so an empty marketplace recruits its first sellers (Basecamp 10550848421).
-			$wpss_viewer_id  = get_current_user_id();
-			$wpss_can_apply  = ! in_array( wpss_get_vendor_status( $wpss_viewer_id ), array( 'pending', 'suspended' ), true ) && ! wpss_vendor_registration_closed_for( $wpss_viewer_id );
+			$wpss_viewer_id = get_current_user_id();
+			// A visitor also needs WordPress sign-up open, or Become a Vendor can only say sign-up is closed.
+			$wpss_can_apply  = ! in_array( wpss_get_vendor_status( $wpss_viewer_id ), array( 'pending', 'suspended' ), true ) && ! wpss_vendor_registration_closed_for( $wpss_viewer_id )
+				&& ( is_user_logged_in() || get_option( 'users_can_register' ) );
 			$wpss_become_url = $wpss_can_apply ? wpss_get_become_vendor_url() : '';
 			?>
 			<?php if ( wpss_is_vendor() ) : ?>

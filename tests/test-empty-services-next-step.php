@@ -33,6 +33,7 @@ $actions = static function ( int $user_id ): array {
 };
 $page     = wpss_get_page_url( 'become_vendor' );
 $vendor_w = get_option( 'wpss_vendor' );
+$ucr_was  = get_option( 'users_can_register' );
 
 try {
 	$check( 'Become a Vendor links reach the mapped page that signs visitors up', '' !== $page && wpss_get_become_vendor_url() === $page, wpss_get_become_vendor_url() );
@@ -44,10 +45,16 @@ try {
 	$admin_is_vendor = wpss_is_vendor( $f->admin );
 	$check( 'Owner who does not sell: Add your first service', $admin_is_vendor || array( 'Add your first service' ) === array_column( $actions( $f->admin ), 0 ), wp_json_encode( $actions( $f->admin ) ) );
 
+	update_option( 'users_can_register', 0 );
+	$check( 'WordPress sign-up off: no Start selling for a visitor, who could not create an account', array() === $actions( 0 ), wp_json_encode( $actions( 0 ) ) );
+	$check( '  but a logged-in buyer still gets it', array( array( 'Start selling', $page ) ) === $actions( $f->buyer ) );
+	update_option( 'users_can_register', 1 );
+
 	update_option( 'wpss_vendor', array_merge( (array) $vendor_w, array( 'vendor_registration' => 'closed' ) ) );
 	$check( 'Vendor registration closed: no Start selling', array() === $actions( 0 ) );
 } finally {
 	update_option( 'wpss_vendor', $vendor_w );
+	update_option( 'users_can_register', $ucr_was );
 	wp_set_current_user( 0 );
 }
 
