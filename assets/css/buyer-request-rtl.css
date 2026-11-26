@@ -1144,6 +1144,9 @@
 		grid-column: 1;
 		grid-row: 2;
 		align-self: start;
+		/* The drawer's 9991 is for the overlay only; a sticky column must slide under the theme's
+		   sticky header, as the services archive does (Basecamp 10550832206). */
+		z-index: auto;
 	}
 
 	/* Content in right column */

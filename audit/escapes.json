@@ -1292,6 +1292,14 @@
    "added": "2026-11-26",
    "fails_on": "c6ff2357 (4 FAIL)",
    "check": "tests/test-request-card-proposal-cta.php"
+  },
+  {
+   "card": "10550832206",
+   "title": "the desktop buyer-request sidebar kept the drawer's z-index and covered the theme's sticky header",
+   "guard": "static:request-sidebar-under-header",
+   "added": "2026-11-26",
+   "fails_on": "cd9fba2c (4 FAIL)",
+   "check": "tests/test-request-sidebar-under-header.php"
   }
  ]
 }

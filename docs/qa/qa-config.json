@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "request-sidebar-under-header",
+    "run": "${WP_CLI:-wp} eval-file tests/test-request-sidebar-under-header.php"
+   },
+   {
     "id": "request-card-proposal-cta",
     "run": "${WP_CLI:-wp} eval-file tests/test-request-card-proposal-cta.php"
    },
