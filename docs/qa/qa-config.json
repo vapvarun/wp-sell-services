@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "auto-complete-reminder",
+    "run": "${WP_CLI:-wp} eval-file tests/test-auto-complete-reminder.php"
+   },
+   {
     "id": "finish-setting-up-block",
     "run": "${WP_CLI:-wp} eval-file tests/test-finish-setting-up-block.php"
    },

@@ -70,6 +70,13 @@ class OrderWorkflowManager {
 	public const SWEEP_BATCH = 200;
 
 	/**
+	 * Order meta: the delivery id the buyer was last reminded about before auto-complete.
+	 *
+	 * @var string
+	 */
+	public const AUTO_COMPLETE_REMINDED_META = '_wpss_auto_complete_reminded';
+
+	/**
 	 * Gateway outcome of the last refund attempted per order, this request.
 	 *
 	 * The bool from apply_refund_status() stays for compatibility, so the caller
@@ -380,6 +387,86 @@ class OrderWorkflowManager {
 				),
 				[ 'order_id' => $order->id ]
 			);
+		}
+
+		$this->send_auto_complete_reminders();
+	}
+
+	/**
+	 * Remind the buyer the day before a delivered order completes on its own (Basecamp 10550887837).
+	 *
+	 * Runs with the auto-complete sweep (every 12 hours), so every order whose auto-complete time
+	 * falls in the next 24 hours is caught once. Sent once per delivery: the latest delivery id is
+	 * kept in the order's meta, so a revision delivery re-arms it. Nothing when auto-complete is off.
+	 *
+	 * @since 1.9.4
+	 *
+	 * @return void
+	 */
+	public function send_auto_complete_reminders(): void {
+		$days = (int) wpss_get_option( 'orders', 'auto_complete_days' );
+
+		if ( $days <= 0 ) {
+			return;
+		}
+
+		global $wpdb;
+		$orders     = $wpdb->prefix . 'wpss_orders';
+		$deliveries = $wpdb->prefix . 'wpss_deliveries';
+		$now        = current_time( 'mysql', true );
+
+		// Orders already reminded for their latest delivery are left out here, not after the LIMIT, so
+		// a busy day cannot fill the batch with them. The meta table exists once anything was written.
+		$not_reminded = '1.0' === get_option( 'wpss_order_meta_table_version' )
+			? $wpdb->prepare( "AND NOT EXISTS ( SELECT 1 FROM {$wpdb->prefix}wpss_order_meta m WHERE m.order_id = o.id AND m.meta_key = %s AND m.meta_value = CAST( d.id AS CHAR ) )", self::AUTO_COMPLETE_REMINDED_META )
+			: '';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $not_reminded is prepared above.
+		$due = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT o.id, o.order_number, o.customer_id, o.status, d.id AS delivery_id
+				FROM {$orders} o
+				INNER JOIN {$deliveries} d ON d.id = ( SELECT d2.id FROM {$deliveries} d2 WHERE d2.order_id = o.id ORDER BY d2.created_at DESC, d2.id DESC LIMIT 1 )
+				WHERE o.status IN (%s, %s)
+				AND d.created_at > DATE_SUB(%s, INTERVAL %d DAY)
+				AND d.created_at <= DATE_SUB(DATE_ADD(%s, INTERVAL 1 DAY), INTERVAL %d DAY)
+				{$not_reminded}
+				ORDER BY o.id ASC
+				LIMIT %d",
+				ServiceOrder::STATUS_PENDING_APPROVAL,
+				ServiceOrder::STATUS_DELIVERED,
+				$now,
+				$days,
+				$now,
+				$days,
+				self::SWEEP_BATCH
+			)
+		);
+		// phpcs:enable
+
+		foreach ( $due as $order ) {
+			$completes_at = wpss_get_auto_complete_at( $order );
+
+			if ( ! $completes_at ) {
+				continue;
+			}
+
+			$sent = $this->notification_service->create(
+				(int) $order->customer_id,
+				'auto_complete_reminder',
+				__( 'Your order completes within 24 hours', 'wp-sell-services' ),
+				sprintf(
+					/* translators: 1: order number, 2: date and time */
+					__( 'Order #%1$s completes automatically on %2$s. Accept the delivery or ask for a revision before then.', 'wp-sell-services' ),
+					$order->order_number,
+					wpss_datetime_label( $completes_at, '', (int) $order->customer_id )
+				),
+				[ 'order_id' => (int) $order->id ]
+			);
+
+			if ( $sent ) {
+				wpss_get_order_provider()->update_item_meta( (int) $order->id, self::AUTO_COMPLETE_REMINDED_META, (int) $order->delivery_id );
+			}
 		}
 	}
 

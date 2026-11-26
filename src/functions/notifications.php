@@ -278,6 +278,7 @@ function wpss_notification_type_settings(): array {
 		'delivery_ready'               => 'notify_delivery_submitted',
 		'delivery_submitted'           => 'notify_delivery_submitted',
 		'delivery_received'            => 'notify_delivery_submitted',
+		'auto_complete_reminder'       => 'notify_delivery_submitted',
 		'revision_requested'           => 'notify_revision_requested',
 		// Completion.
 		'order_completed'              => 'notify_order_completed',
@@ -598,6 +599,7 @@ function wpss_notification_types(): array {
 		'order_completed'              => array( __( 'Order completed', 'wp-sell-services' ), 'check-circle' ),
 		'order_completed_vendor'       => array( __( 'Order completed', 'wp-sell-services' ), 'check-circle' ),
 		'order_auto_completed'         => array( __( 'Order auto-completed', 'wp-sell-services' ), 'check-circle' ),
+		'auto_complete_reminder'       => array( __( 'Auto-complete reminder', 'wp-sell-services' ), 'clock' ),
 		'deadline_reminder'            => array( __( 'Deadline reminder', 'wp-sell-services' ), 'calendar-clock' ),
 		'deadline_warning'             => array( __( 'Deadline warning', 'wp-sell-services' ), 'calendar-clock' ),
 		'requirements_pending'         => array( __( 'Requirements needed', 'wp-sell-services' ), 'clipboard-list' ),

@@ -1372,6 +1372,14 @@
    "added": "2026-11-27",
    "fails_on": "2d7fa9a0 (7 FAIL)",
    "check": "tests/test-finish-setting-up-block.php"
+  },
+  {
+   "card": "10550887837",
+   "title": "no reminder before a delivered order auto-completed, so a buyer who missed one email lost their revision",
+   "guard": "static:auto-complete-reminder",
+   "added": "2026-11-27",
+   "fails_on": "b58d2ee1 (8 FAIL)",
+   "check": "tests/test-auto-complete-reminder.php"
   }
  ]
 }

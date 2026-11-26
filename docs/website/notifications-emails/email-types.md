@@ -40,6 +40,7 @@ These keep your customers updated on their purchases and activity.
 |-------|----------------|
 | **Order In Progress** | The vendor starts working on the buyer's order |
 | **Delivery Ready** | The vendor submits completed work for review |
+| **Auto-complete Reminder** | A delivery is still waiting for the buyer and the order completes automatically within 24 hours. Sent once per delivery, so a revision delivery sends a new one. Not sent when auto-completion is off |
 | **Order Completed** | The order is marked complete (manual or automatic) |
 | **Order Cancelled** | An order is cancelled by any party |
 | **Proposal Submitted** | A vendor submits a proposal on the buyer's request |
@@ -84,7 +85,7 @@ bold is the label you will see.
 | **Order Completed** | An order is marked complete |
 | **Order Cancelled** | An order is cancelled |
 | **Cancellation Requested** | A buyer asks to cancel an order in progress |
-| **Delivery Submitted** | A vendor delivers work |
+| **Delivery Submitted** | A vendor delivers work. Also gates the auto-complete reminder buyers get the day before a delivery completes on its own. |
 | **Revision Requested** | A buyer asks for a revision |
 | **New Message** | A message is sent on an order |
 | **Vendor Direct Message** | A buyer contacts a vendor outside an order |
