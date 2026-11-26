@@ -214,7 +214,8 @@
 			}
 		};
 
-		if ( 0 === steps.length ) {
+		// Only the dashboard root starts the tour by itself; elsewhere it waits for Replay.
+		if ( 0 === steps.length || false === window.wpssTour.autostart || '' === window.wpssTour.autostart ) {
 			return;
 		}
 

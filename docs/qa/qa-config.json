@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "tour-waits-on-dashboard-sections",
+    "run": "${WP_CLI:-wp} eval-file tests/test-tour-waits-on-dashboard-sections.php"
+   },
+   {
     "id": "auto-complete-date-shown",
     "run": "${WP_CLI:-wp} eval-file tests/test-auto-complete-date-shown.php"
    },

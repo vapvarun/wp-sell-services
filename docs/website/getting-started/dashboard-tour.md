@@ -28,7 +28,7 @@ The tour inspects the viewer's role and tailors the steps:
 
 ## When It Opens
 
-The tour auto-opens the first time a logged-in user hits any URL that renders the `[wpss_dashboard]` shortcode. Completion persists per-user through the `wpss_tour_completed` user meta, so it won't re-interrupt after that.
+The tour auto-opens the first time a logged-in user lands on the dashboard itself (the page with the `[wpss_dashboard]` shortcode, with no section in the address). It never opens by itself on a section such as Create Service or an order, so it does not interrupt a form someone is filling in; **Replay tour** still works there. Completion persists per-user through the `wpss_tour_completed` user meta, so it won't re-interrupt after that.
 
 Clicking Skip, Finish, or the close icon all count as completion.
 

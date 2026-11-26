@@ -198,8 +198,9 @@ final class Tour {
 			}
 		} elseif ( ! is_admin() ) {
 			global $post;
-			// The dashboard root only. An order URL is still the dashboard page,
-			// and the welcome tour used to open on top of a just-placed order.
+			// Any dashboard page but an order: an order URL is still the dashboard page, and the
+			// welcome tour used to open on top of a just-placed order. Sections load it too, so
+			// Replay tour works there, but it only starts by itself on the root (see autostart).
 			if ( $post instanceof \WP_Post
 				&& has_shortcode( (string) $post->post_content, 'wpss_dashboard' )
 				&& 0 === wpss_resolve_request_order_id() ) {
@@ -282,7 +283,20 @@ final class Tour {
 			// so a new vendor's very first tour opened in wp-admin blue on a
 			// frontend dashboard built in the marketplace's indigo.
 			'context'     => is_admin() ? 'admin' : 'frontend',
+			// The welcome tour starts by itself only where it orients: the dashboard root. On a
+			// section (create service, any wizard) it opened over a half-filled form (Basecamp 10550842456).
+			'autostart'   => is_admin() || ! self::requested_dashboard_section(),
 		);
+	}
+
+	/**
+	 * Whether this request names a dashboard section, in either URL form.
+	 *
+	 * @return bool
+	 */
+	private static function requested_dashboard_section(): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only routing check.
+		return '' !== (string) get_query_var( 'wpss_section', '' ) || ! empty( $_GET['section'] );
 	}
 
 	/**

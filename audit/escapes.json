@@ -1340,6 +1340,14 @@
    "added": "2026-11-26",
    "fails_on": "52e59055 (7 FAIL)",
    "check": "tests/test-auto-complete-date-shown.php"
+  },
+  {
+   "card": "10550842456",
+   "title": "the dashboard welcome tour auto-started over the service wizard",
+   "guard": "static:tour-waits-on-dashboard-sections",
+   "added": "2026-11-26",
+   "fails_on": "406320ba (6 FAIL)",
+   "check": "tests/test-tour-waits-on-dashboard-sections.php"
   }
  ]
 }
