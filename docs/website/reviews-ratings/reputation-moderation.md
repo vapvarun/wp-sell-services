@@ -84,7 +84,7 @@ The **Review Moderation** page lists reviews newest first. You can:
 - **Search** by reviewer name or review text.
 - **Approve** or **Reject** each review. A rejected review can be approved later and an approved one rejected, so a decision is never final.
 
-Reviews are approved or rejected one at a time; there is no bulk action. A review's rating and text cannot be edited, so reject one that contains personal information rather than rewriting it.
+Reviews are approved or rejected one at a time; there is no bulk action. A review's rating and text cannot be edited, by the admin or by the buyer who posted it, so reject one that contains personal information rather than rewriting it.
 
 ## Reputation Recovery for Vendors
 

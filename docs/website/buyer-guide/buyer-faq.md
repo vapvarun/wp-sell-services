@@ -96,8 +96,9 @@ Default **30 days** after completion. Reviews are public and shape the vendor's
 rating and [vendor level](../vendor-system/seller-levels.md).
 
 **Can I edit or delete my review?**
-You can edit your own review. Vendors can reply publicly but cannot remove it.
-Admins moderate only genuinely abusive content.
+No. A review is final once you post it, so check it before you submit. Vendors
+can reply publicly but cannot remove it. Only the site admin can reject or
+delete a review.
 
 **Should I tip?**
 Optional, and always appreciated for work that went beyond the brief. Send it

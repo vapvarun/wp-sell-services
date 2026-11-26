@@ -40,7 +40,7 @@ The REST API takes them as optional `rating_communication`, `rating_quality` and
 
 ### Written Review (Required)
 
-Buyers must also write a review (minimum 10 characters). The best reviews are specific and constructive -- mentioning what went well, what could improve, and whether they would hire the vendor again.
+Buyers must also write a review. It cannot be empty; there is no minimum length. The best reviews are specific and constructive -- mentioning what went well, what could improve, and whether they would hire the vendor again.
 
 ## Leaving a Review
 
@@ -105,7 +105,7 @@ Imported reviews:
 
 **Vendor rating:** The average of all approved review ratings across all of the vendor's services, weighted by the number of reviews per service.
 
-Ratings update automatically whenever a review is added, edited, or its status changes.
+Ratings update automatically whenever a review is added or its status changes.
 
 ## Where Reviews Appear
 
@@ -127,7 +127,7 @@ Consistently low ratings can reduce a vendor's search visibility and may trigger
 **For Buyers:**
 - Leave honest, constructive feedback. Specific examples help both the vendor and future buyers.
 - Review within the time window so your experience is captured.
-- If the vendor fixed an issue, update your review to reflect the resolution.
+- Reviews cannot be edited after you post them. If the vendor is still fixing an issue, wait until it is resolved before you review.
 
 **For Vendors:**
 - Reply to every review -- positive or negative. It shows you care.
