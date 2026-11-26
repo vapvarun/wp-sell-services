@@ -1,7 +1,7 @@
 # Database Schema
 
-WP Sell Services stores marketplace data in **17 custom tables**, and Pro adds
-**8 more**. Services and buyer requests are custom post types; everything else
+WP Sell Services stores marketplace data in **19 custom tables**, and Pro adds
+**7 more**. Services and buyer requests are custom post types; everything else
 lives in these tables.
 
 All names are shown without the site's table prefix. Use `$wpdb->prefix` in code.
@@ -14,7 +14,8 @@ All names are shown without the site's table prefix. Use `$wpdb->prefix` in code
 
 | Entity | Stored as |
 |--------|-----------|
-| Service | `wpss_service` post type + `wpss_service_packages` / `wpss_service_addons` |
+| Service | `wpss_service` post type + `wpss_service_packages` |
+| Service add-ons, FAQs, requirements | Post meta on the service: `_wpss_addons`, `_wpss_faqs`, `_wpss_requirements` |
 | Buyer request | `wpss_request` post type |
 | Order | `wpss_orders` (custom table, **not** a post type) |
 | Everything else | Custom tables below |
@@ -118,14 +119,19 @@ that is what the "Auto" badge in the admin list reads.
 | Table | Purpose | Key columns |
 |-------|---------|-------------|
 | `wpss_service_packages` | Package tiers per service | `service_id`, `name`, `price`, `delivery_days`, `revisions`, `features`, `sort_order` |
-| `wpss_service_addons` | Add-ons and extras | `service_id`, `title`, `field_type`, `price`, `price_type`, `min_quantity`, `max_quantity`, `is_required`, `options`, `delivery_days_extra`, `applies_to` |
 | `wpss_order_requirements` | Buyer's answers | `order_id`, `field_data`, `attachments`, `submitted_at` |
 | `wpss_deliveries` | Delivery submissions | `order_id`, `vendor_id`, `message`, `attachments`, `version`, `status`, `response_message`, `responded_at` |
 | `wpss_extension_requests` | Paid extensions | `order_id`, `requested_by`, `extra_days`, `amount`, `pay_order_id`, `status`, `original_due_date`, `new_due_date` |
+| `wpss_payment_receipts` | Offline payment proof and who verified it | `order_id`, `uploaded_by`, `attachments`, `note`, `status` (default `submitted`), `verified_by`, `verified_at`, `admin_note`, `created_at` |
 
 `wpss_deliveries.version` increments per revision round, so the delivery history
 is preserved rather than overwritten. `extension_requests.pay_order_id` points at
 the sub-order in `wpss_orders` that carries the payment.
+
+`wpss_payment_receipts` stores the proof as file records in `attachments`. The
+older `attachment_id` column is kept for rows written before 1.7.1; nothing
+writes it now. Verifying a receipt credits the vendor, so `verified_by` and
+`verified_at` record who released the money.
 
 ## Messaging and notifications
 
@@ -148,10 +154,30 @@ per-participant, so do not treat `is_read` on a message as global.
 | `wpss_proposals` | Bids on buyer requests | `request_id`, `vendor_id`, `cover_letter`, `proposed_price`, `proposed_days`, `contract_type`, `milestones`, `status`, `order_id` |
 | `wpss_portfolio_items` | Vendor portfolio | `vendor_id`, `service_id`, `title`, `media`, `external_url`, `tags`, `is_featured`, `sort_order` |
 | `wpss_audit_log` | Admin action trail | `actor_id`, `actor_role`, `event_type`, `object_type`, `object_id`, `action`, `from_value`, `to_value`, `is_forced`, `context` |
+| `wpss_reports` | Member reports on a person, service, review or message | `target_type`, `target_id`, `reported_user_id`, `reporter_id`, `reason`, `details`, `status` (default `open`), `resolved_by`, `resolution`, `resolved_at`, `created_at` |
 
 `proposals.contract_type` selects fixed-price or phased; when phased, the
 `milestones` JSON is what becomes milestone sub-orders on acceptance.
 `proposals.order_id` is populated once accepted.
+
+`wpss_reports` allows one report per member per target: a unique key on
+`reporter_id`, `target_type` and `target_id` blocks repeat filing.
+`reported_user_id` is resolved at write time, so you can list every report
+against one member with a single indexed query.
+
+## Retired tables
+
+Upgraded sites may still carry tables the plugin no longer writes. Do not read
+them as live data:
+
+| Retired table | Live data is in |
+|---------------|-----------------|
+| `wpss_buyer_requests` | `wpss_request` posts plus post meta |
+| `wpss_service_addons` | `_wpss_addons` post meta on the service |
+| `wpss_service_faqs` | `_wpss_faqs` post meta on the service |
+| `wpss_service_requirements` | `_wpss_requirements` post meta on the service |
+| `wpss_service_platform_map` | The `platform_order_ref` column on `wpss_orders` |
+| `wpss_analytics_events` | Derived from `wpss_orders` at query time **[PRO]** |
 
 ## Pro tables
 
