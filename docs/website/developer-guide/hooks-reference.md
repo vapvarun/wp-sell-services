@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**586 hooks** across **808** firing sites.
+**587 hooks** across **809** firing sites.
 
 ## Actions (302)
 
@@ -319,7 +319,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (284)
+## Filters (285)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -493,6 +493,7 @@ guide; this is the complete index.
 | `wpss_pro_recurring_feature_available` | 1 | `src/RecurringServices/RecurringSettingsRenderer.php` **[PRO]** | Whether the recurring-services feature is available in this version. |
 | `wpss_pro_upgrade_url` | 1 | `src/functions/urls.php` |  |
 | `wpss_product_types` | 1 | `src/Core/Plugin.php` | Filter the registered product types. |
+| `wpss_profile_portfolio_limit` | 2 | `templates/vendor/profile.php` | Filters how many portfolio items the public vendor profile shows. |
 | `wpss_proposal_order_revisions` | 3 | `src/Services/BuyerRequestService.php` |  |
 | `wpss_rail_status_map` | 2 | `src/functions/order-status.php` | Filters the rail status map. |
 | `wpss_rate_limits` | 2 | `src/Core/RateLimiter.php` | Filter rate limits for a specific action. |

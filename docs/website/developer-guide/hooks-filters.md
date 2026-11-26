@@ -53,8 +53,8 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_pre_update_service` | `array $data, int $service_id` | `ServiceManager.php` |
 | `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:895` |
 | `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:759` |
-| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:982` |
-| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:1047` |
+| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:983` |
+| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:1048` |
 
 ## Moderation Actions
 
@@ -118,7 +118,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_delivery_submitted` | `int $delivery_id, int $order_id` | `src/Services/DeliveryService.php:225` |
 | `wpss_delivery_accepted` | `int $order_id` | `src/Services/DeliveryService.php:279` |
 | `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:350` |
-| `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:521` |
+| `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:544` |
 | `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:1485` |
 | `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1667` |
 | `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` (chat only; not deliveries or revision requests) | `src/Services/ConversationService.php:432` |
@@ -151,7 +151,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_stripe_webhook_received` | `string $event_type, object $data, string $payload` | `src/Integrations/Stripe/StripeGateway.php:662` |
-| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1629` |
+| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1597` |
 
 ### PayPal Gateway
 
@@ -163,7 +163,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/Integrations/Gateways/AbstractPaymentGateway.php:194` |
+| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/API/PaymentController.php:331` |
 
 ### Payment Filters
 
@@ -224,7 +224,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 |--------|-----------|------|
 | `wpss_pre_vendor_register` | `array $profile_data, int $user_id` | `VendorService.php` |
 | `wpss_vendor_profile_allowed_fields` | `array $allowed_fields` | `VendorService.php` |
-| `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:948` |
+| `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:968` |
 | `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1373` |
 
 | Hook | Parameters | File |
@@ -237,7 +237,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:272` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:483` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1480` |
-| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2078` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2082` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:549` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:601` |
 
@@ -292,7 +292,7 @@ tip. Tips are excluded from commission by default, so the two usually match.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_review_created` | `int $review_id, int $order_id` | `src/Services/ReviewService.php:107` |
+| `wpss_review_created` | `int $review_id, int $order_id` | `src/Services/ReviewService.php:113` |
 | `wpss_review_reply_created` | `int $review_id` | `src/API/ReviewsController.php:668` |
 | `wpss_buyer_request_created` | `int $post_id, array $data` | `src/Services/BuyerRequestService.php:129` |
 | `wpss_buyer_request_updated` | `int $request_id, array $data` | `src/Services/BuyerRequestService.php:190` |
@@ -415,7 +415,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1478` |
+| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1479` |
 | `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:640` |
 | `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
 | `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
@@ -607,7 +607,7 @@ These filters let you customize outgoing email content without modifying templat
 |--------|-----------|------|
 | `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2531` |
 | `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2507` |
-| `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1806` |
+| `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1821` |
 
 ```php
 // Change the "From" name on all marketplace emails
@@ -676,7 +676,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:57` |
 | `wpss_currency` | `$currency` | `src/functions/money.php:466` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/core.php:34` |
-| `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:164` |
+| `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:184` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:98` |
 | `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:501` |
 | `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:528` |
@@ -763,7 +763,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1114` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:369` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:1061` |
-| `wpss_max_order_quantity` | `$max` | `src/Checkout/CheckoutIntentService.php:273` |
+| `wpss_max_order_quantity` | `$max` | `src/Checkout/CheckoutIntentService.php:283` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:211` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:677` |
 | `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1378` |
@@ -777,8 +777,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_realtime_settings` | `array $settings` | `RealtimeService.php` |
-| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:586` |
-| `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/Services/ReviewService.php:483` |
+| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:592` |
+| `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/Services/ReviewService.php:489` |
 | `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:654` |
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:134` |
 | `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:373` |
@@ -790,7 +790,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:762` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:265` |
-| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1594` |
+| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1595` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
@@ -845,16 +845,16 @@ add_filter( 'wpss_reign_hide_left_panel', '__return_false' );
 | `wpss_service_schema` | `$schema, $service_id` | `src/SEO/SchemaMarkup.php:217` |
 | `wpss_service_list_schema` | `$schema` | `src/SEO/SchemaMarkup.php:257` |
 | `wpss_category_schema` | `$schema, $term` | `src/SEO/SchemaMarkup.php:316` |
-| `wpss_person_schema` | `$schema, $user_id` | `src/SEO/SchemaMarkup.php:369` |
-| `wpss_vendor_page_schema` | `$schema, $user_id` | `src/SEO/SchemaMarkup.php:416` |
-| `wpss_organization_schema` | `$schema` | `src/SEO/SchemaMarkup.php:447` |
+| `wpss_person_schema` | `$schema, $user_id` | `src/SEO/SchemaMarkup.php:367` |
+| `wpss_vendor_page_schema` | `$schema, $user_id` | `src/SEO/SchemaMarkup.php:414` |
+| `wpss_organization_schema` | `$schema` | `src/SEO/SchemaMarkup.php:445` |
 | `wpss_seo_integrations` | `array<string, SeoIntegrationInterface> $integrations` | `src/SEO/SEO.php:54` |
 | `wpss_open_graph_data` | `$data, $service_id` | `src/SEO/SEO.php:260` |
 | `wpss_sitemap_post_types` | `$post_types` | `src/SEO/SEO.php:324` |
 | `wpss_breadcrumbs` | `$breadcrumbs, $service_id` | `src/SEO/SEO.php:392` |
-| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2321` |
-| `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1757` |
-| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1912` |
+| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2336` |
+| `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1772` |
+| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1927` |
 
 ## Pro Plugin Actions **[PRO]**
 
@@ -922,7 +922,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:912` |
+| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:906` |
 
 ### Stripe Connect Actions
 
