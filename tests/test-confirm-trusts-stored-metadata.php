@@ -202,6 +202,33 @@ try {
 		$check( "{$name}.js sends the selection with its create-payment request", false !== strpos( (string) @file_get_contents( $js . '.js' ), 'wpssCheckoutSelection()' ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		$check( "  and {$name}.min.js is rebuilt with it", false !== strpos( (string) @file_get_contents( $js . '.min.js' ), 'wpssCheckoutSelection' ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 	}
+
+	// 6. PayPal: B capturing A's PayPal order is refused with the shared "different account" answer, before any capture (Basecamp 10545750765).
+	$captured = array();
+	$paypal   = static function ( $pre, $args, $url ) use ( &$captured, $buyer_a ) {
+		if ( false === strpos( (string) $url, '/v2/checkout/orders/QAPAYPALFOREIGN' ) ) {
+			return $pre;
+		}
+		if ( 'POST' === ( $args['method'] ?? '' ) ) {
+			$captured[] = $url;
+		}
+		$order = array( 'id' => 'QAPAYPALFOREIGN', 'status' => 'APPROVED', 'purchase_units' => array( array( 'custom_id' => wp_json_encode( array( 'customer_id' => $buyer_a->ID ) ) ) ) );
+		return array( 'headers' => array(), 'body' => wp_json_encode( $order ), 'response' => array( 'code' => 200, 'message' => 'OK' ), 'cookies' => array() );
+	};
+	add_filter( 'pre_http_request', $paypal, 8, 3 );
+	$gateway = new \WPSellServices\Integrations\PayPal\PayPalGateway();
+	$token   = new ReflectionProperty( $gateway, 'access_token' );
+	$token->setAccessible( true );
+	$token->setValue( $gateway, 'qa-token' );
+	$capture = new ReflectionMethod( $gateway, 'capture_and_settle' );
+	$capture->setAccessible( true );
+	wp_set_current_user( $buyer_b->ID );
+	$r    = $capture->invoke( $gateway, 'QAPAYPALFOREIGN' );
+	$rest = $gateway->rest_confirm_payment( array( 'payment_id' => 'QAPAYPALFOREIGN' ) );
+	remove_filter( 'pre_http_request', $paypal, 8 );
+	$check( 'PayPal: B capturing A\'s order is refused as another account\'s payment', empty( $r['success'] ) && CheckoutIntentService::PAYMENT_NOT_YOURS === ( $r['code'] ?? '' ) );
+	$check( '  and nothing was captured', array() === $captured );
+	$check( '  and over REST it answers 403 wpss_payment_not_yours, as Stripe does', is_wp_error( $rest ) && CheckoutIntentService::PAYMENT_NOT_YOURS === $rest->get_error_code() && 403 === ( $rest->get_error_data()['status'] ?? 0 ) );
 } finally {
 	wp_set_current_user( 0 );
 	remove_filter( 'pre_http_request', $stub, 10 );

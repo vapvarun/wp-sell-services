@@ -702,6 +702,7 @@ Most codes fall here. The ones you are most likely to handle:
 | `rest_action_failed` | The order status transition is not allowed from here |
 | `rest_amount_mismatch` | Paid amount does not match the order total |
 | `wpss_payment_already_used` (409) | `POST /payments/confirm` with `pay_order`: this payment already paid a different order |
+| `wpss_payment_not_yours` (403) | `POST /payments/confirm`: the Stripe or PayPal payment was started by a different account. Nothing is charged twice or refunded |
 | `own_service` | Buying your own service |
 | `service_paused` | Vendor paused the service or is on vacation |
 | `empty_cart`, `not_found` | Cart empty, or item key not in cart |

@@ -764,11 +764,10 @@ class PayPalGateway extends AbstractPaymentGateway {
 		$metadata      = json_decode( (string) ( $order_details['purchase_units'][0]['custom_id'] ?? '' ), true ) ?: array();
 		$buyer_id      = (int) ( $metadata['customer_id'] ?? 0 );
 
-		if ( ! $buyer_id || $buyer_id !== get_current_user_id() ) {
-			return array(
-				'success' => false,
-				'error'   => __( 'Please log in to continue.', 'wp-sell-services' ),
-			);
+		// A signed-in buyer settling someone else's PayPal order gets the shared refusal and log line.
+		$refusal = \WPSellServices\Checkout\CheckoutIntentService::foreign_charge( $buyer_id, get_current_user_id(), self::GATEWAY_ID, $paypal_order_id );
+		if ( $refusal ) {
+			return $refusal;
 		}
 
 		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
@@ -1598,6 +1597,11 @@ class PayPalGateway extends AbstractPaymentGateway {
 				'package_id'      => $package_id,
 			)
 		);
+
+		// Another member's payment answers 403 with the shared code, as Stripe's confirm does.
+		if ( \WPSellServices\Checkout\CheckoutIntentService::PAYMENT_NOT_YOURS === ( $result['code'] ?? '' ) ) {
+			return new WP_Error( $result['code'], $result['error'], array( 'status' => 403 ) );
+		}
 
 		if ( empty( $result['success'] ) ) {
 			return new WP_Error( 'paypal_confirm_error', $result['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
