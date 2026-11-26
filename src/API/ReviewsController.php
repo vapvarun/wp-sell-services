@@ -504,18 +504,14 @@ class ReviewsController extends RestController {
 		$updates    = array();
 		$new_status = null;
 
-		// Customers can update rating and review text.
-		if ( (int) $review->customer_id === get_current_user_id() ) {
-			if ( $request->has_param( 'rating' ) ) {
-				$rating = (int) $request->get_param( 'rating' );
-				if ( $rating >= 1 && $rating <= 5 ) {
-					$updates['rating'] = $rating;
-				}
-			}
-
-			if ( $request->has_param( 'review' ) ) {
-				$updates['review'] = sanitize_textarea_field( $request->get_param( 'review' ) );
-			}
+		// A review is final once submitted: the buyer cannot rewrite its stars or text
+		// (owner decision, Basecamp 10546305098). Refused with a reason, not ignored.
+		if ( (int) $review->customer_id === get_current_user_id() && ( $request->has_param( 'rating' ) || $request->has_param( 'review' ) ) ) {
+			return new WP_Error(
+				'rest_review_immutable',
+				__( 'A review cannot be changed after it is submitted.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
 		}
 
 		// Admins can update status.
