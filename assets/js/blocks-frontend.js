@@ -60,7 +60,9 @@
 		this.$dotsContainer = this.$container.find('.wpss-carousel-dots');
 
 		this.options = {
-			autoplay: this.$container.data('autoplay') === true || this.$container.data('autoplay') === 'true',
+			// A visitor who asked the system for less motion never gets autoplay.
+			autoplay: (this.$container.data('autoplay') === true || this.$container.data('autoplay') === 'true') &&
+				!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches),
 			interval: parseInt(this.$container.data('interval')) || 5000,
 			showDots: this.$container.data('dots') === true || this.$container.data('dots') === 'true',
 			showArrows: this.$container.data('arrows') === true || this.$container.data('arrows') === 'true'
@@ -151,12 +153,32 @@
 			self.goToSlide($(this).data('index'));
 		});
 
-		// Pause autoplay on hover.
+		// Pause autoplay while the pointer is over it or keyboard focus is inside it,
+		// resume only when neither is true.
 		if (this.options.autoplay) {
+			let hovered = false;
+			let focused = false;
+			const resume = function() {
+				if (!hovered && !focused) {
+					self.startAutoplay();
+				}
+			};
 			this.$container.on('mouseenter', function() {
+				hovered = true;
 				self.stopAutoplay();
 			}).on('mouseleave', function() {
-				self.startAutoplay();
+				hovered = false;
+				resume();
+			}).on('focusin', function() {
+				focused = true;
+				self.stopAutoplay();
+			}).on('focusout', function(e) {
+				// Focus moving between slides stays inside: keep paused.
+				if (e.relatedTarget && self.$container[0].contains(e.relatedTarget)) {
+					return;
+				}
+				focused = false;
+				resume();
 			});
 		}
 

@@ -86,9 +86,10 @@ class FeaturedServices extends AbstractBlock {
 				'type'    => 'number',
 				'default' => 8,
 			),
+			// Off by default: motion that starts by itself needs the owner's opt-in (WCAG 2.2.2).
 			'autoplay'   => array(
 				'type'    => 'boolean',
-				'default' => true,
+				'default' => false,
 			),
 			'interval'   => array(
 				'type'    => 'number',
@@ -133,7 +134,7 @@ class FeaturedServices extends AbstractBlock {
 			'layout'     => 'carousel',
 			'columns'    => 4,
 			'limit'      => 8,
-			'autoplay'   => true,
+			'autoplay'   => false,
 			'interval'   => 5000,
 			'showDots'   => true,
 			'showArrows' => true,

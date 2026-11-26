@@ -355,7 +355,7 @@
 			layout: { type: 'string', default: 'carousel' },
 			columns: { type: 'number', default: 4 },
 			limit: { type: 'number', default: 8 },
-			autoplay: { type: 'boolean', default: true },
+			autoplay: { type: 'boolean', default: false },
 			interval: { type: 'number', default: 5000 },
 			showDots: { type: 'boolean', default: true },
 			showArrows: { type: 'boolean', default: true },
