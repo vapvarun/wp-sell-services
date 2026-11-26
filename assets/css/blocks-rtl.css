@@ -521,6 +521,7 @@
 .wpss-featured-slide {
 	flex: 0 0 25%;
 	min-width: 0; /* honour the column width; a card's content must not widen it */
+	box-sizing: border-box; /* the padding sits inside the width on content-box themes (TT5) */
 	padding: 0 0.75rem;
 }
 

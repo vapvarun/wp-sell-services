@@ -27,7 +27,9 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 foreach ( array( 'blocks.css', 'blocks.min.css', 'blocks-rtl.css', 'blocks-rtl.min.css' ) as $file ) {
 	$css = preg_replace( '/\s+/', '', (string) file_get_contents( WPSS_PLUGIN_DIR . 'assets/css/' . $file ) );
 	$check( "{$file}: Columns 2, 3 and 5 size the carousel slides", false !== strpos( $css, '.wpss-grid-cols-2.wpss-featured-slide{flex-basis:50%' ) && false !== strpos( $css, '.wpss-grid-cols-3.wpss-featured-slide{flex-basis:33.333%' ) && false !== strpos( $css, '.wpss-grid-cols-5.wpss-featured-slide{flex-basis:20%' ) );
-	$check( "{$file}: a slide's content cannot widen its column", (bool) preg_match( '/\.wpss-featured-slide\{flex:0025%;min-width:0/', $css ) );
+	$slide = preg_match( '/\.wpss-featured-slide\{([^}]*flex:0025%[^}]*)\}/', $css, $m ) ? $m[1] : '';
+	$check( "{$file}: a slide's content cannot widen its column", false !== strpos( $slide, 'min-width:0' ) );
+	$check( "{$file}: the slide padding sits inside its width on content-box themes", false !== strpos( $slide, 'box-sizing:border-box' ) );
 	$check( "{$file}: a long seller name wraps inside the card", false !== strpos( $css, '.wpss-featured-sellerspan{min-width:0;overflow-wrap:anywhere' ) );
 	$check( "{$file}: the grid layout has a 5-column rule", false !== strpos( $css, '.wpss-grid-cols-5.wpss-featured-slides' ) );
 }
