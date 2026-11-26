@@ -1236,6 +1236,14 @@
    "added": "2026-11-26",
    "fails_on": "a07607ff (6 FAIL)",
    "check": "tests/test-extension-decline-wired.php"
+  },
+  {
+   "card": "10549262537",
+   "title": "a one-line flex row with a nowrap child and no wrap, so a narrow card pushed the level badge past its edge",
+   "guard": "static:service-card-badge-wraps",
+   "added": "2026-11-26",
+   "fails_on": "db74e013 (8 FAIL)",
+   "check": "tests/test-service-card-badge-wraps.php"
   }
  ]
 }

@@ -534,8 +534,10 @@ article.wpss-service-card:hover {
 
 .wpss-service-card__vendor {
 	display: flex;
+	flex-wrap: wrap; /* the level badge drops to its own line in a narrow card instead of running off it */
 	align-items: center;
 	gap: 8px;
+	row-gap: 4px;
 	margin-bottom: 10px;
 }
 
@@ -547,6 +549,8 @@ article.wpss-service-card:hover {
 }
 
 .wpss-service-card__vendor-name {
+	min-width: 0;
+	overflow-wrap: anywhere;
 	font-size: 13px;
 	color: var(--wpss-text);
 }

@@ -839,6 +839,10 @@
    {
     "id": "extension-decline-wired",
     "run": "${WP_CLI:-wp} eval-file tests/test-extension-decline-wired.php"
+   },
+   {
+    "id": "service-card-badge-wraps",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-card-badge-wraps.php"
    }
   ]
  }
