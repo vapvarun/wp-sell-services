@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "empty-services-next-step",
+    "run": "${WP_CLI:-wp} eval-file tests/test-empty-services-next-step.php"
+   },
+   {
     "id": "tour-waits-on-dashboard-sections",
     "run": "${WP_CLI:-wp} eval-file tests/test-tour-waits-on-dashboard-sections.php"
    },

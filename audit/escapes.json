@@ -1348,6 +1348,14 @@
    "added": "2026-11-26",
    "fails_on": "406320ba (6 FAIL)",
    "check": "tests/test-tour-waits-on-dashboard-sections.php"
+  },
+  {
+   "card": "10550848421",
+   "title": "an empty Services page offered no next step, and Become a Vendor links missed the mapped page",
+   "guard": "static:empty-services-next-step",
+   "added": "2026-11-27",
+   "fails_on": "2c7fb46e (4 FAIL)",
+   "check": "tests/test-empty-services-next-step.php"
   }
  ]
 }

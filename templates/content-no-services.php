@@ -15,7 +15,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.1
+ * @version 1.9.4
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -67,10 +67,26 @@ $message = apply_filters( 'wpss_no_services_message', $default_message );
 				</a>
 			<?php endif; ?>
 
+			<?php
+			// One next step per viewer, so an empty marketplace recruits its first sellers (Basecamp 10550848421).
+			$wpss_viewer_id  = get_current_user_id();
+			$wpss_can_apply  = ! in_array( wpss_get_vendor_status( $wpss_viewer_id ), array( 'pending', 'suspended' ), true ) && ! wpss_vendor_registration_closed_for( $wpss_viewer_id );
+			$wpss_become_url = $wpss_can_apply ? wpss_get_become_vendor_url() : '';
+			?>
 			<?php if ( wpss_is_vendor() ) : ?>
 				<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>"
 					class="wpss-btn wpss-btn--outline">
 					<?php esc_html_e( 'Create a Service', 'wp-sell-services' ); ?>
+				</a>
+			<?php elseif ( current_user_can( 'manage_options' ) ) : ?>
+				<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>"
+					class="wpss-btn wpss-btn--outline">
+					<?php esc_html_e( 'Add your first service', 'wp-sell-services' ); ?>
+				</a>
+			<?php elseif ( $wpss_become_url ) : ?>
+				<a href="<?php echo esc_url( $wpss_become_url ); ?>"
+					class="wpss-btn wpss-btn--outline">
+					<?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
 		</div>

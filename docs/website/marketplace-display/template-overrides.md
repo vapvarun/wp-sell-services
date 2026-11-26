@@ -63,7 +63,7 @@ Subfolders are preserved: `templates/order/order-view.php` becomes
 | `single-request.php` | A buyer request detail page |
 | `content-service-card.php` | A service card in any grid |
 | `content-request-card.php` | A request card in any list |
-| `content-no-services.php` | Empty state for the catalog |
+| `content-no-services.php` | Empty state for the catalog. Gives each viewer one next step: Create a Service (vendor), Add your first service (owner), Start selling (everyone else, while vendor registration is open). Changed in 1.9.4, so re-copy an override made earlier |
 | `content-no-requests.php` | Empty state for the requests board |
 | `wpss-fullwidth-template.php` | The full-width page wrapper |
 

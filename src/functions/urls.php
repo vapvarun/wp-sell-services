@@ -733,19 +733,18 @@ function wpss_is_page( string $page_key ): bool {
  * @return string Become vendor URL.
  */
 function wpss_get_become_vendor_url(): string {
-	// First check for a dedicated vendor registration page.
-	$vendor_page_url = wpss_get_page_url( 'vendor_registration' );
+	// The mapped Become a Vendor page first: it signs a visitor up as a seller, where the dashboard
+	// section only asks them to log in. The key was 'vendor_registration', which no page carries,
+	// so every link fell through to the dashboard (Basecamp 10550848421).
+	$vendor_page_url = wpss_get_page_url( 'become_vendor' );
 	if ( $vendor_page_url ) {
 		return $vendor_page_url;
 	}
 
 	// Fall back to dashboard with become-vendor section.
 	$dashboard_url = wpss_get_page_url( 'dashboard' );
-	if ( $dashboard_url ) {
-		return wpss_append_dashboard_section( $dashboard_url, 'become-vendor' );
-	}
 
-	return wpss_get_page_url( 'become_vendor' );
+	return $dashboard_url ? wpss_append_dashboard_section( $dashboard_url, 'become-vendor' ) : '';
 }
 
 /**
