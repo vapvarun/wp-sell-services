@@ -28,6 +28,8 @@ Choose how vendors join your marketplace:
 | **Requires Approval** | People apply to become vendors, and you approve or decline each application |
 | **Closed** | Only you (the admin) can create vendor accounts |
 
+Open and Requires Approval both need visitors to be able to create an account. That is WordPress's own **Anyone can register** setting (**Settings > General**), which is off on a new site. The setup wizard's Vendor Settings step has a **Let visitors create accounts** box for it, and while vendor registration is open but sign-up is off, the WP Sell Services Dashboard says so. If your marketplace is invite-only, set Vendor Registration to **Closed** and the warning clears.
+
 ## Essential Pages
 
 Your marketplace needs 4 pages to function. The plugin can create them for you automatically:

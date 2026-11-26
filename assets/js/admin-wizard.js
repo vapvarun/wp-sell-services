@@ -119,6 +119,7 @@
 				data.vendor_registration = $('input[name="wpss_vendor_reg"]:checked').val();
 				data.max_services_per_vendor = $('#wpss-wiz-max-services').val();
 				data.require_service_moderation = $('#wpss-wiz-moderation').is(':checked') ? 1 : 0;
+				data.users_can_register = $('#wpss-wiz-users-can-register').is(':checked') ? 1 : 0;
 			}
 
 			$.post(ajaxUrl, data, function(response) {

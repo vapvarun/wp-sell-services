@@ -1316,6 +1316,14 @@
    "added": "2026-11-26",
    "fails_on": "7760b2ef provider (1 FAIL); helpers absent before",
    "check": "tests/test-routes-work-on-plain-permalinks.php"
+  },
+  {
+   "card": "10550842350",
+   "title": "the wizard promised open vendor sign-up while WordPress registration was off, with no screen saying why",
+   "guard": "static:signup-switch-matches-vendor-registration",
+   "added": "2026-11-26",
+   "fails_on": "664b2155 (3 FAIL)",
+   "check": "tests/test-signup-switch-matches-vendor-registration.php"
   }
  ]
 }

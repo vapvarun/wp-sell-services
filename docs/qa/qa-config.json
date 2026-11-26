@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "signup-switch-matches-vendor-registration",
+    "run": "${WP_CLI:-wp} eval-file tests/test-signup-switch-matches-vendor-registration.php"
+   },
+   {
     "id": "routes-work-on-plain-permalinks",
     "run": "${WP_CLI:-wp} eval-file tests/test-routes-work-on-plain-permalinks.php"
    },

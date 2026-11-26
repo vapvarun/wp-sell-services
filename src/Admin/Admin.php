@@ -1126,6 +1126,16 @@ class Admin {
 			}
 		}
 
+		// Sign-up: vendor registration is open, but WordPress lets nobody create an account, so a
+		// visitor's Become a Vendor and Create Account both say sign-up is closed (Basecamp 10550842350).
+		if ( 'closed' !== wpss_get_option( 'vendor', 'vendor_registration', 'open' ) && ! get_option( 'users_can_register' ) ) {
+			$problems['signup'] = array(
+				'text'  => __( 'Visitors cannot create accounts (WordPress: Anyone can register is off), so only existing members can become vendors or buyers. Turn it on, or set Vendor Registration to Closed if the marketplace is invite-only.', 'wp-sell-services' ),
+				'url'   => admin_url( 'options-general.php' ),
+				'label' => __( 'Open sign-up settings', 'wp-sell-services' ),
+			);
+		}
+
 		// Background jobs: the queue has stopped, so timed work silently never happens.
 		$stalled = \WPSellServices\Services\Scheduler::stalled_since();
 

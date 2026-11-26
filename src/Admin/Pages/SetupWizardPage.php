@@ -366,6 +366,15 @@ class SetupWizardPage {
 		// wizard too; a toggle that changes no behaviour is worse than none.
 		$vendor['require_service_moderation'] = ! empty( $_POST['require_service_moderation'] );
 
+		// WordPress's own sign-up switch, offered here because open vendor registration depends on it
+		// (Basecamp 10550842350). Written only when the owner changed the box: it is core's option.
+		if ( isset( $_POST['users_can_register'] ) ) {
+			$can_register = (bool) absint( wp_unslash( $_POST['users_can_register'] ) );
+			if ( (bool) get_option( 'users_can_register' ) !== $can_register ) {
+				update_option( 'users_can_register', (int) $can_register );
+			}
+		}
+
 		update_option( 'wpss_vendor', $vendor );
 
 		wp_send_json_success( array( 'message' => __( 'Vendor settings saved.', 'wp-sell-services' ) ) );
@@ -661,6 +670,14 @@ class SetupWizardPage {
 							<?php esc_html_e( 'Requires Approval — Admin must approve', 'wp-sell-services' ); ?>
 						</label>
 					</div>
+				</div>
+
+				<div class="wpss-wizard-field">
+					<label>
+						<input type="checkbox" id="wpss-wiz-users-can-register" <?php checked( (bool) get_option( 'users_can_register' ) ); ?>>
+						<?php esc_html_e( 'Let visitors create accounts (WordPress setting: Anyone can register)', 'wp-sell-services' ); ?>
+					</label>
+					<p class="description"><?php esc_html_e( 'When off, only people who already have an account can become vendors or buyers.', 'wp-sell-services' ); ?></p>
 				</div>
 
 				<div class="wpss-wizard-field">
