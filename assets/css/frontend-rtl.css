@@ -4441,3 +4441,22 @@ a.wpss-order-filter.is-active:focus {
 .wpss-review-service a {
 	color: var(--wpss-text-light);
 }
+
+/*
+ * Offline Payment description on checkout. Token colours so the box follows
+ * light and dark mode (hard-coded light inline colours left the dark-mode
+ * text at 1.40:1).
+ */
+.wpss-offline-gateway-description {
+	background: var(--wpss-bg-subtle);
+	border: 1px solid var(--wpss-border);
+	color: var(--wpss-text-secondary);
+	padding: var(--wpss-space-4, 1rem);
+	border-radius: 4px;
+	margin-block-end: var(--wpss-space-4, 1rem);
+}
+
+.wpss-offline-gateway-description p {
+	margin: 0;
+	color: inherit;
+}

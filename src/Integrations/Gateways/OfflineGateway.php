@@ -469,8 +469,8 @@ class OfflineGateway extends AbstractPaymentGateway {
 		ob_start();
 		?>
 		<div class="wpss-offline-gateway-form">
-			<div class="wpss-offline-gateway-description" style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 16px; border-radius: 4px; margin-bottom: 16px;">
-				<p style="margin: 0;">
+			<div class="wpss-offline-gateway-description">
+				<p>
 					<?php echo esc_html( $description ); ?>
 				</p>
 			</div>
@@ -607,7 +607,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			<h3 style="margin-top: 0; color: #856404;">
 				<?php esc_html_e( 'Payment instructions', 'wp-sell-services' ); ?>
 			</h3>
-			<div class="wpss-offline-instructions-content">
+			<div class="wpss-offline-instructions-content" style="color: #856404;">
 				<?php echo '' === $instructions ? '<p>' . esc_html( self::no_instructions_text() ) . '</p>' : wp_kses_post( wpautop( $instructions ) ); ?>
 			</div>
 			<p style="margin-bottom: 0; color: #856404;">
@@ -1423,7 +1423,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			</div>
 			<div class="wpss-order-section__body">
 				<div class="wpss-offline-instructions" style="background: #fff3cd; border: 1px solid #ffc107; padding: 20px; border-radius: 4px; margin: 0;">
-					<div class="wpss-offline-instructions-content">
+					<div class="wpss-offline-instructions-content" style="color: #856404;">
 						<?php echo wp_kses_post( wpautop( $instructions ) ); ?>
 					</div>
 					<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0c874;">
