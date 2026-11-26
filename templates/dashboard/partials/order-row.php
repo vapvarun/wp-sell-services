@@ -13,7 +13,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
- * @version 1.9.3
+ * @version 1.9.4
  *
  * @var object $order_item    Order row from OrderRepository.
  * @var string $wpss_side     'buyer' (My Orders) or 'seller' (Sales Orders).
@@ -82,7 +82,12 @@ $next_actions = $wpss_is_seller
 		'pending_approval'     => __( 'Review delivery', 'wp-sell-services' ),
 	);
 $next_action  = $is_sub_order ? '' : ( $next_actions[ $order_item->status ] ?? '' );
-$is_late      = wpss_is_order_late( $order_item );
+// Paid by bank transfer or another offline method: the buyer has nothing to
+// pay here, the order page shows how to pay and the owner confirms it.
+if ( '' !== $next_action && 'pending_payment' === $order_item->status && wpss_order_awaits_payment_confirmation( $order_item ) ) {
+	$next_action = __( 'View payment instructions', 'wp-sell-services' );
+}
+$is_late = wpss_is_order_late( $order_item );
 // A due date means something only while the seller is working; before payment
 // or after the work is done, the order date is what identifies the row.
 $is_working = in_array( $order_item->status, array( 'in_progress', 'revision_requested', 'late' ), true );
