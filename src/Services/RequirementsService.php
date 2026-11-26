@@ -133,8 +133,15 @@ class RequirementsService {
 		// For buyer request orders (platform='request'), skip service requirement validation
 		// Requirements were already collected in the proposal, so just save submitted data.
 		if ( ! $service && 'request' === $order->platform ) {
-			$field_data  = $this->sanitize( array(), $field_data );
-			$attachments = array_merge( $attachments, $this->process_uploads( $files, $order_id ) );
+			$field_data = $this->sanitize( array(), $field_data );
+			$uploaded   = $this->process_uploads( $files, $order_id );
+			if ( is_wp_error( $uploaded ) ) {
+				return array(
+					'success' => false,
+					'message' => $uploaded->get_error_message(),
+				);
+			}
+			$attachments = array_merge( $attachments, $uploaded );
 
 			// Save requirements directly without service field validation.
 			$saved = $this->save( $order_id, $field_data, $attachments );
@@ -185,8 +192,15 @@ class RequirementsService {
 			);
 		}
 
-		$field_data  = $this->sanitize( $fields, $field_data );
-		$attachments = array_merge( $attachments, $this->process_uploads( $files, $order_id ) );
+		$field_data = $this->sanitize( $fields, $field_data );
+		$uploaded   = $this->process_uploads( $files, $order_id );
+		if ( is_wp_error( $uploaded ) ) {
+			return array(
+				'success' => false,
+				'message' => $uploaded->get_error_message(),
+			);
+		}
+		$attachments = array_merge( $attachments, $uploaded );
 
 		$saved = $this->save( $order_id, $field_data, $attachments );
 
@@ -363,9 +377,9 @@ class RequirementsService {
 	 *
 	 * @param array $files    Files from $_FILES.
 	 * @param int   $order_id Order ID.
-	 * @return array Processed attachment data.
+	 * @return array|\WP_Error Processed attachment data, or the first refused file.
 	 */
-	private function process_uploads( array $files, int $order_id ): array {
+	private function process_uploads( array $files, int $order_id ): array|\WP_Error {
 		$attachments = array();
 
 		if ( empty( $files ) ) {
@@ -376,24 +390,33 @@ class RequirementsService {
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 
-		$files = self::flatten_file_inputs( $files );
+		$files = array_filter(
+			self::flatten_file_inputs( $files ),
+			static fn( $file ) => ! empty( $file['name'] ) && UPLOAD_ERR_OK === $file['error']
+		);
+
+		/*
+		 * The owner's Settings > Advanced rule, not a private copy of it.
+		 * This carried its own 27-type allowlist and a hardcoded 50MB cap, so
+		 * changing Max File Upload Size did nothing here and a type added to
+		 * Allowed File Types was still refused (Basecamp 10304976534).
+		 * wpss_check_upload() also verifies the real bytes rather than
+		 * trusting the client-supplied extension. Every file is checked before
+		 * any is stored, and a refusal goes back to the buyer instead of the
+		 * file being dropped without a word (Basecamp 10380882200).
+		 */
+		foreach ( $files as $file ) {
+			$refused = wpss_check_upload( $file, 'requirements' );
+			if ( null !== $refused ) {
+				return new \WP_Error(
+					$refused->get_error_code(),
+					/* translators: 1: file name, 2: why the file was refused */
+					sprintf( __( '%1$s was not attached: %2$s', 'wp-sell-services' ), sanitize_file_name( (string) $file['name'] ), $refused->get_error_message() )
+				);
+			}
+		}
 
 		foreach ( $files as $key => $file ) {
-			if ( empty( $file['name'] ) || UPLOAD_ERR_OK !== $file['error'] ) {
-				continue;
-			}
-
-			/*
-			 * The owner's Settings > Advanced rule, not a private copy of it.
-			 * This carried its own 27-type allowlist and a hardcoded 50MB cap, so
-			 * changing Max File Upload Size did nothing here and a type added to
-			 * Allowed File Types was still refused (Basecamp 10304976534).
-			 * wpss_check_upload() also verifies the real bytes rather than
-			 * trusting the client-supplied extension.
-			 */
-			if ( null !== wpss_check_upload( $file, 'requirements' ) ) {
-				continue;
-			}
 
 			// A buyer's brief is private by any reasonable reading, and the docs
 			// say so - but post_status 'private' hides the attachment ROW while
