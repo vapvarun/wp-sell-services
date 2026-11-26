@@ -4460,3 +4460,9 @@ a.wpss-order-filter.is-active:focus {
 	margin: 0;
 	color: inherit;
 }
+
+/* Owner links inside the yellow bank-instructions box keep the box's text colour (a theme's dark-mode link colour was white on yellow, 1.11:1). */
+.wpss-offline-instructions a {
+	color: inherit;
+	text-decoration: underline;
+}
