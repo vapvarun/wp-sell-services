@@ -936,6 +936,45 @@ function wpss_login_failed_redirect(): void {
 add_action( 'wp_login_failed', 'wpss_login_failed_redirect' );
 
 /**
+ * URL of a plugin route, in the form the site's permalink setting can serve.
+ *
+ * Every rewrite rule the plugin adds maps a pretty path to query vars. With Plain permalinks
+ * WordPress never reads those rules, so a pretty path lands on the blog home; the same route
+ * as query vars on the home URL works under every setting (Basecamp 10550842296).
+ *
+ * @since 1.9.4
+ *
+ * @param string $path  Pretty path, relative to the home URL (e.g. 'checkout/12/').
+ * @param array  $query The query vars that path's rewrite rule maps to.
+ * @return string
+ */
+function wpss_route_url( string $path, array $query ): string {
+	if ( get_option( 'permalink_structure' ) ) {
+		return home_url( '/' . ltrim( $path, '/' ) );
+	}
+
+	return add_query_arg( $query, home_url( '/' ) );
+}
+
+/**
+ * The URL a payment gateway posts its webhooks to - the one owners paste into the provider's dashboard.
+ *
+ * @since 1.9.4
+ *
+ * @param string $gateway_id Gateway ID (stripe, paypal, razorpay).
+ * @return string
+ */
+function wpss_get_payment_callback_url( string $gateway_id ): string {
+	return wpss_route_url(
+		'wpss-payment/' . $gateway_id . '/callback/',
+		array(
+			'wpss_payment_callback' => 1,
+			'wpss_gateway'          => $gateway_id,
+		)
+	);
+}
+
+/**
  * Get the base checkout URL (without service ID).
  *
  * Uses the mapped checkout page URL, or builds from the adapter's checkout slug.

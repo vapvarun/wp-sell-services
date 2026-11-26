@@ -412,7 +412,7 @@ function wpss_get_vendor_url( int $user_id ): string {
 	}
 
 	$vendor_slug = apply_filters( 'wpss_vendor_slug', 'provider' );
-	return home_url( '/' . $vendor_slug . '/' . $user->user_nicename );
+	return wpss_route_url( $vendor_slug . '/' . $user->user_nicename, array( 'wpss_vendor' => $user->user_nicename ) );
 }
 
 /**

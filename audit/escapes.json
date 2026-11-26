@@ -1308,6 +1308,14 @@
    "added": "2026-11-26",
    "fails_on": "09b98163 (12 FAIL)",
    "check": "tests/test-archive-sidebars-clear-header.php"
+  },
+  {
+   "card": "10550842296",
+   "title": "with Plain permalinks the checkout link and the gateway webhook URLs landed on the blog home",
+   "guard": "static:routes-work-on-plain-permalinks",
+   "added": "2026-11-26",
+   "fails_on": "7760b2ef provider (1 FAIL); helpers absent before",
+   "check": "tests/test-routes-work-on-plain-permalinks.php"
   }
  ]
 }

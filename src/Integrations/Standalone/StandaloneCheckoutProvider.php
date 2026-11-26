@@ -77,7 +77,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * @return string
 	 */
 	public function get_checkout_url( int $service_id, array $args = [] ): string {
-		$url = home_url( '/' . StandaloneAdapter::get_checkout_slug() . '/' . $service_id . '/' );
+		$url = wpss_route_url(
+			StandaloneAdapter::get_checkout_slug() . '/' . $service_id . '/',
+			array(
+				'wpss_checkout'   => 1,
+				'wpss_service_id' => $service_id,
+			)
+		);
 
 		// Index 0 is a real package, so the arg must survive it.
 		if ( isset( $args['package_id'] ) && '' !== $args['package_id'] ) {

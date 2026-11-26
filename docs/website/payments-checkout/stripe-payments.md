@@ -52,7 +52,7 @@ Webhooks let Stripe tell your site when a payment succeeds or fails.
 
 1. In your Stripe Dashboard, go to **Developers > Webhooks**
 2. Click **Add endpoint**
-3. Paste your webhook URL: `https://yoursite.com/wpss-payment/stripe/callback`
+3. Paste your webhook URL: `https://yoursite.com/wpss-payment/stripe/callback`. With Plain permalinks (Settings > Permalinks) the URL is `https://yoursite.com/?wpss_payment_callback=1&wpss_gateway=stripe` instead; the gateway's setup guide always shows the right one for your site.
 4. Select these events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`
 5. Click **Add endpoint**
 6. Copy the **Signing secret** that appears

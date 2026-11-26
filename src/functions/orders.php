@@ -475,7 +475,7 @@ function wpss_get_order_url( int $order_id, string $section = '', ?object $order
 	}
 
 	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
-	return home_url( '/' . $order_slug . '/' . $order_id . '/' );
+	return wpss_route_url( $order_slug . '/' . $order_id . '/', array( 'wpss_service_order' => $order_id ) );
 }
 
 /**

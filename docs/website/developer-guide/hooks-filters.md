@@ -132,7 +132,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_standalone_adapter_init` | `StandaloneAdapter $adapter` | `src/Integrations/Standalone/StandaloneAdapter.php:156` |
-| `wpss_standalone_checkout_processed` | `int $order_id, array $order_data` | `StandaloneCheckoutProvider.php:134` |
+| `wpss_standalone_checkout_processed` | `int $order_id, array $order_data` | `StandaloneCheckoutProvider.php:140` |
 | `wpss_standalone_order_complete` | `object $order` | `src/Integrations/Standalone/StandaloneOrderProvider.php:784` |
 | `wpss_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Standalone/StandaloneOrderProvider.php:480` |
 | `wpss_order_status_pending_requirements` | `int $order_id, string $old_status` | `src/Integrations/Standalone/StandaloneOrderProvider.php:470` |
@@ -354,8 +354,8 @@ These hooks fire in the WordPress admin area for order management, service meta,
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_service_meta_fields` | `array $fields, int $post_id` | `src/Admin/Metaboxes/ServiceMetabox.php:195` |
-| `wpss_pro_upgrade_url` | `string $url` (default `https://wbcomdesigns.com/downloads/wp-sell-services-pro/`) | `src/functions/urls.php:1271` |
-| `wpss_docs_url` | `string $url` (default `https://wbcomdesigns.com/docs/wp-sell-services/`) | `src/functions/urls.php:1281` |
+| `wpss_pro_upgrade_url` | `string $url` (default `https://wbcomdesigns.com/downloads/wp-sell-services-pro/`) | `src/functions/urls.php:1310` |
+| `wpss_docs_url` | `string $url` (default `https://wbcomdesigns.com/docs/wp-sell-services/`) | `src/functions/urls.php:1320` |
 
 _`wpss_pro_upgrade_url` (added 1.3.0) controls where every "Upgrade to Pro" call-to-action points - the admin upgrade screen and the in-wizard prompts. Point it at your own landing page or an in-site URL:_
 
@@ -683,7 +683,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1323` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/order-status.php:85` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:610` |
-| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:429` |
+| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:435` |
 | `wpss_wallet_manager` | `null` | `src/functions/ledger.php:734` |
 
 ### Currency System Filters (1.2.1)

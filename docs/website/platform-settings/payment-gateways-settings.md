@@ -63,7 +63,8 @@ Card payments, and the gateway most marketplaces start with.
 | Gateway Fee (Fixed) | Number, 0-5 | `0.30` | Per-transaction fixed fee, in your currency |
 
 The card includes a three-step **Stripe Setup Guide** covering API keys, the
-webhook endpoint to register (`/wpss-payment/stripe/callback/`, listening for
+webhook endpoint to register (`/wpss-payment/stripe/callback/`, or
+`/?wpss_payment_callback=1&wpss_gateway=stripe` with Plain permalinks, listening for
 `payment_intent.succeeded`, `payment_intent.payment_failed` and
 `charge.refunded`), and the minimum permissions for a restricted key.
 

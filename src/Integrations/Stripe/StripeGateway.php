@@ -1723,7 +1723,7 @@ class StripeGateway extends AbstractPaymentGateway {
 			<ol style="margin-left: 20px;">
 				<li><?php esc_html_e( 'Go to your Stripe Dashboard → Developers → Webhooks', 'wp-sell-services' ); ?></li>
 				<li><?php esc_html_e( 'Click "Add endpoint" and enter this URL:', 'wp-sell-services' ); ?>
-					<br><code style="display: inline-block; margin: 5px 0; padding: 4px 8px; background: #fff;"><?php echo esc_html( home_url( '/wpss-payment/stripe/callback/' ) ); ?></code>
+					<br><code style="display: inline-block; margin: 5px 0; padding: 4px 8px; background: #fff;"><?php echo esc_html( wpss_get_payment_callback_url( 'stripe' ) ); ?></code>
 				</li>
 				<li><?php esc_html_e( 'Select the following events to listen for:', 'wp-sell-services' ); ?>
 					<ul style="margin: 5px 0 5px 20px; list-style: disc;">

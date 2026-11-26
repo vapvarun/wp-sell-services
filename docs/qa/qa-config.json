@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "routes-work-on-plain-permalinks",
+    "run": "${WP_CLI:-wp} eval-file tests/test-routes-work-on-plain-permalinks.php"
+   },
+   {
     "id": "archive-sidebars-clear-header",
     "run": "${WP_CLI:-wp} eval-file tests/test-archive-sidebars-clear-header.php"
    },

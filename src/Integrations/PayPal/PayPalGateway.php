@@ -1219,7 +1219,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 			<ol style="margin-left: 20px;">
 				<li><?php esc_html_e( 'In your REST API app, scroll to "Webhooks" and click "Add Webhook"', 'wp-sell-services' ); ?></li>
 				<li><?php esc_html_e( 'Enter this URL:', 'wp-sell-services' ); ?>
-					<br><code style="display: inline-block; margin: 5px 0; padding: 4px 8px; background: #fff;"><?php echo esc_html( home_url( '/wpss-payment/paypal/callback/' ) ); ?></code>
+					<br><code style="display: inline-block; margin: 5px 0; padding: 4px 8px; background: #fff;"><?php echo esc_html( wpss_get_payment_callback_url( 'paypal' ) ); ?></code>
 				</li>
 				<li><?php esc_html_e( 'Select the following events to subscribe:', 'wp-sell-services' ); ?>
 					<ul style="margin: 5px 0 5px 20px; list-style: disc;">

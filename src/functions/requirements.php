@@ -79,7 +79,13 @@ function wpss_get_order_requirements_url( int $order_id ): string {
 	}
 
 	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
-	return home_url( '/' . $order_slug . '/' . $order_id . '/requirements/' );
+	return wpss_route_url(
+		$order_slug . '/' . $order_id . '/requirements/',
+		array(
+			'wpss_service_order' => $order_id,
+			'wpss_order_action'  => 'requirements',
+		)
+	);
 }
 
 /**
