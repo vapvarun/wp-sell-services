@@ -1,6 +1,6 @@
 # WP Sell Services — Capabilities & Roles
 
-**Version**: 1.7.0-dev · **Enumerated**: 2026-08-26 (branch `1.7.0`)
+**Version**: 1.9.4 · **Enumerated**: 2026-11-26 (branch `1.9.4`, from `Core\Activator::create_roles()`)
 
 Enumerated from source, not generated. Every entry below was verified against an
 actual `current_user_can()` / `add_cap()` call — a capability that exists only in
@@ -24,12 +24,18 @@ alongside other roles; the helper is the only check that accounts for both.
 
 | Capability | Granted to | Enforced at |
 |---|---|---|
-| `wpss_manage_services` | administrator, vendor | Service create/edit REST + admin |
-| `wpss_manage_orders` | administrator | Order admin screens and status changes |
-| `wpss_manage_vendors` | administrator | Vendor approval / management |
-| `wpss_manage_disputes` | administrator | Dispute resolution |
-| `wpss_manage_settings` | administrator | Plugin settings |
-| `wpss_respond_to_requests` | vendor | Submitting proposals to buyer requests |
+| `wpss_vendor` | administrator, shop_manager, vendor | Vendor marker; check vendor status with `wpss_is_vendor()` |
+| `wpss_manage_services` | administrator, shop_manager, vendor | Service create REST, `wpss/create-service`, earnings and withdrawal abilities |
+| `wpss_vendor_orders` | administrator, shop_manager, vendor | Vendor-side order work (`can_manage_orders` in `/me`) |
+| `wpss_view_analytics` | administrator, shop_manager, vendor | Granted only; admin analytics use `manage_options` |
+| `wpss_respond_to_requests` | administrator, shop_manager, vendor | `wpss/submit-proposal` |
+| `wpss_manage_orders` | administrator, shop_manager | Admin Orders screen; forcing any status (`OrderService`) |
+| `wpss_manage_disputes` | administrator | Admin Disputes screen (resolving needs `manage_options`) |
+| `wpss_manage_settings` | administrator | Admin Settings screen |
+| `wpss_manage_vendors` | administrator | Granted only; nothing checks it. Vendors screen uses `manage_options` |
+
+Authors hold no WPSS capability (removed on activation since 1.7.1). Moderation
+of services, reviews and vendors is admin-only (`manage_options`).
 
 ## 3. WordPress capabilities relied on
 

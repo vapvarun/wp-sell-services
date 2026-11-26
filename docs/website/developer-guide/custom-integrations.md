@@ -259,7 +259,7 @@ The Pro plugin hooks into `wpss_loaded` to register all extensions:
 
 ## Vendor Capabilities
 
-The `wpss_vendor` role includes: `wpss_vendor`, `wpss_manage_services`, `wpss_manage_orders`, `wpss_view_analytics`, `wpss_respond_to_requests`, `read`, `upload_files`, `edit_posts`.
+The `wpss_vendor` role includes: `wpss_vendor`, `wpss_manage_services`, `wpss_vendor_orders`, `wpss_view_analytics`, `wpss_respond_to_requests`, `read`, `upload_files`, and the own-service caps (`edit_wpss_services`, `edit_published_wpss_services`, `publish_wpss_services`, `delete_wpss_services`, `delete_published_wpss_services`). It does not include `edit_posts` or `wpss_manage_orders`. See [Capabilities & Roles](capabilities.md).
 
 ## Related Documentation
 

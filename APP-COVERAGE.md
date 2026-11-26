@@ -84,7 +84,7 @@ and a Pusher-compatible realtime layer (off by default) — all web-side.
 | Vendor subscription plans | ❌ Missing | Browse, subscribe, own subscription |
 | PayPal payout profile | ❌ Missing | The seller's own payout details |
 | Cloud storage | ❌ Missing | S3 / GCS / DO Spaces. Tied to the attachment gap |
-| Cart adapters (Woo · EDD · FluentCart · SureCart) | — Server | Decides which rail owns payment; the app follows what the site publishes |
+| Cart adapters (Woo · EDD · FluentCart) | — Server | Decides which rail owns payment; the app follows what the site publishes |
 | Gateways (Stripe · PayPal · Razorpay) | — By design | Hosted checkout, not an in-app card form |
 | Admin analytics · commission rules · white label · ledger export | — Owner | Correctly absent |
 
@@ -135,7 +135,7 @@ point of the file.
 ## Never verified
 
 No run on a real device. No run on a localised site — which is the entire point of
-the status-label and vocabulary work. No run on the EDD, FluentCart or SureCart
+the status-label and vocabulary work. No run on the EDD or FluentCart
 rails, where four features are supposed to disappear from the app. No dark-mode
 pass. What has happened is browser rendering at 390px against a seeded local site,
 plus route-level checks.
@@ -162,6 +162,7 @@ wp eval '
 python3 scripts/coverage.py /path/to/routes.txt
 ```
 
-Counts differ where different plugins are enabled — the four `wpss-pro/v1`
-cart-adapter routes only exist when SureCart or FluentCart is installed, and are
-not counted here.
+Counts differ where different plugins are enabled - the two `wpss-pro/v1`
+cart-adapter routes (`/fluentcart/products`, `/fluentcart/orders`) only exist
+when FluentCart is installed, and are not counted here. SureCart support was
+removed in 1.6.0.
