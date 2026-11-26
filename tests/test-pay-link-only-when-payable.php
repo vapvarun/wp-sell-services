@@ -67,6 +67,22 @@ $extension = ( $f->order )(
 	) + $unpaid
 );
 $check( 'an extension on hold carries no checkout_url', null === $url( $extension ) );
+// Every real quote has its request row (create_extension_request() writes both); Decline needs its id.
+global $wpdb;
+$wpdb->insert(
+	$wpdb->prefix . 'wpss_extension_requests',
+	array(
+		'order_id'     => $disputed,
+		'requested_by' => $f->vendor,
+		'extra_days'   => 2,
+		'amount'       => 20,
+		'pay_order_id' => $extension,
+		'reason'       => 'QA-RFT',
+		'status'       => \WPSellServices\Services\ExtensionRequestService::STATUS_PENDING,
+		'created_at'   => current_time( 'mysql', true ),
+	)
+);
+$extension_request_id = (int) $wpdb->insert_id;
 
 $current_order = wpss_get_order( $extension );
 $user_id       = (int) $f->buyer;
@@ -75,7 +91,8 @@ include wpss_locate_template( 'order/extension-view.php' );
 $html = (string) ob_get_clean();
 $check( 'the extension view shows no Accept & Pay while on hold', false === strpos( $html, 'Accept &amp; Pay' ) && false === strpos( $html, 'Accept & Pay' ) );
 $check( '  it says why', false !== strpos( $html, esc_html( wpss_get_order_payment_refusal( $current_order ) ) ) );
-$check( '  and Decline stays available', false !== strpos( $html, 'wpss-extension-decline-btn' ) );
+$check( '  and Decline stays available', false !== strpos( $html, 'wpss-extension-decline-btn' ) && false !== strpos( $html, 'data-request="' . $extension_request_id . '"' ) );
+$wpdb->delete( $wpdb->prefix . 'wpss_extension_requests', array( 'id' => $extension_request_id ) );
 
 wp_set_current_user( 0 );
 
