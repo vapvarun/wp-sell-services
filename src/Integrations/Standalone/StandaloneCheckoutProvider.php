@@ -445,6 +445,25 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	}
 
 	/**
+	 * Where "Back to order" goes from a pay page.
+	 *
+	 * A sub-order (tip, extension, milestone phase) goes back to the order it
+	 * hangs off; any other order goes to itself. A proposal order's
+	 * platform_order_id is the buyer request, not an order, so reading it as
+	 * the parent left the refusal page's link empty.
+	 *
+	 * @since 1.9.4
+	 *
+	 * @param object $order Order being paid.
+	 * @return string
+	 */
+	private static function back_to_order_url( object $order ): string {
+		$parent = in_array( (string) ( $order->platform ?? '' ), wpss_get_sub_order_platforms(), true ) ? (int) ( $order->platform_order_id ?? 0 ) : 0;
+
+		return wpss_get_order_url( $parent > 0 ? $parent : (int) $order->id );
+	}
+
+	/**
 	 * Load and validate pay_order, then render the same checkout form.
 	 *
 	 * @param int $order_id Order ID to pay.
@@ -472,15 +491,12 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'You do not have permission to pay for this order.', 'wp-sell-services' ) . '</p>';
 		}
 
-		$parent_order_id = ! empty( $order->platform_order_id ) ? (int) $order->platform_order_id : (int) $order->id;
-		$back_to_order   = wpss_get_order_url( $parent_order_id );
-
 		$refusal = wpss_get_order_payment_refusal( $order );
 		if ( '' !== $refusal ) {
 			return sprintf(
 				'<p class="wpss-alert wpss-alert-info">%s</p><p><a class="wpss-btn wpss-btn--secondary" href="%s">%s</a></p>',
 				esc_html( $refusal ),
-				esc_url( $back_to_order ),
+				esc_url( self::back_to_order_url( $order ) ),
 				esc_html__( 'Back to order', 'wp-sell-services' )
 			);
 		}
@@ -966,7 +982,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			<div class="wpss-co-header">
 				<?php // A proposal order has no service page to go back to: its way back is the order. ?>
 				<?php $back_to_order_view = $is_pay_order && ( $service->id <= 0 || $is_sub_order ); ?>
-				<a href="<?php echo esc_url( $back_to_order_view ? wpss_get_order_url( $is_sub_order && ! empty( $pay_order->platform_order_id ) ? (int) $pay_order->platform_order_id : (int) $pay_order->id ) : ( $service->id > 0 ? get_permalink( $service->id ) : home_url( '/' ) ) ); ?>" class="wpss-co-header__back">
+				<a href="<?php echo esc_url( $back_to_order_view ? self::back_to_order_url( $pay_order ) : ( $service->id > 0 ? get_permalink( $service->id ) : home_url( '/' ) ) ); ?>" class="wpss-co-header__back">
 					<span aria-hidden="true">&larr;</span>
 					<?php echo $back_to_order_view ? esc_html__( 'Back to order', 'wp-sell-services' ) : esc_html__( 'Back to service', 'wp-sell-services' ); ?>
 				</a>
