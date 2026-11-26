@@ -767,6 +767,70 @@
    {
     "id": "smoke-1-9-3-polish",
     "run": "${WP_CLI:-wp} eval-file tests/test-smoke-1-9-3-polish.php"
+   },
+   {
+    "id": "offline-text-readable-in-dark-mode",
+    "run": "${WP_CLI:-wp} eval-file tests/test-offline-text-readable-in-dark-mode.php"
+   },
+   {
+    "id": "gallery-icons-after-select-and-remove",
+    "run": "${WP_CLI:-wp} eval-file tests/test-gallery-icons-after-select-and-remove.php"
+   },
+   {
+    "id": "requirements-refused-upload-is-reported",
+    "run": "${WP_CLI:-wp} eval-file tests/test-requirements-refused-upload-is-reported.php"
+   },
+   {
+    "id": "review-is-final-for-the-buyer",
+    "run": "${WP_CLI:-wp} eval-file tests/test-review-is-final-for-the-buyer.php"
+   },
+   {
+    "id": "empty-review-refused-with-reason",
+    "run": "${WP_CLI:-wp} eval-file tests/test-empty-review-refused-with-reason.php"
+   },
+   {
+    "id": "request-open-until-one-reader",
+    "run": "${WP_CLI:-wp} eval-file tests/test-request-open-until-one-reader.php"
+   },
+   {
+    "id": "proposal-accepted-copy-follows-payment",
+    "run": "${WP_CLI:-wp} eval-file tests/test-proposal-accepted-copy-follows-payment.php"
+   },
+   {
+    "id": "rest-service-faqs-saved",
+    "run": "${WP_CLI:-wp} eval-file tests/test-rest-service-faqs-saved.php"
+   },
+   {
+    "id": "buyer-requests-block-toggles",
+    "run": "${WP_CLI:-wp} eval-file tests/test-buyer-requests-block-toggles.php"
+   },
+   {
+    "id": "vendor-bio-falls-back-to-wp-profile",
+    "run": "${WP_CLI:-wp} eval-file tests/test-vendor-bio-falls-back-to-wp-profile.php"
+   },
+   {
+    "id": "featured-carousel-motion",
+    "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
+   },
+   {
+    "id": "uninstall-loads-what-it-calls",
+    "run": "${WP_CLI:-wp} eval-file tests/test-uninstall-loads-what-it-calls.php --skip-plugins=wp-sell-services,wp-sell-services-pro"
+   },
+   {
+    "id": "confirm-trusts-stored-metadata",
+    "run": "${WP_CLI:-wp} eval-file tests/test-confirm-trusts-stored-metadata.php"
+   },
+   {
+    "id": "offline-order-row-cta",
+    "run": "${WP_CLI:-wp} eval-file tests/test-offline-order-row-cta.php"
+   },
+   {
+    "id": "pay-page-back-link",
+    "run": "${WP_CLI:-wp} eval-file tests/test-pay-page-back-link.php"
+   },
+   {
+    "id": "pay-link-only-when-payable",
+    "run": "${WP_CLI:-wp} eval-file tests/test-pay-link-only-when-payable.php"
    }
   ]
  }

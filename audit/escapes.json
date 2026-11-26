@@ -1092,6 +1092,134 @@
    "added": "2026-11-16",
    "fails_on": "1.9.3 tree before this commit (reactivated param and the new titles did not exist)",
    "check": "tests/test-smoke-1-9-3-polish.php"
+  },
+  {
+   "card": "10546236606",
+   "title": "the offline gateway text carried fixed light colours, unreadable under a theme's dark mode",
+   "guard": "static:offline-text-readable-in-dark-mode",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (4 FAIL)",
+   "check": "tests/test-offline-text-readable-in-dark-mode.php"
+  },
+  {
+   "card": "10545984846",
+   "title": "icons Alpine adds after load were never redrawn, so gallery buttons rendered empty",
+   "guard": "static:gallery-icons-after-select-and-remove",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (4 FAIL)",
+   "check": "tests/test-gallery-icons-after-select-and-remove.php"
+  },
+  {
+   "card": "10380882200",
+   "title": "a refused upload was skipped with continue, so the buyer was never told and the order started without it",
+   "guard": "static:requirements-refused-upload-is-reported",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (4 FAIL)",
+   "check": "tests/test-requirements-refused-upload-is-reported.php"
+  },
+  {
+   "card": "10546305098",
+   "title": "a write route let the review's buyer rewrite a review the owner decided is final",
+   "guard": "static:review-is-final-for-the-buyer",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (PATCH 200, row changed)",
+   "check": "tests/test-review-is-final-for-the-buyer.php"
+  },
+  {
+   "card": "10546305005",
+   "title": "an empty review passed the service and surfaced as a generic 500 instead of a reason",
+   "guard": "static:empty-review-refused-with-reason",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (7 FAIL)",
+   "check": "tests/test-empty-review-refused-with-reason.php"
+  },
+  {
+   "card": "10511341034",
+   "title": "three readers used the demo-only key instead of the stored expiry, so every real request showed an em dash",
+   "guard": "static:request-open-until-one-reader",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (admin em dash, model empty, API empty)",
+   "check": "tests/test-request-open-until-one-reader.php"
+  },
+  {
+   "card": "10379875093",
+   "title": "a notice told the vendor to start work on a hire that was still unpaid",
+   "guard": "static:proposal-accepted-copy-follows-payment",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (2 FAIL)",
+   "check": "tests/test-proposal-accepted-copy-follows-payment.php"
+  },
+  {
+   "card": "10545978302",
+   "title": "a REST writer ignored a field the app sends, so FAQs were silently lost; blank rows were stored",
+   "guard": "static:rest-service-faqs-saved",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (4 FAIL); 9a27f122 (blank row stored)",
+   "check": "tests/test-rest-service-faqs-saved.php"
+  },
+  {
+   "card": "10545808114",
+   "title": "block attributes were never passed to the shared card template, so the toggles did nothing",
+   "guard": "static:buyer-requests-block-toggles",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (3 FAIL)",
+   "check": "tests/test-buyer-requests-block-toggles.php"
+  },
+  {
+   "card": "10545805738",
+   "title": "one value read by different rules on different surfaces (vendor bio)",
+   "guard": "static:vendor-bio-falls-back-to-wp-profile",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (2 FAIL); 05abb617 (REST readers)",
+   "check": "tests/test-vendor-bio-falls-back-to-wp-profile.php"
+  },
+  {
+   "card": "10545808390",
+   "title": "motion that starts by itself was on by default with no keyboard or reduced-motion pause",
+   "guard": "static:featured-carousel-motion",
+   "added": "2026-11-26",
+   "fails_on": "27da5f84^ (7 FAIL)",
+   "check": "tests/test-featured-carousel-motion.php"
+  },
+  {
+   "card": "10545751792",
+   "title": "uninstall called a helper from a file it never loaded, after dropping the tables",
+   "guard": "static:uninstall-loads-what-it-calls",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (7 FAIL)",
+   "check": "tests/test-uninstall-loads-what-it-calls.php"
+  },
+  {
+   "card": "10545750765,10545751632",
+   "title": "the confirm step trusted the browser request instead of the charge's stored buyer and selection",
+   "guard": "static:confirm-trusts-stored-metadata",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (7 FAIL)",
+   "check": "tests/test-confirm-trusts-stored-metadata.php"
+  },
+  {
+   "card": "10546216275",
+   "title": "a list row offered an action the order page itself withholds (pay an offline order awaiting confirmation)",
+   "guard": "static:offline-order-row-cta",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (2 FAIL)",
+   "check": "tests/test-offline-order-row-cta.php"
+  },
+  {
+   "card": "10511340927",
+   "title": "a column was read as the parent order for every order type, so the refusal page's back link was empty",
+   "guard": "static:pay-page-back-link",
+   "added": "2026-11-26",
+   "fails_on": "main 1c1fea32 (proposal link empty)",
+   "check": "tests/test-pay-page-back-link.php"
+  },
+  {
+   "card": "10545751953",
+   "title": "a pay link was offered where the pay page then refuses payment",
+   "guard": "static:pay-link-only-when-payable",
+   "added": "2026-11-26",
+   "fails_on": "1.9.4 tree with the two files at HEAD (6 FAIL)",
+   "check": "tests/test-pay-link-only-when-payable.php"
   }
  ]
 }
