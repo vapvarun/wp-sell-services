@@ -23,25 +23,13 @@ if ( ! $delete_data ) {
 
 global $wpdb;
 
-// Composer autoloader is required for uninstall routines.
-$autoloader = __DIR__ . '/vendor/autoload.php';
-
-if ( file_exists( $autoloader ) ) {
-	require_once $autoloader;
-}
-
-use WPSellServices\Database\SchemaManager;
-
-// Drop all tables.
-$schema = new SchemaManager();
-$schema->uninstall();
+// The plugin is not loaded during uninstall, so require every file this
+// routine calls into directly - no Composer autoloader needed.
+require_once __DIR__ . '/src/Database/SchemaManager.php';
+require_once __DIR__ . '/src/functions/order-files.php';
 
 // Order files live on disk, not in the tables, in whichever of the two
 // locations wpss_get_order_files_dir() chose for this host.
-if ( ! function_exists( 'wpss_rmdir_recursive' ) ) {
-	require_once __DIR__ . '/src/functions/files.php';
-}
-
 $uploads = wp_upload_dir();
 
 foreach ( array(
@@ -179,6 +167,11 @@ $cron_hooks = array(
 foreach ( $cron_hooks as $hook ) {
 	wp_clear_scheduled_hook( $hook );
 }
+
+// Drop all tables last, so a failure above leaves the data recoverable
+// rather than half-deleted.
+$schema = new \WPSellServices\Database\SchemaManager();
+$schema->uninstall();
 
 // Flush rewrite rules.
 flush_rewrite_rules();
