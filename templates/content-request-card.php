@@ -19,10 +19,18 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.3
+ * @version 1.9.4
  */
 
 defined( 'ABSPATH' ) || exit;
+
+/*
+ * Display toggles from the Buyer Requests block. Absent means show - the archive,
+ * the shortcode and a theme override including this file directly render as before.
+ */
+$wpss_show_budget   = ! isset( $wpss_show_budget ) || $wpss_show_budget;
+$wpss_show_deadline = ! isset( $wpss_show_deadline ) || $wpss_show_deadline;
+$wpss_show_offers   = ! isset( $wpss_show_offers ) || $wpss_show_offers;
 
 $request_id         = get_the_ID();
 $buyer_id           = (int) get_post_field( 'post_author', $request_id );
@@ -217,10 +225,12 @@ do_action( 'wpss_before_request_card', $request_id );
 		do_action( 'wpss_request_card_footer', $request_id );
 		?>
 		<div class="wpss-request-card__meta">
+			<?php if ( $wpss_show_budget ) : ?>
 			<div class="wpss-request-card__meta-item">
 				<span class="wpss-request-card__meta-label"><?php esc_html_e( 'Budget', 'wp-sell-services' ); ?></span>
 				<span class="wpss-request-card__meta-value"><?php echo wp_kses_post( $budget_display ); ?></span>
 			</div>
+			<?php endif; ?>
 
 			<?php
 			// The buyer's deadline, as the Post a Request form asks for it. This
@@ -228,7 +238,7 @@ do_action( 'wpss_before_request_card', $request_id );
 			// posting, which never counted down (Basecamp 10337197376). A request
 			// posted without a date keeps its day count.
 			?>
-			<?php if ( $expires_at || $delivery_days ) : ?>
+			<?php if ( $wpss_show_deadline && ( $expires_at || $delivery_days ) ) : ?>
 				<div class="wpss-request-card__meta-item">
 					<span class="wpss-request-card__meta-label"><?php echo esc_html( $expires_at ? __( 'Open until', 'wp-sell-services' ) : __( 'Needed within', 'wp-sell-services' ) ); ?></span>
 					<span class="wpss-request-card__meta-value">
@@ -247,14 +257,16 @@ do_action( 'wpss_before_request_card', $request_id );
 				</div>
 			<?php endif; ?>
 
+			<?php if ( $wpss_show_offers ) : ?>
 			<div class="wpss-request-card__meta-item">
 				<span class="wpss-request-card__meta-label"><?php esc_html_e( 'Proposals', 'wp-sell-services' ); ?></span>
 				<span class="wpss-request-card__meta-value"><?php echo esc_html( number_format_i18n( $proposal_count ) ); ?></span>
 			</div>
+			<?php endif; ?>
 		</div>
 
 		<div class="wpss-request-card__actions">
-			<?php if ( $has_time_left ) : ?>
+			<?php if ( $wpss_show_deadline && $has_time_left ) : ?>
 				<span class="wpss-request-card__expires">
 					<i data-lucide="clock" class="wpss-icon wpss-icon--sm wpss-request-card__expires-icon" aria-hidden="true"></i>
 					<?php echo esc_html( $time_remaining ); ?>

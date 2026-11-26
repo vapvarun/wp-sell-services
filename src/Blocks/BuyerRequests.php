@@ -192,7 +192,15 @@ class BuyerRequests extends AbstractBlock {
 						// inline markup, so a theme override applied on the
 						// archive and silently did not here, and the two cards
 						// drifted apart in what they showed.
-						wpss_get_template_part( 'content', 'request-card' );
+						wpss_get_template_part(
+							'content',
+							'request-card',
+							[
+								'wpss_show_budget'   => (bool) $attributes['showBudget'],
+								'wpss_show_deadline' => (bool) $attributes['showDeadline'],
+								'wpss_show_offers'   => (bool) $attributes['showOffers'],
+							]
+						);
 					endwhile;
 					?>
 				</div>
