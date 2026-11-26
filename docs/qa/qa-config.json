@@ -843,6 +843,10 @@
    {
     "id": "service-card-badge-wraps",
     "run": "${WP_CLI:-wp} eval-file tests/test-service-card-badge-wraps.php"
+   },
+   {
+    "id": "block-theme-shim-prints-module-map",
+    "run": "${WP_CLI:-wp} eval-file tests/test-block-theme-shim-prints-module-map.php"
    }
   ]
  }
