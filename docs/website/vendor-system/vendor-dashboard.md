@@ -14,6 +14,8 @@ Track the services you have purchased. You can see each order's status, the vend
 
 This is where vendors manage incoming orders from buyers. Each entry shows the order number, buyer name, service purchased, your earnings, delivery deadline, and current status.
 
+A new vendor with no services yet sees **Create your first service** here, which opens the service wizard. Once they have any service, including a draft, the button reads **View My Services**.
+
 From here you can:
 - View order details
 - Submit a delivery

@@ -813,6 +813,14 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "admin-menu-queue-counts",
+    "run": "${WP_CLI:-wp} eval-file tests/test-admin-menu-queue-counts.php"
+   },
+   {
+    "id": "new-vendor-sales-next-step",
+    "run": "${WP_CLI:-wp} eval-file tests/test-new-vendor-sales-next-step.php"
+   },
+   {
     "id": "auto-complete-reminder",
     "run": "${WP_CLI:-wp} eval-file tests/test-auto-complete-reminder.php"
    },

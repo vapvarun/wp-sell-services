@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.3
+ * @version 1.9.4
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -236,6 +236,10 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 	<?php endif; ?>
 
 	<?php if ( empty( $orders ) ) : ?>
+		<?php
+		// Drafts and services awaiting review count: the Services list shows them (Basecamp 10550911651).
+		$wpss_has_services = $sales_filtered || wpss_count_vendor_services( $user_id, array( 'publish', 'draft', 'pending', 'private' ) ) > 0;
+		?>
 		<div class="wpss-empty-state">
 			<div class="wpss-empty-state__icon">
 				<i data-lucide="banknote" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
@@ -253,8 +257,10 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 				<?php
 				if ( $sales_filtered ) {
 					esc_html_e( 'Try a wider date range or clear the status and search filters.', 'wp-sell-services' );
-				} else {
+				} elseif ( $wpss_has_services ) {
 					esc_html_e( 'When someone orders your service, it will appear here.', 'wp-sell-services' );
+				} else {
+					esc_html_e( 'Create a service so buyers can order from you. Their orders will appear here.', 'wp-sell-services' );
 				}
 				?>
 			</p>
@@ -262,9 +268,13 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 				<a href="<?php echo esc_url( remove_query_arg( array( 'sales_period', 'sales_status', 'sales_search', 'sales_page' ) ) ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php esc_html_e( 'Show all orders', 'wp-sell-services' ); ?>
 				</a>
-			<?php else : ?>
+			<?php elseif ( $wpss_has_services ) : ?>
 				<a href="<?php echo esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'services' ) ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php esc_html_e( 'View My Services', 'wp-sell-services' ); ?>
+				</a>
+			<?php else : ?>
+				<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>" class="wpss-btn wpss-btn--primary">
+					<?php esc_html_e( 'Create your first service', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
 		</div>

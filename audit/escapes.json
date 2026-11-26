@@ -1380,6 +1380,22 @@
    "added": "2026-11-27",
    "fails_on": "b58d2ee1 (8 FAIL)",
    "check": "tests/test-auto-complete-reminder.php"
+  },
+  {
+   "card": "10550910764",
+   "title": "Vendors, Disputes and Withdrawals menus had no count while their Dashboard cards did",
+   "guard": "static:admin-menu-queue-counts",
+   "added": "2026-11-27",
+   "fails_on": "6b6230e1 (7 FAIL)",
+   "check": "tests/test-admin-menu-queue-counts.php"
+  },
+  {
+   "card": "10550911651",
+   "title": "a vendor with no services was sent from Sales Orders to an empty Services list",
+   "guard": "static:new-vendor-sales-next-step",
+   "added": "2026-11-27",
+   "fails_on": "6b6230e1 (2 FAIL)",
+   "check": "tests/test-new-vendor-sales-next-step.php"
   }
  ]
 }
