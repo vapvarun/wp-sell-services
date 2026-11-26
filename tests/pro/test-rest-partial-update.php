@@ -17,6 +17,11 @@ if ( ! defined( 'WPSS_PRO_VERSION' ) ) {
 	echo "SKIP  Pro is not active\n";
 	return;
 }
+// Unlicensed Pro boots none of its features (Pro::init() returns at the licence gate).
+if ( ! ( new \WPSellServicesPro\License\Manager() )->is_valid() ) {
+	echo "SKIP  Pro is not licensed, so these routes and filters are not registered\n";
+	return;
+}
 
 require_once dirname( __DIR__ ) . '/exit-on-fail.php';
 
@@ -122,8 +127,8 @@ update_option( 'wpss_pro_connect_fee_percent', $saved[1] );
 $call( 'DELETE', "/commission-rules/{$rule}" );
 $call( 'DELETE', "/commission-rules/{$vol}" );
 global $wpdb;
-$wpdb->query( "DELETE FROM {$wpdb->prefix}wpss_commission_rules WHERE name LIKE 'QA-RFT%'" );
-$wpdb->query( "DELETE FROM {$wpdb->prefix}wpss_subscription_plans WHERE name LIKE 'QA-RFT%'" );
+$wpdb->query( "DELETE FROM {$wpdb->prefix}wpss_pro_commission_rules WHERE name LIKE 'QA-RFT%'" );
+$wpdb->query( "DELETE FROM {$wpdb->prefix}wpss_pro_subscription_plans WHERE name LIKE 'QA-RFT%'" );
 wp_set_current_user( 0 );
 
 echo $fails ? "{$fails} FAILED\n" : "All passed\n";

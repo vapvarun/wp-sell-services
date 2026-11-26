@@ -14,6 +14,11 @@ if ( ! defined( 'WPSS_PRO_VERSION' ) ) {
 	echo "SKIP  Pro is not active\n";
 	return;
 }
+// Unlicensed Pro boots none of its features (Pro::init() returns at the licence gate).
+if ( ! ( new \WPSellServicesPro\License\Manager() )->is_valid() ) {
+	echo "SKIP  Pro is not licensed, so these routes and filters are not registered\n";
+	return;
+}
 
 require_once dirname( __DIR__ ) . '/exit-on-fail.php';
 
