@@ -48,6 +48,19 @@ The **Become a Vendor** page only appears in this list while vendor registration
 
 After creating these pages, add the **Services** and **Become a Vendor** pages to your site's main menu at **Appearance > Menus**.
 
+## Finish Setting Up
+
+After the wizard, **Sell Services > Dashboard** opens with a **Finish setting up** box above Action items. It lists whatever still stops the marketplace from working, each with one link to fix it:
+
+- A required page is missing or unpublished
+- No payment method is turned on, or only demo payments are
+- Visitors cannot create accounts while vendor registration is open
+- Checkout takes payments but no Terms page is mapped
+- No services are published yet
+- Background jobs have stopped running
+
+Each row disappears once its cause is fixed, and the box goes when nothing is left. Nothing is saved: it is worked out from your settings every time the Dashboard loads. On the Dashboard these items appear only in the box; on the other WP Sell Services screens they still show as notices. The pages and Terms rows can be dismissed, as their notices can.
+
 ## Quick Configuration Checklist
 
 Here is everything you should review before inviting your first vendors:

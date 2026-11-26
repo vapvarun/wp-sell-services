@@ -434,6 +434,70 @@ h2.wpss-settings-subhead__title {
 	gap: 20px;
 }
 
+/* Finish setting up (Basecamp 10550887795): derived from setup health, hidden when empty. */
+.wpss-setup-steps {
+	background: var(--wpss-admin-white);
+	border: 1px solid var(--wpss-admin-border);
+	border-inline-start: 4px solid var(--wpss-admin-warning);
+	border-radius: var(--wpss-admin-radius-sm);
+	padding: 16px 20px;
+}
+
+.wpss-setup-steps__title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 15px;
+	font-weight: 600;
+	margin: 0 0 8px;
+	color: var(--wpss-admin-text);
+}
+
+.wpss-setup-steps__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.wpss-setup-steps__item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin: 0;
+	padding: 12px 0;
+	border-top: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-setup-steps__item:first-child {
+	border-top: 0;
+}
+
+.wpss-setup-steps__text {
+	margin: 0;
+	color: var(--wpss-admin-text);
+}
+
+.wpss-setup-steps__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+}
+
+@media (max-width: 782px) {
+	.wpss-setup-steps {
+		padding: 12px 16px;
+	}
+
+	.wpss-setup-steps__item {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+	}
+}
+
 /* Stats Row */
 .wpss-stats-heading {
 	font-size: 13px;

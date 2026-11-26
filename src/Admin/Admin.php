@@ -815,25 +815,18 @@ class Admin {
 		// interrupted about a settings page.
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		if ( ! self::is_wpss_screen( $screen ) ) {
+		// The Dashboard lists it in Finish setting up instead (Basecamp 10550887795).
+		if ( ! self::is_wpss_screen( $screen ) || 'toplevel_page_wp-sell-services' === $screen->id ) {
 			return;
 		}
 
-		$terms_id = (int) get_option( 'wpss_terms_page' );
+		$terms = $this->terms_problem();
 
-		if ( $terms_id && 'publish' === get_post_status( $terms_id ) ) {
+		if ( ! $terms ) {
 			return;
 		}
 
-		if ( ! wpss_terms_notice_due() ) {
-			return;
-		}
-
-		$signature = $this->live_gateway_signature();
-
-		if ( get_user_meta( get_current_user_id(), '_wpss_terms_notice_dismissed', true ) === $signature ) {
-			return;
-		}
+		$signature = $terms['dismiss'];
 
 		if ( $this->defer_notice( __( 'no Terms page is mapped', 'wp-sell-services' ) ) ) {
 			return;
@@ -843,11 +836,83 @@ class Admin {
 			'<div class="notice notice-warning is-dismissible wpss-dismissible-notice" data-notice="terms" data-signature="%s" data-nonce="%s"><p><strong>%s</strong> %s</p><p><a class="button" href="%s">%s</a></p></div>',
 			esc_attr( $signature ),
 			esc_attr( wp_create_nonce( 'wpss_dismiss_notice' ) ),
-			esc_html__( 'Checkout can take payments on this site, but no Terms page is mapped.', 'wp-sell-services' ),
-			esc_html__( 'Checkout has nothing to link to, so buyers agree to nothing in writing - which is the gap owners usually find out about during a dispute. Map a page you have written; we never publish one for you.', 'wp-sell-services' ),
-			esc_url( wpss_get_settings_url( 'pages' ) ),
-			esc_html__( 'Map a Terms page', 'wp-sell-services' )
+			esc_html( $terms['title'] ),
+			esc_html( $terms['text'] ),
+			esc_url( $terms['url'] ),
+			esc_html( $terms['label'] )
 		);
+	}
+
+	/**
+	 * The missing-Terms problem, or null when there is none or the owner dismissed it for these gateways.
+	 *
+	 * One condition and one wording for the notice and the Dashboard's Finish setting up block.
+	 *
+	 * @since 1.9.4
+	 *
+	 * @return array{title: string, text: string, url: string, label: string, dismiss: string}|null
+	 */
+	private function terms_problem(): ?array {
+		$terms_id = (int) get_option( 'wpss_terms_page' );
+
+		if ( $terms_id && 'publish' === get_post_status( $terms_id ) ) {
+			return null;
+		}
+
+		if ( ! wpss_terms_notice_due() ) {
+			return null;
+		}
+
+		$signature = $this->live_gateway_signature();
+
+		if ( get_user_meta( get_current_user_id(), '_wpss_terms_notice_dismissed', true ) === $signature ) {
+			return null;
+		}
+
+		return array(
+			'title'   => __( 'Checkout can take payments on this site, but no Terms page is mapped.', 'wp-sell-services' ),
+			'text'    => __( 'Checkout has nothing to link to, so buyers agree to nothing in writing - which is the gap owners usually find out about during a dispute. Map a page you have written; we never publish one for you.', 'wp-sell-services' ),
+			'url'     => wpss_get_settings_url( 'pages' ),
+			'label'   => __( 'Map a Terms page', 'wp-sell-services' ),
+			'dismiss' => $signature,
+		);
+	}
+
+	/**
+	 * What the owner still has to do before the marketplace works, for the Dashboard's Finish setting up block.
+	 *
+	 * Derived on every load, nothing stored: the setup-health problems, the missing Terms page and an
+	 * empty catalog, each worded as its notice is. Rows the owner dismissed as a notice stay dismissed.
+	 * Empty when the marketplace is ready (Basecamp 10550887795).
+	 *
+	 * @since 1.9.4
+	 *
+	 * @return array<string, array{text: string, url: string, label: string, title?: string, dismiss?: string}>
+	 */
+	public function get_setup_steps(): array {
+		$steps = array();
+
+		foreach ( $this->get_setup_health_problems() as $key => $problem ) {
+			if ( isset( $problem['dismiss'] ) && get_user_meta( get_current_user_id(), '_wpss_pages_notice_dismissed', true ) === $problem['dismiss'] ) {
+				continue;
+			}
+			$steps[ $key ] = $problem;
+		}
+
+		$terms = $this->terms_problem();
+		if ( $terms ) {
+			$steps['terms'] = $terms;
+		}
+
+		if ( ! (int) wp_count_posts( 'wpss_service' )->publish ) {
+			$steps['services'] = array(
+				'text'  => __( 'No services are published yet, so buyers find an empty catalog. Add one yourself, or invite vendors to sign up.', 'wp-sell-services' ),
+				'url'   => admin_url( 'post-new.php?post_type=wpss_service' ),
+				'label' => __( 'Add a service', 'wp-sell-services' ),
+			);
+		}
+
+		return $steps;
 	}
 
 	/**
@@ -1051,7 +1116,7 @@ class Admin {
 	 *
 	 * @since 1.7.1
 	 *
-	 * @return array<string, array{text: string, url: string, label: string, dismiss?: string}>
+	 * @return array<string, array{text: string, url: string, label: string, dismiss?: string, extra?: array{url: string, label: string}}>
 	 *         Keyed by problem; `dismiss` is a signature a dismissal is stored against.
 	 */
 	public function get_setup_health_problems(): array {
@@ -1122,6 +1187,12 @@ class Admin {
 					'text'  => __( 'Demo payments are on. Checkout is simulated so you can test the whole buying flow - no money moves and no card is charged. Configure a payment gateway before taking real orders; this notice clears itself once one is ready.', 'wp-sell-services' ),
 					'url'   => wpss_get_settings_url( 'payments' ),
 					'label' => __( 'Set up payments', 'wp-sell-services' ),
+					// The opt-out is what makes wpss_demo_payments reachable, so an owner can run a live
+					// store with no gateway yet rather than a simulated checkout.
+					'extra' => array(
+						'url'   => wp_nonce_url( admin_url( 'admin-post.php?action=wpss_disable_demo_payments' ), 'wpss_disable_demo_payments' ),
+						'label' => __( 'Turn demo payments off', 'wp-sell-services' ),
+					),
 				);
 			}
 		}
@@ -1174,7 +1245,8 @@ class Admin {
 
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		if ( ! $screen || ! $this->is_plugin_page( (string) $screen->id ) ) {
+		// The Dashboard lists these in Finish setting up instead (Basecamp 10550887795).
+		if ( ! $screen || ! $this->is_plugin_page( (string) $screen->id ) || 'toplevel_page_wp-sell-services' === $screen->id ) {
 			return;
 		}
 
@@ -1196,15 +1268,8 @@ class Admin {
 
 			$buttons = sprintf( '<a href="%s" class="button button-primary">%s</a>', esc_url( $problem['url'] ), esc_html( $problem['label'] ) );
 
-			// The opt-out link is what makes wpss_demo_payments reachable, so
-			// an owner can run a live store with no gateway yet rather than a
-			// simulated checkout.
-			if ( 'demo' === $key ) {
-				$buttons .= sprintf(
-					' <a href="%s" class="button">%s</a>',
-					esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=wpss_disable_demo_payments' ), 'wpss_disable_demo_payments' ) ),
-					esc_html__( 'Turn demo payments off', 'wp-sell-services' )
-				);
+			if ( isset( $problem['extra'] ) ) {
+				$buttons .= sprintf( ' <a href="%s" class="button">%s</a>', esc_url( $problem['extra']['url'] ), esc_html( $problem['extra']['label'] ) );
 			}
 
 			printf(
@@ -2042,6 +2107,42 @@ class Admin {
 			<hr class="wp-header-end">
 
 			<div class="wpss-dashboard-grid">
+				<?php $wpss_setup_steps = $this->get_setup_steps(); ?>
+				<?php if ( $wpss_setup_steps ) : ?>
+					<section class="wpss-setup-steps" aria-labelledby="wpss-setup-steps-title">
+						<h2 id="wpss-setup-steps-title" class="wpss-setup-steps__title">
+							<i data-lucide="list-checks" class="wpss-icon" aria-hidden="true"></i>
+							<?php esc_html_e( 'Finish setting up', 'wp-sell-services' ); ?>
+						</h2>
+						<ul class="wpss-setup-steps__list">
+							<?php foreach ( $wpss_setup_steps as $wpss_key => $wpss_step ) : ?>
+								<?php
+								$wpss_dismiss_attrs = isset( $wpss_step['dismiss'] )
+									? sprintf( ' data-notice="%s" data-signature="%s" data-nonce="%s"', esc_attr( $wpss_key ), esc_attr( $wpss_step['dismiss'] ), esc_attr( wp_create_nonce( 'wpss_dismiss_notice' ) ) )
+									: '';
+								?>
+								<li class="wpss-setup-steps__item<?php echo $wpss_dismiss_attrs ? ' wpss-dismissible-notice' : ''; ?>" data-step="<?php echo esc_attr( $wpss_key ); ?>"<?php echo $wpss_dismiss_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each value escaped above. ?>>
+									<p class="wpss-setup-steps__text">
+										<?php if ( isset( $wpss_step['title'] ) ) : ?>
+											<strong><?php echo esc_html( $wpss_step['title'] ); ?></strong>
+										<?php endif; ?>
+										<?php echo esc_html( $wpss_step['text'] ); ?>
+									</p>
+									<span class="wpss-setup-steps__actions">
+										<a class="button button-primary" href="<?php echo esc_url( $wpss_step['url'] ); ?>"><?php echo esc_html( $wpss_step['label'] ); ?></a>
+										<?php if ( isset( $wpss_step['extra'] ) ) : ?>
+											<a class="button" href="<?php echo esc_url( $wpss_step['extra']['url'] ); ?>"><?php echo esc_html( $wpss_step['extra']['label'] ); ?></a>
+										<?php endif; ?>
+										<?php if ( isset( $wpss_step['dismiss'] ) ) : ?>
+											<button type="button" class="button-link notice-dismiss-link"><?php esc_html_e( 'Dismiss', 'wp-sell-services' ); ?></button>
+										<?php endif; ?>
+									</span>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					</section>
+				<?php endif; ?>
+
 				<!-- Daily action items — counts >0 are highlighted, =0 dim out
 					so admin can confirm "nothing on my plate today" at a glance. -->
 				<h2 class="wpss-stats-heading"><?php esc_html_e( 'Action items', 'wp-sell-services' ); ?></h2>

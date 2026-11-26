@@ -1364,6 +1364,14 @@
    "added": "2026-11-27",
    "fails_on": "09120c15 (5 FAIL)",
    "check": "tests/test-clearance-names-dispute-window.php"
+  },
+  {
+   "card": "10550887795",
+   "title": "setup work left after the wizard was scattered across notices, with nothing for an empty catalog",
+   "guard": "static:finish-setting-up-block",
+   "added": "2026-11-27",
+   "fails_on": "2d7fa9a0 (7 FAIL)",
+   "check": "tests/test-finish-setting-up-block.php"
   }
  ]
 }

@@ -586,7 +586,7 @@
 	 * the missing page set, so a change asks again rather than staying silent
 	 * forever.
 	 */
-	$(document).on('click', '.wpss-dismissible-notice .notice-dismiss', function () {
+	$(document).on('click', '.wpss-dismissible-notice .notice-dismiss, .wpss-dismissible-notice .notice-dismiss-link', function () {
 		var $notice = $(this).closest('.wpss-dismissible-notice');
 
 		$.post(ajaxurl, {
@@ -595,6 +595,16 @@
 			signature: $notice.data('signature'),
 			nonce: $notice.data('nonce')
 		});
+
+		// A Finish setting up row is not a WP notice, so core does not hide it: drop it, and the
+		// block with its last row.
+		var $steps = $notice.closest('.wpss-setup-steps');
+		if ($steps.length) {
+			$notice.remove();
+			if (!$steps.find('.wpss-setup-steps__item').length) {
+				$steps.remove();
+			}
+		}
 	});
 
 	/**

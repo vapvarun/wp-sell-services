@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "finish-setting-up-block",
+    "run": "${WP_CLI:-wp} eval-file tests/test-finish-setting-up-block.php"
+   },
+   {
     "id": "clearance-names-dispute-window",
     "run": "${WP_CLI:-wp} eval-file tests/test-clearance-names-dispute-window.php"
    },
