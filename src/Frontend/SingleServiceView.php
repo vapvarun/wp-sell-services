@@ -403,7 +403,7 @@ class SingleServiceView {
 		$vendor_service = new \WPSellServices\Services\VendorService();
 		$profile        = $vendor_service->get_profile( $vendor_id );
 
-		$bio       = $profile->bio ?? get_user_meta( $vendor_id, 'description', true );
+		$bio       = wpss_get_vendor_bio( (int) $vendor_id );
 		$languages = ! empty( $profile->languages ) ? json_decode( $profile->languages, true ) : get_user_meta( $vendor_id, '_wpss_vendor_languages', true );
 		$skills    = ! empty( $profile->skills ) ? json_decode( $profile->skills, true ) : get_user_meta( $vendor_id, '_wpss_vendor_skills', true );
 		// completed_orders lives in the wpss_vendor_profiles table; the

@@ -331,9 +331,7 @@ class SchemaMarkup {
 		// migration) — the old wpss_vendor_* user-meta keys were never written.
 		$vendor_profile = wpss_get_vendor( $user_id );
 		$vendor_title   = $vendor_profile ? $vendor_profile->title : '';
-		$vendor_bio     = $vendor_profile && '' !== $vendor_profile->bio
-			? $vendor_profile->bio
-			: get_user_meta( $user_id, 'description', true );
+		$vendor_bio     = wpss_get_vendor_bio( $user_id );
 
 		$schema = array(
 			'@type' => 'Person',

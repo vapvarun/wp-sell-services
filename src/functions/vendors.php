@@ -74,6 +74,25 @@ function wpss_get_vendor( int $user_id ): ?\WPSellServices\Models\VendorProfile 
 }
 
 /**
+ * A vendor's bio: the vendor profile's, else the WordPress profile Biographical Info.
+ *
+ * One rule for the Vendor Card block, the service page About box and the
+ * schema markup. The profile model stores '' rather than null, so a `??`
+ * fallback never reached the WordPress bio and the card showed nothing.
+ *
+ * @since 1.9.4
+ *
+ * @param int $user_id Vendor user ID.
+ * @return string Bio text, '' when neither is set.
+ */
+function wpss_get_vendor_bio( int $user_id ): string {
+	$profile = wpss_get_vendor( $user_id );
+	$bio     = $profile ? trim( (string) $profile->bio ) : '';
+
+	return '' !== $bio ? $bio : (string) get_user_meta( $user_id, 'description', true );
+}
+
+/**
  * Get a vendor's account status.
  *
  * Shared accessor for every vendor-status read. Resolves from the canonical

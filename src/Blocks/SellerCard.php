@@ -184,7 +184,7 @@ class SellerCard extends AbstractBlock {
 
 				<?php if ( $attributes['showBio'] ) : ?>
 					<?php
-					$bio = get_user_meta( $user_id, 'description', true );
+					$bio = wpss_get_vendor_bio( (int) $user_id );
 					if ( $bio ) :
 						?>
 						<div class="wpss-seller-bio">
