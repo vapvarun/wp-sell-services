@@ -1268,6 +1268,14 @@
    "added": "2026-11-26",
    "fails_on": "91575683 (2 FAIL); f79ce5a4 edit-form door (1 FAIL)",
    "check": "tests/test-request-close-records-status.php"
+  },
+  {
+   "card": "10549776724",
+   "title": "the hidden reorder error showed as an empty pink box under Order again",
+   "guard": "static:hidden-notice-stays-hidden",
+   "added": "2026-11-26",
+   "fails_on": "dc2eafb9 (4 FAIL)",
+   "check": "tests/test-hidden-notice-stays-hidden.php"
   }
  ]
 }

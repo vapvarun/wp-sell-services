@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "hidden-notice-stays-hidden",
+    "run": "${WP_CLI:-wp} eval-file tests/test-hidden-notice-stays-hidden.php"
+   },
+   {
     "id": "request-close-records-status",
     "run": "${WP_CLI:-wp} eval-file tests/test-request-close-records-status.php"
    },

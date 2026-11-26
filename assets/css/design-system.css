@@ -1155,6 +1155,8 @@ select.wpss-form-input::-ms-expand {
 .wpss-notice--error   { background: var(--wpss-danger-light); color: var(--wpss-danger-dark, #991b1b); border: 1px solid var(--wpss-danger-border, #fecaca); }
 .wpss-notice--warning { background: var(--wpss-warning-light); color: var(--wpss-warning-dark, #92400e); border: 1px solid var(--wpss-warning-border, #fde68a); }
 .wpss-notice--info    { background: var(--wpss-info-light); color: var(--wpss-info-dark, #1e40af); border: 1px solid var(--wpss-info-border, #bfdbfe); }
+/* A hidden notice stays hidden: display:flex above outranks the browser's [hidden] rule. */
+.wpss-notice[hidden] { display: none; }
 
 /* Banner */
 .wpss-banner { display: flex; align-items: center; gap: var(--wpss-space-4); padding: var(--wpss-space-5) var(--wpss-space-6); border-radius: var(--wpss-radius-lg); margin-bottom: var(--wpss-space-6); }
