@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.0
+ * @version 1.9.4
  *
  * @var WPSellServices\Models\Service $service    Service object.
  * @var int                            $service_id Service post ID.
@@ -19,7 +19,8 @@
 defined( 'ABSPATH' ) || exit;
 
 $service_id = get_the_ID();
-$faqs       = get_post_meta( $service_id, '_wpss_faqs', true ) ?: [];
+// Only complete rows render, so an incomplete stored row cannot print an empty box.
+$faqs = wpss_sanitize_service_faqs( (array) ( get_post_meta( $service_id, '_wpss_faqs', true ) ?: [] ) );
 
 if ( empty( $faqs ) ) {
 	return;

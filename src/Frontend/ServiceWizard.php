@@ -2099,7 +2099,7 @@ class ServiceWizard {
 			'gallery'      => $this->sanitize_gallery( $data['gallery'] ?? array() ),
 			'requirements' => $this->sanitize_requirements( $data['requirements'] ?? array() ),
 			'extras'       => $this->sanitize_extras( $data['extras'] ?? array() ),
-			'faqs'         => $this->sanitize_faqs( $data['faqs'] ?? array() ),
+			'faqs'         => wpss_sanitize_service_faqs( (array) ( $data['faqs'] ?? array() ) ),
 		);
 
 		/**
@@ -2229,29 +2229,6 @@ class ServiceWizard {
 	 */
 	private function sanitize_extras( array $extras ): array {
 		return wpss_normalize_service_addons( $extras );
-	}
-
-	/**
-	 * Sanitize FAQs data.
-	 *
-	 * @param array $faqs Raw FAQs.
-	 * @return array Sanitized FAQs.
-	 */
-	private function sanitize_faqs( array $faqs ): array {
-		$sanitized = array();
-
-		foreach ( $faqs as $faq ) {
-			if ( empty( $faq['question'] ) || empty( $faq['answer'] ) ) {
-				continue;
-			}
-
-			$sanitized[] = array(
-				'question' => sanitize_text_field( $faq['question'] ),
-				'answer'   => wp_kses_post( $faq['answer'] ),
-			);
-		}
-
-		return $sanitized;
 	}
 
 	/**

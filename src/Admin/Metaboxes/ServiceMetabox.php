@@ -812,16 +812,7 @@ class ServiceMetabox {
 		// Save FAQs.
 		$faqs_data = $capped['meta']['faqs'];
 		if ( is_array( $faqs_data ) && ! empty( $faqs_data ) ) {
-			$faqs = array();
-			foreach ( $faqs_data as $faq ) {
-				if ( ! empty( $faq['question'] ) ) {
-					$faqs[] = array(
-						'question' => sanitize_text_field( $faq['question'] ),
-						'answer'   => sanitize_textarea_field( $faq['answer'] ?? '' ),
-					);
-				}
-			}
-			update_post_meta( $post_id, '_wpss_faqs', $faqs );
+			update_post_meta( $post_id, '_wpss_faqs', wpss_sanitize_service_faqs( $faqs_data ) );
 		} elseif ( isset( $_POST['wpss_faqs_present'] ) ) {
 			// The FAQ panel was on the form and submitted zero rows: the admin
 			// removed every FAQ, so clear the meta. Without this sentinel guard

@@ -55,6 +55,26 @@ $check( 'the FAQ cap applies over REST', 2 === count( $stored() ), (string) coun
 $put( array( 'faqs' => array( array( 'question' => 'QA-RFT kept', 'answer' => 'yes' ), array( 'question' => '', 'answer' => ' <p></p> ' ) ) ) );
 $check( 'a blank FAQ row is dropped, not stored', 1 === count( $stored() ) && 'QA-RFT kept' === ( $stored()[0]['question'] ?? '' ), wp_json_encode( $stored() ) );
 
+$faq_box = static function () use ( $service ): string {
+	global $post;
+	$post = get_post( $service ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- the partial reads get_the_ID().
+	setup_postdata( $post );
+	ob_start();
+	include WPSS_PLUGIN_DIR . 'templates/partials/service-faqs.php';
+	$html = (string) ob_get_clean();
+	wp_reset_postdata();
+	return $html;
+};
+foreach ( array(
+	'answer-only' => array( 'question' => '', 'answer' => 'QA-RFT answer with no question' ),
+	'question-only' => array( 'question' => 'QA-RFT question with no answer', 'answer' => '' ),
+) as $kind => $row ) {
+	$put( array( 'faqs' => array( $row ) ) );
+	$check( "an {$kind} row is not stored", array() === $stored(), wp_json_encode( $stored() ) );
+	update_post_meta( $service, '_wpss_faqs', array( $row ) ); // Older data saved before 1.9.4.
+	$check( "  and a stored {$kind} row prints no FAQ box", false === strpos( $faq_box(), 'wpss-service-faqs' ) );
+}
+
 $put( array( 'faqs' => array() ) );
 $check( 'faqs: [] clears them', array() === $stored() );
 

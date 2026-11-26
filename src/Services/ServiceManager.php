@@ -482,21 +482,7 @@ class ServiceManager {
 	 * @return void
 	 */
 	public function save_faqs( int $service_id, array $faqs ): void {
-		// Sanitize FAQs before saving.
-		$sanitized_faqs = array();
-		foreach ( $faqs as $faq ) {
-			$question = sanitize_text_field( $faq['question'] ?? '' );
-			$answer   = wp_kses_post( $faq['answer'] ?? '' );
-			// A row with neither a question nor an answer is a blank form row, not an FAQ.
-			if ( '' === $question && '' === trim( wp_strip_all_tags( $answer ) ) ) {
-				continue;
-			}
-			$sanitized_faqs[] = array(
-				'question' => $question,
-				'answer'   => $answer,
-			);
-		}
-		update_post_meta( $service_id, '_wpss_faqs', $sanitized_faqs );
+		update_post_meta( $service_id, '_wpss_faqs', wpss_sanitize_service_faqs( $faqs ) );
 	}
 
 	/**

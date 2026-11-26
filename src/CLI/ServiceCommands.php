@@ -573,7 +573,7 @@ class ServiceCommands extends WP_CLI_Command {
 
 		// Save other meta.
 		if ( ! empty( $data['faqs'] ) ) {
-			update_post_meta( $post_id, '_wpss_faqs', $data['faqs'] );
+			update_post_meta( $post_id, '_wpss_faqs', wpss_sanitize_service_faqs( (array) $data['faqs'] ) );
 		}
 		if ( ! empty( $data['requirements'] ) ) {
 			wpss_save_service_requirements( $post_id, (array) $data['requirements'] );

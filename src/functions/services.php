@@ -1157,3 +1157,40 @@ function wpss_user_can_edit_service( ?\WP_Post $service, int $user_id ): bool {
 	return $service && 'wpss_service' === $service->post_type
 		&& ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
 }
+
+/**
+ * The one FAQ rule: a row is kept only when it has both a question and an answer.
+ *
+ * Shared by every writer (wizard, admin metabox, REST, WP-CLI) and by the
+ * service page, which shows a row only when both are present. Three writers
+ * once used three rules, so a half-filled row could be stored and the page
+ * printed an empty "Frequently Asked Questions" box (Basecamp 10545978302).
+ *
+ * @since 1.9.4
+ *
+ * @param array<int,mixed> $faqs Raw FAQ rows.
+ * @return array<int,array{question:string,answer:string}> Sanitised, complete rows.
+ */
+function wpss_sanitize_service_faqs( array $faqs ): array {
+	$clean = array();
+
+	foreach ( $faqs as $faq ) {
+		if ( ! is_array( $faq ) ) {
+			continue;
+		}
+
+		$question = sanitize_text_field( (string) ( $faq['question'] ?? '' ) );
+		$answer   = wp_kses_post( (string) ( $faq['answer'] ?? '' ) );
+
+		if ( '' === $question || '' === trim( wp_strip_all_tags( $answer ) ) ) {
+			continue;
+		}
+
+		$clean[] = array(
+			'question' => $question,
+			'answer'   => $answer,
+		);
+	}
+
+	return $clean;
+}
