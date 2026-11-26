@@ -25,10 +25,10 @@ add_filter( 'pre_wp_mail', '__return_true' );
 
 $vendor = wp_insert_user( array( 'user_login' => 'qa_rft_pa_vendor', 'user_pass' => wp_generate_password(), 'user_email' => 'qa_rft_pa_vendor@example.test' ) );
 $made   = array();
-$order  = static function ( string $status ) use ( $wpdb, $orders, $vendor, &$made ): int {
+$order  = static function ( string $status, array $extra = array() ) use ( $wpdb, $orders, $vendor, &$made ): int {
 	$wpdb->insert(
 		$orders,
-		array(
+		$extra + array(
 			'order_number'   => 'QA-RFT-PA-' . wp_generate_password( 6, false ),
 			'customer_id'    => 1,
 			'vendor_id'      => $vendor,
@@ -57,6 +57,28 @@ try {
 
 	$paid = $text( $svc->send( $vendor, 'proposal_accepted', array( 'order_id' => $order( 'pending_requirements' ), 'request_title' => 'QA-RFT logo' ) ) );
 	$check( 'paid hire: keeps the start-work copy', false !== stripos( $paid, 'start work' ) && false === stripos( $paid, 'waiting for the buyer' ), $paid );
+
+	// Milestone hire: the parent opens in_progress at once; phase 1 is its own unpaid sub-order.
+	$phase = static function ( int $parent, string $status ) use ( $order ): int {
+		return $order(
+			$status,
+			array(
+				'platform'          => 'milestone',
+				'platform_order_id' => $parent,
+				'meta'              => wp_json_encode( array( 'is_contract_milestone' => true, 'title' => 'QA-RFT phase 1' ) ),
+			)
+		);
+	};
+	$ms_parent = $order( 'in_progress' );
+	$phase( $ms_parent, 'pending_payment' );
+	$ms_unpaid = $text( $svc->send( $vendor, 'proposal_accepted', array( 'order_id' => $ms_parent, 'request_title' => 'QA-RFT logo' ) ) );
+	$check( 'milestone hire, phase 1 unpaid: says the phase waits for payment', false !== stripos( $ms_unpaid, 'waiting for the buyer' ) && false !== strpos( $ms_unpaid, 'QA-RFT phase 1' ), $ms_unpaid );
+	$check( 'milestone hire, phase 1 unpaid: does not say the order is open', false === stripos( $ms_unpaid, 'order is now open' ), $ms_unpaid );
+
+	$ms_paid_parent = $order( 'in_progress' );
+	$phase( $ms_paid_parent, 'in_progress' );
+	$ms_paid = $text( $svc->send( $vendor, 'proposal_accepted', array( 'order_id' => $ms_paid_parent, 'request_title' => 'QA-RFT logo' ) ) );
+	$check( 'milestone hire, phase 1 paid: keeps the start-work copy', false !== stripos( $ms_paid, 'order is now open' ), $ms_paid );
 } finally {
 	foreach ( $made as $id ) {
 		$wpdb->delete( $orders, array( 'id' => $id ) );

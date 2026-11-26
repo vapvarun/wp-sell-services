@@ -1572,6 +1572,31 @@ class NotificationService {
 					);
 					break;
 				}
+				// A milestone hire opens the workspace at once, but each phase is paid
+				// on its own: while one waits for payment there is nothing to start.
+				$unpaid_phase = null;
+				if ( $order ) {
+					foreach ( ( new MilestoneService() )->get_for_parent( (int) $order->id ) as $phase ) {
+						if ( $phase['is_contract_milestone'] && \WPSellServices\Models\ServiceOrder::STATUS_PENDING_PAYMENT === $phase['status'] ) {
+							$unpaid_phase = $phase;
+							break;
+						}
+					}
+				}
+				if ( $unpaid_phase ) {
+					$message->line(
+						/* translators: %s: request title */
+						__( 'The buyer accepted your proposal on "%s".', 'wp-sell-services' ),
+						(string) ( $data['request_title'] ?? '' )
+					);
+					$message->paragraph(
+						/* translators: 1: milestone title, 2: milestone order number */
+						__( 'Milestone "%1$s" (#%2$s) is waiting for the buyer\'s payment. Start work on it once it is paid.', 'wp-sell-services' ),
+						$unpaid_phase['title'],
+						$unpaid_phase['order_number']
+					);
+					break;
+				}
 				$message->line(
 					/* translators: %s: request title */
 					__( 'The buyer accepted your proposal on "%s" and the order is now open.', 'wp-sell-services' ),
