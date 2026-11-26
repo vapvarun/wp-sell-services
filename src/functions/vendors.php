@@ -76,8 +76,9 @@ function wpss_get_vendor( int $user_id ): ?\WPSellServices\Models\VendorProfile 
 /**
  * A vendor's bio: the vendor profile's, else the WordPress profile Biographical Info.
  *
- * One rule for the Vendor Card block, the service page About box and the
- * schema markup. The profile model stores '' rather than null, so a `??`
+ * One rule for every public surface: the Vendor Card block, the service page
+ * About box, the vendor profile page and shortcode, the REST vendor payloads
+ * and the schema markup. The profile model stores '' rather than null, so a `??`
  * fallback never reached the WordPress bio and the card showed nothing.
  *
  * @since 1.9.4

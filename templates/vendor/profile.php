@@ -43,7 +43,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.3
+ * @version 1.9.4
  *
  * @var int $vendor_id Vendor user ID.
  */
@@ -78,7 +78,7 @@ $profile = $vendor_service->get_profile( $vendor_id );
 
 // Get vendor data from profile object (database) with fallbacks.
 $tagline       = $profile->tagline ?? '';
-$bio           = $profile->bio ?? '';
+$bio           = wpss_get_vendor_bio( (int) $vendor_id );
 $skills        = ! empty( $profile->skills ) ? json_decode( $profile->skills, true ) : [];
 $languages     = ! empty( $profile->languages ) ? json_decode( $profile->languages, true ) : [];
 $response_time = $vendor_service->get_response_time( $vendor_id );

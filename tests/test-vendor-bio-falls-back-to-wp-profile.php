@@ -48,6 +48,14 @@ $set_bio( '' );
 $check( 'Vendor Card: no profile bio falls back to the WordPress bio', false !== strpos( $card(), 'QA-RFT WordPress bio' ) );
 $check( 'About the Vendor: no profile bio falls back to the WordPress bio', false !== strpos( $about(), 'QA-RFT WordPress bio' ) );
 
+$rest_bio = static function ( string $route ) {
+	$res = rest_do_request( new WP_REST_Request( 'GET', $route ) );
+	$d   = $res->get_data();
+	return (string) ( $d['bio'] ?? ( $d['vendor_profile']['bio'] ?? '' ) );
+};
+$check( 'REST GET /vendors/{id}: falls back to the WordPress bio', 'QA-RFT WordPress bio' === $rest_bio( '/wpss/v1/vendors/' . $vendor ) );
+$check( 'REST GET /services/{id}: vendor bio falls back too', 'QA-RFT WordPress bio' === $rest_bio( '/wpss/v1/services/' . $service ) );
+
 $set_bio( 'QA-RFT profile bio' );
 $check( 'Vendor Card: the vendor profile bio wins', false !== strpos( $card(), 'QA-RFT profile bio' ) && false === strpos( $card(), 'QA-RFT WordPress bio' ) );
 $check( 'About the Vendor: the vendor profile bio wins', false !== strpos( $about(), 'QA-RFT profile bio' ) );

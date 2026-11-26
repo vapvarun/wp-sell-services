@@ -919,7 +919,7 @@ class VendorsController extends RestController {
 			'avatar'           => get_avatar_url( $vendor_id, array( 'size' => 96 ) ),
 			'avatar_large'     => get_avatar_url( $vendor_id, array( 'size' => 256 ) ),
 			'tagline'          => $profile ? $profile->title : '',
-			'bio'              => $profile ? $profile->bio : '',
+			'bio'              => wpss_get_vendor_bio( (int) $vendor_id ),
 			'skills'           => get_user_meta( $vendor_id, '_wpss_vendor_skills', true ) ?: array(),
 			'languages'        => get_user_meta( $vendor_id, '_wpss_vendor_languages', true ) ?: array(),
 			'response_time'    => get_user_meta( $vendor_id, '_wpss_vendor_response_time', true ) ?: '',

@@ -1058,7 +1058,7 @@ class Shortcodes {
 	private function render_vendor_profile_fallback( object $profile, int $vendor_id ): void {
 		$display_name = wpss_get_member_display_name( $vendor_id );
 		$tagline      = (string) ( $profile->tagline ?? '' );
-		$bio          = (string) ( $profile->bio ?? '' );
+		$bio          = wpss_get_vendor_bio( $vendor_id );
 		?>
 		<div class="wpss-app-shell"><div class="wpss-app-shell__container">
 		<div class="wpss-vendor-profile">

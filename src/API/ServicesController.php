@@ -581,7 +581,7 @@ class ServicesController extends RestController {
 		return array(
 			'id'               => $vendor_id,
 			'tagline'          => $profile ? (string) $profile->title : '',
-			'bio'              => $profile ? (string) $profile->bio : '',
+			'bio'              => wpss_get_vendor_bio( $vendor_id ),
 			'country'          => $profile ? (string) $profile->country : '',
 			'is_verified'      => $profile ? (bool) $profile->is_verified : false,
 			'completed_orders' => $profile ? (int) $profile->orders_completed : 0,
