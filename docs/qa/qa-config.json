@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "settings-bare-hash-stays",
+    "run": "node tests/test-settings-bare-hash-stays.cjs"
+   },
+   {
     "id": "hidden-notice-stays-hidden",
     "run": "${WP_CLI:-wp} eval-file tests/test-hidden-notice-stays-hidden.php"
    },

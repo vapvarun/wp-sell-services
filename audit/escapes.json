@@ -1276,6 +1276,14 @@
    "added": "2026-11-26",
    "fails_on": "dc2eafb9 (4 FAIL)",
    "check": "tests/test-hidden-notice-stays-hidden.php"
+  },
+  {
+   "card": "10550073503",
+   "title": "the colour picker's href=\"#\" handle sent Settings back to General",
+   "guard": "static:settings-bare-hash-stays",
+   "added": "2026-11-26",
+   "fails_on": "a604d408 (2 FAIL)",
+   "check": "tests/test-settings-bare-hash-stays.cjs"
   }
  ]
 }

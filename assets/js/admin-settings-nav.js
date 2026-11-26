@@ -134,6 +134,13 @@
 	// the page did not.
 	window.addEventListener( 'hashchange', function() {
 		var id = location.hash.replace( '#', '' );
+		// A bare "#" comes from an href="#" control inside a section (the colour picker's
+		// handle), not from navigation: stay on this section (Basecamp 10550073503).
+		var current = document.querySelector( NAV + '.' + ACTIVE );
+		if ( ! id && '#' === location.href.slice( -1 ) && current ) {
+			history.replaceState( null, '', '#' + current.dataset.section );
+			return;
+		}
 		if ( ! leaveIfMoved( id ) ) {
 			activate( id || '' );
 		}
