@@ -59,7 +59,10 @@ $order        = static function ( string $txn, string $method ) use ( $wpdb, $or
 };
 $row     = static fn( int $id ) => $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$orders_table} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $open    = static fn( int $id ): array => ChargebackService::open_for_order( $row( $id ) );
-$ledgers = static fn(): int => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$ledger} WHERE reference_id IN (" . implode( ',', array_map( 'intval', $made ) ) . ')' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// A closure by reference: an arrow function would freeze $made while it is still empty.
+$ledgers = static function () use ( $wpdb, $ledger, &$made ): int {
+	return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$ledger} WHERE reference_id IN (" . implode( ',', array_map( 'intval', $made ) ) . ')' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+};
 
 $mails = array();
 add_filter(
