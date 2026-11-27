@@ -269,9 +269,25 @@ do_action( 'wpss_before_service_card', $service_id );
 			do_action( 'wpss_service_card_footer', $service_id );
 			?>
 
+			<?php
+			// A non-fixed type names itself, so a quote-only service never reads as buyable.
+			$wpss_card_type = wpss_get_service_type( $service_id );
+			$wpss_type_name = 'fixed' === $wpss_card_type ? '' : (string) ( wpss_get_service_types()[ $wpss_card_type ]['label'] ?? '' );
+			?>
 			<?php if ( $wpss_show_price ) : ?>
-				<span class="wpss-service-card__price-label"><?php esc_html_e( 'Starting at', 'wp-sell-services' ); ?></span>
+				<span class="wpss-service-card__price-label">
+					<?php
+					if ( '' !== $wpss_type_name ) {
+						/* translators: %s: service type label, e.g. "Custom quote". */
+						echo esc_html( sprintf( __( '%s, from', 'wp-sell-services' ), $wpss_type_name ) );
+					} else {
+						esc_html_e( 'Starting at', 'wp-sell-services' );
+					}
+					?>
+				</span>
 				<span class="wpss-service-card__price"><?php echo wp_kses_post( wpss_catalog_price_html( $starting_price, 'card' ) ); ?></span>
+			<?php elseif ( '' !== $wpss_type_name ) : ?>
+				<span class="wpss-service-card__price-label"><?php echo esc_html( $wpss_type_name ); ?></span>
 			<?php endif; ?>
 		</div>
 	</a>

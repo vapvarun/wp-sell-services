@@ -1294,7 +1294,7 @@
       "known_gap": "The post type uses WordPress's post capabilities, so a member with an editing role can still change other fields (author) through core routes. Planned: own capability type in the version after 1.8.0."
     },
     "service_availability": {
-      "authority": "wpss_service_unavailable_reason( $service_id ) in src/functions/services.php: missing, unpublished, paused, seller on vacation, then the wpss_service_unavailable_reason filter.",
+      "authority": "wpss_service_unavailable_reason( $service_id ) in src/functions/services.php: missing, unpublished, paused, a non-purchasable service type (custom quote), seller on vacation, then the wpss_service_unavailable_reason filter.",
       "callers": [
         "CheckoutIntentService::price_service_line (every purchase path prices through it; WP_Error wpss_service_paused or wpss_service_unavailable, 409)",
         "wpss_get_user_cart",
@@ -1305,7 +1305,23 @@
       ],
       "listing_rule": "Vendors on vacation are left out with author__not_in = wpss_get_unlisted_seller_ids(): catalog, search, REST services, services grid, featured block, Related services (SingleServiceView), live search (AjaxHandlers)."
     },
-    "request_deadline": "A request's deadline is stored as _wpss_expires_at (service key expires_at). REST create and update both map the 'deadline' parameter to it, and the response's 'deadline' field reads it back."
+    "request_deadline": "A request's deadline is stored as _wpss_expires_at (service key expires_at). REST create and update both map the 'deadline' parameter to it, and the response's 'deadline' field reads it back.",
+    "service_types": {
+      "card": "10551449478 (2.0.0)",
+      "registry": "wpss_get_service_types() in src/functions/services.php, filter wpss_service_types: id => label, description, purchasable, steps (wizard step keys), addons. fixed (default, all steps) and custom (quote first: purchasable false, no requirements step, no add-ons). Digital and subscription register with their own cards. fixed cannot be filtered away.",
+      "meta": "_wpss_service_type post meta; one writer wpss_set_service_type() (ignores unknown ids); reader wpss_get_service_type() returns fixed when unset or no longer registered, so no migration.",
+      "purchase_rule": "A type with purchasable=false is refused by wpss_service_unavailable_reason(), so every rail, cart, checkout pricer and REST cart refuses it; proposals (buyer request -> order) do not go through it and still work.",
+      "surfaces": [
+        "ServiceWizard step 1 radio + type-driven steps (assets/js/service-wizard.js get steps(), typeHasAddons(); wpssWizard.serviceTypes)",
+        "ServiceMetabox Overview 'Sold as' select (wpss_service_type)",
+        "REST service card service_type, POST/PUT service_type (enum), GET /services?service_type=",
+        "templates/partials/service-packages.php: Ask for a quote (contact form) + Post a request",
+        "templates/content-service-card.php: '<Type>, from' label",
+        "ServiceArchiveView sidebar 'How you pay' + query via wpss_service_type_meta_query()",
+        "MarketplaceSeeder: one demo service set to custom, no orders seeded on it"
+      ],
+      "test": "tests/test-service-types.php (guard static:service-types)"
+    }
   },
   "coverage": {
     "map": "bin/coverage-map.php lists every REST route, AJAX action, shortcode, block, admin page, CLI command, template and fired hook from the live registries and src/, and finds each in tests/, audit/journeys/, the smoke runbook and audit/render-coverage.json. Run: wp --exec=\"define('WP_ADMIN', true);\" eval-file bin/coverage-map.php [write|check]. CI runs check; audit/coverage-baseline.json ratchets down only.",

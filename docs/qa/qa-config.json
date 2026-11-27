@@ -1039,6 +1039,10 @@
    {
     "id": "file-scopes",
     "run": "${WP_CLI:-wp} eval-file tests/test-file-scopes.php"
+   },
+   {
+    "id": "service-types",
+    "run": "${WP_CLI:-wp} eval-file tests/test-service-types.php"
    }
   ]
  }

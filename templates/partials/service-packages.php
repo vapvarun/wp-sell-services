@@ -35,6 +35,10 @@ $wpss_paused = isset( $wpss_paused )
 	? (bool) $wpss_paused
 	: ( 'paused' === wpss_get_service_status( $service_id ) );
 
+// Quote-first type: packages are a price guide and the CTA asks for a quote instead of selling one.
+$wpss_by_quote    = empty( wpss_get_service_types()[ wpss_get_service_type( $service_id ) ]['purchasable'] ?? true );
+$wpss_request_url = $wpss_by_quote ? wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'create-request' ) : '';
+
 // If no packages, show single price (omit description to avoid duplicating "About This Service").
 if ( empty( $packages ) ) {
 	$price         = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
@@ -291,6 +295,22 @@ do_action( 'wpss_before_service_packages', $service_id );
 							</button>
 							<p id="<?php echo esc_attr( $wpss_paused_note_id ); ?>" class="wpss-package-vacation-note">
 								<?php esc_html_e( 'This service is paused and not accepting new orders right now.', 'wp-sell-services' ); ?>
+							</p>
+						<?php elseif ( $wpss_by_quote ) : ?>
+							<?php $wpss_quote_note_id = 'wpss-quote-cta-note-' . esc_attr( $index ); ?>
+							<button type="button"
+									class="wpss-btn wpss-btn--primary wpss-btn--block wpss-contact-btn"
+									data-vendor="<?php echo esc_attr( $vendor_id ); ?>"
+									aria-describedby="<?php echo esc_attr( $wpss_quote_note_id ); ?>">
+								<?php esc_html_e( 'Ask for a quote', 'wp-sell-services' ); ?>
+							</button>
+							<?php if ( $wpss_request_url ) : ?>
+								<a href="<?php echo esc_url( $wpss_request_url ); ?>" class="wpss-btn wpss-btn--secondary wpss-btn--block wpss-request-quote-link">
+									<?php esc_html_e( 'Post a request', 'wp-sell-services' ); ?>
+								</a>
+							<?php endif; ?>
+							<p id="<?php echo esc_attr( $wpss_quote_note_id ); ?>" class="wpss-package-quote-note">
+								<?php esc_html_e( 'Priced by quote. The package shows a typical price; the seller sends you an exact one.', 'wp-sell-services' ); ?>
 							</p>
 						<?php elseif ( (float) ( $package['price'] ?? 0 ) <= 0 ) : ?>
 							<?php

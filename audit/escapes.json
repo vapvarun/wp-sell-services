@@ -1595,6 +1595,13 @@
    "guard": "static:file-scopes",
    "added": "2026-11-28",
    "fails_on": "87990a11 (no wpss_can_read_file: the first check fails and the test stops)"
+  },
+  {
+   "card": "10551449478",
+   "title": "Every service was sold the same way: a vendor who prices by quote had no way to list without a buy button, and nothing stopped a package being bought on such a service through the cart, checkout or REST",
+   "guard": "static:service-types",
+   "added": "2026-11-28",
+   "fails_on": "3d9b07ce (no wpss_get_service_types: the first check fails and the test stops)"
   }
  ]
 }

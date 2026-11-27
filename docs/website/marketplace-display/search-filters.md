@@ -29,6 +29,14 @@ Category archives have their own pages, so when a visitor selects "Logo Design,"
 
 ---
 
+## How You Pay Filter
+
+The services page sidebar has a **How you pay** filter: **Fixed price**, **Custom quote** or **Any**. Fixed price also lists every service created before service types existed. Custom-quote services are labelled **Custom quote, from** on their card instead of **Starting at**.
+
+The filter appears only when more than one service type is available. The same filter is `service_type` on `GET /wpss/v1/services`.
+
+---
+
 ## Sort Options
 
 On the services catalog page, visitors can sort results by:

@@ -244,9 +244,15 @@ silently.
 ### A service card is always the same object
 
 `GET /services` and `GET /favorites` return the same keys for a service: `id`,
-`title`, `slug`, `description`, `excerpt`, `status`, `paused`, `link`, `vendor`,
+`title`, `slug`, `description`, `excerpt`, `status`, `paused`, `service_type`, `link`, `vendor`,
 `pricing`, `delivery`, `images`, `categories`, `tags`, `rating`, `created_at`,
 `updated_at`.
+
+`service_type` is `fixed` (buy a package) or `custom` (quote first: no package can be
+added to a cart or checked out, and the cart answers with the reason). A service saved
+before 2.0.0 reads as `fixed`. Send `service_type` on `POST` or `PUT /services/{id}` to
+change it (an unknown value is refused with 400), and `GET /services?service_type=custom`
+to list one type. Other plugins can add types through the `wpss_service_types` filter.
 
 `/favorites` additionally carries the flat `thumbnail`, `price`, `price_minor`
 and `currency` it has always returned. One exception is deliberate and

@@ -395,29 +395,31 @@ function wpss_rest_service_card( \WP_Post $service ): array {
 	$tags = wp_get_object_terms( $service->ID, 'wpss_service_tag', array( 'fields' => 'names' ) );
 
 	return array(
-		'id'          => (int) $service->ID,
-		'title'       => wpss_rest_text( $service->post_title ),
-		'slug'        => $service->post_name,
-		'description' => $service->post_content,
-		'excerpt'     => $service->post_excerpt,
-		'status'      => $service->post_status,
+		'id'           => (int) $service->ID,
+		'title'        => wpss_rest_text( $service->post_title ),
+		'slug'         => $service->post_name,
+		'description'  => $service->post_content,
+		'excerpt'      => $service->post_excerpt,
+		'status'       => $service->post_status,
 		// Published but taking no new orders (wpss_set_service_paused()).
-		'paused'      => 'paused' === wpss_get_service_status( $service->ID ),
-		'link'        => get_permalink( $service->ID ),
-		'vendor'      => wpss_rest_user( (int) $service->post_author ),
+		'paused'       => 'paused' === wpss_get_service_status( $service->ID ),
+		// fixed: buy a package; custom: quote first, no package is sold (wpss_get_service_types()).
+		'service_type' => wpss_get_service_type( $service->ID ),
+		'link'         => get_permalink( $service->ID ),
+		'vendor'       => wpss_rest_user( (int) $service->post_author ),
 		// Services carry no currency of their own - they are priced in the store
 		// currency, which is the helper's default.
-		'pricing'     => wpss_rest_money( 'base_price', (float) get_post_meta( $service->ID, '_wpss_starting_price', true ) ),
-		'delivery'    => array(
+		'pricing'      => wpss_rest_money( 'base_price', (float) get_post_meta( $service->ID, '_wpss_starting_price', true ) ),
+		'delivery'     => array(
 			'time'      => wpss_get_service_delivery_days( $service->ID ) ?: 7,
 			'revisions' => wpss_get_service_revisions( $service->ID ),
 		),
-		'images'      => wpss_rest_service_images( $service->ID ),
-		'categories'  => $categories,
-		'tags'        => is_wp_error( $tags ) ? array() : $tags,
-		'rating'      => wpss_rest_service_rating( $service->ID ),
-		'created_at'  => wpss_rest_date( $service->post_date_gmt ),
-		'updated_at'  => wpss_rest_date( $service->post_modified_gmt ),
+		'images'       => wpss_rest_service_images( $service->ID ),
+		'categories'   => $categories,
+		'tags'         => is_wp_error( $tags ) ? array() : $tags,
+		'rating'       => wpss_rest_service_rating( $service->ID ),
+		'created_at'   => wpss_rest_date( $service->post_date_gmt ),
+		'updated_at'   => wpss_rest_date( $service->post_modified_gmt ),
 	);
 }
 

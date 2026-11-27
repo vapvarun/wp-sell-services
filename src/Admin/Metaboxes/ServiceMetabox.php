@@ -739,6 +739,10 @@ class ServiceMetabox {
 			wpss_set_service_paused( $post_id, 'paused' === sanitize_key( $_POST['wpss_status'] ) );
 		}
 
+		if ( isset( $_POST['wpss_service_type'] ) ) {
+			wpss_set_service_type( $post_id, sanitize_key( wp_unslash( $_POST['wpss_service_type'] ) ) );
+		}
+
 		// Save packages (indexed array format).
 		$packages_data = $capped['meta']['packages'];
 		if ( is_array( $packages_data ) && ! empty( $packages_data ) ) {
@@ -1389,6 +1393,29 @@ class ServiceMetabox {
 							<p class="description"><?php esc_html_e( 'Paused keeps the page visible but stops new orders. Whether the service is live is set by Publish and Moderation.', 'wp-sell-services' ); ?></p>
 						</div>
 					</div>
+
+					<?php
+					$wpss_types = wpss_get_service_types();
+					if ( count( $wpss_types ) > 1 ) :
+						$wpss_type = wpss_get_service_type( $post->ID );
+						?>
+						<div class="wpss-detail-card">
+							<div class="wpss-detail-icon">
+								<i data-lucide="shopping-bag" class="wpss-icon" aria-hidden="true"></i>
+							</div>
+							<div class="wpss-detail-content">
+								<label for="wpss_service_type"><?php esc_html_e( 'Sold as', 'wp-sell-services' ); ?></label>
+								<div class="wpss-detail-input">
+									<select id="wpss_service_type" name="wpss_service_type">
+										<?php foreach ( $wpss_types as $wpss_type_id => $wpss_type_def ) : ?>
+											<option value="<?php echo esc_attr( $wpss_type_id ); ?>" <?php selected( $wpss_type, $wpss_type_id ); ?>><?php echo esc_html( $wpss_type_def['label'] ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+								<p class="description"><?php echo esc_html( $wpss_types[ $wpss_type ]['description'] ); ?></p>
+							</div>
+						</div>
+					<?php endif; ?>
 
 					<?php
 					/*

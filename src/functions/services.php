@@ -70,6 +70,119 @@ function wpss_set_service_paused( int $service_id, bool $paused ): void {
 }
 
 /**
+ * The kinds of service a vendor can list, and what each one needs.
+ *
+ * A type decides which wizard steps the vendor sees and whether buyers can pay
+ * for a package straight away. `fixed` is every service listed before types
+ * existed: a missing `_wpss_service_type` reads as fixed, so no migration runs.
+ * `custom` is quote-first: the packages stay as a price guide, buyers message
+ * the vendor or post a request, and the vendor answers with a proposal.
+ *
+ * Each entry: label, description (shown to the vendor), purchasable (false
+ * refuses package checkout on every rail, through wpss_service_unavailable_reason()),
+ * steps (wizard step keys, in order) and addons (whether paid add-ons apply).
+ * Another plugin adds a type here without editing WP Sell Services.
+ *
+ * @since 2.0.0
+ *
+ * @return array<string, array{label:string, description:string, purchasable:bool, steps:string[], addons:bool}>
+ */
+function wpss_get_service_types(): array {
+	$all = array( 'basic', 'pricing', 'gallery', 'requirements', 'extras', 'review' );
+
+	$defaults = array(
+		'fixed'  => array(
+			'label'       => __( 'Fixed price', 'wp-sell-services' ),
+			'description' => __( 'Buyers choose a package and pay before you start.', 'wp-sell-services' ),
+			'purchasable' => true,
+			'steps'       => $all,
+			'addons'      => true,
+		),
+		'custom' => array(
+			'label'       => __( 'Custom quote', 'wp-sell-services' ),
+			'description' => __( 'Buyers message you or post a request, and you send them a price. Your packages show as a price guide.', 'wp-sell-services' ),
+			'purchasable' => false,
+			// Requirements and add-ons belong to a package purchase, which a quote never has.
+			'steps'       => array_values( array_diff( $all, array( 'requirements' ) ) ),
+			'addons'      => false,
+		),
+	);
+
+	/**
+	 * Filter the service types vendors can choose from.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array $types Type id => label, description, purchasable, steps, addons.
+	 */
+	$types = (array) apply_filters( 'wpss_service_types', $defaults );
+
+	// Fixed is the fallback every reader relies on, so a filter cannot remove it.
+	return $types + array( 'fixed' => $defaults['fixed'] );
+}
+
+/**
+ * A service's type id; 'fixed' when unset or no longer registered.
+ *
+ * @since 2.0.0
+ *
+ * @param int $service_id Service post ID.
+ * @return string
+ */
+function wpss_get_service_type( int $service_id ): string {
+	$type = (string) get_post_meta( $service_id, '_wpss_service_type', true );
+
+	return '' !== $type && isset( wpss_get_service_types()[ $type ] ) ? $type : 'fixed';
+}
+
+/**
+ * The one writer of _wpss_service_type. An unknown id is ignored.
+ *
+ * @since 2.0.0
+ *
+ * @param int    $service_id Service post ID.
+ * @param string $type       Type id from wpss_get_service_types().
+ * @return void
+ */
+function wpss_set_service_type( int $service_id, string $type ): void {
+	if ( isset( wpss_get_service_types()[ $type ] ) ) {
+		update_post_meta( $service_id, '_wpss_service_type', $type );
+	}
+}
+
+/**
+ * A meta_query clause selecting services of one type, for every listing query.
+ *
+ * Fixed also matches services with no type saved, which is every service from before 2.0.0.
+ *
+ * @since 2.0.0
+ *
+ * @param string $type Type id.
+ * @return array Empty for an unknown type, so the caller adds no clause.
+ */
+function wpss_service_type_meta_query( string $type ): array {
+	if ( ! isset( wpss_get_service_types()[ $type ] ) ) {
+		return array();
+	}
+
+	$clause = array(
+		'key'   => '_wpss_service_type',
+		'value' => $type,
+	);
+
+	return 'fixed' === $type
+		? array(
+			'relation' => 'OR',
+			$clause,
+			array(
+				'key'     => '_wpss_service_type',
+				'compare' => 'NOT EXISTS',
+			),
+		)
+		: $clause;
+}
+
+/**
  * Get service URL.
  *
  * @param int $service_id Service ID.
@@ -730,6 +843,11 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 	// (Basecamp 10375174747). Same words as CheckoutIntentService's refusal.
 	if ( 'paused' === wpss_get_service_status( $service_id ) ) {
 		return __( 'This service is not taking new orders right now.', 'wp-sell-services' );
+	}
+
+	// A quote-first type: the vendor prices the job in a proposal, so no package is sold.
+	if ( empty( wpss_get_service_types()[ wpss_get_service_type( $service_id ) ]['purchasable'] ?? true ) ) {
+		return __( 'This service is priced by quote. Message the seller or post a request to get a price.', 'wp-sell-services' );
 	}
 
 	$seller_reason = wpss_seller_unavailable_reason( (int) $service->post_author );

@@ -1078,3 +1078,37 @@
 	font-size: var(--wpss-text-sm, 0.875rem);
 	cursor: pointer;
 }
+
+/* Service type choice (step 1). */
+.wpss-service-type-group {
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius, 8px);
+	padding: var(--wpss-space-3, 12px) var(--wpss-space-4, 16px);
+	margin-block-end: var(--wpss-space-5, 20px);
+}
+
+.wpss-service-type-group legend {
+	padding-inline: var(--wpss-space-1, 4px);
+}
+
+.wpss-service-type-group .wpss-radio {
+	display: flex;
+	gap: var(--wpss-space-2, 8px);
+	align-items: flex-start;
+	padding-block: var(--wpss-space-2, 8px);
+	min-height: 40px;
+	cursor: pointer;
+	line-height: 1.45;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-service-type-group .wpss-radio input {
+	margin-block-start: 4px;
+	flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+	.wpss-service-type-group {
+		padding-inline: var(--wpss-space-3, 12px);
+	}
+}

@@ -1785,6 +1785,18 @@
 	text-align: center;
 }
 
+/* Priced by quote: information, not a warning. */
+.wpss-package-quote-note {
+	margin: var(--wpss-space-2, 8px) 0 0;
+	font-size: var(--wpss-text-sm, 0.875rem);
+	color: var(--wpss-text-light, #6b7280);
+	text-align: center;
+}
+
+.wpss-request-quote-link {
+	margin-block-start: var(--wpss-space-2, 8px);
+}
+
 @media (max-width: 991px) {
 	.wpss-vacation-notice {
 		margin-bottom: 18px;

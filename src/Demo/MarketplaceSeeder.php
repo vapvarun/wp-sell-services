@@ -242,6 +242,13 @@ class MarketplaceSeeder {
 	private bool $seed_images = true;
 
 	/**
+	 * The demo service seeded as a custom quote, 0 when none was.
+	 *
+	 * @var int
+	 */
+	private int $quote_service_id = 0;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param callable|null $logger Optional progress logger receiving a string.
@@ -304,8 +311,8 @@ class MarketplaceSeeder {
 		$this->log( 'Buyers created: ' . count( $buyers ) );
 
 		$services            = $this->seed_services( $vendors, $category_ids );
-		$summary['services'] = count( $services );
-		$this->log( 'Services created: ' . count( $services ) );
+		$summary['services'] = count( $services ) + ( $this->quote_service_id ? 1 : 0 );
+		$this->log( 'Services created: ' . $summary['services'] );
 
 		$summary['portfolio'] = $this->seed_portfolios( $vendors, $services );
 		$this->log( 'Portfolio items created: ' . $summary['portfolio'] );
@@ -663,6 +670,14 @@ class MarketplaceSeeder {
 					'revisions'      => (int) max( $revisions ),
 				);
 			}
+		}
+
+		// One service of every type, so the quote-first page and its archive filter are walked too.
+		// It is left out of the list orders are seeded on: a quote service sells no package.
+		$quote = count( $services ) > 1 ? array_pop( $services ) : null;
+		if ( $quote ) {
+			$this->quote_service_id = (int) $quote['id'];
+			wpss_set_service_type( $this->quote_service_id, 'custom' );
 		}
 
 		return $services;

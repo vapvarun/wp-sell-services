@@ -448,6 +448,12 @@ class ServicesController extends RestController {
 			);
 		}
 
+		$type_clause = wpss_service_type_meta_query( (string) $request->get_param( 'service_type' ) );
+		if ( $type_clause ) {
+			$args['meta_query']   = $args['meta_query'] ?? array();
+			$args['meta_query'][] = $type_clause;
+		}
+
 		$query    = new WP_Query( $args );
 		$services = array();
 
@@ -1621,6 +1627,10 @@ class ServicesController extends RestController {
 			)
 		);
 
+		if ( $request->has_param( 'service_type' ) ) {
+			wpss_set_service_type( $service_id, (string) $request->get_param( 'service_type' ) );
+		}
+
 		// Save packages (primary source of truth).
 		if ( $request->has_param( 'packages' ) ) {
 			$raw_packages = $capped['meta']['packages'];
@@ -1804,6 +1814,11 @@ class ServicesController extends RestController {
 				'minimum'     => 0,
 				'maximum'     => 5,
 			),
+			'service_type'      => array(
+				'description' => __( 'Only services of this type (fixed includes services with no type saved).', 'wp-sell-services' ),
+				'type'        => 'string',
+				'enum'        => array_keys( wpss_get_service_types() ),
+			),
 		);
 	}
 
@@ -1820,28 +1835,34 @@ class ServicesController extends RestController {
 			'properties' => array_merge(
 				$this->get_common_schema_properties(),
 				array(
-					'title'       => array(
+					'title'        => array(
 						'description' => __( 'Service title.', 'wp-sell-services' ),
 						'type'        => 'string',
 						'context'     => array( 'view', 'edit' ),
 						'required'    => true,
 					),
-					'description' => array(
+					'description'  => array(
 						'description' => __( 'Service description.', 'wp-sell-services' ),
 						'type'        => 'string',
 						'context'     => array( 'view', 'edit' ),
 					),
-					'excerpt'     => array(
+					'excerpt'      => array(
 						'description' => __( 'Service excerpt.', 'wp-sell-services' ),
 						'type'        => 'string',
 						'context'     => array( 'view', 'edit' ),
 					),
-					'base_price'  => array(
+					'service_type' => array(
+						'description' => __( 'How buyers pay: fixed (buy a package) or custom (quote first). See the wpss_service_types filter.', 'wp-sell-services' ),
+						'type'        => 'string',
+						'enum'        => array_keys( wpss_get_service_types() ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'base_price'   => array(
 						'description' => __( 'Base price.', 'wp-sell-services' ),
 						'type'        => 'number',
 						'context'     => array( 'view', 'edit' ),
 					),
-					'categories'  => array(
+					'categories'   => array(
 						// IDs or slugs. /categories hands the client both and
 						// never said which to send back, so rejecting slugs
 						// here meant the API refused half of what it published.
@@ -1850,7 +1871,7 @@ class ServicesController extends RestController {
 						'items'       => array( 'type' => array( 'integer', 'string' ) ),
 						'context'     => array( 'view', 'edit' ),
 					),
-					'tags'        => array(
+					'tags'         => array(
 						'description' => __( 'Tags.', 'wp-sell-services' ),
 						'type'        => 'array',
 						'items'       => array( 'type' => 'string' ),

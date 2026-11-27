@@ -31,8 +31,13 @@ function wpssServiceWizard(existingData = {}) {
 		// Current step
 		currentStep: 'basic',
 
-		// Step order
-		steps: ['basic', 'pricing', 'gallery', 'requirements', 'extras', 'review'],
+		// Step order: the chosen service type decides which steps apply.
+		get steps() {
+			const types = wpssWizard.serviceTypes || {};
+			const type  = types[this.data.service_type] || types.fixed;
+
+			return type && type.steps ? type.steps : ['basic', 'pricing', 'gallery', 'requirements', 'extras', 'review'];
+		},
 
 		// Completed steps tracking
 		completedSteps: new Set(),
@@ -58,6 +63,7 @@ function wpssServiceWizard(existingData = {}) {
 
 		// Service data
 		data: {
+			service_type: 'fixed',
 			title: '',
 			description: '',
 			category: '',
@@ -419,6 +425,11 @@ function wpssServiceWizard(existingData = {}) {
 		extrasErrors() {
 			const errors = [];
 
+			// Add-ons are hidden for a type that sells none, so they cannot block it either.
+			if (!this.typeHasAddons()) {
+				return errors;
+			}
+
 			(this.data.extras || []).forEach((extra, i) => {
 				const title = (extra.title || '').trim();
 				const raw   = extra.price;
@@ -440,6 +451,17 @@ function wpssServiceWizard(existingData = {}) {
 			});
 
 			return errors;
+		},
+
+		/**
+		 * Whether the chosen service type sells paid add-ons.
+		 *
+		 * @return {boolean} True unless the type says otherwise.
+		 */
+		typeHasAddons() {
+			const type = (wpssWizard.serviceTypes || {})[this.data.service_type];
+
+			return !type || false !== type.addons;
 		},
 
 		pricingErrors() {

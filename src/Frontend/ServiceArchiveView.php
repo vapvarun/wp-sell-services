@@ -244,7 +244,7 @@ class ServiceArchiveView {
 		}
 
 		// Preserve current filter parameters in pagination links.
-		$filter_params = array( 'category', 'min_price', 'max_price', 'rating', 'delivery', 'sort' );
+		$filter_params = array( 'category', 'min_price', 'max_price', 'rating', 'delivery', 'service_type', 'sort' );
 		$add_args      = array();
 
 		foreach ( $filter_params as $param ) {
@@ -297,6 +297,9 @@ class ServiceArchiveView {
 		$min_rating = isset( $_GET['rating'] ) ? absint( $_GET['rating'] ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$delivery_time = isset( $_GET['delivery'] ) ? sanitize_text_field( wp_unslash( $_GET['delivery'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$service_type  = isset( $_GET['service_type'] ) ? sanitize_key( wp_unslash( $_GET['service_type'] ) ) : '';
+		$service_types = wpss_get_service_types();
 
 		// Determine the active category for sidebar highlighting.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -459,6 +462,24 @@ class ServiceArchiveView {
 						</label>
 					</div>
 				</div>
+
+				<?php if ( count( $service_types ) > 1 ) : ?>
+					<div class="wpss-filter-section">
+						<h4><?php esc_html_e( 'How you pay', 'wp-sell-services' ); ?></h4>
+						<div class="wpss-delivery-options">
+							<?php foreach ( $service_types as $wpss_type_id => $wpss_type ) : ?>
+								<label class="wpss-checkbox-option">
+									<input type="radio" name="service_type" value="<?php echo esc_attr( $wpss_type_id ); ?>" <?php checked( $service_type, $wpss_type_id ); ?>>
+									<?php echo esc_html( $wpss_type['label'] ); ?>
+								</label>
+							<?php endforeach; ?>
+							<label class="wpss-checkbox-option">
+								<input type="radio" name="service_type" value="" <?php checked( $service_type, '' ); ?>>
+								<?php esc_html_e( 'Any', 'wp-sell-services' ); ?>
+							</label>
+						</div>
+					</div>
+				<?php endif; ?>
 
 				<div class="wpss-filter-actions">
 					<?php // Filters apply as soon as they are picked, like sort (frontend.js); this stays for keyboard and no-JS use and shows when focused. ?>
@@ -769,6 +790,12 @@ class ServiceArchiveView {
 				'compare' => '<=',
 				'type'    => 'NUMERIC',
 			);
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$type_clause = isset( $_GET['service_type'] ) ? wpss_service_type_meta_query( sanitize_key( wp_unslash( $_GET['service_type'] ) ) ) : array();
+		if ( $type_clause ) {
+			$meta_query[] = $type_clause;
 		}
 
 		if ( ! empty( $meta_query ) ) {

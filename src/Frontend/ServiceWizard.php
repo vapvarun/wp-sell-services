@@ -378,6 +378,7 @@ class ServiceWizard {
 		<ol class="wpss-wizard__progress-list">
 			<?php foreach ( $steps as $key => $step ) : ?>
 				<li class="wpss-wizard__progress-item"
+					x-show="steps.includes('<?php echo esc_attr( $key ); ?>')"
 					:class="{
 						'wpss-wizard__progress-item--active': currentStep === '<?php echo esc_attr( $key ); ?>',
 						'wpss-wizard__progress-item--completed': isStepCompleted('<?php echo esc_attr( $key ); ?>')
@@ -450,6 +451,22 @@ class ServiceWizard {
 
 		<div class="wpss-wizard__step-body">
 			<?php $this->render_error_summary(); ?>
+
+			<?php
+			$wpss_types = wpss_get_service_types();
+			// One type means there is nothing to choose.
+			if ( count( $wpss_types ) > 1 ) :
+				?>
+				<fieldset class="wpss-form-group wpss-service-type-group">
+					<legend class="wpss-form-label"><?php esc_html_e( 'How do buyers pay you?', 'wp-sell-services' ); ?></legend>
+					<?php foreach ( $wpss_types as $wpss_type_id => $wpss_type ) : ?>
+						<label class="wpss-radio">
+							<input type="radio" name="service_type" value="<?php echo esc_attr( $wpss_type_id ); ?>" x-model="data.service_type">
+							<span><strong><?php echo esc_html( $wpss_type['label'] ); ?></strong> &mdash; <?php echo esc_html( $wpss_type['description'] ); ?></span>
+						</label>
+					<?php endforeach; ?>
+				</fieldset>
+			<?php endif; ?>
 
 			<div class="wpss-form-group">
 				<label for="service_title" class="wpss-form-label">
@@ -1042,7 +1059,7 @@ class ServiceWizard {
 		<div class="wpss-wizard__step-body">
 			<?php $this->render_error_summary(); ?>
 			<!-- Service Extras -->
-			<div class="wpss-section">
+			<div class="wpss-section" x-show="typeHasAddons()">
 				<h3 class="wpss-section__title"><?php esc_html_e( 'Service Extras', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-section__desc"><?php esc_html_e( 'Offer additional services buyers can add to their order.', 'wp-sell-services' ); ?></p>
 
@@ -1418,6 +1435,7 @@ class ServiceWizard {
 
 		$data = array(
 			'id'           => $service_id,
+			'service_type' => wpss_get_service_type( $service_id ),
 			'title'        => $service->post_title,
 			'description'  => $service->post_content,
 			'category'     => ! empty( $categories ) ? $categories[0] : '',
@@ -1602,6 +1620,7 @@ class ServiceWizard {
 				'minPrice'       => $wpss_thresholds['min_price'],
 				'thresholds'     => $wpss_thresholds,
 				'limits'         => $this->get_limits(),
+				'serviceTypes'   => wpss_get_service_types(),
 				'isPro'          => $this->is_pro_active(),
 				'strings'        => array(
 					'saving'                     => __( 'Saving…', 'wp-sell-services' ),
@@ -2089,7 +2108,9 @@ class ServiceWizard {
 	 * @return array Sanitized data.
 	 */
 	private function sanitize_service_data( array $data ): array {
+		$type      = sanitize_key( (string) ( $data['service_type'] ?? '' ) );
 		$sanitized = array(
+			'service_type' => isset( wpss_get_service_types()[ $type ] ) ? $type : 'fixed',
 			'title'        => sanitize_text_field( $data['title'] ?? '' ),
 			'description'  => wp_kses_post( $data['description'] ?? '' ),
 			'category'     => absint( $data['category'] ?? 0 ),
@@ -2350,6 +2371,8 @@ class ServiceWizard {
 
 		// Save FAQs.
 		update_post_meta( $service_id, '_wpss_faqs', $data['faqs'] );
+
+		wpss_set_service_type( $service_id, (string) ( $data['service_type'] ?? 'fixed' ) );
 
 		/**
 		 * Fires after the wizard persists service meta.

@@ -23,6 +23,17 @@ Each step can be saved as a draft at any time. A progress bar at the top shows w
 
 This is where vendors describe what they are offering.
 
+**How do buyers pay you?** -- The first choice in the wizard:
+
+| Type | What buyers see | Steps the vendor fills in |
+|------|-----------------|---------------------------|
+| **Fixed price** (default) | Buyers pick a package and pay before work starts. | All six. |
+| **Custom quote** | No buy button. Buyers see **Ask for a quote** (opens the contact form) and **Post a request**, and the vendor answers with a price in a proposal. The packages still show, as a price guide. | Basic Info, Pricing, Gallery, Extras and FAQs (FAQs only, no add-ons), Review. Requirements is skipped, because it belongs to a package purchase. |
+
+Every service created before this choice existed is a **Fixed price** service; nothing changes for it. The site owner can change a service's type in **Sell Services > All Services > edit > Overview > Sold as**.
+
+A custom-quote service cannot be bought through any checkout, cart or the REST API, even by a direct link. The buyer is told to message the seller or post a request instead.
+
 **Service title** -- A clear, specific headline for the service. Think "I will design a professional logo for your brand" rather than "Logo design." The title should tell buyers exactly what they will get. Keep it between 10 and 80 characters.
 
 **Category** -- Choose from the service categories the site owner has created (e.g., Design, Writing, Marketing). The Category dropdown lists **top-level categories only**.
