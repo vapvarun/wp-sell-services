@@ -1601,7 +1601,7 @@
    "title": "Every service was sold the same way: a vendor who prices by quote had no way to list without a buy button, and nothing stopped a package being bought on such a service through the cart, checkout or REST",
    "guard": "static:service-types",
    "added": "2026-11-28",
-   "fails_on": "3d9b07ce (no wpss_get_service_types: the first check fails and the test stops)"
+   "fails_on": "e22abfbc (no wpss_get_service_types: the first check fails and the test stops)"
   }
  ]
 }
