@@ -252,6 +252,10 @@ function wpss_discard_request_brief( int $attachment_id ): void {
 
 	if ( is_array( $record ) && ( ! empty( $record['path'] ) || ! empty( $record['remote_path'] ) ) ) {
 		wpss_discard_order_file( array( 'attachment_id' => $attachment_id ) + $record, 0 );
+
+		foreach ( wpss_order_files_dirs() as $dir ) {
+			@rmdir( $dir . 'r' . $attachment_id . '/' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Removed only when empty.
+		}
 	}
 }
 

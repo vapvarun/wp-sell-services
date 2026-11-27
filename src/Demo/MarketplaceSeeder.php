@@ -921,6 +921,9 @@ class MarketplaceSeeder {
 					'submitted_at' => current_time( 'mysql', true ),
 				)
 			);
+
+			// Into the order's private folder now, as a real upload would be; nothing left in uploads.
+			$file && wpss_locate_order_file( (int) $order['id'], (string) $file );
 		}
 
 		return $count;
@@ -1113,6 +1116,9 @@ class MarketplaceSeeder {
 			if ( $brief ) {
 				update_post_meta( $post_id, '_wpss_attachments', array( $brief ) );
 				add_post_meta( $brief, '_wpss_request_id', $post_id );
+				// A brief, stored as POST /media stores one: in the private store, never in uploads.
+				update_post_meta( $brief, '_wpss_upload_context', 'request' );
+				wpss_locate_order_file( $post_id, (string) $brief, 'request' );
 			}
 
 			$budget_min = 100 + ( $r_index * 50 );

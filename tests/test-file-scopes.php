@@ -245,6 +245,45 @@ try {
 	// 11. Deleting the brief's attachment removes its private bytes.
 	wp_delete_attachment( $bid, true );
 	$check( 'Deleting a brief removes its private bytes', ! file_exists( $path ) );
+	$check( '  and its empty folder', ! is_dir( dirname( $path ) ) );
+
+	// 12. Demo briefs are seeded into the store the way real uploads land; deleting them leaves nothing.
+	if ( function_exists( 'imagecreatetruecolor' ) ) {
+		$seeder = new \WPSellServices\Demo\MarketplaceSeeder();
+		$call   = static function ( string $method, array $args ) use ( $seeder ) {
+			$m = new ReflectionMethod( $seeder, $method );
+			$m->setAccessible( true );
+			return $m->invokeArgs( $seeder, $args );
+		};
+		$cat    = (int) ( get_terms( array( 'taxonomy' => 'wpss_service_category', 'hide_empty' => false, 'number' => 1, 'fields' => 'ids' ) )[0] ?? 0 );
+		$before = (int) $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $wpdb->posts ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$call( 'seed_requests_and_proposals', array( array( (int) $f->buyer ), array( array( 'user_id' => (int) $f->vendor, 'blueprint' => array( 'skills' => array( 'QA' ) ) ) ), array( $cat => 'qa' ) ) );
+		$seeded_reqs = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND ID > %d", BuyerRequestPostType::POST_TYPE, $before ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$posts       = array_merge( $posts, $seeded_reqs );
+		$demo_briefs = array();
+		foreach ( $seeded_reqs as $sr ) {
+			$demo_briefs = array_merge( $demo_briefs, array_map( 'intval', (array) get_post_meta( $sr, '_wpss_attachments', true ) ) );
+		}
+		$demo_briefs = array_filter( $demo_briefs );
+		$atts        = array_merge( $atts, $demo_briefs );
+		$in_store    = array_filter( $demo_briefs, static fn( $b ) => is_array( get_post_meta( $b, '_wpss_file', true ) ) && '' === (string) get_attached_file( $b ) );
+		$check( 'Demo request briefs are seeded into the private store, nothing in uploads', $demo_briefs && count( $in_store ) === count( $demo_briefs ), wp_json_encode( $demo_briefs ) );
+		$demo_paths = array_map( static fn( $b ) => wpss_find_local_order_file( 'r' . $b, (string) get_post_meta( $b, '_wpss_file', true )['path'] ), $demo_briefs );
+		$as( $admin ); // Demo removal runs as an admin or from WP-CLI, which the proposal file lock lets through.
+		foreach ( $demo_briefs as $b ) {
+			wp_delete_attachment( $b, true );
+		}
+		$check( '  and deleting them removes their bytes and folders', ! array_filter( $demo_paths, static fn( $p ) => '' !== $p && ( file_exists( $p ) || is_dir( dirname( $p ) ) ) ) );
+		$wpdb->query( 'DELETE FROM ' . $wpdb->prefix . 'wpss_proposals WHERE request_id IN (' . implode( ',', array_map( 'intval', $seeded_reqs ?: array( 0 ) ) ) . ')' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$doid = ( $f->order )( array( 'status' => 'in_progress' ) );
+		$call( 'seed_requirements', array( array( array( 'id' => $doid, 'status' => 'in_progress', 'customer_id' => (int) $f->buyer ) ) ) );
+		$drow = json_decode( (string) $wpdb->get_var( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_order_requirements WHERE order_id = %d", $doid ) ), true ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$drec = $drow[0] ?? array();
+		$check( 'Demo order brief is seeded into the order folder, its public attachment gone', ! empty( $drec['path'] ) && empty( $drec['url'] ) && 'attachment' !== get_post_type( (int) ( $drec['id'] ?? 0 ) ), wp_json_encode( $drec ) );
+		wpss_delete_order_files( $doid );
+		$wpdb->delete( $wpdb->prefix . 'wpss_order_requirements', array( 'order_id' => $doid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	}
 } finally {
 	wp_set_current_user( 0 );
 	wp_delete_file( $mu );
