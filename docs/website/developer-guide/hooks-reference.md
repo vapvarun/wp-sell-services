@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**587 hooks** across **810** firing sites.
+**587 hooks** across **811** firing sites.
 
 ## Actions (302)
 
@@ -595,7 +595,7 @@ guide; this is the complete index.
 | `wpss_vendor_profile_allowed_fields` | 1 | `src/Services/VendorService.php` | Filter the list of allowed vendor profile fields for update. |
 | `wpss_vendor_profile_fields` | 2 | `templates/vendor/profile.php` | Filter additional vendor profile fields. |
 | `wpss_vendor_registration_open` | 1 | `src/API/VendorsController.php` |  |
-| `wpss_vendor_reserved_payouts` | 2 | `src/Services/EarningsService.php` | Money a payout rail has sent or committed but not yet debited to the ledger. |
+| `wpss_vendor_reserved_payouts` | 2 | `src/Services/EarningsService.php` *(+1 more)* | Money a payout rail has sent or committed but not yet debited to the ledger. |
 | `wpss_vendor_slug` | 1 | `src/Core/Plugin.php` *(+1 more)* | Filter the vendor profile URL slug. |
 | `wpss_vendor_vacation_notice` | 2 | `src/functions/vendors.php` | Filter the vendor vacation notice before it renders. |
 | `wpss_vendor_welcome_email_content` | 3 | `src/Services/NotificationService.php` | Filter vendor welcome email content. |

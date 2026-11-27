@@ -1460,6 +1460,14 @@
    "added": "2026-11-27",
    "fails_on": "20b0017a (7 FAIL)",
    "check": "tests/test-commission-credit-must-land.php"
+  },
+  {
+   "card": "10551463105",
+   "title": "a manual withdrawal could be marked paid while a PayPal batch had the same money in flight",
+   "guard": "static:mark-paid-honours-payout-reservation",
+   "added": "2026-11-27",
+   "fails_on": "73a7915c (3 FAIL)",
+   "check": "tests/test-mark-paid-honours-payout-reservation.php"
   }
  ]
 }

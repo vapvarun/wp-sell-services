@@ -251,10 +251,10 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_commission_recorded` | `int $order_id, array $commission, int $vendor_id` | `src/Services/CommissionService.php:316` |
-| `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:817` |
-| `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `src/Services/EarningsService.php:1215` |
-| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1868` |
+| `wpss_commission_recorded` | `int $order_id, array $commission, int $vendor_id` | `src/Services/CommissionService.php:324` |
+| `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:820` |
+| `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `src/Services/EarningsService.php:1218` |
+| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1871` |
 | `wpss_tip_order_created` | `int $tip_order_id, int $parent_order_id, int $customer_id, float $amount` | `src/Services/TippingService.php:350` |
 | `wpss_tip_sent` | `int $tip_txn_id, int $parent_order_id, int $vendor_id, int $customer_id, float $vendor_earnings, string $vendor_notes` | `src/Services/TippingService.php:555` |
 
@@ -761,7 +761,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1145` |
-| `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:381` |
+| `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:389` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:1061` |
 | `wpss_max_order_quantity` | `$max` | `src/Checkout/CheckoutIntentService.php:283` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:211` |
@@ -783,7 +783,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:134` |
 | `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:373` |
 | `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:383` |
-| `wpss_payout_method_registry` | `$methods` (id => label + fields) | `src/Services/EarningsService.php:1366` |
+| `wpss_payout_method_registry` | `$methods` (id => label + fields) | `src/Services/EarningsService.php:1369` |
 | `wpss_vendor_reserved_payouts` | `$reserved` (default 0), `$vendor_id`: money a payout rail has committed but not yet debited; counted as a withdrawal in progress | `src/Services/EarningsService.php:175` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |

@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "mark-paid-honours-payout-reservation",
+    "run": "${WP_CLI:-wp} eval-file tests/test-mark-paid-honours-payout-reservation.php"
+   },
+   {
     "id": "commission-credit-must-land",
     "run": "${WP_CLI:-wp} eval-file tests/test-commission-credit-must-land.php"
    },

@@ -596,7 +596,10 @@ class EarningsService {
 		// both pass. Compared against the ledger rather than available_balance:
 		// available already subtracts this very withdrawal, so testing it here
 		// would count the amount twice and refuse a vendor who can afford it.
-		$ledger_balance = wpss_get_ledger_balance( (int) $withdrawal->vendor_id, true );
+		// Less what a payout rail has in flight (a PayPal batch not yet debited), the same filter
+		// available_balance reads, or the same money is paid twice (Basecamp 10551463105).
+		$ledger_balance = wpss_get_ledger_balance( (int) $withdrawal->vendor_id, true )
+			- max( 0.0, (float) apply_filters( 'wpss_vendor_reserved_payouts', 0.0, (int) $withdrawal->vendor_id ) );
 
 		if ( $ledger_balance < (float) $withdrawal->amount ) {
 			$wpdb->query( 'ROLLBACK' );
