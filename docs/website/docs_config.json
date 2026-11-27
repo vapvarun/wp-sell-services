@@ -118,6 +118,10 @@
           "title": "Creating a Service: The 6-Step Wizard"
         },
         {
+          "slug": "digital-products",
+          "title": "Digital Products"
+        },
+        {
           "slug": "pricing-packages",
           "title": "Pricing and Packages"
         },
@@ -489,6 +493,10 @@
           "title": "General Settings"
         },
         {
+          "slug": "features",
+          "title": "Features"
+        },
+        {
           "slug": "pages-setup",
           "title": "Pages Setup"
         },
@@ -763,40 +771,46 @@
           "order": 1
         },
         {
+          "title": "Digital Products",
+          "slug": "digital-products-wpss",
+          "file": "service-creation/digital-products.md",
+          "order": 2
+        },
+        {
           "title": "Pricing Packages (Basic/Standard/Premium)",
           "slug": "pricing-packages-wpss",
           "file": "service-creation/pricing-packages.md",
-          "order": 2
+          "order": 3
         },
         {
           "title": "Service Add-ons & Extras",
           "slug": "service-addons-wpss",
           "file": "service-creation/service-addons.md",
-          "order": 3
+          "order": 4
         },
         {
           "title": "Service Gallery & Media",
           "slug": "service-media-wpss",
           "file": "service-creation/service-media.md",
-          "order": 4
+          "order": 5
         },
         {
           "title": "Service Requirements & FAQs",
           "slug": "service-requirements-faqs-wpss",
           "file": "service-creation/service-requirements-faqs.md",
-          "order": 5
+          "order": 6
         },
         {
           "title": "Publishing, Moderation & Templates",
           "slug": "publishing-moderation-wpss",
           "file": "service-creation/publishing-moderation.md",
-          "order": 6
+          "order": 7
         },
         {
           "title": "Managing Services: Edit, Pause & Delete",
           "slug": "editing-pausing-services-wpss",
           "file": "service-creation/editing-pausing-services.md",
-          "order": 7
+          "order": 8
         }
       ]
     },

@@ -237,7 +237,8 @@ function wpss_get_checkout_badges( array $package ): array {
 			/* translators: %d: number of days. */
 			? sprintf( _n( '%d day from requirements', '%d days from requirements', $days, 'wp-sell-services' ), $days )
 			: '',
-		'revisions' => null === $revisions
+		// No revisions (a digital product, or a package without them) is not a reassurance.
+		'revisions' => null === $revisions || 0 === $revisions
 			? ''
 			: ( -1 === $revisions
 				? __( 'Unlimited revisions included', 'wp-sell-services' )

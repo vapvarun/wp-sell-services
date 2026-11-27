@@ -88,6 +88,7 @@ class AuditLogService {
 			'review.duplicate_removed'       => __( 'Duplicate review removed', 'wp-sell-services' ),
 			'email.failed'                   => __( 'Email not sent', 'wp-sell-services' ),
 			'dispute.opened'                 => __( 'Dispute opened', 'wp-sell-services' ),
+			'product.downloaded'             => __( 'Product file downloaded', 'wp-sell-services' ),
 			'vendor.level_changed'           => __( 'Seller level changed', 'wp-sell-services' ),
 			'review.deleted'                 => __( 'Review deleted', 'wp-sell-services' ),
 			'review.imported'                => __( 'Review imported', 'wp-sell-services' ),
@@ -165,6 +166,29 @@ class AuditLogService {
 			function (): void {
 				$this->cleanup_expired();
 			}
+		);
+
+		// One row per download of a digital product's file: the seller's proof the buyer received it.
+		add_action(
+			'wpss_file_downloaded',
+			function ( string $scope, int $scope_id, array $record ): void {
+				if ( 'service' !== $scope ) {
+					return;
+				}
+
+				$this->log(
+					'product.downloaded',
+					'service',
+					$scope_id,
+					array(
+						'action'   => 'download',
+						'to_value' => (string) ( $record['name'] ?? '' ),
+						'context'  => array( 'file_id' => (string) ( $record['id'] ?? '' ) ),
+					)
+				);
+			},
+			10,
+			3
 		);
 
 		add_action(

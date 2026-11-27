@@ -670,7 +670,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		// included - so Service Details and the reassurance row promise the day
 		// the deadline will say (Basecamp 10337201764).
 		$delivery_days = $is_pay_order ? (int) ( $selected_package['delivery_days'] ?? 0 ) : (int) $line['delivery_days'];
-		$revisions     = $selected_package['revisions'] ?? 0;
+		// A digital product is downloaded on payment: no delivery time to promise.
+		if ( ! wpss_service_type_supports( $is_pay_order ? (int) $pay_order->service_id : (int) $service->id, 'delivery' ) ) {
+			$delivery_days = 0;
+		}
+		$revisions = $selected_package['revisions'] ?? 0;
 
 		$rating       = wpss_get_service_rating( (int) $service->id );
 		$review_count = $rating['count'];
@@ -1328,27 +1332,19 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									</div>
 								</div>
 							<?php else : ?>
+								<?php
+								// A digital product has no brief and no work: it is downloaded on payment.
+								$wpss_steps = wpss_service_type_supports( (int) $service->id, 'delivery' )
+									? array( __( 'Pay', 'wp-sell-services' ), __( 'Requirements', 'wp-sell-services' ), __( 'Vendor Works', 'wp-sell-services' ), __( 'Review', 'wp-sell-services' ), __( 'Complete', 'wp-sell-services' ) )
+									: array( __( 'Pay', 'wp-sell-services' ), __( 'Download', 'wp-sell-services' ), __( 'Complete', 'wp-sell-services' ) );
+								?>
 								<div class="wpss-co-steps__track">
-									<div class="wpss-co-step">
-										<span class="wpss-co-step__dot">1</span>
-										<span class="wpss-co-step__label"><?php esc_html_e( 'Pay', 'wp-sell-services' ); ?></span>
-									</div>
-									<div class="wpss-co-step">
-										<span class="wpss-co-step__dot">2</span>
-										<span class="wpss-co-step__label"><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></span>
-									</div>
-									<div class="wpss-co-step">
-										<span class="wpss-co-step__dot">3</span>
-										<span class="wpss-co-step__label"><?php esc_html_e( 'Vendor Works', 'wp-sell-services' ); ?></span>
-									</div>
-									<div class="wpss-co-step">
-										<span class="wpss-co-step__dot">4</span>
-										<span class="wpss-co-step__label"><?php esc_html_e( 'Review', 'wp-sell-services' ); ?></span>
-									</div>
-									<div class="wpss-co-step">
-										<span class="wpss-co-step__dot">5</span>
-										<span class="wpss-co-step__label"><?php esc_html_e( 'Complete', 'wp-sell-services' ); ?></span>
-									</div>
+									<?php foreach ( $wpss_steps as $wpss_i => $wpss_label ) : ?>
+										<div class="wpss-co-step">
+											<span class="wpss-co-step__dot"><?php echo (int) $wpss_i + 1; ?></span>
+											<span class="wpss-co-step__label"><?php echo esc_html( $wpss_label ); ?></span>
+										</div>
+									<?php endforeach; ?>
 								</div>
 							<?php endif; ?>
 						</div>

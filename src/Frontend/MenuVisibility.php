@@ -77,6 +77,7 @@ class MenuVisibility {
 		return array(
 			'orders'        => __( 'My Orders', 'wp-sell-services' ),
 			'favorites'     => __( 'Favorites', 'wp-sell-services' ),
+			'downloads'     => __( 'Downloads', 'wp-sell-services' ),
 			'requests'      => __( 'Buyer Requests', 'wp-sell-services' ),
 			'services'      => __( 'My Services', 'wp-sell-services' ),
 			'sales'         => __( 'Sales Orders', 'wp-sell-services' ),

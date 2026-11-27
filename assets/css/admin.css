@@ -1055,6 +1055,24 @@ h2.wpss-settings-subhead__title {
 	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* A card for some service types only (data-wpss-for-types) is hidden while another type is chosen. */
+.wpss-detail-card[hidden] {
+	display: none;
+}
+
+.wpss-no-delivery .wpss-package-row--delivery {
+	display: none;
+}
+
+.wpss-product-file-current__meta {
+	display: block;
+}
+
+.wpss-product-file-current {
+	margin: 0 0 8px;
+	overflow-wrap: anywhere;
+}
+
 .wpss-detail-card:hover {
 	border-color: var(--wpss-gray-400, #b4b9be);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);

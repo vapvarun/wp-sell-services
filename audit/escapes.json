@@ -1602,6 +1602,13 @@
    "guard": "static:service-types",
    "added": "2026-11-28",
    "fails_on": "e22abfbc (no wpss_get_service_types: the first check fails and the test stops)"
+  },
+  {
+   "card": "10551449503",
+   "title": "A file could only be sold as a service the vendor delivered by hand: no product file, no delivery at payment, no buyer downloads list, and nothing kept a buyer of a refunded order or another member from a paid file",
+   "guard": "static:digital-products",
+   "added": "2026-11-28",
+   "fails_on": "2b113edf (no digital type or wpss_add_product_file: the first check fails and the test stops)"
   }
  ]
 }

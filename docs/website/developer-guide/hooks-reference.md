@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**603 hooks** across **825** firing sites.
+**607 hooks** across **831** firing sites.
 
-## Actions (305)
+## Actions (308)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -101,7 +101,7 @@ guide; this is the complete index.
 | `wpss_dashboard_assets_enqueued` | 0 | `src/Frontend/UnifiedDashboard.php` | Fires once the dashboard's own assets are enqueued, wherever it renders. |
 | `wpss_dashboard_header` | 0 | `src/Frontend/UnifiedDashboard.php` *(+1 more)* | Fires at the start of the unified dashboard header. |
 | `wpss_dashboard_section_after` | 2 | `templates/dashboard/sections/create-request.php` *(+13 more)* | Fires after the create request dashboard section content. |
-| `wpss_dashboard_section_before` | 2 | `templates/dashboard/sections/create-request.php` *(+15 more)* | Fires before the create request dashboard section content. |
+| `wpss_dashboard_section_before` | 2 | `templates/dashboard/sections/create-request.php` *(+16 more)* | Fires before the create request dashboard section content. |
 | `wpss_dashboard_section_before_content` | 2 | `src/Frontend/UnifiedDashboard.php` | Fires before the dashboard section content is rendered. |
 | `wpss_delivery_accepted` | 1 | `src/Services/DeliveryService.php` | Fires when delivery is accepted. |
 | `wpss_delivery_submitted` | 2 | `src/Services/DeliveryService.php` | Fires when a delivery is submitted. |
@@ -131,6 +131,7 @@ guide; this is the complete index.
 | `wpss_extension_approved` | 7 | `src/Services/ExtensionOrderService.php` | Fires after a paid extension has been credited and the parent order extended. |
 | `wpss_extension_rejected` | 4 | `src/Services/ExtensionOrderService.php` | Fires when a buyer declines a pending extension request. |
 | `wpss_extension_request_created` | 4 | `src/Services/ExtensionOrderService.php` | Fires after an extension sub-order has been created and is awaiting the buyer's payment. |
+| `wpss_file_downloaded` | 4 | `src/API/OrdersController.php` *(+1 more)* | Fires when a stored file is handed to the person allowed to read it, on the web link or this route. |
 | `wpss_fluentcart_adapter_init` | 1 | `src/Integrations/FluentCart/FluentCartAdapter.php` **[PRO]** | Fires after Fluent Cart adapter is initialized. |
 | `wpss_fluentcart_order_created` | 3 | `src/Integrations/FluentCart/FluentCartOrderProvider.php` **[PRO]** | Fires when a WPSS order is created from Fluent Cart. |
 | `wpss_fluentcart_order_detail` | 1 | `src/Integrations/FluentCart/FluentCartAccountProvider.php` **[PRO]** | Fires after order detail content. |
@@ -138,6 +139,7 @@ guide; this is the complete index.
 | `wpss_gateway_refund_received` | 4 | `src/Integrations/PayPal/PayPalGateway.php` *(+8 more)* | Fires when a refund happened at the payment rail. |
 | `wpss_gateway_refund_unallocated` | 1 | `src/Services/PendingRefundService.php` | Fires when a rail refund cannot be tied to one gig and waits for an admin. |
 | `wpss_gateway_settings_owned_by_rail` | 1 | `src/Admin/Settings.php` | Fires instead of the gateway cards when a cart rail owns payment. |
+| `wpss_instant_delivery_created` | 3 | `src/functions/downloads.php` | Fires after a paid digital order is delivered automatically. |
 | `wpss_ledger_row_inserted` | 4 | `src/functions/ledger.php` | Fires after a wallet ledger row is written (never for an ignored duplicate). |
 | `wpss_loaded` | 1 | `src/Core/Plugin.php` | Fires after the plugin is fully loaded. |
 | `wpss_message_sent` | 2 | `src/Services/ConversationService.php` | Fires when a message is sent. |
@@ -204,6 +206,7 @@ guide; this is the complete index.
 | `wpss_pro_connect_transfer_reversed` | 3 | `src/StripeConnect/ConnectWebhookHandler.php` **[PRO]** | Fires when a Connect transfer reversal is confirmed by Stripe. |
 | `wpss_pro_loaded` | 1 | `wp-sell-services-pro.php` **[PRO]** | Fires after WP Sell Services Pro is fully loaded. |
 | `wpss_pro_payout_batch_created` | 5 | `src/PayPalPayouts/PayoutsBatchService.php` **[PRO]** | Fires after a payout batch is accepted by PayPal. |
+| `wpss_product_file_added` | 2 | `src/functions/downloads.php` | Fires after a digital product gets a new version of its file. |
 | `wpss_profile_form_fields` | 1 | `templates/dashboard/sections/profile.php` | Fires in the profile form before the submit button. |
 | `wpss_proposal_accepted` | 3 | `src/Services/BuyerRequestService.php` | Fires when a proposal is accepted via order conversion. |
 | `wpss_proposal_deleted` | 2 | `src/Services/ProposalService.php` | Fires when a proposal is deleted. |
@@ -322,7 +325,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (298)
+## Filters (299)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -361,6 +364,7 @@ guide; this is the complete index.
 | `wpss_buyer_request_post_type_args` | 1 | `src/PostTypes/BuyerRequestPostType.php` | Filter buyer request post type arguments. |
 | `wpss_buyer_request_slug` | 1 | `src/PostTypes/BuyerRequestPostType.php` | Filter the buyer request post type slug. |
 | `wpss_can_access_dashboard_section` | 3 | `src/Frontend/UnifiedDashboard.php` | Filter whether user can access a dashboard section. |
+| `wpss_can_download_product` | 3 | `src/functions/downloads.php` | Filter whether a user may download a digital product's file. |
 | `wpss_can_refund_order` | 4 | `src/functions/orders.php` | Filters whether a user may refund an order. |
 | `wpss_can_view_request_attachments` | 2 | `src/functions/request-files.php` | Filter who may see a buyer request's attachments. |
 | `wpss_cart_checkout` | 4 | `src/API/CartController.php` | Filter to create order from cart during standalone checkout. |

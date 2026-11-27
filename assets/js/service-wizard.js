@@ -45,6 +45,8 @@ function wpssServiceWizard(existingData = {}) {
 		// Loading states
 		saving: false,
 		publishing: false,
+		fileUploading: false,
+		fileError: '',
 
 		// Active package tab
 		activePackage: 'basic',
@@ -64,6 +66,7 @@ function wpssServiceWizard(existingData = {}) {
 		// Service data
 		data: {
 			service_type: 'fixed',
+			product_file: null,
 			title: '',
 			description: '',
 			category: '',
@@ -305,6 +308,12 @@ function wpssServiceWizard(existingData = {}) {
 					this.validationErrors.push(...this.pricingErrors());
 					break;
 
+				case 'file':
+					if (!this.data.product_file) {
+						this.validationErrors.push(wpssWizard.strings.validationFile);
+					}
+					break;
+
 				case 'gallery':
 					if (!this.data.gallery.main) {
 						this.validationErrors.push(wpssWizard.strings.validationImage);
@@ -458,6 +467,87 @@ function wpssServiceWizard(existingData = {}) {
 		 *
 		 * @return {boolean} True unless the type says otherwise.
 		 */
+		typeHasDelivery() {
+			const type = (wpssWizard.serviceTypes || {})[this.data.service_type];
+
+			return !type || false !== type.delivery;
+		},
+
+		/**
+		 * Upload a digital product's file as its new version (REST, multipart).
+		 * A new service is saved as a draft first, because the file belongs to it.
+		 *
+		 * @param {Event} event Change event of the file input.
+		 */
+		async uploadProductFile(event) {
+			const input = event.target;
+			const file  = input.files && input.files[0];
+
+			if (!file) {
+				return;
+			}
+
+			this.fileError     = '';
+			this.fileUploading = true;
+
+			try {
+				const wizard = document.getElementById('wpss-service-wizard');
+
+				if (!(parseInt(wizard.dataset.serviceId, 10) || 0)) {
+					await this._doSaveDraft();
+				}
+
+				const serviceId = parseInt(wizard.dataset.serviceId, 10) || 0;
+
+				if (!serviceId) {
+					throw new Error(wpssWizard.strings.uploadFailed);
+				}
+
+				const body = new FormData();
+				body.append('file', file);
+
+				const response = await fetch(wpssWizard.restUrl + 'services/' + serviceId + '/file', {
+					method: 'POST',
+					headers: { 'X-WP-Nonce': wpssWizard.restNonce },
+					credentials: 'same-origin',
+					body
+				});
+				const result = await response.json();
+
+				if (!response.ok) {
+					throw new Error(result.message || wpssWizard.strings.uploadFailed);
+				}
+
+				this.data.product_file = result;
+				this.refreshIcons();
+				this.validationErrors  = this.validationErrors.filter((e) => e !== wpssWizard.strings.validationFile);
+			} catch (error) {
+				this.fileError = error.message || wpssWizard.strings.uploadFailed;
+			} finally {
+				this.fileUploading = false;
+				input.value        = '';
+			}
+		},
+
+		/**
+		 * A byte count as buyers read it.
+		 *
+		 * @param {number} bytes Size in bytes.
+		 * @return {string} e.g. "2.4 MB".
+		 */
+		fileSizeLabel(bytes) {
+			const units = ['B', 'KB', 'MB', 'GB'];
+			let size    = Number(bytes) || 0;
+			let unit    = 0;
+
+			while (size >= 1024 && unit < units.length - 1) {
+				size /= 1024;
+				unit++;
+			}
+
+			return (unit ? size.toFixed(1) : size) + ' ' + units[unit];
+		},
+
 		typeHasAddons() {
 			const type = (wpssWizard.serviceTypes || {})[this.data.service_type];
 
@@ -505,7 +595,8 @@ function wpssServiceWizard(existingData = {}) {
 			// buyer can't Continue with $1–4.99 and only fail on the Publish AJAX.
 			const minPrice = parseFloat(wpssWizard.minPrice) || 0;
 
-			return !isNaN(price) && price > 0 && price >= minPrice && !isNaN(deliveryTime) && deliveryTime > 0;
+			// A digital product is delivered when paid, so it has no delivery time to check.
+			return !isNaN(price) && price > 0 && price >= minPrice && (!this.typeHasDelivery() || (!isNaN(deliveryTime) && deliveryTime > 0));
 		},
 
 		/**

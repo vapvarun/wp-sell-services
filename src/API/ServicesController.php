@@ -293,6 +293,19 @@ class ServicesController extends RestController {
 			)
 		);
 
+		// POST /services/{id}/file - Upload a digital product's file (multipart field `file`); each upload is a new version.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/file',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'upload_product_file' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				),
+			)
+		);
+
 		// POST /services/{id}/addons - Create addon (vendor only).
 		register_rest_route(
 			$this->namespace,
@@ -539,6 +552,36 @@ class ServicesController extends RestController {
 	}
 
 	/**
+	 * Store an uploaded file as the product's new version.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function upload_product_file( $request ) {
+		$service_id = (int) $request->get_param( 'id' );
+		$file       = $request->get_file_params()['file'] ?? null;
+
+		if ( ! is_array( $file ) || empty( $file['tmp_name'] ) ) {
+			return new WP_Error( 'wpss_no_file', __( 'Choose a file to upload.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		// wpss_check_upload() names the reason (type or size); the store refuses the same file for the same reason.
+		$refused = wpss_check_upload( $file, 'delivery' );
+
+		if ( $refused ) {
+			return new WP_Error( 'wpss_file_refused', $refused->get_error_message(), array( 'status' => 400 ) );
+		}
+
+		if ( ! wpss_add_product_file( $service_id, $file ) ) {
+			return new WP_Error( 'wpss_file_not_saved', __( 'The file could not be saved. Please try again.', 'wp-sell-services' ), array( 'status' => 500 ) );
+		}
+
+		return new WP_REST_Response( wpss_product_file_for_client( $service_id ), 201 );
+	}
+
+	/**
 	 * Fields that belong on a single service, not on a card in a grid.
 	 *
 	 * @since 1.6.0
@@ -556,6 +599,8 @@ class ServicesController extends RestController {
 		$packages = (array) wpss_get_service_packages( $service_id );
 
 		return array(
+			// A digital product's current file, for its seller and for buyers who paid; null for anyone else.
+			'product_file'   => wpss_service_type_supports( $service_id, 'file' ) && wpss_can_read_file( 'service', $service_id ) ? wpss_product_file_for_client( $service_id ) : null,
 			'content'        => apply_filters( 'the_content', $service->post_content ),
 			'packages'       => array_values( $packages ),
 			'extras'         => array_values( (array) wpss_get_service_extras( $service_id ) ),

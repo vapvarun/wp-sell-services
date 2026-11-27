@@ -21,7 +21,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.3
+ * @version 2.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -242,7 +242,12 @@ do_action( 'wpss_before_service_card', $service_id );
 					<span class="wpss-service-card__rating-new"><?php esc_html_e( 'New', 'wp-sell-services' ); ?></span>
 				<?php endif; ?>
 				<?php // Delivery beside the rating, so cards compare without opening each one (Basecamp 10337201764). ?>
-				<?php if ( $delivery_days > 0 ) : ?>
+				<?php if ( ! wpss_service_type_supports( $service_id, 'delivery' ) ) : ?>
+					<span class="wpss-service-card__delivery">
+						<i data-lucide="download" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
+						<?php esc_html_e( 'Instant download', 'wp-sell-services' ); ?>
+					</span>
+				<?php elseif ( $delivery_days > 0 ) : ?>
 					<span class="wpss-service-card__delivery">
 						<i data-lucide="clock" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 						<?php

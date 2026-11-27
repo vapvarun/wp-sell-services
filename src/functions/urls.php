@@ -257,6 +257,7 @@ function wpss_get_known_dashboard_sections(): array {
 	$sections = array(
 		// Buying.
 		'orders',
+		'downloads',
 		'favorites',
 		'requests',
 		// Selling.

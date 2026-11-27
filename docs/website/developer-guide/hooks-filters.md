@@ -52,10 +52,10 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_service_types` | `array $types` (id => `label`, `description`, `purchasable`, `steps`, `addons`) | `src/functions/services.php` |
 | `wpss_pre_create_service` | `array $data` | `ServiceManager.php` |
 | `wpss_pre_update_service` | `array $data, int $service_id` | `ServiceManager.php` |
-| `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:890` |
-| `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:765` |
-| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:989` |
-| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:1054` |
+| `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:915` |
+| `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:810` |
+| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:1034` |
+| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:1099` |
 
 ## Moderation Actions
 
@@ -79,11 +79,11 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |--------|-----------|------|
 | `wpss_pre_create_order` | `array $order_data` | `StandaloneOrderProvider.php` |
 | `wpss_pre_order_status_change` | `bool $allow, int $order_id, string $new_status, string $old_status` | `OrderService.php` |
-| `wpss_order_started` | `int $order_id` | `src/API/OrdersController.php:1012` |
+| `wpss_order_started` | `int $order_id` | `src/API/OrdersController.php:1073` |
 | `wpss_order_completed` | `int $order_id, object $order` | `src/Services/OrderWorkflowManager.php:794` |
 | `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `src/Services/OrderWorkflowManager.php:876` |
-| `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:1264` |
-| `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:749` |
+| `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:1325` |
+| `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:775` |
 | `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/requirements.php:40` |
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:755` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:574` |
@@ -363,9 +363,9 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_service_meta_fields` | `array $fields, int $post_id` | `src/Admin/Metaboxes/ServiceMetabox.php:195` |
-| `wpss_pro_upgrade_url` | `string $url` (default `https://wbcomdesigns.com/downloads/wp-sell-services-pro/`) | `src/functions/urls.php:1310` |
-| `wpss_docs_url` | `string $url` (default `https://wbcomdesigns.com/docs/wp-sell-services/`) | `src/functions/urls.php:1320` |
+| `wpss_service_meta_fields` | `array $fields, int $post_id` | `src/Admin/Metaboxes/ServiceMetabox.php:210` |
+| `wpss_pro_upgrade_url` | `string $url` (default `https://wbcomdesigns.com/downloads/wp-sell-services-pro/`) | `src/functions/urls.php:1311` |
+| `wpss_docs_url` | `string $url` (default `https://wbcomdesigns.com/docs/wp-sell-services/`) | `src/functions/urls.php:1321` |
 
 _`wpss_pro_upgrade_url` (added 1.3.0) controls where every "Upgrade to Pro" call-to-action points - the admin upgrade screen and the in-wizard prompts. Point it at your own landing page or an in-site URL:_
 
@@ -456,7 +456,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `src/Frontend/ServiceWizard.php:1974` |
+| `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `src/Frontend/ServiceWizard.php:2045` |
 | `wpss_wizard_pricing_after` | `WP_Post\|null $service` | `ServiceWizard.php` |
 | `wpss_wizard_save_service_meta` | `int $service_id, array $data` | `ServiceWizard.php` |
 
@@ -464,7 +464,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1485` |
+| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1530` |
 | `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:661` |
 | `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
 | `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
@@ -534,7 +534,7 @@ add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:1065` |
+| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:1078` |
 
 ### Dashboard Filters
 
@@ -732,7 +732,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1547` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/order-status.php:85` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:677` |
-| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:443` |
+| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:445` |
 | `wpss_wallet_manager` | `null` | `src/functions/ledger.php:763` |
 
 ### Currency System Filters (1.2.1)
@@ -797,7 +797,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_get_template_part` | `$template, $slug, $name` | `src/functions/templates.php:125` |
 | `wpss_get_template` | `$template, $template_name, $args` | `src/functions/templates.php:162` |
 | `wpss_locate_template` | `$template, $template_name, $template_path` | `src/Frontend/TemplateLoader.php:591` |
-| `wpss_dashboard_section_template` | `$template_path, $section` | `src/functions/urls.php:426` |
+| `wpss_dashboard_section_template` | `$template_path, $section` | `src/functions/urls.php:427` |
 
 ### URL and Taxonomy Filters
 
@@ -842,20 +842,20 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:440` |
 | `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:450` |
 | `wpss_payout_method_registry` | `$methods` (id => label + fields; optional `render` callable( $user_id ) draws the method's card in the vendor's Payout Methods, `withdrawal` => false keeps a connect-only rail out of the withdrawal choices) | `src/Services/EarningsService.php:1373` |
-| `wpss_order_needs_requirements` | `$needs, $order`: whether a paid order waits in pending_requirements (Pro answers false for a recurring renewal) | `src/functions/requirements.php:284` |
+| `wpss_order_needs_requirements` | `$needs, $order`: whether a paid order waits in pending_requirements (Pro answers false for a recurring renewal) | `src/functions/requirements.php:285` |
 | `wpss_vendor_reserved_payouts` | `$reserved` (default 0), `$vendor_id`: money a payout rail has committed but not yet debited; counted as a withdrawal in progress | `src/Services/EarningsService.php:175` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:762` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:265` |
-| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1601` |
+| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1646` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
 | `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:533` |
-| `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:652` |
-| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:1003` |
+| `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:664` |
+| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:1016` |
 
 **`wpss_realtime_settings`** - filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
 

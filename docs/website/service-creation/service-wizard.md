@@ -29,6 +29,7 @@ This is where vendors describe what they are offering.
 |------|-----------------|---------------------------|
 | **Fixed price** (default) | Buyers pick a package and pay before work starts. | All six. |
 | **Custom quote** | No buy button. Buyers see **Ask for a quote** (opens the contact form) and **Post a request**, and the vendor answers with a price in a proposal. The packages still show, as a price guide. | Basic Info, Pricing, Gallery, Extras and FAQs (FAQs only, no add-ons), Review. Requirements is skipped, because it belongs to a package purchase. |
+| **Digital product** | A file buyers download the moment they pay, shown as **Instant download**. No delivery time, revisions or brief. See [Digital Products](digital-products.md). | Basic Info, Pricing (title, description and price only), Gallery, Your File, Extras and FAQs (FAQs only), Review. |
 
 Every service created before this choice existed is a **Fixed price** service; nothing changes for it. The site owner can change a service's type in **Sell Services > All Services > edit > Overview > Sold as**.
 

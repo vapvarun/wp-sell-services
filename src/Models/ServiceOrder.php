@@ -635,6 +635,11 @@ class ServiceOrder {
 	 * @return int -1 for unlimited.
 	 */
 	public function get_remaining_revisions(): int {
+		// A digital product is a file, not work: there is nothing to revise, whatever its package says.
+		if ( 'digital' === wpss_get_order_kind( $this ) ) {
+			return 0;
+		}
+
 		if ( -1 === $this->revisions_included ) {
 			return -1; // Unlimited.
 		}

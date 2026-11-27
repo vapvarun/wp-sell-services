@@ -241,6 +241,18 @@
 	 */
 	$(document).ready(function() {
 		ServiceDataTabs.init();
+
+		// Cards that belong to some service types only (a digital product's file) follow the Sold as choice.
+		$('#wpss_service_type').on('change', function() {
+			var type = $(this).val();
+
+			$('[data-wpss-for-types]').each(function() {
+				this.hidden = String($(this).data('wpss-for-types')).split(' ').indexOf(type) === -1;
+			});
+
+			// A type with no delivery (a digital product) hides delivery time, revisions and express on every package.
+			$('.wpss-service-data-wrap').toggleClass('wpss-no-delivery', String($(this).data('no-delivery') || '').split(' ').indexOf(type) !== -1);
+		});
 	});
 
 	// Expose for external access.

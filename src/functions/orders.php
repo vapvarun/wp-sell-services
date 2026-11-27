@@ -1099,8 +1099,16 @@ function wpss_offline_payment_notice( object $order ): string {
 	$proof = \WPSellServices\Services\PaymentReceiptService::is_enabled()
 		&& null !== ( new \WPSellServices\Database\Repositories\PaymentReceiptRepository() )->get_pending_for_order( (int) $order->id );
 
-	return $proof
-		? __( 'Payment proof received. We will confirm it shortly and let you know.', 'wp-sell-services' )
+	if ( $proof ) {
+		return __( 'Payment proof received. We will confirm it shortly and let you know.', 'wp-sell-services' );
+	}
+
+	// A digital product (not a tip or other sub-order on it) is downloaded, not worked on.
+	$digital = ! in_array( (string) ( $order->platform ?? '' ), wpss_get_sub_order_platforms(), true )
+		&& wpss_service_type_supports( (int) ( $order->service_id ?? 0 ), 'file' );
+
+	return $digital
+		? __( 'Order placed and waiting for your payment. Your download is ready once it is confirmed.', 'wp-sell-services' )
 		: __( 'Order placed and waiting for your payment. Work starts once it is confirmed.', 'wp-sell-services' );
 }
 

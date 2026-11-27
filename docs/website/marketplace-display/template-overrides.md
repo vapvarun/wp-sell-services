@@ -3,7 +3,7 @@
 Change how service cards, vendor profiles, dashboards, and order screens look --
 through your theme, without touching plugin files.
 
-The plugin ships **109 templates**: 69 frontend templates plus 40 email
+The plugin ships **111 templates**: 71 frontend templates plus 40 email
 templates. Any of them can be overridden, and most of them also expose hooks so
 you can add markup without overriding at all.
 
@@ -102,6 +102,7 @@ Subfolders are preserved: `templates/order/order-view.php` becomes
 | `order/extension-view.php` | A paid extension |
 | `order/tip-view.php` | A tip receipt |
 | `order/payment.php` | Payment method, status and transaction ID in the order summary |
+| `order/download.php` | A digital product's file and Download button, for its buyer |
 | `order/cancellation.php` | Cancellation reason and details in the order summary |
 
 ### Dashboard
@@ -111,7 +112,7 @@ Each section of the unified dashboard is its own template under
 
 `orders.php` · `sales.php` · `services.php` · `create.php` · `requests.php` ·
 `create-request.php` · `edit-request.php` · `proposals.php` · `reviews.php` ·
-`favorites.php` · `earnings.php` · `messages.php` · `notifications.php` ·
+`favorites.php` · `downloads.php` · `earnings.php` · `messages.php` · `notifications.php` ·
 `disputes.php` · `portfolio.php` · `profile.php`
 
 **[PRO]** sections override the same way: `analytics.php` and `subscription.php`

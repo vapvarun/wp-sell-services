@@ -15,7 +15,7 @@
   },
   "rest": {
     "namespace": "wpss/v1",
-    "endpoint_count": 136,
+    "endpoint_count": 138,
     "controllers": [
       {
         "class": "API",
@@ -201,6 +201,20 @@
         "auth": "logged in",
         "since": "1.7.1",
         "why": "Payload gained reasons_by_role (customer and vendor lists) and reason_labels (every label, for rendering a dispute either party opened). The existing reasons key still means the buyer's list, so older clients are unaffected."
+      },
+      {
+        "route": "/wpss/v1/services/{id}/file",
+        "method": "POST",
+        "auth": "the service's seller or an admin (can_edit_service)",
+        "since": "2.0.0",
+        "why": "Uploads a digital product's file as a new version (wpss_add_product_file); 201 with the client file, 400 wpss_no_file / wpss_file_refused, 500 wpss_file_not_saved. Card 10551449503."
+      },
+      {
+        "route": "/wpss/v1/downloads",
+        "method": "GET",
+        "auth": "logged in (own purchases only)",
+        "since": "2.0.0",
+        "why": "The buyer's digital purchases, newest first, paginated; same rows as Dashboard > Downloads (wpss_buyer_download_for_client). Card 10551449503."
       }
     ],
     "endpoint_count_note": "Measured 2026-09-23 from the LIVE registry with Pro deactivated: 136 unique wpss/v1 routes, 348 method handlers. Was 153 and dated to the 1.3.1 branch, which had stopped meaning anything. The number moves with configuration - PaymentController registers nothing off the standalone rail and TippingController nothing when tipping is off - so audit/route-authority.json is the authority on WHICH routes exist and who may reach them; this count is a size, not a contract."
@@ -1308,7 +1322,7 @@
     "request_deadline": "A request's deadline is stored as _wpss_expires_at (service key expires_at). REST create and update both map the 'deadline' parameter to it, and the response's 'deadline' field reads it back.",
     "service_types": {
       "card": "10551449478 (2.0.0)",
-      "registry": "wpss_get_service_types() in src/functions/services.php, filter wpss_service_types: id => label, description, purchasable, steps (wizard step keys), addons. fixed (default, all steps) and custom (quote first: purchasable false, no requirements step, no add-ons). Digital and subscription register with their own cards. fixed cannot be filtered away.",
+      "registry": "wpss_get_service_types() in src/functions/services.php, filter wpss_service_types: id => label, description, purchasable, steps (wizard step keys), addons. fixed (default, all steps) and custom (quote first: purchasable false, no requirements step, no add-ons). digital (card 10551449503): steps add 'file' and drop requirements, addons false, delivery false. Flags addons/delivery/purchasable default true; read them through wpss_service_type_supports( $service_id, $feature ) (a flag, else a step key). fixed cannot be filtered away.",
       "meta": "_wpss_service_type post meta; one writer wpss_set_service_type() (ignores unknown ids); reader wpss_get_service_type() returns fixed when unset or no longer registered, so no migration.",
       "purchase_rule": "A type with purchasable=false is refused by wpss_service_unavailable_reason(), so every rail, cart, checkout pricer and REST cart refuses it; proposals (buyer request -> order) do not go through it and still work.",
       "surfaces": [
@@ -1321,6 +1335,30 @@
         "MarketplaceSeeder: one demo service set to custom, no orders seeded on it"
       ],
       "test": "tests/test-service-types.php (guard static:service-types)"
+    },
+    "digital_products": {
+      "card": "10551449503 (2.0.0)",
+      "data": "No new table (owner 2026-11-27). Product file versions in post meta _wpss_product_files (one writer wpss_add_product_file, kind 'product', folder s{service} of the private file store). Order kind frozen at payment in wpss_orders.meta.service_type='digital' (wpss_get_order_kind).",
+      "helpers": "src/functions/downloads.php: wpss_get_product_files/_file, wpss_product_file_for_client, wpss_get_order_kind, wpss_get_buyer_downloads (limit 0 = COUNT, idx_customer then meta LIKE), wpss_buyer_download_for_client, wpss_can_download_product (filter of the same name), wpss_deliver_digital_order (wpss_order_paid prio 20 -> DeliveryService::submit), wpss_discard_product_files (before_delete_post).",
+      "read_gate": "wpss_can_read_file('service', service_id) -> wpss_can_download_product: admin, seller, or buyer with a paid / partially_refunded order not cancelled or refunded. Doors: admin-post wpss_order_file&scope=service and GET /orders/{service_id}/files/{file}?scope=service; both fire wpss_file_downloaded -> AuditLogService 'product.downloaded'.",
+      "no_work_rules": "ServiceOrder::get_remaining_revisions() is 0 for a digital order (covers can_request_revision and every caller); ExtensionOrderService::create_extension_request refuses it; order-view hides the extension CTA; checkout, SEO description, badges, buy box, card and wizard review show no delivery days or revisions.",
+      "surfaces": [
+        "ServiceWizard 'file' step + uploadProductFile (REST)",
+        "ServiceMetabox Overview 'Product file' card (multipart via post_edit_form_tag), delivery rows hidden by .wpss-no-delivery",
+        "templates/order/download.php (buyer only)",
+        "templates/dashboard/sections/downloads.php + UnifiedDashboard 'downloads' item (only when the buyer has one)",
+        "StandaloneCheckoutProvider next-steps Pay/Download/Complete",
+        "wpss_offline_payment_notice digital wording",
+        "templates/order/deliveries.php auto-complete note follows can_request_revision"
+      ],
+      "hooks": [
+        "wpss_product_file_added",
+        "wpss_instant_delivery_created",
+        "wpss_can_download_product",
+        "wpss_file_downloaded"
+      ],
+      "test": "tests/test-digital-products.php (guard static:digital-products)",
+      "not_built": "Download limits/expiry (filter seam only); EDD/FluentCart product-level 'Estimated delivery' is owner-typed on the shop product and not driven by the service type."
     }
   },
   "coverage": {

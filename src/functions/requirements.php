@@ -269,7 +269,9 @@ function wpss_get_service_requirements( int $service_id ): array {
 function wpss_order_needs_requirements( object $order ): bool {
 	$service_id = (int) ( $order->service_id ?? 0 );
 
-	$needs = ! $service_id || 'request' === (string) ( $order->platform ?? '' ) || ! empty( wpss_get_service_requirements( $service_id ) );
+	// A type with no brief step (a digital product) starts at once even if old questions are still saved.
+	$needs = ! $service_id || 'request' === (string) ( $order->platform ?? '' )
+		|| ( wpss_service_type_supports( $service_id, 'requirements' ) && ! empty( wpss_get_service_requirements( $service_id ) ) );
 
 	/**
 	 * Filter whether a paid order waits for the buyer's requirements.

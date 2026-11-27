@@ -612,6 +612,8 @@ do_action( 'wpss_before_order_view', $order );
 		</section>
 	<?php endif; ?>
 
+	<?php wpss_get_template_part( 'order/download', '', array( 'wpss_order' => $order ) ); ?>
+
 	<?php ob_start(); ?>
 	<?php
 	wpss_get_template_part(
@@ -1596,6 +1598,7 @@ do_action( 'wpss_before_order_view', $order );
 	// never appear on the same order.
 	$can_request_extension        = $is_vendor
 		&& ! $is_request_order
+		&& 'digital' !== wpss_get_order_kind( $order )
 		&& null === $pending_extension
 		&& in_array( $order->status, $extension_active_statuses, true );
 	$buyer_sees_pending_extension = $is_customer && ! $is_request_order && null !== $pending_extension;

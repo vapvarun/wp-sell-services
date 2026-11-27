@@ -91,20 +91,31 @@ function wpss_get_service_types(): array {
 	$all = array( 'basic', 'pricing', 'gallery', 'requirements', 'extras', 'review' );
 
 	$defaults = array(
-		'fixed'  => array(
+		'fixed'   => array(
 			'label'       => __( 'Fixed price', 'wp-sell-services' ),
 			'description' => __( 'Buyers choose a package and pay before you start.', 'wp-sell-services' ),
 			'purchasable' => true,
 			'steps'       => $all,
 			'addons'      => true,
+			'delivery'    => true,
 		),
-		'custom' => array(
+		'custom'  => array(
 			'label'       => __( 'Custom quote', 'wp-sell-services' ),
 			'description' => __( 'Buyers message you or post a request, and you send them a price. Your packages show as a price guide.', 'wp-sell-services' ),
 			'purchasable' => false,
 			// Requirements and add-ons belong to a package purchase, which a quote never has.
 			'steps'       => array_values( array_diff( $all, array( 'requirements' ) ) ),
 			'addons'      => false,
+			'delivery'    => true,
+		),
+		'digital' => array(
+			'label'       => __( 'Digital product', 'wp-sell-services' ),
+			'description' => __( 'Buyers pay and download your file at once: a template, a preset, an e-book.', 'wp-sell-services' ),
+			'purchasable' => true,
+			// The file replaces the brief, the add-ons and the delivery time: the order is delivered the moment it is paid.
+			'steps'       => array( 'basic', 'pricing', 'gallery', 'file', 'extras', 'review' ),
+			'addons'      => false,
+			'delivery'    => false,
 		),
 	);
 
@@ -113,7 +124,7 @@ function wpss_get_service_types(): array {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $types Type id => label, description, purchasable, steps, addons.
+	 * @param array $types Type id => label, description, purchasable, steps (wizard step keys), addons, delivery (whether the vendor works to a delivery time).
 	 */
 	$types = (array) apply_filters( 'wpss_service_types', $defaults );
 
@@ -133,6 +144,26 @@ function wpss_get_service_type( int $service_id ): string {
 	$type = (string) get_post_meta( $service_id, '_wpss_service_type', true );
 
 	return '' !== $type && isset( wpss_get_service_types()[ $type ] ) ? $type : 'fixed';
+}
+
+/**
+ * Whether a service's type has a wizard step or a feature flag (addons, delivery, purchasable).
+ *
+ * @since 2.0.0
+ *
+ * @param int    $service_id Service post ID.
+ * @param string $feature    A step key, or addons|delivery|purchasable.
+ * @return bool
+ */
+function wpss_service_type_supports( int $service_id, string $feature ): bool {
+	$type = wpss_get_service_types()[ wpss_get_service_type( $service_id ) ];
+
+	// A flag a type leaves out means yes, so a type another plugin adds behaves like fixed unless it says otherwise.
+	if ( in_array( $feature, array( 'addons', 'delivery', 'purchasable' ), true ) ) {
+		return (bool) ( $type[ $feature ] ?? true );
+	}
+
+	return in_array( $feature, (array) ( $type['steps'] ?? array() ), true );
 }
 
 /**
@@ -391,6 +422,7 @@ function wpss_service_publish_thresholds(): array {
  *     @type string                         $description  Service description.
  *     @type array<int,array<string,mixed>> $packages     Package rows with price + delivery_days.
  *     @type int                            $thumbnail_id Main image attachment id.
+ *     @type array|null                     $product_file A digital product's current file; null when none is uploaded.
  * }
  * @return string[] User-facing error sentences; empty when the service may go live.
  */
@@ -553,6 +585,10 @@ function wpss_validate_service_publishable( array $service ): array {
 		$errors[] = __( 'Please upload a main image.', 'wp-sell-services' );
 	}
 
+	if ( array_key_exists( 'product_file', $service ) && empty( $service['product_file'] ) ) {
+		$errors[] = __( 'Please upload the file buyers download.', 'wp-sell-services' );
+	}
+
 	/**
 	 * Filter the reasons a service may not go live.
 	 *
@@ -620,7 +656,7 @@ function wpss_get_service_publish_errors( int $service_id ): array {
 			'description'  => $post->post_content,
 			'packages'     => (array) get_post_meta( $post->ID, '_wpss_packages', true ),
 			'thumbnail_id' => get_post_thumbnail_id( $post->ID ),
-		)
+		) + ( wpss_service_type_supports( $post->ID, 'file' ) ? array( 'product_file' => wpss_get_product_file( $post->ID ) ) : array() )
 	);
 }
 
@@ -846,8 +882,13 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 	}
 
 	// A quote-first type: the vendor prices the job in a proposal, so no package is sold.
-	if ( empty( wpss_get_service_types()[ wpss_get_service_type( $service_id ) ]['purchasable'] ?? true ) ) {
+	if ( ! wpss_service_type_supports( $service_id, 'purchasable' ) ) {
 		return __( 'This service is priced by quote. Message the seller or post a request to get a price.', 'wp-sell-services' );
+	}
+
+	// A digital product sells its file; until one is uploaded there is nothing to deliver.
+	if ( wpss_service_type_supports( $service_id, 'file' ) && ! wpss_get_product_file( $service_id ) ) {
+		return __( 'This product has no file to download yet.', 'wp-sell-services' );
 	}
 
 	$seller_reason = wpss_seller_unavailable_reason( (int) $service->post_author );

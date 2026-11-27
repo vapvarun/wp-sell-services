@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.1
+ * @version 2.0.0
  *
  * @var WPSellServices\Models\Service $service Service object.
  * @var int                            $service_id Service post ID.
@@ -36,7 +36,9 @@ $wpss_paused = isset( $wpss_paused )
 	: ( 'paused' === wpss_get_service_status( $service_id ) );
 
 // Quote-first type: packages are a price guide and the CTA asks for a quote instead of selling one.
-$wpss_by_quote    = empty( wpss_get_service_types()[ wpss_get_service_type( $service_id ) ]['purchasable'] ?? true );
+$wpss_by_quote = ! wpss_service_type_supports( $service_id, 'purchasable' );
+// A digital product is delivered the moment it is paid: no delivery time or revisions to show.
+$wpss_instant     = ! wpss_service_type_supports( $service_id, 'delivery' );
 $wpss_request_url = $wpss_by_quote ? wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'create-request' ) : '';
 
 // If no packages, show single price (omit description to avoid duplicating "About This Service").
@@ -140,7 +142,15 @@ do_action( 'wpss_before_service_packages', $service_id );
 					// Support both 'delivery_days' (saved by wizard) and 'delivery_time' (legacy).
 					$delivery_days_value = $package['delivery_days'] ?? ( $package['delivery_time'] ?? 0 );
 					?>
-					<?php if ( ! empty( $delivery_days_value ) ) : ?>
+					<?php if ( $wpss_instant ) : ?>
+						<li>
+							<span class="wpss-detail-icon wpss-icon-clock">
+								<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
+							</span>
+							<span class="wpss-detail-label"><?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?></span>
+							<span class="wpss-detail-value"><?php esc_html_e( 'Instant download', 'wp-sell-services' ); ?></span>
+						</li>
+					<?php elseif ( ! empty( $delivery_days_value ) ) : ?>
 						<li>
 							<span class="wpss-detail-icon wpss-icon-clock">
 								<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
@@ -159,7 +169,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 						</li>
 					<?php endif; ?>
 
-					<?php if ( isset( $package['revisions'] ) ) : ?>
+					<?php if ( isset( $package['revisions'] ) && ! $wpss_instant ) : ?>
 						<li>
 							<span class="wpss-detail-icon wpss-icon-revision">
 								<i data-lucide="refresh-cw" class="wpss-icon" aria-hidden="true"></i>

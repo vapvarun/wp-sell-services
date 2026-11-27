@@ -73,11 +73,18 @@ $wpss_viewer     = $wpss_viewer ?? 'buyer';
 				?>
 				<p class="wpss-notice wpss-notice--info wpss-order-auto-complete">
 					<?php
-					printf(
+					if ( 'buyer' !== $wpss_viewer ) {
 						/* translators: %s: date and time the order completes automatically. */
-						esc_html( 'buyer' === $wpss_viewer ? __( 'If you don\'t accept the delivery or ask for a revision by %s, this order completes automatically.', 'wp-sell-services' ) : __( 'If the buyer doesn\'t respond by %s, this order completes automatically.', 'wp-sell-services' ) ),
-						esc_html( wpss_datetime_label( $wpss_auto_complete_at, '', 'buyer' === $wpss_viewer ? (int) $wpss_order->customer_id : 0 ) )
-					);
+						$wpss_auto_note = __( 'If the buyer doesn\'t respond by %s, this order completes automatically.', 'wp-sell-services' );
+					} elseif ( $wpss_order->can_request_revision() ) {
+						/* translators: %s: date and time the order completes automatically. */
+						$wpss_auto_note = __( 'If you don\'t accept the delivery or ask for a revision by %s, this order completes automatically.', 'wp-sell-services' );
+					} else {
+						// No revisions to ask for (none left, or a digital product): do not offer one.
+						/* translators: %s: date and time the order completes automatically. */
+						$wpss_auto_note = __( 'If you don\'t accept the delivery by %s, this order completes automatically.', 'wp-sell-services' );
+					}
+					printf( esc_html( $wpss_auto_note ), esc_html( wpss_datetime_label( $wpss_auto_complete_at, '', 'buyer' === $wpss_viewer ? (int) $wpss_order->customer_id : 0 ) ) );
 					?>
 				</p>
 			<?php endif; ?>

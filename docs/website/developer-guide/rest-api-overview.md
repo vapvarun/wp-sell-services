@@ -181,6 +181,7 @@ an order. Add `scope`:
 | `order` (default) | the order | its buyer, its vendor, admins |
 | `conversation` | a pre-sale conversation (vendor contact form) | its two participants, admins |
 | `request` | a buyer request; `{file}` is an id in its `attachments` | anyone allowed to see that request's files (`wpss_can_view_request_attachments`), its author, admins |
+| `service` | a digital product; `{file}` is the id of one of its file versions | a buyer with a paid order for it that was not cancelled or refunded, its seller, admins (`wpss_can_download_product`) |
 
 A request's `attachments[].url` and a message's `attachments[].url` already
 carry the right scope. Links without `scope` are order links, so every link
@@ -197,6 +198,25 @@ What comes back depends on where the bytes are:
 
 Calling the route through `POST /batch` always returns the JSON form, with
 `url` null for a locally stored file - a batch cannot carry bytes.
+
+### Digital products
+
+A service whose `service_type` is `digital` sells a file
+([Digital Products](../service-creation/digital-products.md)).
+
+- `POST /wpss/v1/services/{id}/file` (its seller or an admin), multipart field
+  `file`: stores a new version and answers `201` with the file (`id`, `name`,
+  `type`, `size`, `version`, `uploaded_at`, `url`). `400 wpss_no_file` when no
+  file was sent, `400 wpss_file_refused` when its type or size is not allowed.
+- `GET /services/{id}` carries `product_file`: the current file, or `null`
+  unless the caller may download it.
+- `GET /orders/{id}` carries `kind` (`digital` or `service`, fixed when the order
+  is paid) and `download` (the current file, or `null`).
+- `GET /wpss/v1/downloads` lists the signed-in buyer's digital purchases, newest
+  first: `order_id`, `order_number`, `order_url`, `service` (`id`, `title`,
+  `link`), `purchased_at`, `file`. Paginated with `page` and `per_page` (max 100).
+- Each download through either door fires `wpss_file_downloaded` and writes one
+  `product.downloaded` audit row.
 
 ## Payload conventions
 
@@ -248,8 +268,9 @@ silently.
 `pricing`, `delivery`, `images`, `categories`, `tags`, `rating`, `created_at`,
 `updated_at`.
 
-`service_type` is `fixed` (buy a package) or `custom` (quote first: no package can be
-added to a cart or checked out, and the cart answers with the reason). A service saved
+`service_type` is `fixed` (buy a package), `custom` (quote first: no package can be
+added to a cart or checked out, and the cart answers with the reason) or `digital`
+(a file downloaded on payment; see [Digital products](#digital-products)). A service saved
 before 2.0.0 reads as `fixed`. Send `service_type` on `POST` or `PUT /services/{id}` to
 change it (an unknown value is refused with 400), and `GET /services?service_type=custom`
 to list one type. Other plugins can add types through the `wpss_service_types` filter.

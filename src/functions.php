@@ -41,6 +41,7 @@ $wpss_function_files = array(
 	'files',
 	'order-files',
 	'request-files',
+	'downloads',
 	'moderation',
 	'notifications',
 	'payments',

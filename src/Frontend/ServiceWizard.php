@@ -93,6 +93,11 @@ class ServiceWizard {
 					'title' => __( 'Gallery', 'wp-sell-services' ),
 					'icon'  => 'images',
 				),
+				// Only a digital product's type lists this step (wpss_get_service_types()).
+				'file'         => array(
+					'title' => __( 'Your File', 'wp-sell-services' ),
+					'icon'  => 'file-down',
+				),
 				'requirements' => array(
 					'title' => __( 'Requirements', 'wp-sell-services' ),
 					'icon'  => 'list',
@@ -293,6 +298,10 @@ class ServiceWizard {
 					</div>
 
 					<!-- Step 4: Requirements -->
+					<div class="wpss-wizard__step" data-step="file" x-show="currentStep === 'file'" x-cloak>
+						<?php $this->render_step_file(); ?>
+					</div>
+
 					<div class="wpss-wizard__step" data-step="requirements" x-show="currentStep === 'requirements'" x-cloak>
 						<?php $this->render_step_requirements( $service ); ?>
 					</div>
@@ -708,7 +717,7 @@ class ServiceWizard {
 								</div>
 							</div>
 
-							<div class="wpss-form-group">
+							<div class="wpss-form-group" x-show="typeHasDelivery()">
 								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-delivery">
 									<?php esc_html_e( 'Delivery time', 'wp-sell-services' ); ?>
 									<span class="wpss-required">*</span>
@@ -727,7 +736,8 @@ class ServiceWizard {
 							</div>
 						</div>
 
-						<div class="wpss-form-row wpss-form-row--2col">
+						<?php /* A digital product is delivered when paid: no delivery time, no revisions. */ ?>
+						<div class="wpss-form-row wpss-form-row--2col" x-show="typeHasDelivery()">
 							<div class="wpss-form-group">
 								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-revisions"><?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?></label>
 								<select id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-revisions" class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.revisions">
@@ -748,7 +758,7 @@ class ServiceWizard {
 						 * blank price means not offered.
 						 */
 						?>
-						<div class="wpss-form-row wpss-form-row--2col">
+						<div class="wpss-form-row wpss-form-row--2col" x-show="typeHasDelivery()">
 							<div class="wpss-form-group">
 								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-express-price"><?php esc_html_e( 'Express delivery price', 'wp-sell-services' ); ?></label>
 								<div class="wpss-input-group <?php echo esc_attr( wpss_money_affix_class() ); ?>">
@@ -933,6 +943,53 @@ class ServiceWizard {
 					</div>
 				</div>
 			</details>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the file step of a digital product: the file buyers download once they pay.
+	 *
+	 * @return void
+	 */
+	private function render_step_file(): void {
+		?>
+		<div class="wpss-wizard__step-header">
+			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Your File', 'wp-sell-services' ); ?></h2>
+			<p class="wpss-wizard__step-desc"><?php esc_html_e( 'Buyers download this file the moment they pay. Upload a new version any time: buyers always get the latest.', 'wp-sell-services' ); ?></p>
+		</div>
+
+		<div class="wpss-wizard__step-body">
+			<?php $this->render_error_summary(); ?>
+
+			<div class="wpss-product-file">
+				<template x-if="data.product_file">
+					<p class="wpss-product-file__current">
+						<i data-lucide="file-check" class="wpss-icon" aria-hidden="true"></i>
+						<span>
+							<strong x-text="data.product_file.name"></strong>
+							<span class="wpss-product-file__meta" x-text="fileSizeLabel(data.product_file.size) + ' · <?php echo esc_js( __( 'version', 'wp-sell-services' ) ); ?> ' + data.product_file.version"></span>
+						</span>
+					</p>
+				</template>
+
+				<label class="wpss-btn wpss-btn--outline" :aria-busy="fileUploading ? 'true' : 'false'">
+					<i data-lucide="upload" class="wpss-icon" aria-hidden="true"></i>
+					<span x-text="fileUploading ? wpssWizard.strings.uploading : ( data.product_file ? wpssWizard.strings.replaceFile : wpssWizard.strings.chooseFile )"></span>
+					<input type="file" class="screen-reader-text" @change="uploadProductFile($event)" :disabled="fileUploading">
+				</label>
+
+				<p class="wpss-form-error" role="alert" x-show="fileError" x-text="fileError" x-cloak></p>
+				<p class="wpss-form-hint">
+					<?php
+					printf(
+						/* translators: %s: maximum file size, e.g. 10 MB. */
+						esc_html__( 'One file, up to %s. To sell several files, put them in one ZIP.', 'wp-sell-services' ),
+						esc_html( (int) wpss_get_option( 'advanced', 'max_file_size' ) . ' MB' )
+					);
+					?>
+				</p>
+			</div>
 		</div>
 		<?php
 	}
@@ -1332,6 +1389,11 @@ class ServiceWizard {
 							<span class="wpss-icon" aria-hidden="true" x-show="!(data.gallery.main)"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Main image uploaded', 'wp-sell-services' ); ?>
 						</li>
+						<li :class="{ 'completed': data.product_file }" x-show="steps.includes('file')" x-cloak>
+							<span class="wpss-icon" aria-hidden="true" x-show="data.product_file" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!data.product_file"><i data-lucide="circle"></i></span>
+							<?php esc_html_e( 'File for buyers uploaded', 'wp-sell-services' ); ?>
+						</li>
 					</ul>
 				</div>
 
@@ -1343,7 +1405,8 @@ class ServiceWizard {
 							<div class="wpss-pricing-summary-item" x-show="tier === 'basic' || data.packages[tier].enabled" x-cloak>
 								<span class="wpss-pricing-summary-name" x-text="data.packages[tier].name || tier.charAt(0).toUpperCase() + tier.slice(1)"></span>
 								<span class="wpss-pricing-summary-price" x-text="window.wpssMoney.format(data.packages[tier].price || 0)"></span>
-								<span class="wpss-pricing-summary-delivery" x-text="(data.packages[tier].delivery_time || '?') + ' ' + (parseInt(data.packages[tier].delivery_time, 10) === 1 ? '<?php echo esc_js( __( 'day', 'wp-sell-services' ) ); ?>' : '<?php echo esc_js( __( 'days', 'wp-sell-services' ) ); ?>')"></span>
+								<span class="wpss-pricing-summary-delivery" x-show="!typeHasDelivery()"><?php esc_html_e( 'Instant download', 'wp-sell-services' ); ?></span>
+								<span class="wpss-pricing-summary-delivery" x-show="typeHasDelivery()" x-text="(data.packages[tier].delivery_time || '?') + ' ' + (parseInt(data.packages[tier].delivery_time, 10) === 1 ? '<?php echo esc_js( __( 'day', 'wp-sell-services' ) ); ?>' : '<?php echo esc_js( __( 'days', 'wp-sell-services' ) ); ?>')"></span>
 							</div>
 						</template>
 					</div>
@@ -1436,6 +1499,7 @@ class ServiceWizard {
 		$data = array(
 			'id'           => $service_id,
 			'service_type' => wpss_get_service_type( $service_id ),
+			'product_file' => wpss_product_file_for_client( $service_id ),
 			'title'        => $service->post_title,
 			'description'  => $service->post_content,
 			'category'     => ! empty( $categories ) ? $categories[0] : '',
@@ -1610,6 +1674,8 @@ class ServiceWizard {
 			'wpssWizard',
 			array(
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+				'restUrl'        => esc_url_raw( rest_url( 'wpss/v1/' ) ),
+				'restNonce'      => wp_create_nonce( 'wp_rest' ),
 				'nonce'          => wp_create_nonce( 'wpss_service_wizard' ),
 				'dashboardUrl'   => $this->get_dashboard_url(),
 				'currencySymbol' => wpss_get_currency_symbol(),
@@ -1669,6 +1735,11 @@ class ServiceWizard {
 					'selectMainImage'            => __( 'Select Main Image', 'wp-sell-services' ),
 					'addGalleryImage'            => __( 'Add Gallery Image', 'wp-sell-services' ),
 					'delete'                     => __( 'Delete', 'wp-sell-services' ),
+					'validationFile'             => __( 'Upload the file buyers download.', 'wp-sell-services' ),
+					'chooseFile'                 => __( 'Choose a file', 'wp-sell-services' ),
+					'replaceFile'                => __( 'Upload a new version', 'wp-sell-services' ),
+					'uploading'                  => __( 'Uploading...', 'wp-sell-services' ),
+					'uploadFailed'               => __( 'The file could not be uploaded. Please try again.', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -2317,9 +2388,19 @@ class ServiceWizard {
 		// numeric-indexed array so checkout, gateways, and templates all work
 		// with consistent integer indices (0, 1, 2).
 		$numeric_packages = array();
+		// A type delivered at payment (a digital product) has no delivery time or revisions to sell.
+		$timed = false !== ( wpss_get_service_types()[ $data['service_type'] ?? 'fixed' ]['delivery'] ?? true );
 		foreach ( $data['packages'] as $pkg ) {
 			if ( empty( $pkg['enabled'] ) ) {
 				continue;
+			}
+			if ( ! $timed ) {
+				$pkg = array(
+					'delivery_days' => 1,
+					'revisions'     => 0,
+					'express_price' => 0,
+				) + $pkg;
+				unset( $pkg['delivery_time'] );
 			}
 			$numeric_packages[] = wpss_package_id_from_input( (array) $pkg ) + array(
 				'name'          => $pkg['name'] ?? '',

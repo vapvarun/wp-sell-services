@@ -568,6 +568,18 @@ class UnifiedDashboard {
 			),
 		);
 
+		// Only buyers who bought a digital product see Downloads, so a services-only site shows no empty item.
+		if ( wpss_get_buyer_downloads( $user_id, 0, 0 ) > 0 ) {
+			$sections['buying']['items'] = array_slice( $sections['buying']['items'], 0, 1, true )
+				+ array(
+					'downloads' => array(
+						'icon'  => 'download',
+						'label' => __( 'Downloads', 'wp-sell-services' ),
+					),
+				)
+				+ $sections['buying']['items'];
+		}
+
 		if ( ! $is_active && $this->is_suspended_vendor( $user_id ) ) {
 			$sections['selling'] = array(
 				'label' => __( 'Selling', 'wp-sell-services' ),
@@ -967,6 +979,7 @@ class UnifiedDashboard {
 		$titles = array(
 			'orders'         => __( 'My Orders', 'wp-sell-services' ),
 			'favorites'      => __( 'Favorites', 'wp-sell-services' ),
+			'downloads'      => __( 'Downloads', 'wp-sell-services' ),
 			'requests'       => __( 'Buyer Requests', 'wp-sell-services' ),
 			'services'       => __( 'My Services', 'wp-sell-services' ),
 			'sales'          => __( 'Sales Orders', 'wp-sell-services' ),

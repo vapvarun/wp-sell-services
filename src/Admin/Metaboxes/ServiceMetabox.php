@@ -42,6 +42,21 @@ class ServiceMetabox {
 		$this->register_publish_guards();
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_notices', array( $this, 'limit_notice' ) );
+		add_action( 'post_edit_form_tag', array( $this, 'allow_file_upload' ) );
+	}
+
+	/**
+	 * Let the service edit form carry a digital product's file.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param \WP_Post $post Post being edited.
+	 * @return void
+	 */
+	public function allow_file_upload( $post ): void {
+		if ( $post instanceof \WP_Post && ServicePostType::POST_TYPE === $post->post_type ) {
+			echo ' enctype="multipart/form-data"';
+		}
 	}
 
 	/**
@@ -358,7 +373,7 @@ class ServiceMetabox {
 								placeholder="<?php esc_attr_e( 'Describe what\'s included in this package...', 'wp-sell-services' ); ?>"><?php echo esc_textarea( $package['description'] ?? '' ); ?></textarea>
 					</div>
 				</div>
-				<div class="wpss-package-row wpss-package-row-grid">
+				<div class="wpss-package-row wpss-package-row-grid wpss-package-row--delivery">
 					<div class="wpss-package-field">
 						<label>
 							<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
@@ -386,7 +401,7 @@ class ServiceMetabox {
 					</div>
 				</div>
 				<?php $express = wpss_sanitize_package_express( $package ); ?>
-				<div class="wpss-package-row wpss-package-row-grid">
+				<div class="wpss-package-row wpss-package-row-grid wpss-package-row--delivery">
 					<div class="wpss-package-field">
 						<label>
 							<i data-lucide="zap" class="wpss-icon" aria-hidden="true"></i>
@@ -741,6 +756,16 @@ class ServiceMetabox {
 
 		if ( isset( $_POST['wpss_service_type'] ) ) {
 			wpss_set_service_type( $post_id, sanitize_key( wp_unslash( $_POST['wpss_service_type'] ) ) );
+		}
+
+		// A digital product's file: a new upload becomes the version buyers get. The nonce was checked above.
+		if ( ! empty( $_FILES['wpss_product_file']['tmp_name'] ) ) {
+			$wpss_file    = array_map( 'wp_unslash', (array) $_FILES['wpss_product_file'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- an upload; the store checks type and size.
+			$wpss_refused = wpss_check_upload( $wpss_file, 'delivery' );
+
+			if ( $wpss_refused || ! wpss_add_product_file( $post_id, $wpss_file ) ) {
+				set_transient( 'wpss_product_file_refused_' . get_current_user_id(), $wpss_refused ? $wpss_refused->get_error_message() : __( 'The file could not be saved. Please try again.', 'wp-sell-services' ), MINUTE_IN_SECONDS );
+			}
 		}
 
 		// Save packages (indexed array format).
@@ -1242,7 +1267,7 @@ class ServiceMetabox {
 		$is_new = $this->is_new_service( $post );
 		$tabs   = $this->get_service_data_tabs();
 		?>
-		<div class="wpss-service-data-wrap" data-view-mode="<?php echo $is_new ? 'wizard' : 'tabs'; ?>">
+		<div class="wpss-service-data-wrap<?php echo wpss_service_type_supports( $post->ID, 'delivery' ) ? '' : ' wpss-no-delivery'; ?>" data-view-mode="<?php echo $is_new ? 'wizard' : 'tabs'; ?>">
 			<?php if ( $is_new ) : ?>
 				<?php $this->render_wizard_mode( $post, $tabs ); ?>
 			<?php else : ?>
@@ -1406,13 +1431,53 @@ class ServiceMetabox {
 							<div class="wpss-detail-content">
 								<label for="wpss_service_type"><?php esc_html_e( 'Sold as', 'wp-sell-services' ); ?></label>
 								<div class="wpss-detail-input">
-									<select id="wpss_service_type" name="wpss_service_type">
+									<select id="wpss_service_type" name="wpss_service_type" data-no-delivery="<?php echo esc_attr( implode( ' ', array_keys( array_filter( $wpss_types, static fn( $wpss_def ) => false === ( $wpss_def['delivery'] ?? true ) ) ) ) ); ?>">
 										<?php foreach ( $wpss_types as $wpss_type_id => $wpss_type_def ) : ?>
 											<option value="<?php echo esc_attr( $wpss_type_id ); ?>" <?php selected( $wpss_type, $wpss_type_id ); ?>><?php echo esc_html( $wpss_type_def['label'] ); ?></option>
 										<?php endforeach; ?>
 									</select>
 								</div>
 								<p class="description"><?php echo esc_html( $wpss_types[ $wpss_type ]['description'] ); ?></p>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<?php
+					// Types that sell a file (a digital product); the card follows the Sold as choice live.
+					$wpss_file_types = array_keys( array_filter( $wpss_types, static fn( $wpss_def ) => in_array( 'file', (array) ( $wpss_def['steps'] ?? array() ), true ) ) );
+					if ( $wpss_file_types ) :
+						$wpss_file         = wpss_product_file_for_client( $post->ID );
+						$wpss_file_refused = (string) get_transient( 'wpss_product_file_refused_' . get_current_user_id() );
+						delete_transient( 'wpss_product_file_refused_' . get_current_user_id() );
+						?>
+						<div class="wpss-detail-card" data-wpss-for-types="<?php echo esc_attr( implode( ' ', $wpss_file_types ) ); ?>" <?php echo wpss_service_type_supports( $post->ID, 'file' ) ? '' : 'hidden'; ?>>
+							<div class="wpss-detail-icon">
+								<i data-lucide="file-down" class="wpss-icon" aria-hidden="true"></i>
+							</div>
+							<div class="wpss-detail-content">
+								<label for="wpss_product_file"><?php esc_html_e( 'Product file', 'wp-sell-services' ); ?></label>
+								<?php if ( $wpss_file ) : ?>
+									<p class="wpss-product-file-current">
+										<a href="<?php echo esc_url( $wpss_file['url'] ); ?>"><?php echo esc_html( $wpss_file['name'] ); ?></a>
+										<span class="wpss-product-file-current__meta">
+										<?php
+										printf(
+											/* translators: 1: file size, e.g. 2 MB, 2: version number. */
+											esc_html__( '%1$s · version %2$d', 'wp-sell-services' ),
+											esc_html( size_format( $wpss_file['size'] ) ),
+											(int) $wpss_file['version']
+										);
+										?>
+										</span>
+									</p>
+								<?php endif; ?>
+								<div class="wpss-detail-input">
+									<input type="file" id="wpss_product_file" name="wpss_product_file">
+								</div>
+								<?php if ( '' !== $wpss_file_refused ) : ?>
+									<p class="description wpss-error-text" role="alert"><?php echo esc_html( $wpss_file_refused ); ?></p>
+								<?php endif; ?>
+								<p class="description"><?php esc_html_e( 'Buyers download this file the moment they pay. Upload a new version and press Update: buyers always get the latest.', 'wp-sell-services' ); ?></p>
 							</div>
 						</div>
 					<?php endif; ?>
@@ -1505,7 +1570,7 @@ class ServiceMetabox {
 			</div>
 		</div>
 
-		<p class="wpss-details-note">
+		<p class="wpss-details-note wpss-package-row--delivery">
 			<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
 			<?php esc_html_e( 'Delivery time and revisions are configured per package in the Pricing tab.', 'wp-sell-services' ); ?>
 		</p>

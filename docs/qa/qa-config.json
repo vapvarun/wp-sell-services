@@ -1043,6 +1043,10 @@
    {
     "id": "service-types",
     "run": "${WP_CLI:-wp} eval-file tests/test-service-types.php"
+   },
+   {
+    "id": "digital-products",
+    "run": "${WP_CLI:-wp} eval-file tests/test-digital-products.php"
    }
   ]
  }

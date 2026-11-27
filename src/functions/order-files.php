@@ -24,15 +24,16 @@ defined( 'ABSPATH' ) || exit;
  * @since 1.7.0
  *
  * Every customer file uses this one store, whatever it belongs to. `$owner_id` is the order for
- * order files, the conversation for a pre-sale `contact` file and the attachment post for a buyer
- * request `request` brief; wpss_file_folder() names the folder each one lives in.
+ * order files, the conversation for a pre-sale `contact` file, the attachment post for a buyer
+ * request `request` brief and the service for a digital product's `product` file; wpss_file_folder()
+ * names the folder each one lives in.
  *
  * @since 1.7.0
  * @since 2.0.0 Contact files and request briefs, in their own folders.
  *
  * @param array<string,mixed> $file     One entry from $_FILES.
- * @param int                 $owner_id Order id; conversation id for `contact`; attachment id for `request`.
- * @param string              $kind     delivery|requirement|message|dispute|receipt|contact|request.
+ * @param int                 $owner_id Order id; conversation id for `contact`; attachment id for `request`; service id for `product`.
+ * @param string              $kind     delivery|requirement|message|dispute|receipt|contact|request|product.
  * @return array<string,mixed>|null Record, or null when the upload is rejected.
  */
 function wpss_store_order_file( array $file, int $owner_id, string $kind = 'delivery' ): ?array {
@@ -45,13 +46,15 @@ function wpss_store_order_file( array $file, int $owner_id, string $kind = 'deli
 	 * order-files store (Basecamp 10321653509). wpss_check_upload() is
 	 * idempotent, so running it twice costs a mime lookup and nothing else.
 	 */
-	$kind = in_array( $kind, array( 'delivery', 'requirement', 'message', 'dispute', 'contact', 'receipt', 'request' ), true ) ? $kind : 'delivery';
+	$kind = in_array( $kind, array( 'delivery', 'requirement', 'message', 'dispute', 'contact', 'receipt', 'request', 'product' ), true ) ? $kind : 'delivery';
 
 	// The kind's own context, so an owner's wpss_delivery_allowed_file_types / wpss_requirements_allowed_file_types widening holds here too (Basecamp 10551464950).
 	$wpss_refused = wpss_check_upload(
 		$file,
 		array(
 			'delivery'    => 'delivery',
+			// A product file is what a delivery would have been, so it takes the delivery allow-list.
+			'product'     => 'delivery',
 			'requirement' => 'requirements',
 			'request'     => 'request',
 		)[ $kind ] ?? ''
@@ -86,12 +89,14 @@ function wpss_store_order_file( array $file, int $owner_id, string $kind = 'deli
 
 	$owner_id = max( 0, $owner_id );
 	$owner    = array(
-		'order_id' => in_array( $kind, array( 'contact', 'request' ), true ) ? 0 : $owner_id,
+		'order_id' => in_array( $kind, array( 'contact', 'request', 'product' ), true ) ? 0 : $owner_id,
 	);
 	if ( 'contact' === $kind ) {
 		$owner['conversation_id'] = $owner_id;
 	} elseif ( 'request' === $kind ) {
 		$owner['attachment_id'] = $owner_id;
+	} elseif ( 'product' === $kind ) {
+		$owner['service_id'] = $owner_id;
 	}
 	$folder = wpss_file_folder( $owner );
 
@@ -213,7 +218,7 @@ function wpss_can_read_order_files( int $order_id, int $user_id = 0 ): bool {
  * The folder a stored file lives in, under the order-files store.
  *
  * `{order}` for an order file, `c{conversation}` for a pre-sale contact file, `r{attachment}` for a
- * buyer-request brief. The same folder prefixes its bucket key (`wpss/{folder}/...`).
+ * buyer-request brief, `s{service}` for a digital product's file. The same folder prefixes its bucket key (`wpss/{folder}/...`).
  *
  * @since 2.0.0
  *
@@ -229,6 +234,10 @@ function wpss_file_folder( array $record ): string {
 		return 'c' . (int) $record['conversation_id'];
 	}
 
+	if ( ! empty( $record['service_id'] ) && empty( $record['order_id'] ) ) {
+		return 's' . (int) $record['service_id'];
+	}
+
 	return ! empty( $record['order_id'] ) ? (string) (int) $record['order_id'] : '';
 }
 
@@ -240,12 +249,13 @@ function wpss_file_folder( array $record ): string {
  * - conversation: its participants.
  * - request: its author; anyone else only on a publicly viewable request and when allowed to see its
  *   attachments (wpss_can_view_request_attachments(), signed-in members by default). Which file belongs to the request is wpss_find_file()'s check.
+ * - service: a digital product's file - its seller, or a buyer who paid for it (wpss_can_download_product()).
  * An administrator reads every scope.
  *
  * @since 2.0.0
  *
- * @param string $scope    order|conversation|request.
- * @param int    $scope_id Order, conversation or request id.
+ * @param string $scope    order|conversation|request|service.
+ * @param int    $scope_id Order, conversation, request or service id.
  * @param int    $user_id  User ID. Defaults to the current user.
  * @return bool
  */
@@ -258,6 +268,10 @@ function wpss_can_read_file( string $scope, int $scope_id, int $user_id = 0 ): b
 
 	if ( 'order' === $scope ) {
 		return wpss_can_read_order_files( $scope_id, $user_id );
+	}
+
+	if ( 'service' === $scope ) {
+		return wpss_can_download_product( $scope_id, $user_id );
 	}
 
 	if ( user_can( $user_id, 'manage_options' ) ) {
@@ -286,6 +300,7 @@ function wpss_can_read_file( string $scope, int $scope_id, int $user_id = 0 ): b
  * - order: every table that holds the order's files (wpss_find_order_file()).
  * - conversation: the conversation's messages.
  * - request: a brief listed on the request, by its attachment id.
+ * - service: any version of a digital product's file.
  *
  * @since 2.0.0
  *
@@ -297,6 +312,16 @@ function wpss_can_read_file( string $scope, int $scope_id, int $user_id = 0 ): b
 function wpss_find_file( string $scope, int $scope_id, string $file_id ): ?array {
 	if ( 'order' === $scope ) {
 		return wpss_find_order_file( $scope_id, $file_id );
+	}
+
+	if ( 'service' === $scope ) {
+		foreach ( wpss_get_product_files( $scope_id ) as $record ) {
+			if ( (string) ( $record['id'] ?? '' ) === $file_id ) {
+				return $record + array( 'service_id' => $scope_id );
+			}
+		}
+
+		return null;
 	}
 
 	if ( 'request' === $scope ) {
@@ -333,6 +358,10 @@ function wpss_find_file( string $scope, int $scope_id, string $file_id ): ?array
 function wpss_file_scope( array $record ): array {
 	if ( ! empty( $record['order_id'] ) ) {
 		return array( 'order', (int) $record['order_id'] );
+	}
+
+	if ( ! empty( $record['service_id'] ) ) {
+		return array( 'service', (int) $record['service_id'] );
 	}
 
 	return array( 'conversation', (int) ( $record['conversation_id'] ?? 0 ) );
@@ -1480,6 +1509,9 @@ function wpss_serve_order_file(): void {
 		$data = (array) $located->get_error_data();
 		wp_die( esc_html( $located->get_error_message() ), '', array( 'response' => (int) ( $data['status'] ?? 404 ) ) );
 	}
+
+	/** This action is documented in src/API/OrdersController.php */
+	do_action( 'wpss_file_downloaded', $scope, $order_id, $located['record'], get_current_user_id() );
 
 	if ( isset( $located['url'] ) ) {
 		wp_redirect( $located['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- deliberately offsite: the configured bucket, or the file's own historical location on this site.

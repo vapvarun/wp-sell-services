@@ -43,6 +43,32 @@ class OrdersController extends RestController {
 	 * @return void
 	 */
 	public function register_routes(): void {
+		// GET /downloads - the signed-in buyer's digital purchases they may still download.
+		register_rest_route(
+			$this->namespace,
+			'/downloads',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_downloads' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+					'args'                => array(
+						'page'     => array(
+							'type'    => 'integer',
+							'default' => 1,
+							'minimum' => 1,
+						),
+						'per_page' => array(
+							'type'    => 'integer',
+							'default' => 20,
+							'minimum' => 1,
+							'maximum' => 100,
+						),
+					),
+				),
+			)
+		);
+
 		// List orders.
 		register_rest_route(
 			$this->namespace,
@@ -195,9 +221,9 @@ class OrdersController extends RestController {
 					'permission_callback' => array( $this, 'check_file_permissions' ),
 					'args'                => array(
 						'scope' => array(
-							'description' => __( 'Whose file: order (default; {id} is the order), conversation ({id} is a pre-sale conversation) or request ({id} is a buyer request).', 'wp-sell-services' ),
+							'description' => __( 'Whose file: order (default; {id} is the order), conversation ({id} is a pre-sale conversation), request ({id} is a buyer request) or service ({id} is a digital product).', 'wp-sell-services' ),
 							'type'        => 'string',
-							'enum'        => array( 'order', 'conversation', 'request' ),
+							'enum'        => array( 'order', 'conversation', 'request', 'service' ),
 							'default'     => 'order',
 						),
 					),
@@ -868,6 +894,20 @@ class OrdersController extends RestController {
 			return $located;
 		}
 
+		/**
+		 * Fires when a stored file is handed to the person allowed to read it, on the web link or this route.
+		 *
+		 * The audit log keeps one row per download of a digital product's file.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param string              $scope    order|conversation|request|service.
+		 * @param int                 $scope_id The scope's id.
+		 * @param array<string,mixed> $record   The file record.
+		 * @param int                 $user_id  Who downloaded it.
+		 */
+		do_action( 'wpss_file_downloaded', (string) $request->get_param( 'scope' ), $order_id, $located['record'], get_current_user_id() );
+
 		$record = $located['record'];
 		$data   = array(
 			'id'         => (string) ( $record['id'] ?? $file_id ),
@@ -900,6 +940,27 @@ class OrdersController extends RestController {
 		}
 
 		return new WP_REST_Response( $data );
+	}
+
+	/**
+	 * The signed-in buyer's digital purchases, newest first, each with its current file.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_downloads( $request ): WP_REST_Response {
+		$user_id = get_current_user_id();
+		$args    = $this->get_pagination_args( $request );
+		$rows    = wpss_get_buyer_downloads( $user_id, 0, $args['per_page'], ( $args['page'] - 1 ) * $args['per_page'] );
+
+		return $this->paginated_response(
+			array_map( 'wpss_buyer_download_for_client', $rows ),
+			wpss_get_buyer_downloads( $user_id, 0, 0 ),
+			$args['page'],
+			$args['per_page']
+		);
 	}
 
 	/**
@@ -2197,6 +2258,11 @@ class OrdersController extends RestController {
 			// the row but not explain or action it.
 			'type'                => $this->get_order_type( $order ),
 			'parent_id'           => $this->get_parent_order_id( $order ),
+			// digital or service, frozen when the order was paid; a digital order carries its file for whoever may download it.
+			'kind'                => wpss_get_order_kind( $order ),
+			'download'            => 'digital' === wpss_get_order_kind( $order ) && wpss_can_read_file( 'service', (int) $order->service_id )
+				? wpss_product_file_for_client( (int) $order->service_id )
+				: null,
 			'checkout_url'        => $this->get_checkout_url_for( $order ),
 			'total'               => (float) $order->total,
 			// Exact integer minor units. `total` stays a float for existing
@@ -2217,7 +2283,7 @@ class OrdersController extends RestController {
 			// drift from the two values it derives from.
 			'revisions_included'  => (int) ( $order->revisions_included ?? 0 ),
 			'revisions_used'      => (int) ( $order->revisions_used ?? 0 ),
-			'revisions_remaining' => max( 0, (int) ( $order->revisions_included ?? 0 ) - (int) ( $order->revisions_used ?? 0 ) ),
+			'revisions_remaining' => 'digital' === wpss_get_order_kind( $order ) ? 0 : max( 0, (int) ( $order->revisions_included ?? 0 ) - (int) ( $order->revisions_used ?? 0 ) ),
 			'revision_reason'     => $order->get_revision_reason(),
 			// The package the buyer actually bought, frozen onto the order in
 			// 1.6.0. Read from the snapshot, NOT from the service -- the service

@@ -120,6 +120,52 @@
 	overflow: hidden;
 }
 
+/* A digital order's download. */
+.wpss-order-download {
+	padding: 1.25rem 1.5rem;
+}
+
+.wpss-order-download__title {
+	margin: 0 0 0.75rem;
+}
+
+.wpss-order-download__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1rem;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.wpss-order-download__file {
+	display: flex;
+	gap: 0.5rem;
+	align-items: flex-start;
+	margin: 0;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-order-download__meta {
+	display: block;
+	font-size: 0.875rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+
+.wpss-order-download__note {
+	margin: 0.75rem 0 0;
+	font-size: 0.875rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+@media (max-width: 640px) {
+	.wpss-order-download {
+		padding: 1rem;
+	}
+}
+
 /* The tip and extra-work prompts are cards of their own: inset them from the
    section edge the way the chat card is, instead of sitting flush against it. */
 .wpss-order-section--tip,

@@ -195,6 +195,11 @@ class ExtensionOrderService {
 			return $fail( __( 'Extensions are for fixed-price service orders. For custom-project orders, propose a phase instead.', 'wp-sell-services' ) );
 		}
 
+		// A digital product is a file the buyer downloaded, not work: there is nothing to extend.
+		if ( 'digital' === wpss_get_order_kind( $parent ) ) {
+			return $fail( __( 'A digital product is downloaded, not worked on, so it cannot be extended.', 'wp-sell-services' ) );
+		}
+
 		// Only ongoing orders can be extended.
 		if ( ! in_array( $parent->status, self::ACTIVE_PARENT_STATUSES, true ) ) {
 			return $fail( __( 'Extensions can only be requested on active orders.', 'wp-sell-services' ) );
