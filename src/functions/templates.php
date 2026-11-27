@@ -756,7 +756,7 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 								// Stored records have no URL; the gated endpoint link is
 								// built at render time. Legacy rows still carry one and
 								// get it back unchanged.
-								$file_url  = wpss_get_order_file_url( (array) $attachment );
+								$file_url  = wpss_get_order_file_url( (array) $attachment + array( 'conversation_id' => (int) ( $message->conversation_id ?? 0 ) ) );
 								$file_name = $attachment['name'] ?? ( $attachment['filename'] ?? basename( (string) $file_url ) );
 								$file_type = $attachment['type'] ?? '';
 								$is_image  = 0 === strpos( (string) $file_type, 'image/' );

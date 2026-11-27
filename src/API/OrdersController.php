@@ -193,6 +193,14 @@ class OrdersController extends RestController {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_file' ),
 					'permission_callback' => array( $this, 'check_file_permissions' ),
+					'args'                => array(
+						'scope' => array(
+							'description' => __( 'Whose file: order (default; {id} is the order), conversation ({id} is a pre-sale conversation) or request ({id} is a buyer request).', 'wp-sell-services' ),
+							'type'        => 'string',
+							'enum'        => array( 'order', 'conversation', 'request' ),
+							'default'     => 'order',
+						),
+					),
 				),
 			)
 		);
@@ -854,7 +862,7 @@ class OrdersController extends RestController {
 		$order_id = (int) $request->get_param( 'id' );
 		$file_id  = sanitize_text_field( (string) $request->get_param( 'file_id' ) );
 
-		$located = wpss_locate_order_file( $order_id, $file_id );
+		$located = wpss_locate_order_file( $order_id, $file_id, (string) $request->get_param( 'scope' ) );
 
 		if ( is_wp_error( $located ) ) {
 			return $located;
@@ -1889,7 +1897,7 @@ class OrdersController extends RestController {
 	/**
 	 * May the caller read this order's files?
 	 *
-	 * The ONE rule for order files - wpss_can_read_order_files(), which the
+	 * The ONE rule for customer files - wpss_can_read_file(), which the
 	 * admin-post link also runs - so a change there applies to app clients too.
 	 *
 	 * @since 1.7.1
@@ -1904,7 +1912,7 @@ class OrdersController extends RestController {
 			return $permission;
 		}
 
-		if ( ! wpss_can_read_order_files( (int) $request->get_param( 'id' ) ) ) {
+		if ( ! wpss_can_read_file( (string) $request->get_param( 'scope' ), (int) $request->get_param( 'id' ) ) ) {
 			return new WP_Error(
 				'wpss_not_owner',
 				__( 'You do not have permission to access this order.', 'wp-sell-services' ),

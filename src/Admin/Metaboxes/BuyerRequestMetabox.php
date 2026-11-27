@@ -252,11 +252,11 @@ class BuyerRequestMetabox {
 							}
 							?>
 							<li>
-								<?php if ( wp_attachment_is_image( $attachment_id ) ) : ?>
+								<?php if ( ! get_post_meta( $attachment_id, '_wpss_file', true ) && wp_attachment_is_image( $attachment_id ) ) : ?>
 									<?php echo wp_get_attachment_image( $attachment_id, 'thumbnail' ); ?>
 								<?php else : ?>
-									<a href="<?php echo esc_url( wp_get_attachment_url( $attachment_id ) ); ?>" target="_blank">
-										<?php echo esc_html( $attachment->post_title ); ?>
+									<a href="<?php echo esc_url( wpss_request_file_url( (int) $attachment_id, (int) $post->ID ) ); ?>" target="_blank" rel="noopener">
+										<?php echo esc_html( wpss_attachment_display_name( (int) $attachment_id ) ); ?>
 									</a>
 								<?php endif; ?>
 								<input type="hidden" name="wpss_attachments[]" value="<?php echo esc_attr( (string) $attachment_id ); ?>">

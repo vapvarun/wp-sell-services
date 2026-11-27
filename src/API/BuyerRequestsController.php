@@ -834,7 +834,7 @@ class BuyerRequestsController extends RestController {
 
 		// Same rule as the website (Basecamp 10337217098).
 		if ( isset( $buyer_request->attachments ) && wpss_can_view_request_attachments( (int) ( $buyer_request->id ?? $buyer_request->ID ) ) ) {
-			$data['attachments'] = $this->get_attachment_urls( $buyer_request->attachments );
+			$data['attachments'] = wpss_request_files_for_client( $buyer_request->attachments, (int) ( $buyer_request->id ?? $buyer_request->ID ) );
 		}
 
 		return $data;
@@ -868,32 +868,6 @@ class BuyerRequestsController extends RestController {
 				'created_at'    => $this->format_datetime( $proposal->created_at ?? null ),
 			]
 		);
-	}
-
-	/**
-	 * Get attachment URLs.
-	 *
-	 * @param mixed $attachments Attachment IDs.
-	 * @return array
-	 */
-	private function get_attachment_urls( $attachments ): array {
-		if ( ! is_array( $attachments ) ) {
-			$attachments = json_decode( $attachments, true ) ?: [];
-		}
-
-		$urls = [];
-		foreach ( $attachments as $id ) {
-			$url = wp_get_attachment_url( $id );
-			if ( $url ) {
-				$urls[] = [
-					'id'       => $id,
-					'url'      => $url,
-					'filename' => wpss_attachment_display_name( (int) $id ),
-					'type'     => get_post_mime_type( $id ),
-				];
-			}
-		}
-		return $urls;
 	}
 
 	/**

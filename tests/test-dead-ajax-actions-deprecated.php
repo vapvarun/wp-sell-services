@@ -1,6 +1,6 @@
 <?php
 /**
- * The 27 admin-ajax actions nothing calls any more log a deprecation, and keep working.
+ * The 26 admin-ajax actions nothing calls any more log a deprecation, and keep working.
  *
  * Run: wp eval-file tests/test-dead-ajax-actions-deprecated.php
  *
@@ -31,7 +31,7 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) use ( 
 };
 
 $listed = defined( AjaxHandlers::class . '::DEPRECATED_ACTIONS' ) ? AjaxHandlers::DEPRECATED_ACTIONS : array();
-$check( 'AjaxHandlers lists 27 deprecated actions', 27 === count( array_unique( $listed ) ), (string) count( $listed ) );
+$check( 'AjaxHandlers lists 26 deprecated actions', 26 === count( array_unique( $listed ) ), (string) count( $listed ) );
 
 // The callback registered at priority 1 on a hook, as "Class::method" names.
 $at_priority_1 = static function ( string $hook ) use ( &$wp_filter ): array {

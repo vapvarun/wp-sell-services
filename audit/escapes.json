@@ -1588,6 +1588,13 @@
    "guard": "static:feature-modules",
    "added": "2026-11-28",
    "fails_on": "f3eb15f5 (no wpss_modules registry: the first check fails and the test stops)"
+  },
+  {
+   "card": "10551464986",
+   "title": "Buyer-request briefs and pre-sale contact files sat in wp-content/uploads behind an unlisted URL, so anyone holding the link opened them; order, request and contact files each had their own storage and gate, old message and dispute rows were never migrated, a stored URL to another host was followed, and the download name was mangled",
+   "guard": "static:file-scopes",
+   "added": "2026-11-28",
+   "fails_on": "87990a11 (no wpss_can_read_file: the first check fails and the test stops)"
   }
  ]
 }

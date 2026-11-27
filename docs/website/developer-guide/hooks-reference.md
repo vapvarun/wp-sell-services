@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**600 hooks** across **822** firing sites.
+**602 hooks** across **824** firing sites.
 
 ## Actions (305)
 
@@ -322,7 +322,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (295)
+## Filters (297)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -422,6 +422,8 @@ guide; this is the complete index.
 | `wpss_email_preference_categories` | 3 | `src/functions/notifications.php` | Filters the email preference categories offered to a user. |
 | `wpss_email_subject` | 3 | `src/Services/EmailService.php` | Filters the email subject line before sending. |
 | `wpss_ensure_pay_order` | 2 | `src/functions/urls.php` | Filter the pay URL after the rail has made sure its store order exists. |
+| `wpss_file_download_method` | 2 | `src/functions/order-files.php` | Filter how a file download is sent: readfile, xsendfile or xaccel. |
+| `wpss_file_xaccel_path` | 2 | `src/functions/order-files.php` | Filter the nginx internal location an X-Accel-Redirect download points at. |
 | `wpss_foreign_page_map` | 1 | `src/Admin/PageDropdownWalker.php` | Filter the pages shown as belonging to another plugin. |
 | `wpss_format_price` | 3 | `src/functions/money.php` |  |
 | `wpss_fullwidth_page_keys` | 1 | `src/Frontend/TemplateLoader.php` | Filter which mapped plugin pages render full-width. |

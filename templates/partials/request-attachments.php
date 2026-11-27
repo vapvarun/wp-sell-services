@@ -64,8 +64,8 @@ $wpss_file_max       = (int) wpss_get_option( 'advanced', 'max_file_size' );
 (function($) {
 	'use strict';
 
-	// Each file goes to the public media route as soon as it is picked; the
-	// form then carries only the attachment IDs.
+	// Each file is stored privately as soon as it is picked; the form then
+	// carries only the attachment IDs.
 	$('#request_attachments').on('change', function() {
 		var $list = $(this).siblings('.wpss-request-files');
 		Array.prototype.forEach.call(this.files, function(file) {

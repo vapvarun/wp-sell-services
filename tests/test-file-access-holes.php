@@ -90,7 +90,7 @@ try {
 	$atts[] = $bid;
 	$check( 'Request brief upload stored', $bid > 0, wp_json_encode( $brief ) );
 	$check( '  as a private attachment', $bid > 0 && 'private' === get_post_status( $bid ), (string) get_post_status( $bid ) );
-	$check( '  with an unguessable file name', $bid > 0 && 'brief.txt' !== basename( (string) get_attached_file( $bid ) ), basename( (string) get_attached_file( $bid ) ) );
+	$check( '  with no file in wp-content/uploads (private store, Basecamp 10551464986)', $bid > 0 && '' === (string) get_attached_file( $bid ), (string) get_attached_file( $bid ) );
 	$check( '  but shown under its original name', $bid > 0 && function_exists( 'wpss_attachment_display_name' ) && 'brief.txt' === wpss_attachment_display_name( $bid ), $bid > 0 && function_exists( 'wpss_attachment_display_name' ) ? wpss_attachment_display_name( $bid ) : '' );
 	$legacy = wp_insert_attachment( array( 'post_title' => 'qa-950-legacy', 'post_mime_type' => 'text/plain', 'post_status' => 'private' ), '/tmp/abc123-legacy.txt' );
 	$atts[] = $legacy;

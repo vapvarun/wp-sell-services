@@ -129,3 +129,163 @@ function wpss_guard_proposed_request_status( $data, $postarr ) {
 }
 
 add_filter( 'wp_insert_post_data', 'wpss_guard_proposed_request_status', 10, 2 );
+
+/**
+ * Store an uploaded buyer-request brief in the private store.
+ *
+ * The brief keeps an attachment post as its identity - the integer id every request lists, its
+ * owner, the proposal file lock and the delete guards all key on it - but its bytes live in the
+ * order-files store under `r{attachment}/`, behind the request read gate, never in
+ * wp-content/uploads (Basecamp 10551464986).
+ *
+ * @since 2.0.0
+ *
+ * @param array<string,mixed> $file One entry from $_FILES, already checked by wpss_check_upload().
+ * @return int|WP_Error Attachment id.
+ */
+function wpss_store_request_brief( array $file ) {
+	$name          = sanitize_text_field( (string) ( $file['name'] ?? '' ) );
+	$attachment_id = wp_insert_attachment(
+		array(
+			'post_title'     => sanitize_file_name( $name ),
+			'post_status'    => 'private',
+			'post_mime_type' => (string) ( wp_check_filetype( $name )['type'] ?? '' ),
+			'guid'           => '',
+		),
+		false,
+		0,
+		true
+	);
+
+	if ( is_wp_error( $attachment_id ) ) {
+		return $attachment_id;
+	}
+
+	$record = wpss_store_order_file( $file, (int) $attachment_id, 'request' );
+
+	if ( ! $record ) {
+		wp_delete_post( (int) $attachment_id, true );
+
+		return new WP_Error( 'upload_failed', __( 'The file could not be saved.', 'wp-sell-services' ), array( 'status' => 500 ) );
+	}
+
+	// Addressed by the attachment id, like every brief already listed on a request.
+	$record['id'] = (string) $attachment_id;
+
+	update_post_meta( $attachment_id, '_wpss_file', $record );
+	update_post_meta( $attachment_id, '_wpss_original_name', $name );
+
+	return (int) $attachment_id;
+}
+
+/**
+ * A buyer-request brief as a file record, whichever way it was stored.
+ *
+ * A brief stored since 2.0.0 carries its record on the attachment (`_wpss_file`). An older brief
+ * uploaded for a request is still in wp-content/uploads: its record has a `url` and an owner, and
+ * wpss_locate_order_file() moves it into the private store the first time someone allowed opens it.
+ * Any other media the author listed keeps its own public address.
+ *
+ * @since 2.0.0
+ *
+ * @param int $attachment_id Attachment id.
+ * @return array<string,mixed>|null
+ */
+function wpss_request_file_record( int $attachment_id ): ?array {
+	if ( $attachment_id <= 0 || 'attachment' !== get_post_type( $attachment_id ) ) {
+		return null;
+	}
+
+	$stored = get_post_meta( $attachment_id, '_wpss_file', true );
+
+	if ( is_array( $stored ) && ( ! empty( $stored['path'] ) || ! empty( $stored['remote_path'] ) ) ) {
+		return array( 'attachment_id' => $attachment_id ) + $stored;
+	}
+
+	$file   = (string) get_attached_file( $attachment_id );
+	$record = array(
+		'id'   => (string) $attachment_id,
+		'name' => wpss_attachment_display_name( $attachment_id ),
+		'type' => (string) get_post_mime_type( $attachment_id ),
+		'size' => '' !== $file && is_readable( $file ) ? (int) filesize( $file ) : 0,
+		'url'  => (string) wp_get_attachment_url( $attachment_id ),
+	);
+
+	if ( 'request' === get_post_meta( $attachment_id, '_wpss_upload_context', true ) ) {
+		$record['attachment_id'] = $attachment_id;
+	}
+
+	return $record;
+}
+
+/**
+ * The gated link to a brief listed on a buyer request.
+ *
+ * @since 2.0.0
+ *
+ * @param int $attachment_id Attachment id listed in the request's `_wpss_attachments`.
+ * @param int $request_id    Buyer request id.
+ * @return string '' when there is no file to link.
+ */
+function wpss_request_file_url( int $attachment_id, int $request_id ): string {
+	$record = wpss_request_file_record( $attachment_id );
+
+	if ( ! $record || ( empty( $record['path'] ) && empty( $record['remote_path'] ) && empty( $record['url'] ) ) ) {
+		return '';
+	}
+
+	return wpss_file_link( 'request', $request_id, (string) $attachment_id );
+}
+
+/**
+ * Remove a private brief's bytes when its attachment post is deleted.
+ *
+ * WordPress deletes the files it knows about; a private brief's bytes are ours.
+ *
+ * @since 2.0.0
+ *
+ * @param int $attachment_id Attachment being deleted.
+ * @return void
+ */
+function wpss_discard_request_brief( int $attachment_id ): void {
+	$record = get_post_meta( $attachment_id, '_wpss_file', true );
+
+	if ( is_array( $record ) && ( ! empty( $record['path'] ) || ! empty( $record['remote_path'] ) ) ) {
+		wpss_discard_order_file( array( 'attachment_id' => $attachment_id ) + $record, 0 );
+	}
+}
+
+add_action( 'delete_attachment', 'wpss_discard_request_brief' );
+
+/**
+ * A request's listed briefs as links, for the request page, its admin box and REST.
+ *
+ * @since 2.0.0
+ *
+ * @param mixed $attachments The request's `_wpss_attachments` value (ids; a JSON string from older rows).
+ * @param int   $request_id  Buyer request id.
+ * @return array<int,array{id:int,url:string,filename:string,type:string}>
+ */
+function wpss_request_files_for_client( $attachments, int $request_id ): array {
+	if ( ! is_array( $attachments ) ) {
+		$attachments = json_decode( (string) $attachments, true ) ?: array();
+	}
+
+	$files = array();
+
+	foreach ( array_filter( array_map( 'absint', $attachments ) ) as $attachment_id ) {
+		$url = wpss_request_file_url( $attachment_id, $request_id );
+
+		if ( '' !== $url ) {
+			$record  = (array) wpss_request_file_record( $attachment_id );
+			$files[] = array(
+				'id'       => $attachment_id,
+				'url'      => $url,
+				'filename' => wpss_attachment_display_name( $attachment_id ),
+				'type'     => (string) ( $record['type'] ?? '' ),
+			);
+		}
+	}
+
+	return $files;
+}

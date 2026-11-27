@@ -174,27 +174,6 @@ class BuyerRequest {
 	}
 
 	/**
-	 * Get attachment URLs.
-	 *
-	 * @return array
-	 */
-	public function get_attachment_urls(): array {
-		$urls = [];
-		foreach ( $this->attachments as $id ) {
-			$url = wp_get_attachment_url( $id );
-			if ( $url ) {
-				$urls[] = [
-					'id'       => $id,
-					'url'      => $url,
-					'filename' => wpss_attachment_display_name( (int) $id ),
-					'type'     => get_post_mime_type( $id ),
-				];
-			}
-		}
-		return $urls;
-	}
-
-	/**
 	 * Check if request is open for proposals.
 	 *
 	 * @return bool

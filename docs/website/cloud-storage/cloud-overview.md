@@ -64,6 +64,7 @@ Until you enable cloud storage, files are stored locally:
 
 - Order files go to a `wpss-order-files/` folder beside your WordPress folder when that is writable and not inside the web root (on a network, each site gets its own `site-N/` subfolder), otherwise to `wp-content/uploads/wpss-order-files/` with access rules added. Files already stored stay readable if that choice later changes
 - Only the buyer, the vendor and site admins can download them
+- Buyer request files and files sent with a message through a vendor's contact form use the same private store: request files open for people allowed to see that request's files, contact files for the two people in that conversation and site admins
 - Storage is limited by your hosting plan
 
 **Tips for managing local storage:**

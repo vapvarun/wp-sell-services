@@ -124,8 +124,7 @@ class MediaController extends RestController {
 		// meant to be seen). Anything that belongs to an order goes through
 		// the private order store on the order routes instead
 		// (Basecamp 10264291163).
-		// 'request': a buyer request is a public page vendors browse, so its
-		// brief and reference files are public by nature too.
+		// 'request': a buyer-request brief, stored in the private store behind the request's read gate.
 		if ( ! in_array( $context, array( 'avatar', 'portfolio', 'service', 'profile', 'request' ), true ) ) {
 			return new WP_Error(
 				'wpss_order_upload_context',
@@ -151,18 +150,10 @@ class MediaController extends RestController {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
-		// A request brief is shown on the request page only, so it is private
-		// (core REST no longer lists it to visitors) and its name unguessable,
-		// like a pre-sale contact file. Profile and portfolio media stay public
-		// (Basecamp 10551464950).
-		$is_brief = 'request' === $context;
-		if ( $is_brief ) {
-			add_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
-		}
-		$attachment_id = media_handle_upload( 'file', 0, $is_brief ? array( 'post_status' => 'private' ) : array() );
-		if ( $is_brief ) {
-			remove_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
-		}
+		// A request brief goes to the private store: its bytes never sit in wp-content/uploads
+		// (Basecamp 10551464986). Profile and portfolio media stay public.
+		$is_brief      = 'request' === $context;
+		$attachment_id = $is_brief ? wpss_store_request_brief( (array) $files['file'] ) : media_handle_upload( 'file', 0 );
 
 		if ( is_wp_error( $attachment_id ) ) {
 			return new WP_Error(
@@ -177,10 +168,6 @@ class MediaController extends RestController {
 		update_post_meta( $attachment_id, '_wpss_uploader', get_current_user_id() );
 
 		update_post_meta( $attachment_id, '_wpss_upload_context', $context );
-
-		if ( $is_brief ) {
-			update_post_meta( $attachment_id, '_wpss_original_name', sanitize_text_field( (string) ( $files['file']['name'] ?? '' ) ) );
-		}
 
 		return new WP_REST_Response( $this->format_attachment( $attachment_id ), 201 );
 	}
@@ -348,6 +335,20 @@ class MediaController extends RestController {
 	 * @return array
 	 */
 	private function format_attachment( int $attachment_id ): array {
+		$brief = get_post_meta( $attachment_id, '_wpss_file', true );
+
+		// A private brief has no public address; it is opened from its request (wpss_request_file_url()).
+		if ( is_array( $brief ) && ! empty( $brief ) ) {
+			return array(
+				'id'        => $attachment_id,
+				'url'       => '',
+				'filename'  => wpss_attachment_display_name( $attachment_id ),
+				'filesize'  => (int) ( $brief['size'] ?? 0 ),
+				'mime_type' => (string) ( $brief['type'] ?? '' ),
+				'type'      => wp_ext2type( (string) pathinfo( (string) ( $brief['name'] ?? '' ), PATHINFO_EXTENSION ) ) ?: 'other',
+			);
+		}
+
 		$url       = wp_get_attachment_url( $attachment_id );
 		$metadata  = wp_get_attachment_metadata( $attachment_id );
 		$filepath  = get_attached_file( $attachment_id ) ?: '';

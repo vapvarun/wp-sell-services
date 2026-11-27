@@ -508,7 +508,10 @@ class ConversationsController extends RestController {
 		$file_params = $request->get_file_params();
 		if ( ! empty( $file_params['attachments'] ) ) {
 			$conversation = $this->conversation_service->get( $conversation_id );
-			$uploaded     = wpss_handle_message_attachments( (array) $file_params['attachments'], $conversation ? (int) $conversation->order_id : 0, 'message' );
+			$order_id     = $conversation ? (int) $conversation->order_id : 0;
+			$uploaded     = $order_id > 0
+				? wpss_handle_message_attachments( (array) $file_params['attachments'], $order_id, 'message' )
+				: wpss_handle_message_attachments( (array) $file_params['attachments'], $conversation_id, 'contact' );
 			$attachments  = array_merge( $attachments, $uploaded['attachments'] );
 			$skipped      = $uploaded['skipped'];
 		}
@@ -660,7 +663,8 @@ class ConversationsController extends RestController {
 		foreach ( $attachment_data as $attachment ) {
 			// Support both attachment ID format and full object format.
 			if ( is_array( $attachment ) && isset( $attachment['id'] ) ) {
-				$attachments[] = wpss_order_file_for_client( $attachment );
+				// Older rows name no owner; the message's conversation is it (Basecamp 10551464986, H8).
+				$attachments[] = wpss_order_file_for_client( $attachment + array( 'conversation_id' => (int) ( $message->conversation_id ?? 0 ) ) );
 			} elseif ( is_numeric( $attachment ) ) {
 				$id  = (int) $attachment;
 				$url = wp_get_attachment_url( $id );

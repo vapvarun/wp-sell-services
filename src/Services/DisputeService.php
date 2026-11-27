@@ -736,7 +736,8 @@ class DisputeService {
 				'type'        => (string) ( $row['message_type'] ?? '' ) ?: 'text',
 				'content'     => $content,
 				'description' => (string) ( $row['description'] ?? '' ),
-				'attachments' => $attachments,
+				// The gated link, never the storage path (Basecamp 10551464986).
+				'attachments' => array_map( static fn( $a ) => is_array( $a ) ? wpss_order_file_for_client( $a ) : $a, $attachments ),
 				'created_at'  => (string) $row['created_at'],
 			);
 		}

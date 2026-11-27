@@ -60,7 +60,7 @@ List specific skills or technologies the project requires (e.g., "WordPress", "L
 
 Upload reference files, mockups, design briefs, or any documents that help explain what you need.
 
-Each file uploads as soon as you pick it. Request files are shown only on the request page (to signed-in members who can see it) and get an unguessable address, but anyone given that address can open the file, so do not attach anything secret.
+Each file uploads as soon as you pick it. Request files are kept in the plugin's private file store, not in the public media library, and open only for people allowed to see the request's files: signed-in members by default, plus you and site admins. A copied link does not open the file for anyone else. Files attached to requests before version 2.0.0 move into the private store the first time someone allowed opens them.
 
 ![Public buyer requests listing](../images/frontend-buyer-requests-listing.webp)
 

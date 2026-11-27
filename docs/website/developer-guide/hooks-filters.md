@@ -78,11 +78,11 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |--------|-----------|------|
 | `wpss_pre_create_order` | `array $order_data` | `StandaloneOrderProvider.php` |
 | `wpss_pre_order_status_change` | `bool $allow, int $order_id, string $new_status, string $old_status` | `OrderService.php` |
-| `wpss_order_started` | `int $order_id` | `src/API/OrdersController.php:1004` |
+| `wpss_order_started` | `int $order_id` | `src/API/OrdersController.php:1012` |
 | `wpss_order_completed` | `int $order_id, object $order` | `src/Services/OrderWorkflowManager.php:794` |
 | `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `src/Services/OrderWorkflowManager.php:876` |
-| `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:1256` |
-| `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:741` |
+| `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:1264` |
+| `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:749` |
 | `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/requirements.php:40` |
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:755` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:574` |
@@ -246,7 +246,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:272` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:483` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1480` |
-| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2107` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2036` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:549` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:601` |
 
@@ -285,8 +285,8 @@ tip. Tips are excluded from commission by default, so the two usually match.
 |------|-----------|------|
 | `wpss_dispute_opened` | `int $dispute_id, int $order_id, int $opened_by, array $data` | `src/Services/DisputeService.php:407` |
 | `wpss_dispute_evidence_added` | `int $dispute_id, int $user_id` | `src/Services/DisputeService.php:562` |
-| `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `src/Services/DisputeService.php:873` |
-| `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `src/Services/DisputeService.php:1088` |
+| `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `src/Services/DisputeService.php:874` |
+| `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `src/Services/DisputeService.php:1089` |
 | `wpss_dispute_response_submitted` | `int $message_id, int $dispute_id, int $user_id` | `src/Services/DisputeWorkflowManager.php:208` |
 | `wpss_dispute_escalated` | `int $dispute_id, string $reason, int $escalated_by` | `src/Services/DisputeWorkflowManager.php:303` |
 | `wpss_dispute_cancelled` | `int $dispute_id, int $user_id, string $reason` | `src/Services/DisputeWorkflowManager.php:504` |
@@ -373,6 +373,21 @@ add_filter( 'wpss_pro_upgrade_url', function( $url ) {
     return home_url( '/go-pro/' );
 } );
 ```
+
+### File Downloads
+
+Every customer file (order files, buyer-request files, pre-sale contact files) is streamed by one response builder. By default PHP reads the file out. On a server that can send files itself, switch that on:
+
+```php
+// Apache with mod_xsendfile, or lighttpd.
+add_filter( 'wpss_file_download_method', fn() => 'xsendfile' );
+
+// nginx: map the disk path to an `internal` location.
+add_filter( 'wpss_file_download_method', fn() => 'xaccel' );
+add_filter( 'wpss_file_xaccel_path', fn( $location, $path ) => '/protected-files/' . basename( dirname( $path ) ) . '/' . basename( $path ), 10, 2 );
+```
+
+Who may read a file is `wpss_can_read_file( $scope, $scope_id )`, with scope `order`, `conversation` or `request`. Build a link with `wpss_file_link( $scope, $scope_id, $file_id )`.
 
 ### Feature Modules
 

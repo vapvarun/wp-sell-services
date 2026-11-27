@@ -133,7 +133,6 @@ class AjaxHandlers {
 		'wpss_update_cart_item',
 		'wpss_update_portfolio_item',
 		'wpss_update_vendor_profile',
-		'wpss_upload_file',
 	);
 
 	/**
@@ -201,7 +200,6 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_delete_service', array( $this, 'delete_service' ) );
 
 		// File upload.
-		add_action( 'wp_ajax_wpss_upload_file', array( $this, 'upload_file' ) );
 
 		// Search.
 
@@ -1869,75 +1867,6 @@ class AjaxHandlers {
 	}
 
 	/**
-	 * Upload file.
-	 *
-	 * @return void
-	 */
-	public function upload_file(): void {
-		check_ajax_referer( 'wpss_upload_nonce', 'nonce' );
-
-		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'You must be logged in to upload files.', 'wp-sell-services' ) ) );
-		}
-
-		// Rate limiting.
-		if ( RateLimiter::check_and_track( 'file_upload', get_current_user_id() ) ) {
-			RateLimiter::send_error( 'file_upload' );
-		}
-
-		if ( empty( $_FILES['file'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'No file uploaded.', 'wp-sell-services' ) ) );
-		}
-
-		$file = $_FILES['file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- validated by wpss_check_upload(), stored by media_handle_upload().
-
-		$refused = wpss_check_upload( $file );
-
-		if ( $refused ) {
-			wp_send_json_error( array( 'message' => $refused->get_error_message() ) );
-		}
-
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		require_once ABSPATH . 'wp-admin/includes/image.php';
-		require_once ABSPATH . 'wp-admin/includes/media.php';
-
-		// Unguessable path: this handler has no owning record to gate on, so the
-		// URL is the only thing protecting the file. See
-		// wpss_obfuscate_public_upload_name().
-		add_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
-		$attachment_id = media_handle_upload( 'file', 0 );
-		remove_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
-
-		if ( is_wp_error( $attachment_id ) ) {
-			wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
-		}
-
-		// Match how deliveries are stored. A requirement upload is a buyer
-		// handing over a brief, a brand asset or a document, and it was landing
-		// as a public attachment listed in everyone's media library while the
-		// docs told them it was private. Deliveries have used `private` since
-		// 1.0 - the same rule applies to what the buyer sends the other way.
-		//
-		// This hides it from the library and from public listings. The file
-		// itself still sits in the uploads tree, so treat its URL as unlisted
-		// rather than secret; protecting the path is tracked separately.
-		wp_update_post(
-			array(
-				'ID'          => $attachment_id,
-				'post_status' => 'private',
-			)
-		);
-
-		wp_send_json_success(
-			array(
-				'attachment_id' => $attachment_id,
-				'url'           => wp_get_attachment_url( $attachment_id ),
-				'filename'      => basename( get_attached_file( $attachment_id ) ?: '' ),
-			)
-		);
-	}
-
-	/**
 	 * Contact vendor.
 	 *
 	 * Allows logged-in users to send a message to a service vendor.
@@ -2010,17 +1939,6 @@ class AjaxHandlers {
 			}
 		}
 
-		// Pre-sale: there is no order yet, so the shared helper keeps these in
-		// the media library (private) rather than the order store.
-		$attachments = array();
-		$skipped     = array();
-		if ( ! empty( $_FILES['attachments'] ) ) {
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES group is validated/sanitized inside wpss_handle_message_attachments().
-			$uploaded    = wpss_handle_message_attachments( (array) $_FILES['attachments'], 0, 'contact' );
-			$attachments = array_slice( $uploaded['attachments'], 0, 5 );
-			$skipped     = $uploaded['skipped'];
-		}
-
 		// Get sender info.
 		//
 		// Guarded because send_vendor_contact() typehints \WP_User: handing it
@@ -2032,6 +1950,30 @@ class AjaxHandlers {
 		if ( ! $sender instanceof \WP_User ) {
 			wp_send_json_error( array( 'message' => __( 'Your session has expired. Please sign in again.', 'wp-sell-services' ) ) );
 		}
+
+		// The conversation first: its participants are who may open the files (Basecamp 10551464986).
+		$conversation_service = new ConversationService();
+
+		$conv_subject = $service_title
+			? sprintf(
+				/* translators: %s: service title */
+				__( 'Inquiry about "%s"', 'wp-sell-services' ),
+				$service_title
+			)
+			: __( 'Direct Message', 'wp-sell-services' );
+
+		$conversation = $conversation_service->create_direct( $user_id, $vendor_id, $conv_subject, $service_id );
+
+		$attachments = array();
+		$skipped     = array();
+		if ( ! empty( $_FILES['attachments'] ) && $conversation ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES group is validated/sanitized inside wpss_handle_message_attachments().
+			$uploaded    = wpss_handle_message_attachments( (array) $_FILES['attachments'], (int) $conversation->id, 'contact' );
+			$attachments = array_slice( $uploaded['attachments'], 0, 5 );
+			$skipped     = $uploaded['skipped'];
+		}
+		// The gated link, never the storage path, for the bell, the email and the action.
+		$shared = array_map( 'wpss_order_file_for_client', $attachments );
 
 		// Create notification for vendor.
 		$notification_service = new \WPSellServices\Services\NotificationService();
@@ -2059,7 +2001,7 @@ class AjaxHandlers {
 			'sender_id'   => $user_id,
 			'service_id'  => $service_id,
 			'message'     => $message,
-			'attachments' => $attachments,
+			'attachments' => $shared,
 		);
 
 		$notification_service->create(
@@ -2072,20 +2014,7 @@ class AjaxHandlers {
 
 		// Send HTML email to vendor using the branded template.
 		$email_service = new EmailService();
-		$email_service->send_vendor_contact( $vendor, $sender, $message, $service_title, $attachments );
-
-		// Create a conversation so the message appears in the dashboard.
-		$conversation_service = new ConversationService();
-
-		$conv_subject = $service_title
-			? sprintf(
-				/* translators: %s: service title */
-				__( 'Inquiry about "%s"', 'wp-sell-services' ),
-				$service_title
-			)
-			: __( 'Direct Message', 'wp-sell-services' );
-
-		$conversation = $conversation_service->create_direct( $user_id, $vendor_id, $conv_subject, $service_id );
+		$email_service->send_vendor_contact( $vendor, $sender, $message, $service_title, $shared );
 
 		if ( $conversation ) {
 			// The bell entry and branded mail above are this inquiry's notice. Without
@@ -2105,7 +2034,7 @@ class AjaxHandlers {
 		 * @param string $message     Message content.
 		 * @param array  $attachments Attachment data.
 		 */
-		do_action( 'wpss_vendor_contacted', $vendor_id, $user_id, $service_id, $message, $attachments );
+		do_action( 'wpss_vendor_contacted', $vendor_id, $user_id, $service_id, $message, $shared );
 
 		$response = array( 'message' => __( 'Your message has been sent successfully!', 'wp-sell-services' ) );
 		if ( ! empty( $skipped ) ) {

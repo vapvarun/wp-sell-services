@@ -1035,6 +1035,10 @@
    {
     "id": "feature-modules",
     "run": "${WP_CLI:-wp} eval-file tests/test-feature-modules.php"
+   },
+   {
+    "id": "file-scopes",
+    "run": "${WP_CLI:-wp} eval-file tests/test-file-scopes.php"
    }
   ]
  }

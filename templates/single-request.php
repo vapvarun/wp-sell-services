@@ -244,14 +244,10 @@ do_action( 'wpss_before_single_request', $request_id );
 									</p>
 								<?php else : ?>
 								<div class="wpss-attachments-list">
-									<?php foreach ( $attachments as $attachment_id ) : ?>
-										<?php
-										$attachment_url  = wp_get_attachment_url( $attachment_id );
-										$attachment_name = wpss_attachment_display_name( (int) $attachment_id );
-										?>
-										<a href="<?php echo esc_url( $attachment_url ); ?>" class="wpss-attachment-item" target="_blank" rel="noopener">
+									<?php foreach ( wpss_request_files_for_client( $attachments, (int) $request_id ) as $attachment_file ) : ?>
+										<a href="<?php echo esc_url( $attachment_file['url'] ); ?>" class="wpss-attachment-item" target="_blank" rel="noopener">
 											<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
-											<span class="wpss-attachment-name"><?php echo esc_html( $attachment_name ); ?></span>
+											<span class="wpss-attachment-name"><?php echo esc_html( $attachment_file['filename'] ); ?></span>
 										</a>
 									<?php endforeach; ?>
 								</div>

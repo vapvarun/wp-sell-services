@@ -681,9 +681,9 @@ function wpss_get_max_upload_size(): int {
 /**
  * The name a media-library attachment is shown under: the name it was uploaded with.
  *
- * Request briefs and contact files are stored under an unguessable name
- * (wpss_obfuscate_public_upload_name()), so the original is kept in
- * _wpss_original_name; older attachments fall back to the stored file name.
+ * Request briefs are kept in the private store under a generated name, so the
+ * original is kept in _wpss_original_name; older attachments fall back to the
+ * stored file name.
  *
  * @since 2.0.0
  *
@@ -714,8 +714,8 @@ function wpss_attachment_display_name( int $attachment_id ): string {
  *
  * @param array<string, mixed> $files    A single $_FILES['attachments'] entry (PHP's grouped
  *                                       multi-file shape: name[], type[], tmp_name[], etc.).
- * @param int                  $order_id Order the conversation belongs to, 0 for none.
- * @param string               $kind     message|contact|dispute|receipt - grouping only.
+ * @param int                  $order_id Order the files belong to; the conversation id for `contact`.
+ * @param string               $kind     message|contact|dispute|receipt.
  * @return array{attachments: array<int, array<string,mixed>>, skipped: array<int,string>}
  */
 function wpss_handle_message_attachments( array $files, int $order_id = 0, string $kind = 'message' ): array {
@@ -755,38 +755,14 @@ function wpss_handle_message_attachments( array $files, int $order_id = 0, strin
 			continue;
 		}
 
-		if ( $order_id > 0 ) {
-			$record = wpss_store_order_file( $file, $order_id, $kind );
+		// Every file goes to the private store; a pre-sale contact file to its conversation's
+		// folder, behind the participants gate (Basecamp 10551464986).
+		$record = $order_id > 0 ? wpss_store_order_file( $file, $order_id, $kind ) : null;
 
-			if ( $record ) {
-				$attachments[] = $record;
-			} else {
-				$skipped[] = $file_name . ': ' . __( 'upload failed', 'wp-sell-services' );
-			}
-			continue;
-		}
-
-		// ponytail: pre-sale contact files stay in the media library; the URL is
-		// unlisted, not gated. Move them behind a conversation read gate if
-		// pre-sale inquiries start carrying sensitive documents.
-		$_FILES['upload_file'] = $file;
-
-		// Unlisted means unguessable, or it means nothing - see
-		// wpss_obfuscate_public_upload_name().
-		add_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
-		$attachment_id = media_handle_upload( 'upload_file', 0, array( 'post_status' => 'private' ) );
-		remove_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
-
-		if ( ! is_wp_error( $attachment_id ) ) {
-			update_post_meta( $attachment_id, '_wpss_original_name', sanitize_text_field( (string) $files['name'][ $i ] ) );
-			$attachments[] = array(
-				'id'   => $attachment_id,
-				'url'  => wp_get_attachment_url( $attachment_id ),
-				'name' => $files['name'][ $i ],
-				'type' => (string) get_post_mime_type( $attachment_id ), // Server-verified MIME, not client-provided.
-			);
+		if ( $record ) {
+			$attachments[] = $record;
 		} else {
-			$skipped[] = $file_name . ': ' . $attachment_id->get_error_message();
+			$skipped[] = $file_name . ': ' . __( 'upload failed', 'wp-sell-services' );
 		}
 	}
 
