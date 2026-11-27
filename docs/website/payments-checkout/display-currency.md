@@ -24,8 +24,8 @@ drift** between the price a shopper sees at checkout and the amount they pay.
 
 1. Sign up at [openexchangerates.org](https://openexchangerates.org/signup) and copy your App ID. The free tier is enough for a typical marketplace.
 2. Go to **Sell Services > Settings > Integrations** and find the **Display Currency** card.
-3. Tick **Enable**, paste your App ID, and list the currencies you want to offer.
-4. Save.
+3. Paste your App ID, list the currencies you want to offer, and save.
+4. Turn **Display currency** on under **Sell Services > Settings > Features**.
 
 The converted hint then appears on catalog price displays automatically, through
 the free plugin's `wpss_catalog_price_html` seam. **No template edits are

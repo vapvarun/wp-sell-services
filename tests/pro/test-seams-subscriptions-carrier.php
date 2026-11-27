@@ -40,8 +40,9 @@ if ( ! class_exists( PlanEnforcer::class ) ) {
 	return;
 }
 
-$was_enabled = get_option( 'wpss_pro_vendor_subscriptions_enabled', null );
-update_option( 'wpss_pro_vendor_subscriptions_enabled', 1 );
+foreach ( array( 'option_', 'default_option_' ) as $prefix ) {
+	add_filter( $prefix . 'wpss_modules', static fn( $v ) => array_merge( (array) $v, array( 'vendor_subscriptions' => true ) ), 99 );
+}
 
 $vendor = wp_insert_user( array( 'user_login' => 'qa_seam_' . wp_rand(), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) );
 $plan   = ( new PlanRepository() )->create( array( 'name' => 'QA seam plan', 'slug' => 'qa-seam-' . wp_rand(), 'price' => 5, 'billing_period' => 'monthly', 'max_services' => 5, 'max_featured' => 1 ) );
@@ -110,7 +111,6 @@ foreach ( array_merge( $mine, array( $other ) ) as $pid ) {
 $wpdb->delete( $wpdb->prefix . 'wpss_pro_vendor_subscriptions', array( 'vendor_id' => $vendor ) );
 require_once ABSPATH . 'wp-admin/includes/user.php';
 wp_delete_user( $vendor );
-null === $was_enabled ? delete_option( 'wpss_pro_vendor_subscriptions_enabled' ) : update_option( 'wpss_pro_vendor_subscriptions_enabled', $was_enabled );
 wp_set_current_user( 0 );
 
 echo $fails ? "{$fails} FAILED\n" : "All passed\n";

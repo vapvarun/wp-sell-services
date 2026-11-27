@@ -236,10 +236,74 @@
 		}
 	}
 
+	/**
+	 * Settings > Features (2.0.0): one switch per module, saved through POST /modules. A switch can
+	 * turn others off (a module that needs it), so every card is redrawn from the server's answer.
+	 *
+	 * @param {NodeList} cards The .wpss-modules cards, one per group.
+	 */
+	function initModules( cards ) {
+		if ( ! cards.length ) {
+			return;
+		}
+
+		var url   = cards[ 0 ].getAttribute( 'data-rest' );
+		var nonce = cards[ 0 ].getAttribute( 'data-nonce' );
+
+		function redraw( groups ) {
+			Object.keys( groups || {} ).forEach( function ( key ) {
+				groups[ key ].modules.forEach( function ( m ) {
+					var toggle = document.querySelector( '.wpss-modules tr[data-id="' + m.id + '"] .wpss-modules__toggle' );
+					if ( toggle ) {
+						toggle.checked = !! m.enabled;
+					}
+				} );
+			} );
+		}
+
+		Array.prototype.forEach.call( cards, function ( card ) {
+			card.addEventListener( 'change', function ( e ) {
+				if ( ! e.target.classList.contains( 'wpss-modules__toggle' ) ) {
+					return;
+				}
+
+				var notice  = card.querySelector( '.wpss-modules__notice' );
+				var enabled = {};
+				enabled[ e.target.closest( 'tr' ).getAttribute( 'data-id' ) ] = e.target.checked;
+				card.classList.add( 'is-saving' );
+				notice.textContent = '';
+
+				window.fetch( url, {
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
+					body: JSON.stringify( { enabled: enabled } ),
+				} ).then( function ( res ) {
+					return res.json().then( function ( json ) {
+						if ( ! res.ok ) {
+							throw new Error( json && json.message ? json.message : res.statusText );
+						}
+						return json;
+					} );
+				} ).then( function ( json ) {
+					redraw( json.groups );
+					notice.textContent = card.getAttribute( 'data-saved' );
+				} ).catch( function ( err ) {
+					e.target.checked = ! e.target.checked;
+					notice.textContent = err.message;
+				} ).then( function () {
+					card.classList.remove( 'is-saving' );
+					card.dispatchEvent( new CustomEvent( 'wpss:card-clean' ) );
+				} );
+			} );
+		} );
+	}
+
 	ready( function () {
 		var fields = document.querySelectorAll( '.wpss-secret-field' );
 		Array.prototype.forEach.call( fields, initField );
 		initDeleteDataConfirm();
 		Array.prototype.forEach.call( document.querySelectorAll( '.wpss-payment-methods' ), initPaymentMethods );
+		initModules( document.querySelectorAll( '.wpss-modules' ) );
 	} );
 } )();

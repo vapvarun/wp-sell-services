@@ -6,7 +6,7 @@ Buyers can show appreciation with a tip after an order is completed, and vendors
 
 ## Tipping **[PRO]**
 
-Tipping needs WP Sell Services Pro. It is on by default once Pro is active, and the marketplace owner can switch it off under **Sell Services > Settings > Commission & Tax > Buyer Tips**.
+Tipping needs WP Sell Services Pro. It is on by default once Pro is active, and the marketplace owner can switch it off under **Sell Services > Settings > Features > Buyer tips**.
 
 Without Pro, or with Buyer Tips switched off, buyers see no tip option and past tips are hidden from order pages. A tip a buyer has already paid for is still credited to the vendor, and it still appears in the vendor's wallet history so the balance adds up.
 

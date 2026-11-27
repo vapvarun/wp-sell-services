@@ -105,8 +105,8 @@ gets sent - push follows the notifications you already have.
 1. Create a Firebase project at console.firebase.google.com and generate a
    **service account key** - a JSON file Google gives you once.
 2. Go to **Sell Services > Settings > Integrations**.
-3. Paste the JSON into the push notification credentials field and enable it.
-4. Save.
+3. Paste the JSON into the push notification credentials field and save.
+4. Turn **Push notifications** on under **Sell Services > Settings > Features**.
 
 Firebase relays to Apple's service for iOS, so one credential covers Android,
 iOS and web. You do not need a separate Apple key.

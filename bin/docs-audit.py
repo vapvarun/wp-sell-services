@@ -49,6 +49,7 @@ ADMIN_PATH_ROOTS = [
 VALID_TABS = {
     "General", "Checkout", "Pages", "Payment Gateways", "Commission & Tax", "Payouts",
     "Vendor Settings", "Orders & Disputes", "Emails", "Integrations", "System", "Branding",
+    "Features",
 }
 
 # Tab names retired by the July 2026 settings regroup. They read as plausible,

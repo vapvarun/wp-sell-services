@@ -1031,6 +1031,10 @@
    {
     "id": "chargeback-opened",
     "run": "${WP_CLI:-wp} eval-file tests/test-chargeback-opened.php"
+   },
+   {
+    "id": "feature-modules",
+    "run": "${WP_CLI:-wp} eval-file tests/test-feature-modules.php"
    }
   ]
  }

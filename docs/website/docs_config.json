@@ -1280,34 +1280,40 @@
           "order": 2
         },
         {
+          "title": "Features",
+          "slug": "features-wpss",
+          "file": "platform-settings/features.md",
+          "order": 3
+        },
+        {
           "title": "Payment Gateways Settings",
           "slug": "payment-gateways-settings-wpss",
           "file": "platform-settings/payment-gateways-settings.md",
-          "order": 3
+          "order": 4
         },
         {
           "title": "Commission & Tax Settings",
           "slug": "commission-tax-settings-wpss",
           "file": "platform-settings/commission-tax-settings.md",
-          "order": 4
+          "order": 5
         },
         {
           "title": "Payouts Settings",
           "slug": "payouts-settings-wpss",
           "file": "platform-settings/payouts-settings.md",
-          "order": 5
+          "order": 6
         },
         {
           "title": "White Label Branding [PRO]",
           "slug": "white-label-wpss",
           "file": "platform-settings/white-label.md",
-          "order": 6
+          "order": 7
         },
         {
           "title": "Advanced Settings (Debug, API, Uninstall)",
           "slug": "advanced-settings-wpss",
           "file": "platform-settings/advanced-settings.md",
-          "order": 7
+          "order": 8
         }
       ]
     },

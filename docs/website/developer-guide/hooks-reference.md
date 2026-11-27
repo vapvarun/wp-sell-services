@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**598 hooks** across **820** firing sites.
+**600 hooks** across **822** firing sites.
 
-## Actions (304)
+## Actions (305)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -148,6 +148,7 @@ guide; this is the complete index.
 | `wpss_milestone_proposed` | 3 | `src/Services/BuyerRequestService.php` *(+1 more)* |  |
 | `wpss_milestone_revision_requested` | 5 | `src/Services/MilestoneService.php` | Fires when a buyer sends a milestone phase back for changes. |
 | `wpss_milestone_submitted` | 4 | `src/Services/MilestoneService.php` |  |
+| `wpss_modules_changed` | 1 | `src/functions/modules.php` | Fires after feature modules are switched on or off. |
 | `wpss_mycred_balance_changed` | 3 | `src/Integrations/Wallets/MyCredProvider.php` **[PRO]** | Fires after MyCred balance changes for WPSS. |
 | `wpss_new_order_message` | 3 | `src/Services/ConversationService.php` | Fires for email notification on a new order chat message. |
 | `wpss_no_requests_content` | 0 | `templates/content-no-requests.php` | Hook: wpss_no_requests_content |
@@ -321,7 +322,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (294)
+## Filters (295)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -446,6 +447,7 @@ guide; this is the complete index.
 | `wpss_message_email_delay_minutes` | 1 | `src/Services/EmailService.php` | Filter the message-email delay. |
 | `wpss_messages_per_page` | 2 | `templates/dashboard/sections/messages.php` | Filter how many conversations one page of the messages list shows. |
 | `wpss_min_service_price` | 1 | `src/Frontend/ServiceWizard.php` *(+1 more)* |  |
+| `wpss_modules` | 1 | `src/functions/modules.php` | Register feature modules. |
 | `wpss_no_requests_message` | 1 | `templates/content-no-requests.php` | Template: No Requests Found |
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php` | Filter email content before sending. |

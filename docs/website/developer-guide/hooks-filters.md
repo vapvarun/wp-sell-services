@@ -136,7 +136,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | `wpss_standalone_order_complete` | `object $order` | `src/Integrations/Standalone/StandaloneOrderProvider.php:784` |
 | `wpss_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Standalone/StandaloneOrderProvider.php:480` |
 | `wpss_order_status_pending_requirements` | `int $order_id, string $old_status` | `src/Integrations/Standalone/StandaloneOrderProvider.php:470` |
-| `wpss_payment_callback` | `string $gateway_id` | `src/Core/Plugin.php:1303` |
+| `wpss_payment_callback` | `string $gateway_id` | `src/Core/Plugin.php:1306` |
 
 ### Offline Gateway
 
@@ -356,7 +356,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:3322` |
-| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:2183` |
+| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:2194` |
 
 ### Admin Filters
 
@@ -371,6 +371,30 @@ _`wpss_pro_upgrade_url` (added 1.3.0) controls where every "Upgrade to Pro" call
 ```php
 add_filter( 'wpss_pro_upgrade_url', function( $url ) {
     return home_url( '/go-pro/' );
+} );
+```
+
+### Feature Modules
+
+Every switchable feature registers on one filter and is switched on **Settings > Features** (`GET|POST /wpss/v1/modules`). Read the state with `wpss_module_enabled( $id )`; change it with `wpss_set_modules( array( $id => true ) )`, which refuses a module whose requirements are off and turns dependants off with it.
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_modules` (filter) | `array $modules` keyed by id: `name`, `description`, `group`, `tier`, `default`, `requires`, `boot`, `seed`, `settings_url`, `available`, `unavailable_reason` | `src/functions/modules.php:53` |
+| `wpss_modules_changed` (action) | `array $changed` id => bool, dependants included | `src/functions/modules.php:203` |
+
+`boot` runs once at `init` priority 0 whether the module is on or off, so existing orders, webhooks and refunds keep working; the module gates new use on `wpss_module_enabled()`. `seed` returns the feature's old on/off value (or null) the first time a site meets the module, so an upgrade keeps what was running.
+
+```php
+add_filter( 'wpss_modules', function ( array $modules ): array {
+    $modules['my_feature'] = array(
+        'name'        => __( 'My feature', 'my-plugin' ),
+        'description' => __( 'What it does for the owner.', 'my-plugin' ),
+        'group'       => 'engagement',
+        'default'     => false,
+        'boot'        => 'my_feature_boot',
+    );
+    return $modules;
 } );
 ```
 
@@ -652,7 +676,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_portfolio_item_updated` | `int $item_id, array $data` | `src/Services/PortfolioService.php:302` |
 | `wpss_portfolio_item_deleted` | `int $item_id, object $item` | `src/Services/PortfolioService.php:352` |
 | `wpss_settings_tab_{tab}` | *(none)* | `Settings.php:985` |
-| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2364` |
+| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2442` |
 
 ## Filters
 
@@ -704,7 +728,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1526` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:428` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:651` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4430` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4508` |
 | `wpss_decimal_places` | `int $places, string $currency` | `src/functions/money.php:186` |
 | `wpss_currency_position` | `string $position` | `src/functions/money.php:88` |
 | `wpss_price_separators` | `array{thousand:string, decimal:string} $separators` | `src/functions/money.php:143` |
@@ -783,10 +807,10 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:1061` |
 | `wpss_max_order_quantity` | `$max` | `src/Checkout/CheckoutIntentService.php:283` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:211` |
-| `wpss_api_public_settings` | `$settings` | `src/API/API.php:681` |
-| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1382` |
-| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1455` |
-| `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:239` |
+| `wpss_api_public_settings` | `$settings` | `src/API/API.php:730` |
+| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1434` |
+| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1507` |
+| `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:247` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
 | `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:285` |
 

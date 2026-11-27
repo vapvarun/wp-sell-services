@@ -280,17 +280,21 @@
 	color: var(--wpss-admin-text-light, #50575e);
 }
 
-.wpss-payment-methods__table {
+.wpss-payment-methods__table,
+.wpss-modules__table {
 	border: 0;
 	box-shadow: none;
 }
 
 .wpss-payment-methods__table th,
-.wpss-payment-methods__table td {
+.wpss-payment-methods__table td,
+.wpss-modules__table th,
+.wpss-modules__table td {
 	vertical-align: middle;
 }
 
-.wpss-payment-methods__table tbody tr {
+.wpss-payment-methods__table tbody tr,
+.wpss-modules__table tbody tr {
 	border-top: 1px solid var(--wpss-admin-border, #e2e4e7);
 }
 
@@ -336,22 +340,40 @@
 	opacity: 0.5;
 }
 
-.wpss-payment-methods.is-saving .wpss-payment-methods__table {
+.wpss-payment-methods.is-saving .wpss-payment-methods__table,
+.wpss-modules.is-saving .wpss-modules__table {
 	opacity: 0.6;
 	pointer-events: none;
 }
 
-.wpss-payment-methods__notice:empty {
+.wpss-payment-methods__notice:empty,
+.wpss-modules__notice:empty {
 	display: none;
 }
 
-.wpss-payment-methods__notice {
+.wpss-payment-methods__notice,
+.wpss-modules__notice {
 	margin-block: 8px 0;
 	margin-inline: 0;
 	color: var(--wpss-admin-text-light, #50575e);
 }
 
+.wpss-modules__name .description {
+	margin-block: 4px 0;
+	font-weight: 400;
+}
+
+.wpss-modules__table th:not(:first-child),
+.wpss-modules__table td:not(:first-child) {
+	width: 1%;
+	white-space: nowrap;
+}
+
 @media (max-width: 640px) {
+	.wpss-modules__table thead {
+		display: none;
+	}
+
 	.wpss-payment-methods__order {
 		width: auto;
 	}

@@ -1204,6 +1204,7 @@ function wpss_get_settings_sections(): array {
 		'general',
 		'checkout',
 		'pages',
+		'features',
 		'payments',
 		'commission',
 		'payouts',

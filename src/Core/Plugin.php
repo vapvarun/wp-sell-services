@@ -312,6 +312,9 @@ final class Plugin {
 		$this->hold_back_stale_pro();
 
 		do_action( 'wpss_loaded', $this );
+
+		// Modules boot once their labels can be translated, after every add-on registered them on wpss_loaded.
+		add_action( 'init', 'wpss_boot_modules', 0 );
 	}
 
 	/**

@@ -42,8 +42,9 @@ $service = new VendorSubscriptionService();
 $billing = new SubscriptionBillingHandler();
 
 // Plans on and required; a Stripe key so the cancel call is attempted; Stripe answered locally.
-foreach ( array( 'wpss_pro_vendor_subscriptions_enabled', 'wpss_pro_require_vendor_subscription' ) as $opt ) {
-	add_filter( "pre_option_{$opt}", '__return_true' );
+add_filter( 'pre_option_wpss_pro_require_vendor_subscription', '__return_true' );
+foreach ( array( 'option_', 'default_option_' ) as $prefix ) {
+	add_filter( $prefix . 'wpss_modules', static fn( $v ) => array_merge( (array) $v, array( 'vendor_subscriptions' => true ) ), 99 );
 }
 $stripe = static fn( $v ) => array( 'test_mode' => 1, 'test_secret_key' => 'sk_test_qa' ) + (array) $v;
 add_filter( 'option_wpss_stripe_settings', $stripe );

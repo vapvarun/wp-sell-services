@@ -8,8 +8,8 @@ your own across the admin, the vendor dashboard, and transactional emails.
 ## Setup
 
 1. Go to **Sell Services > Settings > Branding**.
-2. Tick **Enable** -- nothing changes until you do.
-3. Fill in the fields below and save.
+2. Fill in the fields below and save.
+3. Turn **White label** on under **Sell Services > Settings > Features**. Nothing changes until you do.
 
 Branding applies immediately. There are no template edits and no CSS to write.
 

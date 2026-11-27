@@ -78,6 +78,7 @@ class Settings {
 			'general'      => __( 'General', 'wp-sell-services' ),
 			'checkout'     => __( 'Checkout', 'wp-sell-services' ),
 			'pages'        => __( 'Pages', 'wp-sell-services' ),
+			'features'     => __( 'Features', 'wp-sell-services' ),
 			// Money. The old single "Payments" tab carried commission, tax,
 			// payouts AND every gateway credential set — eight independent
 			// forms with eight save buttons, where editing across two cards
@@ -99,8 +100,13 @@ class Settings {
 			'advanced'     => __( 'System', 'wp-sell-services' ),
 		);
 
+		// Settings > Features lists feature modules (2.0.0); with none registered it has nothing to show.
+		if ( ! wpss_modules() ) {
+			unset( $this->tabs['features'] );
+		}
+
 		$this->tab_groups = array(
-			'setup'      => array( 'general', 'checkout', 'pages' ),
+			'setup'      => array( 'general', 'checkout', 'pages', 'features' ),
 			'money'      => array( 'payments', 'commission', 'payouts' ),
 			'operations' => array( 'vendor', 'orders', 'emails' ),
 			'pro'        => array(), // Pro tabs added via filter.
@@ -129,6 +135,7 @@ class Settings {
 			'general',
 			'checkout',
 			'pages',
+			'features',
 			'payments',
 			'commission',
 			'payouts',
@@ -192,6 +199,7 @@ class Settings {
 			'general'      => 'settings',
 			'checkout'     => 'shopping-bag',
 			'pages'        => 'layout-template',
+			'features'     => 'toggle-right',
 			'payments'     => 'credit-card',
 			'commission'   => 'percent',
 			'payouts'      => 'banknote',
@@ -1929,6 +1937,9 @@ class Settings {
 			case 'pages':
 				$this->render_pages_tab();
 				break;
+			case 'features':
+				$this->render_features_tab();
+				break;
 			case 'payments':
 				$this->render_payments_tab();
 				break;
@@ -2195,6 +2206,73 @@ class Settings {
 		foreach ( $split( false ) as $id => $card ) {
 			$this->render_gateway_card( $id, $card['title'], $card['description'], $card['option_group'] );
 		}
+	}
+
+	/**
+	 * Render Settings > Features: one card per group, each feature module with its on/off switch,
+	 * what it needs and a link to its settings. admin-settings.js saves through POST /modules.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	private function render_features_tab(): void {
+		echo '<div class="wpss-settings-subhead">';
+		echo '<h2 class="wpss-settings-subhead__title">' . esc_html__( 'Features', 'wp-sell-services' ) . '</h2>';
+		echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Switch optional features on or off. Turning one off hides it from new use only: orders, payments, refunds and files it already has keep working.', 'wp-sell-services' ) . '</p>';
+		echo '</div>';
+
+		foreach ( wpss_module_rows() as $group ) :
+			?>
+			<div class="wpss-card wpss-modules" data-rest="<?php echo esc_url( rest_url( 'wpss/v1/modules' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-saved="<?php esc_attr_e( 'Saved', 'wp-sell-services' ); ?>">
+				<div class="wpss-card__head">
+					<h2 class="wpss-card__title"><?php echo esc_html( $group['label'] ); ?></h2>
+				</div>
+				<table class="widefat wpss-modules__table">
+					<thead>
+						<tr>
+							<th scope="col"><?php esc_html_e( 'Feature', 'wp-sell-services' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'On', 'wp-sell-services' ); ?></th>
+							<th scope="col"><span class="screen-reader-text"><?php esc_html_e( 'Settings', 'wp-sell-services' ); ?></span></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $group['modules'] as $row ) : ?>
+							<tr data-id="<?php echo esc_attr( $row['id'] ); ?>">
+								<td class="wpss-modules__name">
+									<strong><?php echo esc_html( $row['name'] ); ?></strong>
+									<?php if ( '' !== $row['description'] ) : ?>
+										<p class="description"><?php echo esc_html( $row['description'] ); ?></p>
+									<?php endif; ?>
+									<?php if ( $row['requires'] ) : ?>
+										<?php /* translators: %s: comma-separated feature names */ ?>
+										<p class="description wpss-modules__needs"><?php echo esc_html( sprintf( __( 'Needs %s.', 'wp-sell-services' ), implode( ', ', $row['requires'] ) ) ); ?></p>
+									<?php endif; ?>
+									<?php if ( ! $row['available'] && '' !== $row['unavailable_reason'] ) : ?>
+										<p class="description"><?php echo esc_html( $row['unavailable_reason'] ); ?></p>
+									<?php endif; ?>
+								</td>
+								<td>
+									<?php if ( $row['available'] ) : ?>
+										<?php /* translators: %s: feature name */ ?>
+										<input type="checkbox" class="wpss-modules__toggle" aria-label="<?php echo esc_attr( sprintf( __( 'Turn %s on', 'wp-sell-services' ), $row['name'] ) ); ?>" <?php checked( $row['enabled'] ); ?>>
+									<?php else : ?>
+										<span class="wpss-gateway-badge wpss-gateway-badge--off"><?php esc_html_e( 'Not available yet', 'wp-sell-services' ); ?></span>
+									<?php endif; ?>
+								</td>
+								<td>
+									<?php if ( '' !== $row['settings_url'] && $row['available'] ) : ?>
+										<?php /* translators: %s: feature name */ ?>
+										<a href="<?php echo esc_url( $row['settings_url'] ); ?>" aria-label="<?php echo esc_attr( sprintf( __( '%s settings', 'wp-sell-services' ), $row['name'] ) ); ?>"><?php esc_html_e( 'Settings', 'wp-sell-services' ); ?></a>
+									<?php endif; ?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+				<p class="wpss-modules__notice" role="status" aria-live="polite"></p>
+			</div>
+			<?php
+		endforeach;
 	}
 
 	/**

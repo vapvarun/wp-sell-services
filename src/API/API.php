@@ -301,6 +301,31 @@ class API {
 			]
 		);
 
+		// GET|POST /modules - Settings > Features: every feature module, switched on or off (2.0.0).
+		register_rest_route(
+			'wpss/v1',
+			'/modules',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => static fn() => new \WP_REST_Response( [ 'groups' => wpss_module_rows() ] ),
+					'permission_callback' => 'wpss_rest_require_admin',
+				],
+				[
+					'methods'             => \WP_REST_Server::EDITABLE,
+					'callback'            => [ $this, 'save_modules' ],
+					'permission_callback' => 'wpss_rest_require_admin',
+					'args'                => [
+						'enabled' => [
+							'description' => __( 'Module id => on (true) or off (false).', 'wp-sell-services' ),
+							'type'        => 'object',
+							'required'    => true,
+						],
+					],
+				],
+			]
+		);
+
 		// Settings endpoint (public).
 		register_rest_route(
 			'wpss/v1',
@@ -637,6 +662,30 @@ class API {
 	}
 
 	/**
+	 * POST /modules: switch feature modules on or off.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param \WP_REST_Request $request Request with `enabled` (id => bool).
+	 * @return \WP_REST_Response|\WP_Error The groups as saved, plus every switch that changed.
+	 */
+	public function save_modules( \WP_REST_Request $request ) {
+		$enabled = array_map( 'rest_sanitize_boolean', (array) $request->get_param( 'enabled' ) );
+		$changed = wpss_set_modules( $enabled );
+
+		if ( is_wp_error( $changed ) ) {
+			return $changed;
+		}
+
+		return new \WP_REST_Response(
+			[
+				'changed' => $changed,
+				'groups'  => wpss_module_rows(),
+			]
+		);
+	}
+
+	/**
 	 * Get public settings.
 	 *
 	 * @return \WP_REST_Response
@@ -864,6 +913,9 @@ class API {
 					'milestones'     => $can_pay_single_order,
 					'tips'           => $can_pay_single_order && wpss_tipping_enabled(),
 					'extensions'     => $can_pay_single_order,
+
+					// Every feature module, on or off (2.0.0), so the app hides what the owner switched off.
+					'modules'        => array_map( 'wpss_module_enabled', array_column( wpss_modules(), 'id', 'id' ) ),
 
 					/*
 					 * NOT PUBLISHED HERE, deliberately: portfolio, reviews and

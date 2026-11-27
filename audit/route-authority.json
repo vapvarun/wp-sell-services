@@ -107,6 +107,12 @@
       "object_id": true,
       "writes": true
     },
+    "DELETE /wpss/v1/withdrawals/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": true,
+      "writes": true
+    },
     "GET /wpss/v1/audit-log": {
       "audience": "admin",
       "permission_callback": "WPSellServices\\API\\AuditLogController::check_admin_permissions",
@@ -297,6 +303,12 @@
       "object_id": false,
       "writes": false
     },
+    "GET /wpss/v1/modules": {
+      "audience": "admin",
+      "object_id": false,
+      "permission_callback": "wpss_rest_require_admin",
+      "writes": false
+    },
     "GET /wpss/v1/notifications": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\NotificationsController::check_permissions",
@@ -400,6 +412,13 @@
       "object_id": false,
       "writes": false,
       "conditional_on": "wpss_uses_standalone_payments() - PaymentController::register_routes() returns early when a cart plugin owns payment, so these are absent on a WooCommerce/EDD/FluentCart rail."
+    },
+    "GET /wpss/v1/payments/settings": {
+      "audience": "admin",
+      "object_id": false,
+      "permission_callback": "WPSellServices\\API\\PaymentController::check_admin_permissions",
+      "writes": false,
+      "conditional_on": "wpss_uses_standalone_payments() - absent when a cart plugin owns payment."
     },
     "GET /wpss/v1/portfolio": {
       "audience": "guarded",
@@ -658,6 +677,12 @@
       "writes": false
     },
     "GET /wpss/v1/withdrawals/methods": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/withdrawals/profile": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
       "object_id": false,
@@ -1089,11 +1114,24 @@
       "object_id": false,
       "writes": true
     },
+    "POST,PUT,PATCH /wpss/v1/modules": {
+      "audience": "admin",
+      "object_id": false,
+      "permission_callback": "wpss_rest_require_admin",
+      "writes": true
+    },
     "POST,PUT,PATCH /wpss/v1/orders/(?P<id>[\\d]+)": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
       "object_id": true,
       "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/payments/settings": {
+      "audience": "admin",
+      "object_id": false,
+      "permission_callback": "WPSellServices\\API\\PaymentController::check_admin_permissions",
+      "writes": true,
+      "conditional_on": "wpss_uses_standalone_payments() - absent when a cart plugin owns payment."
     },
     "POST,PUT,PATCH /wpss/v1/portfolio/(?P<id>[\\d]+)": {
       "audience": "owner",
@@ -1142,18 +1180,6 @@
       "permission_callback": "WPSellServices\\API\\EarningsController::check_admin_permissions",
       "object_id": true,
       "writes": true
-    },
-    "DELETE /wpss/v1/withdrawals/(?P<id>[\\d]+)": {
-      "audience": "guarded",
-      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
-      "object_id": true,
-      "writes": true
-    },
-    "GET /wpss/v1/withdrawals/profile": {
-      "audience": "guarded",
-      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
-      "object_id": false,
-      "writes": false
     },
     "POST,PUT,PATCH /wpss/v1/withdrawals/profile": {
       "audience": "guarded",

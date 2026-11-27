@@ -1581,6 +1581,13 @@
    "guard": "static:chargeback-opened",
    "added": "2026-11-28",
    "fails_on": "4b366116 (base, Stripe and PayPal gateways ignore the opened events; 6 checks fail)"
+  },
+  {
+   "card": "10551496924",
+   "title": "Each Pro feature had its own on/off switch in its own settings card (or none: analytics, tiered commission and recurring always booted), so an owner could not see or switch features in one place and nothing stopped a feature running without what it needs",
+   "guard": "static:feature-modules",
+   "added": "2026-11-28",
+   "fails_on": "f3eb15f5 (no wpss_modules registry: the first check fails and the test stops)"
   }
  ]
 }

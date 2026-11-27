@@ -33,13 +33,14 @@ if ( ! class_exists( RateService::class ) ) {
 
 $hook = 'wpss_pro_refresh_rates';
 
-// Feature on, with an app id. option_ only runs for a saved option; default_option_ covers a site that never saved it.
+// Feature on (its module), with an app id. option_ only runs for a saved option; default_option_ covers a site that never saved it.
 foreach ( array( 'option_', 'default_option_' ) as $prefix ) {
 	add_filter(
 		$prefix . RateService::OPTION,
-		static fn( $v ) => array_merge( is_array( $v ) ? $v : array(), array( 'enabled' => 1, 'app_id' => 'qa-app-id' ) ),
+		static fn( $v ) => array_merge( is_array( $v ) ? $v : array(), array( 'app_id' => 'qa-app-id' ) ),
 		99
 	);
+	add_filter( $prefix . 'wpss_modules', static fn( $v ) => array_merge( (array) $v, array( 'display_currency' => true ) ), 99 );
 }
 
 // The rates API: count calls, answer ok or down.
