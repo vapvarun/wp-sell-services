@@ -30,10 +30,33 @@ if ( is_wp_error( $user_id ) ) {
 }
 
 // 1. wp-login.php path: six wrong passwords, then the right one signs in.
+// Only core's and our own sign-in filters run: a security plugin's limiter (wbcom-essential on the
+// dev site) is allowed to lock, and is not what this test is about.
+$set_aside = array();
+foreach ( array( 'authenticate', 'wp_authenticate_user' ) as $hook ) {
+	foreach ( $GLOBALS['wp_filter'][ $hook ]->callbacks ?? array() as $priority => $callbacks ) {
+		foreach ( $callbacks as $cb ) {
+			$fn = $cb['function'];
+			try {
+				$ref = is_array( $fn ) ? new ReflectionMethod( $fn[0], $fn[1] ) : ( is_string( $fn ) && str_contains( $fn, '::' ) ? new ReflectionMethod( $fn ) : new ReflectionFunction( $fn ) );
+			} catch ( ReflectionException $e ) {
+				continue;
+			}
+			$file = wp_normalize_path( (string) $ref->getFileName() );
+			if ( ! str_contains( $file, '/wp-includes/' ) && ! str_contains( $file, '/plugins/wp-sell-services' ) ) {
+				$set_aside[] = array( $hook, $fn, $priority, $cb['accepted_args'] );
+				remove_filter( $hook, $fn, $priority );
+			}
+		}
+	}
+}
 for ( $i = 1; $i <= 6; $i++ ) {
 	wp_authenticate( $login, 'wrong-' . $i );
 }
 $user = wp_authenticate( $login, $password );
+foreach ( $set_aside as $f ) {
+	add_filter( $f[0], $f[1], $f[2], $f[3] );
+}
 $check( 'six wrong passwords on the web path do not lock the account', $user instanceof WP_User, is_wp_error( $user ) ? $user->get_error_code() : '' );
 
 // 2. REST path: six wrong passwords from two addresses (the per-IP limiter never trips), then the right one.

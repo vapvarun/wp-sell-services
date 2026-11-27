@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.4
+ * @version 2.0.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -274,7 +274,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 				</a>
 			<?php else : ?>
 				<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Create your first service', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Create Your First Service', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
 		</div>

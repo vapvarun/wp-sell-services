@@ -58,6 +58,77 @@
 	function init() {
 		// Process refund button.
 		$(document).on('click', '.wpss-process-refund', handleProcessRefund);
+		$(document).on('click', '.wpss-mark-paid-btn', handleMarkPaid);
+		$(document).on('click', '.wpss-receipt-action', handleReceiptDecision);
+	}
+
+	/**
+	 * Mark an offline order as paid (a money action: the plugin's own dialog, which opens on Cancel).
+	 *
+	 * @param {Event} e Click event.
+	 */
+	function handleMarkPaid(e) {
+		var $btn = $(e.currentTarget);
+		var i18n = wpssOrderAdmin.i18n;
+
+		wpssConfirm(i18n.confirmMarkPaid, { tone: 'danger' }).then(function(ok) {
+			if (!ok) {
+				return;
+			}
+			$btn.prop('disabled', true).text(i18n.processing);
+			$.post(wpssOrderAdmin.ajaxUrl, {
+				action: 'wpss_admin_mark_order_paid',
+				order_id: $btn.data('order-id'),
+				transaction_id: $('#wpss-transaction-id').val(),
+				nonce: $btn.data('nonce')
+			}).done(function(response) {
+				if (response && response.success) {
+					location.reload();
+					return;
+				}
+				(window.wpssToast || notify)((response && response.data && response.data.message) || i18n.error, 'error');
+				$btn.prop('disabled', false).text(i18n.markPaid);
+			}).fail(function() {
+				(window.wpssToast || notify)(i18n.requestFailed, 'error');
+				$btn.prop('disabled', false).text(i18n.markPaid);
+			});
+		});
+	}
+
+	/**
+	 * Verify or reject an uploaded payment receipt. A rejection needs a note for the buyer.
+	 *
+	 * @param {Event} e Click event.
+	 */
+	function handleReceiptDecision(e) {
+		var $b = $(e.currentTarget);
+		var i18n = wpssOrderAdmin.i18n;
+		var decision = $b.data('action');
+		var note = $b.closest('div').find('.wpss-receipt-note').val() || '';
+
+		if (decision === 'reject' && !note.trim()) {
+			(window.wpssToast || notify)(i18n.rejectNeedsNote, 'error');
+			return;
+		}
+
+		$b.prop('disabled', true);
+		$.post(wpssOrderAdmin.ajaxUrl, {
+			action: 'wpss_review_payment_receipt',
+			receipt_id: $b.data('receipt'),
+			decision: decision,
+			note: note,
+			nonce: $b.data('nonce')
+		}).done(function(res) {
+			if (res && res.success) {
+				location.reload();
+				return;
+			}
+			(window.wpssToast || notify)((res && res.data && res.data.message) || i18n.decisionFailed, 'error');
+			$b.prop('disabled', false);
+		}).fail(function() {
+			(window.wpssToast || notify)(i18n.decisionFailed, 'error');
+			$b.prop('disabled', false);
+		});
 	}
 
 	/**

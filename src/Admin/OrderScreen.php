@@ -136,6 +136,12 @@ class OrderScreen {
 					'confirmPartialRefund' => __( 'Issue this partial refund? The buyer is refunded the amount entered and the vendor\'s proportional share is clawed back.', 'wp-sell-services' ),
 					'refund'               => __( 'Refund', 'wp-sell-services' ),
 					'error'                => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'confirmMarkPaid'      => __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ),
+					'processing'           => __( 'Processing...', 'wp-sell-services' ),
+					'markPaid'             => __( 'Mark as paid', 'wp-sell-services' ),
+					'requestFailed'        => __( 'Request failed. Please try again.', 'wp-sell-services' ),
+					'rejectNeedsNote'      => __( 'Give the buyer a reason so they know what to send instead.', 'wp-sell-services' ),
+					'decisionFailed'       => __( 'Could not record that decision.', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -371,49 +377,6 @@ class OrderScreen {
 			</div>
 		</div>
 
-		<script>
-		function wpssAdminNotice(msg, type) {
-			type = type || 'error';
-			var cls = type === 'success' ? 'notice-success' : 'notice-error';
-			var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
-			jQuery('.wrap h1, .wrap h2').first().after($notice);
-			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
-		}
-		jQuery(function($) {
-			$('.wpss-mark-paid-btn').on('click', function() {
-				var $btn = $(this);
-				var orderId = $btn.data('order-id');
-				var nonce = $btn.data('nonce');
-				var transactionId = $('#wpss-transaction-id').val();
-
-				// A money action: the plugin's own dialog, which opens on Cancel.
-				( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
-					if (!ok) return;
-
-				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>');
-
-				$.post(ajaxurl, {
-					action: 'wpss_admin_mark_order_paid',
-					order_id: orderId,
-					transaction_id: transactionId,
-					nonce: nonce
-				}, function(response) {
-					if (response.success) {
-						// Success - page will reload to show updated state.
-						location.reload();
-					} else {
-						wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
-						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as paid', 'wp-sell-services' ) ); ?>');
-					}
-				}).fail(function() {
-					wpssAdminNotice('<?php echo esc_js( __( 'Request failed. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
-					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as paid', 'wp-sell-services' ) ); ?>');
-				});
-				});
-			});
-		});
-		</script>
 		<?php
 	}
 
@@ -519,38 +482,6 @@ class OrderScreen {
 
 		echo '</div>';
 		?>
-		<script>
-		jQuery(function($){
-			$('.wpss-receipt-action').off('click.wpssReceipt').on('click.wpssReceipt', function(){
-				var $b = $(this),
-					action = $b.data('action'),
-					note = $b.closest('div').find('.wpss-receipt-note').val() || '';
-
-				if (action === 'reject' && !note.trim()) {
-					wpssAdminNotice('<?php echo esc_js( __( 'Give the buyer a reason so they know what to send instead.', 'wp-sell-services' ) ); ?>', 'error');
-					return;
-				}
-
-				$b.prop('disabled', true);
-				$.post(ajaxurl, {
-					action: 'wpss_review_payment_receipt',
-					receipt_id: $b.data('receipt'),
-					decision: action,
-					note: note,
-					nonce: $b.data('nonce')
-				}).done(function(res){
-					if (res && res.success) { location.reload(); }
-					else {
-						wpssAdminNotice((res && res.data && res.data.message) || '<?php echo esc_js( __( 'Could not record that decision.', 'wp-sell-services' ) ); ?>', 'error');
-						$b.prop('disabled', false);
-					}
-				}).fail(function(){
-					wpssAdminNotice('<?php echo esc_js( __( 'Could not record that decision.', 'wp-sell-services' ) ); ?>', 'error');
-					$b.prop('disabled', false);
-				});
-			});
-		});
-		</script>
 		<?php
 	}
 

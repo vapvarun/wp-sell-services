@@ -1567,6 +1567,13 @@
    "guard": "static:payout-registry",
    "added": "2026-11-27",
    "fails_on": "86b14264 + Pro 0a7d115 (registry keys and helpers missing; bank vendor paid at old@example.com)"
+  },
+  {
+   "card": "10551703287",
+   "title": "Templates changed since the last release kept @version 1.9.3 (three emails and single-request), so a theme override of the old copy was never reported outdated; the check compared against the unbumped plugin version and passed them",
+   "guard": "static:template-contract",
+   "added": "2026-11-28",
+   "fails_on": "bfebfc01 (4 templates at 1.9.3, the old rule passed them; 12 more failed it)"
   }
  ]
 }

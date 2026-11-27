@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.2
+ * @version 2.0.0
  *
  * @var array $portfolio_items Array of portfolio item arrays.
  * @var int   $vendor_id       Vendor user ID.
@@ -468,22 +468,7 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 		<?php endforeach; ?>
 	</div>
 </div>
-<script>
-document.addEventListener( 'click', function ( e ) {
-	var open = e.target.closest( '[data-wpss-portfolio-open]' );
-	var dlg;
-	if ( open ) {
-		dlg = document.getElementById( open.getAttribute( 'data-wpss-portfolio-open' ) );
-		if ( dlg && dlg.showModal ) { dlg.showModal(); }
-		return;
-	}
-	if ( e.target.closest( '[data-wpss-portfolio-close]' ) ) {
-		e.target.closest( 'dialog' ).close();
-	} else if ( e.target.matches && e.target.matches( 'dialog.wpss-portfolio-public__dialog' ) ) {
-		e.target.close(); // Click on the backdrop.
-	}
-} );
-</script>
+<?php \WPSellServices\Assets\ScriptRegistry::enqueue( 'wpss-portfolio-dialog', 'assets/js/portfolio-dialog.js' ); ?>
 
 <?php
 /**

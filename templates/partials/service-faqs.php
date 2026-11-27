@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.4
+ * @version 2.0.0
  *
  * @var WPSellServices\Models\Service $service    Service object.
  * @var int                            $service_id Service post ID.

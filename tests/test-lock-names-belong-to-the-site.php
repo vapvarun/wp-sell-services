@@ -35,9 +35,11 @@ foreach ( array( dirname( __DIR__ ) . '/src', WP_PLUGIN_DIR . '/wp-sell-services
 		$src = (string) file_get_contents( (string) $file );
 		if ( preg_match_all( '/(?:GET|RELEASE)_LOCK\(\s*%s[^;]*;|(?:GET|RELEASE)_LOCK\(\s*\'[^%]/', $src, $m ) ) {
 			foreach ( $m[0] as $call ) {
-				// The name is either built by the helper in the call, or held in $lock, which must be.
+				// The name is built by the helper in the call, held in $lock (which must be), or returned by a
+				// same-file name method whose body is `return wpss_lock_name( ... )` (OrderService::refund_lock_name()).
 				$ok = false !== strpos( $call, 'wpss_lock_name(' )
-					|| ( false !== strpos( $call, '$lock' ) && preg_match( '/\$lock\s*=\s*wpss_lock_name\(/', $src ) );
+					|| ( false !== strpos( $call, '$lock' ) && preg_match( '/\$lock\s*=\s*wpss_lock_name\(/', $src ) )
+					|| ( preg_match( '/(?:self::|\$this->)(\w+)\(/', $call, $named ) && preg_match( '/function\s+' . $named[1] . '\s*\([^)]*\)[^{]*\{\s*return\s+wpss_lock_name\(/', $src ) );
 				if ( ! $ok ) {
 					$bare[] = basename( (string) $file );
 				}

@@ -46,14 +46,23 @@ $last_tag = trim( (string) shell_exec( "git -C {$git_dir} describe --tags --abbr
 if ( '' === $last_tag ) {
 	echo "SKIP  templates changed since the last tag carry this @version (no tags in this checkout)\n";
 } else {
-	$unbumped = array();
+	// Before the cut the plugin still reports the last tag's version, so a changed template must be newer
+	// than that tag; once the version is bumped it must equal it exactly.
+	$tag_version = ltrim( $last_tag, 'v' );
+	$bumped      = version_compare( WPSS_VERSION, $tag_version, '>' );
+	$want        = $bumped ? WPSS_VERSION : 'newer than ' . $tag_version;
+	$unbumped    = array();
 	foreach ( array_filter( explode( "\n", (string) shell_exec( "git -C {$git_dir} diff --name-only " . escapeshellarg( $last_tag ) . '..HEAD -- templates' ) ) ) as $rel ) {
 		$path = WPSS_PLUGIN_DIR . $rel;
-		if ( str_ends_with( $rel, '.php' ) && is_file( $path ) && WPSS_VERSION !== wpss_template_version( $path ) ) {
-			$unbumped[] = substr( $rel, strlen( 'templates/' ) ) . ' (' . wpss_template_version( $path ) . ')';
+		if ( ! str_ends_with( $rel, '.php' ) || ! is_file( $path ) ) {
+			continue;
+		}
+		$version = wpss_template_version( $path );
+		if ( $bumped ? WPSS_VERSION !== $version : ! version_compare( $version, $tag_version, '>' ) ) {
+			$unbumped[] = substr( $rel, strlen( 'templates/' ) ) . " ({$version})";
 		}
 	}
-	$check( "templates changed since {$last_tag} carry @version " . WPSS_VERSION . ( $unbumped ? ' (' . implode( ', ', $unbumped ) . ')' : '' ), ! $unbumped );
+	$check( "templates changed since {$last_tag} carry @version {$want}" . ( $unbumped ? ' (' . implode( ', ', $unbumped ) . ')' : '' ), ! $unbumped );
 }
 
 // 2. Emails go through wpss_locate_template(), so the wpss_get_template filter reaches them.

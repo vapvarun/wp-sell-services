@@ -324,7 +324,8 @@ namespace {
 	preg_match_all( "/case '([a-z._]+)':/", wpss_fu568_rzp_source( 'handle_webhook' ), $m );
 	$handled = $m[1] ?? array();
 
-	preg_match_all( '/<code>([a-z]+\.[a-z]+)<\/code>/', wpss_fu568_rzp_source( 'render_settings_fields' ), $m );
+	// Event names have two or more parts (payment.dispute.lost), so match any dotted name.
+	preg_match_all( '/<code>([a-z_]+(?:\.[a-z_]+)+)<\/code>/', wpss_fu568_rzp_source( 'render_settings_fields' ), $m );
 	$listed = $m[1] ?? array();
 
 	sort( $handled );

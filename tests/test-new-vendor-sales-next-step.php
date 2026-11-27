@@ -35,7 +35,7 @@ $render = static function () use ( $f ): array {
 
 try {
 	list( $label, $url ) = $render();
-	$check( 'No services: Create your first service', 'Create your first service' === $label, $label );
+	$check( 'No services: Create Your First Service', 'Create Your First Service' === $label, $label );
 	$check( '  to the service editor', wpss_get_service_editor_url() === $url, $url );
 
 	( $f->service )( 'draft' );

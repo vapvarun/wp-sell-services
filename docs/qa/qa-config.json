@@ -1007,6 +1007,26 @@
    {
     "id": "payout-registry",
     "run": "${WP_CLI:-wp} eval-file tests/pro/test-payout-registry.php"
+   },
+   {
+    "id": "template-contract",
+    "run": "${WP_CLI:-wp} eval-file tests/test-template-contract.php"
+   },
+   {
+    "id": "lock-names-belong-to-the-site",
+    "run": "${WP_CLI:-wp} eval-file tests/test-lock-names-belong-to-the-site.php"
+   },
+   {
+    "id": "login-no-lockout",
+    "run": "${WP_CLI:-wp} eval-file tests/test-login-lockout.php"
+   },
+   {
+    "id": "pro-followups",
+    "run": "${WP_CLI:-wp} eval-file tests/pro/test-pro-followups.php"
+   },
+   {
+    "id": "pro-perf-and-options",
+    "run": "${WP_CLI:-wp} eval-file tests/pro/test-pro-perf-and-options.php"
    }
   ]
  }
