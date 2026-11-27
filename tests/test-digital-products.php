@@ -248,6 +248,36 @@ try {
 		$m->setAccessible( true );
 		return $m->invokeArgs( $wizard, $args );
 	};
+	// A fresh digital product posts no delivery time: the wizard hides the field (QA bounce, 10551449503).
+	$fresh = array(
+		'title'        => 'Brand guide template for small studios',
+		'category'     => (int) ( get_terms( array( 'taxonomy' => 'wpss_service_category', 'hide_empty' => false, 'number' => 1, 'fields' => 'ids' ) )[0] ?? 0 ),
+		'description'  => str_repeat( 'A ready-made brand guide template you download and edit. ', 4 ),
+		'service_type' => 'digital',
+		'packages'     => array( 'basic' => array( 'name' => 'Template', 'price' => 19, 'delivery_days' => '' ) ),
+		'gallery'      => array( 'main' => 1 ),
+	);
+	$delivery_errors = static fn( array $errors ): array => array_values( array_filter( $errors, static fn( $e ) => str_contains( (string) $e, 'delivery time' ) ) );
+	$check( 'Wizard publish check: a fresh digital product needs no delivery time', array() === $delivery_errors( $call( 'validate_service_data', array( $fresh ) ) ), wp_json_encode( $call( 'validate_service_data', array( $fresh ) ) ) );
+	$check( '  a fixed service with no delivery time is still refused', array() !== $delivery_errors( $call( 'validate_service_data', array( array( 'service_type' => 'fixed' ) + $fresh ) ) ) );
+	$check( '  the shared check (REST, admin) agrees', array() === $delivery_errors( wpss_validate_service_publishable( array( 'packages' => $fresh['packages'], 'service_type' => 'digital' ) ) ) && array() !== $delivery_errors( wpss_validate_service_publishable( array( 'packages' => $fresh['packages'] ) ) ) );
+	$saved_pkgs = get_post_meta( $sid, '_wpss_packages', true );
+	update_post_meta( $sid, '_wpss_packages', array( array( 'name' => 'Template', 'price' => 19 ) ) );
+	$check( '  and a saved digital product with no delivery time can go live', array() === $delivery_errors( wpss_get_service_publish_errors( $sid ) ), wp_json_encode( wpss_get_service_publish_errors( $sid ) ) );
+	update_post_meta( $sid, '_wpss_packages', $saved_pkgs );
+	$view = new \WPSellServices\Frontend\SingleServiceView();
+	$meta = static function ( int $id ) use ( $view ): string {
+		ob_start();
+		$view->render_meta( \WPSellServices\Models\Service::from_post( get_post( $id ) ) );
+		return (string) ob_get_clean();
+	};
+	$orders[] = ( $f->order )(
+		array(
+			'service_id' => $fixed,
+			'status'     => 'in_progress',
+		)
+	);
+	$check( 'The product page shows no "orders in queue"; a fixed service still does', ! str_contains( $meta( $sid ), 'in queue' ) && str_contains( $meta( $fixed ), 'in queue' ) );
 	$check( 'Wizard loads the current file', 'guide.txt' === ( $call( 'get_service_data', array( $sid ) )['product_file']['name'] ?? '' ) );
 	ob_start();
 	$call( 'render_step_file', array() );

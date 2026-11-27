@@ -423,11 +423,15 @@ function wpss_service_publish_thresholds(): array {
  *     @type array<int,array<string,mixed>> $packages     Package rows with price + delivery_days.
  *     @type int                            $thumbnail_id Main image attachment id.
  *     @type array|null                     $product_file A digital product's current file; null when none is uploaded.
+ *     @type string                         $service_type The service type; a type without delivery (digital) needs no delivery time.
  * }
  * @return string[] User-facing error sentences; empty when the service may go live.
  */
 function wpss_validate_service_publishable( array $service ): array {
 	$errors = array();
+	$types  = wpss_get_service_types();
+	// A digital product has no delivery time: the wizard hides the field (Basecamp 10551449503).
+	$needs_delivery = false !== ( $types[ (string) ( $service['service_type'] ?? '' ) ]['delivery'] ?? true );
 
 	$thresholds = wpss_service_publish_thresholds();
 
@@ -548,7 +552,7 @@ function wpss_validate_service_publishable( array $service ): array {
 						);
 				}
 
-				if ( empty( $package['delivery_days'] ) ) {
+				if ( $needs_delivery && empty( $package['delivery_days'] ) ) {
 					$errors[] = '' !== $label
 						? sprintf(
 							/* translators: %s: package name or tier (e.g. Standard). */
@@ -656,6 +660,7 @@ function wpss_get_service_publish_errors( int $service_id ): array {
 			'description'  => $post->post_content,
 			'packages'     => (array) get_post_meta( $post->ID, '_wpss_packages', true ),
 			'thumbnail_id' => get_post_thumbnail_id( $post->ID ),
+			'service_type' => wpss_get_service_type( $post->ID ),
 		) + ( wpss_service_type_supports( $post->ID, 'file' ) ? array( 'product_file' => wpss_get_product_file( $post->ID ) ) : array() )
 	);
 }

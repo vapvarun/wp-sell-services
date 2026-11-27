@@ -744,9 +744,10 @@ class ServicesController extends RestController {
 		if ( 'draft' !== $post_status ) {
 			$publish_errors = wpss_validate_service_publishable(
 				array(
-					'title'       => (string) $request->get_param( 'title' ),
-					'description' => (string) $request->get_param( 'description' ),
-					'packages'    => (array) $request->get_param( 'packages' ),
+					'title'        => (string) $request->get_param( 'title' ),
+					'description'  => (string) $request->get_param( 'description' ),
+					'packages'     => (array) $request->get_param( 'packages' ),
+					'service_type' => (string) $request->get_param( 'service_type' ),
 				)
 			);
 
@@ -906,11 +907,12 @@ class ServicesController extends RestController {
 		if ( 'publish' === $effective_status ) {
 			$publish_errors = wpss_validate_service_publishable(
 				array(
-					'title'       => $update_data['post_title'] ?? get_the_title( $service_id ),
-					'description' => $update_data['post_content'] ?? (string) get_post_field( 'post_content', $service_id ),
-					'packages'    => $request->has_param( 'packages' )
+					'title'        => $update_data['post_title'] ?? get_the_title( $service_id ),
+					'description'  => $update_data['post_content'] ?? (string) get_post_field( 'post_content', $service_id ),
+					'packages'     => $request->has_param( 'packages' )
 						? (array) $request->get_param( 'packages' )
 						: (array) get_post_meta( $service_id, '_wpss_packages', true ),
+					'service_type' => $request->has_param( 'service_type' ) ? (string) $request->get_param( 'service_type' ) : wpss_get_service_type( $service_id ),
 				)
 			);
 
@@ -944,9 +946,10 @@ class ServicesController extends RestController {
 			if ( $publish_errors && $edits_a_live_listing ) {
 				$existing_errors = wpss_validate_service_publishable(
 					array(
-						'title'       => get_the_title( $service_id ),
-						'description' => (string) get_post_field( 'post_content', $service_id ),
-						'packages'    => (array) get_post_meta( $service_id, '_wpss_packages', true ),
+						'title'        => get_the_title( $service_id ),
+						'description'  => (string) get_post_field( 'post_content', $service_id ),
+						'packages'     => (array) get_post_meta( $service_id, '_wpss_packages', true ),
+						'service_type' => wpss_get_service_type( $service_id ),
 					)
 				);
 

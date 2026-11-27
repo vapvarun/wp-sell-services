@@ -307,7 +307,8 @@ class SingleServiceView {
 
 			<div class="wpss-meta-item wpss-meta-queue">
 				<?php
-				$queue_count = $this->get_queue_count( $vendor_id );
+				// A queue is a wait for work; a digital product is downloaded at once.
+				$queue_count = wpss_service_type_supports( $service_id, 'delivery' ) ? $this->get_queue_count( $vendor_id ) : 0;
 				if ( $queue_count > 0 ) :
 					?>
 					<span class="wpss-queue-indicator">

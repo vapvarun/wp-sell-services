@@ -2372,6 +2372,7 @@ class ServiceWizard {
 				'description'  => (string) ( $data['description'] ?? '' ),
 				'packages'     => $packages,
 				'thumbnail_id' => $data['gallery']['main'] ?? 0,
+				'service_type' => (string) ( $data['service_type'] ?? '' ),
 			)
 		);
 	}
