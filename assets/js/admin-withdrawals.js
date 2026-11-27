@@ -39,16 +39,7 @@
 		 * @return {string} Display string.
 		 */
 		function formatMoney( amount ) {
-			var decimals = parseInt( settings.currencyDecimals, 10 );
-
-			if ( isNaN( decimals ) ) {
-				decimals = 2;
-			}
-
-			return ( settings.currencyFormat || '$%s' ).replace( '%s', ( Number( amount ) || 0 ).toLocaleString( undefined, {
-				minimumFractionDigits: decimals,
-				maximumFractionDigits: decimals
-			} ) );
+			return window.wpssMoney.format( amount );
 		}
 
 		/**

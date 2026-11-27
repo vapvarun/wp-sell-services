@@ -112,8 +112,6 @@ class ManualOrderPage {
 				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
 				'nonce'                 => wp_create_nonce( 'wpss_create_manual_order' ),
 				'defaultCommissionRate' => $default_rate,
-				'currencyFormat'        => wpss_get_currency_format(),
-				'currencyDecimals'      => wpss_get_currency_decimals(),
 				'i18n'                  => array(
 					'selectPackage'       => __( '-- Select Package --', 'wp-sell-services' ),
 					'loadingPackages'     => __( 'Loading packages...', 'wp-sell-services' ),
@@ -142,9 +140,7 @@ class ManualOrderPage {
 		$has_services = (int) wp_count_posts( 'wpss_service' )->publish > 0;
 
 		$default_commission = CommissionService::get_global_commission_rate();
-		$default_currency   = wpss_get_currency();
 		$order_statuses     = $this->get_initial_statuses();
-		$currencies         = $this->get_currencies();
 		?>
 		<div class="wrap wpss-manual-order-wrap">
 			<h1><?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?></h1>
@@ -313,21 +309,6 @@ class ManualOrderPage {
 										</tr>
 									</table>
 
-									<?php if ( count( $currencies ) > 1 ) : ?>
-										<?php // One currency (the store's, by default) needs no choice; a multi-currency add-on widens the list through wpss_manual_order_currencies. ?>
-									<div class="wpss-form-row" style="margin-top: 16px;">
-										<label for="wpss-currency"><?php esc_html_e( 'Currency', 'wp-sell-services' ); ?></label>
-										<select name="currency" id="wpss-currency">
-											<?php foreach ( $currencies as $code => $label ) : ?>
-												<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $default_currency, $code ); ?>>
-													<?php echo esc_html( $label ); ?>
-												</option>
-											<?php endforeach; ?>
-										</select>
-									</div>
-									<?php else : ?>
-										<input type="hidden" name="currency" value="<?php echo esc_attr( (string) key( $currencies ) ); ?>">
-									<?php endif; ?>
 
 									<!-- Hidden calculated fields -->
 									<?php // Nothing is posted as a price: the server prices the package, add-ons and tax (price_manual_order()). ?>
@@ -524,7 +505,8 @@ class ManualOrderPage {
 		$transaction_id  = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
 		$delivery_days   = absint( $_POST['delivery_days'] ?? 7 );
 		$revisions_input = isset( $_POST['revisions_included'] ) && '' !== $_POST['revisions_included'] ? absint( $_POST['revisions_included'] ) : null;
-		$currency        = isset( $_POST['currency'] ) ? sanitize_text_field( wp_unslash( $_POST['currency'] ) ) : wpss_get_currency();
+		// One store currency (owner, 2026-11-27): a manual order is recorded in it like every other order.
+		$currency        = wpss_get_currency();
 		$commission_rate = isset( $_POST['commission_rate'] ) ? (float) $_POST['commission_rate'] : CommissionService::get_global_commission_rate();
 		$notes           = isset( $_POST['notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['notes'] ) ) : '';
 
@@ -544,10 +526,6 @@ class ManualOrderPage {
 		$service = get_post( $service_id );
 		if ( ! $service || 'wpss_service' !== $service->post_type ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
-		}
-
-		if ( ! isset( $this->get_currencies()[ $currency ] ) ) {
-			wp_send_json_error( array( 'message' => __( 'That currency is not offered on this site.', 'wp-sell-services' ) ) );
 		}
 
 		// --- 3. Determine vendor ---
@@ -945,32 +923,5 @@ class ManualOrderPage {
 			'delivered'            => __( 'Delivered', 'wp-sell-services' ),
 			'completed'            => __( 'Completed', 'wp-sell-services' ),
 		);
-	}
-
-	/**
-	 * Get supported currencies.
-	 *
-	 * @return array<string, string>
-	 */
-	private function get_currencies(): array {
-		// The store currency only: the site charges in one currency, and a
-		// 148-option dropdown invited orders in a currency nothing else on the
-		// site reads (Basecamp 10337161480). A multi-currency add-on adds its
-		// currencies through the filter, and the dropdown appears.
-		$code       = wpss_get_currency();
-		$currencies = array( $code => sprintf( '%1$s (%2$s)', $code, wpss_get_currency_symbol( $code ) ) );
-
-		/**
-		 * Filter the currencies available on the Manual Order page dropdown.
-		 *
-		 * Defaults to the store currency alone, in which case no dropdown is
-		 * shown. Return more than one to offer a choice.
-		 *
-		 * @since 1.8.0 Defaults to the store currency instead of every currency.
-		 * @since 1.2.1
-		 *
-		 * @param array<string, string> $currencies Currency code => label map.
-		 */
-		return apply_filters( 'wpss_manual_order_currencies', $currencies );
 	}
 }

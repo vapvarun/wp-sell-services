@@ -210,7 +210,7 @@ class ExtensionOrderService {
 		$orders_table     = $wpdb->prefix . 'wpss_orders';
 		$extensions_table = $wpdb->prefix . 'wpss_extension_requests';
 		$order_number     = 'EXT-' . strtoupper( wp_generate_password( 8, false, false ) );
-		$currency         = $parent->currency ?? 'USD';
+		$currency         = ( $parent->currency ?: wpss_get_currency() );
 
 		$priced = \WPSellServices\Checkout\CheckoutIntentService::price_sub_order( 'extension', $amount, (int) $parent->service_id, (int) $parent->vendor_id );
 
@@ -396,7 +396,7 @@ class ExtensionOrderService {
 				'type'           => self::TYPE_EXTENSION,
 				'amount'         => $vendor_earnings,
 				'balance_after'  => $new_balance,
-				'currency'       => $sub->currency ?? 'USD',
+				'currency'       => ( $sub->currency ?: wpss_get_currency() ),
 				'description'    => $description,
 				'reference_type' => 'order',
 				'reference_id'   => $pay_order_id,

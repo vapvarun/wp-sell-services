@@ -1174,9 +1174,12 @@ class Admin {
 			$enabled = array_map( 'strval', array_keys( wpss_get_checkout_gateways() ) );
 
 			if ( ! $enabled ) {
+				$any_on              = array_filter( wpss()->get_payment_gateways(), static fn( $gateway ) => $gateway->is_enabled() );
 				$problems['gateway'] = array(
-					/* translators: %s: currency code */
-					'text'  => sprintf( __( 'No enabled payment method takes %s. Buyers cannot check out.', 'wp-sell-services' ), wpss_get_currency() ),
+					'text'  => $any_on
+						/* translators: %s: currency code */
+						? sprintf( __( 'No enabled payment method takes %s. Buyers cannot check out.', 'wp-sell-services' ), wpss_get_currency() )
+						: __( 'No payment method is enabled. Buyers cannot check out.', 'wp-sell-services' ),
 					'url'   => wpss_get_settings_url( 'payments' ),
 					'label' => __( 'Set up payments', 'wp-sell-services' ),
 				);
@@ -1680,11 +1683,9 @@ class Admin {
 			'wpss-admin',
 			'wpssAdmin',
 			array(
-				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'wpss_admin_nonce' ),
-				'currencyFormat'   => wpss_get_currency_format(),
-				'currencyDecimals' => wpss_get_decimal_places(),
-				'i18n'             => array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'wpss_admin_nonce' ),
+				'i18n'    => array(
 					'selectImage'  => __( 'Select Image', 'wp-sell-services' ),
 					'selectImages' => __( 'Select Images', 'wp-sell-services' ),
 					'useImage'     => __( 'Use Image', 'wp-sell-services' ),
@@ -3535,7 +3536,7 @@ class Admin {
 
 		<p class="wpss-dispute-outcome" aria-live="polite"
 			data-total="<?php echo esc_attr( (string) $total ); ?>"
-			data-currency="<?php echo esc_attr( (string) ( $order->currency ?? wpss_get_currency() ) ); ?>"
+			data-money="<?php echo esc_attr( (string) wp_json_encode( wpss_money_js_config( (string) ( $order->currency ?? '' ) ) ) ); ?>"
 			data-full="<?php /* translators: 1: amount refunded to the buyer */ esc_attr_e( 'The buyer gets %1$s back (a full refund); the vendor keeps nothing.', 'wp-sell-services' ); ?>"
 			data-partial="<?php /* translators: 1: amount refunded to the buyer, 2: amount the vendor keeps */ esc_attr_e( 'The buyer gets %1$s back; the vendor keeps %2$s.', 'wp-sell-services' ); ?>"
 			data-none="<?php /* translators: 2: amount the vendor keeps */ esc_attr_e( 'The buyer gets nothing back; the order completes and the vendor keeps %2$s.', 'wp-sell-services' ); ?>"></p>

@@ -287,7 +287,7 @@ class TippingService {
 
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 		$order_number = 'TIP-' . strtoupper( wp_generate_password( 8, false, false ) );
-		$currency     = $parent->currency ?? 'USD';
+		$currency     = ( $parent->currency ?: wpss_get_currency() );
 		$tip_message  = sanitize_textarea_field( $message );
 
 		$priced = \WPSellServices\Checkout\CheckoutIntentService::price_sub_order( 'tip', $amount, (int) $parent->service_id, (int) $parent->vendor_id );
@@ -481,7 +481,7 @@ class TippingService {
 				'type'           => self::TYPE_TIP,
 				'amount'         => $vendor_earnings,
 				'balance_after'  => $new_balance,
-				'currency'       => $tip_order->currency ?? 'USD',
+				'currency'       => ( $tip_order->currency ?: wpss_get_currency() ),
 				'description'    => $description,
 				'reference_type' => 'order',
 				// Reference the tip sub-order id (not parent) so the wallet

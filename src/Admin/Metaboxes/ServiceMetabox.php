@@ -341,7 +341,7 @@ class ServiceMetabox {
 							<i data-lucide="banknote" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
 						</label>
-						<div class="wpss-input-with-prefix">
+						<div class="wpss-input-with-prefix <?php echo esc_attr( wpss_money_affix_class() ); ?>">
 							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][price]" aria-label="<?php esc_attr_e( 'Package price', 'wp-sell-services' ); ?>"
 									value="<?php echo esc_attr( $package['price'] ?? '' ); ?>"
@@ -392,7 +392,7 @@ class ServiceMetabox {
 							<i data-lucide="zap" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Express price', 'wp-sell-services' ); ?>
 						</label>
-						<div class="wpss-input-with-prefix">
+						<div class="wpss-input-with-prefix <?php echo esc_attr( wpss_money_affix_class() ); ?>">
 							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][express_price]" aria-label="<?php esc_attr_e( 'Express delivery price', 'wp-sell-services' ); ?>"
 									value="<?php echo esc_attr( $express['express_price'] > 0 ? $express['express_price'] : '' ); ?>"
@@ -631,7 +631,7 @@ class ServiceMetabox {
 					</div>
 					<div class="wpss-addon-field">
 						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_price"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
-						<div class="wpss-input-with-prefix">
+						<div class="wpss-input-with-prefix <?php echo esc_attr( wpss_money_affix_class() ); ?>">
 							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 							<input type="number" id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_price" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][price]"
 									value="<?php echo esc_attr( $addon['price'] ?? '' ); ?>"
@@ -1756,7 +1756,7 @@ class ServiceMetabox {
 					</div>
 					<div class="wpss-addon-field">
 						<label for="wpss_addon_{{data.index}}_price"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
-						<div class="wpss-input-with-prefix">
+						<div class="wpss-input-with-prefix <?php echo esc_attr( wpss_money_affix_class() ); ?>">
 							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 							<input type="number" id="wpss_addon_{{data.index}}_price" name="wpss_addons[{{data.index}}][price]"
 									min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="<?php echo esc_attr( wpss_get_price_input_attrs()['placeholder'] ); ?>">

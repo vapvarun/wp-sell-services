@@ -730,9 +730,34 @@
         "purpose": "Currencies offered in the settings currency dropdown"
       },
       {
-        "name": "wpss_manual_order_currencies",
+        "name": "wpss_currency_position",
         "type": "filter",
-        "purpose": "Currencies available when creating a manual order"
+        "purpose": "Symbol position: before, after, before_space, after_space (a shop route sets it)"
+      },
+      {
+        "name": "wpss_price_separators",
+        "type": "filter",
+        "purpose": "Thousand and decimal separators for displayed prices (a shop route sets them)"
+      },
+      {
+        "name": "wpss_decimal_places",
+        "type": "filter",
+        "purpose": "Decimal places a price is shown with, per currency"
+      },
+      {
+        "name": "wpss_currency_locked",
+        "type": "filter",
+        "purpose": "Whether the store currency is locked; true once any order exists, return false to allow a change"
+      },
+      {
+        "name": "wpss_currency_owner",
+        "type": "filter",
+        "purpose": "Name of the shop plugin that owns the currency and its formatting, '' on our own checkout"
+      },
+      {
+        "name": "wpss_manual_order_payment_methods",
+        "type": "filter",
+        "purpose": "Payment methods a manual order can record; each counts as manual (Mark as paid, to-confirm queue)"
       },
       {
         "name": "wpss_three_decimal_currencies",

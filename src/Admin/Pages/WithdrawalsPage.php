@@ -159,15 +159,13 @@ class WithdrawalsPage {
 			'wpss-admin-withdrawals',
 			'wpssWithdrawals',
 			array(
-				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'wpss_withdrawals_admin' ),
-				'bulkNonce'        => wp_create_nonce( 'wpss_withdrawals_bulk' ),
+				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+				'nonce'     => wp_create_nonce( 'wpss_withdrawals_admin' ),
+				'bulkNonce' => wp_create_nonce( 'wpss_withdrawals_bulk' ),
 				// Currency parts for the settlement total shown in the bulk
 				// mark-paid confirmation. Same pair Admin::enqueue_scripts
 				// localizes; wpss_format_price() always prefixes the symbol.
-				'currencyFormat'   => wpss_get_currency_format(),
-				'currencyDecimals' => wpss_get_decimal_places(),
-				'i18n'             => array(
+				'i18n'      => array(
 					'error'        => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'selectFirst'  => __( 'Select at least one withdrawal first.', 'wp-sell-services' ),
 					/* translators: %action%: bulk action label, %count%: number of selected withdrawals. Placeholders are replaced in JS. */
@@ -935,7 +933,7 @@ class WithdrawalsPage {
 						(int) $row->vendor_id,
 						(string) ( $row->vendor_name ?? '' ),
 						(string) ( $row->vendor_email ?? '' ),
-						number_format( (float) $row->amount, 2, '.', '' ),
+						number_format( (float) $row->amount, wpss_get_currency_decimals( $currency ), '.', '' ),
 						$currency,
 						(string) $row->method,
 						(string) ( $details['email'] ?? '' ),

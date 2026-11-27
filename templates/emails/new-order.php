@@ -97,7 +97,7 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 		</tr>
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; font-weight: 600; color: <?php echo esc_attr( $base_color ); ?>;"><?php echo wp_kses_post( wpss_format_price( $order->total ) ); ?></td>
+			<td style="padding: 12px; font-weight: 600; color: <?php echo esc_attr( $base_color ); ?>;"><?php echo wp_kses_post( wpss_format_price( (float) $order->total, (string) $order->currency ) ); ?></td>
 		</tr>
 	</tbody>
 </table>

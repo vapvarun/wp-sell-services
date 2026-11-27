@@ -16,7 +16,9 @@ Your currency applies everywhere -- service prices, order totals, vendor earning
 
 The marketplace supports 148 currencies. See the [full list with codes, symbols and decimal places](currency-reference.md); it is generated from the plugin, so it is always current.
 
-**Good to know:** Changing currency after you already have orders does not convert existing amounts. Only new orders will use the new currency.
+**The currency locks after your first order.** Once any order exists, the Currency field is greyed out and the setup wizard keeps it as well. Service prices, vendor balances and past withdrawals store a number without a currency of their own, so changing the currency would relabel them without converting them. Orders keep the currency they were placed in, so an older order always shows its own currency. Developers can allow a deliberate change with the `wpss_currency_locked` filter (return `false`).
+
+Symbol position, separators and decimal places are on the same screen. See [How prices look](../platform-settings/general-settings.md#how-prices-look).
 
 ## Enabling Tax
 
@@ -103,7 +105,7 @@ Tax is calculated on the service price. Commission is also calculated on the ser
 
 ## Tips for Getting It Right
 
-- **Set currency before creating services.** It is easier than converting later.
+- **Set currency before your first order.** After that it is locked.
 - **Check local tax requirements.** Many regions require you to collect and remit tax on digital services.
 - **Test checkout** after changing tax settings to make sure prices display correctly.
 - **Keep it simple.** If you only serve one region, a single flat tax rate works fine.

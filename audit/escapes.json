@@ -1532,6 +1532,13 @@
    "added": "2026-11-27",
    "fails_on": "2e42cdce + Pro 19bf5ee (fatal on missing wpss_gateway_supports; behaviour probe: 3 FAIL); bounce fix fails on 2d37126b (with Razorpay/Test unregistered both read as manual)",
    "check": "tests/test-payment-module-contract.php"
+  },
+  {
+   "card": "10551474179",
+   "title": "Currency not used uniformly: order amounts in emails, the Pay button and the tip receipt shown in the store currency; 'usd' missed the symbol lookup; the saved decimal places overrode JPY/KWD; USD fallbacks; a second currency door on Manual Order; the currency could change under existing orders; separators fixed at 1,234.56; shop routes kept our formatting",
+   "guard": "static:currency-uniform",
+   "added": "2026-11-27",
+   "fails_on": "08002316 (8 checks fail, then fatal on missing wpss_money_js_config)"
   }
  ]
 }

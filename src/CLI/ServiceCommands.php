@@ -698,7 +698,7 @@ class ServiceCommands extends WP_CLI_Command {
 					'platform'       => 'standalone',
 					'subtotal'       => 0,
 					'total'          => 0,
-					'currency'       => 'USD',
+					'currency'       => wpss_get_currency(),
 					'status'         => 'completed',
 					'payment_status' => 'paid',
 					'payment_method' => 'standalone',

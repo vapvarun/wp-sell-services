@@ -246,6 +246,21 @@
 	border-radius: 0 var(--wpss-radius, 8px) var(--wpss-radius, 8px) 0;
 }
 
+/* Symbol after the amount (Settings > General > Currency Symbol Position). */
+.wpss-input-group.wpss-money-after {
+	flex-direction: row-reverse;
+}
+
+.wpss-input-group.wpss-money-after .wpss-input-prefix {
+	border-right: 1px solid var(--wpss-border, #e5e7eb);
+	border-left: none;
+	border-radius: 0 var(--wpss-radius, 8px) var(--wpss-radius, 8px) 0;
+}
+
+.wpss-input-group.wpss-money-after .wpss-form-input {
+	border-radius: var(--wpss-radius, 8px) 0 0 var(--wpss-radius, 8px);
+}
+
 /* Toggle */
 .wpss-toggle {
 	display: flex;

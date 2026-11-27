@@ -156,7 +156,7 @@ class ServiceOrder {
 	 *
 	 * @var string|null
 	 */
-	public ?string $currency = 'USD';
+	public ?string $currency = null;
 
 	/**
 	 * Commission rate applied to this order.

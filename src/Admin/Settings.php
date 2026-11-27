@@ -550,6 +550,8 @@ class Settings {
 				'option_name' => 'wpss_general',
 				'field'       => 'currency',
 				'options'     => $this->get_currencies(),
+				'disabled'    => '' !== wpss_currency_owner() || wpss_currency_is_locked(),
+				'description' => $this->money_field_note( wpss_currency_is_locked() ? __( 'Locked: this store already has orders. Prices, vendor balances and past withdrawals have no currency of their own, so changing it would relabel them without converting.', 'wp-sell-services' ) : __( 'Choose before the first order. Once an order exists the currency locks.', 'wp-sell-services' ) ),
 			)
 		);
 
@@ -565,12 +567,39 @@ class Settings {
 				'option_name' => 'wpss_general',
 				'field'       => 'currency_position',
 				'default'     => wpss_get_currency_position(),
+				'disabled'    => '' !== wpss_currency_owner(),
+				'description' => $this->money_field_note( '' ),
 				'options'     => array(
-					'before' => __( 'Before amount ($99)', 'wp-sell-services' ),
-					'after'  => __( 'After amount (99$)', 'wp-sell-services' ),
+					'before'       => __( 'Before amount ($99)', 'wp-sell-services' ),
+					'after'        => __( 'After amount (99$)', 'wp-sell-services' ),
+					'before_space' => __( 'Before amount, with a space ($ 99)', 'wp-sell-services' ),
+					'after_space'  => __( 'After amount, with a space (99 $)', 'wp-sell-services' ),
 				),
 			)
 		);
+
+		foreach (
+			array(
+				'thousand_separator' => array( __( 'Thousand Separator', 'wp-sell-services' ), ',' ),
+				'decimal_separator'  => array( __( 'Decimal Separator', 'wp-sell-services' ), '.' ),
+			) as $wpss_key => $wpss_field
+		) {
+			add_settings_field(
+				$wpss_key,
+				$wpss_field[0],
+				array( $this, 'render_text_field' ),
+				'wpss_general',
+				'wpss_general_section',
+				array(
+					'option_name' => 'wpss_general',
+					'field'       => $wpss_key,
+					'default'     => $wpss_field[1],
+					'class'       => 'small-text',
+					'disabled'    => '' !== wpss_currency_owner(),
+					'description' => $this->money_field_note( sprintf( /* translators: %s: example price */ __( 'Prices show as %s.', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( 1234.56 ) ) ) ),
+				)
+			);
+		}
 
 		// E-commerce integration section.
 		add_settings_section(
@@ -2947,10 +2976,12 @@ class Settings {
 		$value   = $options[ $args['field'] ] ?? $this->field_default( $args ) ?? '';
 
 		printf(
-			'<input type="text" id="%1$s" name="%2$s[%1$s]" value="%3$s" class="regular-text">',
+			'<input type="text" id="%1$s" name="%2$s[%1$s]" value="%3$s" class="%4$s"%5$s>',
 			esc_attr( $args['field'] ),
 			esc_attr( $args['option_name'] ),
-			esc_attr( $value )
+			esc_attr( $value ),
+			esc_attr( $args['class'] ?? 'regular-text' ),
+			disabled( ! empty( $args['disabled'] ), true, false )
 		);
 
 		if ( ! empty( $args['description'] ) ) {
@@ -3202,10 +3233,12 @@ class Settings {
 		$options = get_option( $args['option_name'], array() );
 		$value   = $options[ $args['field'] ] ?? $this->field_default( $args ) ?? '';
 
+		// A disabled select is not submitted, so the sanitizer keeps the stored value.
 		printf(
-			'<select id="%1$s" name="%2$s[%1$s]">',
+			'<select id="%1$s" name="%2$s[%1$s]"%3$s>',
 			esc_attr( $args['field'] ),
-			esc_attr( $args['option_name'] )
+			esc_attr( $args['option_name'] ),
+			disabled( ! empty( $args['disabled'] ), true, false )
 		);
 
 		foreach ( $args['options'] as $option_value => $option_label ) {
@@ -3321,10 +3354,10 @@ class Settings {
 			'wpss_general_section',
 			__( 'Price Decimal Places', 'wp-sell-services' ),
 			array(
-				'default'     => 2,
+				'default'     => wpss_get_currency_decimals(),
 				'min'         => 0,
 				'max'         => 4,
-				'description' => __( 'Decimal places used when formatting prices.', 'wp-sell-services' ),
+				'description' => $this->money_field_note( __( 'Decimal places used when formatting prices in the store currency. A currency without minor units (JPY, KRW) always shows whole amounts.', 'wp-sell-services' ) ),
 			)
 		);
 		$number(
@@ -3638,6 +3671,19 @@ class Settings {
 	}
 
 	/**
+	 * Description for a money-format field: who sets it on a shop route, else the given note.
+	 *
+	 * @param string $note Note for our own checkout.
+	 * @return string
+	 */
+	private function money_field_note( string $note ): string {
+		$owner = wpss_currency_owner();
+
+		/* translators: %s: shop plugin name, e.g. WooCommerce */
+		return '' !== $owner ? sprintf( __( 'Set by %s. Change it in its settings.', 'wp-sell-services' ), $owner ) : $note;
+	}
+
+	/**
 	 * Default for a field: the shared wpss_settings_defaults() entry, else the
 	 * field's own 'default' for option groups the shared list does not cover.
 	 *
@@ -3848,7 +3894,25 @@ class Settings {
 		}
 
 		if ( array_key_exists( 'currency', $input ) ) {
-			$sanitized['currency'] = sanitize_text_field( (string) $input['currency'] );
+			$currency = wpss_validate_store_currency( sanitize_text_field( (string) $input['currency'] ) );
+			if ( is_wp_error( $currency ) ) {
+				add_settings_error( 'wpss_general', $currency->get_error_code(), $currency->get_error_message() . ' ' . __( 'The previous currency was kept.', 'wp-sell-services' ) );
+			} else {
+				$sanitized['currency'] = $currency;
+			}
+		}
+
+		foreach ( array( 'thousand_separator', 'decimal_separator' ) as $key ) {
+			if ( array_key_exists( $key, $input ) ) {
+				// A space is a real thousand separator (1 234,56), so only tags are stripped, not whitespace.
+				$sanitized[ $key ] = mb_substr( wp_strip_all_tags( (string) $input[ $key ] ), 0, 3 );
+			}
+		}
+		if ( '' === ( $sanitized['decimal_separator'] ?? '.' ) || ( $sanitized['decimal_separator'] ?? '.' ) === ( $sanitized['thousand_separator'] ?? ',' ) ) {
+			$sanitized['decimal_separator'] = $existing['decimal_separator'] ?? '.';
+			if ( $sanitized['decimal_separator'] === ( $sanitized['thousand_separator'] ?? ',' ) ) {
+				$sanitized['thousand_separator'] = $existing['thousand_separator'] ?? ',';
+			}
 		}
 
 		$previous = (string) ( $existing['ecommerce_platform'] ?? 'auto' );
@@ -3891,7 +3955,7 @@ class Settings {
 		}
 
 		if ( array_key_exists( 'currency_position', $input ) ) {
-			$sanitized['currency_position'] = 'after' === $input['currency_position'] ? 'after' : 'before';
+			$sanitized['currency_position'] = in_array( $input['currency_position'], wpss_currency_positions(), true ) ? $input['currency_position'] : 'before';
 		}
 
 		// Only the Checkout form carries the badge table; the General form

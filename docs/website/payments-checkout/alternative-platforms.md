@@ -77,6 +77,10 @@ Here is a practical guide:
 - **Need the fastest checkout?** Standalone mode. FluentCart is beta and cannot take a catalog purchase yet.
 - **Need subscription billing?** Use WooCommerce with a subscriptions extension. Pro's own recurring services are not available -- every surface is switched off and there is no setting to turn them on.
 
+## Currency on EDD and FluentCart
+
+The shop plugin owns the currency on its route: WP Sell Services uses EDD's or FluentCart's store currency, symbol position and separators (and EDD's decimals), and its own currency fields become read-only. FluentCart's "ISO code before/after" positions show the currency symbol with a space instead.
+
 ## Switching Between Platforms
 
 You can change platforms at any time:

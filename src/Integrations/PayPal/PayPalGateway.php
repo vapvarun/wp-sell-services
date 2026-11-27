@@ -345,7 +345,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 				'transaction_id' => $capture['id'] ?? $response['id'],
 				'status'         => 'completed',
 				'amount'         => (float) ( $capture['amount']['value'] ?? 0 ),
-				'currency'       => $capture['amount']['currency_code'] ?? 'USD',
+				'currency'       => $capture['amount']['currency_code'] ?? wpss_get_currency(),
 				'payer_email'    => $response['payer']['email_address'] ?? '',
 			);
 		}
@@ -371,7 +371,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 		if ( null !== $amount ) {
 			// Get original transaction to determine currency.
 			$capture  = $this->api_request( "v2/payments/captures/{$transaction_id}", array(), 'GET' );
-			$currency = $capture['amount']['currency_code'] ?? 'USD';
+			$currency = $capture['amount']['currency_code'] ?? wpss_get_currency();
 			$value    = $this->amount_value( $amount, $currency );
 			if ( null === $value ) {
 				return array(
@@ -631,7 +631,10 @@ class PayPalGateway extends AbstractPaymentGateway {
 		}
 
 		$client_id = $this->get_client_id();
-		$currency  = wpss_get_currency();
+		// The SDK charges one currency per page load: a pay-order page pays the order in its own.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup of the page's order.
+		$pay_order = isset( $_GET['pay_order'] ) ? wpss_get_order( absint( $_GET['pay_order'] ) ) : null;
+		$currency  = strtoupper( (string) ( $pay_order->currency ?? '' ) ) ?: wpss_get_currency();
 
 		wp_enqueue_script(
 			'paypal-sdk',

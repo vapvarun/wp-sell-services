@@ -33,12 +33,14 @@ if ( ! class_exists( RateService::class ) ) {
 
 $hook = 'wpss_pro_refresh_rates';
 
-// Feature on, with an app id.
-add_filter(
-	'option_' . RateService::OPTION,
-	static fn( $v ) => array_merge( is_array( $v ) ? $v : array(), array( 'enabled' => 1, 'app_id' => 'qa-app-id' ) ),
-	99
-);
+// Feature on, with an app id. option_ only runs for a saved option; default_option_ covers a site that never saved it.
+foreach ( array( 'option_', 'default_option_' ) as $prefix ) {
+	add_filter(
+		$prefix . RateService::OPTION,
+		static fn( $v ) => array_merge( is_array( $v ) ? $v : array(), array( 'enabled' => 1, 'app_id' => 'qa-app-id' ) ),
+		99
+	);
+}
 
 // The rates API: count calls, answer ok or down.
 $calls  = 0;
@@ -74,6 +76,9 @@ $check( 'a page view makes no call to the rates API', 0 === $calls, "{$calls} ca
 $check( 'and shows no rates rather than waiting', array() === $map || ! isset( $map['EUR'] ) );
 $check( 'it queues one background refresh', Scheduler::has_pending( $hook, array(), Scheduler::GROUP_PRO ) );
 $check( 'the refresh job has a listener', has_action( $hook ) );
+// The boot listener read its settings before the filters above; a site that saved the app id has it at boot.
+remove_all_actions( $hook );
+add_action( $hook, array( new RateService(), 'refresh' ) );
 
 // 2. The background job runs.
 do_action( $hook );

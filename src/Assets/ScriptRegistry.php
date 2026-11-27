@@ -140,6 +140,9 @@ class ScriptRegistry {
 				'dismiss' => __( 'Dismiss', 'wp-sell-services' ),
 			)
 		);
+
+		// One money format for every script, built from the same settings as wpss_format_price().
+		wp_localize_script( self::HANDLE_UI, 'wpssMoneyConfig', wpss_money_js_config() );
 	}
 
 	/**

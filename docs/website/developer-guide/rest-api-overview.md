@@ -395,6 +395,9 @@ Get public marketplace settings.
   "currency_symbol": "$",
   "currency_position": "before",
   "decimal_places": 2,
+  "thousand_separator": ",",
+  "decimal_separator": ".",
+  "price_pattern": "$%s",
   "min_order_amount": 5.00,
   "max_order_amount": 10000.00,
   "vendor_registration": true,
@@ -431,6 +434,8 @@ Get public marketplace settings.
   }
 }
 ```
+
+Format a price as `price_pattern` with `%s` replaced by the amount, written with `decimal_places` and the two separators. `currency_position` is `before`, `after`, `before_space` or `after_space`. On a WooCommerce, EDD or FluentCart site all of these come from the shop.
 
 #### Which pages exist, and which are optional
 

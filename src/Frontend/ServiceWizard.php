@@ -680,7 +680,7 @@ class ServiceWizard {
 									<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
 									<span class="wpss-required">*</span>
 								</label>
-								<div class="wpss-input-group">
+								<div class="wpss-input-group <?php echo esc_attr( wpss_money_affix_class() ); ?>">
 									<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 									<input type="number"
 										id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-price"
@@ -734,7 +734,7 @@ class ServiceWizard {
 						<div class="wpss-form-row wpss-form-row--2col">
 							<div class="wpss-form-group">
 								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-express-price"><?php esc_html_e( 'Express delivery price', 'wp-sell-services' ); ?></label>
-								<div class="wpss-input-group">
+								<div class="wpss-input-group <?php echo esc_attr( wpss_money_affix_class() ); ?>">
 									<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 									<input type="number"
 										id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-express-price"
@@ -1099,7 +1099,7 @@ class ServiceWizard {
 								<div class="wpss-form-row wpss-form-row--2col">
 									<div class="wpss-form-group">
 										<label class="wpss-form-label" :for="'wpss-extra-price-' + index"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
-										<div class="wpss-input-group">
+										<div class="wpss-input-group <?php echo esc_attr( wpss_money_affix_class() ); ?>">
 											<span class="wpss-input-prefix" x-text="'percentage' === extra.price_type ? '%' : '<?php echo esc_js( wpss_get_currency_symbol() ); ?>'"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 											<input type="number"
 												class="wpss-form-input"
@@ -1240,7 +1240,7 @@ class ServiceWizard {
 							<h3 class="wpss-service-preview-title" x-text="data.title || '<?php esc_attr_e( 'Untitled Service', 'wp-sell-services' ); ?>'"></h3>
 							<div class="wpss-service-preview-price">
 								<?php esc_html_e( 'Starting at', 'wp-sell-services' ); ?>
-								<strong x-text="'<?php echo esc_html( wpss_get_currency_symbol() ); ?>' + (data.packages.basic.price || '0')"></strong>
+								<strong x-text="window.wpssMoney.format(data.packages.basic.price || 0)"></strong>
 							</div>
 						</div>
 					</div>
@@ -1325,7 +1325,7 @@ class ServiceWizard {
 						<template x-for="tier in ['basic', 'standard', 'premium']" :key="tier">
 							<div class="wpss-pricing-summary-item" x-show="tier === 'basic' || data.packages[tier].enabled" x-cloak>
 								<span class="wpss-pricing-summary-name" x-text="data.packages[tier].name || tier.charAt(0).toUpperCase() + tier.slice(1)"></span>
-								<span class="wpss-pricing-summary-price" x-text="'<?php echo esc_html( wpss_get_currency_symbol() ); ?>' + (data.packages[tier].price || '0')"></span>
+								<span class="wpss-pricing-summary-price" x-text="window.wpssMoney.format(data.packages[tier].price || 0)"></span>
 								<span class="wpss-pricing-summary-delivery" x-text="(data.packages[tier].delivery_time || '?') + ' ' + (parseInt(data.packages[tier].delivery_time, 10) === 1 ? '<?php echo esc_js( __( 'day', 'wp-sell-services' ) ); ?>' : '<?php echo esc_js( __( 'days', 'wp-sell-services' ) ); ?>')"></span>
 							</div>
 						</template>

@@ -95,7 +95,7 @@ wpss_t(
 
 $pay_src = file_get_contents( dirname( __DIR__ ) . '/src/functions/payments.php' );
 wpss_t(
-	1 === preg_match( '/function wpss_terms_notice_due\(\): bool \{\s*if \( ! wpss_has_live_gateway\(\) \) \{\s*return false;/', $pay_src ),
+	1 === preg_match( '/function wpss_terms_notice_due\(\): bool \{\s*return wpss_has_live_gateway\(\) &&/', $pay_src ),
 	'the due-gate returns false while no real gateway is live'
 );
 

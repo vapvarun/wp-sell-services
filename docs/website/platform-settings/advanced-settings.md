@@ -87,14 +87,7 @@ Behind such a proxy, every request seems to come from the proxy's address, so al
 
 ## Currency Symbol Position
 
-Choose where the currency symbol appears relative to the amount. Options include:
-
-- **Left** -- $100 (default)
-- **Right** -- 100$
-- **Left with space** -- $ 100
-- **Right with space** -- 100 $
-
-Configure this at **Sell Services > Settings > General**.
+This moved to **Sell Services > Settings > General**, next to the currency it formats. See [How prices look](general-settings.md#how-prices-look).
 
 ---
 

@@ -1273,7 +1273,7 @@ class NotificationService {
 			->field( __( 'Service:', 'wp-sell-services' ), $service_name );
 
 		if ( $refund_amount > 0 ) {
-			$customer_message->field( __( 'Refund Amount:', 'wp-sell-services' ), wpss_format_price( $refund_amount ) );
+			$customer_message->field( __( 'Refund Amount:', 'wp-sell-services' ), wpss_format_price( $refund_amount, (string) $order->currency ) );
 			$customer_message->paragraph( __( 'The refund will be processed according to our refund policy.', 'wp-sell-services' ) );
 		}
 
@@ -1309,7 +1309,7 @@ class NotificationService {
 				sprintf(
 					/* translators: %s: refund amount */
 					__( '%s (deducted from earnings)', 'wp-sell-services' ),
-					wpss_format_price( $refund_amount )
+					wpss_format_price( $refund_amount, (string) $order->currency )
 				)
 			);
 		}

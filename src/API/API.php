@@ -647,6 +647,10 @@ class API {
 			'currency_symbol'     => wpss_get_currency_symbol(),
 			'currency_position'   => wpss_get_currency_position(),
 			'decimal_places'      => wpss_get_decimal_places(),
+			// Additive (contract_version unchanged): the separators and the pattern the web uses, so the app formats alike.
+			'thousand_separator'  => wpss_get_price_separators()['thousand'],
+			'decimal_separator'   => wpss_get_price_separators()['decimal'],
+			'price_pattern'       => wpss_money_js_config()['pattern'],
 			'min_order_amount'    => (float) get_option( 'wpss_min_order_amount', 5 ),
 			'max_order_amount'    => (float) get_option( 'wpss_max_order_amount', 10000 ),
 			'vendor_registration' => wpss_get_option( 'vendor', 'vendor_registration' ),

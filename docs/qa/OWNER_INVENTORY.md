@@ -593,7 +593,6 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 57
 - `wpss_notification_types` — src/Admin/Settings.php
 - `wpss_foreign_page_map` — src/Admin/PageDropdownWalker.php
 - `wpss_admin_menu_label` — src/Admin/Admin.php
-- `wpss_manual_order_currencies` — src/Admin/Pages/ManualOrderPage.php
 - `wpss_docs_url` — src/Admin/Pages/UpgradePage.php
 - `wpss_service_meta_fields` — src/Admin/Metaboxes/ServiceMetabox.php
 - `wpss_service_is_featured` — src/Admin/Metaboxes/ServiceMetabox.php

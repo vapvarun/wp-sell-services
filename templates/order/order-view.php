@@ -294,7 +294,7 @@ do_action( 'wpss_before_order_view', $order );
 					'label' => sprintf(
 						/* translators: %s: formatted price */
 						__( 'Pay %s', 'wp-sell-services' ),
-						wpss_format_price( $order->total )
+						wpss_format_price( (float) $order->total, (string) $order->currency )
 					),
 					'class' => 'wpss-btn wpss-btn--success',
 					'attrs' => 'onclick="window.location.href=\'' . esc_url( $pay_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
@@ -1748,8 +1748,6 @@ do_action( 'wpss_before_order_view', $order );
 	if ( 'completed' === $order->status && $is_customer && wpss_can_pay_single_order() && wpss_tipping_enabled() ) :
 		$tipping_service = new \WPSellServices\Services\TippingService();
 		$already_tipped  = $tipping_service->has_tipped( $order_id, get_current_user_id() );
-		$currency        = wpss_get_currency();
-
 		// Buyer-facing receipt should show the gross amount the buyer paid
 		// (tip order total), not the net the vendor received. Fetch the
 		// related tip order by parent order ID.
@@ -1770,7 +1768,7 @@ do_action( 'wpss_before_order_view', $order );
 						<p class="wpss-tip-receipt__amount">
 							<?php
 							echo esc_html(
-								wpss_format_price( (float) $tip_order_row->total, $currency )
+								wpss_format_price( (float) $tip_order_row->total, (string) $tip_order_row->currency )
 							);
 							?>
 						</p>

@@ -212,7 +212,7 @@ class MilestoneService {
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 		$sort_order   = count( $this->get_for_parent( $parent_order_id ) ) + 1;
 		$order_number = 'MS-' . strtoupper( wp_generate_password( 8, false, false ) );
-		$currency     = $parent->currency ?? 'USD';
+		$currency     = ( $parent->currency ?: wpss_get_currency() );
 
 		$due_date = null;
 		if ( $days_to_deliver > 0 ) {
@@ -429,7 +429,7 @@ class MilestoneService {
 				'type'           => self::TYPE_MILESTONE,
 				'amount'         => $vendor_earnings,
 				'balance_after'  => (float) wpss_get_ledger_balance( (int) $sub->vendor_id, true ) + $vendor_earnings,
-				'currency'       => $sub->currency ?? 'USD',
+				'currency'       => ( $sub->currency ?: wpss_get_currency() ),
 				'description'    => sprintf(
 					/* translators: 1: milestone title, 2: sub-order number */
 					__( 'Milestone payment: %1$s (%2$s)', 'wp-sell-services' ),

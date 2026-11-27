@@ -140,7 +140,7 @@ $check( 'bulk order and dispute results print at once, not via a late admin_noti
 $check( 'order detail status form asks first for Completed and Cancelled', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'data-wpss-confirm-cancelled' ) && false !== strpos( file_get_contents( $root . '/assets/js/admin.js' ), 'wpss-order-status-form' ) );
 $check( 'refused Assign and Retry refund carry the reason back; Mark refund sent asks first', 2 === substr_count( file_get_contents( $root . '/src/Admin/Admin.php' ), '$args += $this->signed_error_args(' ) && false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'data-wpss-order-confirm' ) );
 $check( 'refusal reason in the order-page link is signed', false !== strpos( file_get_contents( $root . '/src/Admin/Admin.php' ), 'hash_equals( $this->error_signature(' ) );
-$check( 'wizard validates currency and refuses a change under existing orders', false !== strpos( $wizard, "array_key_exists( \$currency, wpss_get_currencies() )" ) && false !== strpos( $wizard, 'has_any()' ) );
+$check( 'wizard validates currency and refuses a change under existing orders', false !== strpos( $wizard, 'wpss_validate_store_currency(' ) && is_wp_error( wpss_validate_store_currency( 'dollars' ) ) && false !== strpos( (string) file_get_contents( $root . '/src/functions/money.php' ), 'has_any()' ) );
 $check( 'wizard stays on a step that failed to save and confirms the demo import', false !== strpos( file_get_contents( $root . '/assets/js/admin-wizard.js' ), '!response.success' ) && false !== strpos( file_get_contents( $root . '/assets/js/admin-wizard.js' ), 'confirmDemo' ) );
 $wpss_vo = wpss_get_option( 'vendor', 'vendor_registration' );
 $wpss_set = get_option( 'wpss_vendor', array() );

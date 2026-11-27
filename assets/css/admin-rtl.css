@@ -1371,6 +1371,15 @@ h2.wpss-settings-subhead__title {
 	font-size: 14px;
 }
 
+.wpss-input-with-prefix.wpss-money-after {
+	flex-direction: row-reverse;
+}
+
+.wpss-input-with-prefix.wpss-money-after .wpss-input-prefix {
+	border-left: none;
+	border-right: 1px solid var(--wpss-text-muted, #8c8f94);
+}
+
 .wpss-input-with-prefix input {
 	border: none;
 	flex: 1;

@@ -40,7 +40,22 @@ The marketplace supports 148 currencies. See the [full list with codes, symbols 
 
 Your entire marketplace operates in one currency. All service prices, order totals, and vendor earnings use the same currency. Payment gateways handle any conversion on their end if a buyer pays from a different region.
 
-**Tip:** Set your currency during initial setup. Changing it later can create confusion since existing service prices stay at their original numbers.
+**The currency locks after your first order.** Once any order exists, the Currency field is greyed out and the setup wizard keeps it as well. Service prices, vendor balances and past withdrawals store a number without a currency of their own, so changing the currency would relabel them without converting them. Orders keep the currency they were placed in, so an older order always shows its own currency. Developers can allow a deliberate change with the `wpss_currency_locked` filter (return `false`).
+
+## How prices look
+
+Four settings on the same screen control how every price is written, on service pages, at checkout, in emails, on dashboards and in the app's REST data:
+
+| Setting | Options | Default |
+|---|---|---|
+| **Currency Symbol Position** | Before ($99), After (99$), Before with a space ($ 99), After with a space (99 $) | Before |
+| **Thousand Separator** | Any character, including a space | `,` |
+| **Decimal Separator** | Any character except the thousand separator | `.` |
+| **Price Decimal Places** | 0 to 4 | The currency's own (2 for USD, 0 for JPY, 3 for KWD) |
+
+The decimal places apply to your store currency. An order in another currency shows that currency's own decimals, and a currency without minor units (JPY, KRW) always shows whole amounts, so a yen price never shows `.00`.
+
+**On WooCommerce, Easy Digital Downloads or FluentCart [PRO],** the shop plugin owns the currency and all four of these settings. The fields show "Set by WooCommerce" (or EDD, or FluentCart) and are read-only; change them in the shop's own settings.
 
 **[PRO]** Multi-currency support is available in the Pro version -- currency detected from the shopper's timezone, live exchange rates, and localized price displays.
 

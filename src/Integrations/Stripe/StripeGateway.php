@@ -564,7 +564,7 @@ class StripeGateway extends AbstractPaymentGateway {
 		);
 
 		if ( null !== $amount ) {
-			$currency       = $payment_intent['currency'] ?? 'usd';
+			$currency       = $payment_intent['currency'] ?? wpss_get_currency();
 			$args['amount'] = $this->format_amount( $amount, $currency );
 		}
 
@@ -1457,7 +1457,7 @@ class StripeGateway extends AbstractPaymentGateway {
 			return $this->settle_webhook_payment(
 				(int) $metadata['order_id'],
 				(string) $payment_intent['id'],
-				$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ?? 0 ), (string) ( $payment_intent['currency'] ?? 'usd' ) ),
+				$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ?? 0 ), (string) ( $payment_intent['currency'] ?? wpss_get_order( (int) $metadata['order_id'] )?->currency ?? wpss_get_currency() ) ),
 				(string) ( $payment_intent['currency'] ?? '' )
 			);
 		}
@@ -1473,8 +1473,8 @@ class StripeGateway extends AbstractPaymentGateway {
 			$settle = ( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_from_metadata(
 				'stripe',
 				(string) $payment_intent['id'],
-				$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ), $payment_intent['currency'] ?? 'usd' ),
-				strtoupper( $payment_intent['currency'] ?? 'usd' ),
+				$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ), $payment_intent['currency'] ?? wpss_get_currency() ),
+				strtoupper( $payment_intent['currency'] ?? wpss_get_currency() ),
 				(array) $metadata,
 				(int) $metadata['customer_id']
 			);

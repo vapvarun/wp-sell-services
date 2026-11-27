@@ -29,10 +29,7 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 	// supported currency renders with its proper symbol out of the box - no
 	// code snippet required. Falls back to the code plus a space for a
 	// currency with no known symbol.
-	$symbol = wpss_get_currency_symbol( $currency );
-	if ( $symbol === $currency ) {
-		$symbol .= ' ';
-	}
+	$symbol   = wpss_get_currency_symbol( $currency );
 	$decimals = wpss_get_decimal_places( $currency );
 
 	/**
@@ -47,8 +44,9 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 	// the latter, which reads as a typo — and negatives became reachable in the
 	// UI once refunds started driving vendor balances below zero.
 	$is_negative = $price < 0;
-	$number      = number_format( abs( $price ), $decimals );
-	$formatted   = 'after' === wpss_get_currency_position() ? $number . $symbol : $symbol . $number;
+	$separators  = wpss_get_price_separators();
+	$number      = number_format( abs( $price ), $decimals, $separators['decimal'], $separators['thousand'] );
+	$formatted   = sprintf( wpss_currency_pattern( trim( $symbol ) ), $number );
 
 	if ( $is_negative ) {
 		$formatted = '-' . $formatted;
@@ -63,15 +61,17 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 }
 
 /**
- * Where the currency symbol goes: 'before' or 'after' the amount.
+ * Where the currency symbol goes: before or after the amount, with or without a space.
  *
  * Set on Settings > General since 1.8.0 (it was on Advanced, away from the
  * currency it formats - Basecamp 10337154229). A site that has not saved
  * General since then still reads its Advanced value, so nothing moves.
+ * A shop route (WooCommerce, EDD, FluentCart) supplies its own through the filter.
  *
  * @since 1.8.0
+ * @since 2.0.0 Adds before_space and after_space, and the wpss_currency_position filter.
  *
- * @return string 'before' or 'after'.
+ * @return string 'before', 'after', 'before_space' or 'after_space'.
  */
 function wpss_get_currency_position(): string {
 	$general  = get_option( 'wpss_general', array() );
@@ -79,26 +79,246 @@ function wpss_get_currency_position(): string {
 		? $general['currency_position']
 		: wpss_get_option( 'advanced', 'currency_position' );
 
-	return 'after' === $position ? 'after' : 'before';
+	/**
+	 * Filter where the currency symbol goes.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $position 'before', 'after', 'before_space' or 'after_space'.
+	 */
+	$position = (string) apply_filters( 'wpss_currency_position', (string) $position );
+
+	return in_array( $position, wpss_currency_positions(), true ) ? $position : 'before';
+}
+
+/**
+ * The symbol positions an amount can take.
+ *
+ * @since 2.0.0
+ *
+ * @return string[]
+ */
+function wpss_currency_positions(): array {
+	return array( 'before', 'after', 'before_space', 'after_space' );
+}
+
+/**
+ * A sprintf pattern placing the symbol around the number (%s), for PHP and JS alike.
+ *
+ * A currency with no symbol of its own shows its code, always with a space (USD 5, not USD5).
+ *
+ * @since 2.0.0
+ *
+ * @param string $symbol Currency symbol, or the code.
+ * @return string
+ */
+function wpss_currency_pattern( string $symbol ): string {
+	$position = wpss_get_currency_position();
+	$space    = str_ends_with( $position, '_space' ) || preg_match( '/^[A-Z]{3}$/', $symbol ) ? ' ' : '';
+	$symbol   = str_replace( '%', '%%', $symbol );
+
+	return str_starts_with( $position, 'after' ) ? '%s' . $space . $symbol : $symbol . $space . '%s';
+}
+
+/**
+ * Thousand and decimal separators for displayed prices.
+ *
+ * Stored in wpss_general (thousand_separator, decimal_separator); defaults keep 1,234.56.
+ * A shop route supplies its own through the filter.
+ *
+ * @since 2.0.0
+ *
+ * @return array{thousand: string, decimal: string}
+ */
+function wpss_get_price_separators(): array {
+	$general = (array) get_option( 'wpss_general', array() );
+
+	/**
+	 * Filter the price separators.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array{thousand: string, decimal: string} $separators Separators.
+	 */
+	$separators = (array) apply_filters(
+		'wpss_price_separators',
+		array(
+			'thousand' => (string) ( $general['thousand_separator'] ?? ',' ),
+			'decimal'  => (string) ( $general['decimal_separator'] ?? '.' ),
+		)
+	);
+
+	return array(
+		'thousand' => (string) ( $separators['thousand'] ?? ',' ),
+		'decimal'  => '' !== (string) ( $separators['decimal'] ?? '' ) ? (string) $separators['decimal'] : '.',
+	);
 }
 
 /**
  * Decimal places to DISPLAY a price with.
  *
- * The owner's "Price Decimal Places" setting when it has been saved, else the
- * currency's own minor-unit count. Display only: minor-unit conversion for
- * gateways keeps using wpss_get_currency_decimals(), because a JPY charge is
- * still in whole yen whatever the site shows.
+ * The owner's "Price Decimal Places" setting applies to the store currency only; any other
+ * currency (an order placed before a change, a Stripe refund in JPY) uses its own minor-unit
+ * count, so a JPY order never shows .00 and a KWD one keeps its third digit. Display only:
+ * minor-unit conversion for gateways keeps using wpss_get_currency_decimals().
  *
  * @since 1.7.1
+ * @since 2.0.0 The saved setting applies to the store currency only; filter wpss_decimal_places.
  *
  * @param string $currency Currency code. Defaults to the store currency.
  * @return int
  */
 function wpss_get_decimal_places( string $currency = '' ): int {
-	$saved = get_option( 'wpss_decimal_places', null );
+	$store    = wpss_get_currency();
+	$currency = '' === $currency ? $store : strtoupper( $currency );
+	$saved    = get_option( 'wpss_decimal_places', null );
+	$own      = wpss_get_currency_decimals( $currency );
+	// shortcut: the owner's places apply only to the store currency, and never add .00 to one without minor units.
+	$places = null !== $saved && $currency === $store && $own > 0 ? (int) $saved : $own;
 
-	return null === $saved ? wpss_get_currency_decimals( $currency ) : (int) $saved;
+	/**
+	 * Filter the decimal places a price is shown with.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int    $places   Decimal places.
+	 * @param string $currency Currency code.
+	 */
+	return max( 0, (int) apply_filters( 'wpss_decimal_places', $places, $currency ) );
+}
+
+/**
+ * Class for a price input's symbol box: 'wpss-money-after' when the symbol follows the amount, else ''.
+ *
+ * @since 2.0.0
+ *
+ * @return string
+ */
+function wpss_money_affix_class(): string {
+	return str_starts_with( wpss_get_currency_position(), 'after' ) ? 'wpss-money-after' : '';
+}
+
+/**
+ * Everything the browser needs to format money exactly as wpss_format_price() does.
+ *
+ * @since 2.0.0
+ *
+ * @param string $currency Currency code. Defaults to the store currency.
+ * @return array{currency: string, symbol: string, pattern: string, decimals: int, thousand: string, decimal: string}
+ */
+function wpss_money_js_config( string $currency = '' ): array {
+	$currency   = '' === $currency ? wpss_get_currency() : strtoupper( $currency );
+	$symbol     = trim( wpss_get_currency_symbol( $currency ) );
+	$separators = wpss_get_price_separators();
+
+	return array(
+		'currency' => $currency,
+		'symbol'   => $symbol,
+		'pattern'  => str_replace( '%%', '%', wpss_currency_pattern( $symbol ) ),
+		'decimals' => wpss_get_decimal_places( $currency ),
+		'thousand' => $separators['thousand'],
+		'decimal'  => $separators['decimal'],
+	);
+}
+
+/**
+ * Whether the store currency can no longer be changed: an order exists (owner, 2026-11-27).
+ *
+ * Orders keep the currency they were placed in, but catalog prices, vendor balances and past
+ * withdrawals carry no currency of their own, so a later change would relabel them without
+ * converting. No migration is offered.
+ *
+ * @since 2.0.0
+ *
+ * @return bool
+ */
+function wpss_currency_is_locked(): bool {
+	/**
+	 * Filter whether the store currency is locked. Return false to allow a deliberate change.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param bool $locked True once any order exists.
+	 */
+	return (bool) apply_filters( 'wpss_currency_locked', ( new \WPSellServices\Database\Repositories\OrderRepository() )->has_any() );
+}
+
+/**
+ * Check a requested store currency: supported, and not a change once the currency is locked.
+ *
+ * The one rule for Settings and the setup wizard.
+ *
+ * @since 2.0.0
+ *
+ * @param string $currency Requested code (any case).
+ * @return string|\WP_Error The upper-case code, or why it is refused.
+ */
+function wpss_validate_store_currency( string $currency ) {
+	$currency = strtoupper( trim( $currency ) );
+	$current  = strtoupper( (string) wpss_get_option( 'general', 'currency', 'USD' ) );
+
+	if ( ! array_key_exists( $currency, wpss_get_currencies() ) ) {
+		return new \WP_Error( 'wpss_currency_unsupported', __( 'That currency is not supported. Pick one from the list.', 'wp-sell-services' ) );
+	}
+
+	if ( $currency !== $current && wpss_currency_is_locked() ) {
+		return new \WP_Error( 'wpss_currency_locked', __( 'This store already has orders, so its currency can no longer be changed. Prices, vendor balances and past withdrawals would be relabelled without being converted.', 'wp-sell-services' ) );
+	}
+
+	return $currency;
+}
+
+/**
+ * Let a shop plugin own the currency and its formatting on its route (owner, 2026-11-27).
+ *
+ * Called once by each shop adapter (WooCommerce, EDD, FluentCart) when it is the active route.
+ * The callback is read on every lookup, so a change in the shop's settings shows at once.
+ *
+ * @since 2.0.0
+ *
+ * @param string   $owner  Shop name shown on our read-only fields, e.g. "WooCommerce".
+ * @param callable $format Returns array{currency?: string, position?: string, decimals?: int, thousand?: string, decimal?: string};
+ *                         position uses our names (before, after, before_space, after_space).
+ * @return void
+ */
+function wpss_follow_shop_currency( string $owner, callable $format ): void {
+	$read = static fn( string $key ) => ( (array) $format() )[ $key ] ?? null;
+
+	add_filter( 'wpss_currency_owner', static fn() => $owner );
+	add_filter( 'wpss_currency', static fn( $currency ) => (string) ( $read( 'currency' ) ?: $currency ) );
+	add_filter( 'wpss_currency_position', static fn( $position ) => (string) ( $read( 'position' ) ?? $position ) );
+	add_filter(
+		'wpss_price_separators',
+		static fn( $separators ) => array(
+			'thousand' => (string) ( $read( 'thousand' ) ?? $separators['thousand'] ),
+			'decimal'  => (string) ( $read( 'decimal' ) ?? $separators['decimal'] ),
+		)
+	);
+	// The shop's decimals are for its own currency; an order in another keeps that currency's own.
+	add_filter(
+		'wpss_decimal_places',
+		static fn( $places, $currency ) => null !== $read( 'decimals' ) && strtoupper( (string) $currency ) === wpss_get_currency() ? (int) $read( 'decimals' ) : $places,
+		10,
+		2
+	);
+}
+
+/**
+ * Name of the shop plugin that sets the currency on this route ('' on our own checkout).
+ *
+ * @since 2.0.0
+ *
+ * @return string For example "WooCommerce".
+ */
+function wpss_currency_owner(): string {
+	/**
+	 * Filter which shop plugin owns the currency and its formatting. A shop adapter sets its name.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $owner Shop name, or '' when WP Sell Services owns it.
+	 */
+	return (string) apply_filters( 'wpss_currency_owner', '' );
 }
 
 /**
@@ -467,7 +687,9 @@ function wpss_get_currency(): string {
 	 *
 	 * @param string $currency Currency code.
 	 */
-	return apply_filters( 'wpss_currency', $currency );
+	$currency = strtoupper( (string) apply_filters( 'wpss_currency', $currency ) );
+
+	return '' !== $currency ? $currency : 'USD';
 }
 
 /**
@@ -488,9 +710,8 @@ function wpss_format_currency( float $amount, string $currency = '' ): string {
  * @return string
  */
 function wpss_get_currency_symbol( string $currency = '' ): string {
-	if ( empty( $currency ) ) {
-		$currency = wpss_get_currency();
-	}
+	// Recurring rows and gateway responses carry 'usd'; the registry is upper case.
+	$currency = '' === $currency ? wpss_get_currency() : strtoupper( $currency );
 
 	$symbols = array();
 	foreach ( wpss_get_currency_registry() as $code => $data ) {
@@ -529,7 +750,7 @@ function wpss_get_currency_format( string $currency = '' ): string {
 	 * @param string $symbol   Currency symbol.
 	 * @param string $currency Currency code.
 	 */
-	return apply_filters( 'wpss_currency_format', 'after' === wpss_get_currency_position() ? '%s' . $symbol : $symbol . '%s', $symbol, $currency );
+	return apply_filters( 'wpss_currency_format', str_replace( '%%', '%', wpss_currency_pattern( trim( $symbol ) ) ), $symbol, $currency );
 }
 
 /**

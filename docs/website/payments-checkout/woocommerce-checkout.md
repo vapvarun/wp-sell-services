@@ -278,6 +278,12 @@ nothing to switch on.
 
 ---
 
+## Currency
+
+WooCommerce owns the currency on this route. WP Sell Services uses WooCommerce's store currency, symbol position, decimals and thousand and decimal separators, so a service price looks exactly like a product price. The matching WP Sell Services fields are read-only.
+
+**Currency switcher plugins (CURCY, Aelia and similar) are not supported for services.** A switcher charges the shopper's currency without converting the service price, while the order, the vendor's earnings and the ledger are kept in the store currency. When the shopper has picked another currency, the cart and checkout show "Services can only be paid in USD. Switch the currency back to USD to check out." and the order cannot be placed until they switch back. Products are not affected.
+
 ## Order Status Sync
 
 Orders stay connected between WooCommerce and your marketplace with **bidirectional sync**:

@@ -306,19 +306,12 @@ class SetupWizardPage {
 		if ( isset( $_POST['platform_name'] ) ) {
 			$general['platform_name'] = sanitize_text_field( wp_unslash( $_POST['platform_name'] ) );
 		}
-		if ( isset( $_POST['currency'] ) ) {
-			$currency = strtoupper( sanitize_text_field( wp_unslash( $_POST['currency'] ) ) );
+		// On a shop route the shop owns the currency; nothing to save here.
+		if ( isset( $_POST['currency'] ) && '' === wpss_currency_owner() ) {
+			$currency = wpss_validate_store_currency( sanitize_text_field( wp_unslash( $_POST['currency'] ) ) );
 
-			if ( ! array_key_exists( $currency, wpss_get_currencies() ) ) {
-				wp_send_json_error( array( 'message' => __( 'That currency is not supported. Pick one from the list.', 'wp-sell-services' ) ) );
-			}
-
-			// Orders keep the currency they were placed in, so switching the shop currency
-			// under existing orders would show their amounts in the wrong one.
-			$has_orders = ( new \WPSellServices\Database\Repositories\OrderRepository() )->has_any();
-
-			if ( $has_orders && ( $general['currency'] ?? 'USD' ) !== $currency ) {
-				wp_send_json_error( array( 'message' => __( 'This store already has orders, so the currency can no longer be changed from the wizard. Leave it as it is.', 'wp-sell-services' ) ) );
+			if ( is_wp_error( $currency ) ) {
+				wp_send_json_error( array( 'message' => $currency->get_error_message() ) );
 			}
 
 			$general['currency'] = $currency;
@@ -485,7 +478,7 @@ class SetupWizardPage {
 		$currencies = wpss_get_currencies();
 
 		$platform_name   = wpss_get_platform_name();
-		$currency        = $general['currency'] ?? 'USD';
+		$currency        = wpss_get_currency();
 		$commission_rate = $commission['commission_rate'] ?? 10;
 
 		$vendor_registration = $vendor['vendor_registration'] ?? 'open';
@@ -523,13 +516,17 @@ class SetupWizardPage {
 
 				<div class="wpss-wizard-field">
 					<label for="wpss-wiz-currency"><?php esc_html_e( 'Currency', 'wp-sell-services' ); ?></label>
-					<select id="wpss-wiz-currency">
+					<?php $wpss_currency_note = '' !== wpss_currency_owner() ? sprintf( /* translators: %s: shop plugin name */ __( 'Set by %s.', 'wp-sell-services' ), wpss_currency_owner() ) : ( wpss_currency_is_locked() ? __( 'Locked: this store already has orders.', 'wp-sell-services' ) : '' ); ?>
+					<select id="wpss-wiz-currency" <?php disabled( '' !== $wpss_currency_note ); ?>>
 						<?php foreach ( $currencies as $code => $label ) : ?>
 							<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $currency, $code ); ?>>
 								<?php echo esc_html( $code . ' — ' . $label ); ?>
 							</option>
 						<?php endforeach; ?>
 					</select>
+					<?php if ( '' !== $wpss_currency_note ) : ?>
+						<p class="description"><?php echo esc_html( $wpss_currency_note ); ?></p>
+					<?php endif; ?>
 				</div>
 
 				<div class="wpss-wizard-field">

@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "currency-uniform",
+    "run": "${WP_CLI:-wp} eval-file tests/test-currency-uniform.php"
+   },
+   {
     "id": "payment-module-contract",
     "run": "${WP_CLI:-wp} eval-file tests/test-payment-module-contract.php"
    },

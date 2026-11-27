@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**590 hooks** across **813** firing sites.
+**594 hooks** across **817** firing sites.
 
 ## Actions (302)
 
@@ -319,7 +319,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (288)
+## Filters (292)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -384,6 +384,9 @@ guide; this is the complete index.
 | `wpss_currency` | 1 | `src/functions/money.php` | Filter the default currency. |
 | `wpss_currency_decimals` | 2 | `src/functions/money.php` | Filter the number of decimal places for a currency. |
 | `wpss_currency_format` | 3 | `src/functions/money.php` | Filter the currency format string. |
+| `wpss_currency_locked` | 1 | `src/functions/money.php` | Filter whether the store currency is locked. Return false to allow a deliberate change. |
+| `wpss_currency_owner` | 1 | `src/functions/money.php` | Filter which shop plugin owns the currency and its formatting. A shop adapter sets its name. |
+| `wpss_currency_position` | 1 | `src/functions/money.php` | Filter where the currency symbol goes. |
 | `wpss_currency_registry` | 1 | `src/functions/money.php` | Filter the canonical currency registry. |
 | `wpss_currency_symbols` | 1 | `src/functions/money.php` | Filter currency symbols. |
 | `wpss_dashboard_asset_shortcodes` | 1 | `src/Frontend/UnifiedDashboard.php` | Filters the shortcodes that make a page load the dashboard assets. |
@@ -392,6 +395,7 @@ guide; this is the complete index.
 | `wpss_dashboard_section_template` | 2 | `src/functions/urls.php` | Filter the template path for a dashboard section. |
 | `wpss_dashboard_section_titles` | 1 | `src/Frontend/UnifiedDashboard.php` | Filter dashboard section titles. |
 | `wpss_dashboard_sections` | 3 | `src/Frontend/UnifiedDashboard.php` | Filter dashboard sections. |
+| `wpss_decimal_places` | 2 | `src/functions/money.php` | Filter the decimal places a price is shown with. |
 | `wpss_default_page_slugs` | 1 | `src/functions/urls.php` | Filter default page slugs. |
 | `wpss_default_service_categories` | 1 | `src/PostTypes/ServicePostType.php` | The category names a fresh marketplace starts with. |
 | `wpss_delivery_allowed_file_types` | 1 | `src/functions/files.php` | Filter the file extensions allowed for order deliveries. |
@@ -431,7 +435,6 @@ guide; this is the complete index.
 | `wpss_ledger_non_earning_types` | 1 | `src/functions/ledger.php` | Filter the ledger credit types that are not earnings. |
 | `wpss_locate_template` | 3 | `src/Frontend/TemplateLoader.php` |  |
 | `wpss_locked_billing_fields` | 1 | `src/functions/billing.php` | Filters the billing fields that cannot be disabled. |
-| `wpss_manual_order_currencies` | 1 | `src/Admin/Pages/ManualOrderPage.php` | Filter the currencies available on the Manual Order page dropdown. |
 | `wpss_manual_order_payment_methods` | 1 | `src/functions/payments.php` | Filter the payment methods a manual order can record. Each counts as manual: Mark as paid, the to-confirm queue, and never swept as abandoned. |
 | `wpss_max_order_quantity` | 2 | `src/Frontend/SingleServiceView.php` *(+2 more)* | Filters the maximum order quantity for a service. |
 | `wpss_max_upload_size` | 1 | `src/functions/files.php` | Filter the max upload size for requirements files. |
@@ -488,6 +491,7 @@ guide; this is the complete index.
 | `wpss_pre_update_service` | 2 | `src/Services/ServiceManager.php` | Filters service data before update. |
 | `wpss_pre_vendor_register` | 2 | `src/Services/VendorService.php` | Filter vendor profile data before creating the vendor profile. |
 | `wpss_presence_window` | 2 | `src/functions/notifications.php` | Filters the presence window, in seconds. |
+| `wpss_price_separators` | 1 | `src/functions/money.php` | Filter the price separators. |
 | `wpss_pro_beta_rails` | 1 | `wp-sell-services-pro.php` **[PRO]** | Filter whether the beta EDD and FluentCart rails are registered. |
 | `wpss_pro_fcm_payload` | 3 | `src/Push/FcmProvider.php` **[PRO]** | Filter the FCM message body before it is sent. |
 | `wpss_pro_pause_license_recheck` | 2 | `src/License/Manager.php` **[PRO]** | Filter whether automatic license re-checks are paused. |

@@ -68,7 +68,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:751` |
+| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:729` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
 | `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:802` |
 
@@ -157,7 +157,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:1095` |
+| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:1098` |
 
 ### Payment REST API
 
@@ -172,7 +172,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `src/Integrations/Stripe/StripeGateway.php:290` |
 | `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `src/Integrations/Gateways/AbstractPaymentGateway.php:97` |
 | `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `src/Integrations/Gateways/AbstractPaymentGateway.php:122` |
-| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:245` |
+| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:465` |
 
 **`wpss_stripe_payment_intent_args`** lets you modify Stripe PaymentIntent parameters before creation:
 
@@ -346,8 +346,8 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:3289` |
-| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:2149` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:3290` |
+| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:2178` |
 
 ### Admin Filters
 
@@ -387,7 +387,7 @@ add_filter( 'wpss_can_access_dashboard_section', function( $can, $section, $user
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_catalog_price_html` | `string $html, float $amount, string $context` | `src/functions/money.php:165` |
+| `wpss_catalog_price_html` | `string $html, float $amount, string $context` | `src/functions/money.php:385` |
 
 _`wpss_catalog_price_html` (added 1.3.0) is the single seam for catalog price display. Base currency is authoritative for all stored amounts; this filter is where an add-on (such as the Pro display-currency hint) injects a converted, visitor-facing price without changing the stored value._
 
@@ -643,7 +643,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_portfolio_item_updated` | `int $item_id, array $data` | `src/Services/PortfolioService.php:302` |
 | `wpss_portfolio_item_deleted` | `int $item_id, object $item` | `src/Services/PortfolioService.php:352` |
 | `wpss_settings_tab_{tab}` | *(none)* | `Settings.php:985` |
-| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2273` |
+| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2302` |
 
 ## Filters
 
@@ -673,14 +673,14 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:57` |
-| `wpss_currency` | `$currency` | `src/functions/money.php:469` |
+| `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:55` |
+| `wpss_currency` | `$currency` | `src/functions/money.php:689` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/core.php:34` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:184` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:98` |
-| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:504` |
-| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:531` |
-| `wpss_currencies` | `$currencies` | `src/functions/money.php:1326` |
+| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:725` |
+| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:752` |
+| `wpss_currencies` | `$currencies` | `src/functions/money.php:1547` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/order-status.php:85` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:677` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:435` |
@@ -692,11 +692,15 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1305` |
-| `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:208` |
-| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:431` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4291` |
-| `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:973` |
+| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1526` |
+| `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:428` |
+| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:651` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4355` |
+| `wpss_decimal_places` | `int $places, string $currency` | `src/functions/money.php:186` |
+| `wpss_currency_position` | `string $position` | `src/functions/money.php:88` |
+| `wpss_price_separators` | `array{thousand:string, decimal:string} $separators` | `src/functions/money.php:143` |
+| `wpss_currency_locked` | `bool $locked` | `src/functions/money.php:242` |
+| `wpss_currency_owner` | `string $owner` | `src/functions/money.php:320` |
 
 **`wpss_currency_registry`** is the preferred, single-place override - add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
 
@@ -713,17 +717,22 @@ add_filter( 'wpss_currency_registry', function( $registry ) {
 } );
 ```
 
-**`wpss_currency_decimals`** overrides the decimal places for a specific currency at format time (for example, to render USD without minor units):
+**`wpss_currency_decimals`** is the currency's minor-unit count, which gateways use to convert amounts (a 2 here means Stripe is sent cents). Change it only to correct the registry. To change how prices are **shown**, use **`wpss_decimal_places`**, which is display only:
 
 ```php
-add_filter( 'wpss_currency_decimals', function( $decimals, $currency ) {
-    return 'USD' === $currency ? 0 : $decimals;
+// Show USD prices without cents; charges are unaffected.
+add_filter( 'wpss_decimal_places', function( $places, $currency ) {
+    return 'USD' === $currency ? 0 : $places;
 }, 10, 2 );
 ```
 
+**`wpss_currency_position`** and **`wpss_price_separators`** feed `wpss_format_price()` and the browser's `wpssMoney.format()` alike. A shop route sets them, with the currency and `wpss_currency_owner`, through one call, `wpss_follow_shop_currency( $owner, $callback )`.
+
+**`wpss_currency_locked`** is true once any order exists, which greys out the Currency field and makes Settings and the setup wizard refuse a change. Return `false` for a deliberate change; nothing is converted.
+
 **`wpss_zero_decimal_currencies`** returns the codes rendered without minor units. It is derived from the registry (`decimals === 0`); filter it only when you need to force a currency into or out of zero-decimal formatting independently of its registry entry.
 
-**`wpss_settings_currencies`** and **`wpss_manual_order_currencies`** narrow (or extend) the currency choices offered in the admin settings dropdown and the manual-order screen respectively - useful for restricting a store to a subset of the registry:
+**`wpss_settings_currencies`** narrows (or extends) the currency choices offered in the admin settings dropdown - useful for restricting a store to a subset of the registry. Manual orders always use the store currency:
 
 ```php
 // Only allow USD and EUR to be selected in settings
@@ -765,9 +774,9 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:1061` |
 | `wpss_max_order_quantity` | `$max` | `src/Checkout/CheckoutIntentService.php:283` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:211` |
-| `wpss_api_public_settings` | `$settings` | `src/API/API.php:677` |
-| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1378` |
-| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1451` |
+| `wpss_api_public_settings` | `$settings` | `src/API/API.php:681` |
+| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1382` |
+| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1455` |
 | `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:239` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
 | `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:285` |
@@ -883,7 +892,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_edd_adapter_init` | `EDDAdapter $adapter` | `src/Integrations/EDD/EDDAdapter.php:199` |
+| `wpss_edd_adapter_init` | `EDDAdapter $adapter` | `src/Integrations/EDD/EDDAdapter.php:211` |
 | `wpss_edd_service_purchased` | `ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:120` |
 | `wpss_edd_services_processed` | `int $order_id, ServiceItem[] $items` | `src/Integrations/EDD/EDDOrderProvider.php:150` |
 | `wpss_edd_order_record_created` | `int $record_id, ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:482` |
@@ -894,7 +903,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_fluentcart_adapter_init` | `FluentCartAdapter $adapter` | `src/Integrations/FluentCart/FluentCartAdapter.php:244` |
+| `wpss_fluentcart_adapter_init` | `FluentCartAdapter $adapter` | `src/Integrations/FluentCart/FluentCartAdapter.php:268` |
 | `wpss_fluentcart_order_created` | `int $order_id, int $external_order_id, array $order_data` | `src/Integrations/FluentCart/FluentCartOrderProvider.php:116` |
 | `wpss_fluentcart_order_detail` | `object $order` | `src/Integrations/FluentCart/FluentCartAccountProvider.php:361` |
 

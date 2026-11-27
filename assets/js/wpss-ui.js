@@ -489,3 +489,29 @@
 		}
 	} );
 }() );
+
+/**
+ * wpssMoney.format( amount ) - format money exactly as wpss_format_price() does on the server:
+ * the store's symbol position, decimal places and separators (wpssMoneyConfig, ScriptRegistry::register_ui()).
+ * Pass a config from wpss_money_js_config( $currency ) as the second argument for another currency.
+ */
+( function() {
+	'use strict';
+
+	window.wpssMoney = {
+		config: window.wpssMoneyConfig || { pattern: '$%s', decimals: 2, thousand: ',', decimal: '.' },
+
+		format: function( amount, config ) {
+			var c        = config || this.config;
+			var decimals = parseInt( c.decimals, 10 );
+			var value    = Number( amount ) || 0;
+			var parts;
+
+			decimals = isNaN( decimals ) ? 2 : decimals;
+			parts    = Math.abs( value ).toFixed( decimals ).split( '.' );
+			parts[0] = parts[0].replace( /\B(?=(\d{3})+(?!\d))/g, c.thousand );
+
+			return ( value < 0 ? '-' : '' ) + c.pattern.replace( '%s', parts.join( c.decimal ) );
+		}
+	};
+}() );

@@ -13,8 +13,8 @@
  * Opting in must not remove the warning. With the filter on, the platform
  * select labels both rails "Beta, not purchase-tested" rather than
  * "Available", the admin notice names what the active rail cannot do
- * (including that an EDD refund is not reflected in the marketplace and the
- * vendor stays credited), and Free refuses the add-to-cart instead of writing
+ * (EDD refunds reach the order since 1.9.3, so that limit is no longer listed), and
+ * Free refuses the add-to-cart instead of writing
  * a cart row it cannot check out.
  *
  * Runs without EDD or FluentCart active: the plugin presence checks are
@@ -176,8 +176,6 @@ $expected_limits = array(
 	),
 	'edd'        => array(
 		'Services are not created as Easy Digital Downloads downloads',
-		'A refund issued in Easy Digital Downloads is not reflected in the marketplace',
-		'the vendor stays credited',
 		'Pay links for milestone phases, tips and paid extensions are unavailable',
 		'planned for 1.8.0',
 	),
@@ -270,7 +268,13 @@ try {
 	echo '  note  ' . $e->getMessage() . "\n";
 }
 
-wpss_t( 1 === count( $found ) && (int) $found[0]->id === $row_ids[0], 'FluentCart paid: a tip minted for this FluentCart order is matched through fc_pay_order_id' );
+// Since 8f8eb5d both ends must agree: the FluentCart order carries the back-link in its own meta, so
+// the match needs FluentCart itself. A rail-gated check skips, it does not fail.
+if ( class_exists( '\\FluentCart\\App\\Models\\Order' ) ) {
+	wpss_t( 1 === count( $found ) && (int) $found[0]->id === $row_ids[0], 'FluentCart paid: a tip minted for this FluentCart order is matched through fc_pay_order_id' );
+} else {
+	echo "  SKIP  FluentCart paid: matching a tip needs FluentCart's own order (not active here)\n";
+}
 wpss_t( ! in_array( $row_ids[1], array_map( static fn( $r ) => (int) $r->id, $found ), true ), 'FluentCart paid: a longer id sharing the prefix is not matched' );
 
 foreach ( $row_ids as $row_id ) {

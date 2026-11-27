@@ -90,7 +90,7 @@ do_action( 'wpss_email_content_before', 'order_completed', $order, $recipient );
 		<?php endif; ?>
 		<tr>
 			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo wp_kses_post( wpss_format_price( $order->total ) ); ?></td>
+			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo wp_kses_post( wpss_format_price( (float) $order->total, (string) $order->currency ) ); ?></td>
 		</tr>
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
@@ -122,7 +122,7 @@ do_action( 'wpss_email_content_before', 'order_completed', $order, $recipient );
 			printf(
 				/* translators: %s: formatted price */
 				esc_html__( 'Payment of %s will be released to your earnings.', 'wp-sell-services' ),
-				wp_kses_post( wpss_format_price( $wpss_release ) )
+				wp_kses_post( wpss_format_price( $wpss_release, (string) $order->currency ) )
 			);
 		} else {
 			esc_html_e( 'Each phase of this project was added to your earnings when the buyer approved it.', 'wp-sell-services' );

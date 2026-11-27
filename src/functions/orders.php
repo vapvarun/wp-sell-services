@@ -1218,7 +1218,8 @@ function wpss_get_reorder_plan( \WPSellServices\Models\ServiceOrder $order, int 
 	// What the last order cost for the same quantity, so a lower quantity is not read as a price change.
 	$previous = round( ( (float) $order->subtotal * $quantity / max( 1, $bought_quantity ) ) + (float) $order->addons_total, wpss_get_currency_decimals() );
 	$current  = round( (float) $line['subtotal'] + (float) $line['addons_total'], wpss_get_currency_decimals() );
-	$changed  = abs( $current - $previous ) > 0.005;
+	// An order in another currency cannot be compared with today's price.
+	$changed = strtoupper( (string) $order->currency ) === wpss_get_currency() && abs( $current - $previous ) > 0.005;
 
 	if ( $changed ) {
 		$warnings[] = sprintf(

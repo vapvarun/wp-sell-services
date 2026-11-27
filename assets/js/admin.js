@@ -169,9 +169,7 @@
 		$(document).on('input', '.wpss-package-price-input', function() {
 			var $item = $(this).closest('.wpss-package-item');
 			var price = parseFloat($(this).val()) || 0;
-			var decimals = (window.wpssAdmin && typeof wpssAdmin.currencyDecimals !== 'undefined') ? wpssAdmin.currencyDecimals : 2;
-			var fmt = (window.wpssAdmin && wpssAdmin.currencyFormat) ? wpssAdmin.currencyFormat : '$%s';
-			var formatted = price > 0 ? fmt.replace('%s', price.toFixed(decimals)) : '';
+			var formatted = price > 0 ? window.wpssMoney.format(price) : '';
 			$item.find('.wpss-package-price-display').text(formatted);
 		});
 	}
@@ -635,12 +633,9 @@
 		var option = select.options[select.selectedIndex];
 		var kind = option ? option.getAttribute('data-refund') : null;
 		var total = parseFloat(outcome.dataset.total) || 0;
+		// The order's own currency, formatted like every other price.
 		var money = function (value) {
-			try {
-				return new Intl.NumberFormat(document.documentElement.lang || undefined, { style: 'currency', currency: outcome.dataset.currency }).format(value);
-			} catch (e) {
-				return value.toFixed(2);
-			}
+			return window.wpssMoney.format(value, JSON.parse(outcome.dataset.money || 'null'));
 		};
 
 		if (amountRow) {

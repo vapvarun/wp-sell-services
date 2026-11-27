@@ -340,7 +340,7 @@
 			$('<td>')
 				.attr('data-label', i18n.walletColAmount)
 				.addClass('wpss-wallet__amount-col wpss-wallet__amount')
-				.text((isDebit ? '-' : '+') + (txn.amount_formatted || Math.abs(amount).toFixed(2)))
+				.text((isDebit ? '-' : '+') + (txn.amount_formatted || window.wpssMoney.format(Math.abs(amount))))
 				.appendTo($row);
 
 			return $row;

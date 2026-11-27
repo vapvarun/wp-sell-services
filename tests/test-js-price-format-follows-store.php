@@ -36,7 +36,8 @@ if ( null === $general ) {
 }
 
 $js = (string) file_get_contents( WPSS_PLUGIN_DIR . 'assets/js/frontend.js' );
-$check( 'frontend.js formats with the localized currencyFormat', false !== strpos( $js, 'wpssData.currencyFormat' ) && false === strpos( $js, 'wpssData.currencySymbol' ) );
-$check( 'the admin script gets the same format as the storefront', false !== strpos( (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/Admin/Admin.php' ), "'currencyFormat'   => wpss_get_currency_format()" ) );
+// 2.0.0: one browser formatter, wpssMoney.format(), localized once on the shared UI bundle (Basecamp 10551474179).
+$check( 'frontend.js formats with the shared wpssMoney.format', false !== strpos( $js, 'wpssMoney.format(' ) && false === strpos( $js, 'wpssData.currencySymbol' ) && false === strpos( $js, 'currencyFormat' ) );
+$check( 'the admin and the storefront get the same config, from the one shared bundle', false !== strpos( (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/Assets/ScriptRegistry.php' ), "'wpssMoneyConfig', wpss_money_js_config()" ) && false !== strpos( (string) file_get_contents( WPSS_PLUGIN_DIR . 'assets/js/admin.js' ), 'wpssMoney.format(' ) );
 
 echo $fails ? "{$fails} FAILED\n" : "All passed\n";
