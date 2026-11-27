@@ -108,7 +108,7 @@ after confirming they are a party to that order.
 ### Test It
 
 Upload a delivery on a real order, then check your bucket: the file appears
-under `wpss/{order_id}/delivery/`. That is the end-to-end check.
+under `wpss/{order_id}/delivery/`, named `{file id}-{original name}`. That is the end-to-end check.
 
 **Test Connection** on the settings card verifies credentials, region and
 permissions on their own, which is the faster check when you are first

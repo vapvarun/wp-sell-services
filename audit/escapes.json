@@ -1500,6 +1500,14 @@
    "added": "2026-11-27",
    "fails_on": "6ef3b5e0 (7 FAIL)",
    "check": "tests/test-order-files-folder-safety.php"
+  },
+  {
+   "card": "10551464875",
+   "title": "two order files with the same name shared a bucket key (second overwrote the first) and stored names were guessable",
+   "guard": "static:order-file-names-unique",
+   "added": "2026-11-27",
+   "fails_on": "bec24492 (3 FAIL)",
+   "check": "tests/test-order-file-names-unique.php"
   }
  ]
 }

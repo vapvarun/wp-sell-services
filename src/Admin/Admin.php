@@ -487,10 +487,12 @@ class Admin {
 		}
 
 		printf(
-			'<div class="notice notice-error"><p><strong>%s</strong> %s</p><p>%s</p></div>',
+			'<div class="notice notice-error"><p><strong>%s</strong> %s</p><p>%s</p><p>%s <code>%s</code></p></div>',
 			esc_html__( 'Order files can be downloaded by anyone.', 'wp-sell-services' ),
 			esc_html__( 'This server could not store them outside the web root, and it is ignoring the deny rule we wrote alongside them. Requirement briefs and delivered work are readable by anyone who guesses the address.', 'wp-sell-services' ),
-			esc_html__( 'Ask your host to block direct access to the wpss-order-files directory, or to make the folder above WordPress writable so the files can be moved out of the web root entirely.', 'wp-sell-services' )
+			esc_html__( 'Ask your host to block direct access to the wpss-order-files directory, or to make the folder above WordPress writable so the files can be moved out of the web root entirely.', 'wp-sell-services' ),
+			esc_html__( 'On nginx, this rule in the server block does it:', 'wp-sell-services' ),
+			esc_html( 'location ~ /wpss-order-files/ { deny all; }' )
 		);
 	}
 

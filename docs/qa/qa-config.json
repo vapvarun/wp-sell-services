@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "order-file-names-unique",
+    "run": "${WP_CLI:-wp} eval-file tests/test-order-file-names-unique.php"
+   },
+   {
     "id": "order-files-folder-safety",
     "run": "${WP_CLI:-wp} eval-file tests/test-order-files-folder-safety.php"
    },

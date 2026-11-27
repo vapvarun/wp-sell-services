@@ -100,7 +100,7 @@ wpss_t( is_array( $migrated ), 'the file migrates' );
 wpss_t( is_array( $migrated ) && ! empty( $migrated['path'] ), 'the migrated record carries a private path' );
 wpss_t( is_array( $migrated ) && ! isset( $migrated['url'] ), 'the public url is dropped, so the file has ONE address' );
 wpss_t( ! file_exists( $public ), 'the public copy is removed - this is the whole point' );
-wpss_t( file_exists( wpss_get_order_files_dir() . (int) $order->id . '/' . $name ), 'the bytes are in the private store' );
+wpss_t( is_array( $migrated ) && str_ends_with( (string) $migrated['path'], '-' . $name ) && file_exists( wpss_get_order_files_dir() . (int) $order->id . '/' . $migrated['path'] ), 'the bytes are in the private store, under an id-led name' );
 
 // 4. The rewrite reached the database, not just the returned array.
 $reread = wpss_find_order_file( (int) $order->id, $file_id );

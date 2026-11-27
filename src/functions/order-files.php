@@ -78,7 +78,10 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 		wp_mkdir_p( $dir );
 	}
 
-	$filename = wp_unique_filename( $dir, sanitize_file_name( (string) $file['name'] ) );
+	// The record id leads the stored name, so two files called final.zip never share a disk path or
+	// bucket key and the name cannot be guessed; the record keeps `name` for display (Basecamp 10551464875).
+	$id       = wp_generate_uuid4();
+	$filename = wp_unique_filename( $dir, $id . '-' . sanitize_file_name( (string) $file['name'] ) );
 	$target   = $dir . $filename;
 
 	if ( ! @move_uploaded_file( $file['tmp_name'], $target ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_move_uploaded_file
@@ -90,7 +93,7 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 	@chmod( $target, 0640 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_chmod
 
 	$record = array(
-		'id'          => wp_generate_uuid4(),
+		'id'          => $id,
 		'name'        => (string) $file['name'],
 		'type'        => (string) $checked['type'],
 		'size'        => (int) ( $file['size'] ?? filesize( $target ) ),
@@ -564,7 +567,7 @@ function wpss_migrate_legacy_order_file( array $record, int $order_id ): ?array 
 		wp_mkdir_p( $dir );
 	}
 
-	$filename = wp_unique_filename( $dir, sanitize_file_name( basename( $source ) ) );
+	$filename = wp_unique_filename( $dir, wp_generate_uuid4() . '-' . sanitize_file_name( basename( $source ) ) );
 	$target   = $dir . $filename;
 
 	// COPY, not rename: if the record rewrite below fails we must still have a
