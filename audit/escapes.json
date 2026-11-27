@@ -1476,6 +1476,14 @@
    "added": "2026-11-27",
    "fails_on": "4c0b9c07 (5 FAIL)",
    "check": "tests/test-demo-payments-latch-off-once-live.php"
+  },
+  {
+   "card": "10550988589",
+   "title": "Pro REST payment routes created orders on a disabled Razorpay/Offline, dropped quantity/add-ons/pay_order, and offline bank details vanished when Offline was turned off",
+   "guard": "static:rest-payment-routes-honour-enabled",
+   "added": "2026-11-27",
+   "fails_on": "Pro d42c660 + Free 07f07ddc (7 FAIL)",
+   "check": "../wp-sell-services-pro/tests/test-rest-payment-routes-honour-enabled.php"
   }
  ]
 }

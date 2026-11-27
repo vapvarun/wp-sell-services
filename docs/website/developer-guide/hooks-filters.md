@@ -163,7 +163,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/API/PaymentController.php:333` |
+| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/API/PaymentController.php:348` |
 
 ### Payment Filters
 

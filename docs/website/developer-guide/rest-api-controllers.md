@@ -589,6 +589,8 @@ Available only when WP Sell Services Pro is active with a valid license.
 | POST | `/payments/offline/submit` |
 | GET | `/payments/(?P<order_id>[\d]+)/status` |
 
+The routes that start a payment (`create-intent`, `create-order`, `offline/submit`) answer `403 wpss_gateway_disabled` when that method is switched off. They take `quantity`, `addons` and `pay_order` like Free's `/payments/create-intent`, and the order is priced on the server; `amount` is ignored. The routes that finish a payment (`confirm`, `capture`, `verify`) keep working on a disabled method, so a buyer who has already paid is never stranded.
+
 ### Wallet
 
 | Method | Route |

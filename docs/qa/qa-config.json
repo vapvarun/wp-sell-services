@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "rest-payment-routes-honour-enabled",
+    "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-rest-payment-routes-honour-enabled.php"
+   },
+   {
     "id": "demo-payments-latch-off-once-live",
     "run": "${WP_CLI:-wp} eval-file tests/test-demo-payments-latch-off-once-live.php"
    },

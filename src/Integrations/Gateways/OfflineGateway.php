@@ -1371,8 +1371,8 @@ class OfflineGateway extends AbstractPaymentGateway {
 		</p>
 		<?php
 
-		// Instructions: offline orders, while the gateway is enabled.
-		if ( self::GATEWAY_ID !== ( $order->payment_method ?? '' ) || ! $this->is_enabled() ) {
+		// Instructions belong to the order: a buyer still owing keeps the bank details after the owner turns Offline off (Basecamp 10550988589).
+		if ( self::GATEWAY_ID !== ( $order->payment_method ?? '' ) ) {
 			return;
 		}
 
