@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "webhook-retry-on-failure",
+    "run": "${WP_CLI:-wp} eval-file tests/test-webhook-retry-on-failure.php"
+   },
+   {
     "id": "refund-lock-across-requests",
     "run": "${WP_CLI:-wp} eval-file tests/test-refund-lock-across-requests.php"
    },

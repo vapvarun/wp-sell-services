@@ -1436,6 +1436,14 @@
    "added": "2026-11-27",
    "fails_on": "af9902d5 (4 FAIL)",
    "check": "tests/test-refund-lock-across-requests.php"
+  },
+  {
+   "card": "10550988500",
+   "title": "PayPal and Razorpay webhooks answered 200 and stored the dedup key even when settling failed, so the provider never retried",
+   "guard": "static:webhook-retry-on-failure",
+   "added": "2026-11-27",
+   "fails_on": "c30742a6 / Pro a38c0d4 (8 FAIL)",
+   "check": "tests/test-webhook-retry-on-failure.php"
   }
  ]
 }

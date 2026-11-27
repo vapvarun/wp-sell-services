@@ -466,16 +466,8 @@ class PayPalGateway extends AbstractPaymentGateway {
 			exit;
 		}
 
-		$result = $this->handle_webhook( $event );
-
-		// Mark event as processed (48-hour dedup window).
-		if ( $event_id ) {
-			set_transient( 'wpss_paypal_event_' . $event_id, true, 48 * HOUR_IN_SECONDS );
-		}
-
-		status_header( 200 );
-		echo wp_json_encode( $result );
-		exit;
+		// A capture that could not be applied answers 500 and stays unmarked, so PayPal sends it again.
+		$this->respond_to_webhook( $this->handle_webhook( $event ), $event_id ? 'wpss_paypal_event_' . $event_id : '' );
 	}
 
 	/**
@@ -1009,9 +1001,8 @@ class PayPalGateway extends AbstractPaymentGateway {
 		$metadata  = json_decode( $custom_id, true ) ?: array();
 
 		if ( ! empty( $metadata['order_id'] ) && $this->is_own_order( (string) ( $resource_data['invoice_id'] ?? '' ) ) ) {
-			( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
+			return $this->settle_webhook_payment(
 				(int) $metadata['order_id'],
-				'paypal',
 				(string) $resource_data['id'],
 				(float) ( $resource_data['amount']['value'] ?? 0 ),
 				(string) ( $resource_data['amount']['currency_code'] ?? '' )

@@ -658,9 +658,9 @@ class CheckoutIntentService {
 	 * @param string $transaction_id Gateway payment id, as settle() stamps it.
 	 * @param float  $amount         Amount the gateway reports as paid.
 	 * @param string $currency       Currency the gateway reports.
-	 * @param string $refusal        Set to why a false answer was given: 'refunded', 'spent' or 'mismatch'
-	 *                               (the order is not for this amount), else empty. Only 'mismatch' is a
-	 *                               reason to give the charge back.
+	 * @param string $refusal        Set to why a false answer was given: 'refunded', 'spent', 'closed' (the
+	 *                               order is gone, cancelled or refunded) or 'mismatch' (not for this amount).
+	 *                               Empty with false means a write failed. Only 'mismatch' gives the charge back.
 	 * @return bool False when the payment was spent elsewhere or does not match.
 	 */
 	public function settle_webhook_order( int $order_id, string $gateway_id, string $transaction_id, float $amount, string $currency, string &$refusal = '' ): bool {
@@ -699,8 +699,15 @@ class CheckoutIntentService {
 
 				// mark_as_paid() is the standalone provider's, not the interface's.
 				$provider = wpss_get_order_provider();
+				$marked   = method_exists( $provider, 'mark_as_paid' ) && (bool) $provider->mark_as_paid( $order_id, $transaction_id, $gateway_id );
 
-				return method_exists( $provider, 'mark_as_paid' ) && (bool) $provider->mark_as_paid( $order_id, $transaction_id, $gateway_id );
+				// A gone or closed order will not become paid however often the event comes; any other
+				// false is a write that failed and is worth another delivery.
+				if ( ! $marked && ( ! $order || in_array( (string) $order->status, array( \WPSellServices\Models\ServiceOrder::STATUS_CANCELLED, \WPSellServices\Models\ServiceOrder::STATUS_REFUNDED ), true ) ) ) {
+					$refusal = 'closed';
+				}
+
+				return $marked;
 			}
 		);
 	}

@@ -680,6 +680,18 @@ class StripeGateway extends AbstractPaymentGateway {
 	}
 
 	/**
+	 * Give back a Stripe charge that could not become an order (the base's hook for webhooks).
+	 *
+	 * @since 1.9.4
+	 *
+	 * @param string $transaction_id Stripe PaymentIntent ID.
+	 * @return bool Whether it is given back, or there was nothing to give back.
+	 */
+	protected function give_back_unsettled( string $transaction_id ): bool {
+		return $this->refund_unsettled_charge( $transaction_id );
+	}
+
+	/**
 	 * Refund a successful charge that could not be turned into an order.
 	 *
 	 * The one path for browser confirm, AJAX confirm and webhook recovery.
@@ -687,7 +699,7 @@ class StripeGateway extends AbstractPaymentGateway {
 	 * @since 1.8.0
 	 *
 	 * @param string $payment_intent_id Stripe PaymentIntent ID.
-	 * @return bool Whether Stripe accepted the refund.
+	 * @return bool Whether Stripe accepted the refund, or there was nothing to refund.
 	 */
 	private function refund_unsettled_charge( string $payment_intent_id ): bool {
 		$refund = array();
@@ -773,24 +785,8 @@ class StripeGateway extends AbstractPaymentGateway {
 			exit;
 		}
 
-		$result = $this->handle_webhook( $event );
-
-		// A charge we could neither settle nor refund: answer non-2xx and leave
-		// the event unmarked, so Stripe delivers it again.
-		if ( ! empty( $result['retry'] ) ) {
-			status_header( 500 );
-			echo wp_json_encode( $result );
-			exit;
-		}
-
-		// Mark event as processed (48-hour dedup window).
-		if ( $event_id ) {
-			set_transient( 'wpss_stripe_event_' . $event_id, true, 48 * HOUR_IN_SECONDS );
-		}
-
-		status_header( 200 );
-		echo wp_json_encode( $result );
-		exit;
+		// A charge we could neither settle nor refund answers 500 and stays unmarked, so Stripe sends it again.
+		$this->respond_to_webhook( $this->handle_webhook( $event ), $event_id ? 'wpss_stripe_event_' . $event_id : '' );
 	}
 
 	/**
@@ -1443,25 +1439,12 @@ class StripeGateway extends AbstractPaymentGateway {
 
 		// Path 1: Order already created via AJAX — just confirm payment.
 		if ( ! empty( $metadata['order_id'] ) ) {
-			$refusal = '';
-			$settled = ( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
+			// A wrong amount is given back, as browser confirm does; a write that failed is sent again.
+			return $this->settle_webhook_payment(
 				(int) $metadata['order_id'],
-				'stripe',
 				(string) $payment_intent['id'],
 				$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ?? 0 ), (string) ( $payment_intent['currency'] ?? 'usd' ) ),
-				(string) ( $payment_intent['currency'] ?? '' ),
-				$refusal
-			);
-
-			// A charge the order's own total refuses is given back, as browser confirm does. Any other
-			// refusal (spent elsewhere, already refunded, a write that failed) is left to the owner.
-			if ( ! $settled && 'mismatch' === $refusal ) {
-				$this->refund_unsettled_charge( (string) $payment_intent['id'] );
-			}
-
-			return array(
-				'success' => true,
-				'message' => 'Order confirmed.',
+				(string) ( $payment_intent['currency'] ?? '' )
 			);
 		}
 

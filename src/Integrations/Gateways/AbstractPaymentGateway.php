@@ -209,4 +209,99 @@ abstract class AbstractPaymentGateway implements PaymentGatewayInterface {
 			201
 		);
 	}
+
+	/**
+	 * Answer a provider's webhook and remember it as handled, unless it should come again.
+	 *
+	 * A result with `retry` (a settle or refund that failed part-way) answers 500 and is not
+	 * remembered, so the provider delivers the event again. Anything else answers 200 and is
+	 * remembered for 48 hours, so a repeat delivery is not applied twice.
+	 *
+	 * @since 1.9.4 Lifted from StripeGateway so every gateway has it (Basecamp 10550988500).
+	 *
+	 * @param array<string, mixed> $result    What the gateway's handler returned.
+	 * @param string               $dedup_key Transient key for this event, '' when it has no id.
+	 * @return void Sends the response and exits.
+	 */
+	protected function respond_to_webhook( array $result, string $dedup_key ): void {
+		if ( ! empty( $result['retry'] ) ) {
+			wpss_log( sprintf( '%s webhook not handled (%s); answering 500 so it is sent again.', $this->get_id(), (string) ( $result['message'] ?? '' ) ), 'warning' );
+			status_header( 500 );
+			echo wp_json_encode( $result );
+			exit;
+		}
+
+		if ( '' !== $dedup_key ) {
+			set_transient( $dedup_key, true, 48 * HOUR_IN_SECONDS );
+		}
+
+		status_header( 200 );
+		echo wp_json_encode( $result );
+		exit;
+	}
+
+	/**
+	 * Mark the order a webhook names as paid, and say what the provider should do next.
+	 *
+	 * A payment for the wrong amount is given back. One already spent elsewhere, already
+	 * given back, or for an order that is gone or closed is final. A write that failed is
+	 * a `retry`, so the provider sends the event again.
+	 *
+	 * @since 1.9.4
+	 *
+	 * @param int    $order_id       Order the webhook names.
+	 * @param string $transaction_id Provider payment id.
+	 * @param float  $amount         Amount the provider reports, in major units.
+	 * @param string $currency       Currency the provider reports.
+	 * @return array{success: bool, message: string, retry?: bool}
+	 */
+	protected function settle_webhook_payment( int $order_id, string $transaction_id, float $amount, string $currency ): array {
+		$refusal = '';
+
+		if ( ( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order( $order_id, $this->get_id(), $transaction_id, $amount, $currency, $refusal ) ) {
+			return array(
+				'success' => true,
+				'message' => 'Order paid.',
+			);
+		}
+
+		if ( 'mismatch' === $refusal ) {
+			$given_back = $this->give_back_unsettled( $transaction_id );
+
+			return array(
+				'success' => $given_back,
+				'message' => $given_back ? 'Payment does not match the order; given back.' : 'Payment does not match the order and could not be given back.',
+				'retry'   => ! $given_back,
+			);
+		}
+
+		return array(
+			'success' => '' !== $refusal,
+			'message' => '' !== $refusal ? "Not marked paid ({$refusal})." : 'Marking the order paid failed.',
+			'retry'   => '' === $refusal,
+		);
+	}
+
+	/**
+	 * Give back a payment that could not become an order.
+	 *
+	 * @since 1.9.4
+	 *
+	 * @param string $transaction_id Provider payment id.
+	 * @return bool Whether it is given back, or there was nothing to give back.
+	 */
+	protected function give_back_unsettled( string $transaction_id ): bool {
+		$refunded = false;
+		$asked    = ( new \WPSellServices\Checkout\CheckoutIntentService() )->refund_unsettled(
+			$this->get_id(),
+			$transaction_id,
+			function () use ( $transaction_id, &$refunded ): bool {
+				$refunded = ! empty( $this->process_refund( $transaction_id )['success'] );
+
+				return $refunded;
+			}
+		);
+
+		return ! $asked || $refunded;
+	}
 }
