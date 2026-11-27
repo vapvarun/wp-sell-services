@@ -77,6 +77,9 @@ class OrderScreen {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'wp_ajax_wpss_admin_update_order_status', array( $this, 'ajax_update_status' ) );
 		add_action( 'wp_ajax_wpss_admin_add_order_note', array( $this, 'ajax_add_note' ) );
+		add_action( 'wp_ajax_wpss_admin_mark_order_paid', array( $this, 'ajax_mark_paid' ) );
+		add_action( 'wp_ajax_wpss_review_payment_receipt', array( $this, 'ajax_review_payment_receipt' ) );
+		add_action( 'wpss_admin_order_actions', array( $this, 'render_admin_order_actions' ), 10, 2 );
 	}
 
 	/**
@@ -276,5 +279,318 @@ class OrderScreen {
 				),
 			)
 		);
+	}
+
+	/**
+	 * AJAX: Admin marks order as paid.
+	 *
+	 * @return void
+	 */
+	public function ajax_mark_paid(): void {
+		check_ajax_referer( 'wpss_admin_mark_paid', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
+		$order_id       = isset( $_POST['order_id'] ) ? (int) wp_unslash( $_POST['order_id'] ) : 0;
+		$transaction_id = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
+
+		$result = ( new \WPSellServices\Services\ManualPaymentService() )->settle( $order_id, $transaction_id );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'message'    => __( 'Order marked as paid successfully.', 'wp-sell-services' ),
+				'new_status' => $result['status'],
+			)
+		);
+	}
+
+	/**
+	 * Mark as paid, and any proof the buyer sent, for an order paid through a manual method.
+	 *
+	 * @since 2.0.0 Moved from OfflineGateway, so every manual method has it (Basecamp 10551488242).
+	 *
+	 * @param object $order  Order object.
+	 * @param string $status Current order status.
+	 * @return void
+	 */
+	public function render_admin_order_actions( object $order, string $status ): void {
+		// Manual-method orders awaiting payment, and unpaid manual sub-orders whatever their status.
+		$is_sub_order_door = ( new \WPSellServices\Services\ManualPaymentService() )->is_unpaid_sub_order( $order );
+
+		if ( ! $is_sub_order_door && ( ! wpss_is_manual_payment_method( (string) ( $order->payment_method ?? '' ) ) || 'pending_payment' !== $status ) ) {
+			return;
+		}
+
+		$nonce = wp_create_nonce( 'wpss_admin_mark_paid' );
+		?>
+		<div class="wpss-offline-admin-actions" style="background: #fff3cd; border: 1px solid #ffc107; padding: 16px; border-radius: 4px; margin: 16px 0;">
+			<h4 style="margin-top: 0; color: #856404;">
+				<?php esc_html_e( 'Offline Payment - Awaiting Confirmation', 'wp-sell-services' ); ?>
+			</h4>
+			<p style="color: #856404; margin-bottom: 12px;">
+				<?php esc_html_e( 'This order is awaiting offline payment. Mark it as paid once you receive the payment.', 'wp-sell-services' ); ?>
+			</p>
+
+			<?php
+			// Buyer-submitted proof, and the decision on it (Basecamp #10194890682).
+			//
+			// Rendered INSIDE the existing Payment Actions box rather than as a
+			// new screen: an admin deciding whether money arrived wants the
+			// evidence and the Mark-as-Paid control in one place, not two.
+			//
+			// Approving routes through PaymentReceiptService::verify(), which
+			// settles via the same mark_as_paid() path this box already uses -
+			// one money-writing path, not two.
+			$this->render_receipt_review( (int) $order->id );
+			?>
+			<div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+				<div>
+					<label for="wpss-transaction-id" style="display: block; margin-bottom: 4px; font-weight: 500;">
+						<?php esc_html_e( 'Transaction ID (optional)', 'wp-sell-services' ); ?>
+					</label>
+					<input type="text"
+						id="wpss-transaction-id"
+						name="transaction_id"
+						placeholder="<?php esc_attr_e( 'Bank ref, receipt #, etc.', 'wp-sell-services' ); ?>"
+						style="width: 200px;">
+				</div>
+				<button type="button"
+					class="button button-primary wpss-mark-paid-btn"
+					data-order-id="<?php echo esc_attr( $order->id ); ?>"
+					data-nonce="<?php echo esc_attr( $nonce ); ?>">
+					<?php esc_html_e( 'Mark as paid', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+		</div>
+
+		<script>
+		function wpssAdminNotice(msg, type) {
+			type = type || 'error';
+			var cls = type === 'success' ? 'notice-success' : 'notice-error';
+			var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
+			jQuery('.wrap h1, .wrap h2').first().after($notice);
+			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
+			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
+		}
+		jQuery(function($) {
+			$('.wpss-mark-paid-btn').on('click', function() {
+				var $btn = $(this);
+				var orderId = $btn.data('order-id');
+				var nonce = $btn.data('nonce');
+				var transactionId = $('#wpss-transaction-id').val();
+
+				// A money action: the plugin's own dialog, which opens on Cancel.
+				( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
+					if (!ok) return;
+
+				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>');
+
+				$.post(ajaxurl, {
+					action: 'wpss_admin_mark_order_paid',
+					order_id: orderId,
+					transaction_id: transactionId,
+					nonce: nonce
+				}, function(response) {
+					if (response.success) {
+						// Success - page will reload to show updated state.
+						location.reload();
+					} else {
+						wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
+						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as paid', 'wp-sell-services' ) ); ?>');
+					}
+				}).fail(function() {
+					wpssAdminNotice('<?php echo esc_js( __( 'Request failed. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
+					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as paid', 'wp-sell-services' ) ); ?>');
+				});
+				});
+			});
+		});
+		</script>
+		<?php
+	}
+
+	/**
+	 * Render buyer-submitted payment proof and the approve / reject controls.
+	 *
+	 * Nothing renders when the feature is off or no proof has been submitted -
+	 * an admin on a card-only marketplace should never see this.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return void
+	 */
+	private function render_receipt_review( int $order_id ): void {
+		if ( ! \WPSellServices\Services\PaymentReceiptService::is_enabled() ) {
+			return;
+		}
+
+		$service  = new \WPSellServices\Services\PaymentReceiptService();
+		$receipts = $service->get_for_order( $order_id );
+
+		if ( ! $receipts ) {
+			printf(
+				'<p style="color:#856404;margin:0 0 12px;"><em>%s</em></p>',
+				esc_html__( 'The buyer has not uploaded proof of payment yet.', 'wp-sell-services' )
+			);
+			return;
+		}
+
+		$nonce = wp_create_nonce( 'wpss_receipt_review' );
+
+		echo '<div class="wpss-receipt-review" style="background:#fff;border:1px solid #ddd;border-radius:4px;padding:12px;margin:0 0 12px;">';
+		printf( '<h4 style="margin:0 0 8px;">%s</h4>', esc_html__( 'Payment proof', 'wp-sell-services' ) );
+
+		foreach ( $receipts as $receipt ) {
+			$file   = wpss_get_receipt_file( $receipt );
+			$url    = $file['url'];
+			$is_img = $file['is_image'];
+			$who    = get_userdata( (int) $receipt->uploaded_by );
+
+			echo '<div class="wpss-receipt-review__item" style="border-top:1px solid #eee;padding:10px 0;">';
+
+			printf(
+				'<p style="margin:0 0 6px;"><strong>%s</strong> &middot; %s</p>',
+				esc_html( ucfirst( (string) $receipt->status ) ),
+				esc_html(
+					sprintf(
+						/* translators: 1: uploader name, 2: date */
+						__( 'uploaded by %1$s on %2$s', 'wp-sell-services' ),
+						wpss_get_member_display_name( (int) ( $who->ID ?? 0 ), __( 'a buyer', 'wp-sell-services' ) ),
+						wpss_date_label( (string) $receipt->created_at )
+					)
+				)
+			);
+
+			if ( $receipt->note ) {
+				printf( '<p style="margin:0 0 6px;">%s</p>', esc_html( (string) $receipt->note ) );
+			}
+
+			if ( $url && $is_img ) {
+				printf(
+					'<a href="%1$s" target="_blank" rel="noopener"><img src="%1$s" alt="%2$s" style="max-width:220px;height:auto;border:1px solid #ddd;border-radius:3px;"></a>',
+					esc_url( $url ),
+					esc_attr__( 'Payment proof', 'wp-sell-services' )
+				);
+			} elseif ( $url ) {
+				printf(
+					'<a href="%s" target="_blank" rel="noopener">%s</a>',
+					esc_url( $url ),
+					esc_html__( 'Open the uploaded file', 'wp-sell-services' )
+				);
+			}
+
+			if ( 'submitted' === (string) $receipt->status ) {
+				?>
+				<div style="margin-top:10px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+					<div>
+						<label for="wpss-receipt-note-<?php echo esc_attr( (string) $receipt->id ); ?>" style="display:block;margin-bottom:4px;font-weight:500;">
+							<?php esc_html_e( 'Note to buyer (required to reject)', 'wp-sell-services' ); ?>
+						</label>
+						<input type="text" id="wpss-receipt-note-<?php echo esc_attr( (string) $receipt->id ); ?>" class="wpss-receipt-note" style="width:260px;">
+					</div>
+					<button type="button" class="button button-primary wpss-receipt-action" data-action="verify"
+						data-receipt="<?php echo esc_attr( (string) $receipt->id ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>">
+						<?php esc_html_e( 'Approve + mark paid', 'wp-sell-services' ); ?>
+					</button>
+					<button type="button" class="button wpss-receipt-action" data-action="reject"
+						data-receipt="<?php echo esc_attr( (string) $receipt->id ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>">
+						<?php esc_html_e( 'Reject', 'wp-sell-services' ); ?>
+					</button>
+				</div>
+				<?php
+			} elseif ( $receipt->admin_note ) {
+				printf(
+					'<p style="margin:6px 0 0;color:#666;"><em>%s</em></p>',
+					esc_html( (string) $receipt->admin_note )
+				);
+			}
+
+			echo '</div>';
+		}
+
+		echo '</div>';
+		?>
+		<script>
+		jQuery(function($){
+			$('.wpss-receipt-action').off('click.wpssReceipt').on('click.wpssReceipt', function(){
+				var $b = $(this),
+					action = $b.data('action'),
+					note = $b.closest('div').find('.wpss-receipt-note').val() || '';
+
+				if (action === 'reject' && !note.trim()) {
+					wpssAdminNotice('<?php echo esc_js( __( 'Give the buyer a reason so they know what to send instead.', 'wp-sell-services' ) ); ?>', 'error');
+					return;
+				}
+
+				$b.prop('disabled', true);
+				$.post(ajaxurl, {
+					action: 'wpss_review_payment_receipt',
+					receipt_id: $b.data('receipt'),
+					decision: action,
+					note: note,
+					nonce: $b.data('nonce')
+				}).done(function(res){
+					if (res && res.success) { location.reload(); }
+					else {
+						wpssAdminNotice((res && res.data && res.data.message) || '<?php echo esc_js( __( 'Could not record that decision.', 'wp-sell-services' ) ); ?>', 'error');
+						$b.prop('disabled', false);
+					}
+				}).fail(function(){
+					wpssAdminNotice('<?php echo esc_js( __( 'Could not record that decision.', 'wp-sell-services' ) ); ?>', 'error');
+					$b.prop('disabled', false);
+				});
+			});
+		});
+		</script>
+		<?php
+	}
+
+	/**
+	 * AJAX: record an admin decision on a payment receipt.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return void
+	 */
+	public function ajax_review_payment_receipt(): void {
+		check_ajax_referer( 'wpss_receipt_review', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to do that.', 'wp-sell-services' ) ), 403 );
+		}
+
+		$receipt_id = isset( $_POST['receipt_id'] ) ? absint( $_POST['receipt_id'] ) : 0;
+		$decision   = isset( $_POST['decision'] ) ? sanitize_key( wp_unslash( $_POST['decision'] ) ) : '';
+		$note       = isset( $_POST['note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['note'] ) ) : '';
+
+		if ( ! in_array( $decision, array( 'verify', 'reject' ), true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unknown decision.', 'wp-sell-services' ) ), 400 );
+		}
+
+		$service = new \WPSellServices\Services\PaymentReceiptService();
+		$result  = 'verify' === $decision
+			? $service->verify( $receipt_id, get_current_user_id(), $note )
+			: $service->reject( $receipt_id, get_current_user_id(), $note );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error(
+				array(
+					'message' => $result->get_error_message(),
+					'code'    => $result->get_error_code(),
+				),
+				(int) ( $result->get_error_data()['status'] ?? 400 )
+			);
+		}
+
+		wp_send_json_success();
 	}
 }

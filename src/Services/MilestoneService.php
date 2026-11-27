@@ -869,6 +869,8 @@ class MilestoneService {
 	 */
 	public function cleanup_abandoned_milestones(): int {
 		global $wpdb;
+		// Manual payments wait for the owner, so they are never abandoned. phpcs:ignore below: built from esc_sql()'d ids.
+		$manual = wpss_manual_payment_sql();
 
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 		$threshold    = gmdate( 'Y-m-d H:i:s', time() - ( self::ABANDON_AFTER_HOURS * HOUR_IN_SECONDS ) );
@@ -899,7 +901,7 @@ class MilestoneService {
 				WHERE platform = %s
 				AND status = %s
 				AND created_at < %s
-				AND ( payment_method IS NULL OR payment_method <> 'offline' )
+				AND NOT {$manual}
 				AND ( meta IS NULL OR meta NOT LIKE %s )",
 				self::ORDER_TYPE,
 				'pending_payment',
@@ -920,7 +922,7 @@ class MilestoneService {
 				WHERE platform = %s
 				AND status = %s
 				AND created_at < %s
-				AND ( payment_method IS NULL OR payment_method <> 'offline' )
+				AND NOT {$manual}
 				AND ( meta IS NULL OR meta NOT LIKE %s )",
 				current_time( 'mysql', true ),
 				self::ORDER_TYPE,

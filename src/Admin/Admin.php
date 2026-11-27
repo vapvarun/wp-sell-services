@@ -1170,17 +1170,13 @@ class Admin {
 
 		// Gateways: only where our own checkout takes the money.
 		if ( wpss_uses_standalone_payments() ) {
-			$enabled = array();
-
-			foreach ( wpss()->get_payment_gateways() as $id => $gateway ) {
-				if ( $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
-					$enabled[] = (string) $id;
-				}
-			}
+			// What buyers are offered: enabled and able to take the store currency.
+			$enabled = array_map( 'strval', array_keys( wpss_get_checkout_gateways() ) );
 
 			if ( ! $enabled ) {
 				$problems['gateway'] = array(
-					'text'  => __( 'No payment method is enabled. Buyers cannot check out.', 'wp-sell-services' ),
+					/* translators: %s: currency code */
+					'text'  => sprintf( __( 'No enabled payment method takes %s. Buyers cannot check out.', 'wp-sell-services' ), wpss_get_currency() ),
 					'url'   => wpss_get_settings_url( 'payments' ),
 					'label' => __( 'Set up payments', 'wp-sell-services' ),
 				);
@@ -2090,9 +2086,9 @@ class Admin {
 			),
 		);
 
-		// Offline orders wait for the owner's Mark as paid; the card goes once nothing offline can arrive.
-		$offline = wpss()->get_payment_gateways()['offline'] ?? null;
-		if ( ! $payments_to_confirm && ! ( $offline && $offline->is_enabled() ) ) {
+		// Manual payments wait for the owner's Mark as paid; the card goes once none can arrive.
+		$manual_on = array_filter( wpss_manual_gateway_ids(), static fn( $id ) => wpss()->get_payment_gateways()[ $id ]->is_enabled() );
+		if ( ! $payments_to_confirm && ! $manual_on ) {
 			array_shift( $queues );
 		}
 		?>
@@ -2919,7 +2915,7 @@ class Admin {
 								echo '</tfoot></table>';
 							}
 							?>
-							<?php if ( 'offline' === ( $order->payment_method ?? '' ) && in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_MILESTONE, ServiceOrder::SUB_ORDER_TYPE_EXTENSION ), true ) && 'paid' !== ( $order->payment_status ?? '' ) && empty( $order->paid_at ) ) : ?>
+							<?php if ( wpss_is_manual_payment_method( (string) ( $order->payment_method ?? '' ) ) && in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_MILESTONE, ServiceOrder::SUB_ORDER_TYPE_EXTENSION ), true ) && 'paid' !== ( $order->payment_status ?? '' ) && empty( $order->paid_at ) ) : ?>
 								<p class="description"><?php esc_html_e( 'Payment not received. Nothing is credited to the vendor until it is confirmed with Mark as Paid, whatever status this order is given.', 'wp-sell-services' ); ?></p>
 							<?php endif; ?>
 							<table class="wpss-admin-order__figures">

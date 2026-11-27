@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**588 hooks** across **812** firing sites.
+**589 hooks** across **812** firing sites.
 
 ## Actions (302)
 
@@ -152,8 +152,8 @@ guide; this is the complete index.
 | `wpss_no_services_content` | 0 | `templates/content-no-services.php` | Hook: wpss_no_services_content |
 | `wpss_notification_created` | 4 | `src/Services/NotificationService.php` | Fires when notification is created. |
 | `wpss_offline_multi_orders_created` | 2 | `src/Integrations/Gateways/OfflineGateway.php` | Fires after multi-service offline orders are created. |
-| `wpss_offline_order_created` | 2 | `src/Integrations/Gateways/OfflineGateway.php` *(+1 more)* | Fires when an existing order is put on the offline rail. |
-| `wpss_offline_order_paid` | 2 | `src/Integrations/Gateways/OfflineGateway.php` | Fires when an offline order is marked as paid. |
+| `wpss_offline_order_created` | 2 | `src/Integrations/Gateways/OfflineGateway.php` | Fires when an order is put on the offline rail, new or existing. |
+| `wpss_offline_order_paid` | 3 | `src/Services/ManualPaymentService.php` | Fires when an order paid outside the site is marked paid. |
 | `wpss_order_auto_refunded` | 3 | `src/Services/OrderWorkflowManager.php` | Fires when an auto-refund is processed successfully. |
 | `wpss_order_cancelled` | 2 | `src/Services/OrderWorkflowManager.php` | Fires when order is cancelled. |
 | `wpss_order_completed` | 2 | `src/Services/OrderWorkflowManager.php` | Fires when order is completed. |
@@ -319,7 +319,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (286)
+## Filters (287)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -371,6 +371,7 @@ guide; this is the complete index.
 | `wpss_check_order_limits` | 3 | `src/functions/money.php` | Filter the order-limit decision. |
 | `wpss_checkout_badges` | 2 | `src/functions/payments.php` | Filter the checkout reassurance badges. |
 | `wpss_checkout_creates_accounts` | 1 | `src/functions/billing.php` | Filter whether checkout creates an account for a logged-out buyer. |
+| `wpss_checkout_gateways` | 2 | `src/functions/payments.php` | Filter the payment methods a new checkout offers. |
 | `wpss_checkout_slug` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php` | Filter the checkout URL slug. |
 | `wpss_checkout_tax_rate` | 3 | `src/functions/money.php` |  |
 | `wpss_cloud_upload_max_bytes` | 1 | `src/functions/order-files.php` | Filter the largest file uploaded to a storage bucket. |

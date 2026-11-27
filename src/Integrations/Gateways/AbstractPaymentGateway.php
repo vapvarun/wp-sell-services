@@ -29,6 +29,64 @@ defined( 'ABSPATH' ) || exit;
 abstract class AbstractPaymentGateway implements PaymentGatewayInterface {
 
 	/**
+	 * Features this gateway has, read through supports().
+	 *
+	 * - manual_confirmation: the money arrives outside the site and the owner confirms it (Mark as paid,
+	 *   buyer proof of payment). Unpaid sub-orders on it are never swept as abandoned.
+	 * - redirect_return: the buyer may come back from the provider's page, handled by
+	 *   reconcile_redirect_return() when the return URL carries wpss_return=<id>.
+	 * - verified_confirmation: confirm and return legs ask the provider whether the money was taken,
+	 *   so they may finish a payment after the gateway is switched off.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var string[]
+	 */
+	protected array $supports = array();
+
+	/**
+	 * Whether this gateway has a feature. Callers ask the feature, never the gateway's name.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $feature Feature name, see $supports.
+	 * @return bool
+	 */
+	public function supports( string $feature ): bool {
+		return in_array( $feature, $this->supports, true );
+	}
+
+	/**
+	 * Words on the checkout button. "Pay $X" for a gateway that takes the money now.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param float  $total    Payable total.
+	 * @param string $currency Currency code.
+	 * @return string
+	 */
+	public function get_checkout_button_label( float $total, string $currency ): string {
+		/* translators: %s: formatted total */
+		return sprintf( __( 'Pay %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $total, $currency ) ) );
+	}
+
+	/**
+	 * Settle a buyer's return from the provider's page. Gateways that support redirect_return override it.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array<string, string> $query The return URL's query arguments.
+	 * @return array{status: string, order_id: int, message: string}
+	 */
+	public function reconcile_redirect_return( array $query ): array {
+		return array(
+			'status'   => 'processing',
+			'order_id' => 0,
+			'message'  => __( 'We are confirming your payment. Please check your orders in a moment, and do not pay again.', 'wp-sell-services' ),
+		);
+	}
+
+	/**
 	 * {@inheritdoc}
 	 *
 	 * Falls back to the `wpss_rest_create_payment_intent` filter, which is how a gateway added
@@ -137,6 +195,121 @@ abstract class AbstractPaymentGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Open the order a manual payment will settle: the buyer's existing order (pay_order), put on this
+	 * rail, or a new pending-payment order for one service.
+	 *
+	 * The one pending-order writer for the checkout form and the app (Basecamp 10551488242). Out-of-band
+	 * rails settle later, so the order remembers which one it waits on: the admin confirmation box and
+	 * the buyer's proof upload key off payment_method (Basecamp 10208094640).
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array<string, mixed> $request Checkout request: pay_order, or service_id, package_id, quantity, add-ons.
+	 * @return object|WP_Error The order.
+	 */
+	public function open_pending_order( array $request ) {
+		$pay_order = absint( $request['pay_order'] ?? 0 );
+
+		if ( ! $pay_order ) {
+			return $this->create_service_order(
+				absint( $request['service_id'] ?? 0 ),
+				absint( $request['package_id'] ?? 0 ),
+				max( 1, absint( $request['quantity'] ?? 1 ) ),
+				\WPSellServices\Checkout\CheckoutIntentService::request_selection( $request ),
+				$this->get_id()
+			);
+		}
+
+		$order = wpss_get_order( $pay_order );
+
+		if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
+			return new WP_Error( 'wpss_invalid_order', __( 'Invalid order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+		}
+
+		$refusal = wpss_get_order_payment_refusal( $order );
+		if ( '' !== $refusal ) {
+			return new WP_Error( 'wpss_order_not_payable', $refusal, array( 'status' => 409 ) );
+		}
+
+		if ( ! wpss_record_pending_payment_method( $pay_order, $this->get_id() ) ) {
+			return new WP_Error( 'wpss_payment_method_not_recorded', __( 'Could not record the payment method on this order.', 'wp-sell-services' ), array( 'status' => 500 ) );
+		}
+
+		return wpss_get_order( $pay_order );
+	}
+
+	/**
+	 * Create a pending-payment order for one service, priced by the one pricer.
+	 *
+	 * Shared by the checkout form (AJAX) and the app (POST
+	 * /payments/create-intent), so both refuse a self-purchase, price the
+	 * package, quantity and add-ons the same way, and apply the owner's order
+	 * limits. The REST copy created the order with its own flat package price
+	 * (Basecamp 10336467402).
+	 *
+	 * @since 1.8.0
+	 * @since 2.0.0 Moved from OfflineGateway to the base, the one pending-order writer.
+	 *
+	 * @param int                              $service_id Service ID.
+	 * @param int                              $package_id Stable package id or legacy index.
+	 * @param int                              $quantity   Quantity.
+	 * @param array<int, array<string, mixed>> $selection  Add-on selection.
+	 * @param string                           $gateway_id Rail that will collect the money.
+	 * @return object|\WP_Error The order.
+	 */
+	public function create_service_order( int $service_id, int $package_id, int $quantity, array $selection, string $gateway_id ) {
+		$service_post = get_post( $service_id );
+
+		if ( ! $service_post || ! wpss_get_service( $service_id ) ) {
+			return new \WP_Error( 'wpss_invalid_service', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		if ( (int) $service_post->post_author === get_current_user_id() ) {
+			return new \WP_Error( 'wpss_own_service', __( 'You cannot purchase your own service.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		// A new purchase on every offline door (checkout form, REST create-intent,
+		// Pro /payments/offline/submit): the standing rule resolve() applies.
+		$standing = wpss_account_status_block( get_current_user_id() );
+		if ( $standing ) {
+			return $standing;
+		}
+
+		// Priced by the one line pricer, from ids alone - package (stable id or
+		// index), quantity and the add-ons as the vendor set them.
+		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, $package_id, max( 1, $quantity ), $selection );
+
+		if ( is_wp_error( $line ) ) {
+			return $line;
+		}
+
+		// The owner's min/max order amount, the same rule Stripe and PayPal
+		// get from CheckoutIntentService::resolve() (Basecamp 10304350394).
+		$limit_error = wpss_check_order_limits( (float) $line['subtotal'] + (float) $line['addons_total'], $gateway_id );
+
+		if ( null !== $limit_error ) {
+			return $limit_error;
+		}
+
+		// subtotal = package price only; addons_total is separate - StandaloneOrderProvider sums them.
+		$order = wpss_get_order_provider()->create_order(
+			array(
+				'service_id'     => $service_id,
+				'package_id'     => (int) $line['package_id'],
+				'quantity'       => (int) $line['quantity'],
+				'customer_id'    => get_current_user_id(),
+				'subtotal'       => (float) $line['subtotal'],
+				'addons'         => $line['addons'],
+				'addons_total'   => (float) $line['addons_total'],
+				'currency'       => wpss_get_currency(),
+				'payment_method' => $gateway_id,
+			)
+		);
+
+		return $order ? $order : new \WP_Error( 'wpss_order_failed', __( 'Failed to create order.', 'wp-sell-services' ), array( 'status' => 500 ) );
+	}
+
+	/**
 	 * Create order directly for offline/test gateways.
 	 *
 	 * @param array<string, mixed> $checkout_request Resolve() request.
@@ -144,26 +317,13 @@ abstract class AbstractPaymentGateway implements PaymentGatewayInterface {
 	 */
 	protected function create_offline_rest_order( array $checkout_request ) {
 		$pay_order = (int) $checkout_request['pay_order'];
+		$order     = $this->open_pending_order( $checkout_request );
 
-		// For existing orders (pay_order), record the rail and return. Ownership
-		// and pending_payment status are already verified by create_intent().
-		//
-		// Out-of-band rails settle later, so the order has to remember which one
-		// it is waiting on: the admin confirmation box and the buyer's proof
-		// upload both key off payment_method being the gateway id, and this
-		// branch used to leave it NULL - the same dead end the AJAX checkout had
-		// (Basecamp 10208094640). One writer serves both entry points.
+		if ( is_wp_error( $order ) ) {
+			return $order;
+		}
+
 		if ( $pay_order ) {
-			$order = wpss_get_order( $pay_order );
-
-			if ( ! wpss_record_pending_payment_method( $pay_order, $this->get_id() ) ) {
-				return new WP_Error(
-					'wpss_payment_method_not_recorded',
-					__( 'Could not record the payment method on this order.', 'wp-sell-services' ),
-					array( 'status' => 500 )
-				);
-			}
-
 			return new WP_REST_Response(
 				array(
 					'gateway'      => $this->get_id(),
@@ -174,20 +334,6 @@ abstract class AbstractPaymentGateway implements PaymentGatewayInterface {
 				),
 				201
 			);
-		}
-
-		// A new order, priced and created by the checkout form's own path.
-		$offline = wpss()->get_payment_gateways()['offline'] ?? new \WPSellServices\Integrations\Gateways\OfflineGateway();
-		$order   = $offline->create_service_order(
-			(int) $checkout_request['service_id'],
-			(int) $checkout_request['package_id'],
-			(int) $checkout_request['quantity'],
-			\WPSellServices\Checkout\CheckoutIntentService::request_selection( $checkout_request ),
-			$this->get_id()
-		);
-
-		if ( is_wp_error( $order ) ) {
-			return $order;
 		}
 
 		/**

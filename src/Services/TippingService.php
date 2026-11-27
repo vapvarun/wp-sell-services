@@ -118,6 +118,8 @@ class TippingService {
 	 */
 	public function cleanup_abandoned_tips(): int {
 		global $wpdb;
+		// Manual payments wait for the owner, so they are never abandoned. phpcs:ignore below: built from esc_sql()'d ids.
+		$manual = wpss_manual_payment_sql();
 
 		$orders = $wpdb->prefix . 'wpss_orders';
 
@@ -127,7 +129,7 @@ class TippingService {
 				"SELECT id FROM {$orders}
 				WHERE platform = %s
 				AND status = 'pending_payment'
-				AND ( payment_method IS NULL OR payment_method <> 'offline' )
+				AND NOT {$manual}
 				AND created_at < %s",
 				self::ORDER_TYPE,
 				gmdate( 'Y-m-d H:i:s', time() - ( self::ABANDON_AFTER_HOURS * HOUR_IN_SECONDS ) )

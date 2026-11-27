@@ -219,9 +219,9 @@ class OrdersController extends RestController {
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'payment_method' => array(
-							'description'       => __( 'Slug stored on the order, for example flutterwave. Defaults to offline. A gateway the plugin runs itself is refused.', 'wp-sell-services' ),
+							'description'       => __( 'Slug stored on the order, for example flutterwave. Empty keeps the order\'s own manual method, else offline. A gateway that takes payment itself is refused.', 'wp-sell-services' ),
 							'type'              => 'string',
-							'default'           => 'offline',
+							'default'           => '',
 							'sanitize_callback' => 'sanitize_key',
 						),
 					),
@@ -1964,7 +1964,7 @@ class OrdersController extends RestController {
 			);
 		}
 
-		$result = ( new \WPSellServices\Integrations\Gateways\OfflineGateway() )->settle_manually(
+		$result = ( new \WPSellServices\Services\ManualPaymentService() )->settle(
 			$order_id,
 			(string) $request->get_param( 'transaction_id' ),
 			(string) $request->get_param( 'payment_method' )

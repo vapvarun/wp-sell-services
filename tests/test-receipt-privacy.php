@@ -222,9 +222,9 @@ $file = $row ? wpss_get_receipt_file( $row ) : array( 'url' => '' );
 $check( 'the receipt link goes through the gated endpoint', false !== strpos( $file['url'], 'action=wpss_order_file' ) );
 $check( 'the receipt link leaks no uploads path', '' !== $file['url'] && false === strpos( $file['url'], '/uploads/' ) );
 
-$admin_box = new ReflectionMethod( \WPSellServices\Integrations\Gateways\OfflineGateway::class, 'render_admin_receipt_review' );
+$admin_box = new ReflectionMethod( \WPSellServices\Admin\OrderScreen::class, 'render_receipt_review' );
 ob_start();
-$admin_box->invoke( new \WPSellServices\Integrations\Gateways\OfflineGateway(), $order_id );
+$admin_box->invoke( new \WPSellServices\Admin\OrderScreen(), $order_id );
 $admin_html = (string) ob_get_clean();
 
 $check( 'the admin review box links through the gated endpoint', false !== strpos( $admin_html, 'action=wpss_order_file' ) );

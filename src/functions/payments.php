@@ -343,7 +343,7 @@ function wpss_demo_payments_enabled(): bool {
  */
 function wpss_store_is_live(): bool {
 	foreach ( wpss()->get_payment_gateways() as $id => $gateway ) {
-		if ( ! in_array( $id, array( 'test', 'offline' ), true ) && $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
+		if ( 'test' !== $id && ! wpss_gateway_supports( $gateway, 'manual_confirmation' ) && $gateway->is_enabled() ) {
 			return true;
 		}
 	}
@@ -611,16 +611,14 @@ function wpss_verify_gateway_nonce( array $actions ): bool {
  * @param object $gateway Gateway exposing is_enabled() and get_name().
  * @return void Sends a JSON error and exits when the gateway is off.
  */
-function wpss_gateway_require_enabled( object $gateway ): void {
+function wpss_gateway_require_enabled( \WPSellServices\Integrations\Contracts\PaymentGatewayInterface $gateway ): void {
 	// A shop plugin taking payment owns new payments too, so our gateways start none there.
-	if ( wpss_uses_standalone_payments() && method_exists( $gateway, 'is_enabled' ) && $gateway->is_enabled() ) {
+	if ( wpss_uses_standalone_payments() && $gateway->is_enabled() ) {
 		return;
 	}
 
-	$name = method_exists( $gateway, 'get_name' ) ? $gateway->get_name() : '';
-
 	wpss_log(
-		sprintf( 'Refused to start a payment on "%s": it is disabled or a shop plugin takes payment.', $name ),
+		sprintf( 'Refused to start a payment on "%s": it is disabled or a shop plugin takes payment.', $gateway->get_name() ),
 		'warning'
 	);
 
@@ -684,13 +682,11 @@ function wpss_stripe_api_version(): string {
  * @param string $currency Currency code.
  * @return string
  */
-function wpss_checkout_button_label( object $gateway, float $total, string $currency ): string {
-	/* translators: %s: formatted total */
-	$label = sprintf( __( 'Pay %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $total, $currency ) ) );
-
-	if ( method_exists( $gateway, 'get_checkout_button_label' ) ) {
-		$label = (string) $gateway->get_checkout_button_label( $total, $currency );
-	}
+function wpss_checkout_button_label( \WPSellServices\Integrations\Contracts\PaymentGatewayInterface $gateway, float $total, string $currency ): string {
+	$label = $gateway instanceof \WPSellServices\Integrations\Gateways\AbstractPaymentGateway
+		? $gateway->get_checkout_button_label( $total, $currency )
+		/* translators: %s: formatted total */
+		: sprintf( __( 'Pay %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $total, $currency ) ) );
 
 	/**
 	 * Filter the checkout button label for a gateway.
@@ -702,7 +698,7 @@ function wpss_checkout_button_label( object $gateway, float $total, string $curr
 	 * @param float  $total    Payable total.
 	 * @param string $currency Currency code.
 	 */
-	return (string) apply_filters( 'wpss_gateway_checkout_button_label', $label, method_exists( $gateway, 'get_id' ) ? (string) $gateway->get_id() : '', $total, $currency );
+	return (string) apply_filters( 'wpss_gateway_checkout_button_label', $label, $gateway->get_id(), $total, $currency );
 }
 
 /**
@@ -719,12 +715,114 @@ function wpss_checkout_button_label( object $gateway, float $total, string $curr
 function wpss_count_payments_to_confirm(): int {
 	global $wpdb;
 
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$manual = wpss_manual_payment_sql();
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $manual is built from esc_sql()'d gateway ids.
 	return (int) $wpdb->get_var(
 		$wpdb->prepare(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_orders WHERE status = %s AND payment_method = %s",
-			\WPSellServices\Models\ServiceOrder::STATUS_PENDING_PAYMENT,
-			'offline'
+			"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_orders WHERE status = %s AND {$manual}",
+			\WPSellServices\Models\ServiceOrder::STATUS_PENDING_PAYMENT
 		)
 	);
+}
+
+/**
+ * Whether a gateway has a feature (AbstractPaymentGateway::supports()). A gateway written against
+ * the bare interface has none.
+ *
+ * @since 2.0.0
+ *
+ * @param \WPSellServices\Integrations\Contracts\PaymentGatewayInterface $gateway Gateway.
+ * @param string                                                         $feature Feature name.
+ * @return bool
+ */
+function wpss_gateway_supports( \WPSellServices\Integrations\Contracts\PaymentGatewayInterface $gateway, string $feature ): bool {
+	return $gateway instanceof \WPSellServices\Integrations\Gateways\AbstractPaymentGateway && $gateway->supports( $feature );
+}
+
+/**
+ * Ids of the registered gateways whose money arrives outside the site (supports manual_confirmation).
+ *
+ * @since 2.0.0
+ *
+ * @return string[]
+ */
+function wpss_manual_gateway_ids(): array {
+	return array_keys( array_filter( wpss()->get_payment_gateways(), static fn( $g ) => wpss_gateway_supports( $g, 'manual_confirmation' ) ) );
+}
+
+/**
+ * Whether an order's payment method is confirmed by hand: a manual gateway, or a slug no gateway
+ * registers (manual-order slugs such as bank_transfer or cash, or a provider an integration named).
+ *
+ * @since 2.0.0
+ *
+ * @param string $method Order payment_method.
+ * @return bool
+ */
+function wpss_is_manual_payment_method( string $method ): bool {
+	if ( '' === $method ) {
+		return false;
+	}
+
+	$gateways = wpss()->get_payment_gateways();
+
+	return ! isset( $gateways[ $method ] ) || wpss_gateway_supports( $gateways[ $method ], 'manual_confirmation' );
+}
+
+/**
+ * SQL condition: the order's payment method is manual (wpss_is_manual_payment_method()). Negate it
+ * with NOT ( ... ) for "no method yet, or one that confirms itself".
+ *
+ * @since 2.0.0
+ *
+ * @param string $column Column holding the method.
+ * @return string
+ */
+function wpss_manual_payment_sql( string $column = 'payment_method' ): string {
+	$automatic = array_diff( array_keys( wpss()->get_payment_gateways() ), wpss_manual_gateway_ids() );
+	$list      = $automatic ? " AND {$column} NOT IN ('" . implode( "','", array_map( 'esc_sql', $automatic ) ) . "')" : '';
+
+	return "( {$column} IS NOT NULL AND {$column} <> ''{$list} )";
+}
+
+/**
+ * The payment methods a new checkout offers, in the owner's order: enabled, able to take the
+ * currency, sorted by wpss_general['payment_methods']. The first is the default.
+ *
+ * The one list for the checkout form, the cart checkout, GET /payments/methods and setup health,
+ * so the web and the app always agree. A method that is off still serves its existing orders
+ * (refunds, webhooks, receipts); it is only left out here.
+ *
+ * @since 2.0.0
+ *
+ * @param string $currency Currency the checkout charges; the store currency when empty.
+ * @return array<string, \WPSellServices\Integrations\Contracts\PaymentGatewayInterface>
+ */
+function wpss_get_checkout_gateways( string $currency = '' ): array {
+	$currency = '' !== $currency ? $currency : wpss_get_currency();
+	$gateways = array_filter(
+		wpss()->get_payment_gateways(),
+		static fn( $g ) => $g->is_enabled() && $g->supports_currency( $currency )
+	);
+
+	$order = array_values( (array) ( get_option( 'wpss_general', array() )['payment_methods'] ?? array() ) );
+	$rank  = array_flip( array_map( 'strval', $order ) );
+	$keys  = array_keys( $gateways );
+
+	// Owner's order first; any method they have not placed keeps its registration order after them.
+	usort(
+		$keys,
+		static fn( $a, $b ) => ( $rank[ $a ] ?? PHP_INT_MAX ) <=> ( $rank[ $b ] ?? PHP_INT_MAX ) ?: array_search( $a, array_keys( $gateways ), true ) <=> array_search( $b, array_keys( $gateways ), true )
+	);
+
+	/**
+	 * Filter the payment methods a new checkout offers.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array  $gateways Gateways keyed by id, in display order.
+	 * @param string $currency Currency of the checkout.
+	 */
+	return (array) apply_filters( 'wpss_checkout_gateways', array_combine( $keys, array_map( static fn( $k ) => $gateways[ $k ], $keys ) ) ?: array(), $currency );
 }

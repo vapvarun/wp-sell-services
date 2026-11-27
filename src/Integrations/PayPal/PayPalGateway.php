@@ -26,6 +26,13 @@ use WP_REST_Response;
 class PayPalGateway extends AbstractPaymentGateway {
 
 	/**
+	 * Features, read through supports().
+	 *
+	 * @var string[]
+	 */
+	protected array $supports = array( 'verified_confirmation' );
+
+	/**
 	 * Gateway ID.
 	 */
 	private const GATEWAY_ID = 'paypal';

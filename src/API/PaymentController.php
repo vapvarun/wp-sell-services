@@ -184,15 +184,11 @@ class PaymentController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_methods( WP_REST_Request $request ): WP_REST_Response {
-		$gateways = wpss()->get_payment_gateways();
 		$currency = wpss_get_currency();
 		$methods  = array();
 
-		foreach ( $gateways as $gateway ) {
-			if ( ! $gateway->is_enabled() ) {
-				continue;
-			}
-
+		// The same list the checkout form offers, in the same order.
+		foreach ( wpss_get_checkout_gateways( $currency ) as $gateway ) {
 			$methods[] = array(
 				'id'                => $gateway->get_id(),
 				'name'              => $gateway->get_name(),
@@ -282,7 +278,7 @@ class PaymentController extends RestController {
 		$package_id = (int) $request->get_param( 'package_id' );
 		$pay_order  = (int) $request->get_param( 'pay_order' );
 
-		// The buyer already paid: a gateway switched off since then still finishes it.
+		// The buyer already paid: a gateway switched off since then still finishes it, if it asks the provider.
 		$gateway = $this->get_gateway( $gateway_id, false );
 
 		if ( ! $gateway ) {
@@ -334,18 +330,18 @@ class PaymentController extends RestController {
 	 * checks it, or a gateway switched off mid-payment leaves a charge with no order.
 	 *
 	 * @param string $gateway_id      Gateway ID.
-	 * @param bool   $require_enabled False for legs that finish a payment already taken.
+	 * @param bool   $require_enabled False for legs that finish a payment already taken: an off gateway is
+	 *                                then served only if it supports verified_confirmation (asks the provider),
+	 *                                never one that settles on the caller's word, such as Test.
 	 * @return object|null Gateway instance or null if not found/enabled.
 	 */
 	private function get_gateway( string $gateway_id, bool $require_enabled = true ): ?object {
-		$gateways = wpss()->get_payment_gateways();
+		$gateway = wpss()->get_payment_gateways()[ $gateway_id ] ?? null;
 
-		foreach ( $gateways as $gateway ) {
-			if ( $gateway->get_id() === $gateway_id && ( ! $require_enabled || $gateway->is_enabled() ) ) {
-				return $gateway;
-			}
+		if ( ! $gateway ) {
+			return null;
 		}
 
-		return null;
+		return $gateway->is_enabled() || ( ! $require_enabled && wpss_gateway_supports( $gateway, 'verified_confirmation' ) ) ? $gateway : null;
 	}
 }

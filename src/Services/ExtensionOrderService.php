@@ -629,6 +629,8 @@ class ExtensionOrderService {
 	 */
 	public function cleanup_abandoned_extensions(): int {
 		global $wpdb;
+		// Manual payments wait for the owner, so they are never abandoned. phpcs:ignore below: built from esc_sql()'d ids.
+		$manual = wpss_manual_payment_sql();
 
 		$orders_table     = $wpdb->prefix . 'wpss_orders';
 		$extensions_table = $wpdb->prefix . 'wpss_extension_requests';
@@ -639,7 +641,7 @@ class ExtensionOrderService {
 			$wpdb->prepare(
 				"SELECT id FROM {$orders_table}
 				WHERE platform = %s AND status = %s AND created_at < %s
-				AND ( payment_method IS NULL OR payment_method <> 'offline' )",
+				AND NOT {$manual}",
 				self::ORDER_TYPE,
 				'pending_payment',
 				$threshold

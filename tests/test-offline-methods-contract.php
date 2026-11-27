@@ -127,11 +127,12 @@ $gw_src = file_get_contents( dirname( __DIR__ ) . '/src/Integrations/Gateways/Of
  * anything through /checkout/pay/{id}/ - wrote no snapshot at all, so that
  * whole population silently lost the guarantee the snapshot exists to make.
  */
-$pay_branch = substr( $gw_src, strpos( $gw_src, '$pay_order_id = isset( $_POST[' ) );
-$pay_branch = substr( $pay_branch, 0, strpos( $pay_branch, 'wpss_offline_order_created' ) );
+// Since 2.0.0 new and pay-order share one branch after open_pending_order(), plus the cart branch.
+$pay_branch = substr( $gw_src, (int) strpos( $gw_src, '$this->open_pending_order( $request )' ) );
+$pay_branch = substr( $pay_branch, 0, (int) strpos( $pay_branch, 'wpss_offline_order_created' ) );
 
-$check( 'the pay-an-existing-order path freezes the chosen method, not just the gateway', false !== strpos( $pay_branch, 'record_order_method' ) );
-$check( 'all offline entry points record the method', substr_count( $gw_src, '$this->record_order_method(' ) >= 3 );
+$check( 'the pay-an-existing-order path freezes the chosen method, not just the gateway', '' !== $pay_branch && false !== strpos( $pay_branch, 'record_order_method' ) );
+$check( 'all offline entry points record the method', substr_count( $gw_src, '$this->record_order_method(' ) >= 2 );
 
 /*
  * 2. The snapshot has to be READ, or freezing it is theatre.

@@ -32,7 +32,7 @@ $run = static function ( string $php ): string {
 	return (string) shell_exec( $cmd );
 };
 
-$stub_src = '$g = new class() { public function is_enabled(): bool { return %s; } '
+$stub_src = '$g = new class() extends \\WPSellServices\\Integrations\\Gateways\\TestGateway { public function is_enabled(): bool { return %s; } '
 	. 'public function get_name(): string { return "Stub"; } }; '
 	. 'wpss_gateway_require_enabled( $g ); echo "ALLOWED";';
 
@@ -45,8 +45,9 @@ $check( '  and never reaches the work', false === strpos( $disabled_out, 'ALLOWE
 
 // Every buyer-facing money-starting handler must call the guard.
 $expected = array(
-	'src/Integrations/Stripe/StripeGateway.php'      => 2,
-	'src/Integrations/PayPal/PayPalGateway.php'      => 2,
+	// One AJAX start each; the REST start leg is guarded once in PaymentController::get_gateway().
+	'src/Integrations/Stripe/StripeGateway.php'      => 1,
+	'src/Integrations/PayPal/PayPalGateway.php'      => 1,
 	'src/Integrations/Gateways/OfflineGateway.php'   => 1,
 	'src/Integrations/Gateways/TestGateway.php'      => 1,
 );
@@ -83,14 +84,14 @@ $pro = dirname( WPSS_PLUGIN_DIR ) . '/wp-sell-services-pro/src/Integrations/Razo
 
 if ( file_exists( $pro ) ) {
 	$check(
-		'RazorpayGateway guards 2 handlers',
-		substr_count( (string) file_get_contents( $pro ), 'wpss_gateway_require_enabled( $this )' ) === 2
+		'RazorpayGateway guards 1 handler (its REST start leg is guarded by the route)',
+		substr_count( (string) file_get_contents( $pro ), 'wpss_gateway_require_enabled( $this )' ) === 1
 	);
 }
 
 // Refunds and receipt review must NOT be gated - they serve historical orders.
-$offline = (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/Integrations/Gateways/OfflineGateway.php' );
-$admin_block = substr( $offline, (int) strpos( $offline, 'function ajax_admin_mark_paid' ) );
+$offline = (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/Admin/OrderScreen.php' );
+$admin_block = substr( $offline, (int) strpos( $offline, 'function ajax_mark_paid' ) );
 $admin_block = substr( $admin_block, 0, 2000 );
 $check( 'admin mark-paid is NOT gated', false === strpos( $admin_block, 'wpss_gateway_require_enabled' ) );
 

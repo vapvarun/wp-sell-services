@@ -258,7 +258,8 @@ function wpss_validate_registry( $items, string $contract, string $filter ): arr
 	$valid = array();
 
 	foreach ( (array) $items as $id => $provider ) {
-		if ( is_string( $id ) && '' !== $id && $provider instanceof $contract ) {
+		// The key is the id every lookup uses, so it must be the provider's own (orders store get_id()).
+		if ( is_string( $id ) && '' !== $id && $provider instanceof $contract && ( ! method_exists( $provider, 'get_id' ) || $provider->get_id() === $id ) ) {
 			$valid[ $id ] = $provider;
 			continue;
 		}
@@ -267,7 +268,7 @@ function wpss_validate_registry( $items, string $contract, string $filter ): arr
 			esc_html( $filter ),
 			sprintf(
 				/* translators: 1: registry id, 2: contract class. */
-				esc_html__( 'The entry "%1$s" was ignored: it must be an instance of %2$s, keyed by a string id.', 'wp-sell-services' ),
+				esc_html__( 'The entry "%1$s" was ignored: it must be an instance of %2$s, keyed by its own get_id().', 'wp-sell-services' ),
 				esc_html( (string) $id ),
 				esc_html( $contract )
 			),

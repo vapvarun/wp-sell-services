@@ -27,6 +27,13 @@ defined( 'ABSPATH' ) || exit;
  * @since 1.0.0
  */
 class OfflineGateway extends AbstractPaymentGateway {
+
+	/**
+	 * Features, read through supports().
+	 *
+	 * @var string[]
+	 */
+	protected array $supports = array( 'manual_confirmation' );
 	/**
 	 * Prefix of the reference made when the owner marks an order paid without typing a transaction ID.
 	 * Kept for the record; screens that show a Transaction ID to the buyer and seller skip it.
@@ -163,11 +170,6 @@ class OfflineGateway extends AbstractPaymentGateway {
 
 		// AJAX handlers - uses _process_payment suffix to match checkout JS pattern.
 		add_action( 'wp_ajax_wpss_offline_process_payment', array( $this, 'ajax_create_order' ) );
-		add_action( 'wp_ajax_wpss_admin_mark_order_paid', array( $this, 'ajax_admin_mark_paid' ) );
-		add_action( 'wp_ajax_wpss_review_payment_receipt', array( $this, 'ajax_review_payment_receipt' ) );
-
-		// Admin order actions.
-		add_action( 'wpss_admin_order_actions', array( $this, 'render_admin_order_actions' ), 10, 2 );
 
 		// Display payment instructions on order view for offline orders.
 		add_action( 'wpss_order_view_details', array( $this, 'display_order_payment_instructions' ), 10, 1 );
@@ -663,83 +665,11 @@ class OfflineGateway extends AbstractPaymentGateway {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		wpss_save_billing_from_request( $_POST );
 
-		// Handle payment for existing order (from proposal acceptance).
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$pay_order_id = isset( $_POST['pay_order'] ) ? (int) wp_unslash( $_POST['pay_order'] ) : 0;
-		if ( $pay_order_id ) {
-			$order = wpss_get_order( $pay_order_id );
-			if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-				return;
-			}
-			$refusal = wpss_get_order_payment_refusal( $order );
-			if ( '' !== $refusal ) {
-				wp_send_json_error( array( 'message' => $refusal ) );
-				return;
-			}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked at the top of this handler.
+		$request = \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST );
 
-			// Record the method the buyer chose.
-			//
-			// Offline is the one gateway that does NOT settle here - the order
-			// stays pending_payment until an admin confirms the money arrived.
-			// Every other gateway writes payment_method as a side effect of
-			// mark_as_paid(), so this branch was the only path that left it
-			// NULL, and three things downstream key off it being 'offline':
-			// the admin "Awaiting Confirmation" box with Mark as Paid
-			// (render_admin_order_actions()), the buyer's proof-of-payment
-			// upload (PaymentReceiptService::can_submit()), and the payment
-			// instructions. With it NULL the order could never be confirmed by
-			// anyone - a dead end, not just a cosmetic gap (Basecamp
-			// 10208094640).
-			if ( ! wpss_record_pending_payment_method( (int) $order->id, self::GATEWAY_ID ) ) {
-				wp_send_json_error( array( 'message' => __( 'Could not record your payment method. Please try again.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			// Freeze WHICH offline method they picked, not just that it was
-			// offline.
-			//
-			// Both other callers of record_order_method() are order-CREATION
-			// paths, so this branch - proposals, milestone phases, tips,
-			// extensions, and anything else paid through /checkout/pay/{id}/ -
-			// was writing no snapshot at all. Those buyers then read the
-			// current global instructions instead of the method they chose,
-			// and renaming or deleting that method rewrote what their order
-			// said afterwards. That is precisely the guarantee the snapshot
-			// exists to make, missing for an entire population.
-			$this->record_order_method(
-				(int) $order->id,
-				sanitize_key( wp_unslash( $_POST['offline_method'] ?? '' ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked at the top of this handler.
-			);
-
-			/**
-			 * Fires when an existing order is put on the offline rail.
-			 *
-			 * Same hook the cart path fires, so listeners do not need to know
-			 * which entry point the buyer came through.
-			 *
-			 * @since 1.6.0
-			 *
-			 * @param int    $order_id Order ID.
-			 * @param object $order    Order object.
-			 */
-			do_action( 'wpss_offline_order_created', (int) $order->id, $order );
-
-			wp_send_json_success(
-				array(
-					'order_id'     => $order->id,
-					'order_number' => $order->order_number,
-					'redirect'     => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_url( $order->id ), 'offline' ),
-					'instructions' => $this->render_buyer_instructions( (int) $order->id ),
-					'message'      => __( 'Please complete your payment using the instructions below. Your order will be activated once payment is confirmed.', 'wp-sell-services' ),
-				)
-			);
-			return;
-		}
-
-		// Multi-service checkout: create one order per cart item.
-		$is_multi = ! empty( $_POST['is_multi_checkout'] );
-		if ( $is_multi ) {
+		// Multi-service checkout: create one order per cart item. An existing order (pay_order) comes first.
+		if ( ! $request['pay_order'] && $request['is_multi_checkout'] ) {
 			$order_provider = wpss_get_order_provider();
 
 			$customer_id = get_current_user_id();
@@ -821,521 +751,48 @@ class OfflineGateway extends AbstractPaymentGateway {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
-		$service_id = isset( $_POST['service_id'] ) ? (int) wp_unslash( $_POST['service_id'] ) : 0;
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
-		$package_id = isset( $_POST['package_id'] ) ? (int) wp_unslash( $_POST['package_id'] ) : 0;
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
-		$quantity = isset( $_POST['quantity'] ) ? max( 1, (int) wp_unslash( $_POST['quantity'] ) ) : 1;
-
-		if ( ! $service_id ) {
+		if ( ! $request['pay_order'] && ! $request['service_id'] ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
 			return;
 		}
 
-		$order = $this->create_service_order(
-			$service_id,
-			$package_id,
-			$quantity,
-			\WPSellServices\Checkout\CheckoutIntentService::request_selection( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ), // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
-			'offline'
-		);
+		// The one pending-order writer, shared with the app (AbstractPaymentGateway::open_pending_order()).
+		$order = $this->open_pending_order( $request );
 
 		if ( is_wp_error( $order ) ) {
 			wp_send_json_error( array( 'message' => $order->get_error_message() ) );
 			return;
 		}
 
+		// Freeze WHICH offline method the buyer picked, so renaming or deleting it later never rewrites
+		// what this order says - on new orders and on every order paid through /checkout/pay/{id}/.
 		$this->record_order_method(
-			(int) ( is_object( $order ) ? ( $order->id ?? 0 ) : (int) $order ),
-			sanitize_key( wp_unslash( $_POST['offline_method'] ?? '' ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
+			(int) $order->id,
+			sanitize_key( wp_unslash( $_POST['offline_method'] ?? '' ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked at the top of this handler.
 		);
 
 		/**
-		 * Fires when an offline order is created.
+		 * Fires when an order is put on the offline rail, new or existing.
 		 *
-		 * @param int   $order_id Order ID.
-		 * @param array $order    Order object.
+		 * @param int    $order_id Order ID.
+		 * @param object $order    Order object.
 		 */
-		do_action( 'wpss_offline_order_created', $order->id, $order );
+		do_action( 'wpss_offline_order_created', (int) $order->id, $order );
 
-		// Drop only the purchased line; other saved items stay in the cart.
-		\WPSellServices\Checkout\ServiceCart::remove_line( get_current_user_id(), $service_id, (int) ( $order->package_id ?? $package_id ) );
+		if ( ! $request['pay_order'] ) {
+			// Drop only the purchased line; other saved items stay in the cart.
+			\WPSellServices\Checkout\ServiceCart::remove_line( get_current_user_id(), (int) $request['service_id'], (int) ( $order->package_id ?? $request['package_id'] ) );
+		}
 
-		// Return success with order view redirect (shows payment instructions).
 		wp_send_json_success(
 			array(
-				'order_id'     => $order->id,
+				'order_id'     => (int) $order->id,
 				'order_number' => $order->order_number,
-				'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_url( $order->id ), 'offline' ),
-				'instructions' => $this->render_buyer_instructions( $order->id ),
+				'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_url( (int) $order->id ), 'offline' ),
+				'instructions' => $this->render_buyer_instructions( (int) $order->id ),
+				'message'      => __( 'Please complete your payment using the instructions below. Your order will be activated once payment is confirmed.', 'wp-sell-services' ),
 			)
 		);
-	}
-
-	/**
-	 * Create a pending-payment order for one service, priced by the one pricer.
-	 *
-	 * Shared by the checkout form (AJAX) and the app (POST
-	 * /payments/create-intent), so both refuse a self-purchase, price the
-	 * package, quantity and add-ons the same way, and apply the owner's order
-	 * limits. The REST copy created the order with its own flat package price
-	 * (Basecamp 10336467402).
-	 *
-	 * @since 1.8.0
-	 *
-	 * @param int                              $service_id Service ID.
-	 * @param int                              $package_id Stable package id or legacy index.
-	 * @param int                              $quantity   Quantity.
-	 * @param array<int, array<string, mixed>> $selection  Add-on selection.
-	 * @param string                           $gateway_id Rail that will collect the money (offline, test).
-	 * @return object|\WP_Error The order.
-	 */
-	public function create_service_order( int $service_id, int $package_id, int $quantity, array $selection, string $gateway_id ) {
-		$service_post = get_post( $service_id );
-
-		if ( ! $service_post || ! wpss_get_service( $service_id ) ) {
-			return new \WP_Error( 'wpss_invalid_service', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-		}
-
-		if ( (int) $service_post->post_author === get_current_user_id() ) {
-			return new \WP_Error( 'wpss_own_service', __( 'You cannot purchase your own service.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		// A new purchase on every offline door (checkout form, REST create-intent,
-		// Pro /payments/offline/submit): the standing rule resolve() applies.
-		$standing = wpss_account_status_block( get_current_user_id() );
-		if ( $standing ) {
-			return $standing;
-		}
-
-		// Priced by the one line pricer, from ids alone - package (stable id or
-		// index), quantity and the add-ons as the vendor set them.
-		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, $package_id, max( 1, $quantity ), $selection );
-
-		if ( is_wp_error( $line ) ) {
-			return $line;
-		}
-
-		// The owner's min/max order amount, the same rule Stripe and PayPal
-		// get from CheckoutIntentService::resolve() (Basecamp 10304350394).
-		$limit_error = wpss_check_order_limits( (float) $line['subtotal'] + (float) $line['addons_total'], 'offline' );
-
-		if ( null !== $limit_error ) {
-			return $limit_error;
-		}
-
-		// subtotal = package price only; addons_total is separate - StandaloneOrderProvider sums them.
-		$order = wpss_get_order_provider()->create_order(
-			array(
-				'service_id'     => $service_id,
-				'package_id'     => (int) $line['package_id'],
-				'quantity'       => (int) $line['quantity'],
-				'customer_id'    => get_current_user_id(),
-				'subtotal'       => (float) $line['subtotal'],
-				'addons'         => $line['addons'],
-				'addons_total'   => (float) $line['addons_total'],
-				'currency'       => wpss_get_currency(),
-				'payment_method' => $gateway_id,
-			)
-		);
-
-		return $order ? $order : new \WP_Error( 'wpss_order_failed', __( 'Failed to create order.', 'wp-sell-services' ), array( 'status' => 500 ) );
-	}
-
-	/**
-	 * AJAX: Admin marks order as paid.
-	 *
-	 * @return void
-	 */
-	public function ajax_admin_mark_paid(): void {
-		check_ajax_referer( 'wpss_admin_mark_paid', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
-		$order_id       = isset( $_POST['order_id'] ) ? (int) wp_unslash( $_POST['order_id'] ) : 0;
-		$transaction_id = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
-
-		$result = $this->settle_manually( $order_id, $transaction_id );
-
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-		}
-
-		wp_send_json_success(
-			array(
-				'message'    => __( 'Order marked as paid successfully.', 'wp-sell-services' ),
-				'new_status' => $result['status'],
-			)
-		);
-	}
-
-	/**
-	 * Record a payment that was made outside the plugin and settle the order.
-	 *
-	 * The one door for the admin "Mark as Paid" box and the REST route, so an
-	 * integration (Make, Zapier, a custom gateway's webhook) settles an order
-	 * exactly the way the admin does. The caller checks the capability.
-	 *
-	 * @since 1.9.2
-	 *
-	 * @param int    $order_id       Order ID.
-	 * @param string $transaction_id Reference from the payment provider; generated when empty.
-	 * @param string $payment_method Slug stored on the order, e.g. flutterwave. Defaults to offline.
-	 * @return array{status: string}|\WP_Error The order's new status, or why it was refused.
-	 */
-	public function settle_manually( int $order_id, string $transaction_id = '', string $payment_method = 'offline' ) {
-		$order = $order_id > 0 ? wpss_get_order( $order_id ) : null;
-
-		if ( ! $order ) {
-			return new \WP_Error( 'wpss_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-		}
-
-		// A whole order must be awaiting payment. A tip, extension or phase may be in any state an admin moved
-		// it to, as long as its payment was never confirmed (it is credited only once this confirms it).
-		if ( 'pending_payment' !== $order->status && ! $this->is_unpaid_offline_sub_order( $order ) ) {
-			return new \WP_Error( 'wpss_order_not_awaiting_payment', __( 'Order is not awaiting payment.', 'wp-sell-services' ), array( 'status' => 409 ) );
-		}
-
-		$payment_method = sanitize_key( $payment_method );
-		$payment_method = '' === $payment_method ? 'offline' : $payment_method;
-
-		// A registered gateway records its own charges, and a refund calls that gateway with the stored id,
-		// so a hand-typed "stripe" plus an invented id would send the refund to Stripe and fail.
-		if ( 'offline' !== $payment_method && isset( wpss()->get_payment_gateways()[ $payment_method ] ) ) {
-			return new \WP_Error(
-				'wpss_method_is_a_gateway',
-				/* translators: %s: payment method slug, for example stripe. */
-				sprintf( __( 'Payments through %s are recorded by that gateway itself. Name the method the money actually came through, or leave it empty for offline.', 'wp-sell-services' ), $payment_method ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$transaction_id = '' === $transaction_id ? self::GENERATED_TRANSACTION_PREFIX . time() : $transaction_id;
-
-		if ( ! wpss_get_order_provider()->mark_as_paid( $order_id, $transaction_id, $payment_method ) ) {
-			return new \WP_Error( 'wpss_mark_paid_failed', __( 'Failed to mark order as paid.', 'wp-sell-services' ), array( 'status' => 409 ) );
-		}
-
-		if ( 'offline' === $payment_method ) {
-			/**
-			 * Fires when an offline order is marked as paid.
-			 *
-			 * @param int    $order_id       Order ID.
-			 * @param string $transaction_id Transaction ID.
-			 */
-			do_action( 'wpss_offline_order_paid', $order_id, $transaction_id );
-		}
-
-		return array( 'status' => (string) ( wpss_get_order( $order_id )->status ?? 'pending_requirements' ) );
-	}
-
-	/**
-	 * Is this an offline tip, extension or phase whose payment is still unconfirmed?
-	 *
-	 * An admin can move such a sub-order to any status, Completed included, and
-	 * CommissionService::record() / MilestoneService::credit_phase() then credit
-	 * nothing until the payment is confirmed. Mark as Paid is that confirmation,
-	 * so it has to stay available whatever the status (except a closed order,
-	 * which mark_as_paid() refuses anyway).
-	 *
-	 * @since 1.9.1
-	 *
-	 * @param object $order Order object.
-	 * @return bool
-	 */
-	private function is_unpaid_offline_sub_order( object $order ): bool {
-		// Offline, or no method chosen at all: the buyer never opened the pay page, or the
-		// owner was paid outside the site. A card or store rail confirms itself, so it is no door.
-		return in_array( (string) ( $order->payment_method ?? '' ), array( self::GATEWAY_ID, '' ), true )
-			&& in_array( $order->platform ?? '', array( ServiceOrder::SUB_ORDER_TYPE_TIP, ServiceOrder::SUB_ORDER_TYPE_EXTENSION, ServiceOrder::SUB_ORDER_TYPE_MILESTONE ), true )
-			&& ! in_array( (string) ( $order->payment_status ?? '' ), array( 'paid', 'refunded', 'partially_refunded' ), true )
-			&& empty( $order->paid_at )
-			&& ! in_array( (string) ( $order->status ?? '' ), array( ServiceOrder::STATUS_CANCELLED, ServiceOrder::STATUS_REFUNDED ), true );
-	}
-
-	/**
-	 * Render admin order actions for offline orders.
-	 *
-	 * @param object $order  Order object.
-	 * @param string $status Current order status.
-	 * @return void
-	 */
-	public function render_admin_order_actions( object $order, string $status ): void {
-		// Offline orders awaiting payment, and unpaid offline sub-orders whatever their status.
-		$is_sub_order_door = $this->is_unpaid_offline_sub_order( $order );
-
-		if ( ! $is_sub_order_door && ( 'offline' !== $order->payment_method || 'pending_payment' !== $status ) ) {
-			return;
-		}
-
-		$nonce = wp_create_nonce( 'wpss_admin_mark_paid' );
-		?>
-		<div class="wpss-offline-admin-actions" style="background: #fff3cd; border: 1px solid #ffc107; padding: 16px; border-radius: 4px; margin: 16px 0;">
-			<h4 style="margin-top: 0; color: #856404;">
-				<?php esc_html_e( 'Offline Payment - Awaiting Confirmation', 'wp-sell-services' ); ?>
-			</h4>
-			<p style="color: #856404; margin-bottom: 12px;">
-				<?php esc_html_e( 'This order is awaiting offline payment. Mark it as paid once you receive the payment.', 'wp-sell-services' ); ?>
-			</p>
-
-			<?php
-			// Buyer-submitted proof, and the decision on it (Basecamp #10194890682).
-			//
-			// Rendered INSIDE the existing Payment Actions box rather than as a
-			// new screen: an admin deciding whether money arrived wants the
-			// evidence and the Mark-as-Paid control in one place, not two.
-			//
-			// Approving routes through PaymentReceiptService::verify(), which
-			// settles via the same mark_as_paid() path this box already uses -
-			// one money-writing path, not two.
-			$this->render_admin_receipt_review( (int) $order->id );
-			?>
-			<div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
-				<div>
-					<label for="wpss-transaction-id" style="display: block; margin-bottom: 4px; font-weight: 500;">
-						<?php esc_html_e( 'Transaction ID (optional)', 'wp-sell-services' ); ?>
-					</label>
-					<input type="text"
-						id="wpss-transaction-id"
-						name="transaction_id"
-						placeholder="<?php esc_attr_e( 'Bank ref, receipt #, etc.', 'wp-sell-services' ); ?>"
-						style="width: 200px;">
-				</div>
-				<button type="button"
-					class="button button-primary wpss-mark-paid-btn"
-					data-order-id="<?php echo esc_attr( $order->id ); ?>"
-					data-nonce="<?php echo esc_attr( $nonce ); ?>">
-					<?php esc_html_e( 'Mark as paid', 'wp-sell-services' ); ?>
-				</button>
-			</div>
-		</div>
-
-		<script>
-		function wpssAdminNotice(msg, type) {
-			type = type || 'error';
-			var cls = type === 'success' ? 'notice-success' : 'notice-error';
-			var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
-			jQuery('.wrap h1, .wrap h2').first().after($notice);
-			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
-		}
-		jQuery(function($) {
-			$('.wpss-mark-paid-btn').on('click', function() {
-				var $btn = $(this);
-				var orderId = $btn.data('order-id');
-				var nonce = $btn.data('nonce');
-				var transactionId = $('#wpss-transaction-id').val();
-
-				// A money action: the plugin's own dialog, which opens on Cancel.
-				( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
-					if (!ok) return;
-
-				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>');
-
-				$.post(ajaxurl, {
-					action: 'wpss_admin_mark_order_paid',
-					order_id: orderId,
-					transaction_id: transactionId,
-					nonce: nonce
-				}, function(response) {
-					if (response.success) {
-						// Success - page will reload to show updated state.
-						location.reload();
-					} else {
-						wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
-						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as paid', 'wp-sell-services' ) ); ?>');
-					}
-				}).fail(function() {
-					wpssAdminNotice('<?php echo esc_js( __( 'Request failed. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
-					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as paid', 'wp-sell-services' ) ); ?>');
-				});
-				});
-			});
-		});
-		</script>
-		<?php
-	}
-
-	/**
-	 * Render buyer-submitted payment proof and the approve / reject controls.
-	 *
-	 * Nothing renders when the feature is off or no proof has been submitted -
-	 * an admin on a card-only marketplace should never see this.
-	 *
-	 * @since 1.6.0
-	 *
-	 * @param int $order_id Order ID.
-	 * @return void
-	 */
-	private function render_admin_receipt_review( int $order_id ): void {
-		if ( ! \WPSellServices\Services\PaymentReceiptService::is_enabled() ) {
-			return;
-		}
-
-		$service  = new \WPSellServices\Services\PaymentReceiptService();
-		$receipts = $service->get_for_order( $order_id );
-
-		if ( ! $receipts ) {
-			printf(
-				'<p style="color:#856404;margin:0 0 12px;"><em>%s</em></p>',
-				esc_html__( 'The buyer has not uploaded proof of payment yet.', 'wp-sell-services' )
-			);
-			return;
-		}
-
-		$nonce = wp_create_nonce( 'wpss_receipt_review' );
-
-		echo '<div class="wpss-receipt-review" style="background:#fff;border:1px solid #ddd;border-radius:4px;padding:12px;margin:0 0 12px;">';
-		printf( '<h4 style="margin:0 0 8px;">%s</h4>', esc_html__( 'Payment proof', 'wp-sell-services' ) );
-
-		foreach ( $receipts as $receipt ) {
-			$file   = wpss_get_receipt_file( $receipt );
-			$url    = $file['url'];
-			$is_img = $file['is_image'];
-			$who    = get_userdata( (int) $receipt->uploaded_by );
-
-			echo '<div class="wpss-receipt-review__item" style="border-top:1px solid #eee;padding:10px 0;">';
-
-			printf(
-				'<p style="margin:0 0 6px;"><strong>%s</strong> &middot; %s</p>',
-				esc_html( ucfirst( (string) $receipt->status ) ),
-				esc_html(
-					sprintf(
-						/* translators: 1: uploader name, 2: date */
-						__( 'uploaded by %1$s on %2$s', 'wp-sell-services' ),
-						wpss_get_member_display_name( (int) ( $who->ID ?? 0 ), __( 'a buyer', 'wp-sell-services' ) ),
-						wpss_date_label( (string) $receipt->created_at )
-					)
-				)
-			);
-
-			if ( $receipt->note ) {
-				printf( '<p style="margin:0 0 6px;">%s</p>', esc_html( (string) $receipt->note ) );
-			}
-
-			if ( $url && $is_img ) {
-				printf(
-					'<a href="%1$s" target="_blank" rel="noopener"><img src="%1$s" alt="%2$s" style="max-width:220px;height:auto;border:1px solid #ddd;border-radius:3px;"></a>',
-					esc_url( $url ),
-					esc_attr__( 'Payment proof', 'wp-sell-services' )
-				);
-			} elseif ( $url ) {
-				printf(
-					'<a href="%s" target="_blank" rel="noopener">%s</a>',
-					esc_url( $url ),
-					esc_html__( 'Open the uploaded file', 'wp-sell-services' )
-				);
-			}
-
-			if ( 'submitted' === (string) $receipt->status ) {
-				?>
-				<div style="margin-top:10px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-					<div>
-						<label for="wpss-receipt-note-<?php echo esc_attr( (string) $receipt->id ); ?>" style="display:block;margin-bottom:4px;font-weight:500;">
-							<?php esc_html_e( 'Note to buyer (required to reject)', 'wp-sell-services' ); ?>
-						</label>
-						<input type="text" id="wpss-receipt-note-<?php echo esc_attr( (string) $receipt->id ); ?>" class="wpss-receipt-note" style="width:260px;">
-					</div>
-					<button type="button" class="button button-primary wpss-receipt-action" data-action="verify"
-						data-receipt="<?php echo esc_attr( (string) $receipt->id ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>">
-						<?php esc_html_e( 'Approve + mark paid', 'wp-sell-services' ); ?>
-					</button>
-					<button type="button" class="button wpss-receipt-action" data-action="reject"
-						data-receipt="<?php echo esc_attr( (string) $receipt->id ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>">
-						<?php esc_html_e( 'Reject', 'wp-sell-services' ); ?>
-					</button>
-				</div>
-				<?php
-			} elseif ( $receipt->admin_note ) {
-				printf(
-					'<p style="margin:6px 0 0;color:#666;"><em>%s</em></p>',
-					esc_html( (string) $receipt->admin_note )
-				);
-			}
-
-			echo '</div>';
-		}
-
-		echo '</div>';
-		?>
-		<script>
-		jQuery(function($){
-			$('.wpss-receipt-action').off('click.wpssReceipt').on('click.wpssReceipt', function(){
-				var $b = $(this),
-					action = $b.data('action'),
-					note = $b.closest('div').find('.wpss-receipt-note').val() || '';
-
-				if (action === 'reject' && !note.trim()) {
-					wpssAdminNotice('<?php echo esc_js( __( 'Give the buyer a reason so they know what to send instead.', 'wp-sell-services' ) ); ?>', 'error');
-					return;
-				}
-
-				$b.prop('disabled', true);
-				$.post(ajaxurl, {
-					action: 'wpss_review_payment_receipt',
-					receipt_id: $b.data('receipt'),
-					decision: action,
-					note: note,
-					nonce: $b.data('nonce')
-				}).done(function(res){
-					if (res && res.success) { location.reload(); }
-					else {
-						wpssAdminNotice((res && res.data && res.data.message) || '<?php echo esc_js( __( 'Could not record that decision.', 'wp-sell-services' ) ); ?>', 'error');
-						$b.prop('disabled', false);
-					}
-				}).fail(function(){
-					wpssAdminNotice('<?php echo esc_js( __( 'Could not record that decision.', 'wp-sell-services' ) ); ?>', 'error');
-					$b.prop('disabled', false);
-				});
-			});
-		});
-		</script>
-		<?php
-	}
-
-	/**
-	 * AJAX: record an admin decision on a payment receipt.
-	 *
-	 * @since 1.6.0
-	 *
-	 * @return void
-	 */
-	public function ajax_review_payment_receipt(): void {
-		check_ajax_referer( 'wpss_receipt_review', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to do that.', 'wp-sell-services' ) ), 403 );
-		}
-
-		$receipt_id = isset( $_POST['receipt_id'] ) ? absint( $_POST['receipt_id'] ) : 0;
-		$decision   = isset( $_POST['decision'] ) ? sanitize_key( wp_unslash( $_POST['decision'] ) ) : '';
-		$note       = isset( $_POST['note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['note'] ) ) : '';
-
-		if ( ! in_array( $decision, array( 'verify', 'reject' ), true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unknown decision.', 'wp-sell-services' ) ), 400 );
-		}
-
-		$service = new \WPSellServices\Services\PaymentReceiptService();
-		$result  = 'verify' === $decision
-			? $service->verify( $receipt_id, get_current_user_id(), $note )
-			: $service->reject( $receipt_id, get_current_user_id(), $note );
-
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error(
-				array(
-					'message' => $result->get_error_message(),
-					'code'    => $result->get_error_code(),
-				),
-				(int) ( $result->get_error_data()['status'] ?? 400 )
-			);
-		}
-
-		wp_send_json_success();
 	}
 
 	/**

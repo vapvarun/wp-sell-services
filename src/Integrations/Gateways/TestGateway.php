@@ -257,158 +257,43 @@ class TestGateway extends AbstractPaymentGateway {
 		// real orders paid on any debug site (Basecamp 10336397941).
 		wpss_gateway_require_enabled( $this );
 
-		// Handle payment for existing order (from proposal acceptance).
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$pay_order_id = isset( $_POST['pay_order'] ) ? (int) wp_unslash( $_POST['pay_order'] ) : 0;
-		if ( $pay_order_id ) {
-			$order = wpss_get_order( $pay_order_id );
-			if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-				return;
-			}
-			$refusal = wpss_get_order_payment_refusal( $order );
-			if ( '' !== $refusal ) {
-				wp_send_json_error( array( 'message' => $refusal ) );
-				return;
-			}
-			$transaction_id = 'test_' . wp_generate_uuid4();
-			$order_provider = wpss_get_order_provider();
-			$order_provider->mark_as_paid( $order->id, $transaction_id, 'test' );
-			wp_send_json_success(
-				array(
-					'order_id'     => $order->id,
-					'order_number' => $order->order_number,
-					'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_requirements_url( $order->id ), 'test' ),
-				)
-			);
+		// The one resolve + settle path every rail uses (Basecamp 10551488242): pay-order, cart and single,
+		// priced server-side, ownership and self-purchase checked, settled once per transaction id.
+		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
+		$intent   = $checkout->resolve( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ), get_current_user_id() ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
+
+		if ( is_wp_error( $intent ) ) {
+			wp_send_json_error( array( 'message' => $intent->get_error_message() ) );
 			return;
 		}
 
-		// Multi-checkout: create orders for all cart items in one payment.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
-		$is_multi = ! empty( $_POST['is_multi_checkout'] );
-		if ( $is_multi ) {
-			$customer_id = get_current_user_id();
-
-			// The one cart reader, for the same reason as the offline rail:
-			// a paused or deleted service must never reach an order.
-			$cart           = wpss_get_user_cart( $customer_id );
-			$order_provider = wpss_get_order_provider();
-
-			$transaction_id = 'test_' . wp_generate_uuid4();
-			$order_ids      = $order_provider->create_orders_from_cart( $cart, 'test', $transaction_id, $customer_id );
-
-			if ( empty( $order_ids ) ) {
-				wp_send_json_error( array( 'message' => __( 'Failed to create orders.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			// Mark all orders as paid.
-			foreach ( $order_ids as $oid ) {
-				$order_provider->mark_as_paid( $oid, $transaction_id, 'test' );
-			}
-
-			// Clear cart.
-			delete_user_meta( $customer_id, '_wpss_cart' );
-
-			$dashboard_url = wpss_get_page_url( 'dashboard' );
-			$redirect      = $dashboard_url ? wpss_get_dashboard_url( 'orders' ) : home_url();
-
-			wp_send_json_success(
-				array(
-					'order_ids'    => $order_ids,
-					'redirect_url' => $redirect,
-				)
-			);
-			return;
-		}
-
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
-		$service_id = isset( $_POST['service_id'] ) ? (int) wp_unslash( $_POST['service_id'] ) : 0;
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
-		$package_id = isset( $_POST['package_id'] ) ? (int) wp_unslash( $_POST['package_id'] ) : 0;
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
-		$quantity = isset( $_POST['quantity'] ) ? max( 1, (int) wp_unslash( $_POST['quantity'] ) ) : 1;
-
-		if ( ! $service_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Self-purchase check: vendors cannot buy their own service.
-		$service_post = get_post( $service_id );
-		if ( $service_post && (int) $service_post->post_author === get_current_user_id() ) {
-			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Get service and package details.
-		$service = wpss_get_service( $service_id );
-
-		if ( ! $service ) {
-			wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Calculate price from package.
-		// Priced by the one line pricer, from ids alone - package (stable id or
-		// index), quantity and the add-ons as the vendor set them.
-		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line(
-			$service_id,
-			$package_id,
-			$quantity,
-			\WPSellServices\Checkout\CheckoutIntentService::request_selection( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
-		);
-
-		if ( is_wp_error( $line ) ) {
-			wp_send_json_error( array( 'message' => $line->get_error_message() ) );
-			return;
-		}
-
-		$price        = (float) $line['subtotal'];
-		$package_id   = (int) $line['package_id'];
-		$addon_data   = array( 'addons' => $line['addons'] );
-		$addons_total = (float) $line['addons_total'];
-
-		// Get order provider.
-		$order_provider = wpss_get_order_provider();
-
-		// Generate test transaction ID.
 		$transaction_id = 'test_' . wp_generate_uuid4();
+		$result         = $checkout->settle( $intent, 'test', $transaction_id, $intent->amount, $intent->currency, get_current_user_id() );
 
-		// Create order.
-		$order = $order_provider->create_order(
-			array(
-				'service_id'     => $service_id,
-				'package_id'     => $package_id,
-				'quantity'       => (int) $line['quantity'],
-				'customer_id'    => get_current_user_id(),
-				'subtotal'       => $price,
-				'addons'         => $addon_data['addons'],
-				'addons_total'   => $addons_total,
-				'currency'       => wpss_get_currency(),
-				'payment_method' => 'test',
-			)
-		);
-
-		if ( ! $order ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
+		if ( empty( $result['success'] ) ) {
+			wp_send_json_error( array( 'message' => (string) ( $result['error'] ?? __( 'Failed to create order.', 'wp-sell-services' ) ) ) );
 			return;
 		}
 
-		// Immediately mark as paid.
-		$order_provider->mark_as_paid( $order->id, $transaction_id, 'test' );
+		wpss_log( sprintf( 'Test payment completed: Transaction %s', $transaction_id ), 'info' );
 
-		// Drop only the purchased line; other saved items stay in the cart.
-		\WPSellServices\Checkout\ServiceCart::remove_line( get_current_user_id(), $service_id, $package_id );
+		if ( ! empty( $result['order_ids'] ) ) {
+			wp_send_json_success(
+				array(
+					'order_ids'    => $result['order_ids'],
+					'redirect_url' => wpss_get_page_url( 'dashboard' ) ? wpss_get_dashboard_url( 'orders' ) : home_url(),
+				)
+			);
+			return;
+		}
 
-		wpss_log( sprintf( 'Test payment completed: Order #%d, Transaction: %s', $order->id, $transaction_id ), 'info' );
+		$order_id = (int) $result['order_id'];
 
 		wp_send_json_success(
 			array(
-				'order_id'     => $order->id,
-				'order_number' => $order->order_number,
-				'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_requirements_url( $order->id ), 'test' ),
+				'order_id'     => $order_id,
+				'order_number' => (string) ( wpss_get_order( $order_id )->order_number ?? '' ),
+				'redirect_url' => wpss_get_post_checkout_url( $order_id, wpss_get_order_requirements_url( $order_id ), 'test' ),
 			)
 		);
 	}

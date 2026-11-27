@@ -26,6 +26,13 @@ use WP_REST_Response;
 class StripeGateway extends AbstractPaymentGateway {
 
 	/**
+	 * Features, read through supports().
+	 *
+	 * @var string[]
+	 */
+	protected array $supports = array( 'redirect_return', 'verified_confirmation' );
+
+	/**
 	 * Gateway ID.
 	 */
 	private const GATEWAY_ID = 'stripe';
@@ -100,29 +107,12 @@ class StripeGateway extends AbstractPaymentGateway {
 	 * @return bool
 	 */
 	public function supports_currency( string $currency ): bool {
-		// Stripe supports most major currencies.
-		$supported = array(
-			'USD',
-			'EUR',
-			'GBP',
-			'AUD',
-			'CAD',
-			'CHF',
-			'CNY',
-			'DKK',
-			'HKD',
-			'INR',
-			'JPY',
-			'MXN',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'BRL',
-		);
+		// Stripe charges in almost every currency; these are the ones it refuses (docs.stripe.com/currencies).
+		// shortcut: a denylist from Stripe's published list, re-check it there when Stripe adds a currency.
+		$unsupported = array( 'BTN', 'CUP', 'ERN', 'HRK', 'IQD', 'IRR', 'KPW', 'LYD', 'SDG', 'SSP', 'SVC', 'SYP', 'TMT', 'VES', 'ZWL' );
+		$currency    = strtoupper( $currency );
 
-		return in_array( strtoupper( $currency ), $supported, true );
+		return 3 === strlen( $currency ) && ! in_array( $currency, $unsupported, true );
 	}
 
 	/**
@@ -1003,7 +993,13 @@ class StripeGateway extends AbstractPaymentGateway {
 				// exists, on Pay (stripe.js, deferred mode).
 				'isGuest'        => ! is_user_logged_in(),
 				'decimals'       => wpss_get_currency_decimals(),
-				'returnUrl'      => add_query_arg( 'step', 'complete', wpss_get_page_url( 'checkout' ) ),
+				'returnUrl'      => add_query_arg(
+					array(
+						'step'        => 'complete',
+						'wpss_return' => 'stripe',
+					),
+					wpss_get_page_url( 'checkout' )
+				),
 				// Prefill the Address Element from the buyer's saved profile so
 				// a returning customer enters card details and nothing else.
 				// Guest checkout is not allowed on a services marketplace (the
@@ -1324,10 +1320,14 @@ class StripeGateway extends AbstractPaymentGateway {
 	 *
 	 * @since 1.4.0
 	 *
-	 * @param string $payment_intent_id PaymentIntent id from the return URL.
+	 * @since 2.0.0 Takes the return URL's query; Stripe adds payment_intent to it.
+	 *
+	 * @param array<string, string> $query The return URL's query arguments.
 	 * @return array{status: string, order_id: int, message: string}
 	 */
-	public function reconcile_redirect_return( string $payment_intent_id ): array {
+	public function reconcile_redirect_return( array $query ): array {
+		$payment_intent_id = (string) ( $query['payment_intent'] ?? '' );
+
 		$fail = static function ( string $status, string $message, int $order_id = 0 ): array {
 			return array(
 				'status'   => $status,

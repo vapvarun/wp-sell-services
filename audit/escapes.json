@@ -1524,6 +1524,14 @@
    "added": "2026-11-27",
    "fails_on": "c7005c61 + Pro a5f6a1c (13 FAIL)",
    "check": "../wp-sell-services-pro/tests/test-cloud-storage-links.php"
+  },
+  {
+   "card": "10551488242",
+   "title": "Payment modules keyed by name: an off Test gateway still confirmed payments, manual methods other than 'offline' were swept as abandoned and had no Mark as paid, checkout offered methods that cannot take the currency, Stripe hid itself from ZAR/KWD stores",
+   "guard": "static:payment-module-contract",
+   "added": "2026-11-27",
+   "fails_on": "2e42cdce + Pro 19bf5ee (fatal on missing wpss_gateway_supports; behaviour probe: 3 FAIL)",
+   "check": "tests/test-payment-module-contract.php"
   }
  ]
 }

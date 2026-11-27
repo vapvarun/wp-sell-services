@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "payment-module-contract",
+    "run": "${WP_CLI:-wp} eval-file tests/test-payment-module-contract.php"
+   },
+   {
     "id": "cloud-storage-links",
     "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-cloud-storage-links.php"
    },

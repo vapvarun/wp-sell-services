@@ -113,7 +113,7 @@ See [Other Payment Gateways](other-gateways.md#test-gateway) for full details.
 
 - **Billing details** -- name, email, address
 - **Order review** -- services, prices, and totals
-- **Payment method selector** -- choose from your enabled gateways
+- **Payment method selector** -- choose from your enabled gateways that accept the order's currency. A method that cannot take it (for example PayPal on an INR store) is left out, here and in the app. Turning a method off hides it from new checkouts only: orders already paid through it can still be refunded and its webhooks still arrive.
 - **Terms and conditions** checkbox (optional)
 - **Place Order** button
 

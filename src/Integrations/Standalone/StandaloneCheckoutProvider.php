@@ -176,20 +176,23 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 *
 	 * @since 1.4.0
 	 *
-	 * @param string $payment_intent_id PaymentIntent id from the return URL.
+	 * @since 2.0.0 Any gateway that supports redirect_return, named by wpss_return=<id>.
+	 *
+	 * @param string                $gateway_id Gateway the buyer returns from.
+	 * @param array<string, string> $query      The return URL's query arguments.
 	 * @return string
 	 */
-	private function render_payment_return( string $payment_intent_id ): string {
-		$gateways = function_exists( 'wpss' ) ? wpss()->get_payment_gateways() : array();
-		$gateway  = $gateways['stripe'] ?? null;
+	private function render_payment_return( string $gateway_id, array $query ): string {
+		$gateway = wpss()->get_payment_gateways()[ $gateway_id ] ?? null;
 
-		if ( ! $gateway || ! method_exists( $gateway, 'reconcile_redirect_return' ) ) {
+		// An off gateway still settles a return: the buyer has already paid on the provider's page.
+		if ( ! $gateway || ! wpss_gateway_supports( $gateway, 'redirect_return' ) ) {
 			return '<div class="wpss-checkout-return wpss-notice wpss-notice--info"><p>'
 				. esc_html__( 'We are confirming your payment. Please check your orders in a moment — do not pay again.', 'wp-sell-services' )
 				. '</p></div>';
 		}
 
-		$result   = $gateway->reconcile_redirect_return( $payment_intent_id );
+		$result   = $gateway->reconcile_redirect_return( $query );
 		$orders   = wpss_get_page_url( 'dashboard' );
 		$continue = '';
 
@@ -307,11 +310,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		// own parameters on the URL. Show them the OUTCOME — never the checkout
 		// form again. The charge has already happened, so re-rendering a live
 		// Pay button over it is an invitation to pay twice.
+		// A Stripe return URL from before 2.0.0 carries payment_intent but no wpss_return.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$returned_intent = isset( $_GET['payment_intent'] ) ? sanitize_text_field( wp_unslash( $_GET['payment_intent'] ) ) : '';
+		$query     = array_map( 'sanitize_text_field', wp_unslash( array_filter( $_GET, 'is_string' ) ) );
+		$return_id = sanitize_key( $query['wpss_return'] ?? ( isset( $query['payment_intent'] ) ? 'stripe' : '' ) );
 
-		if ( '' !== $returned_intent ) {
-			return $this->render_payment_return( $returned_intent );
+		if ( '' !== $return_id ) {
+			return $this->render_payment_return( $return_id, $query );
 		}
 
 		// Check if paying for an existing order (from proposal acceptance).
@@ -649,9 +654,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$vendor_name      = '';
 		}
 
-		// Get available payment gateways.
-		$gateways         = wpss()->get_payment_gateways();
-		$enabled_gateways = array_filter( $gateways, fn( $g ) => $g->is_enabled() );
+		// The methods this checkout offers, in the owner's order (pay-order: the order's own currency).
+		$enabled_gateways = wpss_get_checkout_gateways( $is_pay_order ? (string) $pay_order->currency : '' );
 
 		// Vendor data for regular checkout.
 		if ( ! $is_pay_order ) {
@@ -1407,8 +1411,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 */
 	private function render_multi_checkout_form( array $cart_items ): string {
 		$currency         = wpss_get_currency();
-		$gateways         = wpss()->get_payment_gateways();
-		$enabled_gateways = array_filter( $gateways, fn( $g ) => $g->is_enabled() );
+		$enabled_gateways = wpss_get_checkout_gateways( $currency );
 
 		// Build enriched item list with service/package data and calculate totals.
 		$enriched_items = array();

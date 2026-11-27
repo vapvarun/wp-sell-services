@@ -39,7 +39,7 @@ POST /wp-json/wpss/v1/orders/{id}/mark-paid
 | Field | Required | Meaning |
 |---|---|---|
 | `transaction_id` | No | The provider's reference. Stored on the order. Generated when empty. |
-| `payment_method` | No | A slug such as `flutterwave`. Stored on the order. Defaults to `offline`. A gateway the plugin runs itself (`stripe`, `paypal`) is refused, because that gateway records its own payments. |
+| `payment_method` | No | A slug such as `flutterwave`. Stored on the order. When empty, the order keeps the manual method it already has (for example `bank_transfer` from a manual order), else `offline`. A gateway that takes payment itself (`stripe`, `paypal`, `razorpay`) is refused, because that gateway records its own payments. |
 
 Only an administrator can call it. Use an [application password](rest-api-overview.md) and HTTP Basic authentication, which Make and Zapier both support.
 

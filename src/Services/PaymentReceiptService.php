@@ -79,7 +79,7 @@ class PaymentReceiptService {
 			return false;
 		}
 
-		if ( 'offline' !== (string) ( $order->payment_method ?? '' ) ) {
+		if ( ! wpss_is_manual_payment_method( (string) ( $order->payment_method ?? '' ) ) ) {
 			return false;
 		}
 
@@ -211,7 +211,7 @@ class PaymentReceiptService {
 		$order_id = (int) $receipt->order_id;
 
 		( new \WPSellServices\Integrations\Standalone\StandaloneOrderProvider() )
-			->mark_as_paid( $order_id, 'offline-receipt-' . $receipt_id, 'offline' );
+			->mark_as_paid( $order_id, 'offline-receipt-' . $receipt_id, (string) ( wpss_get_order( $order_id )->payment_method ?? 'offline' ) );
 
 		/**
 		 * Fires when an admin verifies proof of an offline payment.

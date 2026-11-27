@@ -71,7 +71,8 @@ $check( 'wizard reads the shared list, not its own near-duplicates', false !== s
 $admin = (string) file_get_contents( dirname( __DIR__ ) . '/src/Admin/Admin.php' );
 $check( 'terms notice does not claim buyers are paying', false === strpos( $admin, 'Buyers are paying' ) );
 $settings = (string) file_get_contents( dirname( __DIR__ ) . '/src/Admin/Settings.php' ) . $wizard;
-$check( 'vendor registration label does not say anyone can register', false === stripos( $settings, 'anyone can register' ) );
+// Naming WordPress's own setting ("WordPress setting: Anyone can register") is accurate; promising it is not.
+$check( 'vendor registration label does not say anyone can register', false === stripos( str_ireplace( 'WordPress setting: Anyone can register', '', $settings ), 'anyone can register' ) );
 
 // 6. One sign-up name field is split, not stored whole as the first name.
 $made = array();

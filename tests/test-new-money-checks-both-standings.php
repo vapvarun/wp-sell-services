@@ -111,7 +111,7 @@ if ( ! $service ) {
 
 // The cart branch of the offline AJAX handler carries the same gate (it exits, so read the source).
 $src  = (string) file_get_contents( dirname( __DIR__ ) . '/src/Integrations/Gateways/OfflineGateway.php' );
-$cart = substr( $src, (int) strpos( $src, '$is_multi = ' ), 1200 );
+$cart = substr( $src, (int) strpos( $src, "\$request['is_multi_checkout'] ) {" ), 1200 );
 $check( 'offline cart branch checks the buyer standing', str_contains( $cart, 'wpss_account_status_block( $customer_id )' ) );
 
 echo $fails ? "FAILED: {$fails}\n" : "OK\n";

@@ -107,7 +107,7 @@
       "anonymous": false
     },
     "wp_ajax_wpss_admin_mark_order_paid": {
-      "callback": "WPSellServices\\Integrations\\Gateways\\OfflineGateway::ajax_admin_mark_paid",
+      "callback": "WPSellServices\\Admin\\OrderScreen::ajax_mark_paid",
       "nonce": true,
       "capability": true,
       "rate_limited": false,
@@ -401,7 +401,7 @@
       "anonymous": false
     },
     "wp_ajax_wpss_review_payment_receipt": {
-      "callback": "WPSellServices\\Integrations\\Gateways\\OfflineGateway::ajax_review_payment_receipt",
+      "callback": "WPSellServices\\Admin\\OrderScreen::ajax_review_payment_receipt",
       "nonce": true,
       "capability": true,
       "rate_limited": false,

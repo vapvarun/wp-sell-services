@@ -60,13 +60,13 @@ $force_complete = static function ( int $id ) use ( $wpdb, $orders ): void {
 wp_set_current_user( 1 );
 add_filter( 'wp_doing_ajax', '__return_true' );
 add_filter( 'wp_die_ajax_handler', static fn() => static function () { throw new RuntimeException( 'done' ); } );
-$gateway   = new OfflineGateway();
+$gateway   = new \WPSellServices\Admin\OrderScreen();
 $mark_paid = static function ( int $id ) use ( $gateway ): array {
 	$_POST    = array( 'nonce' => wp_create_nonce( 'wpss_admin_mark_paid' ), 'order_id' => $id );
 	$_REQUEST = $_POST;
 	ob_start();
 	try {
-		$gateway->ajax_admin_mark_paid();
+		$gateway->ajax_mark_paid();
 	} catch ( RuntimeException $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
 	}
 	return (array) json_decode( (string) ob_get_clean(), true );

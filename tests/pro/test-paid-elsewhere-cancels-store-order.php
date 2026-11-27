@@ -77,7 +77,7 @@ $tip = static function ( WC_Order $wc ) use ( $f, $parent ): int {
 $wc  = $store_order( 'pending' );
 $sub = $tip( $wc );
 $check( 'the store order is waiting for payment', wc_get_order( $wc->get_id() )->needs_payment() );
-$result = ( new OfflineGateway() )->settle_manually( $sub, 'qa-bank-ref' );
+$result = ( new \WPSellServices\Services\ManualPaymentService() )->settle( $sub, 'qa-bank-ref' );
 $check( 'the admin settles the tip by hand', is_array( $result ), is_wp_error( $result ) ? $result->get_error_message() : '' );
 $check( 'its pending store order is cancelled, so the old pay link cannot charge again', 'cancelled' === wc_get_order( $wc->get_id() )->get_status(), wc_get_order( $wc->get_id() )->get_status() );
 $wc->delete( true );
