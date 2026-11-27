@@ -999,6 +999,14 @@
    {
     "id": "payment-rest-one-path",
     "run": "${WP_CLI:-wp} eval-file tests/test-payment-rest-one-path.php"
+   },
+   {
+    "id": "recurring-renewal-one-path",
+    "run": "${WP_CLI:-wp} eval-file tests/pro/test-recurring-renewal-one-path.php"
+   },
+   {
+    "id": "payout-registry",
+    "run": "${WP_CLI:-wp} eval-file tests/pro/test-payout-registry.php"
    }
   ]
  }

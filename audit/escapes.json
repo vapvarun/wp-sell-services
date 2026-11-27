@@ -1553,6 +1553,20 @@
    "guard": "static:payment-rest-one-path",
    "added": "2026-11-27",
    "fails_on": "80aabf60 + Pro 2f63030 (12 checks fail)"
+  },
+  {
+   "card": "10551488386",
+   "title": "Recurring renewals bypassed the one credit path: inserted already paid with no charge id, no paid hook, a duplicate order on every webhook retry, a second wait for requirements, and billing hard-typed to Stripe in four places",
+   "guard": "static:recurring-renewal-one-path",
+   "added": "2026-11-27",
+   "fails_on": "86b14264 + Pro 0a7d115 (pause/resume missing from the interface, no provider resolver; renewal: 6 checks fail)"
+  },
+  {
+   "card": "10551488386",
+   "title": "Payout rails were hard-coded in Pro's coordinator; Stripe Connect was offered with Stripe checkout off; PayPal Payouts had two switches that could disagree and the features screen read a third rule; a vendor who chose bank transfer was still batch-paid at an old PayPal email",
+   "guard": "static:payout-registry",
+   "added": "2026-11-27",
+   "fails_on": "86b14264 + Pro 0a7d115 (registry keys and helpers missing; bank vendor paid at old@example.com)"
   }
  ]
 }

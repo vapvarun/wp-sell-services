@@ -269,11 +269,19 @@ function wpss_get_service_requirements( int $service_id ): array {
 function wpss_order_needs_requirements( object $order ): bool {
 	$service_id = (int) ( $order->service_id ?? 0 );
 
-	if ( ! $service_id || 'request' === (string) ( $order->platform ?? '' ) ) {
-		return true;
-	}
+	$needs = ! $service_id || 'request' === (string) ( $order->platform ?? '' ) || ! empty( wpss_get_service_requirements( $service_id ) );
 
-	return ! empty( wpss_get_service_requirements( $service_id ) );
+	/**
+	 * Filter whether a paid order waits for the buyer's requirements.
+	 *
+	 * Pro answers false for a recurring renewal: the buyer answered them on the first order.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param bool   $needs Whether the order waits in pending_requirements.
+	 * @param object $order Order row or model.
+	 */
+	return (bool) apply_filters( 'wpss_order_needs_requirements', $needs, $order );
 }
 
 /**

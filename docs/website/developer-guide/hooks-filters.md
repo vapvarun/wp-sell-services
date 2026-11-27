@@ -254,7 +254,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_commission_recorded` | `int $order_id, array $commission, int $vendor_id` | `src/Services/CommissionService.php:324` |
 | `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:820` |
 | `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `src/Services/EarningsService.php:1218` |
-| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1871` |
+| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1885` |
 | `wpss_tip_order_created` | `int $tip_order_id, int $parent_order_id, int $customer_id, float $amount` | `src/Services/TippingService.php:352` |
 | `wpss_tip_sent` | `int $tip_txn_id, int $parent_order_id, int $vendor_id, int $customer_id, float $vendor_earnings, string $vendor_notes` | `src/Services/TippingService.php:557` |
 
@@ -683,7 +683,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1547` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/order-status.php:85` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:677` |
-| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:435` |
+| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:443` |
 | `wpss_wallet_manager` | `null` | `src/functions/ledger.php:763` |
 
 ### Currency System Filters (1.2.1)
@@ -792,7 +792,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:134` |
 | `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:440` |
 | `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:450` |
-| `wpss_payout_method_registry` | `$methods` (id => label + fields) | `src/Services/EarningsService.php:1369` |
+| `wpss_payout_method_registry` | `$methods` (id => label + fields; optional `render` callable( $user_id ) draws the method's card in the vendor's Payout Methods, `withdrawal` => false keeps a connect-only rail out of the withdrawal choices) | `src/Services/EarningsService.php:1373` |
+| `wpss_order_needs_requirements` | `$needs, $order`: whether a paid order waits in pending_requirements (Pro answers false for a recurring renewal) | `src/functions/requirements.php:284` |
 | `wpss_vendor_reserved_payouts` | `$reserved` (default 0), `$vendor_id`: money a payout rail has committed but not yet debited; counted as a withdrawal in progress | `src/Services/EarningsService.php:175` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |
@@ -945,9 +946,9 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_recurring_renewal_order_created` | `int $new_order_id, int $subscription_id, object $subscription` | `src/RecurringServices/RecurringOrderFactory.php:139` |
-| `wpss_recurring_payment_failed` | `int $subscription_id, object $subscription` | `RecurringWebhookHandler.php:191` |
-| `wpss_recurring_subscription_cancelled` | `int $subscription_id, object $subscription` | `RecurringWebhookHandler.php:229` |
+| `wpss_recurring_renewal_order_created` | `int $new_order_id, int $subscription_id, object $subscription` | `src/RecurringServices/RecurringOrderFactory.php:164` |
+| `wpss_recurring_payment_failed` | `int $subscription_id, object $subscription` | `src/RecurringServices/RecurringWebhookHandler.php:192` |
+| `wpss_recurring_subscription_cancelled` | `int $subscription_id, object $subscription` | `src/RecurringServices/RecurringWebhookHandler.php:230` |
 
 ### Analytics Actions
 

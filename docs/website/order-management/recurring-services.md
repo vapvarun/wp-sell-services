@@ -36,7 +36,7 @@ Toggle **Enable recurring billing** on, then pick a billing frequency: Weekly, M
 2. Mark the package as **Recurring** and pick the interval.
 3. Buyers see the interval on the service page and at checkout.
 
-Recurring billing runs on Stripe. Each cycle creates a new order for the vendor automatically, so delivery and messaging work exactly like one-off orders.
+Recurring billing runs on Stripe. Each cycle creates a new order for the vendor automatically, so delivery and messaging work exactly like one-off orders. A renewal order is marked paid with Stripe's payment id, the same way checkout marks an order paid, so it refunds and reports like any other order. If Stripe sends the same renewal event twice, only one order is made. A renewal starts straight away: the buyer answered the service's requirements on the first order.
 
 ## Managing subscriptions
 

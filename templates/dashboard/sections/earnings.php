@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.1
+ * @version 2.0.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -426,25 +426,34 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 	/**
 	 * Fires in the Payouts section's payout-methods area.
 	 *
-	 * The single place where payout-method rails render their vendor-facing UI,
-	 * so every method lives in ONE vendor section instead of separate nav items.
-	 * Manual withdrawal (above) is the universal baseline; add-ons (Pro PayPal
-	 * Payouts, Stripe Connect) hook here to render their setup/status when the
-	 * site owner has enabled that rail. Guarded with has_action() so a manual-
-	 * only site shows no empty block.
+	 * Every payout method lives in ONE vendor section. Manual withdrawal (above)
+	 * is the universal baseline; a method that registers a `render` card on
+	 * wpss_payout_method_registry (Pro PayPal Payouts, Stripe Connect) draws it
+	 * here. This action stays for anything that still hooks it. A manual-only site
+	 * shows no empty block.
 	 *
 	 * @since 1.2.0
 	 *
 	 * @param int    $user_id       Current vendor user ID.
 	 * @param string $payout_method The vendor's saved payout-method meta, if any.
 	 */
-	if ( has_action( 'wpss_payout_methods' ) ) :
+	$payout_rails = EarningsService::get_payout_rails();
+	if ( $payout_rails || has_action( 'wpss_payout_methods' ) ) :
 		?>
 		<div class="wpss-earnings__payout-methods wpss-payout-methods" style="margin-top: 2rem;">
 			<h3><?php esc_html_e( 'Payout Methods', 'wp-sell-services' ); ?></h3>
 			<p class="wpss-payout-methods__intro">
 				<?php esc_html_e( 'Set up how you would like to get paid. Your site can pay you manually using the withdrawal request above, or through one of the connected methods below.', 'wp-sell-services' ); ?>
 			</p>
+			<?php if ( $payout_rails ) : ?>
+				<div class="wpss-payout-rails">
+					<?php
+					foreach ( $payout_rails as $payout_rail ) {
+						call_user_func( $payout_rail, (int) $user_id );
+					}
+					?>
+				</div>
+			<?php endif; ?>
 			<?php do_action( 'wpss_payout_methods', $user_id, $payout_method ); ?>
 		</div>
 		<?php

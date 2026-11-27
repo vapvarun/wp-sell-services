@@ -1315,11 +1315,14 @@ class EarningsService {
 	 *
 	 * One registry: each method names itself and the details it collects, so a
 	 * new method (a regional bank rail, a wallet) is added with one filter entry
-	 * and no core edit.
+	 * and no core edit. Two optional keys, from 2.0.0: `render`, a callable( int $user_id )
+	 * that draws the method's setup card in the vendor's Payout Methods block, and
+	 * `withdrawal` => false for a rail the vendor connects but never picks for a
+	 * withdrawal (Stripe Connect pays at charge time).
 	 *
 	 * @since 1.9.0
 	 *
-	 * @return array<string, array{label: string, fields: array<string, array{label: string, type: string, required: bool}>}>
+	 * @return array<string, array{label: string, fields: array<string, array{label: string, type: string, required: bool}>, render?: callable, withdrawal?: bool}>
 	 */
 	public static function get_payout_methods(): array {
 		$methods = array(
@@ -1365,7 +1368,7 @@ class EarningsService {
 		 *
 		 * @since 1.9.0
 		 *
-		 * @param array $methods id => { label: string, fields: key => { label, type, required } }.
+		 * @param array $methods id => { label: string, fields: key => { label, type, required }, render?: callable, withdrawal?: bool }.
 		 */
 		$filtered = (array) apply_filters( 'wpss_payout_method_registry', $methods );
 		$valid    = array();
@@ -1395,7 +1398,18 @@ class EarningsService {
 	 * @return array<string, string>
 	 */
 	public static function get_withdrawal_methods(): array {
-		return wp_list_pluck( self::get_payout_methods(), 'label' );
+		return wp_list_pluck( array_filter( self::get_payout_methods(), static fn( $m ) => false !== ( $m['withdrawal'] ?? true ) ), 'label' );
+	}
+
+	/**
+	 * Payout methods that draw a setup card for the vendor, as id => callable( int $user_id ).
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return array<string, callable>
+	 */
+	public static function get_payout_rails(): array {
+		return array_filter( array_map( static fn( $m ) => $m['render'] ?? null, self::get_payout_methods() ), 'is_callable' );
 	}
 
 	/**

@@ -106,8 +106,7 @@ Bulk-pay vendors through PayPal's Payouts API.
 
 | Field | Type | Default | What it does |
 |---|---|---|---|
-| Show PayPal Payout Option to Vendors | Checkbox | Off | Adds PayPal as a payout method vendors can select, so they can save a PayPal email |
-| Enable PayPal Payouts | Checkbox | Off | Enables batch sending |
+| Enable PayPal Payouts | Checkbox | Off | Turns on batch sending and adds a PayPal email card to each vendor's Payout Methods |
 | PayPal Client ID / Client Secret | Text / Password | -- | From the PayPal Developer Dashboard |
 | Sandbox Mode | Checkbox | Off | Test without moving real money |
 | Minimum Payout Amount | Number | -- | Vendors below this are excluded from a batch |
@@ -115,9 +114,15 @@ Bulk-pay vendors through PayPal's Payouts API.
 The card also holds **Create Batch Payout** (pick vendors, send) and **Recent
 Payout Batches**.
 
-**Vendors must save a PayPal email on their profile first.** Until they do, the
-vendor table here shows an empty state -- turn on *Show PayPal Payout Option to
-Vendors* so they have somewhere to enter it.
+**Vendors must save a PayPal email first.** Until they do, the vendor table here
+shows an empty state. With PayPal Payouts enabled, vendors enter it in their
+Payout Methods. It is the same email their PayPal withdrawals use, so there is one
+address to keep current. A vendor whose payout method is something else (bank
+transfer, for example) is not included in a PayPal batch.
+
+Before 2.0.0 this card had a second switch, *Show PayPal Payout Option to
+Vendors*. It is folded into *Enable PayPal Payouts*: a site that had either one on
+keeps PayPal Payouts on after the update.
 
 This card saves over AJAX with its own **Save Payout Settings** button.
 

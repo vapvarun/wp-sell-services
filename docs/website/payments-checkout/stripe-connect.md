@@ -28,6 +28,11 @@ already set up for Stripe payments -- there is nothing new to paste.
 4. Find the **Stripe Connect** card below it and tick **Enable Stripe Connect**.
 5. Set the **Platform Fee (%)** -- or leave it blank to use your normal commission rate.
 6. Click **Save Connect Settings**.
+
+Stripe Connect needs Stripe checkout switched on, because it pays vendors out of
+Stripe charges. While Stripe is off under **Payment Methods**, vendors cannot connect
+a new account and the Connect card says so. Payouts and refunds on payments already
+taken keep working.
 7. Add the webhook endpoint shown on the settings screen to Stripe, covering payment and account events.
 
 ### Platform fee vs commission

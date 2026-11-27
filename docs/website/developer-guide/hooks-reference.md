@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**594 hooks** across **816** firing sites.
+**596 hooks** across **817** firing sites.
 
 ## Actions (302)
 
@@ -186,7 +186,7 @@ guide; this is the complete index.
 | `wpss_payment_receipt_rejected` | 4 | `src/Services/PaymentReceiptService.php` | Fires when an admin rejects proof of an offline payment. |
 | `wpss_payment_receipt_submitted` | 3 | `src/Services/PaymentReceiptService.php` | Fires when a buyer submits proof of an offline payment. |
 | `wpss_payment_receipt_verified` | 3 | `src/Services/PaymentReceiptService.php` | Fires when an admin verifies proof of an offline payment. |
-| `wpss_payout_methods` | 2 | `templates/dashboard/sections/earnings.php` *(+1 more)* |  |
+| `wpss_payout_methods` | 2 | `templates/dashboard/sections/earnings.php` |  |
 | `wpss_payout_profile_saved` | 3 | `src/Services/EarningsService.php` | Fires after a vendor's payout profile is saved. |
 | `wpss_paypal_refund_processed` | 2 | `src/Integrations/PayPal/PayPalGateway.php` | Fires when a PayPal refund is processed. |
 | `wpss_pending_refund_assigned` | 3 | `src/Services/PendingRefundService.php` | Fires when part of a rail refund that named no gig is assigned to an order. |
@@ -319,7 +319,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (292)
+## Filters (294)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -458,6 +458,7 @@ guide; this is the complete index.
 | `wpss_order_is_refundable` | 2 | `src/functions/ledger.php` | Filter whether an order may be refunded. |
 | `wpss_order_modal_skip` | 2 | `src/Frontend/SingleServiceView.php` | Whether Continue goes straight to checkout, skipping the Order Options dialog. |
 | `wpss_order_money_rail` | 2 | `src/functions/orders.php` | Filters the platform that owns an order's money. |
+| `wpss_order_needs_requirements` | 2 | `src/functions/requirements.php` | Filter whether a paid order waits for the buyer's requirements. |
 | `wpss_order_number_prefix` | 1 | `src/Database/Repositories/OrderRepository.php` *(+2 more)* | Generate a unique order number. |
 | `wpss_order_payment_reference` | 2 | `src/functions/orders.php` | Filter the payment-rail receipt reference shown on an order. |
 | `wpss_order_status_groups` | 1 | `src/functions/order-status.php` | Filter the order status groups used by the dashboard filter chips. |
@@ -497,6 +498,7 @@ guide; this is the complete index.
 | `wpss_pro_pause_license_recheck` | 2 | `src/License/Manager.php` **[PRO]** | Filter whether automatic license re-checks are paused. |
 | `wpss_pro_push_provider` | 2 | `src/Push/PushNotificationService.php` **[PRO]** | Filter the push provider. |
 | `wpss_pro_push_should_send` | 5 | `src/Push/PushNotificationService.php` **[PRO]** | Filter whether a push is sent for this notification. |
+| `wpss_pro_recurring_billing_providers` | 1 | `src/RecurringServices/RecurringServiceManager.php` **[PRO]** | Filter the recurring billing providers, by payment gateway id. |
 | `wpss_pro_recurring_feature_available` | 1 | `src/RecurringServices/RecurringSettingsRenderer.php` **[PRO]** | Whether the recurring-services feature is available in this version. |
 | `wpss_pro_upgrade_url` | 1 | `src/functions/urls.php` |  |
 | `wpss_product_types` | 1 | `src/Core/Plugin.php` | Filter the registered product types. |
