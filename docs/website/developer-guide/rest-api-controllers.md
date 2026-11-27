@@ -60,7 +60,7 @@ assume:
   routes stop registering entirely; a call to them answers `404 rest_no_route`
   from WordPress core. That is by design: when a cart plugin is enabled it owns
   all payment, and the plugin does not offer a second way in.
-- **Pro + a valid license.** The 10 Pro controllers register on `wpss_loaded`.
+- **Pro active.** The 10 Pro controllers register on `wpss_loaded`. The license does not affect them.
 
 To see the truth for a site, read the index: `GET /wp-json/wpss/v1`.
 
@@ -573,7 +573,7 @@ curl -X POST \
 
 ## Pro controllers **[PRO]**
 
-Available only when WP Sell Services Pro is active with a valid license.
+Available when WP Sell Services Pro is active.
 
 ### Payments (Pro)
 
@@ -690,10 +690,7 @@ it starts an export rather than returning one.
 `/analytics/revenue` takes `period`, one of `7days` | `30days` (default) |
 `90days` | `12months`.
 
-Both admin routes register even on an **unlicensed** site, deliberately: an
-unlicensed call answers `403 wpss_pro_license_required` rather than
-`404 rest_no_route`, so a client can tell "you need a license" apart from "this
-build does not have that endpoint". Anonymous callers get `401 rest_not_logged_in`;
+Anonymous callers get `401 rest_not_logged_in`;
 a logged-in non-admin gets `403`.
 
 ### White label

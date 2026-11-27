@@ -1484,6 +1484,14 @@
    "added": "2026-11-27",
    "fails_on": "Pro d42c660 + Free 07f07ddc (7 FAIL)",
    "check": "../wp-sell-services-pro/tests/test-rest-payment-routes-honour-enabled.php"
+  },
+  {
+   "card": "10550988543",
+   "title": "an unlicensed or lapsed Pro switched features off (Razorpay refunds, Connect/plan/recurring webhooks, Pro REST, app, storage, schema migrations)",
+   "guard": "static:licence-updates-only",
+   "added": "2026-11-27",
+   "fails_on": "Pro 310754f (9 FAIL)",
+   "check": "../wp-sell-services-pro/tests/test-licence-updates-only.php"
   }
  ]
 }

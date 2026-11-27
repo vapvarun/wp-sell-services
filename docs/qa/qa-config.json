@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "licence-updates-only",
+    "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-licence-updates-only.php"
+   },
+   {
     "id": "rest-payment-routes-honour-enabled",
     "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-rest-payment-routes-honour-enabled.php"
    },

@@ -9,7 +9,7 @@ Connect your marketplace to Amazon S3, Google Cloud Storage, or DigitalOcean Spa
 ## Before You Start
 
 You will need:
-- WP Sell Services Pro active and licensed
+- WP Sell Services Pro active
 - An account with your chosen cloud provider
 - Access credentials (API keys or service account) from the provider
 

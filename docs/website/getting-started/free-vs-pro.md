@@ -186,7 +186,7 @@ Yes. Install Pro at any time. All existing services, orders, vendors, reviews, a
 No. The free version includes its own checkout with Stripe, PayPal, and offline payment support. WooCommerce is entirely optional and only available as a Pro integration.
 
 **What happens if my Pro license expires?**
-Your **marketplace** keeps running -- services, orders, messaging, deliveries, disputes, reviews, commission, earnings, and withdrawals all live in the free plugin and are unaffected. But **Pro features stop loading** until you renew: Stripe Connect, wallets, tiered commission, vendor subscriptions, white label, cloud storage, analytics, display currency, and the raised service limits. No data is deleted, and reactivating restores everything as it was. See [License Activation](pro-license.md).
+Everything keeps running, Pro features included. The license controls plugin updates and support only: you stop receiving those until you renew. See [License Activation](pro-license.md).
 
 **Is per-vendor commission a Pro feature?**
 No. Per-vendor commission rates are included in the free version. You can set different rates for individual vendors right out of the box. Pro adds *tiered* rules that resolve automatically by category, vendor level, or sales volume.

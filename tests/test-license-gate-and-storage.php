@@ -64,7 +64,7 @@ $dispatch = function ( string $method, string $route ): string {
 	return '';
 };
 
-// --- P1: Free routes never see the Pro gate; Pro routes always do while unlicensed.
+// --- P1: no route, Free or Pro, is refused on licence state.
 $free_routes = array(
 	'/wpss/v1/payments/methods',
 	'/wpss/v1/wallet/transactions',
@@ -84,15 +84,13 @@ foreach ( $free_routes as $route ) {
 
 $pro_route = '/wpss/v1/wallet/balance';
 if ( ! isset( $routes[ $pro_route ] ) ) {
-	$failures[] = "Pro route {$pro_route} is not registered - it must exist and answer 403 while unlicensed.";
+	$failures[] = "Pro route {$pro_route} is not registered.";
 } else {
 	$code = $dispatch( 'GET', $pro_route );
 	echo "  GET {$pro_route} -> " . ( '' === $code ? '200' : $code ) . "\n";
-	if ( ! $licensed && 'wpss_pro_license_required' !== $code ) {
-		$failures[] = "Pro route {$pro_route} answered '{$code}' while unlicensed - expected wpss_pro_license_required.";
-	}
-	if ( $licensed && 'wpss_pro_license_required' === $code ) {
-		$failures[] = "Pro route {$pro_route} is refused while licensed.";
+	// Since 2.0.0 the licence gates updates only, so no state refuses a Pro route (Basecamp 10550988543).
+	if ( 'wpss_pro_license_required' === $code ) {
+		$failures[] = "Pro route {$pro_route} is refused by a licence gate - the licence controls updates only.";
 	}
 }
 
@@ -152,4 +150,4 @@ if ( $failures ) {
 	exit( 1 );
 }
 
-echo "PASS - Free money routes are not license-gated, Pro routes are, and bucket files resolve their own provider.\n";
+echo "PASS - no route is licence-gated, and bucket files resolve their own provider.\n";

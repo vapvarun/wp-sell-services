@@ -181,8 +181,8 @@ them as live data:
 
 ## Pro tables
 
-Created by Pro's schema manager. They persist when Pro is deactivated or its
-license lapses, so nothing is lost on reactivation.
+Created by Pro's schema manager. They persist when Pro is deactivated, so
+nothing is lost on reactivation.
 
 | Table | Purpose | Key columns |
 |-------|---------|-------------|

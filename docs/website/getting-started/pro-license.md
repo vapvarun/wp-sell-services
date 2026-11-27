@@ -1,7 +1,7 @@
 # License Activation & Updates [PRO]
 
-WP Sell Services Pro uses a license key to unlock Pro features, deliver
-automatic updates, and give you priority support.
+WP Sell Services Pro uses a license key for automatic updates and priority
+support. Every Pro feature works with or without it.
 
 ![The License screen under Sell Services](../images/admin-pro-license.webp)
 
@@ -20,38 +20,17 @@ Once the status reads active, your site receives Pro updates in
 
 ## What the license controls
 
-> **Important: an inactive or expired license disables Pro features.**
->
-> This is not an updates-only license. When the key is missing, invalid, or past
-> its expiry date, WP Sell Services Pro loads **only its License screen** -- every
-> other Pro feature stops initialising.
+The license controls **plugin updates and support only**. It never switches a
+feature off.
 
-That includes:
+- **Active:** Pro updates arrive in **Dashboard > Updates**, and you get priority support.
+- **Missing, invalid or expired:** every Pro feature keeps running - Stripe Connect,
+  payouts, Razorpay, the store integrations, tiered commission, vendor
+  subscriptions, white label, cloud storage, analytics and the raised service
+  limits. You stop receiving updates and support until you renew, and a notice
+  on the admin screens says so.
 
-- Stripe Connect, PayPal mass payouts, and the wallet providers
-- Tiered commission rules
-- Vendor subscriptions
-- White-label branding
-- Cloud storage (S3, GCS, DigitalOcean Spaces)
-- Analytics and data export
-- Display currency
-- The raised service limits (gallery, add-ons, FAQs, requirements)
-- WooCommerce, EDD, FluentCart, and Razorpay integrations
-
-**Your data is not deleted.** Commission rules, subscriptions, wallet balances,
-and connected Stripe accounts all stay in the database, and reactivating the
-license brings the features back exactly as they were.
-
-But the behaviour changes immediately, and some of it is customer-visible. If you
-run Stripe Connect, new orders stop splitting to vendor accounts and start
-accruing to the standard ledger instead. **Renew before expiry** rather than
-after, and treat the renewal date as an operational deadline, not a billing one.
-
-### Your marketplace keeps running
-
-The free plugin is unaffected. Services, orders, messaging, deliveries,
-disputes, reviews, commission, earnings, and withdrawals all keep working,
-because they live in the free plugin. What you lose is the Pro layer on top.
+Nothing changes for your vendors or buyers when a license lapses.
 
 ## Checking status
 
@@ -92,11 +71,10 @@ recognised staging domain. If you are unsure, deactivate before cloning.
 
 | Problem | What to do |
 |---------|-----------|
-| Pro features missing after activating the plugin | Check **Sell Services > License**. Unlicensed, Pro registers only that screen. |
+| Pro features missing after activating the plugin | Check that the free **WP Sell Services** plugin is active and at the version Pro requires. |
 | "License key is invalid" | Re-copy the key from your account page -- a trailing space is the usual cause. |
 | "No activations left" | Deactivate the key on a site you no longer use, or upgrade your plan. |
 | Status active but no updates arrive | Your host may block outgoing requests to `wbcomdesigns.com`. Ask them to allow it. |
-| Features disappeared without warning | The license has most likely expired. Check the expiry date on the License screen. |
 
 ## Related
 

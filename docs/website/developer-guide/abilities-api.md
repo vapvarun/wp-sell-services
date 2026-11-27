@@ -73,8 +73,7 @@ clients enumerating what they can do.
 
 ## Pro abilities **[PRO]**
 
-Registered only when Pro is active **with a valid license** -- an expired license
-means Pro loads nothing, so these disappear along with the rest of Pro.
+Registered whenever Pro is active. The license does not affect them.
 
 | Ability | Permission | Read-only | Input |
 |---------|-----------|-----------|-------|

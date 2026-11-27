@@ -603,7 +603,6 @@ hits, and several were undocumented before 1.4.0.
 | 401 | `rest_not_logged_in` | No usable session or credentials | Refresh the token / re-auth, then retry once |
 | 403 | `wpss_forbidden` | Logged in, but not a party to this object (not the buyer, not the vendor) | Do not retry. Surface it |
 | 403 | `wpss_not_vendor` | Logged in, but the account is not a vendor | Offer the "become a vendor" flow |
-| 403 | `wpss_pro_license_required` | A Pro endpoint on a site with no active license | Hide the feature; do not retry |
 | 400 | `wpss_category_required` | Publishing a service with no category, on a site that requires one | Fix the payload |
 | 404 | `wpss_milestone_not_found` | No such milestone, or the id is not a milestone sub-order | Re-fetch the order |
 | 409 | `wpss_milestone_not_payable` | The phase is not in `pending_payment` | Re-fetch; someone already paid or cancelled it |
@@ -635,7 +634,7 @@ the 404.
 
 `rest_forbidden` (admin-only action) · `wpss_forbidden` · `wpss_not_vendor` ·
 `not_vendor` (legacy spelling, still emitted by some vendor routes) ·
-`wpss_pro_license_required` · `wpss_realtime_forbidden` · `disputes_disabled` ·
+`wpss_realtime_forbidden` · `disputes_disabled` ·
 `registration_disabled`
 
 #### 404 -- not found
