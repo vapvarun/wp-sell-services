@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**594 hooks** across **817** firing sites.
+**594 hooks** across **816** firing sites.
 
 ## Actions (302)
 
@@ -227,7 +227,7 @@ guide; this is the complete index.
 | `wpss_requirements_form_fields` | 1 | `templates/order/requirements-form.php` | Fires after the configured requirement fields, before the notes field. |
 | `wpss_requirements_submitted` | 3 | `src/Services/RequirementsService.php` | Fires after requirements are submitted. |
 | `wpss_requirements_timeout` | 2 | `src/Services/OrderWorkflowManager.php` | Fires when a requirements timeout action is taken. |
-| `wpss_rest_offline_order_created` | 3 | `src/Integrations/Gateways/AbstractPaymentGateway.php` *(+1 more)* | Fires when an offline order is created via REST API. |
+| `wpss_rest_offline_order_created` | 3 | `src/Integrations/Gateways/AbstractPaymentGateway.php` | Fires when an offline order is created via REST API. |
 | `wpss_rest_service_created` | 2 | `src/API/ServicesController.php` | Fires after a service is created via REST API. |
 | `wpss_rest_service_deleted` | 2 | `src/API/ServicesController.php` | Fires after a service is deleted via REST API. |
 | `wpss_rest_service_updated` | 2 | `src/API/ServicesController.php` | Fires after a service is updated via REST API. |

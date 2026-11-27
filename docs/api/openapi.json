@@ -2,7 +2,7 @@
     "openapi": "3.1.0",
     "info": {
         "title": "WP Sell Services REST API",
-        "version": "1.9.2",
+        "version": "1.9.3",
         "description": "REST API for the WP Sell Services marketplace (Free + Pro). Every entity is reachable through these endpoints - the same surface the mobile app and integrations use. Namespaced under `wpss/v1` (Free) and `wpss-pro/v1` (Pro).\n\nThis document is generated from the live route registrations, scoped to the WP Sell Services namespaces only, so it never includes routes from other plugins on the same install.\n\nGenerated on the **standalone** rail, which is the default. Two routes under `wpss-pro/v1` are registered only by the FluentCart adapter and therefore only exist when `wpss_general[ecommerce_platform]` is `fluentcart`; regenerate on the standalone rail so the committed spec stays stable, or the freshness check will flip-flop with whatever rail was last active.\n\nEvery path carries `x-wpss-tier`: `free` routes ship with WP Sell Services, `pro` routes exist only when WP Sell Services Pro is active and licensed.",
         "contact": {
             "name": "Wbcom Designs",
@@ -1718,8 +1718,7 @@
                                         "type": "string",
                                         "enum": [
                                             "open",
-                                            "closed",
-                                            "hired"
+                                            "closed"
                                         ]
                                     }
                                 }
@@ -1800,8 +1799,7 @@
                                         "type": "string",
                                         "enum": [
                                             "open",
-                                            "closed",
-                                            "hired"
+                                            "closed"
                                         ]
                                     }
                                 }
@@ -1882,8 +1880,7 @@
                                         "type": "string",
                                         "enum": [
                                             "open",
-                                            "closed",
-                                            "hired"
+                                            "closed"
                                         ]
                                     }
                                 }
@@ -3412,8 +3409,8 @@
                             "enum": [
                                 "open",
                                 "pending_review",
-                                "resolved",
                                 "escalated",
+                                "resolved",
                                 "closed"
                             ]
                         },
@@ -5960,8 +5957,8 @@
                                     },
                                     "payment_method": {
                                         "type": "string",
-                                        "default": "offline",
-                                        "description": "Slug stored on the order, for example flutterwave. Defaults to offline. A gateway the plugin runs itself is refused."
+                                        "default": "",
+                                        "description": "Slug stored on the order, for example flutterwave. Empty keeps the order's own manual method, else offline. A gateway that takes payment itself is refused."
                                     }
                                 }
                             }
@@ -6715,6 +6712,16 @@
                             "type": "string"
                         },
                         "description": ""
+                    },
+                    {
+                        "name": "soft",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "description": "Answer 200 with id 0 when the order has no conversation yet, instead of 404."
                     }
                 ],
                 "responses": {
@@ -6784,6 +6791,13 @@
                                     "content": {
                                         "type": "string",
                                         "default": ""
+                                    },
+                                    "attachments": {
+                                        "type": "array",
+                                        "default": [],
+                                        "items": {
+                                            "type": "integer"
+                                        }
                                     }
                                 }
                             }
@@ -7460,6 +7474,16 @@
                                         "type": "integer",
                                         "default": 0,
                                         "description": "Existing order ID to pay for."
+                                    },
+                                    "provider_order_id": {
+                                        "type": "string",
+                                        "default": "",
+                                        "description": "The provider's own order id, for gateways that verify against it (Razorpay)."
+                                    },
+                                    "signature": {
+                                        "type": "string",
+                                        "default": "",
+                                        "description": "Payment signature, for gateways that sign the result (Razorpay)."
                                     }
                                 },
                                 "required": [
@@ -7640,6 +7664,18 @@
                                     "payment_info": {
                                         "type": "string",
                                         "description": "Payment reference or details."
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "default": 1
+                                    },
+                                    "addons": {
+                                        "type": "array",
+                                        "default": [],
+                                        "items": {
+                                            "type": "string"
+                                        }
                                     }
                                 },
                                 "required": [
@@ -7741,7 +7777,7 @@
                     }
                 },
                 "requestBody": {
-                    "required": true,
+                    "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
@@ -7749,24 +7785,32 @@
                                 "properties": {
                                     "amount": {
                                         "type": "number",
-                                        "minimum": 0.01
-                                    },
-                                    "currency": {
-                                        "type": "string",
-                                        "default": "USD"
+                                        "description": "Ignored: the order is priced on the server."
                                     },
                                     "service_id": {
                                         "type": "integer"
                                     },
                                     "package_id": {
                                         "type": "integer"
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "default": 1
+                                    },
+                                    "addons": {
+                                        "type": "array",
+                                        "default": [],
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "pay_order": {
+                                        "type": "integer",
+                                        "default": 0,
+                                        "description": "Existing order ID to pay for (tip, milestone, extension, proposal)."
                                     }
-                                },
-                                "required": [
-                                    "amount",
-                                    "service_id",
-                                    "package_id"
-                                ]
+                                }
                             }
                         }
                     }
@@ -7804,7 +7848,7 @@
                     }
                 },
                 "requestBody": {
-                    "required": true,
+                    "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
@@ -7812,24 +7856,32 @@
                                 "properties": {
                                     "amount": {
                                         "type": "number",
-                                        "minimum": 0.01
-                                    },
-                                    "currency": {
-                                        "type": "string",
-                                        "default": "USD"
+                                        "description": "Ignored: the order is priced on the server."
                                     },
                                     "service_id": {
                                         "type": "integer"
                                     },
                                     "package_id": {
                                         "type": "integer"
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "default": 1
+                                    },
+                                    "addons": {
+                                        "type": "array",
+                                        "default": [],
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "pay_order": {
+                                        "type": "integer",
+                                        "default": 0,
+                                        "description": "Existing order ID to pay for (tip, milestone, extension, proposal)."
                                     }
-                                },
-                                "required": [
-                                    "amount",
-                                    "service_id",
-                                    "package_id"
-                                ]
+                                }
                             }
                         }
                     }
@@ -7904,6 +7956,200 @@
                                     "razorpay_payment_id",
                                     "razorpay_signature"
                                 ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/settings": {
+            "x-wpss-tier": "free",
+            "get": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "get_wpss_v1_payments_settings",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "post_wpss_v1_payments_settings",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "order": {
+                                        "type": "array",
+                                        "default": [],
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "Payment method ids in the order buyers see them; the first is the default."
+                                    },
+                                    "enabled": {
+                                        "type": "object",
+                                        "default": [],
+                                        "description": "Payment method id => on (true) or off (false)."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "put_wpss_v1_payments_settings",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "order": {
+                                        "type": "array",
+                                        "default": [],
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "Payment method ids in the order buyers see them; the first is the default."
+                                    },
+                                    "enabled": {
+                                        "type": "object",
+                                        "default": [],
+                                        "description": "Payment method id => on (true) or off (false)."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "patch_wpss_v1_payments_settings",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "order": {
+                                        "type": "array",
+                                        "default": [],
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "Payment method ids in the order buyers see them; the first is the default."
+                                    },
+                                    "enabled": {
+                                        "type": "object",
+                                        "default": [],
+                                        "description": "Payment method id => on (true) or off (false)."
+                                    }
+                                }
                             }
                         }
                     }
@@ -7999,7 +8245,7 @@
                     }
                 },
                 "requestBody": {
-                    "required": true,
+                    "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
@@ -8007,24 +8253,32 @@
                                 "properties": {
                                     "amount": {
                                         "type": "number",
-                                        "minimum": 0.01
-                                    },
-                                    "currency": {
-                                        "type": "string",
-                                        "default": "USD"
+                                        "description": "Ignored: the order is priced on the server."
                                     },
                                     "service_id": {
                                         "type": "integer"
                                     },
                                     "package_id": {
                                         "type": "integer"
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "default": 1
+                                    },
+                                    "addons": {
+                                        "type": "array",
+                                        "default": [],
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "pay_order": {
+                                        "type": "integer",
+                                        "default": 0,
+                                        "description": "Existing order ID to pay for (tip, milestone, extension, proposal)."
                                     }
-                                },
-                                "required": [
-                                    "amount",
-                                    "service_id",
-                                    "package_id"
-                                ]
+                                }
                             }
                         }
                     }
@@ -8174,8 +8428,7 @@
                                     },
                                     "currency": {
                                         "type": "string",
-                                        "default": "USD",
-                                        "description": "ISO-4217 currency code for the payout."
+                                        "description": "ISO-4217 currency code for the payout. Defaults to the store currency."
                                     }
                                 },
                                 "required": [
@@ -9055,7 +9308,8 @@
                                         "default": "fixed"
                                     },
                                     "price": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "minimum": 0.01
                                     },
                                     "delivery_days": {
                                         "type": "integer"
@@ -9067,12 +9321,6 @@
                                         "type": "array",
                                         "items": {
                                             "type": "object"
-                                        }
-                                    },
-                                    "attachments": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "integer"
                                         }
                                     }
                                 },
@@ -9210,7 +9458,8 @@
                                         "type": "string"
                                     },
                                     "price": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "minimum": 0.01
                                     },
                                     "delivery_days": {
                                         "type": "integer"
@@ -9284,7 +9533,8 @@
                                         "type": "string"
                                     },
                                     "price": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "minimum": 0.01
                                     },
                                     "delivery_days": {
                                         "type": "integer"
@@ -9358,7 +9608,8 @@
                                         "type": "string"
                                     },
                                     "price": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "minimum": 0.01
                                     },
                                     "delivery_days": {
                                         "type": "integer"
@@ -9515,6 +9766,16 @@
                     }
                 ],
                 "parameters": [
+                    {
+                        "name": "vendor_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 0
+                        },
+                        "description": "Only subscriptions sold by this vendor."
+                    },
                     {
                         "name": "status",
                         "in": "query",
@@ -10361,16 +10622,6 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "rating": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "maximum": 5,
-                                        "description": "Rating (1-5)."
-                                    },
-                                    "review": {
-                                        "type": "string",
-                                        "description": "Review text."
-                                    },
                                     "status": {
                                         "type": "string",
                                         "enum": [
@@ -10432,16 +10683,6 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "rating": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "maximum": 5,
-                                        "description": "Rating (1-5)."
-                                    },
-                                    "review": {
-                                        "type": "string",
-                                        "description": "Review text."
-                                    },
                                     "status": {
                                         "type": "string",
                                         "enum": [
@@ -10503,16 +10744,6 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "rating": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "maximum": 5,
-                                        "description": "Rating (1-5)."
-                                    },
-                                    "review": {
-                                        "type": "string",
-                                        "description": "Review text."
-                                    },
                                     "status": {
                                         "type": "string",
                                         "enum": [

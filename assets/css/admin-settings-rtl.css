@@ -261,6 +261,110 @@
 	color: var(--wpss-danger-dark, #991b1b);
 }
 
+/* Payment methods table (2.0.0): status badges beyond on/off. */
+.wpss-gateway-badge--live,
+.wpss-gateway-badge--test {
+	background: rgba(46, 164, 79, 0.1);
+	color: var(--wpss-success-dark, #1a7c3b);
+}
+
+.wpss-gateway-badge--needs_setup,
+.wpss-gateway-badge--currency {
+	background: rgba(219, 166, 23, 0.12);
+	color: var(--wpss-warning-dark, #8a5a00);
+}
+
+.wpss-gateway-badge--off {
+	background: var(--wpss-admin-border, #e2e4e7);
+	color: var(--wpss-admin-text-light, #50575e);
+}
+
+.wpss-payment-methods__table {
+	border: 0;
+	box-shadow: none;
+}
+
+.wpss-payment-methods__table th,
+.wpss-payment-methods__table td {
+	vertical-align: middle;
+}
+
+.wpss-payment-methods__table tbody tr {
+	border-top: 1px solid var(--wpss-admin-border, #e2e4e7);
+}
+
+.wpss-payment-methods__order {
+	width: 88px;
+	white-space: nowrap;
+}
+
+.wpss-payment-methods__handle {
+	display: inline-flex;
+	cursor: grab;
+	color: var(--wpss-admin-text-light, #50575e);
+	vertical-align: middle;
+}
+
+.wpss-payment-methods__move {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 32px;
+	min-height: 32px;
+	color: var(--wpss-admin-text-light, #50575e);
+	vertical-align: middle;
+}
+
+.wpss-payment-methods__handle svg,
+.wpss-payment-methods__move svg {
+	width: 16px;
+	height: 16px;
+}
+
+.wpss-payment-methods__table tbody tr:first-child .wpss-payment-methods__move[data-dir="-1"],
+.wpss-payment-methods__table tbody tr:last-child .wpss-payment-methods__move[data-dir="1"] {
+	visibility: hidden;
+}
+
+.wpss-payment-methods__name {
+	font-weight: 600;
+	color: var(--wpss-admin-text, #1d2327);
+}
+
+.wpss-payment-methods__table tr.is-dragging {
+	opacity: 0.5;
+}
+
+.wpss-payment-methods.is-saving .wpss-payment-methods__table {
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+.wpss-payment-methods__notice:empty {
+	display: none;
+}
+
+.wpss-payment-methods__notice {
+	margin-block: 8px 0;
+	margin-inline: 0;
+	color: var(--wpss-admin-text-light, #50575e);
+}
+
+@media (max-width: 640px) {
+	.wpss-payment-methods__order {
+		width: auto;
+	}
+
+	.wpss-payment-methods__handle {
+		display: none;
+	}
+
+	.wpss-payment-methods__table th,
+	.wpss-payment-methods__table td {
+		padding-inline: 4px;
+	}
+}
+
 /* Card head layout with badge + toggle */
 .wpss-card__head--with-badge {
 	display: flex;

@@ -1539,6 +1539,20 @@
    "guard": "static:currency-uniform",
    "added": "2026-11-27",
    "fails_on": "08002316 (8 checks fail, then fatal on missing wpss_money_js_config)"
+  },
+  {
+   "card": "10551488326",
+   "title": "No single place to switch payment methods on or off or order them: each method lived in its own card, the checkout listed them in registration order, and a switch had to round-trip each gateway's full settings form",
+   "guard": "static:payment-methods-overview",
+   "added": "2026-11-27",
+   "fails_on": "80aabf60 (fatal on missing wpss_save_payment_methods)"
+  },
+  {
+   "card": "10551488326",
+   "title": "Payment REST had a second path per gateway: Razorpay only on Pro's own routes, who may pay an order differed (Stripe let an admin pay a buyer's order, PayPal did not), Pro's /razorpay/verify answered 200 to a failed signature, and /offline/submit built its own order",
+   "guard": "static:payment-rest-one-path",
+   "added": "2026-11-27",
+   "fails_on": "80aabf60 + Pro 2f63030 (12 checks fail)"
   }
  ]
 }

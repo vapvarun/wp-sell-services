@@ -2153,6 +2153,8 @@ class Settings {
 			return;
 		}
 
+		$this->render_payment_methods_table();
+
 		// Each registered gateway describes its own card (see
 		// PaymentGatewayInterface::get_settings_card()); core never names one.
 		$cards = array();
@@ -2196,6 +2198,63 @@ class Settings {
 	}
 
 	/**
+	 * Render the Payment methods table: every method with its on/off switch, status and a Manage
+	 * link to its card, in the order buyers see them. Rows are dragged (or moved with the arrow
+	 * buttons) to reorder; admin-settings.js saves through POST /payments/settings.
+	 *
+	 * @since 2.0.0
+	 * @return void
+	 */
+	private function render_payment_methods_table(): void {
+		$rows = wpss_payment_method_rows();
+		if ( ! $rows ) {
+			return;
+		}
+		?>
+		<div class="wpss-card wpss-payment-methods" data-rest="<?php echo esc_url( rest_url( 'wpss/v1/payments/settings' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-saved="<?php esc_attr_e( 'Saved', 'wp-sell-services' ); ?>">
+			<div class="wpss-card__head">
+				<div>
+					<h2 class="wpss-card__title"><?php esc_html_e( 'Payment Methods', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-card__desc"><?php esc_html_e( 'Turn methods on or off and drag them into the order buyers see at checkout. The first one is selected by default.', 'wp-sell-services' ); ?></p>
+				</div>
+			</div>
+			<table class="widefat wpss-payment-methods__table">
+				<thead>
+					<tr>
+						<th scope="col" class="wpss-payment-methods__order"><span class="screen-reader-text"><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></span></th>
+						<th scope="col"><?php esc_html_e( 'Method', 'wp-sell-services' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'On', 'wp-sell-services' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+						<th scope="col"><span class="screen-reader-text"><?php esc_html_e( 'Manage', 'wp-sell-services' ); ?></span></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $rows as $row ) : ?>
+						<tr data-id="<?php echo esc_attr( $row['id'] ); ?>">
+							<td class="wpss-payment-methods__order">
+								<span class="wpss-payment-methods__handle" aria-hidden="true"><i data-lucide="grip-vertical"></i></span>
+								<?php /* translators: %s: payment method name */ ?>
+								<button type="button" class="button-link wpss-payment-methods__move" data-dir="-1" aria-label="<?php echo esc_attr( sprintf( __( 'Move %s up', 'wp-sell-services' ), $row['name'] ) ); ?>"><i data-lucide="chevron-up"></i></button>
+								<?php /* translators: %s: payment method name */ ?>
+								<button type="button" class="button-link wpss-payment-methods__move" data-dir="1" aria-label="<?php echo esc_attr( sprintf( __( 'Move %s down', 'wp-sell-services' ), $row['name'] ) ); ?>"><i data-lucide="chevron-down"></i></button>
+							</td>
+							<td class="wpss-payment-methods__name"><?php echo esc_html( $row['name'] ); ?></td>
+							<td>
+								<?php /* translators: %s: payment method name */ ?>
+								<input type="checkbox" class="wpss-payment-methods__toggle" aria-label="<?php echo esc_attr( sprintf( __( 'Offer %s at checkout', 'wp-sell-services' ), $row['name'] ) ); ?>" <?php checked( $row['enabled'] ); ?>>
+							</td>
+							<td><span class="wpss-gateway-badge wpss-gateway-badge--<?php echo esc_attr( $row['status'] ); ?>" data-status><?php echo esc_html( $row['status_label'] ); ?></span></td>
+							<td><a href="#wpss-gateway-<?php echo esc_attr( $row['id'] ); ?>" class="wpss-payment-methods__manage"><?php esc_html_e( 'Manage', 'wp-sell-services' ); ?></a></td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+			<p class="wpss-payment-methods__notice" role="status" aria-live="polite"></p>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Render a single gateway as a card section.
 	 *
 	 * @since 1.1.0
@@ -2215,7 +2274,7 @@ class Settings {
 		$badge_text  = $enabled ? __( 'Enabled', 'wp-sell-services' ) : __( 'Disabled', 'wp-sell-services' );
 		$collapsed   = $enabled ? '' : ' is-collapsed';
 		?>
-		<div class="wpss-card<?php echo esc_attr( $collapsed ); ?>" data-gateway="<?php echo esc_attr( $gateway_id ); ?>">
+		<div id="wpss-gateway-<?php echo esc_attr( $gateway_id ); ?>" class="wpss-card<?php echo esc_attr( $collapsed ); ?>" data-gateway="<?php echo esc_attr( $gateway_id ); ?>">
 			<div class="wpss-card__head wpss-card__head--with-badge">
 				<div>
 					<h2 class="wpss-card__title"><?php echo esc_html( $title ); ?></h2>
@@ -3980,6 +4039,12 @@ class Settings {
 			}
 
 			$sanitized['checkout_badges'] = $badges;
+		}
+
+		// Written by wpss_save_payment_methods(); only registered gateway ids, first = default.
+		if ( isset( $input['payment_methods'] ) && is_array( $input['payment_methods'] ) ) {
+			$known                        = array_map( 'strval', array_keys( wpss()->get_payment_gateways() ) );
+			$sanitized['payment_methods'] = array_values( array_intersect( array_unique( array_map( static fn( $id ) => sanitize_key( (string) $id ), $input['payment_methods'] ) ), $known ) );
 		}
 
 		return $sanitized;

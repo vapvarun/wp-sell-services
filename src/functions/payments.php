@@ -832,18 +832,8 @@ function wpss_manual_payment_sql( string $column = 'payment_method' ): string {
 function wpss_get_checkout_gateways( string $currency = '' ): array {
 	$currency = '' !== $currency ? $currency : wpss_get_currency();
 	$gateways = array_filter(
-		wpss()->get_payment_gateways(),
+		wpss_sort_payment_methods( wpss()->get_payment_gateways() ),
 		static fn( $g ) => $g->is_enabled() && $g->supports_currency( $currency )
-	);
-
-	$order = array_values( (array) ( get_option( 'wpss_general', array() )['payment_methods'] ?? array() ) );
-	$rank  = array_flip( array_map( 'strval', $order ) );
-	$keys  = array_keys( $gateways );
-
-	// Owner's order first; any method they have not placed keeps its registration order after them.
-	usort(
-		$keys,
-		static fn( $a, $b ) => ( $rank[ $a ] ?? PHP_INT_MAX ) <=> ( $rank[ $b ] ?? PHP_INT_MAX ) ?: array_search( $a, array_keys( $gateways ), true ) <=> array_search( $b, array_keys( $gateways ), true )
 	);
 
 	/**
@@ -854,5 +844,118 @@ function wpss_get_checkout_gateways( string $currency = '' ): array {
 	 * @param array  $gateways Gateways keyed by id, in display order.
 	 * @param string $currency Currency of the checkout.
 	 */
-	return (array) apply_filters( 'wpss_checkout_gateways', array_combine( $keys, array_map( static fn( $k ) => $gateways[ $k ], $keys ) ) ?: array(), $currency );
+	return (array) apply_filters( 'wpss_checkout_gateways', $gateways, $currency );
+}
+
+/**
+ * Put gateways in the owner's order (wpss_general['payment_methods']). A method the owner has
+ * not placed keeps its registration order after the placed ones. Shared by the checkout and the
+ * Payment methods table, so the two always agree.
+ *
+ * @since 2.0.0
+ *
+ * @param array<string, mixed> $gateways Gateways keyed by id.
+ * @return array<string, mixed>
+ */
+function wpss_sort_payment_methods( array $gateways ): array {
+	$rank = array_flip( array_map( 'strval', array_values( (array) ( get_option( 'wpss_general', array() )['payment_methods'] ?? array() ) ) ) );
+	$keys = array_keys( $gateways );
+	$pos  = array_flip( $keys );
+
+	usort( $keys, static fn( $a, $b ) => ( $rank[ $a ] ?? PHP_INT_MAX ) <=> ( $rank[ $b ] ?? PHP_INT_MAX ) ?: $pos[ $a ] <=> $pos[ $b ] );
+
+	return array_combine( $keys, array_map( static fn( $k ) => $gateways[ $k ], $keys ) ) ?: array();
+}
+
+/**
+ * Every registered payment method as the owner's Payment methods table shows it, in the owner's
+ * order: on/off as saved, and a status saying whether buyers can use it.
+ *
+ * Read by the Settings table and GET /payments/settings, so the screen and the app show the same.
+ *
+ * @since 2.0.0
+ *
+ * @return array<int, array{id: string, name: string, enabled: bool, status: string, status_label: string, option_group: string}>
+ */
+function wpss_payment_method_rows(): array {
+	$currency = wpss_get_currency();
+	$labels   = array(
+		'off'         => __( 'Off', 'wp-sell-services' ),
+		'needs_setup' => __( 'Needs setup', 'wp-sell-services' ),
+		/* translators: %s: currency code */
+		'currency'    => sprintf( __( 'Does not take %s', 'wp-sell-services' ), $currency ),
+		'test'        => __( 'Test Mode', 'wp-sell-services' ),
+		'live'        => __( 'Ready', 'wp-sell-services' ),
+	);
+	$rows     = array();
+
+	foreach ( wpss_sort_payment_methods( wpss()->get_payment_gateways() ) as $id => $gateway ) {
+		$card = $gateway->get_settings_card();
+		if ( ! $card ) {
+			continue;
+		}
+
+		// The saved switch, not is_enabled(): Stripe and PayPal also need their keys to count as on.
+		$on     = ! empty( ( (array) get_option( $card['option_group'], array() ) )['enabled'] );
+		$status = match ( true ) {
+			! $on                                      => 'off',
+			! $gateway->is_enabled()                   => 'needs_setup',
+			! $gateway->supports_currency( $currency ) => 'currency',
+			! empty( $card['test_mode'] )              => 'test',
+			default                                    => 'live',
+		};
+
+		$rows[] = array(
+			'id'           => (string) $id,
+			'name'         => (string) $card['title'],
+			'enabled'      => $on,
+			'status'       => $status,
+			'status_label' => $labels[ $status ],
+			'option_group' => (string) $card['option_group'],
+		);
+	}
+
+	return $rows;
+}
+
+/**
+ * Save the owner's payment method order and on/off switches.
+ *
+ * The switch is merged into the gateway's own option: its sanitizer rebuilds the whole array, so a
+ * write carrying only 'enabled' would wipe the keys. Unknown ids are refused before anything is saved.
+ *
+ * @since 2.0.0
+ *
+ * @param string[]            $order   Gateway ids, first = default. Empty leaves the order as it is.
+ * @param array<string, bool> $enabled Gateway id => on.
+ * @return true|\WP_Error
+ */
+function wpss_save_payment_methods( array $order, array $enabled = array() ) {
+	$gateways = wpss()->get_payment_gateways();
+	$order    = array_values( array_unique( array_map( static fn( $id ) => sanitize_key( (string) $id ), $order ) ) );
+	$unknown  = array_diff( array_merge( $order, array_map( 'strval', array_keys( $enabled ) ) ), array_map( 'strval', array_keys( $gateways ) ) );
+
+	if ( $unknown ) {
+		/* translators: %s: comma-separated gateway ids */
+		return new \WP_Error( 'wpss_unknown_payment_method', sprintf( __( 'Unknown payment method: %s.', 'wp-sell-services' ), implode( ', ', $unknown ) ), array( 'status' => 400 ) );
+	}
+
+	if ( $order ) {
+		$general                    = (array) get_option( 'wpss_general', array() );
+		$general['payment_methods'] = $order;
+		update_option( 'wpss_general', $general );
+	}
+
+	foreach ( $enabled as $id => $on ) {
+		$card = $gateways[ $id ]->get_settings_card();
+		if ( ! $card ) {
+			continue;
+		}
+
+		$stored            = (array) get_option( $card['option_group'], array() );
+		$stored['enabled'] = $on ? '1' : '';
+		update_option( $card['option_group'], $stored );
+	}
+
+	return true;
 }

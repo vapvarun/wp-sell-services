@@ -991,6 +991,14 @@
    {
     "id": "block-theme-shim-prints-module-map",
     "run": "${WP_CLI:-wp} eval-file tests/test-block-theme-shim-prints-module-map.php"
+   },
+   {
+    "id": "payment-methods-overview",
+    "run": "${WP_CLI:-wp} eval-file tests/test-payment-methods-overview.php"
+   },
+   {
+    "id": "payment-rest-one-path",
+    "run": "${WP_CLI:-wp} eval-file tests/test-payment-rest-one-path.php"
    }
   ]
  }

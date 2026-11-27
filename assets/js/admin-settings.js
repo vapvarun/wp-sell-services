@@ -93,6 +93,141 @@
 		} );
 	}
 
+	/**
+	 * Payment methods table (2.0.0): on/off switches and buyer-facing order, saved through
+	 * POST /payments/settings. Statuses come back from GET, because the server's gateways read
+	 * their settings once per request.
+	 *
+	 * @param {HTMLElement} box The .wpss-payment-methods card.
+	 */
+	function initPaymentMethods( box ) {
+		var body   = box.querySelector( 'tbody' );
+		var notice = box.querySelector( '.wpss-payment-methods__notice' );
+		var url    = box.getAttribute( 'data-rest' );
+		var nonce  = box.getAttribute( 'data-nonce' );
+		var drag   = null;
+
+		function request( method, data ) {
+			return window.fetch( url, {
+				method: method,
+				credentials: 'same-origin',
+				headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
+				body: data ? JSON.stringify( data ) : undefined,
+			} ).then( function ( res ) {
+				return res.json().then( function ( json ) {
+					if ( ! res.ok ) {
+						throw new Error( json && json.message ? json.message : res.statusText );
+					}
+					return json;
+				} );
+			} );
+		}
+
+		function refresh() {
+			return request( 'GET' ).then( function ( json ) {
+				( json.methods || [] ).forEach( function ( m ) {
+					var row = body.querySelector( 'tr[data-id="' + m.id + '"]' );
+					var badge = row && row.querySelector( '[data-status]' );
+					if ( badge ) {
+						badge.className = 'wpss-gateway-badge wpss-gateway-badge--' + m.status;
+						badge.textContent = m.status_label;
+						row.querySelector( '.wpss-payment-methods__toggle' ).checked = !! m.enabled;
+					}
+				} );
+			} );
+		}
+
+		function save( data ) {
+			box.classList.add( 'is-saving' );
+			notice.textContent = '';
+			request( 'POST', data )
+				.then( refresh )
+				.then( function () {
+					notice.textContent = box.getAttribute( 'data-saved' );
+				} )
+				.catch( function ( err ) {
+					notice.textContent = err.message;
+					refresh();
+				} )
+				.then( function () {
+					box.classList.remove( 'is-saving' );
+					// Saved (or reverted by refresh): tell the settings nav there is nothing to lose.
+					box.dispatchEvent( new CustomEvent( 'wpss:card-clean' ) );
+				} );
+		}
+
+		function saveOrder() {
+			save( {
+				order: Array.prototype.map.call( body.rows, function ( row ) {
+					return row.getAttribute( 'data-id' );
+				} ),
+			} );
+		}
+
+		box.addEventListener( 'change', function ( e ) {
+			if ( e.target.classList.contains( 'wpss-payment-methods__toggle' ) ) {
+				var enabled = {};
+				enabled[ e.target.closest( 'tr' ).getAttribute( 'data-id' ) ] = e.target.checked;
+				save( { enabled: enabled } );
+			}
+		} );
+
+		box.addEventListener( 'click', function ( e ) {
+			var move = e.target.closest( '.wpss-payment-methods__move' );
+			if ( move ) {
+				var row = move.closest( 'tr' );
+				var to = '-1' === move.getAttribute( 'data-dir' ) ? row.previousElementSibling : row.nextElementSibling;
+				if ( to ) {
+					body.insertBefore( row, '-1' === move.getAttribute( 'data-dir' ) ? to : to.nextElementSibling );
+					move.focus();
+					saveOrder();
+				}
+				return;
+			}
+
+			// The settings tabs are routed by the URL hash, so open the card in place instead of
+			// following the anchor (which would switch to the General tab).
+			var manage = e.target.closest( '.wpss-payment-methods__manage' );
+			var card = manage && document.querySelector( manage.getAttribute( 'href' ) );
+			if ( card ) {
+				e.preventDefault();
+				card.classList.remove( 'is-collapsed' );
+				card.scrollIntoView( { block: 'start' } );
+				( card.querySelector( 'input, select, textarea, button' ) || card ).focus( { preventScroll: true } );
+			}
+		} );
+
+		// Drag from the handle only, so text in the row stays selectable.
+		box.addEventListener( 'mousedown', function ( e ) {
+			var row = e.target.closest( 'tr' );
+			if ( row && row.parentNode === body ) {
+				row.draggable = !! e.target.closest( '.wpss-payment-methods__handle' );
+			}
+		} );
+		body.addEventListener( 'dragstart', function ( e ) {
+			drag = e.target.closest( 'tr' );
+			e.dataTransfer.effectAllowed = 'move';
+			drag.classList.add( 'is-dragging' );
+		} );
+		body.addEventListener( 'dragover', function ( e ) {
+			var over = e.target.closest( 'tr' );
+			if ( ! drag || ! over || over === drag ) {
+				return;
+			}
+			e.preventDefault();
+			var box2 = over.getBoundingClientRect();
+			body.insertBefore( drag, e.clientY > box2.top + box2.height / 2 ? over.nextElementSibling : over );
+		} );
+		body.addEventListener( 'dragend', function () {
+			if ( drag ) {
+				drag.classList.remove( 'is-dragging' );
+				drag.draggable = false;
+				drag = null;
+				saveOrder();
+			}
+		} );
+	}
+
 	function ready( fn ) {
 		if ( 'loading' !== document.readyState ) {
 			fn();
@@ -105,5 +240,6 @@
 		var fields = document.querySelectorAll( '.wpss-secret-field' );
 		Array.prototype.forEach.call( fields, initField );
 		initDeleteDataConfirm();
+		Array.prototype.forEach.call( document.querySelectorAll( '.wpss-payment-methods' ), initPaymentMethods );
 	} );
 } )();

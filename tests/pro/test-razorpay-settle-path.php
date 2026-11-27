@@ -69,13 +69,13 @@ $gateway_class = \WPSellServicesPro\Integrations\Razorpay\RazorpayGateway::class
 $shared = 'settle_verified_payment';
 wpss_t( method_exists( $gateway_class, $shared ), "RazorpayGateway::{$shared}() exists" );
 
-$rest_src = wpss_rzp_method_source( 'verify_payment' );
+$rest_src = wpss_rzp_method_source( 'rest_confirm_payment' ); // 2.0.0: Free's POST /payments/confirm, gateway=razorpay.
 $ajax_src = wpss_rzp_method_source( 'ajax_verify_payment' );
-wpss_t( false !== strpos( $rest_src, $shared . '(' ), "REST verify_payment() calls {$shared}()" );
+wpss_t( false !== strpos( $rest_src, $shared . '(' ), "REST rest_confirm_payment() calls {$shared}()" );
 wpss_t( false !== strpos( $ajax_src, $shared . '(' ), "AJAX ajax_verify_payment() calls {$shared}()" );
 wpss_t(
 	false === strpos( $rest_src, 'create_order(' ) && false === strpos( $rest_src, 'mark_as_paid(' ),
-	'REST verify_payment() no longer creates or marks the order itself'
+	'REST rest_confirm_payment() does not create or mark the order itself'
 );
 wpss_t(
 	false !== strpos( wpss_rzp_method_source( $shared ), '->settle_from_metadata(' ),

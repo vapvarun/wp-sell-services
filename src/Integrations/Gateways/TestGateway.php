@@ -466,6 +466,7 @@ class TestGateway extends AbstractPaymentGateway {
 			'title'        => __( 'Test Gateway', 'wp-sell-services' ),
 			'description'  => __( 'Test payment gateway for development. No real charges.', 'wp-sell-services' ),
 			'option_group' => 'wpss_test_gateway_settings',
+			'test_mode'    => true,
 			'order'        => 5,
 		);
 	}

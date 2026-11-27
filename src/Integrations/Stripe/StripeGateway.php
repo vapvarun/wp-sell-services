@@ -2108,16 +2108,10 @@ class StripeGateway extends AbstractPaymentGateway {
 		if ( $pay_order ) {
 			$order = wpss_get_order( $pay_order );
 
-			// The order must exist, belong to the caller, and still be awaiting
-			// payment — none of which was checked before. Without these guards a
-			// buyer could confirm a small payment intent (e.g. a $5 capture)
-			// against someone else's $500 order and have it marked paid.
+			// Who may pay is PaymentController::confirm_payment()'s one rule; here only the
+			// order's own checks: it exists, is unpaid, and the payment's metadata names it.
 			if ( ! $order ) {
 				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-			}
-
-			if ( get_current_user_id() !== (int) $order->customer_id && ! current_user_can( 'manage_options' ) ) {
-				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
 			}
 
 			// Idempotency: never re-process an order that is already paid.
@@ -2206,6 +2200,7 @@ class StripeGateway extends AbstractPaymentGateway {
 			'description'  => __( 'Accept credit card payments via Stripe.', 'wp-sell-services' ),
 			'option_group' => 'wpss_stripe_settings',
 			'order'        => 10,
+			'test_mode'    => $this->is_test_mode(),
 		);
 	}
 }

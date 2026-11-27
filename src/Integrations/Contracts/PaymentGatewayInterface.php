@@ -136,7 +136,10 @@ interface PaymentGatewayInterface {
 	 *
 	 * @since 1.9.0
 	 *
-	 * @param array<string, mixed> $params payment_id, service_id, package_id, pay_order.
+	 * Who may pay a `pay_order` is checked by the controller before this runs.
+	 *
+	 * @param array<string, mixed> $params payment_id, service_id, package_id, pay_order, and (2.0.0)
+	 *                                     provider_order_id and signature for gateways that verify them.
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function rest_confirm_payment( array $params );
@@ -144,11 +147,13 @@ interface PaymentGatewayInterface {
 	/**
 	 * How this gateway appears in Settings > Payments, or null to stay off that screen.
 	 *
-	 * The card body is the gateway's own `wpss_gateway_settings_{id}` fields.
+	 * The card body is the gateway's own `wpss_gateway_settings_{id}` fields. `option_group` is the
+	 * option holding the gateway's settings, with its on/off switch under `enabled`. Optional
+	 * `test_mode` (since 2.0.0) marks the method "Test mode" in the Payment methods table.
 	 *
 	 * @since 1.9.0
 	 *
-	 * @return array{title: string, description: string, option_group: string, order: int}|null
+	 * @return array{title: string, description: string, option_group: string, order: int, test_mode?: bool}|null
 	 */
 	public function get_settings_card(): ?array;
 }

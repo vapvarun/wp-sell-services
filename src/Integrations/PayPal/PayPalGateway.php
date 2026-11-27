@@ -1571,12 +1571,9 @@ class PayPalGateway extends AbstractPaymentGateway {
 		if ( $pay_order ) {
 			$order = wpss_get_order( $pay_order );
 
+			// Who may pay is PaymentController::confirm_payment()'s one rule.
 			if ( ! $order ) {
 				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-			}
-
-			if ( get_current_user_id() !== (int) $order->customer_id ) {
-				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
 			}
 
 			// Idempotency: never re-process an order that is already paid.
@@ -1633,6 +1630,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 			'description'  => __( 'Accept payments via PayPal.', 'wp-sell-services' ),
 			'option_group' => 'wpss_paypal_settings',
 			'order'        => 20,
+			'test_mode'    => $this->is_sandbox_mode(),
 		);
 	}
 }

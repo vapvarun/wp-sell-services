@@ -413,9 +413,24 @@ array says, new IDs are added, and `DELETE /media/{id}` on such a file answers
 | GET | `/payments/methods` |
 | POST | `/payments/create-intent` |
 | POST | `/payments/confirm` |
+| GET, POST | `/payments/settings` (admin only) |
 
-These are the **standalone checkout** payment routes shipped in free. Pro
-replaces them with a wider, gateway-specific set -- see [Payments (Pro)](#payments-pro).
+These are the **standalone checkout** payment routes shipped in free. They serve
+every gateway, Pro's Razorpay included: pass `gateway` (`stripe`, `paypal`,
+`razorpay`, `offline`, ...). Pro's gateway-specific routes are aliases of these --
+see [Payments (Pro)](#payments-pro).
+
+`POST /payments/confirm` takes `gateway`, `payment_id` (the provider's payment
+id) and `pay_order` or `service_id`/`package_id`. Razorpay also needs
+`provider_order_id` (its order id) and `signature`. With `pay_order`, only the
+order's own buyer may confirm it: anyone else, an admin included, gets
+`403 wpss_not_owner`, and an unknown order `404 rest_order_not_found`.
+
+`GET /payments/settings` returns the Payment methods table: one row per method
+with `id`, `name`, `enabled`, `status` (`off`, `needs_setup`, `currency`, `test`,
+`live`) and `status_label`, in checkout order. `POST /payments/settings` takes
+`order` (an array of method ids) and/or `enabled` (`{"stripe": true}`); an
+unknown id answers `400 wpss_unknown_payment_method` and nothing is saved.
 
 `POST /payments/create-intent` takes `service_id`, `package_id` (stable id or
 legacy index), `quantity` and `addons` (ids, or `{id, quantity, option, text}`
@@ -589,7 +604,13 @@ Available when WP Sell Services Pro is active.
 | POST | `/payments/offline/submit` |
 | GET | `/payments/(?P<order_id>[\d]+)/status` |
 
-The routes that start a payment (`create-intent`, `create-order`, `offline/submit`) answer `403 wpss_gateway_disabled` when that method is switched off. They take `quantity`, `addons` and `pay_order` like Free's `/payments/create-intent`, and the order is priced on the server; `amount` is ignored. The routes that finish a payment (`confirm`, `capture`, `verify`) keep working on a disabled method, so a buyer who has already paid is never stranded.
+**Deprecated in 2.0.0, to be removed in 2.1.0.** Each of these forwards to Free's
+`/payments/create-intent` or `/payments/confirm` with the gateway filled in, so it
+answers exactly what that route answers. New clients call Free's routes.
+`/razorpay/verify` maps `razorpay_payment_id`, `razorpay_order_id` and
+`razorpay_signature` to `payment_id`, `provider_order_id` and `signature`.
+
+The routes that start a payment (`create-intent`, `create-order`, `offline/submit`) answer `400 invalid_gateway` when that method is switched off. They take `quantity`, `addons` and `pay_order` like Free's `/payments/create-intent`, and the order is priced on the server; `amount` is ignored. The routes that finish a payment (`confirm`, `capture`, `verify`) keep working on a disabled method, so a buyer who has already paid is never stranded.
 
 ### Wallet
 

@@ -33,6 +33,24 @@ marketplace to WooCommerce.
 
 ---
 
+## Payment methods overview
+
+The table at the top of the tab lists every payment method in one place:
+
+- **On / off switch** per method. It saves at once; the method's other settings
+  are kept.
+- **Status** says whether buyers can actually use it: *Ready*, *Test Mode*,
+  *Needs setup* (switched on but its keys are missing), *Does not take USD*
+  (the method cannot take your store currency), or *Off*.
+- **Order.** Drag a row by its handle, or use the up and down buttons, to set
+  the order buyers see the methods in at checkout. It saves at once.
+- **Manage** opens that method's card below, where its keys and options live.
+
+A method you add later (for example by activating Pro's Razorpay) appears at
+the end of the list until you move it.
+
+---
+
 ## How the cards behave
 
 - A gateway that is **disabled starts collapsed**, with a grey *Disabled*

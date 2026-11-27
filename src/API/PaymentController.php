@@ -61,40 +61,50 @@ class PaymentController extends RestController {
 					'callback'            => array( $this, 'confirm_payment' ),
 					'permission_callback' => array( $this, 'check_permissions' ),
 					'args'                => array(
-						'gateway'      => array(
+						'gateway'           => array(
 							'description' => __( 'Payment gateway ID.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
 						),
-						'payment_id'   => array(
+						'payment_id'        => array(
 							'description' => __( 'Gateway payment/order ID.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
 						),
-						'service_id'   => array(
+						'service_id'        => array(
 							'description' => __( 'Service ID. Same as product_id for the service type.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 0,
 						),
-						'product_id'   => array(
+						'product_id'        => array(
 							'description' => __( 'ID of the product being bought.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 0,
 						),
-						'product_type' => array(
+						'product_type'      => array(
 							'description' => __( 'Product type; "service" is the only type registered.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'default'     => 'service',
 						),
-						'package_id'   => array(
+						'package_id'        => array(
 							'description' => __( 'Package index.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 0,
 						),
-						'pay_order'    => array(
+						'pay_order'         => array(
 							'description' => __( 'Existing order ID to pay for.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 0,
+						),
+						'provider_order_id' => array(
+							'description' => __( "The provider's own order id, for gateways that verify against it (Razorpay).", 'wp-sell-services' ),
+							'type'        => 'string',
+							'default'     => '',
+						),
+						'signature'         => array(
+							'description' => __( 'Payment signature, for gateways that sign the result (Razorpay).', 'wp-sell-services' ),
+							'type'        => 'string',
+							'default'     => '',
 						),
 					),
 				),
@@ -116,6 +126,35 @@ class PaymentController extends RestController {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_methods' ),
 					'permission_callback' => array( $this, 'check_permissions' ),
+				),
+			)
+		);
+
+		// GET|POST /payments/settings - The owner's Payment methods table: order and on/off.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/settings',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => static fn() => new WP_REST_Response( array( 'methods' => wpss_payment_method_rows() ) ),
+					'permission_callback' => array( $this, 'check_admin_permissions' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'save_settings' ),
+					'permission_callback' => array( $this, 'check_admin_permissions' ),
+					'args'                => array(
+						'order'   => array(
+							'description' => __( 'Payment method ids in the order buyers see them; the first is the default.', 'wp-sell-services' ),
+							'type'        => 'array',
+							'items'       => array( 'type' => 'string' ),
+						),
+						'enabled' => array(
+							'description' => __( 'Payment method id => on (true) or off (false).', 'wp-sell-services' ),
+							'type'        => 'object',
+						),
+					),
 				),
 			)
 		);
@@ -206,6 +245,24 @@ class PaymentController extends RestController {
 	}
 
 	/**
+	 * Save the Payment methods order and on/off switches.
+	 *
+	 * Answers with the saved order and switches only. Gateways read their settings once per
+	 * request, so the status column is fetched fresh with GET.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|\WP_Error
+	 */
+	public function save_settings( WP_REST_Request $request ) {
+		$enabled = array_map( 'rest_sanitize_boolean', (array) $request->get_param( 'enabled' ) );
+		$saved   = wpss_save_payment_methods( (array) $request->get_param( 'order' ), $enabled );
+
+		return is_wp_error( $saved ) ? $saved : new WP_REST_Response( array( 'saved' => true ) );
+	}
+
+	/**
 	 * Create payment intent or order for a gateway.
 	 *
 	 * For Stripe: creates a PaymentIntent, returns client_secret.
@@ -285,17 +342,30 @@ class PaymentController extends RestController {
 			return new WP_Error( 'invalid_gateway', __( 'Payment gateway not found or not enabled.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		switch ( $gateway_id ) {
-			default:
-				return $gateway->rest_confirm_payment(
-					array(
-						'payment_id' => $payment_id,
-						'service_id' => $service_id,
-						'package_id' => $package_id,
-						'pay_order'  => $pay_order,
-					)
-				);
+		// One rule for every gateway, the web checkout's: only the order's buyer pays it.
+		// Stripe used to let an admin through and PayPal did not (Basecamp 10551488326).
+		if ( $pay_order ) {
+			$order = wpss_get_order( $pay_order );
+
+			if ( ! $order ) {
+				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+			}
+
+			if ( get_current_user_id() !== (int) $order->customer_id ) {
+				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			}
 		}
+
+		return $gateway->rest_confirm_payment(
+			array(
+				'payment_id'        => $payment_id,
+				'service_id'        => $service_id,
+				'package_id'        => $package_id,
+				'pay_order'         => $pay_order,
+				'provider_order_id' => sanitize_text_field( (string) $request->get_param( 'provider_order_id' ) ),
+				'signature'         => sanitize_text_field( (string) $request->get_param( 'signature' ) ),
+			)
+		);
 	}
 
 	/**

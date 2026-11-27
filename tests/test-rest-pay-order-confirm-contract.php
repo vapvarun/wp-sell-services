@@ -173,8 +173,11 @@ try {
 
 	wp_set_current_user( $seller->ID );
 	$made_for = $second;
-	$r        = $confirm( $pi_id . 'c', $second );
-	$check( 'someone else cannot pay the order', is_wp_error( $r ) && 'pending' === $payment_status( $second ) );
+	// Who may pay is the route's one rule (PaymentController::confirm_payment, 2.0.0), so ask the route.
+	$req = new WP_REST_Request( 'POST', '/wpss/v1/payments/confirm' );
+	$req->set_body_params( array( 'gateway' => 'stripe', 'payment_id' => $pi_id . 'c', 'pay_order' => $second ) );
+	$r = rest_do_request( $req );
+	$check( 'someone else cannot pay the order', 403 === $r->get_status() && 'pending' === $payment_status( $second ), (string) $r->get_status() );
 } finally {
 	wp_set_current_user( 0 );
 	remove_filter( 'pre_http_request', $stub, 10 );
