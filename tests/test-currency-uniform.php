@@ -136,6 +136,28 @@ wpss_follow_shop_currency(
 $check( 'shop route: wpss_get_currency() is the shop\'s', 'EUR' === wpss_get_currency() && 'Easy Digital Downloads' === wpss_currency_owner() );
 $check( '  and prices follow its format: 50,00 €', '50,00 €' === $plain( wpss_format_price( 50 ) ), $plain( wpss_format_price( 50 ) ) );
 $check( '  an order in another currency keeps that currency\'s own places', '1.200 ¥' === $plain( wpss_format_price( 1200, 'JPY' ) ), $plain( wpss_format_price( 1200, 'JPY' ) ) );
+// The locked General fields show the shop's live format, not the saved one (QA bounce 2026-11-27).
+require_once ABSPATH . 'wp-admin/includes/template.php';
+$settings->register_settings();
+ob_start();
+do_settings_fields( 'wpss_general', 'wpss_general_section' );
+$form  = (string) ob_get_clean();
+$field = static function ( string $id ) use ( $form ): string {
+	return preg_match( '/<(?:input|select)[^>]*\bid="' . preg_quote( $id, '/' ) . '"[^>]*>/', $form, $m ) ? $m[0] : '';
+};
+$check(
+	'  the locked fields show the shop\'s separators, not the saved ones',
+	str_contains( $field( 'thousand_separator' ), 'value="."' ) && str_contains( $field( 'decimal_separator' ), 'value=","' ),
+	$field( 'thousand_separator' ) . ' ' . $field( 'decimal_separator' )
+);
+$check( '  and the shop\'s position', 1 === preg_match( '/<option value="after_space"\s+selected/', $form ) );
+$check( '  Decimal Places is locked too', str_contains( $field( 'wpss_decimal_places' ), 'disabled' ), $field( 'wpss_decimal_places' ) );
+remove_filter( 'pre_option_wpss_decimal_places', $places );
+$keep = get_option( 'wpss_decimal_places', null );
+update_option( 'wpss_decimal_places', 3 );
+$check( '  a save with the disabled field absent keeps the stored places', 3 === (int) apply_filters( 'sanitize_option_wpss_decimal_places', null, 'wpss_decimal_places', null ) );
+null === $keep ? delete_option( 'wpss_decimal_places' ) : update_option( 'wpss_decimal_places', $keep );
+add_filter( 'pre_option_wpss_decimal_places', $places );
 $unpin( $p );
 remove_filter( 'pre_option_wpss_decimal_places', $places );
 

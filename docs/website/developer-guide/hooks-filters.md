@@ -347,7 +347,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:3290` |
-| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:2178` |
+| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:2181` |
 
 ### Admin Filters
 
@@ -643,7 +643,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_portfolio_item_updated` | `int $item_id, array $data` | `src/Services/PortfolioService.php:302` |
 | `wpss_portfolio_item_deleted` | `int $item_id, object $item` | `src/Services/PortfolioService.php:352` |
 | `wpss_settings_tab_{tab}` | *(none)* | `Settings.php:985` |
-| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2302` |
+| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2305` |
 
 ## Filters
 
@@ -695,7 +695,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1526` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:428` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:651` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4355` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4365` |
 | `wpss_decimal_places` | `int $places, string $currency` | `src/functions/money.php:186` |
 | `wpss_currency_position` | `string $position` | `src/functions/money.php:88` |
 | `wpss_price_separators` | `array{thousand:string, decimal:string} $separators` | `src/functions/money.php:143` |

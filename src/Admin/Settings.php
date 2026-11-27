@@ -550,6 +550,7 @@ class Settings {
 				'option_name' => 'wpss_general',
 				'field'       => 'currency',
 				'options'     => $this->get_currencies(),
+				'value'       => '' !== wpss_currency_owner() ? wpss_get_currency() : null,
 				'disabled'    => '' !== wpss_currency_owner() || wpss_currency_is_locked(),
 				'description' => $this->money_field_note( wpss_currency_is_locked() ? __( 'Locked: this store already has orders. Prices, vendor balances and past withdrawals have no currency of their own, so changing it would relabel them without converting.', 'wp-sell-services' ) : __( 'Choose before the first order. Once an order exists the currency locks.', 'wp-sell-services' ) ),
 			)
@@ -567,6 +568,7 @@ class Settings {
 				'option_name' => 'wpss_general',
 				'field'       => 'currency_position',
 				'default'     => wpss_get_currency_position(),
+				'value'       => '' !== wpss_currency_owner() ? wpss_get_currency_position() : null,
 				'disabled'    => '' !== wpss_currency_owner(),
 				'description' => $this->money_field_note( '' ),
 				'options'     => array(
@@ -595,6 +597,7 @@ class Settings {
 					'field'       => $wpss_key,
 					'default'     => $wpss_field[1],
 					'class'       => 'small-text',
+					'value'       => '' !== wpss_currency_owner() ? wpss_get_price_separators()[ 'thousand_separator' === $wpss_key ? 'thousand' : 'decimal' ] : null,
 					'disabled'    => '' !== wpss_currency_owner(),
 					'description' => $this->money_field_note( sprintf( /* translators: %s: example price */ __( 'Prices show as %s.', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( 1234.56 ) ) ) ),
 				)
@@ -2973,7 +2976,7 @@ class Settings {
 	 */
 	public function render_text_field( array $args ): void {
 		$options = get_option( $args['option_name'], array() );
-		$value   = $options[ $args['field'] ] ?? $this->field_default( $args ) ?? '';
+		$value   = $args['value'] ?? $options[ $args['field'] ] ?? $this->field_default( $args ) ?? '';
 
 		printf(
 			'<input type="text" id="%1$s" name="%2$s[%1$s]" value="%3$s" class="%4$s"%5$s>',
@@ -3231,7 +3234,7 @@ class Settings {
 	 */
 	public function render_select_field( array $args ): void {
 		$options = get_option( $args['option_name'], array() );
-		$value   = $options[ $args['field'] ] ?? $this->field_default( $args ) ?? '';
+		$value   = $args['value'] ?? $options[ $args['field'] ] ?? $this->field_default( $args ) ?? '';
 
 		// A disabled select is not submitted, so the sanitizer keeps the stored value.
 		printf(
@@ -3331,7 +3334,11 @@ class Settings {
 				array(
 					// Clamp to the field's own min/max: the HTML attributes are client-only.
 					// (int), not absint(): absint() turned -4 into 4 before the clamp saw it.
-					'sanitize_callback' => static function ( $value ) use ( $args ) {
+					'sanitize_callback' => static function ( $value ) use ( $args, $option ) {
+						if ( null === $value ) {
+							// A disabled field (a shop owns it) is not posted; keep what is stored.
+							return get_option( $option, $args['default'] ?? 0 );
+						}
 						$value = ( $args['float'] ?? false ) ? (float) $value : (int) $value;
 						return max( $args['min'] ?? $value, min( $args['max'] ?? $value, $value ) );
 					},
@@ -3355,6 +3362,8 @@ class Settings {
 			__( 'Price Decimal Places', 'wp-sell-services' ),
 			array(
 				'default'     => wpss_get_currency_decimals(),
+				'value'       => '' !== wpss_currency_owner() ? wpss_get_decimal_places( wpss_get_currency() ) : null,
+				'disabled'    => '' !== wpss_currency_owner(),
 				'min'         => 0,
 				'max'         => 4,
 				'description' => $this->money_field_note( __( 'Decimal places used when formatting prices in the store currency. A currency without minor units (JPY, KRW) always shows whole amounts.', 'wp-sell-services' ) ),
@@ -3540,15 +3549,16 @@ class Settings {
 	 */
 	public function render_standalone_number_field( array $args ): void {
 		$option = (string) $args['option'];
-		$value  = get_option( $option, $args['default'] ?? 0 );
+		$value  = $args['value'] ?? get_option( $option, $args['default'] ?? 0 );
 
 		printf(
-			'<input type="number" id="%1$s" name="%1$s" value="%2$s" class="small-text" min="%3$s" max="%4$s" step="%5$s">',
+			'<input type="number" id="%1$s" name="%1$s" value="%2$s" class="small-text" min="%3$s" max="%4$s" step="%5$s"%6$s>',
 			esc_attr( $option ),
 			esc_attr( (string) $value ),
 			esc_attr( (string) ( $args['min'] ?? 0 ) ),
 			esc_attr( (string) ( $args['max'] ?? 999999 ) ),
-			esc_attr( (string) ( $args['step'] ?? '1' ) )
+			esc_attr( (string) ( $args['step'] ?? '1' ) ),
+			disabled( ! empty( $args['disabled'] ), true, false )
 		);
 
 		if ( ! empty( $args['description'] ) ) {
