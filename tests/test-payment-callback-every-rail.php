@@ -37,8 +37,10 @@ $check( '  the rule is live in this request', isset( $wp_rewrite->extra_rules_to
 $check( '  the dispatcher is hooked on template_redirect', false !== has_action( 'template_redirect', array( wpss(), 'dispatch_payment_callback' ) ) );
 
 // 2. Over HTTP: an unknown gateway gets 503 (provider retries), Stripe reaches Stripe's handler.
-$none   = wp_remote_post( wpss_get_payment_callback_url( 'qa-no-such-gateway' ), array( 'timeout' => 20 ) );
-$stripe = wp_remote_post( wpss_get_payment_callback_url( 'stripe' ), array( 'timeout' => 20, 'body' => '{}' ) );
+// Inside a container the site's own host name may not resolve: WPSS_QA_BASE_URL (e.g. http://localhost) replaces the scheme and host.
+$probe  = static fn( string $u ): string => getenv( 'WPSS_QA_BASE_URL' ) ? (string) preg_replace( '#^https?://[^/]+#', rtrim( (string) getenv( 'WPSS_QA_BASE_URL' ), '/' ), $u ) : $u;
+$none   = wp_remote_post( $probe( wpss_get_payment_callback_url( 'qa-no-such-gateway' ) ), array( 'timeout' => 20 ) );
+$stripe = wp_remote_post( $probe( wpss_get_payment_callback_url( 'stripe' ) ), array( 'timeout' => 20, 'body' => '{}' ) );
 $code   = static fn( $r ) => is_wp_error( $r ) ? $r->get_error_message() : (string) wp_remote_retrieve_response_code( $r );
 $check( 'Unknown gateway answers 503, not an empty 200', '503' === $code( $none ), $code( $none ) );
 $body   = is_wp_error( $stripe ) ? '' : wp_remote_retrieve_body( $stripe );
