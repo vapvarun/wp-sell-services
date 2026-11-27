@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "chargeback-lost-is-refund",
+    "run": "${WP_CLI:-wp} eval-file tests/test-chargeback-lost-is-refund.php"
+   },
+   {
     "id": "webhook-retry-on-failure",
     "run": "${WP_CLI:-wp} eval-file tests/test-webhook-retry-on-failure.php"
    },

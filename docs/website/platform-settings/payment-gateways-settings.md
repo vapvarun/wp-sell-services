@@ -65,8 +65,8 @@ Card payments, and the gateway most marketplaces start with.
 The card includes a three-step **Stripe Setup Guide** covering API keys, the
 webhook endpoint to register (`/wpss-payment/stripe/callback/`, or
 `/?wpss_payment_callback=1&wpss_gateway=stripe` with Plain permalinks, listening for
-`payment_intent.succeeded`, `payment_intent.payment_failed` and
-`charge.refunded`), and the minimum permissions for a restricted key.
+`payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`
+and `charge.dispute.closed`), and the minimum permissions for a restricted key.
 
 **Fee fields are for display and splitting, not billing.** Stripe charges what
 Stripe charges. These two numbers only tell the plugin how to show and allocate

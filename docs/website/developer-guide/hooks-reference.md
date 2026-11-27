@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**587 hooks** across **809** firing sites.
+**587 hooks** across **810** firing sites.
 
 ## Actions (302)
 
@@ -133,7 +133,7 @@ guide; this is the complete index.
 | `wpss_fluentcart_order_created` | 3 | `src/Integrations/FluentCart/FluentCartOrderProvider.php` **[PRO]** | Fires when a WPSS order is created from Fluent Cart. |
 | `wpss_fluentcart_order_detail` | 1 | `src/Integrations/FluentCart/FluentCartAccountProvider.php` **[PRO]** | Fires after order detail content. |
 | `wpss_gateway_cards` | 1 | `src/Admin/Settings.php` | Fires after the registered gateway cards, before Offline. |
-| `wpss_gateway_refund_received` | 4 | `src/Integrations/PayPal/PayPalGateway.php` *(+7 more)* | Fires when a refund happened at the payment rail. |
+| `wpss_gateway_refund_received` | 4 | `src/Integrations/PayPal/PayPalGateway.php` *(+8 more)* | Fires when a refund happened at the payment rail. |
 | `wpss_gateway_refund_unallocated` | 1 | `src/Services/PendingRefundService.php` | Fires when a rail refund cannot be tied to one gig and waits for an admin. |
 | `wpss_gateway_settings_owned_by_rail` | 1 | `src/Admin/Settings.php` | Fires instead of the gateway cards when a cart rail owns payment. |
 | `wpss_ledger_row_inserted` | 4 | `src/functions/ledger.php` | Fires after a wallet ledger row is written (never for an ignored duplicate). |

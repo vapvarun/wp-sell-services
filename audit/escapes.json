@@ -1444,6 +1444,14 @@
    "added": "2026-11-27",
    "fails_on": "c30742a6 / Pro a38c0d4 (8 FAIL)",
    "check": "tests/test-webhook-retry-on-failure.php"
+  },
+  {
+   "card": "10550988459",
+   "title": "lost chargebacks were never recorded: the order stayed completed and the vendor kept money the platform lost",
+   "guard": "static:chargeback-lost-is-refund",
+   "added": "2026-11-27",
+   "fails_on": "93999b71 / Pro e03ced7 (5 FAIL)",
+   "check": "tests/test-chargeback-lost-is-refund.php"
   }
  ]
 }

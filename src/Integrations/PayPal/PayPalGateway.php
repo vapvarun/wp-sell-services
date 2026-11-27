@@ -423,6 +423,12 @@ class PayPalGateway extends AbstractPaymentGateway {
 			case 'PAYMENT.CAPTURE.REFUNDED':
 				return $this->handle_refund_completed( $resource );
 
+			// A lost dispute: PayPal sends it as a refund resource pointing at the capture, with its own id.
+			case 'PAYMENT.CAPTURE.REVERSED':
+				wpss_log( sprintf( 'paypal chargeback lost: reversal %s on a capture; recording it as a refund.', (string) ( $resource['id'] ?? '' ) ), 'warning' );
+
+				return $this->handle_refund_completed( $resource );
+
 			default:
 				return array(
 					'success' => true,
@@ -1216,6 +1222,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 						<li><code>CHECKOUT.ORDER.APPROVED</code></li>
 						<li><code>PAYMENT.CAPTURE.COMPLETED</code></li>
 						<li><code>PAYMENT.CAPTURE.REFUNDED</code></li>
+						<li><code>PAYMENT.CAPTURE.REVERSED</code></li>
 					</ul>
 				</li>
 				<li><?php esc_html_e( 'After creating the webhook, copy the "Webhook ID" and paste it in the Webhook ID field above.', 'wp-sell-services' ); ?></li>

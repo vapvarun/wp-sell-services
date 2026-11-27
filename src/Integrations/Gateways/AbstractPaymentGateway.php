@@ -304,4 +304,51 @@ abstract class AbstractPaymentGateway implements PaymentGatewayInterface {
 
 		return ! $asked || $refunded;
 	}
+
+	/**
+	 * Record a lost card dispute (chargeback) as a refund of the disputed amount.
+	 *
+	 * Owner rule: a lost dispute is a refund on the ledger, a won one changes nothing. It enters the
+	 * one refund seam (handle_gateway_refund()), which reverses the vendor's share, lets their balance
+	 * go negative when they already withdrew, and notifies as any refund does. The amount is this
+	 * dispute's own, not a running total, and the dispute id is the refund id, so a resend adds nothing.
+	 *
+	 * @since 1.9.4 (Basecamp 10550988459)
+	 *
+	 * @param string $transaction_id Payment id the order was paid with.
+	 * @param float  $amount         Disputed amount the platform lost, major units.
+	 * @param string $currency       Currency code.
+	 * @param string $dispute_id     Provider dispute id.
+	 * @param int    $order_id       The order, when the provider names it.
+	 * @return array{success: bool, message: string}
+	 */
+	protected function report_lost_dispute( string $transaction_id, float $amount, string $currency, string $dispute_id, int $order_id = 0 ): array {
+		if ( '' === $transaction_id || $amount <= 0 ) {
+			return array(
+				'success' => true,
+				'message' => 'Lost dispute had no payment or amount to record.',
+			);
+		}
+
+		wpss_log( sprintf( '%s chargeback lost: dispute %s took %s %s from payment %s; recording it as a refund.', $this->get_id(), $dispute_id, (string) $amount, $currency, $transaction_id ), 'warning' );
+
+		do_action(
+			'wpss_gateway_refund_received',
+			$this->get_id(),
+			$transaction_id,
+			$amount,
+			array_filter(
+				array(
+					'refund_id' => $dispute_id,
+					'currency'  => strtoupper( $currency ),
+					'order_id'  => $order_id,
+				)
+			)
+		);
+
+		return array(
+			'success' => true,
+			'message' => 'Lost dispute recorded as a refund.',
+		);
+	}
 }

@@ -671,6 +671,20 @@ class StripeGateway extends AbstractPaymentGateway {
 			case 'charge.refunded':
 				return $this->handle_refund( $data );
 
+			// A won dispute (or one closed as a warning) changes nothing.
+			case 'charge.dispute.closed':
+				return 'lost' === ( $data['status'] ?? '' )
+					? $this->report_lost_dispute(
+						(string) ( $data['payment_intent'] ?? '' ),
+						wpss_amount_from_minor_units( (int) ( $data['amount'] ?? 0 ), strtoupper( (string) ( $data['currency'] ?? '' ) ) ),
+						(string) ( $data['currency'] ?? '' ),
+						(string) ( $data['id'] ?? '' )
+					)
+					: array(
+						'success' => true,
+						'message' => 'Dispute not lost; nothing to record.',
+					);
+
 			default:
 				return array(
 					'success' => true,
@@ -1712,6 +1726,7 @@ class StripeGateway extends AbstractPaymentGateway {
 						<li><code>payment_intent.succeeded</code></li>
 						<li><code>payment_intent.payment_failed</code></li>
 						<li><code>charge.refunded</code></li>
+						<li><code>charge.dispute.closed</code></li>
 					</ul>
 				</li>
 				<li><?php esc_html_e( 'After creating the endpoint, copy the "Signing secret" (starts with whsec_) and paste it in the Webhook Secret field above.', 'wp-sell-services' ); ?></li>

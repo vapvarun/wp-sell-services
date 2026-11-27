@@ -53,7 +53,7 @@ Webhooks let Stripe tell your site when a payment succeeds or fails.
 1. In your Stripe Dashboard, go to **Developers > Webhooks**
 2. Click **Add endpoint**
 3. Paste your webhook URL: `https://yoursite.com/wpss-payment/stripe/callback`. With Plain permalinks (Settings > Permalinks) the URL is `https://yoursite.com/?wpss_payment_callback=1&wpss_gateway=stripe` instead; the gateway's setup guide always shows the right one for your site.
-4. Select these events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`
+4. Select these events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`, `charge.dispute.closed`
 5. Click **Add endpoint**
 6. Copy the **Signing secret** that appears
 7. Paste it into **Sell Services > Settings > Payment Gateways**
@@ -132,6 +132,10 @@ If a cart paid for several gigs in one charge, refund each gig from its own orde
 A refund made directly in the Stripe dashboard is recorded too. On a single-gig payment it lands on that gig. On a payment that covers several gigs, Stripe does not say which gig the refund was for, so it waits for you: open the gig and use **Refund waiting for a gig**, or run `wp wpss refunds assign <order_id>`. Refunding the whole charge refunds every gig in full.
 
 Refunds appear in the buyer's account within 5-10 business days. Stripe refunds the percentage fee but keeps the fixed fee (typically $0.30 per transaction).
+
+### Chargebacks (Card Disputes)
+
+When a buyer disputes a card payment with their bank and **you lose the dispute**, Stripe takes the disputed amount from your account. The order is then recorded as refunded for that amount, the vendor's earnings for it are reversed (their balance can go below zero if they already withdrew), and the usual refund notifications go out. A dispute you **win** changes nothing. This needs the `charge.dispute.closed` event on your webhook. PayPal (`PAYMENT.CAPTURE.REVERSED`) and Razorpay (`payment.dispute.lost`) work the same way.
 
 ### Automatic Refund When an Order Cannot Be Created
 
