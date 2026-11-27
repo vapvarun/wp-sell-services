@@ -39,7 +39,7 @@ $wpss_file_max       = (int) wpss_get_option( 'advanced', 'max_file_size' );
 	<ul class="wpss-request-files" aria-live="polite">
 		<?php foreach ( $wpss_attachment_ids as $wpss_attachment_id ) : ?>
 			<li class="wpss-request-files__item">
-				<span class="wpss-request-files__name"><?php echo esc_html( basename( (string) get_attached_file( $wpss_attachment_id ) ) ); ?></span>
+				<span class="wpss-request-files__name"><?php echo esc_html( wpss_attachment_display_name( (int) $wpss_attachment_id ) ); ?></span>
 				<input type="hidden" name="attachments[]" value="<?php echo esc_attr( (string) $wpss_attachment_id ); ?>">
 				<?php if ( ! $wpss_files_locked ) : ?>
 					<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-request-files__remove"><?php esc_html_e( 'Remove', 'wp-sell-services' ); ?></button>

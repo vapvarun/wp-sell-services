@@ -461,7 +461,7 @@ function wpss_discard_order_file( array $record, int $order_id ): void {
 	}
 
 	// Bucket deletes are HTTP calls; queued so a request never waits on one.
-	if ( ! empty( $record['remote_path'] ) ) {
+	if ( ! empty( $record['remote_path'] ) && wpss_remote_path_is_order_scoped( (string) $record['remote_path'], $order_id ) ) {
 		$job = array( (string) ( $record['provider'] ?? '' ), (string) $record['remote_path'], $order_id );
 		if ( ! empty( $record['location'] ) ) {
 			$job[] = (array) $record['location'];
@@ -512,6 +512,21 @@ function wpss_has_unlocated_bucket_files(): bool {
 	}
 
 	return false;
+}
+
+/**
+ * Whether a bucket key belongs to this order. wpss_store_order_file() writes every key as
+ * wpss/{order}/{kind}/{name}, so a key outside that prefix was not written by us for this
+ * order (a client-built record) and is never signed or deleted.
+ *
+ * @since 2.0.0
+ *
+ * @param string $remote_path Object key.
+ * @param int    $order_id    Order the record is attached to.
+ * @return bool
+ */
+function wpss_remote_path_is_order_scoped( string $remote_path, int $order_id ): bool {
+	return $order_id > 0 && str_starts_with( $remote_path, 'wpss/' . $order_id . '/' ) && ! str_contains( $remote_path, '..' );
 }
 
 /**
@@ -1002,6 +1017,10 @@ function wpss_locate_order_file( int $order_id, string $file_id ) {
 	// rows written before 1.7.1 lack one, and for those the active provider
 	// is the only candidate.
 	if ( ! empty( $record['remote_path'] ) ) {
+		if ( ! wpss_remote_path_is_order_scoped( (string) $record['remote_path'], $order_id ) ) {
+			return new WP_Error( 'wpss_file_not_found', __( 'File not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
 		$provider_id = (string) ( $record['provider'] ?? '' );
 		$provider    = '' !== $provider_id ? wpss_get_storage_provider( $provider_id ) : wpss_get_active_storage_provider();
 		$ttl         = 5 * MINUTE_IN_SECONDS;

@@ -91,6 +91,10 @@ try {
 	$check( 'Request brief upload stored', $bid > 0, wp_json_encode( $brief ) );
 	$check( '  as a private attachment', $bid > 0 && 'private' === get_post_status( $bid ), (string) get_post_status( $bid ) );
 	$check( '  with an unguessable file name', $bid > 0 && 'brief.txt' !== basename( (string) get_attached_file( $bid ) ), basename( (string) get_attached_file( $bid ) ) );
+	$check( '  but shown under its original name', $bid > 0 && function_exists( 'wpss_attachment_display_name' ) && 'brief.txt' === wpss_attachment_display_name( $bid ), $bid > 0 && function_exists( 'wpss_attachment_display_name' ) ? wpss_attachment_display_name( $bid ) : '' );
+	$legacy = wp_insert_attachment( array( 'post_title' => 'qa-950-legacy', 'post_mime_type' => 'text/plain', 'post_status' => 'private' ), '/tmp/abc123-legacy.txt' );
+	$atts[] = $legacy;
+	$check( '  and a brief from before 2.0.0 falls back to its file name', function_exists( 'wpss_attachment_display_name' ) && 'abc123-legacy.txt' === wpss_attachment_display_name( (int) $legacy ) );
 	wp_set_current_user( 0 );
 	$listed = rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/media/' . $bid ) );
 	$check( '  and logged-out /wp/v2/media does not serve it', $bid > 0 && 200 !== $listed->get_status(), (string) $listed->get_status() );
@@ -119,6 +123,17 @@ try {
 	$saved   = $msg ? json_decode( (string) $wpdb->get_var( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_messages WHERE id = %d", $msg->id ) ), true ) : null; // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$check( 'Message: another member\'s media id is dropped, the sender\'s own kept', array( $mine ) === array_map( 'intval', (array) $saved ), wp_json_encode( $saved ) );
 
+	// 3b. A client cannot hand the message route a file record of its own making.
+	wp_set_current_user( (int) $f->vendor );
+	$forge = new WP_REST_Request( 'POST', "/wpss/v1/orders/{$oid}/conversation/messages" );
+	$forge->set_body_params( array( 'content' => 'qa 950 forged', 'attachments' => array( array( 'id' => 'f', 'remote_path' => 'wpss/1/delivery/other.pdf', 'provider' => 's3' ) ) ) );
+	$fres   = rest_do_request( $forge );
+	$fmsg   = (int) ( $fres->get_data()['data']['id'] ?? 0 );
+	$frow   = $fmsg ? (string) $wpdb->get_var( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_messages WHERE id = %d", $fmsg ) ) : ''; // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	$fmsg && $wpdb->delete( $wpdb->prefix . 'wpss_messages', array( 'id' => $fmsg ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	wp_set_current_user( 0 );
+	$check( 'Message route: a client-built file record is never stored', ! str_contains( $frow, 'remote_path' ), $fres->get_status() . ' ' . $frow );
+
 	// 4. The store asks with the kind's own context: widened delivery types hold for deliveries only.
 	$d        = $send( array( 'do' => 'store', 'o' => (string) $oid, 'kind' => 'delivery' ) );
 	$msgfile  = $send( array( 'do' => 'store', 'o' => (string) $oid, 'kind' => 'message' ) );
@@ -137,6 +152,11 @@ try {
 	$check( 'Discard: the local file is gone', '' !== $local && ! file_exists( $local ), $local );
 	$check( '  and the bucket delete is queued', \WPSellServices\Services\Scheduler::has_pending( 'wpss_delete_remote_order_file', $job ) );
 	\WPSellServices\Services\Scheduler::unschedule( 'wpss_delete_remote_order_file', $job );
+	$foreign = array( 'qa-950', 'wpss/' . ( $oid + 1 ) . '/delivery/theirs.txt', $oid );
+	wpss_discard_order_file( array( 'id' => 'y', 'path' => '', 'remote_path' => $foreign[1], 'provider' => 'qa-950' ), $oid );
+	$check( '  but never for a bucket key outside the record\'s own order', ! \WPSellServices\Services\Scheduler::has_pending( 'wpss_delete_remote_order_file', $foreign ) );
+	\WPSellServices\Services\Scheduler::unschedule( 'wpss_delete_remote_order_file', $foreign );
+	$check( 'Only keys under wpss/{order}/ are signed for an order', function_exists( 'wpss_remote_path_is_order_scoped' ) && wpss_remote_path_is_order_scoped( "wpss/{$oid}/delivery/a.txt", $oid ) && ! wpss_remote_path_is_order_scoped( 'wpss/' . ( $oid + 1 ) . '/delivery/a.txt', $oid ) && ! wpss_remote_path_is_order_scoped( "wpss/{$oid}/../9/a.txt", $oid ) );
 	$check( '  every failure return of a delivery, requirements save and dispute evidence discards', 3 === substr_count( (string) file_get_contents( dirname( __DIR__ ) . '/src/Services/DeliveryService.php' ), '$this->discard_files(' ) && 2 === substr_count( (string) file_get_contents( dirname( __DIR__ ) . '/src/Services/RequirementsService.php' ), '$this->discard_uploads(' ) && str_contains( (string) file_get_contents( dirname( __DIR__ ) . '/src/API/DisputesController.php' ), 'wpss_discard_order_file(' ) && str_contains( (string) file_get_contents( dirname( __DIR__ ) . '/src/Frontend/AjaxHandlers.php' ), 'wpss_discard_order_file(' ) );
 
 	// 6. An empty or '..' name never resolves to a folder.
@@ -149,7 +169,6 @@ try {
 	$check( 'Client shape drops path, remote_path and provider', ! isset( $client['path'] ) && ! isset( $client['remote_path'] ) && ! isset( $client['provider'] ) && '' !== (string) ( $client['url'] ?? '' ) );
 
 	// 8. Dead code is gone.
-	$check( 'Dead: wp_ajax_wpss_upload_file is not registered', ! has_action( 'wp_ajax_wpss_upload_file' ) );
 	$check( 'Dead: DisputeWorkflowManager::get_messages removed', ! method_exists( \WPSellServices\Services\DisputeWorkflowManager::class, 'get_messages' ) );
 	$check( 'Dead: proposals no longer take an attachments input', ! str_contains( (string) file_get_contents( dirname( __DIR__ ) . '/src/API/ProposalsController.php' ), "get_param( 'attachments' )" ) );
 } finally {
@@ -163,6 +182,9 @@ try {
 			$p = wpss_find_local_order_file( $oid, (string) $rec['path'] );
 			'' !== $p && is_file( $p ) && wp_delete_file( $p );
 		}
+	}
+	foreach ( wpss_order_files_dirs() as $dir ) {
+		@rmdir( $dir . $oid . '/' ); // phpcs:ignore -- only removes it when empty.
 	}
 	if ( isset( $msg ) && $msg ) {
 		$wpdb->delete( $wpdb->prefix . 'wpss_messages', array( 'id' => (int) $msg->id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery

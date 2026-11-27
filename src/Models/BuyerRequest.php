@@ -186,7 +186,7 @@ class BuyerRequest {
 				$urls[] = [
 					'id'       => $id,
 					'url'      => $url,
-					'filename' => basename( get_attached_file( $id ) ?: '' ),
+					'filename' => wpss_attachment_display_name( (int) $id ),
 					'type'     => get_post_mime_type( $id ),
 				];
 			}

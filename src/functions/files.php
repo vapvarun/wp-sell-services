@@ -679,6 +679,24 @@ function wpss_get_max_upload_size(): int {
 }
 
 /**
+ * The name a media-library attachment is shown under: the name it was uploaded with.
+ *
+ * Request briefs and contact files are stored under an unguessable name
+ * (wpss_obfuscate_public_upload_name()), so the original is kept in
+ * _wpss_original_name; older attachments fall back to the stored file name.
+ *
+ * @since 2.0.0
+ *
+ * @param int $attachment_id Attachment ID.
+ * @return string
+ */
+function wpss_attachment_display_name( int $attachment_id ): string {
+	$original = (string) get_post_meta( $attachment_id, '_wpss_original_name', true );
+
+	return '' !== $original ? $original : basename( (string) get_attached_file( $attachment_id ) );
+}
+
+/**
  * Validate + store conversation message file attachments.
  *
  * Single source of truth for message, contact and dispute-reply attachments,
@@ -760,6 +778,7 @@ function wpss_handle_message_attachments( array $files, int $order_id = 0, strin
 		remove_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
 
 		if ( ! is_wp_error( $attachment_id ) ) {
+			update_post_meta( $attachment_id, '_wpss_original_name', sanitize_text_field( (string) $files['name'][ $i ] ) );
 			$attachments[] = array(
 				'id'   => $attachment_id,
 				'url'  => wp_get_attachment_url( $attachment_id ),

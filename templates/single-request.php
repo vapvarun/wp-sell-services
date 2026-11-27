@@ -247,7 +247,7 @@ do_action( 'wpss_before_single_request', $request_id );
 									<?php foreach ( $attachments as $attachment_id ) : ?>
 										<?php
 										$attachment_url  = wp_get_attachment_url( $attachment_id );
-										$attachment_name = basename( get_attached_file( $attachment_id ) );
+										$attachment_name = wpss_attachment_display_name( (int) $attachment_id );
 										?>
 										<a href="<?php echo esc_url( $attachment_url ); ?>" class="wpss-attachment-item" target="_blank" rel="noopener">
 											<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>

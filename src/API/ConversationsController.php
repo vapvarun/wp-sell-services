@@ -122,14 +122,19 @@ class ConversationsController extends RestController {
 					'callback'            => array( $this, 'send_order_message' ),
 					'permission_callback' => array( $this, 'check_order_permission' ),
 					'args'                => array(
-						'order_id' => array(
+						'order_id'    => array(
 							'validate_callback' => array( $this, 'validate_id' ),
 						),
-						'content'  => array(
+						'content'     => array(
 							'required'          => false,
 							'type'              => 'string',
 							'default'           => '',
 							'sanitize_callback' => 'wp_kses_post',
+						),
+						'attachments' => array(
+							'type'    => 'array',
+							'items'   => array( 'type' => 'integer' ),
+							'default' => array(),
 						),
 					),
 				),
@@ -469,9 +474,11 @@ class ConversationsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private function do_send_message( int $conversation_id, $request ) {
-		$user_id     = get_current_user_id();
-		$content     = (string) $request->get_param( 'content' );
-		$attachments = (array) $request->get_param( 'attachments' );
+		$user_id = get_current_user_id();
+		$content = (string) $request->get_param( 'content' );
+		// Clients send media ids only. A record (path, remote_path, location) is built server-side by
+		// wpss_handle_message_attachments() below; a client-built one could point at any stored file.
+		$attachments = array_values( array_filter( array_map( static fn( $a ) => is_scalar( $a ) ? absint( $a ) : 0, (array) $request->get_param( 'attachments' ) ) ) );
 
 		// A block has to actually stop contact, or it is only a preference.
 		// Checked here rather than in the two callers because this is the one
@@ -662,7 +669,7 @@ class ConversationsController extends RestController {
 					$attachments[] = array(
 						'id'        => $id,
 						'url'       => $url,
-						'filename'  => $attached_file ? basename( $attached_file ) : '',
+						'filename'  => $attached_file ? wpss_attachment_display_name( $id ) : '',
 						'type'      => get_post_mime_type( $id ),
 						'thumbnail' => wp_get_attachment_image_url( $id, 'thumbnail' ),
 					);

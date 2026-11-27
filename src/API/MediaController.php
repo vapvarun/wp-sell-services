@@ -178,6 +178,10 @@ class MediaController extends RestController {
 
 		update_post_meta( $attachment_id, '_wpss_upload_context', $context );
 
+		if ( $is_brief ) {
+			update_post_meta( $attachment_id, '_wpss_original_name', sanitize_text_field( (string) ( $files['file']['name'] ?? '' ) ) );
+		}
+
 		return new WP_REST_Response( $this->format_attachment( $attachment_id ), 201 );
 	}
 
@@ -353,7 +357,7 @@ class MediaController extends RestController {
 		$data = array(
 			'id'        => $attachment_id,
 			'url'       => $url,
-			'filename'  => $filepath ? basename( $filepath ) : '',
+			'filename'  => wpss_attachment_display_name( $attachment_id ),
 			'filesize'  => $file_size ?: 0,
 			'mime_type' => $filetype['type'],
 			'type'      => wp_ext2type( $filetype['ext'] ) ?: 'other',

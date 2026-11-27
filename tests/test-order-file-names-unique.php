@@ -105,6 +105,9 @@ try {
 	foreach ( $paths as $p ) {
 		wp_delete_file( $p );
 	}
+	foreach ( wpss_order_files_dirs() as $dir ) {
+		@rmdir( $dir . $oid . '/' ); // phpcs:ignore -- only removes it when empty.
+	}
 }
 
 echo $fails ? "\n{$fails} FAILED\n" : "\nall passed\n";
