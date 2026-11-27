@@ -70,7 +70,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:751` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:799` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:807` |
 
 ### Order Filters
 
@@ -120,7 +120,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:350` |
 | `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:544` |
 | `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:1485` |
-| `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1754` |
+| `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1765` |
 | `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` (chat only; not deliveries or revision requests) | `src/Services/ConversationService.php:432` |
 
 ## Payment and Gateway Actions
@@ -136,7 +136,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | `wpss_standalone_order_complete` | `object $order` | `src/Integrations/Standalone/StandaloneOrderProvider.php:784` |
 | `wpss_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Standalone/StandaloneOrderProvider.php:480` |
 | `wpss_order_status_pending_requirements` | `int $order_id, string $old_status` | `src/Integrations/Standalone/StandaloneOrderProvider.php:470` |
-| `wpss_payment_callback` | `string $gateway_id` | `src/Integrations/Standalone/StandaloneAdapter.php:339` |
+| `wpss_payment_callback` | `string $gateway_id` | `src/Core/Plugin.php:1303` |
 
 ### Offline Gateway
 
@@ -695,7 +695,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1302` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:205` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:428` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4294` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4291` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:973` |
 
 **`wpss_currency_registry`** is the preferred, single-place override - add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
@@ -883,7 +883,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_edd_adapter_init` | `EDDAdapter $adapter` | `src/Integrations/EDD/EDDAdapter.php:172` |
+| `wpss_edd_adapter_init` | `EDDAdapter $adapter` | `src/Integrations/EDD/EDDAdapter.php:199` |
 | `wpss_edd_service_purchased` | `ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:120` |
 | `wpss_edd_services_processed` | `int $order_id, ServiceItem[] $items` | `src/Integrations/EDD/EDDOrderProvider.php:150` |
 | `wpss_edd_order_record_created` | `int $record_id, ServiceItem $item, int $order_id` | `src/Integrations/EDD/EDDOrderProvider.php:482` |
@@ -894,7 +894,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_fluentcart_adapter_init` | `FluentCartAdapter $adapter` | `src/Integrations/FluentCart/FluentCartAdapter.php:217` |
+| `wpss_fluentcart_adapter_init` | `FluentCartAdapter $adapter` | `src/Integrations/FluentCart/FluentCartAdapter.php:244` |
 | `wpss_fluentcart_order_created` | `int $order_id, int $external_order_id, array $order_data` | `src/Integrations/FluentCart/FluentCartOrderProvider.php:116` |
 | `wpss_fluentcart_order_detail` | `object $order` | `src/Integrations/FluentCart/FluentCartAccountProvider.php:361` |
 

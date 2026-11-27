@@ -756,6 +756,23 @@ final class Plugin {
 				// page slug (or its parent) changes. The query-arg form
 				// (?section=services) keeps working as a 301 fallback.
 				$this->register_dashboard_section_rule();
+
+				// Payment callback: /wpss-payment/{gateway}/callback/. Registered on every
+				// rail, because orders already paid through our gateways still receive
+				// refund, dispute and capture webhooks after a switch to a shop plugin.
+				$callback_regex = '^wpss-payment/([^/]+)/callback/?$';
+				add_rewrite_rule( $callback_regex, 'index.php?wpss_payment_callback=1&wpss_gateway=$matches[1]', 'top' );
+
+				// Sites upgraded from a rail that never registered the rule get it without a Permalinks save.
+				$live_rules = get_option( 'rewrite_rules' );
+				if ( is_array( $live_rules ) && ! isset( $live_rules[ $callback_regex ] ) && get_option( 'permalink_structure' ) ) {
+					add_action(
+						'wp_loaded',
+						static function (): void {
+							flush_rewrite_rules( false );
+						}
+					);
+				}
 			},
 			5
 		);
@@ -770,6 +787,8 @@ final class Plugin {
 				$vars[] = 'wpss_section';
 				$vars[] = 'wpss_order_id';
 				$vars[] = 'wpss_pay_order';
+				$vars[] = 'wpss_payment_callback';
+				$vars[] = 'wpss_gateway';
 				return $vars;
 			}
 		);
@@ -789,6 +808,7 @@ final class Plugin {
 		// pages before ANY output is produced.
 		add_action( 'template_redirect', array( $this, 'redirect_dormant_store_pages' ), 1 );
 		add_action( 'template_redirect', array( $this, 'redirect_legacy_vendor_slug' ), 1 );
+		add_action( 'template_redirect', array( $this, 'dispatch_payment_callback' ), 0 );
 
 		// Order files are never linked directly, so this is the only way to read
 		// one. Logged-in only: no nopriv twin.
@@ -1257,6 +1277,40 @@ final class Plugin {
 		}
 
 		return array_diff_key( $query_vars, array_flip( $filters ) );
+	}
+
+	/**
+	 * Hand a payment provider's webhook to its gateway, on every rail.
+	 *
+	 * A gateway hooks `wpss_payment_callback_{id}` and answers the request itself. When
+	 * nothing listens (the gateway's plugin is gone, or an unknown id) the answer is 503,
+	 * so the provider retries later; an empty 200 would tell it the event was handled.
+	 *
+	 * @since 1.9.4 Moved here from StandaloneAdapter, which runs only on the standalone rail.
+	 * @return void
+	 */
+	public function dispatch_payment_callback(): void {
+		if ( ! get_query_var( 'wpss_payment_callback' ) ) {
+			return;
+		}
+
+		$gateway_id = sanitize_key( (string) get_query_var( 'wpss_gateway' ) );
+
+		/**
+		 * Fires when a payment callback is received.
+		 *
+		 * @param string $gateway_id Gateway ID.
+		 */
+		do_action( 'wpss_payment_callback', $gateway_id );
+
+		if ( '' === $gateway_id || ! has_action( "wpss_payment_callback_{$gateway_id}" ) ) {
+			status_header( 503 );
+			header( 'Retry-After: 3600' );
+			exit;
+		}
+
+		do_action( "wpss_payment_callback_{$gateway_id}" );
+		exit;
 	}
 
 	/**
@@ -2737,7 +2791,8 @@ final class Plugin {
 		//
 		// It is tempting to skip this when WooCommerce is taking payment, but
 		// init() is also what hooks each gateway's webhook handler
-		// (wpss_payment_callback_stripe and friends). Switching a site from our
+		// (wpss_payment_callback_stripe and friends), which the always-on
+		// callback route in register_rewrite_rules() dispatches to. Switching a site from our
 		// Stripe to Woo must not change orders that were already paid through
 		// our Stripe - a later refund, dispute or delayed-capture webhook for
 		// one of those still has to be received and applied. Unregistering the

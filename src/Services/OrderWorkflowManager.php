@@ -1002,6 +1002,17 @@ class OrderWorkflowManager {
 			}
 		}
 
+		// A shop plugin's order is reported by that shop. Our own gateway seeing the same charge
+		// (WooCommerce Stripe and ours on one Stripe account) would record the refund twice.
+		if ( isset( wpss()->get_payment_gateways()[ $gateway ] ) ) {
+			foreach ( $orders as $oid => $candidate ) {
+				if ( '' !== wpss_order_money_rail( $candidate ) ) {
+					unset( $orders[ $oid ] );
+					wpss_log( sprintf( 'Order %d: "%s" refund %s skipped; the shop that took the payment reports its refunds.', $oid, $gateway, $transaction_id ), 'info' );
+				}
+			}
+		}
+
 		if ( empty( $orders ) || $amount <= 0 ) {
 			wpss_log( sprintf( 'Gateway refund from "%s" for %s (%s) did not match a service order; nothing applied.', $gateway, $transaction_id, (string) $amount ), 'warning' );
 			return;

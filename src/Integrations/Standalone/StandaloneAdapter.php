@@ -255,12 +255,9 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		// No /account/{page}/ rule: that base belongs to the site (Learnomy and other plugins answer
 		// /account/billing/ and friends). [wpss_account] still reads ?wpss_account_page= from the query string.
 
-		// Payment callback.
-		add_rewrite_rule(
-			'^wpss-payment/([^/]+)/callback/?$',
-			'index.php?wpss_payment_callback=1&wpss_gateway=$matches[1]',
-			'top'
-		);
+		// The payment callback (/wpss-payment/{gateway}/callback/) is registered by
+		// Plugin::register_rewrite_rules() on every rail, not here: webhooks for
+		// orders paid through our gateways keep arriving after a rail switch.
 
 		// Self-heal when the pay rule is missing from the live option.
 		$live_rules = get_option( 'rewrite_rules' );
@@ -304,8 +301,6 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		$vars[] = 'wpss_service_id';
 		$vars[] = 'wpss_account';
 		$vars[] = 'wpss_account_page';
-		$vars[] = 'wpss_payment_callback';
-		$vars[] = 'wpss_gateway';
 		$vars[] = 'wpss_pay_order';
 
 		return $vars;
@@ -326,20 +321,6 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 				$this->render_checkout_page( $service_id, $package_id );
 				exit;
 			}
-		}
-
-		// Handle payment callbacks.
-		if ( get_query_var( 'wpss_payment_callback' ) ) {
-			$gateway_id = sanitize_text_field( get_query_var( 'wpss_gateway' ) );
-
-			/**
-			 * Fires when a payment callback is received.
-			 *
-			 * @param string $gateway_id Gateway ID.
-			 */
-			do_action( 'wpss_payment_callback', $gateway_id );
-			do_action( "wpss_payment_callback_{$gateway_id}" );
-			exit;
 		}
 	}
 

@@ -3857,13 +3857,10 @@ class Settings {
 			$sanitized['ecommerce_platform'] = sanitize_key( (string) $input['ecommerce_platform'] );
 		}
 
-		// Changing the rail changes which rewrite rules exist. The standalone
-		// adapter owns /wpss-payment/{gateway}/callback - the URL every gateway
-		// webhook is delivered to - and registers it only while standalone is
-		// the active rail. Without a flush, that rule is missing from the stored
-		// rewrite rules after a switch, so every incoming webhook 404s until
-		// somebody happens to re-save Permalinks. Nothing surfaces it: the
-		// charge succeeds at the gateway and the order silently never goes paid.
+		// Changing the rail changes which rewrite rules exist (each rail adds its
+		// own checkout and account routes). Without a flush those stay stale
+		// until somebody happens to re-save Permalinks. The payment callback
+		// route is registered on every rail, so webhooks are not affected.
 		//
 		// Deferred through the transient the plugin already uses rather than
 		// flushed inline, because this runs during option save - before the new

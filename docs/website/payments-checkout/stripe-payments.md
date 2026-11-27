@@ -74,6 +74,7 @@ What this means for you:
 
 - You can safely share one Stripe account between a live site and its staging copy.
 - If you move the site to a new domain, payments started on the old address are no longer recognised by webhooks, so let open checkouts finish first. Switching `http` to `https` on the same domain changes nothing.
+- If you later move checkout to WooCommerce, Easy Digital Downloads or FluentCart, keep this webhook in Stripe. Refunds and disputes for orders paid here still arrive at it, and refunds made inside the shop still reach the shop's orders after you switch back. A webhook for a gateway the site no longer has answers 503, so Stripe retries it later.
 - All sites sharing the account should run 1.8.0 or later. A site on an older version still reacts to payments from the others.
 
 ## How Checkout Works with Stripe

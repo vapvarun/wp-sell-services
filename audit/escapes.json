@@ -1396,6 +1396,22 @@
    "added": "2026-11-27",
    "fails_on": "6b6230e1 (2 FAIL)",
    "check": "tests/test-new-vendor-sales-next-step.php"
+  },
+  {
+   "card": "10550988379",
+   "title": "webhooks dropped after a checkout route switch; shop refunds stopped syncing; one refund could be recorded twice",
+   "guard": "static:payment-callback-every-rail",
+   "added": "2026-11-27",
+   "fails_on": "6037e037 (8 FAIL)",
+   "check": "tests/test-payment-callback-every-rail.php"
+  },
+  {
+   "card": "10550988379",
+   "title": "shop order sync registered only while that shop was the checkout route",
+   "guard": "static:store-order-sync-off-route",
+   "added": "2026-11-27",
+   "fails_on": "Pro a1fd28c (13 FAIL)",
+   "check": "../wp-sell-services-pro/tests/test-store-order-sync-off-route.php"
   }
  ]
 }

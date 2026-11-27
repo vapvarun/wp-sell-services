@@ -813,6 +813,14 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "payment-callback-every-rail",
+    "run": "${WP_CLI:-wp} eval-file tests/test-payment-callback-every-rail.php"
+   },
+   {
+    "id": "store-order-sync-off-route",
+    "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-store-order-sync-off-route.php"
+   },
+   {
     "id": "admin-menu-queue-counts",
     "run": "${WP_CLI:-wp} eval-file tests/test-admin-menu-queue-counts.php"
    },

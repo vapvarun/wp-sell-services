@@ -326,6 +326,7 @@ function wpss_order_actor_role( object $order, int $user_id ): string {
  * can carry "stripe" as its method and still belongs to Woo.
  *
  * @since 1.9.0
+ * @since 1.9.4 Defaults from the order's platform, not only from the active rail's filter.
  *
  * @param object $order Order row or model.
  * @return string Human-readable platform name, or '' when we collected the money.
@@ -342,7 +343,14 @@ function wpss_order_money_rail( object $order ): string {
 	 * @param string $rail  Platform name, '' for orders we collected.
 	 * @param object $order Order row or model.
 	 */
-	return (string) apply_filters( 'wpss_order_money_rail', '', $order );
+	// Read from the order itself, so it holds when that shop plugin is not the rail now or is gone.
+	$shops = array(
+		'woocommerce' => 'WooCommerce',
+		'edd'         => 'Easy Digital Downloads',
+		'fluentcart'  => 'FluentCart',
+	);
+
+	return (string) apply_filters( 'wpss_order_money_rail', $shops[ (string) ( $order->platform ?? '' ) ] ?? '', $order );
 }
 
 /**
