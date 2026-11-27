@@ -661,8 +661,20 @@ class StripeGateway extends AbstractPaymentGateway {
 			case 'charge.refunded':
 				return $this->handle_refund( $data );
 
-			// A won dispute (or one closed as a warning) changes nothing.
+			// Opened: the owner is told and the order marked; no money moves.
+			case 'charge.dispute.created':
+				return $this->report_opened_dispute(
+					(string) ( $data['payment_intent'] ?? '' ),
+					wpss_amount_from_minor_units( (int) ( $data['amount'] ?? 0 ), strtoupper( (string) ( $data['currency'] ?? '' ) ) ),
+					(string) ( $data['currency'] ?? '' ),
+					(string) ( $data['id'] ?? '' ),
+					(int) ( $data['evidence_details']['due_by'] ?? 0 )
+				);
+
+			// Closed: the mark clears. A lost one is also a refund on the ledger; won or warning moves nothing.
 			case 'charge.dispute.closed':
+				$this->report_closed_dispute( (string) ( $data['payment_intent'] ?? '' ), (string) ( $data['id'] ?? '' ), (string) ( $data['status'] ?? '' ) );
+
 				return 'lost' === ( $data['status'] ?? '' )
 					? $this->report_lost_dispute(
 						(string) ( $data['payment_intent'] ?? '' ),
@@ -1726,6 +1738,7 @@ class StripeGateway extends AbstractPaymentGateway {
 						<li><code>payment_intent.succeeded</code></li>
 						<li><code>payment_intent.payment_failed</code></li>
 						<li><code>charge.refunded</code></li>
+						<li><code>charge.dispute.created</code></li>
 						<li><code>charge.dispute.closed</code></li>
 					</ul>
 				</li>

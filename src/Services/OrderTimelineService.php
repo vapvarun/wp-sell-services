@@ -47,7 +47,8 @@ class OrderTimelineService {
 			$this->requirement_events( $order_id ),
 			$this->delivery_events( $order_id ),
 			$this->sub_order_events( $order_id ),
-			$this->status_events( $order )
+			$this->status_events( $order ),
+			$this->chargeback_events( $order )
 		);
 
 		// Oldest first: an activity log reads top-down in the order things
@@ -286,6 +287,56 @@ class OrderTimelineService {
 				),
 				array( 'status' => $status )
 			);
+		}
+
+		return $events;
+	}
+
+	/**
+	 * Bank chargebacks on the order: when each opened and how it closed.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param object $order Order.
+	 * @return array<int, array>
+	 */
+	private function chargeback_events( object $order ): array {
+		$gateways = wpss()->get_payment_gateways();
+		$events   = array();
+
+		foreach ( ChargebackService::for_order( $order ) as $dispute_id => $c ) {
+			$gateway = (string) ( $c['gateway'] ?? '' );
+			$label   = isset( $gateways[ $gateway ] ) ? $gateways[ $gateway ]->get_name() : ucfirst( $gateway );
+			$data    = array(
+				'dispute_id' => (string) $dispute_id,
+				'gateway'    => $gateway,
+			);
+
+			$events[] = $this->event(
+				'chargeback_opened',
+				(string) ( $c['opened_at'] ?? '' ),
+				0,
+				empty( $c['due_by'] )
+					/* translators: %s: payment provider, e.g. Stripe */
+					? sprintf( __( 'Chargeback opened at %s.', 'wp-sell-services' ), $label )
+					/* translators: 1: payment provider, 2: date */
+					: sprintf( __( 'Chargeback opened at %1$s. Evidence due %2$s.', 'wp-sell-services' ), $label, wpss_date_label( (string) $c['due_by'] ) ),
+				$data
+			);
+
+			if ( ! empty( $c['closed_at'] ) ) {
+				$messages = array(
+					'won'  => __( 'Chargeback won. Nothing was taken back.', 'wp-sell-services' ),
+					'lost' => __( 'Chargeback lost. The amount is recorded as a refund.', 'wp-sell-services' ),
+				);
+				$events[] = $this->event(
+					'chargeback_closed',
+					(string) $c['closed_at'],
+					0,
+					$messages[ $c['status'] ?? '' ] ?? __( 'Chargeback closed.', 'wp-sell-services' ),
+					$data + array( 'outcome' => (string) ( $c['status'] ?? '' ) )
+				);
+			}
 		}
 
 		return $events;

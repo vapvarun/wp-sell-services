@@ -41,7 +41,7 @@ PayPal provides a full sandbox environment for testing without real money.
 
 1. In PayPal Developer Dashboard, go to **Webhooks**
 2. Add your endpoint: `https://yoursite.com/wpss-payment/paypal/callback`. With Plain permalinks (Settings > Permalinks) the URL is `https://yoursite.com/?wpss_payment_callback=1&wpss_gateway=paypal` instead; the gateway's setup guide always shows the right one for your site.
-3. Select events: `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.REFUNDED` and `PAYMENT.CAPTURE.REVERSED`
+3. Select events: `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.REFUNDED`, `PAYMENT.CAPTURE.REVERSED`, `CUSTOMER.DISPUTE.CREATED` and `CUSTOMER.DISPUTE.RESOLVED`. The two dispute events email you when a buyer opens a chargeback or PayPal claim and mark the order **Chargeback open** until it is resolved; a lost one moves money only through `PAYMENT.CAPTURE.REVERSED`.
 4. Save and copy the **Webhook ID** to your WP Sell Services settings
 
 ### How Checkout Works
@@ -112,7 +112,7 @@ Razorpay provides test mode keys for development.
 
 1. In Razorpay Dashboard, go to **Webhooks**
 2. Add endpoint: `https://yoursite.com/wpss-payment/razorpay/callback`. With Plain permalinks (Settings > Permalinks) the URL is `https://yoursite.com/?wpss_payment_callback=1&wpss_gateway=razorpay` instead; the gateway's setup guide always shows the right one for your site.
-3. Select events: `order.paid`, `payment.failed`, `refund.created`, `payment.dispute.lost`
+3. Select events: `order.paid`, `payment.failed`, `refund.created`, `payment.dispute.created`, `payment.dispute.won`, `payment.dispute.lost`, `payment.dispute.closed`. An opened dispute emails you and marks the order **Chargeback open**; won or closed clears it; lost also records the refund.
 4. Copy the Webhook Secret to your WP Sell Services settings
 
 Razorpay sends every event on an account to every site connected to it. Since

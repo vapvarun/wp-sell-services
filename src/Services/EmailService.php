@@ -75,6 +75,7 @@ class EmailService {
 	 * @var string
 	 */
 	public const TYPE_RECEIPT_SUBMITTED     = 'receipt_submitted';
+	public const TYPE_CHARGEBACK_OPENED     = 'chargeback_opened';
 	public const TYPE_RECEIPT_VERIFIED      = 'receipt_verified';
 	public const TYPE_RECEIPT_REJECTED      = 'receipt_rejected';
 	public const TYPE_CANCELLATION_DECLINED = 'cancellation_declined';
@@ -813,6 +814,79 @@ class EmailService {
 				'button_text'   => __( 'Review the receipt', 'wp-sell-services' ),
 				'receipt_id'    => $receipt_id,
 				'order'         => $order,
+			)
+		);
+	}
+
+	/**
+	 * Tell the site owner a bank chargeback was opened on a payment.
+	 *
+	 * Goes to the dispute contact (the site admin when none is set), never the vendor: the owner
+	 * answers the bank from the gateway dashboard, and the vendor hears only if it is lost, through the
+	 * refund (Basecamp 10553225092). Switched by the "Dispute opened" email setting.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $dispute_id Provider dispute id.
+	 * @param int[]  $order_ids  Orders the disputed payment paid for.
+	 * @param array  $record     gateway, amount, currency, due_by (UTC).
+	 * @return bool
+	 */
+	public function send_chargeback_opened( string $dispute_id, array $order_ids, array $record ): bool {
+		$orders = array_values( array_filter( array_map( 'wpss_get_order', array_map( 'intval', $order_ids ) ) ) );
+
+		if ( ! $orders ) {
+			return false;
+		}
+
+		$to = (string) apply_filters(
+			'wpss_admin_filing_recipient',
+			get_option( 'wpss_dispute_admin_email' ) ?: get_option( 'admin_email' ),
+			'chargeback',
+			(int) $orders[0]->id
+		);
+
+		if ( ! is_email( $to ) ) {
+			return false;
+		}
+
+		$gateways = wpss()->get_payment_gateways();
+		$gateway  = (string) ( $record['gateway'] ?? '' );
+		$label    = isset( $gateways[ $gateway ] ) ? $gateways[ $gateway ]->get_name() : ucfirst( $gateway );
+		$numbers  = implode( ', ', array_map( static fn( $o ): string => '#' . $o->order_number, $orders ) );
+		$content  = sprintf(
+			/* translators: 1: payment provider, e.g. Stripe, 2: amount with currency, 3: order numbers */
+			__( 'A buyer\'s bank has opened a chargeback at %1$s for %2$s on order %3$s. Nothing has moved yet: the order and the vendor\'s earnings stay as they are while the dispute is open. Answer it with your evidence from your %1$s dashboard.', 'wp-sell-services' ),
+			$label,
+			wpss_format_price( (float) ( $record['amount'] ?? 0 ), (string) ( $record['currency'] ?? '' ) ),
+			$numbers
+		);
+
+		if ( ! empty( $record['due_by'] ) ) {
+			$content .= ' ' . sprintf(
+				/* translators: %s: date */
+				__( 'Evidence is due by %s.', 'wp-sell-services' ),
+				wpss_date_label( (string) $record['due_by'] )
+			);
+		}
+
+		return $this->send(
+			$to,
+			sprintf(
+				/* translators: 1: site name, 2: order numbers */
+				__( '[%1$s] Chargeback opened on order %2$s', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$numbers
+			),
+			self::TYPE_CHARGEBACK_OPENED,
+			array(
+				'recipient'     => get_user_by( 'email', $to ) ?: null,
+				'email_heading' => __( 'A chargeback was opened', 'wp-sell-services' ),
+				'content'       => $content,
+				'button_url'    => admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . (int) $orders[0]->id ),
+				'button_text'   => __( 'View the order', 'wp-sell-services' ),
+				'order'         => $orders[0],
+				'dispute_id'    => $dispute_id,
 			)
 		);
 	}
@@ -2899,6 +2973,7 @@ class EmailService {
 			self::TYPE_EXTENSION_DECLINED     => 'extension-declined.php',
 			self::TYPE_TEST_EMAIL             => 'test-email.php',
 			self::TYPE_RECEIPT_SUBMITTED      => 'generic.php',
+			self::TYPE_CHARGEBACK_OPENED      => 'generic.php',
 			self::TYPE_RECEIPT_VERIFIED       => 'generic.php',
 			self::TYPE_RECEIPT_REJECTED       => 'generic.php',
 			self::TYPE_CANCELLATION_DECLINED  => 'generic.php',
@@ -3024,6 +3099,7 @@ class EmailService {
 			// belongs to the category they already control for order updates -
 			// not a new switch nobody knows to look for.
 			self::TYPE_RECEIPT_SUBMITTED      => 'orders',
+			self::TYPE_CHARGEBACK_OPENED      => 'disputes',
 			self::TYPE_RECEIPT_VERIFIED       => 'orders',
 			self::TYPE_RECEIPT_REJECTED       => 'orders',
 			self::TYPE_CANCELLATION_DECLINED  => 'orders',

@@ -2741,6 +2741,38 @@ class Admin {
 			<hr class="wp-header-end">
 
 			<?php
+			// A bank chargeback still open on this order's payment (Basecamp 10553225092). Cleared when the
+			// provider closes it; a lost one then shows as a refund like any other.
+			$wpss_gateways = wpss()->get_payment_gateways();
+			foreach ( \WPSellServices\Services\ChargebackService::open_for_order( $order ) as $wpss_cb ) :
+				$wpss_cb_gateway = (string) ( $wpss_cb['gateway'] ?? '' );
+				$wpss_cb_label   = isset( $wpss_gateways[ $wpss_cb_gateway ] ) ? $wpss_gateways[ $wpss_cb_gateway ]->get_name() : ucfirst( $wpss_cb_gateway );
+				?>
+				<div class="notice notice-error wpss-order-chargeback-notice" style="margin-top: 20px;">
+					<p>
+						<strong><?php esc_html_e( 'Chargeback open', 'wp-sell-services' ); ?></strong>
+						&mdash;
+						<?php
+						printf(
+							/* translators: 1: amount with currency, 2: payment provider, e.g. Stripe */
+							esc_html__( '%1$s disputed at %2$s. Nothing has moved yet; answer it from your %2$s dashboard.', 'wp-sell-services' ),
+							esc_html( wpss_format_price( (float) ( $wpss_cb['amount'] ?? 0 ), (string) ( $wpss_cb['currency'] ?? '' ) ) ),
+							esc_html( $wpss_cb_label )
+						);
+						if ( ! empty( $wpss_cb['due_by'] ) ) {
+							echo ' ';
+							printf(
+								/* translators: %s: date */
+								esc_html__( 'Evidence due %s.', 'wp-sell-services' ),
+								esc_html( wpss_date_label( (string) $wpss_cb['due_by'] ) )
+							);
+						}
+						?>
+					</p>
+				</div>
+			<?php endforeach; ?>
+
+			<?php
 			/*
 			 * An order's dispute, surfaced ON the order.
 			 *

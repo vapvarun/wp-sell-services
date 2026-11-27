@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**596 hooks** across **817** firing sites.
+**598 hooks** across **820** firing sites.
 
-## Actions (302)
+## Actions (304)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -91,6 +91,8 @@ guide; this is the complete index.
 | `wpss_buyer_request_status_changed` | 3 | `src/Services/BuyerRequestService.php` | Fires when request status changes. |
 | `wpss_buyer_request_updated` | 2 | `src/Services/BuyerRequestService.php` | Fires when a buyer request is updated. |
 | `wpss_cancellation_requested` | 4 | `src/Services/OrderService.php` *(+1 more)* | Fires when a buyer requests order cancellation. |
+| `wpss_chargeback_closed` | 3 | `src/Services/ChargebackService.php` | Fires once when an open bank chargeback is closed. |
+| `wpss_chargeback_opened` | 3 | `src/Services/ChargebackService.php` | Fires once when a bank chargeback is opened on a payment. |
 | `wpss_commission_recorded` | 3 | `src/Services/CommissionService.php` *(+3 more)* | Fires when commission is recorded for an order. |
 | `wpss_contract_phases_proposed` | 3 | `src/Services/BuyerRequestService.php` | Fires once when an accepted phased proposal has created all of its phases. |
 | `wpss_conversation_form` | 1 | `templates/order/conversation.php` | Hook: wpss_conversation_form |
@@ -326,7 +328,7 @@ guide; this is the complete index.
 | `wpss_account_page_section` | 2 | `src/Integrations/Standalone/StandaloneAccountProvider.php` | Filters the dashboard section a legacy [wpss_account] page maps to. |
 | `wpss_account_status` | 2 | `src/functions/moderation.php` | Filter a member's account standing. |
 | `wpss_add_service_to_cart` | 3 | `src/Checkout/ServiceCart.php` | Filter to let e-commerce adapters handle cart addition natively. |
-| `wpss_admin_filing_recipient` | 3 | `src/Services/EmailService.php` *(+1 more)* | Tell the site owner a member filed a report or a dispute. |
+| `wpss_admin_filing_recipient` | 3 | `src/Services/EmailService.php` *(+2 more)* | Tell the site owner a bank chargeback was opened on a payment. |
 | `wpss_admin_menu_label` | 1 | `src/Admin/Admin.php` | Filter the admin menu label for white-labelling. |
 | `wpss_admin_notification_email` | 1 | `src/Services/EmailService.php` *(+1 more)* |  |
 | `wpss_admin_vendor_notification_content` | 2 | `src/Services/NotificationService.php` | Filter admin vendor notification email content. |

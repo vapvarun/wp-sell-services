@@ -151,13 +151,22 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_stripe_webhook_received` | `string $event_type, object $data, string $payload` | `src/Integrations/Stripe/StripeGateway.php:651` |
-| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1593` |
+| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1605` |
+
+### Chargebacks
+
+Fired by every gateway through one door on the base gateway. An opened chargeback moves no money; a lost one is settled through the refund seam (`wpss_gateway_refund_received`).
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_chargeback_opened` | `string $dispute_id, int[] $order_ids, array $record` | `src/Services/ChargebackService.php:93` |
+| `wpss_chargeback_closed` | `string $dispute_id, int[] $order_ids, string $outcome` | `src/Services/ChargebackService.php:137` |
 
 ### PayPal Gateway
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:1098` |
+| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:1121` |
 
 ### Payment REST API
 
@@ -346,7 +355,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:3290` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:3322` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:2183` |
 
 ### Admin Filters
@@ -605,8 +614,8 @@ These filters let you customize outgoing email content without modifying templat
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2531` |
-| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2507` |
+| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2605` |
+| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2581` |
 | `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1846` |
 
 ```php
@@ -932,7 +941,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:919` |
+| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:946` |
 
 ### Stripe Connect Actions
 

@@ -1574,6 +1574,13 @@
    "guard": "static:template-contract",
    "added": "2026-11-28",
    "fails_on": "bfebfc01 (4 templates at 1.9.3, the old rule passed them; 12 more failed it)"
+  },
+  {
+   "card": "10553225092",
+   "title": "An opened bank chargeback (Stripe charge.dispute.created, PayPal CUSTOMER.DISPUTE.CREATED, Razorpay payment.dispute.created) was ignored: the owner heard nothing and the order showed nothing until the money was gone",
+   "guard": "static:chargeback-opened",
+   "added": "2026-11-28",
+   "fails_on": "4b366116 (base, Stripe and PayPal gateways ignore the opened events; 6 checks fail)"
   }
  ]
 }

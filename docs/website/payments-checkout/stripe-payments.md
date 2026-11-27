@@ -53,7 +53,7 @@ Webhooks let Stripe tell your site when a payment succeeds or fails.
 1. In your Stripe Dashboard, go to **Developers > Webhooks**
 2. Click **Add endpoint**
 3. Paste your webhook URL: `https://yoursite.com/wpss-payment/stripe/callback`. With Plain permalinks (Settings > Permalinks) the URL is `https://yoursite.com/?wpss_payment_callback=1&wpss_gateway=stripe` instead; the gateway's setup guide always shows the right one for your site.
-4. Select these events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`, `charge.dispute.closed`
+4. Select these events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`
 5. Click **Add endpoint**
 6. Copy the **Signing secret** that appears
 7. Paste it into **Sell Services > Settings > Payment Gateways**
@@ -135,7 +135,9 @@ Refunds appear in the buyer's account within 5-10 business days. Stripe refunds 
 
 ### Chargebacks (Card Disputes)
 
-When a buyer disputes a card payment with their bank and **you lose the dispute**, Stripe takes the disputed amount from your account. The order is then recorded as refunded for that amount, the vendor's earnings for it are reversed (their balance can go below zero if they already withdrew), and the usual refund notifications go out. A dispute you **win** changes nothing. This needs the `charge.dispute.closed` event on your webhook. PayPal (`PAYMENT.CAPTURE.REVERSED`) and Razorpay (`payment.dispute.lost`) work the same way.
+When a buyer disputes a card payment with their bank, **the dispute opening** emails you (the dispute contact under Orders & Disputes, or the site admin) and puts a **Chargeback open** notice on the order, with the date your evidence is due. Its Activity box records it too. Nothing else changes yet: the order keeps its status, the vendor's earnings stay where they are, and the vendor is not told. Answer the bank from your Stripe dashboard. The email follows the **Dispute opened** email setting; the notice on the order always shows.
+
+If **you lose the dispute**, Stripe takes the disputed amount from your account. The order is then recorded as refunded for that amount, the vendor's earnings for it are reversed (their balance can go below zero if they already withdrew), and the usual refund notifications go out. A dispute you **win** changes nothing except clearing the notice. This needs the `charge.dispute.created` and `charge.dispute.closed` events on your webhook. PayPal (`CUSTOMER.DISPUTE.CREATED`, `CUSTOMER.DISPUTE.RESOLVED`, and `PAYMENT.CAPTURE.REVERSED` for the money) and Razorpay (`payment.dispute.created`, `payment.dispute.won`, `payment.dispute.lost`, `payment.dispute.closed`) work the same way.
 
 ### Automatic Refund When an Order Cannot Be Created
 

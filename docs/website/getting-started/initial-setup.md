@@ -109,7 +109,7 @@ Go to **Sell Services > Settings > Emails**. There are **30 notification types**
 - Revision requested (sent to vendor)
 - New message (sent to recipient)
 - New review (sent to vendor)
-- Dispute opened (sent to both parties and admin)
+- Dispute opened (sent to both parties and admin; the same switch covers the owner's chargeback-opened alert)
 
 The same screen has a **Email Deliverability** test. Send yourself a test email before launch -- if it does not arrive, no other notification will either. See [Email Notifications](../notifications-emails/email-types.md) for the full list.
 

@@ -436,6 +436,29 @@ class PayPalGateway extends AbstractPaymentGateway {
 
 				return $this->handle_refund_completed( $resource );
 
+			// A dispute (a bank chargeback or a PayPal claim) opened on a capture: tell the owner, mark the order.
+			case 'CUSTOMER.DISPUTE.CREATED':
+				return $this->report_opened_dispute(
+					(string) ( $resource['disputed_transactions'][0]['seller_transaction_id'] ?? '' ),
+					(float) ( $resource['dispute_amount']['value'] ?? 0 ),
+					(string) ( $resource['dispute_amount']['currency_code'] ?? '' ),
+					(string) ( $resource['dispute_id'] ?? '' ),
+					(int) strtotime( (string) ( $resource['seller_response_due_date'] ?? '' ) )
+				);
+
+			// Resolved: the mark clears. A loss arrives separately as PAYMENT.CAPTURE.REVERSED (above).
+			case 'CUSTOMER.DISPUTE.RESOLVED':
+				$outcomes = array(
+					'RESOLVED_SELLER_FAVOUR' => 'won',
+					'RESOLVED_BUYER_FAVOUR'  => 'lost',
+				);
+
+				return $this->report_closed_dispute(
+					(string) ( $resource['disputed_transactions'][0]['seller_transaction_id'] ?? '' ),
+					(string) ( $resource['dispute_id'] ?? '' ),
+					$outcomes[ (string) ( $resource['dispute_outcome']['outcome_code'] ?? '' ) ] ?? 'closed'
+				);
+
 			default:
 				return array(
 					'success' => true,
@@ -1233,6 +1256,8 @@ class PayPalGateway extends AbstractPaymentGateway {
 						<li><code>PAYMENT.CAPTURE.COMPLETED</code></li>
 						<li><code>PAYMENT.CAPTURE.REFUNDED</code></li>
 						<li><code>PAYMENT.CAPTURE.REVERSED</code></li>
+						<li><code>CUSTOMER.DISPUTE.CREATED</code></li>
+						<li><code>CUSTOMER.DISPUTE.RESOLVED</code></li>
 					</ul>
 				</li>
 				<li><?php esc_html_e( 'After creating the webhook, copy the "Webhook ID" and paste it in the Webhook ID field above.', 'wp-sell-services' ); ?></li>

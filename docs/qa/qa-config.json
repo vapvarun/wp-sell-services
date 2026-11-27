@@ -1027,6 +1027,10 @@
    {
     "id": "pro-perf-and-options",
     "run": "${WP_CLI:-wp} eval-file tests/pro/test-pro-perf-and-options.php"
+   },
+   {
+    "id": "chargeback-opened",
+    "run": "${WP_CLI:-wp} eval-file tests/test-chargeback-opened.php"
    }
   ]
  }

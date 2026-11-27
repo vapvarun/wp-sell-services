@@ -3102,6 +3102,16 @@ final class Plugin {
 			}
 		);
 
+		// A bank chargeback opened: the owner is told once (Basecamp 10553225092).
+		add_action(
+			'wpss_chargeback_opened',
+			static function ( string $dispute_id, array $order_ids, array $record ): void {
+				( new \WPSellServices\Services\EmailService() )->send_chargeback_opened( $dispute_id, $order_ids, $record );
+			},
+			10,
+			3
+		);
+
 		// Offline payment proof: tell the people who need to act
 		// (Basecamp #10194890682). The service fires these three; the emails
 		// route through EmailService so they honour the member's own

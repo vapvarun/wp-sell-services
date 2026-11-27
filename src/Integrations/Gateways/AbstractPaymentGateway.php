@@ -497,4 +497,62 @@ abstract class AbstractPaymentGateway implements PaymentGatewayInterface {
 			'message' => 'Lost dispute recorded as a refund.',
 		);
 	}
+
+	/**
+	 * Record a bank chargeback that has just been opened on a payment.
+	 *
+	 * Owner rule (Basecamp 10553225092): the site owner is emailed and the order shows "Chargeback open";
+	 * the vendor is not told and no money moves until it is lost. A resent event adds nothing, and an
+	 * event for a payment we never took is acknowledged and ignored.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $transaction_id Payment id the order was paid with.
+	 * @param float  $amount         Disputed amount, major units.
+	 * @param string $currency       Currency code.
+	 * @param string $dispute_id     Provider dispute id.
+	 * @param int    $due_by         When evidence is due, Unix time, or 0.
+	 * @return array{success: bool, message: string}
+	 */
+	protected function report_opened_dispute( string $transaction_id, float $amount, string $currency, string $dispute_id, int $due_by = 0 ): array {
+		$marked = ( new \WPSellServices\Services\ChargebackService() )->opened(
+			$this->get_id(),
+			$transaction_id,
+			$dispute_id,
+			$amount,
+			$currency,
+			$due_by > 0 ? gmdate( 'Y-m-d H:i:s', $due_by ) : ''
+		);
+
+		if ( $marked ) {
+			wpss_log( sprintf( '%s chargeback opened: dispute %s on payment %s (orders %s).', $this->get_id(), $dispute_id, $transaction_id, implode( ', ', $marked ) ), 'warning' );
+		}
+
+		return array(
+			'success' => true,
+			'message' => $marked ? 'Chargeback recorded on the order.' : 'Chargeback already recorded, or no order for this payment.',
+		);
+	}
+
+	/**
+	 * Clear the "Chargeback open" mark when the provider closes the dispute.
+	 *
+	 * Moves no money: a lost dispute is settled by report_lost_dispute() (or the provider's own
+	 * reversal event), a won one changes nothing.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $transaction_id Payment id the order was paid with.
+	 * @param string $dispute_id     Provider dispute id.
+	 * @param string $outcome        won, lost or closed.
+	 * @return array{success: bool, message: string}
+	 */
+	protected function report_closed_dispute( string $transaction_id, string $dispute_id, string $outcome ): array {
+		$closed = ( new \WPSellServices\Services\ChargebackService() )->closed( $transaction_id, $dispute_id, $outcome );
+
+		return array(
+			'success' => true,
+			'message' => $closed ? 'Chargeback closed on the order.' : 'No open chargeback for this dispute.',
+		);
+	}
 }

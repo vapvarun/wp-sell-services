@@ -306,6 +306,7 @@ function wpss_notification_type_settings(): array {
 		'dispute_response_received'    => 'notify_dispute_opened',
 		'dispute_reminder'             => 'notify_dispute_opened',
 		'dispute_admin'                => 'notify_dispute_opened',
+		'chargeback_opened'            => 'notify_dispute_opened',
 		'dispute_escalated'            => 'notify_dispute_escalated',
 		'dispute_cancelled'            => 'notify_dispute_cancelled',
 		// Withdrawals.
@@ -626,6 +627,7 @@ function wpss_notification_types(): array {
 		'dispute_response_received'    => array( __( 'Dispute response', 'wp-sell-services' ), 'message-square' ),
 		'dispute_reminder'             => array( __( 'Dispute reminder', 'wp-sell-services' ), 'alert-triangle' ),
 		'dispute_admin'                => array( __( 'Dispute update', 'wp-sell-services' ), 'alert-triangle' ),
+		'chargeback_opened'            => array( __( 'Chargeback opened', 'wp-sell-services' ), 'alert-triangle' ),
 		'dispute_escalated'            => array( __( 'Dispute escalated', 'wp-sell-services' ), 'alert-triangle' ),
 		'dispute_response_reminder'    => array( __( 'Dispute response due', 'wp-sell-services' ), 'clock' ),
 		'report_resolved'              => array( __( 'Report reviewed', 'wp-sell-services' ), 'flag' ),
