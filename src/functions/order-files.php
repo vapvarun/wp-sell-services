@@ -115,6 +115,14 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 
 	$provider = wpss_get_active_storage_provider();
 
+	// Providers read the whole file into memory for the request, so a file past the memory-safe cap
+	// stays on local disk (the same keep-local path as a bucket outage) instead of a fatal that
+	// would leave the file with no record (Basecamp 10551464838).
+	if ( $provider && $record['size'] > wpss_cloud_upload_max_bytes() ) {
+		wpss_log( sprintf( 'Order %d file %s (%d bytes) is over the cloud upload cap; kept on local disk.', $order_id, $filename, $record['size'] ), 'warning' );
+		$provider = null;
+	}
+
 	if ( $provider ) {
 		$remote = sprintf( 'wpss/%d/%s/%s', $order_id, $kind, $filename );
 		$result = $provider->upload( $target, $remote );
@@ -122,6 +130,10 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 		if ( ! is_wp_error( $result ) && ! empty( $result['key'] ) ) {
 			$record['remote_path'] = (string) $result['key'];
 			$record['provider']    = (string) get_option( 'wpss_active_storage_provider', '' );
+			// The bucket (and region) it went to, so a later settings change cannot strand it.
+			if ( ! empty( $result['location'] ) && is_array( $result['location'] ) ) {
+				$record['location'] = $result['location'];
+			}
 
 			// The local copy has served its purpose. Keeping it would mean the
 			// owner pays for the bucket and the disk both, which is the whole
@@ -450,8 +462,71 @@ function wpss_discard_order_file( array $record, int $order_id ): void {
 
 	// Bucket deletes are HTTP calls; queued so a request never waits on one.
 	if ( ! empty( $record['remote_path'] ) ) {
-		\WPSellServices\Services\Scheduler::schedule_single( 'wpss_delete_remote_order_file', time(), array( (string) ( $record['provider'] ?? '' ), (string) $record['remote_path'], $order_id ) );
+		$job = array( (string) ( $record['provider'] ?? '' ), (string) $record['remote_path'], $order_id );
+		if ( ! empty( $record['location'] ) ) {
+			$job[] = (array) $record['location'];
+		}
+		\WPSellServices\Services\Scheduler::schedule_single( 'wpss_delete_remote_order_file', time(), $job );
 	}
+}
+
+/**
+ * Largest file pushed to a storage bucket, in bytes: a quarter of PHP's memory limit, because
+ * providers read the whole file into memory. Larger files stay on local disk.
+ *
+ * @since 2.0.0
+ *
+ * @return int Bytes; PHP_INT_MAX when memory is unlimited.
+ */
+function wpss_cloud_upload_max_bytes(): int {
+	$limit = wp_convert_hr_to_bytes( (string) ini_get( 'memory_limit' ) );
+	$cap   = $limit > 0 ? intdiv( $limit, 4 ) : PHP_INT_MAX;
+
+	/**
+	 * Filter the largest file uploaded to a storage bucket.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int $cap Bytes.
+	 */
+	return (int) apply_filters( 'wpss_cloud_upload_max_bytes', $cap );
+}
+
+/**
+ * Whether any stored bucket file predates 2.0.0 and so names no bucket (it follows the settings).
+ *
+ * Run on a storage settings save only: five LIMIT 1 scans of the attachment columns.
+ *
+ * @since 2.0.0
+ *
+ * @return bool
+ */
+function wpss_has_unlocated_bucket_files(): bool {
+	global $wpdb;
+
+	foreach ( array( 'wpss_deliveries', 'wpss_order_requirements', 'wpss_messages', 'wpss_dispute_messages', 'wpss_payment_receipts' ) as $table ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are fixed.
+		if ( $wpdb->get_var( "SELECT 1 FROM {$wpdb->prefix}{$table} WHERE attachments LIKE '%\"remote_path\":\"%' AND attachments NOT LIKE '%\"location\"%' LIMIT 1" ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * The provider pointed at the bucket and region a record names, when it can be (for_record()).
+ *
+ * Duck-typed so third-party providers written against the 1.9 interface keep working unchanged.
+ *
+ * @since 2.0.0
+ *
+ * @param object              $provider Storage provider.
+ * @param array<string,mixed> $record   File record.
+ * @return object
+ */
+function wpss_storage_for_record( object $provider, array $record ): object {
+	return method_exists( $provider, 'for_record' ) ? $provider->for_record( $record ) : $provider;
 }
 
 /**
@@ -465,10 +540,12 @@ function wpss_discard_order_file( array $record, int $order_id ): void {
  * @param string $provider_id Provider the record named; empty for rows before 1.7.1.
  * @param string $remote_path Object key.
  * @param int    $order_id    Order the file belonged to, for the log.
+ * @param array  $location    Bucket/region the record named; empty for rows before 2.0.0.
  * @return void
  */
-function wpss_delete_remote_order_file( string $provider_id, string $remote_path, int $order_id ): void {
+function wpss_delete_remote_order_file( string $provider_id, string $remote_path, int $order_id, array $location = array() ): void {
 	$provider = '' !== $provider_id ? wpss_get_storage_provider( $provider_id ) : wpss_get_active_storage_provider();
+	$provider = $provider ? wpss_storage_for_record( $provider, array( 'location' => $location ) ) : null;
 
 	if ( '' === $remote_path || ( $provider && method_exists( $provider, 'delete' ) && $provider->delete( $remote_path ) ) ) {
 		return;
@@ -930,7 +1007,7 @@ function wpss_locate_order_file( int $order_id, string $file_id ) {
 		$ttl         = 5 * MINUTE_IN_SECONDS;
 
 		if ( $provider && method_exists( $provider, 'get_signed_url' ) ) {
-			$signed = $provider->get_signed_url( (string) $record['remote_path'], $ttl );
+			$signed = wpss_storage_for_record( $provider, $record )->get_signed_url( (string) $record['remote_path'], $ttl );
 
 			if ( $signed ) {
 				return array(
@@ -1105,8 +1182,9 @@ function wpss_dispute_message_attachments( $raw ): array {
  * Give a publicly-served upload an unguessable filename.
  *
  * Two upload paths cannot use the private store because they have no owning
- * order to gate on: buyer-request briefs and pre-sale contact attachments,
- * which exist before any order or conversation. Both are
+ * order to gate on: the deprecated `wpss_upload_file` handler, buyer-request
+ * briefs and pre-sale contact attachments, which exist before any order or
+ * conversation. All are
  * documented as "unlisted, not secret" - post_status private hides the library
  * row, not the bytes.
  *

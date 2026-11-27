@@ -110,19 +110,30 @@ after confirming they are a party to that order.
 Upload a delivery on a real order, then check your bucket: the file appears
 under `wpss/{order_id}/delivery/`, named `{file id}-{original name}`. That is the end-to-end check.
 
-**Test Connection** on the settings card verifies credentials, region and
-permissions on their own, which is the faster check when you are first
-setting up.
+**Test Connection** on the settings card writes a small test file, downloads it
+through a signed link exactly as a buyer would, and deletes it. It fails if the
+credentials, region or permissions would stop buyers downloading, which is the
+faster check when you are first setting up.
 
 ### Fallback Behavior
 
-The upload endpoint falls back to the media library when the provider is set to
-Local or is not registered. If a **configured** provider fails -- bad
-credentials, network error -- it returns an error rather than silently writing
-locally, so a broken bucket cannot look like a working one.
+If an upload to the bucket fails (bad credentials, network error, outage), the
+file stays on your server and is served from there, so a delivery is never
+lost. The failure is written to the plugin log.
 
-There is no admin warning for a failing provider today. Watch for it in your own
-integration's error handling.
+Files larger than a quarter of PHP's `memory_limit` also stay on your server,
+because uploading them would exhaust memory (on a 256M limit, files over 64 MB).
+Raise `memory_limit` to send bigger files to the bucket, or change the cap with
+the `wpss_cloud_upload_max_bytes` filter.
+
+### Changing Bucket or Region
+
+Each file uploaded since version 2.0.0 remembers its bucket and region, so a
+later change leaves those files downloadable, as long as the old bucket and its
+credentials still exist. Files uploaded before 2.0.0 remember only the provider
+and are read from its current bucket and region: if you change either, copy
+those files to the new bucket first. Saving the settings warns you when such
+files exist.
 
 ---
 

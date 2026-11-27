@@ -3022,11 +3022,11 @@ final class Plugin {
 		// Bucket objects of a deleted order, one job each (wpss_delete_order_files(), Basecamp 10551464914).
 		add_action(
 			'wpss_delete_remote_order_file',
-			static function ( $provider_id = '', $remote_path = '', $order_id = 0 ): void {
-				wpss_delete_remote_order_file( (string) $provider_id, (string) $remote_path, (int) $order_id );
+			static function ( $provider_id = '', $remote_path = '', $order_id = 0, $location = array() ): void {
+				wpss_delete_remote_order_file( (string) $provider_id, (string) $remote_path, (int) $order_id, (array) $location );
 			},
 			10,
-			3
+			4
 		);
 
 		// A vendor credit whose ledger write failed is retried (CommissionService::record(), Basecamp 10551463043).

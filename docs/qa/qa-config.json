@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "cloud-storage-links",
+    "run": "${WP_CLI:-wp} eval-file ../wp-sell-services-pro/tests/test-cloud-storage-links.php"
+   },
+   {
     "id": "file-access-holes",
     "run": "${WP_CLI:-wp} eval-file tests/test-file-access-holes.php"
    },

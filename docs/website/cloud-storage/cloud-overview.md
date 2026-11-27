@@ -54,7 +54,7 @@ With a provider active, the flow is:
 3. If an upload fails, the local copy is kept and served instead, so a bucket outage never loses a delivery
 4. When the buyer downloads, a permission-checked link on the order hands out a short-lived signed URL from the provider
 
-Each stored file records which provider holds it, so files uploaded before you switch providers keep downloading from their original bucket.
+Each stored file records which provider, bucket and region holds it, so files keep downloading from where they were uploaded after you switch provider or bucket. Files uploaded before version 2.0.0 record the provider only; see [Changing Bucket or Region](cloud-setup.md#changing-bucket-or-region). Files over a quarter of PHP's memory limit stay on your server (see [Fallback Behavior](cloud-setup.md#fallback-behavior)).
 
 ---
 

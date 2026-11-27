@@ -52,14 +52,6 @@ interface StorageProviderInterface {
 	 */
 	public function upload( string $local_path, string $remote_path, array $options = [] ): array|\WP_Error;
 
-	/**
-	 * Download a file from cloud storage.
-	 *
-	 * @param string $remote_path Remote path/key.
-	 * @param string $local_path  Local destination path.
-	 * @return array{success: bool, path?: string, error?: string}
-	 */
-	public function download( string $remote_path, string $local_path ): array;
 
 	/**
 	 * Delete a file from cloud storage.
@@ -94,13 +86,6 @@ interface StorageProviderInterface {
 	 */
 	public function get_url( string $remote_path ): string;
 
-	/**
-	 * List files in a directory.
-	 *
-	 * @param string $prefix Directory prefix.
-	 * @return array
-	 */
-	public function list_files( string $prefix = '' ): array;
 
 	/**
 	 * Get file metadata.

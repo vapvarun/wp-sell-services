@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**587 hooks** across **811** firing sites.
+**588 hooks** across **812** firing sites.
 
 ## Actions (302)
 
@@ -319,7 +319,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (285)
+## Filters (286)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -373,6 +373,7 @@ guide; this is the complete index.
 | `wpss_checkout_creates_accounts` | 1 | `src/functions/billing.php` | Filter whether checkout creates an account for a logged-out buyer. |
 | `wpss_checkout_slug` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php` | Filter the checkout URL slug. |
 | `wpss_checkout_tax_rate` | 3 | `src/functions/money.php` |  |
+| `wpss_cloud_upload_max_bytes` | 1 | `src/functions/order-files.php` | Filter the largest file uploaded to a storage bucket. |
 | `wpss_cloudflare_ip_ranges` | 1 | `src/functions/security.php` | Filters Cloudflare's address ranges. Update when Cloudflare publishes new ones. |
 | `wpss_commission_base_amount` | 3 | `src/Services/CommissionService.php` | Filters the base amount used for commission calculation. |
 | `wpss_commission_fee` | 4 | `src/Services/CommissionService.php` | Filters the platform fee AMOUNT for an order. |

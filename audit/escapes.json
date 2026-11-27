@@ -1516,6 +1516,14 @@
    "added": "2026-11-27",
    "fails_on": "aa5f5eb8 (13 FAIL)",
    "check": "tests/test-file-access-holes.php"
+  },
+  {
+   "card": "10551464838",
+   "title": "S3/Spaces signed links double-encoded (AWS refused every download), whole-file uploads fataled on big files, records lost their bucket on a settings change, Test connection never signed a link",
+   "guard": "static:cloud-storage-links",
+   "added": "2026-11-27",
+   "fails_on": "c7005c61 + Pro a5f6a1c (13 FAIL)",
+   "check": "../wp-sell-services-pro/tests/test-cloud-storage-links.php"
   }
  ]
 }
