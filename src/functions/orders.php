@@ -343,14 +343,9 @@ function wpss_order_money_rail( object $order ): string {
 	 * @param string $rail  Platform name, '' for orders we collected.
 	 * @param object $order Order row or model.
 	 */
-	// Read from the order itself, so it holds when that shop plugin is not the rail now or is gone.
-	$shops = array(
-		'woocommerce' => 'WooCommerce',
-		'edd'         => 'Easy Digital Downloads',
-		'fluentcart'  => 'FluentCart',
-	);
-
-	return (string) apply_filters( 'wpss_order_money_rail', $shops[ (string) ( $order->platform ?? '' ) ] ?? '', $order );
+	// Each active shop's adapter answers this on every route (Pro register_order_sync()). A shop that
+	// is deactivated answers nothing, so its old orders become ours to refund by hand (Basecamp 10550988379).
+	return (string) apply_filters( 'wpss_order_money_rail', '', $order );
 }
 
 /**

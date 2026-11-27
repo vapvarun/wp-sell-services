@@ -5,8 +5,9 @@
  * The callback route lived in StandaloneAdapter, which runs only while standalone is the rail, so after a
  * switch to WooCommerce, EDD or FluentCart every Stripe/PayPal/Razorpay webhook for an older order 404ed (or
  * got an empty 200, which stops the provider retrying). Now Plugin registers it on every rail and answers 503
- * when nothing listens. The money owner of a shop order is read from the order itself, and our own gateway
- * reporting the same charge as the shop is skipped, so a refund is recorded once.
+ * when nothing listens. A shop order belongs to its shop while that shop is active, and our own gateway
+ * reporting the same charge as the shop is skipped, so a refund is recorded once. Once the shop is
+ * deactivated nothing names it, so the order can be refunded here.
  *
  * Run: wp eval-file tests/test-payment-callback-every-rail.php
  *
@@ -43,7 +44,7 @@ $check( 'Unknown gateway answers 503, not an empty 200', '503' === $code( $none 
 $body   = is_wp_error( $stripe ) ? '' : wp_remote_retrieve_body( $stripe );
 $check( 'Stripe callback reaches Stripe\'s own handler (its JSON error, not 404/503)', str_contains( $body, '"error"' ) && in_array( $code( $stripe ), array( '400', '500' ), true ), $code( $stripe ) . ' ' . substr( $body, 0, 80 ) );
 
-// 3. A shop's order names its shop as money owner with no shop adapter listening.
+// 3. A shop's order belongs to the shop only while that shop's adapter listens; once the shop is gone it is ours.
 $f      = wpss_test_fixtures();
 $saved  = $GLOBALS['wp_filter']['wpss_order_money_rail'] ?? null;
 unset( $GLOBALS['wp_filter']['wpss_order_money_rail'] );
@@ -54,11 +55,14 @@ foreach ( array( 'woocommerce', 'edd', 'fluentcart', 'standalone' ) as $p ) {
 if ( $saved ) {
 	$GLOBALS['wp_filter']['wpss_order_money_rail'] = $saved;
 }
-$check( 'WooCommerce order: money owner is WooCommerce with no adapter filter', 'WooCommerce' === $rails['woocommerce'], $rails['woocommerce'] );
-$check( '  EDD and FluentCart orders too', 'Easy Digital Downloads' === $rails['edd'] && 'FluentCart' === $rails['fluentcart'] );
+$check( 'Shop deactivated: its WooCommerce order is ours to refund (no rail named)', '' === $rails['woocommerce'], $rails['woocommerce'] );
+$check( '  EDD and FluentCart orders too', '' === $rails['edd'] && '' === $rails['fluentcart'] );
 $check( '  a standalone order stays ours', '' === $rails['standalone'] );
 
-// 4. The same refund reported by our Stripe and by WooCommerce is recorded once.
+// 4. The same refund reported by our Stripe and by WooCommerce is recorded once, while the shop is active
+// (stood in for by the adapter's own callback shape, as Pro's register_order_sync() adds it).
+$woo_active = static fn( string $rail, object $o ): string => '' === $rail && 'woocommerce' === ( $o->platform ?? '' ) ? 'WooCommerce' : $rail;
+add_filter( 'wpss_order_money_rail', $woo_active, 10, 2 );
 $txn   = 'ch_qa_988379_' . wp_generate_password( 6, false );
 $order = ( $f->order )(
 	array(
@@ -75,6 +79,7 @@ $check( 'Our Stripe reporting a WooCommerce order: nothing recorded', 0.0 === $r
 
 do_action( 'wpss_gateway_refund_received', 'woocommerce', $txn, 10.0, array( 'order_id' => $order, 'refund_id' => 'wc_qa_' . $order ) );
 $check( 'WooCommerce reporting it: recorded once (10)', 10.0 === $refunded(), (string) $refunded() );
+remove_filter( 'wpss_order_money_rail', $woo_active, 10 );
 
 $wpdb->delete( $wpdb->prefix . 'wpss_wallet_transactions', array( 'reference_id' => $order ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
