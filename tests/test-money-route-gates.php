@@ -61,8 +61,8 @@ foreach ( $routes as $route => $handlers ) {
 		}
 		if ( is_array( $cb ) && isset( $cb[1] ) ) {
 			$name = $cb[1];
-			if ( ! in_array( $name, array( 'check_vendor_permissions', 'check_admin_permissions' ), true ) ) {
-				$failures[] = "{$route} uses {$name}() - expected check_vendor_permissions().";
+			if ( ! in_array( $name, array( 'check_vendor_permissions', 'check_vendor_money_permissions', 'check_admin_permissions' ), true ) ) {
+				$failures[] = "{$route} uses {$name}() - expected check_vendor_permissions() or check_vendor_money_permissions().";
 			}
 			++$checked;
 		}
