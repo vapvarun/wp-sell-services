@@ -39,12 +39,11 @@ class PaymentController extends RestController {
 	/**
 	 * Register routes.
 	 *
-	 * These endpoints drive the plugin's own gateways, so they exist only when
-	 * this site pays through them. If the owner has enabled WooCommerce, EDD,
-	 * FluentCart or SureCart to take payment, that plugin processes everything
-	 * and none of these routes are registered at all - rather than registering
-	 * them and having each one refuse, which leaves a payment surface that
-	 * looks half alive.
+	 * The start legs (methods, create-intent) exist only when this site pays
+	 * through our gateways; if WooCommerce, EDD or FluentCart takes payment,
+	 * they are not registered. Confirm finishes a payment the buyer already
+	 * made, so it is registered on every route: switching the route mid-payment
+	 * must not strand a charge (1.9.4).
 	 *
 	 * The buyer's pay URL on those rails comes back with the order itself, from
 	 * wpss_get_pay_order_url().
@@ -52,6 +51,58 @@ class PaymentController extends RestController {
 	 * @return void
 	 */
 	public function register_routes(): void {
+		// POST /payments/confirm - Confirm payment and create/update order.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/confirm',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'confirm_payment' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+					'args'                => array(
+						'gateway'      => array(
+							'description' => __( 'Payment gateway ID.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'required'    => true,
+						),
+						'payment_id'   => array(
+							'description' => __( 'Gateway payment/order ID.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'required'    => true,
+						),
+						'service_id'   => array(
+							'description' => __( 'Service ID. Same as product_id for the service type.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 0,
+						),
+						'product_id'   => array(
+							'description' => __( 'ID of the product being bought.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 0,
+						),
+						'product_type' => array(
+							'description' => __( 'Product type; "service" is the only type registered.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'default'     => 'service',
+						),
+						'package_id'   => array(
+							'description' => __( 'Package index.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 0,
+						),
+						'pay_order'    => array(
+							'description' => __( 'Existing order ID to pay for.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 0,
+						),
+					),
+				),
+			)
+		);
+
+		// Starting a new payment is for the route that takes payment; the legs above finish one
+		// already made and stay on every route (Basecamp 10550988413).
 		if ( ! wpss_uses_standalone_payments() ) {
 			return;
 		}
@@ -117,56 +168,6 @@ class PaymentController extends RestController {
 						),
 						'pay_order'    => array(
 							'description' => __( 'Existing order ID to pay for (from proposal).', 'wp-sell-services' ),
-							'type'        => 'integer',
-							'default'     => 0,
-						),
-					),
-				),
-			)
-		);
-
-		// POST /payments/confirm - Confirm payment and create/update order.
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/confirm',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'confirm_payment' ),
-					'permission_callback' => array( $this, 'check_permissions' ),
-					'args'                => array(
-						'gateway'      => array(
-							'description' => __( 'Payment gateway ID.', 'wp-sell-services' ),
-							'type'        => 'string',
-							'required'    => true,
-						),
-						'payment_id'   => array(
-							'description' => __( 'Gateway payment/order ID.', 'wp-sell-services' ),
-							'type'        => 'string',
-							'required'    => true,
-						),
-						'service_id'   => array(
-							'description' => __( 'Service ID. Same as product_id for the service type.', 'wp-sell-services' ),
-							'type'        => 'integer',
-							'default'     => 0,
-						),
-						'product_id'   => array(
-							'description' => __( 'ID of the product being bought.', 'wp-sell-services' ),
-							'type'        => 'integer',
-							'default'     => 0,
-						),
-						'product_type' => array(
-							'description' => __( 'Product type; "service" is the only type registered.', 'wp-sell-services' ),
-							'type'        => 'string',
-							'default'     => 'service',
-						),
-						'package_id'   => array(
-							'description' => __( 'Package index.', 'wp-sell-services' ),
-							'type'        => 'integer',
-							'default'     => 0,
-						),
-						'pay_order'    => array(
-							'description' => __( 'Existing order ID to pay for.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 0,
 						),

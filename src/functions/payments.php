@@ -579,6 +579,8 @@ function wpss_verify_gateway_nonce( array $actions ): bool {
  * boundary that decides whether a gateway can take money, and it should read
  * identically in all of them.
  *
+ * Also refused while WooCommerce, EDD or FluentCart takes payment (@since 1.9.4).
+ *
  * Start legs only (create intent, create order). Never call it on a leg that
  * finishes a payment the buyer already made (confirm, verify, capture, return):
  * a gateway switched off mid-payment would leave a charge with no order.
@@ -589,14 +591,15 @@ function wpss_verify_gateway_nonce( array $actions ): bool {
  * @return void Sends a JSON error and exits when the gateway is off.
  */
 function wpss_gateway_require_enabled( object $gateway ): void {
-	if ( method_exists( $gateway, 'is_enabled' ) && $gateway->is_enabled() ) {
+	// A shop plugin taking payment owns new payments too, so our gateways start none there.
+	if ( wpss_uses_standalone_payments() && method_exists( $gateway, 'is_enabled' ) && $gateway->is_enabled() ) {
 		return;
 	}
 
 	$name = method_exists( $gateway, 'get_name' ) ? $gateway->get_name() : '';
 
 	wpss_log(
-		sprintf( 'Refused a payment action on the disabled gateway "%s".', $name ),
+		sprintf( 'Refused to start a payment on "%s": it is disabled or a shop plugin takes payment.', $name ),
 		'warning'
 	);
 

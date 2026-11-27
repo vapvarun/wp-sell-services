@@ -41,6 +41,48 @@ foreach ( $legs as list( $name, $file, $start, $finish ) ) {
 	$check( "  finishing one ({$finish}) does not", '' !== $f && ! str_contains( $f, 'wpss_gateway_require_enabled(' ) );
 }
 
+// Route: the finish legs register on every route, the start legs only on ours (QA bounce of 10550988413).
+$routes = static function ( string $file ): array {
+	$src  = is_readable( $file ) ? (string) file_get_contents( $file ) : '';
+	$body = preg_match( '/function register_routes\(\): void \{(.*?)\n\t\}\n/s', $src, $m ) ? $m[1] : '';
+	$gate = strpos( $body, 'wpss_uses_standalone_payments()' );
+	return array( $body, false === $gate ? -1 : $gate );
+};
+foreach ( array( array( $free . 'API/PaymentController.php', array( '/confirm' ), array( '/methods', '/create-intent' ) ), array( $pro . 'API/PaymentController.php', array( '/stripe/confirm', '/paypal/capture', '/razorpay/verify' ), array( '/stripe/create-intent', '/paypal/create-order', '/razorpay/create-order', '/offline/submit' ) ) ) as list( $file, $finish_routes, $start_routes ) ) {
+	list( $b, $gate ) = $routes( $file );
+	foreach ( $finish_routes as $r ) {
+		$at = strpos( $b, "rest_base . '{$r}'" );
+		$check( basename( dirname( $file, 3 ) ) . " {$r} registers on every route (before the route gate)", false !== $at && $gate > $at );
+	}
+	foreach ( $start_routes as $r ) {
+		$at = strpos( $b, "rest_base . '{$r}'" );
+		$check( "  {$r} only on our route (after the gate)", false !== $at && $gate > -1 && $at > $gate );
+	}
+}
+$check( 'Start helper refuses while a shop plugin takes payment', str_contains( $body( $free . 'functions/payments.php', 'wpss_gateway_require_enabled' ), 'wpss_uses_standalone_payments() &&' ) );
+$rz = (string) @file_get_contents( $pro . 'Integrations/Razorpay/RazorpayGateway.php' );
+$check( 'Razorpay verify AJAX is hooked on every route', (bool) preg_match( "/\n\t\tadd_action\( 'wp_ajax_wpss_razorpay_verify_payment'/", $rz ) );
+
+// Live: pretend a shop plugin took over payment, then rebuild the REST server.
+$manager = wpss()->get_integration_manager();
+$prop    = new ReflectionProperty( $manager, 'active_adapter' );
+$prop->setAccessible( true );
+$was     = $prop->getValue( $manager );
+$shop    = new class() extends \WPSellServices\Integrations\Standalone\StandaloneAdapter {
+	public function get_id(): string {
+		return 'woocommerce';
+	}
+};
+$prop->setValue( $manager, $shop );
+$GLOBALS['wp_rest_server'] = null;
+$live                      = rest_get_server()->get_routes();
+$check( 'Live, shop route: our gateways are not the route', ! wpss_uses_standalone_payments() );
+$check( '  POST /payments/confirm still answers', isset( $live['/wpss/v1/payments/confirm'] ) );
+$check( '  POST /payments/create-intent does not', ! isset( $live['/wpss/v1/payments/create-intent'] ) );
+$prop->setValue( $manager, $was );
+$GLOBALS['wp_rest_server'] = null;
+rest_get_server();
+
 // Live: call the finish handlers on disabled gateways and see they get past the gate.
 $f        = wpss_test_fixtures();
 $gateways = wpss()->get_payment_gateways();

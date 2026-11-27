@@ -163,7 +163,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/API/PaymentController.php:331` |
+| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/API/PaymentController.php:333` |
 
 ### Payment Filters
 
@@ -922,7 +922,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:897` |
+| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:893` |
 
 ### Stripe Connect Actions
 
