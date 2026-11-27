@@ -249,6 +249,7 @@
 	padding: 3px 10px;
 	border-radius: 3px;
 	font-weight: 500;
+	white-space: nowrap;
 }
 
 .wpss-gateway-badge--enabled {
@@ -359,9 +360,58 @@
 		display: none;
 	}
 
-	.wpss-payment-methods__table th,
+	/* Two lines per method: arrows | name over status | switch over Manage. */
+	.wpss-payment-methods__table,
+	.wpss-payment-methods__table tbody {
+		display: block;
+		width: 100%;
+	}
+
+	.wpss-payment-methods__table thead {
+		display: none;
+	}
+
+	.wpss-payment-methods__table tbody tr {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-areas:
+			"order name toggle"
+			"order status manage";
+		column-gap: 8px;
+		row-gap: 4px;
+		align-items: center;
+		padding-block: 8px;
+		padding-inline: 8px;
+	}
+
 	.wpss-payment-methods__table td {
-		padding-inline: 4px;
+		display: block;
+		padding: 0;
+	}
+
+	/* Arrows stacked: the row is two lines tall, and the status gets the width. */
+	.wpss-payment-methods__table td:nth-child(1) {
+		grid-area: order;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.wpss-payment-methods__table td:nth-child(2) {
+		grid-area: name;
+	}
+
+	.wpss-payment-methods__table td:nth-child(3) {
+		grid-area: toggle;
+		justify-self: end;
+	}
+
+	.wpss-payment-methods__table td:nth-child(4) {
+		grid-area: status;
+	}
+
+	.wpss-payment-methods__table td:nth-child(5) {
+		grid-area: manage;
+		justify-self: end;
 	}
 }
 

@@ -328,7 +328,9 @@ class PaymentController extends RestController {
 	public function confirm_payment( WP_REST_Request $request ) {
 		$gateway_id = sanitize_text_field( $request->get_param( 'gateway' ) );
 		$payment_id = sanitize_text_field( $request->get_param( 'payment_id' ) );
-		$service_id = $this->product_id( $request );
+		// Not required: every gateway settles from the metadata it stored when the payment
+		// started, and Razorpay's old /verify never sent a product (QA bounce of 10551488326).
+		$service_id = $this->product_id( $request, false );
 		if ( is_wp_error( $service_id ) ) {
 			return $service_id;
 		}
@@ -374,10 +376,11 @@ class PaymentController extends RestController {
 	 * "service" is the only registered product type, so another type is refused
 	 * here rather than priced as a service.
 	 *
-	 * @param WP_REST_Request $request Request object.
+	 * @param WP_REST_Request $request  Request object.
+	 * @param bool            $required Refuse a request naming no product and no pay_order.
 	 * @return int|WP_Error
 	 */
-	private function product_id( WP_REST_Request $request ) {
+	private function product_id( WP_REST_Request $request, bool $required = true ) {
 		$type = (string) $request->get_param( 'product_type' );
 		// A registered type other than "service" is known but cannot be bought until
 		// the checkout intent is item-based, so it is refused with the same error.
@@ -386,7 +389,7 @@ class PaymentController extends RestController {
 		}
 
 		$id = (int) $request->get_param( 'product_id' ) ?: (int) $request->get_param( 'service_id' );
-		if ( ! $id && ! (int) $request->get_param( 'pay_order' ) ) {
+		if ( $required && ! $id && ! (int) $request->get_param( 'pay_order' ) ) {
 			return new WP_Error( 'rest_missing_callback_param', __( 'Missing parameter(s): product_id', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 

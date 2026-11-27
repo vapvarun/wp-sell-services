@@ -104,7 +104,8 @@ wpss_t(
 wpss_t( ! method_exists( $gateway_class, 'handle_payment_captured' ), 'the payment.captured handler is gone' );
 wpss_t( method_exists( $gateway_class, 'handle_order_paid' ), 'order.paid still has its handler' );
 
-// 3. AJAX handlers exist only on the standalone rail.
+// 3. AJAX handlers register on every rail (Basecamp 10550988413): verify must finish a payment
+// already taken after a rail switch; create is refused off our rail by wpss_gateway_require_enabled().
 //
 // wpss_uses_standalone_payments() reads the adapter IntegrationManager picked
 // at boot from wpss_general[ecommerce_platform], so a rail change is only
@@ -139,7 +140,7 @@ if ( ! $non_standalone ) {
 		$general['ecommerce_platform'] = $non_standalone;
 		update_option( 'wpss_general', $general );
 		$on_other = trim( (string) WP_CLI::runcommand( 'eval ' . escapeshellarg( $probe ), array( 'launch' => true, 'return' => true, 'exit_error' => false ) ) );
-		wpss_t( 'absent' === $on_other, "AJAX actions absent on the {$non_standalone} rail (got '{$on_other}')" );
+		wpss_t( 'registered' === $on_other, "AJAX actions still registered on the {$non_standalone} rail (got '{$on_other}')" );
 	} finally {
 		$general['ecommerce_platform'] = $original;
 		update_option( 'wpss_general', $general );

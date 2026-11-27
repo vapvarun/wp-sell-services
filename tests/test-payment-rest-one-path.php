@@ -82,6 +82,9 @@ if ( isset( wpss()->get_payment_gateways()['razorpay'] ) ) {
 
 	list( $status, $code ) = $post( 'razorpay/verify', array( 'razorpay_order_id' => 'order_qa', 'razorpay_payment_id' => 'pay_qa', 'razorpay_signature' => 'bad', 'pay_order' => $order_id ) );
 	$check( '  the Pro alias /razorpay/verify gives the same answer', 400 === $status && 'razorpay_confirm_error' === $code, "{$status} {$code}" );
+	// The old route took no product: a new-purchase body (no service, no pay_order) reaches the signature check.
+	list( $status, $code ) = $post( 'razorpay/verify', array( 'razorpay_order_id' => 'order_qa', 'razorpay_payment_id' => 'pay_qa', 'razorpay_signature' => 'bad' ) );
+	$check( '  an old-style body with no product is not refused for a missing product_id', 400 === $status && 'razorpay_confirm_error' === $code, "{$status} {$code}" );
 	wp_set_current_user( $other );
 	list( $status, $code ) = $post( 'razorpay/verify', array( 'razorpay_order_id' => 'order_qa', 'razorpay_payment_id' => 'pay_qa', 'razorpay_signature' => 'bad', 'pay_order' => $order_id ) );
 	$check( '  and the same one rule', 403 === $status && 'wpss_not_owner' === $code, "{$status} {$code}" );

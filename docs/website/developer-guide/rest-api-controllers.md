@@ -420,8 +420,9 @@ every gateway, Pro's Razorpay included: pass `gateway` (`stripe`, `paypal`,
 `razorpay`, `offline`, ...). Pro's gateway-specific routes are aliases of these --
 see [Payments (Pro)](#payments-pro).
 
-`POST /payments/confirm` takes `gateway`, `payment_id` (the provider's payment
-id) and `pay_order` or `service_id`/`package_id`. Razorpay also needs
+`POST /payments/confirm` takes `gateway` and `payment_id` (the provider's payment
+id), plus `pay_order` when paying an existing order. `service_id`/`package_id`
+are optional: every gateway settles from what it stored when the payment started. Razorpay also needs
 `provider_order_id` (its order id) and `signature`. With `pay_order`, only the
 order's own buyer may confirm it: anyone else, an admin included, gets
 `403 wpss_not_owner`, and an unknown order `404 rest_order_not_found`.
