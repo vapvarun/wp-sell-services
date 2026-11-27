@@ -1452,6 +1452,14 @@
    "added": "2026-11-27",
    "fails_on": "93999b71 / Pro e03ced7 (5 FAIL)",
    "check": "tests/test-chargeback-lost-is-refund.php"
+  },
+  {
+   "card": "10551463043",
+   "title": "commission reported recorded after a failed vendor credit (Connect then debited it), and the credit was booked in the store currency",
+   "guard": "static:commission-credit-must-land",
+   "added": "2026-11-27",
+   "fails_on": "20b0017a (7 FAIL)",
+   "check": "tests/test-commission-credit-must-land.php"
   }
  ]
 }

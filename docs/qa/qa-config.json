@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "commission-credit-must-land",
+    "run": "${WP_CLI:-wp} eval-file tests/test-commission-credit-must-land.php"
+   },
+   {
     "id": "chargeback-lost-is-refund",
     "run": "${WP_CLI:-wp} eval-file tests/test-chargeback-lost-is-refund.php"
    },

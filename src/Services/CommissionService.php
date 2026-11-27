@@ -217,9 +217,10 @@ class CommissionService {
 	 * Should be called when order transitions to 'completed' status.
 	 *
 	 * @param int $order_id Order ID.
+	 * @param int $attempt  Retry number after a failed credit (scheduled by this method).
 	 * @return bool True on success, false on failure.
 	 */
-	public function record( int $order_id ): bool {
+	public function record( int $order_id, int $attempt = 0 ): bool {
 		global $wpdb;
 
 		$order = wpss_get_order( $order_id );
@@ -285,7 +286,18 @@ class CommissionService {
 
 		// Create wallet transaction for vendor earnings. The vendor profile's
 		// cached totals are recomputed from the ledger by the insert helper.
-		$this->create_earnings_transaction( $order_id, $order->vendor_id, $commission );
+		// A credit that did not land is not "recorded": the hook would let Pro's Connect debit a
+		// credit that never existed and push the vendor negative (Basecamp 10551463043).
+		if ( ! $this->create_earnings_transaction( $order_id, (int) $order->vendor_id, $commission, (string) ( $order->currency ?? '' ) ) ) {
+			// A deadlock or a dropped connection passes; try again shortly, three times at most.
+			if ( $attempt < 3 ) {
+				Scheduler::schedule_single( 'wpss_retry_commission', time() + 5 * MINUTE_IN_SECONDS, array( $order_id, $attempt + 1 ) );
+			}
+
+			wpss_log( sprintf( 'Order %d: vendor %d was NOT credited %s (the ledger write failed, attempt %d). %s', $order_id, (int) $order->vendor_id, (string) $commission['vendor_earnings'], $attempt + 1, $attempt < 3 ? 'Retrying in 5 minutes.' : 'Giving up; credit it by hand.' ), 'error' );
+
+			return false;
+		}
 
 		/**
 		 * Fires when commission is recorded for an order.
@@ -378,13 +390,17 @@ class CommissionService {
 	/**
 	 * Create wallet transaction for vendor earnings.
 	 *
-	 * @param int   $order_id   Order ID.
-	 * @param int   $vendor_id  Vendor user ID.
-	 * @param array $commission Commission breakdown.
-	 * @return void
+	 * @param int    $order_id   Order ID.
+	 * @param int    $vendor_id  Vendor user ID.
+	 * @param array  $commission Commission breakdown.
+	 * @param string $currency   The order's currency; the store's when the order has none.
+	 * @return bool Whether the credit is on the ledger.
 	 */
-	private function create_earnings_transaction( int $order_id, int $vendor_id, array $commission ): void {
+	private function create_earnings_transaction( int $order_id, int $vendor_id, array $commission, string $currency = '' ): bool {
 		global $wpdb;
+
+		// An order keeps the currency it was placed in, as tips and Connect already book it.
+		$currency = '' !== $currency ? strtoupper( $currency ) : wpss_get_currency();
 
 		// Lock the vendor's wallet transactions to prevent balance race conditions.
 		$wpdb->query( 'START TRANSACTION' );
@@ -398,12 +414,12 @@ class CommissionService {
 				'type'           => 'order_earning',
 				'amount'         => $commission['vendor_earnings'],
 				'balance_after'  => $current_balance + $commission['vendor_earnings'],
-				'currency'       => wpss_get_currency(),
+				'currency'       => $currency,
 				'description'    => sprintf(
 					/* translators: 1: order ID, 2: order total, 3: commission rate */
 					__( 'Earning from order #%1$d (Total: %2$s, Commission: %3$s%%)', 'wp-sell-services' ),
 					$order_id,
-					wpss_format_price( $commission['order_total'] ),
+					wpss_format_price( $commission['order_total'], $currency ),
 					$commission['commission_rate']
 				),
 				'reference_type' => 'order',
@@ -416,10 +432,10 @@ class CommissionService {
 
 		if ( ! $inserted ) {
 			$wpdb->query( 'ROLLBACK' );
-			return;
+			return false;
 		}
 
-		$wpdb->query( 'COMMIT' );
+		return false !== $wpdb->query( 'COMMIT' );
 	}
 
 	/**

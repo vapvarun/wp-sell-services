@@ -3019,6 +3019,16 @@ final class Plugin {
 			4
 		);
 
+		// A vendor credit whose ledger write failed is retried (CommissionService::record(), Basecamp 10551463043).
+		add_action(
+			'wpss_retry_commission',
+			static function ( $order_id = 0, $attempt = 0 ): void {
+				( new \WPSellServices\Services\CommissionService() )->record( (int) $order_id, (int) $attempt );
+			},
+			10,
+			2
+		);
+
 		// Status change hooks.
 		$status_hooks = array(
 			'wpss_order_status_changed'                => array( 'handle_status_change', 10, 3 ),
