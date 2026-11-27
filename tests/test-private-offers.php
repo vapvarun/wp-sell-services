@@ -163,7 +163,11 @@ try {
 	$check( 'an offer past its window reads expired', 'expired' === wpss_private_offer_for_client( (int) $third['id'], (int) $f->buyer )['state'] );
 	$late = $answer( (int) $f->buyer, $third, 'accept' );
 	$check( '  and accepting it is refused before the sweep runs', 400 === $late->get_status() && str_contains( (string) $late->get_data()['message'], 'expired' ) );
-	( new \WPSellServices\Services\BuyerRequestService() )->expire_old_requests();
+	// The sweep takes 100 per run, oldest first, as cron does; drain it so an overdue backlog
+	// on the site (a test stack whose cron has not run yet) cannot hide this offer.
+	for ( $sweeps = 0; $sweeps < 100 && ( new \WPSellServices\Services\BuyerRequestService() )->expire_old_requests() > 0; $sweeps++ ) {
+		continue;
+	}
 	$check( '  the sweep closes it and fires wpss_private_offer_expired', 'expired' === get_post_meta( (int) $third['request_id'], '_wpss_status', true ) && 1 === ( $fired['wpss_private_offer_expired'] ?? 0 ) );
 
 	// 7. Withdraw closes it too.
