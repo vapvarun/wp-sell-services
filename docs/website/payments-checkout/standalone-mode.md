@@ -96,9 +96,16 @@ See [Stripe Payments](stripe-payments.md) and [Other Payment Gateways](other-gat
 
 Turning a gateway off removes it from new checkouts only. A buyer who is paying at that moment still gets their order, and refunds and webhooks for orders already paid through it keep working.
 
-### Test Gateway (Development Only)
+### Test Gateway
 
-When `WP_DEBUG` is enabled in `wp-config.php`, a **Test Gateway** option appears at checkout. It completes payments instantly with no external credentials -- useful for testing the full order lifecycle during development or QA. It is automatically hidden on production sites where `WP_DEBUG` is `false`.
+The **Test Gateway** completes payments instantly with no external credentials, for testing the full order lifecycle. No money moves.
+
+It appears in two cases:
+
+- **Demo payments on a new store.** Until the store has taken or can take real money, a store with no payment method turned on offers the Test Gateway so you can try the whole buying flow. A notice says demo payments are on, with a **Turn demo payments off** link.
+- **Developer sites.** With `WP_DEBUG` on, you can enable it from its settings at any time.
+
+Demo payments switch off for good the first time the store is live: a gateway such as Stripe, PayPal or Razorpay is turned on with its keys, or a real (non-test) order exists. They do not come back if you later turn every method off, for example to rotate keys; checkout then shows that no payment method is available. Offline payments, which are on from installation, do not count as live.
 
 See [Other Payment Gateways](other-gateways.md#test-gateway-development-only) for full details.
 

@@ -1468,6 +1468,14 @@
    "added": "2026-11-27",
    "fails_on": "73a7915c (3 FAIL)",
    "check": "tests/test-mark-paid-honours-payout-reservation.php"
+  },
+  {
+   "card": "10551463173",
+   "title": "demo (Test) payments came back on a live store whenever every real method was briefly off",
+   "guard": "static:demo-payments-latch-off-once-live",
+   "added": "2026-11-27",
+   "fails_on": "4c0b9c07 (5 FAIL)",
+   "check": "tests/test-demo-payments-latch-off-once-live.php"
   }
  ]
 }

@@ -180,19 +180,18 @@ You can enable as many gateways as you like. Buyers will see all enabled options
 | Best for | Global buyers | India | High-trust / manual |
 | Transaction fees | 2.9-4.4% | 0-3% | None |
 
-## Test Gateway (Development Only)
+## Test Gateway
 
 WP Sell Services includes a built-in **Test Gateway** for developers. It auto-completes payments instantly -- no external accounts, API keys, or webhooks needed.
 
-### Enabling the Test Gateway
+### When the Test Gateway Appears
 
-The Test Gateway only appears when `WP_DEBUG` is enabled in `wp-config.php`:
+It appears in two cases:
 
-```php
-define( 'WP_DEBUG', true );
-```
+- **Demo payments on a new store.** Until the store has taken or can take real money, a store with no payment method turned on offers the Test Gateway so you can try the whole buying flow. A notice says demo payments are on, with a **Turn demo payments off** link.
+- **Developer sites.** With `WP_DEBUG` on, you can enable it from its settings at any time.
 
-Once enabled, "Test Gateway" appears as a payment option at checkout with a "Development Mode" banner.
+Demo payments switch off for good the first time the store is live: a gateway such as Stripe, PayPal or Razorpay is turned on with its keys, or a real (non-test) order exists. They do not come back if you later turn every method off, for example to rotate keys; checkout then shows that no payment method is available. Offline payments, which are on from installation, do not count as live.
 
 ### How It Works
 
@@ -209,7 +208,7 @@ Once enabled, "Test Gateway" appears as a payment option at checkout with a "Dev
 - **QA testing** -- rapid order creation for testing requirements, delivery, disputes
 - **Demo sites** -- showcase the marketplace without real payment credentials
 
-**Important:** The Test Gateway is NOT available on production sites where `WP_DEBUG` is `false`. It cannot be enabled via settings -- only via `wp-config.php`.
+**Important:** On a live store the Test Gateway is available only with `WP_DEBUG` on. Never leave `WP_DEBUG` on in production.
 
 ## Troubleshooting
 

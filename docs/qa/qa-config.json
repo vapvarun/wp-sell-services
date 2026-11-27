@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "demo-payments-latch-off-once-live",
+    "run": "${WP_CLI:-wp} eval-file tests/test-demo-payments-latch-off-once-live.php"
+   },
+   {
     "id": "mark-paid-honours-payout-reservation",
     "run": "${WP_CLI:-wp} eval-file tests/test-mark-paid-honours-payout-reservation.php"
    },

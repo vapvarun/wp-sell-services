@@ -301,12 +301,13 @@ function wpss_get_checkout_badges( array $package ): array {
  *   - no real gateway has been configured yet
  *   - the owner has not turned it off
  *
- * So it disables itself the moment real credentials are saved. There is no
- * state to remember and no way to be silently stuck in test mode with a live
- * store - the thing that makes "enable a test gateway by default" dangerous
- * in most plugins.
+ * So it disables itself the moment real credentials are saved. And once the
+ * store has been live (wpss_store_is_live()) it latches off for good: an owner
+ * who turns Stripe off to rotate keys must not get a free "pay" button at
+ * checkout. The owner can still turn it back on by deleting the option.
  *
  * @since 1.4.0
+ * @since 1.9.4 Latches off once the store is live (Basecamp 10551463173).
  *
  * @return bool
  */
@@ -321,7 +322,37 @@ function wpss_demo_payments_enabled(): bool {
 		return false;
 	}
 
+	if ( wpss_store_is_live() ) {
+		update_option( 'wpss_demo_payments', 'no' );
+		return false;
+	}
+
 	return ! wpss_has_live_gateway();
+}
+
+/**
+ * Whether this store has taken, or can take, real money.
+ *
+ * A gateway other than Test and Offline is enabled with its keys, or an order
+ * exists that was not made with the Test gateway. Offline alone is not enough:
+ * it is on from activation, so it says nothing about a store being live.
+ *
+ * @since 1.9.4
+ *
+ * @return bool
+ */
+function wpss_store_is_live(): bool {
+	foreach ( wpss()->get_payment_gateways() as $id => $gateway ) {
+		if ( ! in_array( $id, array( 'test', 'offline' ), true ) && $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
+			return true;
+		}
+	}
+
+	global $wpdb;
+
+	// shortcut: unindexed on payment_method, but LIMIT 1 stops at the first real order and the answer latches; index it if demo stores grow huge.
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	return (bool) $wpdb->get_var( "SELECT 1 FROM {$wpdb->prefix}wpss_orders WHERE payment_method IS NULL OR payment_method <> 'test' LIMIT 1" );
 }
 
 /**
@@ -359,24 +390,14 @@ function wpss_has_live_gateway(): bool {
  *
  * The Offline gateway is on from activation, so "a live gateway exists" is true
  * on a brand-new site with nothing to warn about. The notice waits until money
- * can really move: a gateway with keys (Stripe, PayPal, ...) or a first order.
+ * can really move: wpss_store_is_live() (a gateway with keys, or a first real order).
  *
  * @since 1.9.3
  *
  * @return bool
  */
 function wpss_terms_notice_due(): bool {
-	if ( ! wpss_has_live_gateway() ) {
-		return false;
-	}
-
-	foreach ( wpss()->get_payment_gateways() as $id => $gateway ) {
-		if ( ! in_array( $id, array( 'test', 'offline' ), true ) && $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
-			return true;
-		}
-	}
-
-	return ( new \WPSellServices\Database\Repositories\OrderRepository() )->has_any();
+	return wpss_has_live_gateway() && wpss_store_is_live();
 }
 
 /**
