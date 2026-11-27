@@ -910,6 +910,8 @@
 	.wpss-wizard__progress-list {
 		flex-wrap: wrap;
 		gap: 16px;
+		/* A type that skips a step leaves a short last row; centre it instead of pushing it to the edges. */
+		justify-content: center;
 	}
 
 	.wpss-wizard__progress-list::before {
