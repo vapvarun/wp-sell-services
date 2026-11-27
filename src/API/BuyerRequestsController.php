@@ -475,7 +475,8 @@ class BuyerRequestsController extends RestController {
 		$request_id    = (int) $request->get_param( 'id' );
 		$buyer_request = $this->request_service->get( $request_id );
 
-		if ( ! $buyer_request ) {
+		// A private offer is answered as not found to everyone but its buyer, its vendor and admins.
+		if ( ! $buyer_request || ( 'publish' !== get_post_status( $request_id ) && ! current_user_can( 'read_post', $request_id ) ) ) {
 			return new WP_Error(
 				'request_not_found',
 				__( 'Buyer request not found.', 'wp-sell-services' ),

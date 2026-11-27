@@ -116,6 +116,11 @@ class ProposalService {
 			return false;
 		}
 
+		// A private offer takes one proposal: its own vendor's (wpss_send_private_offer()).
+		if ( 'publish' !== get_post_status( $request_id ) && (int) get_post_meta( $request_id, '_wpss_private_offer_vendor', true ) !== $vendor_id ) {
+			return false;
+		}
+
 		// A seller is still a buyer and may post requests; bidding on their own
 		// is self-dealing (it notifies nobody and can convert to an order with
 		// one party). Refused with a message rather than a bare false so the

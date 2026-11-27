@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**607 hooks** across **831** firing sites.
+**612 hooks** across **836** firing sites.
 
-## Actions (308)
+## Actions (312)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -199,6 +199,10 @@ guide; this is the complete index.
 | `wpss_portfolio_item_deleted` | 2 | `src/Services/PortfolioService.php` | Fires when portfolio item is deleted. |
 | `wpss_portfolio_item_moderated` | 3 | `src/Admin/Pages/VendorsPage.php` | Fires after an admin moderates a vendor portfolio item from the drawer. |
 | `wpss_portfolio_item_updated` | 2 | `src/Services/PortfolioService.php` | Fires when portfolio item is updated. |
+| `wpss_private_offer_accepted` | 2 | `src/functions/private-offers.php` | Fires after a buyer accepts a private offer (the order now waits for payment). |
+| `wpss_private_offer_declined` | 2 | `src/functions/private-offers.php` | Fires after a buyer declines a private offer. |
+| `wpss_private_offer_expired` | 2 | `src/Services/BuyerRequestService.php` | Fires when a private offer expires unanswered. |
+| `wpss_private_offer_sent` | 5 | `src/functions/private-offers.php` | Fires after a vendor sends a private offer. |
 | `wpss_pro_commission_rule_changed` | 3 | `src/TieredCommission/CommissionRuleRepository.php` **[PRO]** | Fires after a commission rule is created, updated or deleted. |
 | `wpss_pro_connect_payout_failed` | 4 | `src/StripeConnect/ConnectWebhookHandler.php` **[PRO]** | Fires when a payout to a connected vendor account fails. |
 | `wpss_pro_connect_payout_paid` | 4 | `src/StripeConnect/ConnectWebhookHandler.php` **[PRO]** | Fires when a payout to a connected vendor account succeeds. |
@@ -325,7 +329,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (299)
+## Filters (300)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -503,6 +507,7 @@ guide; this is the complete index.
 | `wpss_pre_vendor_register` | 2 | `src/Services/VendorService.php` | Filter vendor profile data before creating the vendor profile. |
 | `wpss_presence_window` | 2 | `src/functions/notifications.php` | Filters the presence window, in seconds. |
 | `wpss_price_separators` | 1 | `src/functions/money.php` | Filter the price separators. |
+| `wpss_private_offer_fields` | 1 | `src/functions/private-offers.php` | Filter the fields of a private offer: labels, defaults and limits. |
 | `wpss_pro_beta_rails` | 1 | `wp-sell-services-pro.php` **[PRO]** | Filter whether the beta EDD and FluentCart rails are registered. |
 | `wpss_pro_fcm_payload` | 3 | `src/Push/FcmProvider.php` **[PRO]** | Filter the FCM message body before it is sent. |
 | `wpss_pro_pause_license_recheck` | 2 | `src/License/Manager.php` **[PRO]** | Filter whether automatic license re-checks are paused. |

@@ -1609,6 +1609,13 @@
    "guard": "static:digital-products",
    "added": "2026-11-28",
    "fails_on": "2b113edf (no digital type or wpss_add_product_file: the first check fails and the test stops)"
+  },
+  {
+   "card": "10551449528",
+   "title": "A vendor could not make a buyer a private offer from a conversation: a custom price only existed as a public buyer request every member could see and every vendor could bid on",
+   "guard": "static:private-offers",
+   "added": "2026-11-28",
+   "fails_on": "67e0644c (no wpss_send_private_offer: the first check fails and the test stops)"
   }
  ]
 }

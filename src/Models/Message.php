@@ -29,6 +29,7 @@ class Message {
 	public const TYPE_REVISION      = 'revision';
 	public const TYPE_STATUS_CHANGE = 'status_change';
 	public const TYPE_SYSTEM        = 'system';
+	public const TYPE_OFFER         = 'offer';
 
 	/**
 	 * Message ID.
@@ -144,6 +145,7 @@ class Message {
 			self::TYPE_REVISION      => __( 'Revision Request', 'wp-sell-services' ),
 			self::TYPE_STATUS_CHANGE => __( 'Status Change', 'wp-sell-services' ),
 			self::TYPE_SYSTEM        => __( 'System', 'wp-sell-services' ),
+			self::TYPE_OFFER         => __( 'Private offer', 'wp-sell-services' ),
 		];
 	}
 

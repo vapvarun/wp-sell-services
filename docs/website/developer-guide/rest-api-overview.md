@@ -218,6 +218,25 @@ A service whose `service_type` is `digital` sells a file
 - Each download through either door fires `wpss_file_downloaded` and writes one
   `product.downloaded` audit row.
 
+### Private offers
+
+A seller's offer to one buyer from a pre-sale conversation
+([Private Offers](../buyer-requests/private-offers.md)).
+
+- `POST /wpss/v1/conversations/{id}/offers` (the seller in a conversation with no
+  order): `title`, `description`, `price`, `delivery_days`, `revisions`,
+  `expires_days`, optional `contract_type` and `milestones`. `201` with the offer;
+  `400 wpss_offer_field` names the bad field in `data.field`; `403` when the caller
+  is not a seller, the thread belongs to an order, or either member blocked the other.
+- Every message carries `offer`: the offer for a message of type `offer`, else
+  `null`. It holds `state` (`pending`, `accepted`, `declined`, `withdrawn`,
+  `expired`), the terms, `expires_at`, `can_respond` (the buyer, while pending),
+  `accept_route`, `decline_route` and `order_url`.
+- Accept and decline are the buyer request proposal routes the offer names. Accept
+  answers `order_id` and `checkout_url`; an expired offer answers `400`.
+- `GET /buyer-requests/{id}` answers `404` for an offer's hidden request to anyone
+  but its buyer, its seller and admins.
+
 ## Payload conventions
 
 Four shapes are the same everywhere in this API. They were not always, and the

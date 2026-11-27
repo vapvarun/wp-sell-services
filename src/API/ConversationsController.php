@@ -197,6 +197,33 @@ class ConversationsController extends RestController {
 			)
 		);
 
+		// A vendor's private offer to the other member of a pre-sale conversation (Basecamp 10551449528).
+		// Accept and decline are the buyer's proposal routes: /buyer-requests/{id}/proposals/{pid}/accept|reject.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/offers',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'send_offer' ),
+					'permission_callback' => array( $this, 'check_conversation_permission' ),
+					'args'                => array(
+						'id'            => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+						'contract_type' => array(
+							'type' => 'string',
+							'enum' => array( 'fixed', 'milestone' ),
+						),
+						'milestones'    => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'object' ),
+						),
+					),
+				),
+			)
+		);
+
 		// Mark messages as read.
 		register_rest_route(
 			$this->namespace,
@@ -376,6 +403,20 @@ class ConversationsController extends RestController {
 	 */
 	public function send_message( $request ) {
 		return $this->do_send_message( (int) $request->get_param( 'id' ), $request );
+	}
+
+	/**
+	 * Send a private offer in a conversation.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param WP_REST_Request $request Request: the fields of wpss_get_private_offer_fields(), contract_type, milestones.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function send_offer( $request ) {
+		$offer = wpss_send_private_offer( (int) $request->get_param( 'id' ), get_current_user_id(), $request->get_params() );
+
+		return is_wp_error( $offer ) ? $offer : new WP_REST_Response( $offer, 201 );
 	}
 
 	/**
@@ -712,6 +753,8 @@ class ConversationsController extends RestController {
 			'is_read'     => $is_read,
 			'is_edited'   => $message->is_edited ?? false,
 			'created_at'  => $this->format_datetime( $message->created_at ?? null ),
+			// An offer message carries the offer's live terms and state (null on every other message).
+			'offer'       => 'offer' === ( $message->type ?? '' ) ? wpss_private_offer_for_client( (int) ( wpss_message_metadata( $message )['proposal_id'] ?? 0 ), $user_id ) : null,
 			// Additive: server-rendered message row so the (server-rendered)
 			// thread UIs append byte-identical markup. Mirrors the reviews
 			// pattern; structured fields above remain the canonical contract.

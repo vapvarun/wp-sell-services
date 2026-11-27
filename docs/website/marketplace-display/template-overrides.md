@@ -3,7 +3,7 @@
 Change how service cards, vendor profiles, dashboards, and order screens look --
 through your theme, without touching plugin files.
 
-The plugin ships **111 templates**: 71 frontend templates plus 40 email
+The plugin ships **112 templates**: 72 frontend templates plus 40 email
 templates. Any of them can be overridden, and most of them also expose hooks so
 you can add markup without overriding at all.
 
@@ -79,6 +79,7 @@ Subfolders are preserved: `templates/order/order-view.php` becomes
 | `partials/vendor-level-badge.php` | Vendor level badge (service card, vendor card, profile) |
 | `partials/vendor-portfolio.php` | Portfolio grid |
 | `partials/notifications-list.php` | Notification list markup |
+| `partials/offer-card.php` | A private offer in a conversation, with Accept and Decline for its buyer |
 | `partials/billing-fields.php` | Billing form fields |
 | `partials/billing-summary.php` | Billing recap at checkout |
 | `partials/report-modal.php` | The Report dialog opened from a service page or vendor profile |

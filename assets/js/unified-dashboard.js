@@ -54,6 +54,10 @@
 			// Toggle service status
 			$(document).on('click', '.wpss-toggle-status', this.handleToggleStatus.bind(this));
 
+			// Private offers: the vendor sends one, the buyer accepts or declines it.
+			$(document).on('submit', '[data-wpss-offer-form]', this.handleOfferSend.bind(this));
+			$(document).on('click', '[data-wpss-offer]', this.handleOfferAnswer.bind(this));
+
 			// Delete service
 			$(document).on('click', '.wpss-delete-service', this.handleDeleteService.bind(this));
 			$(document).on('click', '[data-wpss-rest-action]', this.handleRestAction.bind(this));
@@ -547,6 +551,66 @@
 		 *
 		 * @param {Event} e Click event.
 		 */
+		/**
+		 * Send a private offer: POST /conversations/{id}/offers, then show it in the thread.
+		 */
+		handleOfferSend: function (e) {
+			e.preventDefault();
+			const $form = $(e.currentTarget);
+			const $btn = $form.find('button[type="submit"]').prop('disabled', true);
+			const data = {};
+			$form.serializeArray().forEach(function (f) { data[f.name] = f.value; });
+
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + 'conversations/' + $form.data('conversation') + '/offers',
+				method: 'POST',
+				contentType: 'application/json',
+				data: JSON.stringify(data),
+				beforeSend: function (xhr) { xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce); }
+			}).done(function () {
+				location.reload();
+			}).fail(function (xhr) {
+				window.wpssToast((xhr.responseJSON && xhr.responseJSON.message) || wpssUnifiedDashboard.i18n.offerFailed, 'error');
+				$btn.prop('disabled', false);
+			});
+		},
+
+		/**
+		 * Accept (then pay) or decline an offer through the buyer's proposal routes.
+		 */
+		handleOfferAnswer: function (e) {
+			const $btn = $(e.currentTarget);
+			const accept = 'accept' === $btn.data('wpss-offer');
+			const send = function () {
+				$btn.closest('.wpss-offer-card__actions').find('button').prop('disabled', true);
+				$.ajax({
+					url: wpssUnifiedDashboard.restUrl.replace(/wpss\/v1\/$/, '') + String($btn.data('route')).replace(/^\//, ''),
+					method: 'POST',
+					beforeSend: function (xhr) { xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce); }
+				}).done(function (res) {
+					if (accept && res && res.checkout_url) {
+						window.location.href = res.checkout_url;
+						return;
+					}
+					location.reload();
+				}).fail(function (xhr) {
+					window.wpssToast((xhr.responseJSON && xhr.responseJSON.message) || wpssUnifiedDashboard.i18n.offerFailed, 'error');
+					$btn.closest('.wpss-offer-card__actions').find('button').prop('disabled', false);
+				});
+			};
+
+			if (accept) {
+				send();
+				return;
+			}
+
+			window.wpssConfirm(wpssUnifiedDashboard.i18n.offerDeclineConfirm, { tone: 'danger' }).then(function (ok) {
+				if (ok) {
+					send();
+				}
+			});
+		},
+
 		handleToggleStatus: function (e) {
 			e.preventDefault();
 

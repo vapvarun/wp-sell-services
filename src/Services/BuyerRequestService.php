@@ -781,7 +781,7 @@ class BuyerRequestService {
 	public function expire_old_requests(): int {
 		$args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
-			'post_status'    => 'publish',
+			'post_status'    => array( 'publish', 'private' ), // Private offers expire on the same sweep.
 
 			/*
 			 * Bounded per run; the next cron tick picks up the rest.
@@ -816,6 +816,18 @@ class BuyerRequestService {
 		foreach ( $request_ids as $request_id ) {
 			if ( $this->update_status( $request_id, self::STATUS_EXPIRED ) ) {
 				++$count;
+
+				if ( wpss_is_private_offer( (int) $request_id ) ) {
+					/**
+					 * Fires when a private offer expires unanswered.
+					 *
+					 * @since 2.0.0
+					 *
+					 * @param int $proposal_id The offer's proposal ID.
+					 * @param int $request_id  The hidden request ID.
+					 */
+					do_action( 'wpss_private_offer_expired', (int) get_post_meta( $request_id, '_wpss_private_offer_proposal', true ), (int) $request_id );
+				}
 			}
 		}
 
@@ -881,6 +893,14 @@ class BuyerRequestService {
 			return array(
 				'success' => false,
 				'message' => __( 'Buyer request not found.', 'wp-sell-services' ),
+			);
+		}
+
+		// An offer past its window cannot be accepted, even before the daily sweep closes it.
+		if ( wpss_is_private_offer( $request_id ) && wpss_private_offer_is_expired( $request_id ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This offer has expired. Ask the seller to send a new one.', 'wp-sell-services' ),
 			);
 		}
 

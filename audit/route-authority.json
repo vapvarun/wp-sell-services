@@ -1187,6 +1187,12 @@
       "object_id": false,
       "writes": true
     },
+    "POST /wpss/v1/conversations/(?P<id>[\\d]+)/offers": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ConversationsController::check_conversation_permission",
+      "object_id": true,
+      "writes": true
+    },
     "POST /wpss/v1/services/(?P<id>[\\d]+)/file": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\ServicesController::update_item_permissions_check",

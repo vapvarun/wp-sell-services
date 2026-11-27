@@ -53,9 +53,9 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_pre_create_service` | `array $data` | `ServiceManager.php` |
 | `wpss_pre_update_service` | `array $data, int $service_id` | `ServiceManager.php` |
 | `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:915` |
-| `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:810` |
-| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:1034` |
-| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:1099` |
+| `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:811` |
+| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:1037` |
+| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:1102` |
 
 ## Moderation Actions
 
@@ -122,7 +122,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:561` |
 | `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:1516` |
 | `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1798` |
-| `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` (chat only; not deliveries or revision requests) | `src/Services/ConversationService.php:448` |
+| `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` (chat only; not deliveries or revision requests) | `src/Services/ConversationService.php:450` |
 
 ## Payment and Gateway Actions
 
@@ -307,15 +307,15 @@ tip. Tips are excluded from commission by default, so the two usually match.
 | `wpss_buyer_request_created` | `int $post_id, array $data` | `src/Services/BuyerRequestService.php:129` |
 | `wpss_buyer_request_updated` | `int $request_id, array $data` | `src/Services/BuyerRequestService.php:190` |
 | `wpss_buyer_request_status_changed` | `int $request_id, string $status, string $old_status` | `src/Services/BuyerRequestService.php:678` |
-| `wpss_request_converted_to_order` | `int $order_id, int $request_id, int $proposal_id, object $request, object $proposal` | `src/Services/BuyerRequestService.php:1249` |
-| `wpss_proposal_submitted` | `int $proposal_id, int $request_id, int $vendor_id, array $proposal_data` | `src/Services/ProposalService.php:194` |
-| `wpss_proposal_updated` | `int $proposal_id, array $update_data` | `src/Services/ProposalService.php:375` |
-| `wpss_proposal_accepted` | `int $proposal_id, object $proposal, object $request` | `src/Services/BuyerRequestService.php:1191` |
-| `wpss_proposal_rejected` | `int $proposal_id, object $proposal, string $reason` | `src/Services/ProposalService.php:472` |
-| `wpss_proposal_withdrawn` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:517` |
-| `wpss_proposal_deleted` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:923` |
-| `wpss_proposal_status_updated` | `int $proposal_id, string $status` | `src/Services/BuyerRequestService.php:1171` |
-| `wpss_buyer_request_deleted` | `int $request_id` | `src/Services/BuyerRequestService.php:1418` |
+| `wpss_request_converted_to_order` | `int $order_id, int $request_id, int $proposal_id, object $request, object $proposal` | `src/Services/BuyerRequestService.php:1269` |
+| `wpss_proposal_submitted` | `int $proposal_id, int $request_id, int $vendor_id, array $proposal_data` | `src/Services/ProposalService.php:199` |
+| `wpss_proposal_updated` | `int $proposal_id, array $update_data` | `src/Services/ProposalService.php:380` |
+| `wpss_proposal_accepted` | `int $proposal_id, object $proposal, object $request` | `src/Services/BuyerRequestService.php:1211` |
+| `wpss_proposal_rejected` | `int $proposal_id, object $proposal, string $reason` | `src/Services/ProposalService.php:477` |
+| `wpss_proposal_withdrawn` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:522` |
+| `wpss_proposal_deleted` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:928` |
+| `wpss_proposal_status_updated` | `int $proposal_id, string $status` | `src/Services/BuyerRequestService.php:1191` |
+| `wpss_buyer_request_deleted` | `int $request_id` | `src/Services/BuyerRequestService.php:1438` |
 | `wpss_buyer_request_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/BuyerRequestMetabox.php:349` |
 
 ## Milestone and Extension Actions
@@ -326,7 +326,7 @@ ids: `$milestone_id` is the sub-order, `$order_id` is the parent. See
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_milestone_proposed` | `int $milestone_id, int $order_id, int $vendor_id` | `src/Services/BuyerRequestService.php:1149` |
+| `wpss_milestone_proposed` | `int $milestone_id, int $order_id, int $vendor_id` | `src/Services/BuyerRequestService.php:1169` |
 | `wpss_milestone_paid` | `int $milestone_id, int $order_id, int $vendor_id, int $customer_id, float $vendor_earnings` | `src/Services/MilestoneService.php:359` |
 | `wpss_milestone_submitted` | `int $milestone_id, int $order_id, int $vendor_id, int $customer_id` | `src/Services/MilestoneService.php:546` |
 | `wpss_milestone_approved` | `int $milestone_id, int $order_id, int $vendor_id, int $customer_id` | `src/Services/MilestoneService.php:602` |
@@ -464,7 +464,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1530` |
+| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1533` |
 | `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:661` |
 | `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
 | `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
@@ -534,7 +534,7 @@ add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:1078` |
+| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:1080` |
 
 ### Dashboard Filters
 
@@ -654,9 +654,9 @@ These filters let you customize outgoing email content without modifying templat
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2605` |
-| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2581` |
-| `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1846` |
+| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2651` |
+| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2627` |
+| `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1874` |
 
 ```php
 // Change the "From" name on all marketplace emails
@@ -686,7 +686,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_message_sent` | `object $message, object $conversation` | `src/Services/ConversationService.php:435` |
+| `wpss_message_sent` | `object $message, object $conversation` | `src/Services/ConversationService.php:437` |
 | `wpss_notification_created` | `int $notification_id, int $user_id, string $type, array $data` | `src/Services/NotificationService.php:122` |
 | `wpss_portfolio_item_created` | `int $item_id, int $vendor_id, array $data` | `src/Services/PortfolioService.php:199` |
 | `wpss_portfolio_item_updated` | `int $item_id, array $data` | `src/Services/PortfolioService.php:302` |
@@ -820,7 +820,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 |--------|-----------|------|
 | `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1145` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:389` |
-| `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:1061` |
+| `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:1081` |
 | `wpss_max_order_quantity` | `$max` | `src/Checkout/CheckoutIntentService.php:283` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:211` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:730` |
@@ -846,16 +846,16 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_vendor_reserved_payouts` | `$reserved` (default 0), `$vendor_id`: money a payout rail has committed but not yet debited; counted as a withdrawal in progress | `src/Services/EarningsService.php:175` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |
-| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:762` |
+| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:763` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:265` |
-| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1646` |
+| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1649` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
-| `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:533` |
-| `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:664` |
-| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:1016` |
+| `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:535` |
+| `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:666` |
+| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:1018` |
 
 **`wpss_realtime_settings`** - filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
 
@@ -911,9 +911,9 @@ add_filter( 'wpss_reign_hide_left_panel', '__return_false' );
 | `wpss_open_graph_data` | `$data, $service_id` | `src/SEO/SEO.php:260` |
 | `wpss_sitemap_post_types` | `$post_types` | `src/SEO/SEO.php:324` |
 | `wpss_breadcrumbs` | `$breadcrumbs, $service_id` | `src/SEO/SEO.php:392` |
-| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2363` |
-| `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1797` |
-| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1952` |
+| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2391` |
+| `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1825` |
+| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1980` |
 
 ## Pro Plugin Actions **[PRO]**
 

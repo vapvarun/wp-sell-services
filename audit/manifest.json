@@ -15,7 +15,7 @@
   },
   "rest": {
     "namespace": "wpss/v1",
-    "endpoint_count": 138,
+    "endpoint_count": 139,
     "controllers": [
       {
         "class": "API",
@@ -215,6 +215,13 @@
         "auth": "logged in (own purchases only)",
         "since": "2.0.0",
         "why": "The buyer's digital purchases, newest first, paginated; same rows as Dashboard > Downloads (wpss_buyer_download_for_client). Card 10551449503."
+      },
+      {
+        "route": "/wpss/v1/conversations/{id}/offers",
+        "method": "POST",
+        "auth": "the vendor in a pre-sale conversation (check_conversation_permission, then wpss_send_private_offer: vendor, not suspended, order_id 0, not blocked)",
+        "since": "2.0.0",
+        "why": "Sends a private offer to the other participant; 201 with the offer (wpss_private_offer_for_client) plus message_id, 403 wpss_offer_conversation / wpss_not_vendor / wpss_blocked, 400 wpss_offer_buyer / wpss_offer_field (data.field). Accept and decline reuse POST /buyer-requests/{rid}/proposals/{pid}/accept|reject. Messages gain an offer key. Card 10551449528."
       }
     ],
     "endpoint_count_note": "Measured 2026-09-23 from the LIVE registry with Pro deactivated: 136 unique wpss/v1 routes, 348 method handlers. Was 153 and dated to the 1.3.1 branch, which had stopped meaning anything. The number moves with configuration - PaymentController registers nothing off the standalone rail and TippingController nothing when tipping is off - so audit/route-authority.json is the authority on WHICH routes exist and who may reach them; this count is a size, not a contract."
@@ -1359,6 +1366,22 @@
       ],
       "test": "tests/test-digital-products.php (guard static:digital-products)",
       "not_built": "Download limits/expiry (filter seam only); EDD/FluentCart product-level 'Estimated delivery' is owner-typed on the shop product and not driven by the service type."
+    },
+    "private_offers": {
+      "card": "10551449528 (2.0.0)",
+      "data": "No new table (owner 2026-11-27). An offer = a wpss_request with post_status private and post_author the buyer (so every 'publish' query - archive, get_open, search, REST lists, sitemaps, My Requests - excludes it) + the vendor's proposal on it (ProposalService::submit) + a message of type 'offer' whose metadata is {proposal_id, request_id}. Meta: _wpss_private_offer_vendor, _wpss_private_offer_conversation, _wpss_private_offer_proposal, _wpss_private_offer_revisions, _wpss_expires_at (UTC).",
+      "helpers": "src/functions/private-offers.php: wpss_get_private_offer_fields (filter wpss_private_offer_fields), wpss_is_private_offer, wpss_send_private_offer, wpss_private_offer_for_client, wpss_private_offer_is_expired, wpss_private_offer_url, wpss_message_metadata.",
+      "read_gate": "map_meta_cap read_post on a private wpss_request -> 'read' for the offer vendor (wpss_offer_map_read_cap); author and admins read private posts already. BuyerRequestsController::get_item 404s a non-published request unless current_user_can('read_post'). ProposalService::submit refuses a non-published request unless the caller is the offer vendor.",
+      "lifecycle": "accept -> convert_to_order (refuses an expired offer before the sweep) -> wpss_ensure_pay_order checkout_url, revisions via wpss_proposal_order_revisions; decline (wpss_proposal_rejected) and withdraw (wpss_proposal_withdrawn) close the request; expire_old_requests sweeps private too. Hooks: wpss_private_offer_sent/accepted/declined/expired.",
+      "surfaces": [
+        "templates/dashboard/sections/messages.php 'Send an offer' form (vendor, pre-sale thread)",
+        "templates/partials/offer-card.php via wpss_render_message_row (buttons only for the buyer)",
+        "unified-dashboard.js handleOfferSend/handleOfferAnswer",
+        "templates/dashboard/sections/proposals.php Private offer badge + conversation link",
+        "EmailService::send_proposal_submitted + NotificationService proposal_received offer wording, link to the conversation",
+        "wpss_get_order_subject 'Private offer: %s'"
+      ],
+      "test": "tests/test-private-offers.php (guard static:private-offers)"
     }
   },
   "coverage": {

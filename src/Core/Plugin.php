@@ -1605,7 +1605,8 @@ final class Plugin {
 						// ProposalService::submit() passes its insert row to this
 						// hook, so the price key is `proposed_price`.
 						'bid_amount'    => $proposal_data['proposed_price'] ?? 0,
-						'action_url'    => get_permalink( $request_id ),
+						// A private offer is answered in its conversation.
+						'action_url'    => wpss_private_offer_url( $request_id ) ?: get_permalink( $request_id ),
 					)
 				);
 			},
@@ -1634,7 +1635,7 @@ final class Plugin {
 						'request_id'    => $request_id,
 						'request_title' => $request ? $request->post_title : '',
 						'reason'        => $reason,
-						'action_url'    => $request_id ? get_permalink( $request_id ) : '',
+						'action_url'    => wpss_private_offer_url( $request_id ) ?: ( $request_id ? get_permalink( $request_id ) : '' ),
 					)
 				);
 			},

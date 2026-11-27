@@ -732,6 +732,19 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 					<?php if ( ! $is_own ) : ?>
 						<span class="wpss-messaging__sender"><?php echo esc_html( $sender_name ); ?></span>
 					<?php endif; ?>
+					<?php
+					$offer = 'offer' === $type ? wpss_private_offer_for_client( (int) ( wpss_message_metadata( $message )['proposal_id'] ?? 0 ), $current_user_id ) : null;
+					if ( $offer ) :
+						wpss_get_template_part(
+							'partials/offer-card',
+							'',
+							array(
+								'offer'   => $offer,
+								'user_id' => $current_user_id,
+							)
+						);
+					else :
+						?>
 					<div class="wpss-messaging__text">
 						<?php
 						// Linkify, then break lines, then escape.
@@ -749,6 +762,7 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 						echo wp_kses_post( nl2br( make_clickable( $content ) ) );
 						?>
 					</div>
+					<?php endif; ?>
 					<?php if ( ! empty( $attachments ) ) : ?>
 						<div class="wpss-messaging__attachments">
 							<?php foreach ( $attachments as $attachment ) : ?>

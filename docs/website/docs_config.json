@@ -167,6 +167,10 @@
         {
           "slug": "proposal-contracts",
           "title": "Proposal Contracts: Fixed vs Milestone"
+        },
+        {
+          "slug": "private-offers",
+          "title": "Private Offers"
         }
       ],
       "description": "Post a request, receive proposals and turn one into an order."
@@ -842,6 +846,12 @@
           "slug": "proposal-contracts-wpss",
           "file": "buyer-requests/proposal-contracts.md",
           "order": 4
+        },
+        {
+          "title": "Private Offers",
+          "slug": "private-offers-wpss",
+          "file": "buyer-requests/private-offers.md",
+          "order": 5
         }
       ]
     },

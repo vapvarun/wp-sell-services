@@ -1047,6 +1047,10 @@
    {
     "id": "digital-products",
     "run": "${WP_CLI:-wp} eval-file tests/test-digital-products.php"
+   },
+   {
+    "id": "private-offers",
+    "run": "${WP_CLI:-wp} eval-file tests/test-private-offers.php"
    }
   ]
  }

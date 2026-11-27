@@ -316,6 +316,7 @@ class ConversationService {
 	 * @param string $content         Message content.
 	 * @param array  $attachments     Optional attachments.
 	 * @param string $type            Message type.
+	 * @param array  $metadata        Optional structured data (an offer message names its proposal).
 	 * @return Message|null
 	 */
 	public function send_message(
@@ -323,7 +324,8 @@ class ConversationService {
 		int $sender_id,
 		string $content,
 		array $attachments = array(),
-		string $type = Message::TYPE_TEXT
+		string $type = Message::TYPE_TEXT,
+		array $metadata = array()
 	): ?Message {
 		$conversation = $this->get( $conversation_id );
 
@@ -380,7 +382,7 @@ class ConversationService {
 				'type'            => $message_data['type'],
 				'content'         => $message_data['content'],
 				'attachments'     => wp_json_encode( $message_data['attachments'] ),
-				'metadata'        => wp_json_encode( array() ),
+				'metadata'        => wp_json_encode( $metadata ),
 				'read_by'         => wp_json_encode( array( $message_data['sender_id'] => true ) ),
 				'is_edited'       => 0,
 				'created_at'      => current_time( 'mysql', true ),

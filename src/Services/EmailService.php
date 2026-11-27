@@ -2372,6 +2372,38 @@ class EmailService {
 			$vendor->display_name
 		);
 
+		// A private offer is a proposal the buyer never asked for: say what it is and send them to the conversation.
+		if ( wpss_is_private_offer( $request_id ) ) {
+			$subject = sprintf(
+				/* translators: 1: platform name, 2: vendor name */
+				__( '[%1$s] %2$s sent you a private offer', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$vendor->display_name
+			);
+
+			return $this->send(
+				$buyer->user_email,
+				$subject,
+				self::TYPE_PROPOSAL_SUBMITTED,
+				array(
+					'recipient'      => $buyer,
+					'email_heading'  => __( 'You have a private offer', 'wp-sell-services' ),
+					'content'        => sprintf(
+						/* translators: 1: vendor name, 2: offer title, 3: price, 4: days */
+						__( '%1$s sent you a private offer: "%2$s" for %3$s, delivered in %4$d days. Accept it to pay and start the order, or decline it.', 'wp-sell-services' ),
+						$vendor->display_name,
+						$request->post_title,
+						wp_strip_all_tags( wpss_format_price( (float) ( $data['proposed_price'] ?? 0 ) ) ),
+						(int) ( $data['proposed_days'] ?? 0 )
+					),
+					'button_url'     => wpss_private_offer_url( $request_id ),
+					'button_text'    => __( 'View offer', 'wp-sell-services' ),
+					'reply_to_email' => $vendor->user_email,
+					'reply_to_name'  => $vendor->display_name,
+				)
+			);
+		}
+
 		$template_vars = array(
 			'recipient'      => $buyer,
 			'email_heading'  => __( 'New proposal received', 'wp-sell-services' ),
@@ -2406,16 +2438,17 @@ class EmailService {
 			return false;
 		}
 
-		$subject = sprintf(
+		$is_offer = wpss_is_private_offer( (int) ( $request->ID ?? 0 ) );
+		$subject  = sprintf(
 			/* translators: 1: platform name, 2: request title */
-			__( '[%1$s] Your Proposal Was Accepted - %2$s', 'wp-sell-services' ),
+			$is_offer ? __( '[%1$s] Your private offer was accepted - %2$s', 'wp-sell-services' ) : __( '[%1$s] Your Proposal Was Accepted - %2$s', 'wp-sell-services' ),
 			wpss_get_platform_name(),
 			$request->post_title
 		);
 
 		$template_vars = array(
 			'recipient'      => $vendor,
-			'email_heading'  => __( 'Proposal Accepted!', 'wp-sell-services' ),
+			'email_heading'  => $is_offer ? __( 'Private offer accepted', 'wp-sell-services' ) : __( 'Proposal Accepted!', 'wp-sell-services' ),
 			'content'        => sprintf(
 				/* translators: 1: buyer name, 2: request title */
 				__( 'Congratulations! %1$s has accepted your proposal for "%2$s". An order will be created automatically.', 'wp-sell-services' ),
@@ -2487,9 +2520,20 @@ class EmailService {
 			$request_title
 		);
 
+		$is_offer = wpss_is_private_offer( (int) $proposal->request_id );
+
+		if ( $is_offer ) {
+			$subject = sprintf(
+				/* translators: 1: platform name, 2: offer title */
+				__( '[%1$s] Your private offer was declined - %2$s', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$request_title
+			);
+		}
+
 		$content = sprintf(
 			/* translators: %s: request title */
-			__( 'Unfortunately, your proposal for "%s" was not accepted by the buyer.', 'wp-sell-services' ),
+			$is_offer ? __( 'The buyer declined your private offer "%s".', 'wp-sell-services' ) : __( 'Unfortunately, your proposal for "%s" was not accepted by the buyer.', 'wp-sell-services' ),
 			$request_title
 		);
 
@@ -2501,18 +2545,20 @@ class EmailService {
 			);
 		}
 
-		$content .= ' ' . __( 'Don\'t worry — keep submitting proposals to find the right match!', 'wp-sell-services' );
+		$content .= ' ' . ( $is_offer
+			? __( 'You can send a new offer from the same conversation.', 'wp-sell-services' )
+			: __( 'Don\'t worry — keep submitting proposals to find the right match!', 'wp-sell-services' ) );
 
 		$template_vars = array(
 			'recipient'     => $vendor,
-			'email_heading' => __( 'Proposal Not Accepted', 'wp-sell-services' ),
+			'email_heading' => $is_offer ? __( 'Private offer declined', 'wp-sell-services' ) : __( 'Proposal Not Accepted', 'wp-sell-services' ),
 			'content'       => $content,
 			// There is no "proposals" dashboard section — this used to link at
 			// `?section=proposals`, which rendered a dead "Section Not
 			// Available" card. Send the seller where more work actually is:
 			// the buyer-request archive they bid from.
-			'button_url'    => (string) get_post_type_archive_link( 'wpss_request' ),
-			'button_text'   => __( 'Browse Requests', 'wp-sell-services' ),
+			'button_url'    => $is_offer ? wpss_private_offer_url( (int) $proposal->request_id ) : (string) get_post_type_archive_link( 'wpss_request' ),
+			'button_text'   => $is_offer ? __( 'Open the conversation', 'wp-sell-services' ) : __( 'Browse Requests', 'wp-sell-services' ),
 		);
 
 		if ( $buyer ) {

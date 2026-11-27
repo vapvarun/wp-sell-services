@@ -1540,6 +1540,18 @@ class NotificationService {
 			case 'proposal_received':
 				$title  = __( 'New proposal received', 'wp-sell-services' );
 				$vendor = get_user_by( 'id', $data['vendor_id'] ?? 0 );
+				if ( wpss_is_private_offer( (int) ( $data['request_id'] ?? 0 ) ) ) {
+					$title = __( 'You have a private offer', 'wp-sell-services' );
+					$message->line(
+						/* translators: 1: vendor name, 2: offer title */
+						__( '%1$s sent you a private offer: "%2$s".', 'wp-sell-services' ),
+						NotificationMessage::strong( wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'A vendor', 'wp-sell-services' ) ) ),
+						(string) ( $data['request_title'] ?? '' )
+					);
+					$message->block()->field( __( 'Price:', 'wp-sell-services' ), wpss_format_price( (float) ( $data['bid_amount'] ?? 0 ) ) );
+					$message->paragraph( __( 'Open the conversation to accept and pay, or decline it.', 'wp-sell-services' ) );
+					break;
+				}
 				$message->line(
 					/* translators: 1: vendor name, 2: request title */
 					__( '%1$s sent a proposal on your request "%2$s".', 'wp-sell-services' ),
@@ -1556,7 +1568,9 @@ class NotificationService {
 				break;
 
 			case 'proposal_accepted':
-				$title = __( 'Your proposal was accepted', 'wp-sell-services' );
+				$title = wpss_is_private_offer( (int) ( $data['request_id'] ?? 0 ) )
+					? __( 'Your private offer was accepted', 'wp-sell-services' )
+					: __( 'Your proposal was accepted', 'wp-sell-services' );
 				$order = wpss_get_order( (int) ( $data['order_id'] ?? 0 ) );
 				// A hire that still needs the buyer's payment must not tell the vendor to start.
 				if ( $order && \WPSellServices\Models\ServiceOrder::STATUS_PENDING_PAYMENT === $order->status ) {
@@ -1612,6 +1626,20 @@ class NotificationService {
 			case 'proposal_rejected':
 				$title  = __( 'Proposal not selected', 'wp-sell-services' );
 				$reason = trim( (string) ( $data['reason'] ?? '' ) );
+				// A declined private offer had no competing vendor: say what happened.
+				if ( wpss_is_private_offer( (int) ( $data['request_id'] ?? 0 ) ) ) {
+					$title = __( 'Your private offer was declined', 'wp-sell-services' );
+					$message->line(
+						/* translators: %s: offer title */
+						__( 'The buyer declined your private offer "%s".', 'wp-sell-services' ),
+						(string) ( $data['request_title'] ?? '' )
+					);
+					if ( '' !== $reason ) {
+						$message->block()->field( __( 'Their note:', 'wp-sell-services' ), $reason );
+					}
+					$message->paragraph( __( 'You can send a new offer from the same conversation.', 'wp-sell-services' ) );
+					break;
+				}
 				$message->line(
 					/* translators: %s: request title */
 					__( 'The buyer went with another vendor on "%s".', 'wp-sell-services' ),

@@ -984,8 +984,11 @@ function wpss_get_order_subject( object $order, string $context = 'public' ): ar
 		$request_post    = $parent_id > 0 ? get_post( $parent_id ) : null;
 
 		if ( $request_post && 'wpss_request' === $request_post->post_type ) {
-			$subject['label'] = $request_post->post_title;
-			$subject['url']   = $is_admin ? (string) get_edit_post_link( $request_post->ID, 'raw' ) : '';
+			$subject['label'] = wpss_is_private_offer( $parent_id )
+				/* translators: %s: offer title. */
+				? sprintf( __( 'Private offer: %s', 'wp-sell-services' ), $request_post->post_title )
+				: $request_post->post_title;
+			$subject['url'] = $is_admin ? (string) get_edit_post_link( $request_post->ID, 'raw' ) : '';
 
 			return $subject;
 		}

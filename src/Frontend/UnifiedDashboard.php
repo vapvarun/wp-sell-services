@@ -188,6 +188,8 @@ class UnifiedDashboard {
 					'walletColAmount'        => __( 'Amount', 'wp-sell-services' ),
 					'walletEmpty'            => __( 'No wallet transactions yet.', 'wp-sell-services' ),
 					'walletLoadFailed'       => __( 'Could not load transactions. Please try again.', 'wp-sell-services' ),
+					'offerFailed'            => __( 'The offer could not be sent or answered. Please try again.', 'wp-sell-services' ),
+					'offerDeclineConfirm'    => __( 'Decline this offer? The seller is told, and it cannot be accepted afterwards.', 'wp-sell-services' ),
 					'walletTypeUnknown'      => __( 'Other', 'wp-sell-services' ),
 					'processing'             => __( 'Processing...', 'wp-sell-services' ),
 					'confirmDelete'          => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),

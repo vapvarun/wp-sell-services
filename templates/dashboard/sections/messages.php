@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -139,6 +139,32 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 					<?php endif; ?>
 				<?php endif; ?>
 			</div>
+
+			<?php if ( $active_conversation->can_reply( $user_id ) && 0 === (int) $active_conversation->order_id && $other_user && wpss_is_vendor( $user_id ) ) : ?>
+				<details class="wpss-offer-form">
+					<summary class="wpss-btn wpss-btn--outline wpss-btn--sm"><?php esc_html_e( 'Send an offer', 'wp-sell-services' ); ?></summary>
+					<form data-wpss-offer-form data-conversation="<?php echo esc_attr( (string) $active_conversation_id ); ?>">
+						<?php /* translators: %s: the other member's name. */ ?>
+						<p class="wpss-text-muted"><?php echo esc_html( sprintf( __( 'A private offer only %s can see. They accept and pay, and it becomes an order.', 'wp-sell-services' ), $other_user->display_name ) ); ?></p>
+						<?php foreach ( wpss_get_private_offer_fields() as $wpss_key => $wpss_field ) : ?>
+							<div class="wpss-form-group">
+								<label for="wpss-offer-<?php echo esc_attr( $wpss_key ); ?>"><?php echo esc_html( $wpss_field['label'] ?? $wpss_key ); ?></label>
+								<?php if ( 'textarea' === ( $wpss_field['type'] ?? '' ) ) : ?>
+									<textarea id="wpss-offer-<?php echo esc_attr( $wpss_key ); ?>" name="<?php echo esc_attr( $wpss_key ); ?>" class="wpss-textarea" rows="3" <?php echo empty( $wpss_field['required'] ) ? '' : 'required'; ?>></textarea>
+								<?php else : ?>
+									<input id="wpss-offer-<?php echo esc_attr( $wpss_key ); ?>" name="<?php echo esc_attr( $wpss_key ); ?>" class="wpss-input" type="<?php echo 'number' === ( $wpss_field['type'] ?? '' ) ? 'number' : 'text'; ?>"
+										<?php echo isset( $wpss_field['default'] ) ? 'value="' . esc_attr( (string) $wpss_field['default'] ) . '"' : ''; ?>
+										<?php echo isset( $wpss_field['min'] ) ? 'min="' . esc_attr( (string) $wpss_field['min'] ) . '"' : ''; ?>
+										<?php echo isset( $wpss_field['max'] ) ? 'max="' . esc_attr( (string) $wpss_field['max'] ) . '"' : ''; ?>
+										<?php echo 'price' === $wpss_key ? 'step="0.01"' : ''; ?>
+										<?php echo empty( $wpss_field['required'] ) ? '' : 'required'; ?>>
+								<?php endif; ?>
+							</div>
+						<?php endforeach; ?>
+						<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--sm"><?php esc_html_e( 'Send offer', 'wp-sell-services' ); ?></button>
+					</form>
+				</details>
+			<?php endif; ?>
 
 			<?php if ( $active_conversation->can_reply( $user_id ) ) : ?>
 				<form id="wpss-reply-form" class="wpss-conversation-thread__reply">

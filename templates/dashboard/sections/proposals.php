@@ -14,7 +14,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.7.1
- * @version 1.9.2
+ * @version 2.0.0
  *
  * @var int           $user_id        Current user ID.
  * @var VendorService $vendor_service Vendor service instance.
@@ -92,12 +92,16 @@ if ( $request_ids ) {
 				$status        = (string) $proposal->status;
 				$status_text   = $status_labels[ $status ] ?? ucfirst( $status );
 				$request_title = get_the_title( $request_id );
+				$is_offer      = wpss_is_private_offer( $request_id );
 				$sent_on       = $proposal->created_at ? wpss_date_label( (string) $proposal->created_at ) : '';
 				?>
 				<div class="wpss-request-card">
 					<div class="wpss-request-card__main">
 						<h4 class="wpss-request-card__title">
 							<?php echo esc_html( '' !== $request_title ? $request_title : __( '(request removed)', 'wp-sell-services' ) ); ?>
+							<?php if ( $is_offer ) : ?>
+								<span class="wpss-badge"><?php esc_html_e( 'Private offer', 'wp-sell-services' ); ?></span>
+							<?php endif; ?>
 						</h4>
 						<p class="wpss-request-card__excerpt"><?php echo esc_html( wp_trim_words( (string) $proposal->cover_letter, 20 ) ); ?></p>
 						<div class="wpss-request-card__meta">
@@ -137,8 +141,8 @@ if ( $request_ids ) {
 					<div class="wpss-request-card__actions">
 						<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>"><?php echo esc_html( $status_text ); ?></span>
 						<?php if ( '' !== $request_title ) : ?>
-							<?php $view_label = __( 'View Request', 'wp-sell-services' ); ?>
-							<a href="<?php echo esc_url( (string) get_permalink( $request_id ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+							<?php $view_label = $is_offer ? __( 'View conversation', 'wp-sell-services' ) : __( 'View Request', 'wp-sell-services' ); ?>
+							<a href="<?php echo esc_url( $is_offer ? wpss_private_offer_url( $request_id ) : (string) get_permalink( $request_id ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 								<?php echo esc_html( $view_label ); ?>
 							</a>
 						<?php endif; ?>
