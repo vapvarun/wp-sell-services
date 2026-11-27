@@ -109,17 +109,14 @@ function wpss_get_storage_provider( string $id ): ?object {
  * @return string Absolute path with a trailing slash.
  */
 function wpss_get_order_files_dir(): string {
-	$outside = trailingslashit( dirname( untrailingslashit( ABSPATH ) ) ) . 'wpss-order-files/';
+	// Multisite blogs share the folder above WordPress, so each gets its own segment (uploads is per blog already).
+	$outside = wpss_order_files_outside_base() . ( is_multisite() ? 'site-' . get_current_blog_id() . '/' : '' );
 
-	// Only worth using if it is genuinely not under the WordPress root. On a
-	// host where ABSPATH's parent IS the document root this is false and we go
-	// to the fallback, which at least knows it needs checking.
-	$is_outside_root = 0 !== strpos( $outside, trailingslashit( ABSPATH ) );
-
-	if ( $is_outside_root && ( is_dir( $outside ) || wp_mkdir_p( $outside ) ) && wp_is_writable( $outside ) ) {
-		// No guard file here on purpose: nothing serves this directory, so a
-		// deny rule would be decoration. The guards below exist because the
-		// fallback IS served.
+	// Only when no web root covers it: WordPress in a subfolder, Bedrock (web/wp)
+	// and addon domains put ABSPATH's parent inside the served tree.
+	if ( ! wpss_path_is_web_served( $outside ) && ( is_dir( $outside ) || wp_mkdir_p( $outside ) ) && wp_is_writable( $outside ) ) {
+		// Guarded anyway: a document root we could not see (CLI, a proxy) costs three small files.
+		wpss_guard_files_dir( $outside );
 		return $outside;
 	}
 
@@ -133,6 +130,76 @@ function wpss_get_order_files_dir(): string {
 	wpss_guard_files_dir( $dir );
 
 	return $dir;
+}
+
+/**
+ * The folder above WordPress that order files prefer.
+ *
+ * @since 2.0.0
+ *
+ * @return string Absolute path with a trailing slash.
+ */
+function wpss_order_files_outside_base(): string {
+	return trailingslashit( dirname( untrailingslashit( ABSPATH ) ) ) . 'wpss-order-files/';
+}
+
+/**
+ * Every folder an order's local files may be in, the current one first.
+ *
+ * The choice can change between requests (a host makes ABSPATH's parent writable, a site joins a
+ * network, a web-root check now refuses the old folder), and files stay where they were written, so a
+ * read tries each (Basecamp 10551464914).
+ *
+ * @since 2.0.0
+ *
+ * @return string[] Absolute paths with a trailing slash.
+ */
+function wpss_order_files_dirs(): array {
+	$uploads = wp_upload_dir();
+
+	return array_values(
+		array_unique(
+			array(
+				wpss_get_order_files_dir(),
+				wpss_order_files_outside_base() . ( is_multisite() ? 'site-' . get_current_blog_id() . '/' : '' ),
+				wpss_order_files_outside_base(),
+				trailingslashit( $uploads['basedir'] ) . 'wpss-order-files/',
+			)
+		)
+	);
+}
+
+/**
+ * Is a path inside the WordPress root or the web server's document root?
+ *
+ * @since 2.0.0
+ *
+ * @param string $path Absolute path; need not exist yet.
+ * @return bool
+ */
+function wpss_path_is_web_served( string $path ): bool {
+	$path = wp_normalize_path( $path );
+
+	// Resolve the nearest existing parent, so a symlinked tree compares like for like.
+	$probe = $path;
+	while ( '' !== $probe && '/' !== $probe && ! file_exists( $probe ) ) {
+		$probe = dirname( $probe );
+	}
+	$real = realpath( $probe );
+	$path = $real ? trailingslashit( wp_normalize_path( $real ) ) . ltrim( substr( $path, strlen( wp_normalize_path( $probe ) ) ), '/' ) : $path;
+
+	// shortcut: CLI and cron have no DOCUMENT_ROOT and fall back to the ABSPATH test; reads still find the file through wpss_order_files_dirs().
+	$roots = array( ABSPATH, isset( $_SERVER['DOCUMENT_ROOT'] ) ? (string) wp_unslash( $_SERVER['DOCUMENT_ROOT'] ) : '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+	foreach ( array_filter( $roots ) as $root ) {
+		$root = realpath( $root );
+
+		if ( $root && 0 === strpos( trailingslashit( $path ), trailingslashit( wp_normalize_path( $root ) ) ) ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**

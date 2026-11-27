@@ -28,6 +28,7 @@ Even with this option enabled, some things are not removed:
 - WordPress user accounts (buyers and vendors remain as WP users)
 - The pages mapped under **Settings > Pages** (Services, Dashboard, Become a Vendor and the rest), because the plugin adopts any page you already had that carries the shortcode and cannot tell those apart from the ones it published; delete them by hand if you no longer want them
 - Uploaded media files (images, documents in your media library)
+- Order files in the `wpss-order-files/` folder beside your WordPress folder, when the host let the plugin use it. Another site on the same hosting account can share that folder, so the plugin never deletes it; remove it by hand once no site uses it. Order files kept in `wp-content/uploads/wpss-order-files/` are deleted.
 - Payment records held by your payment processor (Stripe, PayPal, etc.)
 
 **Important:** This is irreversible. Always export your data and create a database backup before uninstalling with this option enabled.

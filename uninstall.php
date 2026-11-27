@@ -28,16 +28,12 @@ global $wpdb;
 require_once __DIR__ . '/src/Database/SchemaManager.php';
 require_once __DIR__ . '/src/functions/order-files.php';
 
-// Order files live on disk, not in the tables, in whichever of the two
-// locations wpss_get_order_files_dir() chose for this host.
+// Order files in uploads go with the plugin. The folder above WordPress
+// (wpss-order-files/ beside it) is left alone: another site on the same
+// account can share it, so removing it could delete that site's files.
+// The docs tell the owner to delete it by hand.
 $uploads = wp_upload_dir();
-
-foreach ( array(
-	trailingslashit( dirname( untrailingslashit( ABSPATH ) ) ) . 'wpss-order-files/',
-	trailingslashit( $uploads['basedir'] ) . 'wpss-order-files/',
-) as $order_files_dir ) {
-	wpss_rmdir_recursive( $order_files_dir );
-}
+wpss_rmdir_recursive( trailingslashit( $uploads['basedir'] ) . 'wpss-order-files/' );
 
 // Delete custom post types and their data.
 $post_types = array( 'wpss_service', 'wpss_request' );

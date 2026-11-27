@@ -1492,6 +1492,14 @@
    "added": "2026-11-27",
    "fails_on": "Pro 310754f (9 FAIL)",
    "check": "../wp-sell-services-pro/tests/test-licence-updates-only.php"
+  },
+  {
+   "card": "10551464914",
+   "title": "order-file folder above WordPress shared across sites (delete/uninstall took another site's files), served from a web root while reported private, old files 404 after a folder switch, bucket deletes inline",
+   "guard": "static:order-files-folder-safety",
+   "added": "2026-11-27",
+   "fails_on": "6ef3b5e0 (7 FAIL)",
+   "check": "tests/test-order-files-folder-safety.php"
   }
  ]
 }

@@ -62,7 +62,7 @@ Each stored file records which provider holds it, so files uploaded before you s
 
 Until you enable cloud storage, files are stored locally:
 
-- Order files go to a `wpss-order-files/` folder outside your web root where the host allows it, otherwise to `wp-content/uploads/wpss-order-files/` with access rules added
+- Order files go to a `wpss-order-files/` folder beside your WordPress folder when that is writable and not inside the web root (on a network, each site gets its own `site-N/` subfolder), otherwise to `wp-content/uploads/wpss-order-files/` with access rules added. Files already stored stay readable if that choice later changes
 - Only the buyer, the vendor and site admins can download them
 - Storage is limited by your hosting plan
 

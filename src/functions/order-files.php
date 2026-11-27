@@ -371,10 +371,11 @@ function wpss_normalize_requirement_attachments( array $entries, int $customer_i
  * Before 1.7.1 nothing removed these on any path, so a deleted order left its
  * buyer's brief and the seller's deliverables readable on disk forever.
  *
- * A remote object the provider cannot delete is logged, not retried: the row
- * that named it is about to go, so this log line is the owner's only pointer.
+ * Each record's own local file is deleted, never the folder, and bucket objects
+ * are queued (wpss_delete_remote_order_file) rather than deleted inline.
  *
  * @since 1.7.1
+ * @since 2.0.0 Per-file deletes, queued bucket deletes, legacy attachments removed.
  *
  * @param int $order_id Order ID.
  * @return void
@@ -385,29 +386,83 @@ function wpss_delete_order_files( int $order_id ): void {
 	}
 
 	foreach ( wpss_get_order_file_records( $order_id ) as $record ) {
-		if ( empty( $record['remote_path'] ) ) {
-			continue;
+		// Only this record's own file: the folder above WordPress can be shared with another site that has the same order id.
+		$local = wpss_find_local_order_file( $order_id, (string) ( $record['path'] ?? '' ) );
+
+		if ( '' !== $local ) {
+			wp_delete_file( $local );
 		}
 
-		$provider_id = (string) ( $record['provider'] ?? '' );
-		$provider    = '' !== $provider_id ? wpss_get_storage_provider( $provider_id ) : wpss_get_active_storage_provider();
-
-		if ( $provider && method_exists( $provider, 'delete' ) && $provider->delete( (string) $record['remote_path'] ) ) {
-			continue;
+		// A pre-1.7 file still in the media library, named by its attachment id.
+		if ( empty( $record['path'] ) && is_numeric( $record['id'] ?? '' ) && 'attachment' === get_post_type( (int) $record['id'] ) ) {
+			wp_delete_attachment( (int) $record['id'], true );
 		}
 
-		wpss_log(
-			sprintf(
-				'Could not delete remote file %s for order %d from storage provider "%s"; remove it from the bucket by hand.',
-				(string) $record['remote_path'],
-				$order_id,
-				'' !== $provider_id ? $provider_id : (string) get_option( 'wpss_active_storage_provider', '' )
-			),
-			'error'
-		);
+		// Bucket deletes are HTTP calls; queued so deleting a busy service cannot time out.
+		if ( ! empty( $record['remote_path'] ) ) {
+			\WPSellServices\Services\Scheduler::schedule_single( 'wpss_delete_remote_order_file', time(), array( (string) ( $record['provider'] ?? '' ), (string) $record['remote_path'], $order_id ) );
+		}
 	}
 
-	wpss_rmdir_recursive( wpss_get_order_files_dir() . $order_id . '/' );
+	foreach ( wpss_order_files_dirs() as $dir ) {
+		@rmdir( $dir . $order_id . '/' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Removed only when empty.
+	}
+}
+
+/**
+ * Delete one object from a storage bucket (Action Scheduler job, queued by wpss_delete_order_files()).
+ *
+ * A remote object the provider cannot delete is logged, not retried: the row that named it is gone,
+ * so this log line is the owner's only pointer.
+ *
+ * @since 2.0.0
+ *
+ * @param string $provider_id Provider the record named; empty for rows before 1.7.1.
+ * @param string $remote_path Object key.
+ * @param int    $order_id    Order the file belonged to, for the log.
+ * @return void
+ */
+function wpss_delete_remote_order_file( string $provider_id, string $remote_path, int $order_id ): void {
+	$provider = '' !== $provider_id ? wpss_get_storage_provider( $provider_id ) : wpss_get_active_storage_provider();
+
+	if ( '' === $remote_path || ( $provider && method_exists( $provider, 'delete' ) && $provider->delete( $remote_path ) ) ) {
+		return;
+	}
+
+	wpss_log(
+		sprintf(
+			'Could not delete remote file %s for order %d from storage provider "%s"; remove it from the bucket by hand.',
+			$remote_path,
+			$order_id,
+			'' !== $provider_id ? $provider_id : (string) get_option( 'wpss_active_storage_provider', '' )
+		),
+		'error'
+	);
+}
+
+/**
+ * Where an order's local file is now, across every folder it may have been written to.
+ *
+ * @since 2.0.0
+ *
+ * @param int    $order_id Order ID.
+ * @param string $name     The record's stored file name.
+ * @return string Readable absolute path, or '' when it is in none of them.
+ */
+function wpss_find_local_order_file( int $order_id, string $name ): string {
+	$name = basename( $name );
+
+	if ( '' === $name ) {
+		return '';
+	}
+
+	foreach ( wpss_order_files_dirs() as $dir ) {
+		if ( is_readable( $dir . $order_id . '/' . $name ) ) {
+			return $dir . $order_id . '/' . $name;
+		}
+	}
+
+	return '';
 }
 
 /**
@@ -857,9 +912,9 @@ function wpss_locate_order_file( int $order_id, string $file_id ) {
 		);
 	}
 
-	$path = wpss_get_order_files_dir() . $order_id . '/' . basename( (string) ( $record['path'] ?? '' ) );
+	$path = wpss_find_local_order_file( $order_id, (string) ( $record['path'] ?? '' ) );
 
-	if ( ! is_readable( $path ) ) {
+	if ( '' === $path ) {
 		return new WP_Error( 'wpss_file_not_found', __( 'File not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 	}
 
