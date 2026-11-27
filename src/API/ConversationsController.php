@@ -653,13 +653,7 @@ class ConversationsController extends RestController {
 		foreach ( $attachment_data as $attachment ) {
 			// Support both attachment ID format and full object format.
 			if ( is_array( $attachment ) && isset( $attachment['id'] ) ) {
-				// A stored record carries no URL; hand the client the gated
-				// link and keep the storage internals off the wire.
-				if ( empty( $attachment['url'] ) ) {
-					$attachment['url'] = wpss_get_order_file_url( $attachment );
-				}
-				unset( $attachment['path'], $attachment['remote_path'], $attachment['provider'] );
-				$attachments[] = $attachment;
+				$attachments[] = wpss_order_file_for_client( $attachment );
 			} elseif ( is_numeric( $attachment ) ) {
 				$id  = (int) $attachment;
 				$url = wp_get_attachment_url( $id );

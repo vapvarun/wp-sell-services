@@ -60,7 +60,7 @@ List specific skills or technologies the project requires (e.g., "WordPress", "L
 
 Upload reference files, mockups, design briefs, or any documents that help explain what you need.
 
-Each file uploads as soon as you pick it. Request files are visible to vendors browsing your request, so do not attach anything private.
+Each file uploads as soon as you pick it. Request files are shown only on the request page (to signed-in members who can see it) and get an unguessable address, but anyone given that address can open the file, so do not attach anything secret.
 
 ![Public buyer requests listing](../images/frontend-buyer-requests-listing.webp)
 

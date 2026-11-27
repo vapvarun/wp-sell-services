@@ -589,6 +589,9 @@ class DisputesController extends RestController {
 		$result = $this->dispute_service->add_evidence( $dispute_id, $user_id, $type, $content, $description, $attachments );
 
 		if ( ! $result ) {
+			foreach ( $attachments as $stored ) {
+				is_array( $stored ) && wpss_discard_order_file( $stored, (int) ( $stored['order_id'] ?? 0 ) );
+			}
 			return new WP_Error(
 				'evidence_add_failed',
 				__( 'Failed to add evidence.', 'wp-sell-services' ),
@@ -627,6 +630,11 @@ class DisputesController extends RestController {
 				if ( array_key_exists( $date_key, $entry ) ) {
 					$entry[ $date_key ] = wpss_rest_date( $entry[ $date_key ] );
 				}
+			}
+
+			// Storage internals stay server-side (Basecamp 10551464950).
+			if ( ! empty( $entry['attachments'] ) && is_array( $entry['attachments'] ) ) {
+				$entry['attachments'] = array_map( static fn( $a ) => is_array( $a ) ? wpss_order_file_for_client( $a ) : $a, $entry['attachments'] );
 			}
 
 			$timeline[ $index ] = $entry;

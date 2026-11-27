@@ -151,7 +151,18 @@ class MediaController extends RestController {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
-		$attachment_id = media_handle_upload( 'file', 0 );
+		// A request brief is shown on the request page only, so it is private
+		// (core REST no longer lists it to visitors) and its name unguessable,
+		// like a pre-sale contact file. Profile and portfolio media stay public
+		// (Basecamp 10551464950).
+		$is_brief = 'request' === $context;
+		if ( $is_brief ) {
+			add_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
+		}
+		$attachment_id = media_handle_upload( 'file', 0, $is_brief ? array( 'post_status' => 'private' ) : array() );
+		if ( $is_brief ) {
+			remove_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
+		}
 
 		if ( is_wp_error( $attachment_id ) ) {
 			return new WP_Error(

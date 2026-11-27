@@ -38,7 +38,16 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 	 * order-files store (Basecamp 10321653509). wpss_check_upload() is
 	 * idempotent, so running it twice costs a mime lookup and nothing else.
 	 */
-	$wpss_refused = wpss_check_upload( $file );
+	$kind = in_array( $kind, array( 'delivery', 'requirement', 'message', 'dispute', 'contact', 'receipt' ), true ) ? $kind : 'delivery';
+
+	// The kind's own context, so an owner's wpss_delivery_allowed_file_types / wpss_requirements_allowed_file_types widening holds here too (Basecamp 10551464950).
+	$wpss_refused = wpss_check_upload(
+		$file,
+		array(
+			'delivery'    => 'delivery',
+			'requirement' => 'requirements',
+		)[ $kind ] ?? ''
+	);
 
 	if ( $wpss_refused ) {
 		// null, not the WP_Error: this function's contract is ?array and every
@@ -68,7 +77,6 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 	}
 
 	$order_id = max( 0, $order_id );
-	$kind     = in_array( $kind, array( 'delivery', 'requirement', 'message', 'dispute', 'contact', 'receipt' ), true ) ? $kind : 'delivery';
 
 	// wp_unique_filename() against the target directory, so two buyers uploading
 	// brief.pdf to the same order cannot overwrite each other.
@@ -389,26 +397,60 @@ function wpss_delete_order_files( int $order_id ): void {
 	}
 
 	foreach ( wpss_get_order_file_records( $order_id ) as $record ) {
-		// Only this record's own file: the folder above WordPress can be shared with another site that has the same order id.
-		$local = wpss_find_local_order_file( $order_id, (string) ( $record['path'] ?? '' ) );
-
-		if ( '' !== $local ) {
-			wp_delete_file( $local );
-		}
-
-		// A pre-1.7 file still in the media library, named by its attachment id.
-		if ( empty( $record['path'] ) && is_numeric( $record['id'] ?? '' ) && 'attachment' === get_post_type( (int) $record['id'] ) ) {
-			wp_delete_attachment( (int) $record['id'], true );
-		}
-
-		// Bucket deletes are HTTP calls; queued so deleting a busy service cannot time out.
-		if ( ! empty( $record['remote_path'] ) ) {
-			\WPSellServices\Services\Scheduler::schedule_single( 'wpss_delete_remote_order_file', time(), array( (string) ( $record['provider'] ?? '' ), (string) $record['remote_path'], $order_id ) );
-		}
+		wpss_discard_order_file( $record, $order_id );
 	}
 
 	foreach ( wpss_order_files_dirs() as $dir ) {
 		@rmdir( $dir . $order_id . '/' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Removed only when empty.
+	}
+}
+
+/**
+ * A stored file record as a client may see it: the gated link, never the storage internals.
+ *
+ * @since 2.0.0
+ *
+ * @param array<string,mixed> $record A record from wpss_store_order_file().
+ * @return array<string,mixed>
+ */
+function wpss_order_file_for_client( array $record ): array {
+	if ( empty( $record['url'] ) ) {
+		$record['url'] = wpss_get_order_file_url( $record );
+	}
+	unset( $record['path'], $record['remote_path'], $record['provider'] );
+
+	return $record;
+}
+
+/**
+ * Delete one stored file record's bytes: its own local file, a pre-1.7 media-library copy, and its
+ * bucket object (queued). The one delete path for a whole order (wpss_delete_order_files()) and for
+ * a file whose row failed to save, so nothing is left behind on disk or in the bucket.
+ *
+ * Only this record's own file: the folder above WordPress can be shared with another site that has
+ * the same order id, so the folder itself is never removed here.
+ *
+ * @since 2.0.0
+ *
+ * @param array<string,mixed> $record   A record from wpss_store_order_file().
+ * @param int                 $order_id Order the file belongs to.
+ * @return void
+ */
+function wpss_discard_order_file( array $record, int $order_id ): void {
+	$local = wpss_find_local_order_file( $order_id, (string) ( $record['path'] ?? '' ) );
+
+	if ( '' !== $local ) {
+		wp_delete_file( $local );
+	}
+
+	// A pre-1.7 file still in the media library, named by its attachment id.
+	if ( empty( $record['path'] ) && is_numeric( $record['id'] ?? '' ) && 'attachment' === get_post_type( (int) $record['id'] ) ) {
+		wp_delete_attachment( (int) $record['id'], true );
+	}
+
+	// Bucket deletes are HTTP calls; queued so a request never waits on one.
+	if ( ! empty( $record['remote_path'] ) ) {
+		\WPSellServices\Services\Scheduler::schedule_single( 'wpss_delete_remote_order_file', time(), array( (string) ( $record['provider'] ?? '' ), (string) $record['remote_path'], $order_id ) );
 	}
 }
 
@@ -460,7 +502,8 @@ function wpss_find_local_order_file( int $order_id, string $name ): string {
 	}
 
 	foreach ( wpss_order_files_dirs() as $dir ) {
-		if ( is_readable( $dir . $order_id . '/' . $name ) ) {
+		// is_file: a '..' or empty name must never resolve to a folder.
+		if ( is_file( $dir . $order_id . '/' . $name ) && is_readable( $dir . $order_id . '/' . $name ) ) {
 			return $dir . $order_id . '/' . $name;
 		}
 	}
@@ -1062,8 +1105,8 @@ function wpss_dispute_message_attachments( $raw ): array {
  * Give a publicly-served upload an unguessable filename.
  *
  * Two upload paths cannot use the private store because they have no owning
- * record to gate on: the generic `wpss_upload_file` handler, and pre-sale
- * contact attachments, which exist before any order or conversation. Both are
+ * order to gate on: buyer-request briefs and pre-sale contact attachments,
+ * which exist before any order or conversation. Both are
  * documented as "unlisted, not secret" - post_status private hides the library
  * row, not the bytes.
  *

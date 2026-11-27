@@ -106,10 +106,6 @@ class ProposalsController extends RestController {
 							'type'  => 'array',
 							'items' => array( 'type' => 'object' ),
 						],
-						'attachments'   => [
-							'type'  => 'array',
-							'items' => array( 'type' => 'integer' ),
-						],
 					],
 				],
 			]
@@ -337,11 +333,6 @@ class ProposalsController extends RestController {
 		$milestones = $request->get_param( 'milestones' );
 		if ( is_array( $milestones ) ) {
 			$data['milestones'] = $milestones;
-		}
-
-		$attachments = $request->get_param( 'attachments' );
-		if ( is_array( $attachments ) ) {
-			$data['attachments'] = array_map( 'absint', $attachments );
 		}
 
 		// Validation sanity check — submit() returns false for a wide set of

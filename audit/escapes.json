@@ -1508,6 +1508,14 @@
    "added": "2026-11-27",
    "fails_on": "bec24492 (3 FAIL)",
    "check": "tests/test-order-file-names-unique.php"
+  },
+  {
+   "card": "10551464950",
+   "title": "request briefs listed by core REST to visitors, foreign media ids in messages, store ignored upload context, files left on failed saves, '..' resolved to a folder, dead upload/dispute code, dispute timeline leaked storage internals",
+   "guard": "static:file-access-holes",
+   "added": "2026-11-27",
+   "fails_on": "aa5f5eb8 (13 FAIL)",
+   "check": "tests/test-file-access-holes.php"
   }
  ]
 }

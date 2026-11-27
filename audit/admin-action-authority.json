@@ -541,13 +541,6 @@
       "rate_limited": false,
       "anonymous": false
     },
-    "wp_ajax_wpss_upload_file": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::upload_file",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": true,
-      "anonymous": false
-    },
     "wp_ajax_wpss_withdraw_proposal": {
       "callback": "WPSellServices\\Frontend\\AjaxHandlers::withdraw_proposal",
       "nonce": true,

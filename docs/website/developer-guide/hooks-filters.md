@@ -115,13 +115,13 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_delivery_submitted` | `int $delivery_id, int $order_id` | `src/Services/DeliveryService.php:225` |
-| `wpss_delivery_accepted` | `int $order_id` | `src/Services/DeliveryService.php:279` |
-| `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:350` |
-| `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:544` |
+| `wpss_delivery_submitted` | `int $delivery_id, int $order_id` | `src/Services/DeliveryService.php:228` |
+| `wpss_delivery_accepted` | `int $order_id` | `src/Services/DeliveryService.php:282` |
+| `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:353` |
+| `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:561` |
 | `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:1516` |
 | `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1798` |
-| `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` (chat only; not deliveries or revision requests) | `src/Services/ConversationService.php:432` |
+| `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` (chat only; not deliveries or revision requests) | `src/Services/ConversationService.php:448` |
 
 ## Payment and Gateway Actions
 
@@ -237,7 +237,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:272` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:483` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1480` |
-| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2105` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2036` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:549` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:601` |
 
@@ -279,8 +279,8 @@ tip. Tips are excluded from commission by default, so the two usually match.
 | `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `src/Services/DisputeService.php:873` |
 | `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `src/Services/DisputeService.php:1088` |
 | `wpss_dispute_response_submitted` | `int $message_id, int $dispute_id, int $user_id` | `src/Services/DisputeWorkflowManager.php:208` |
-| `wpss_dispute_escalated` | `int $dispute_id, string $reason, int $escalated_by` | `src/Services/DisputeWorkflowManager.php:358` |
-| `wpss_dispute_cancelled` | `int $dispute_id, int $user_id, string $reason` | `src/Services/DisputeWorkflowManager.php:558` |
+| `wpss_dispute_escalated` | `int $dispute_id, string $reason, int $escalated_by` | `src/Services/DisputeWorkflowManager.php:303` |
+| `wpss_dispute_cancelled` | `int $dispute_id, int $user_id, string $reason` | `src/Services/DisputeWorkflowManager.php:504` |
 
 ## Review, Request, and Proposal Actions
 
@@ -637,7 +637,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_message_sent` | `object $message, object $conversation` | `src/Services/ConversationService.php:419` |
+| `wpss_message_sent` | `object $message, object $conversation` | `src/Services/ConversationService.php:435` |
 | `wpss_notification_created` | `int $notification_id, int $user_id, string $type, array $data` | `src/Services/NotificationService.php:122` |
 | `wpss_portfolio_item_created` | `int $item_id, int $vendor_id, array $data` | `src/Services/PortfolioService.php:199` |
 | `wpss_portfolio_item_updated` | `int $item_id, array $data` | `src/Services/PortfolioService.php:302` |

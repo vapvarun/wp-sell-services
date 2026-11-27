@@ -331,6 +331,22 @@ class ConversationService {
 			return null;
 		}
 
+		// A bare media id must be the sender's own upload; anything else would put another
+		// member's private file URL in this thread (Basecamp 10551464950). Stored records
+		// (arrays) were built server-side by wpss_handle_message_attachments().
+		$attachments = array_values(
+			array_filter(
+				$attachments,
+				static function ( $item ) use ( $sender_id ): bool {
+					if ( is_array( $item ) ) {
+						return true;
+					}
+					$post = is_numeric( $item ) ? get_post( (int) $item ) : null;
+					return $post && 'attachment' === $post->post_type && (int) $post->post_author === $sender_id;
+				}
+			)
+		);
+
 		$message_data = array(
 			'sender_id'   => $sender_id,
 			'type'        => $type,

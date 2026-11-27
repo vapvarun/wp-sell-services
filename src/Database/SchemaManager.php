@@ -35,7 +35,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.9.1';
+	const DB_VERSION = '2.0.0';
 
 	/**
 	 * Option name for storing DB version.
@@ -256,6 +256,7 @@ class SchemaManager {
 		$this->run_precision_migrations();
 		$this->add_1_7_1_indexes();
 		$this->run_1_8_0_data_migrations();
+		$this->privatise_request_briefs();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}
@@ -1806,6 +1807,7 @@ class SchemaManager {
 		$this->run_precision_migrations();
 		$this->add_1_7_1_indexes();
 		$this->run_1_8_0_data_migrations();
+		$this->privatise_request_briefs();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}
@@ -1845,6 +1847,26 @@ class SchemaManager {
 		// phpcs:enable
 
 		return $changed;
+	}
+
+	/**
+	 * Make request briefs uploaded before 2.0.0 private.
+	 *
+	 * They were 'inherit' with no parent, so core REST listed them to logged-out
+	 * visitors (Basecamp 10551464950). One set-based UPDATE, idempotent.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return void
+	 */
+	private function privatise_request_briefs(): void {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$this->wpdb->query(
+			"UPDATE {$this->wpdb->posts} p
+			INNER JOIN {$this->wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = '_wpss_upload_context' AND m.meta_value = 'request'
+			SET p.post_status = 'private'
+			WHERE p.post_type = 'attachment' AND p.post_status = 'inherit'"
+		);
 	}
 
 	/**

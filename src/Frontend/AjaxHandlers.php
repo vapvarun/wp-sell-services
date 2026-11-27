@@ -133,7 +133,6 @@ class AjaxHandlers {
 		'wpss_update_cart_item',
 		'wpss_update_portfolio_item',
 		'wpss_update_vendor_profile',
-		'wpss_upload_file',
 	);
 
 	/**
@@ -201,7 +200,6 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_delete_service', array( $this, 'delete_service' ) );
 
 		// File upload.
-		add_action( 'wp_ajax_wpss_upload_file', array( $this, 'upload_file' ) );
 
 		// Search.
 
@@ -1284,9 +1282,8 @@ class AjaxHandlers {
 				wp_send_json_error( array( 'message' => __( 'Could not store the file.', 'wp-sell-services' ) ) );
 			}
 
-			$evidence_files   = array( $record );
-			$evidence_content = wpss_get_order_file_url( $record );
-			$evidence_type    = 0 === strpos( (string) $record['type'], 'image/' ) ? 'image' : 'file';
+			$evidence_files = array( $record );
+			$evidence_type  = 0 === strpos( (string) $record['type'], 'image/' ) ? 'image' : 'file';
 		}
 
 		// Must have either description or file.
@@ -1299,12 +1296,15 @@ class AjaxHandlers {
 			$dispute_id,
 			$user_id,
 			$evidence_type,
-			$evidence_files ? '' : $evidence_content,
+			$evidence_files ? '' : $evidence_content, // The record is kept, never its URL.
 			$evidence_type !== 'text' ? $description : '',
 			$evidence_files
 		);
 
 		if ( ! $evidence_id ) {
+			foreach ( $evidence_files as $stored ) {
+				wpss_discard_order_file( $stored, (int) $order->id );
+			}
 			wp_send_json_error( array( 'message' => __( 'Failed to add evidence.', 'wp-sell-services' ) ) );
 		}
 
@@ -1864,75 +1864,6 @@ class AjaxHandlers {
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Service deleted.', 'wp-sell-services' ) ) );
-	}
-
-	/**
-	 * Upload file.
-	 *
-	 * @return void
-	 */
-	public function upload_file(): void {
-		check_ajax_referer( 'wpss_upload_nonce', 'nonce' );
-
-		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'You must be logged in to upload files.', 'wp-sell-services' ) ) );
-		}
-
-		// Rate limiting.
-		if ( RateLimiter::check_and_track( 'file_upload', get_current_user_id() ) ) {
-			RateLimiter::send_error( 'file_upload' );
-		}
-
-		if ( empty( $_FILES['file'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'No file uploaded.', 'wp-sell-services' ) ) );
-		}
-
-		$file = $_FILES['file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- validated by wpss_check_upload(), stored by media_handle_upload().
-
-		$refused = wpss_check_upload( $file );
-
-		if ( $refused ) {
-			wp_send_json_error( array( 'message' => $refused->get_error_message() ) );
-		}
-
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		require_once ABSPATH . 'wp-admin/includes/image.php';
-		require_once ABSPATH . 'wp-admin/includes/media.php';
-
-		// Unguessable path: this handler has no owning record to gate on, so the
-		// URL is the only thing protecting the file. See
-		// wpss_obfuscate_public_upload_name().
-		add_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
-		$attachment_id = media_handle_upload( 'file', 0 );
-		remove_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
-
-		if ( is_wp_error( $attachment_id ) ) {
-			wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
-		}
-
-		// Match how deliveries are stored. A requirement upload is a buyer
-		// handing over a brief, a brand asset or a document, and it was landing
-		// as a public attachment listed in everyone's media library while the
-		// docs told them it was private. Deliveries have used `private` since
-		// 1.0 - the same rule applies to what the buyer sends the other way.
-		//
-		// This hides it from the library and from public listings. The file
-		// itself still sits in the uploads tree, so treat its URL as unlisted
-		// rather than secret; protecting the path is tracked separately.
-		wp_update_post(
-			array(
-				'ID'          => $attachment_id,
-				'post_status' => 'private',
-			)
-		);
-
-		wp_send_json_success(
-			array(
-				'attachment_id' => $attachment_id,
-				'url'           => wp_get_attachment_url( $attachment_id ),
-				'filename'      => basename( get_attached_file( $attachment_id ) ?: '' ),
-			)
-		);
 	}
 
 	/**

@@ -147,6 +147,7 @@ class RequirementsService {
 			$saved = $this->save( $order_id, $field_data, $attachments );
 
 			if ( ! $saved ) {
+				$this->discard_uploads( $uploaded, $order_id );
 				return array(
 					'success' => false,
 					'message' => __( 'Failed to save requirements. Please try again.', 'wp-sell-services' ),
@@ -205,6 +206,7 @@ class RequirementsService {
 		$saved = $this->save( $order_id, $field_data, $attachments );
 
 		if ( ! $saved ) {
+			$this->discard_uploads( $uploaded, $order_id );
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to save requirements. Please try again.', 'wp-sell-services' ),
@@ -370,6 +372,21 @@ class RequirementsService {
 		}
 
 		return $clean;
+	}
+
+	/**
+	 * Remove files stored for a requirements save that failed.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array<int,array<string,mixed>> $records  Records from process_uploads().
+	 * @param int                            $order_id Order ID.
+	 * @return void
+	 */
+	private function discard_uploads( array $records, int $order_id ): void {
+		foreach ( $records as $record ) {
+			wpss_discard_order_file( $record, $order_id );
+		}
 	}
 
 	/**

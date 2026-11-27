@@ -215,60 +215,6 @@ class DisputeWorkflowManager {
 	}
 
 	/**
-	 * Get dispute messages.
-	 *
-	 * @param int $dispute_id Dispute ID.
-	 * @return array Messages.
-	 */
-	public function get_messages( int $dispute_id ): array {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$messages = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT m.*, u.display_name, u.user_email
-				FROM {$this->messages_table} m
-				LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
-				WHERE m.dispute_id = %d
-				ORDER BY m.created_at ASC",
-				$dispute_id
-			)
-		);
-
-		foreach ( $messages as $message ) {
-			if ( $message->attachments ) {
-				$message->attachments     = $this->decode_json_array( $message->attachments );
-				$message->attachment_urls = $this->get_attachment_urls( $message->attachments );
-			}
-		}
-
-		return $messages;
-	}
-
-	/**
-	 * Get attachment URLs.
-	 *
-	 * @param array $attachment_ids Attachment IDs.
-	 * @return array Attachment URLs with metadata.
-	 */
-	private function get_attachment_urls( array $attachment_ids ): array {
-		$urls = array();
-		foreach ( $attachment_ids as $id ) {
-			$url = wp_get_attachment_url( $id );
-			if ( $url ) {
-				$urls[] = array(
-					'id'        => $id,
-					'url'       => $url,
-					'filename'  => basename( get_attached_file( $id ) ?: '' ),
-					'type'      => get_post_mime_type( $id ),
-					'thumbnail' => wp_get_attachment_image_url( $id, 'thumbnail' ),
-				);
-			}
-		}
-		return $urls;
-	}
-
-	/**
 	 * Decode JSON into an array safely.
 	 *
 	 * @param mixed $json JSON string.

@@ -145,6 +145,7 @@ class DeliveryService {
 			);
 			/* translators: %s: file names */
 			$this->last_error = sprintf( __( 'These files could not be saved: %s. Nothing was delivered.', 'wp-sell-services' ), implode( ', ', $failed_files ) );
+			$this->discard_files( $processed_files, $order_id );
 			return false;
 		}
 
@@ -188,6 +189,7 @@ class DeliveryService {
 		$delivery_id = (int) $wpdb->insert_id;
 
 		if ( ! $delivery_id ) {
+			$this->discard_files( $processed_files, $order_id );
 			return false;
 		}
 
@@ -213,6 +215,7 @@ class DeliveryService {
 			// Roll the row back so a retry does not leave two deliveries with one version.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->delete( $deliveries_table, array( 'id' => $delivery_id ), array( '%d' ) );
+			$this->discard_files( $processed_files, $order_id );
 			wpss_log( "Delivery {$delivery_id} rolled back: status update to pending_approval failed for order {$order_id}.", 'error' );
 			return false;
 		}
@@ -370,6 +373,21 @@ class DeliveryService {
 				$order_id
 			)
 		);
+	}
+
+	/**
+	 * Remove files already stored for a delivery that did not save.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array<int,array<string,mixed>> $records  Records from process_file().
+	 * @param int                            $order_id Order ID.
+	 * @return void
+	 */
+	private function discard_files( array $records, int $order_id ): void {
+		foreach ( $records as $record ) {
+			wpss_discard_order_file( $record, $order_id );
+		}
 	}
 
 	/**
