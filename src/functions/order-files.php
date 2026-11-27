@@ -238,8 +238,8 @@ function wpss_file_folder( array $record ): string {
  * The one read gate for every customer file (Basecamp 10551464986):
  * - order: the order's buyer or seller (wpss_can_read_order_files()).
  * - conversation: its participants.
- * - request: anyone allowed to see that request's attachments (wpss_can_view_request_attachments(),
- *   signed-in members by default). Which file belongs to the request is wpss_find_file()'s check.
+ * - request: its author; anyone else only on a publicly viewable request and when allowed to see its
+ *   attachments (wpss_can_view_request_attachments(), signed-in members by default). Which file belongs to the request is wpss_find_file()'s check.
  * An administrator reads every scope.
  *
  * @since 2.0.0
@@ -272,7 +272,9 @@ function wpss_can_read_file( string $scope, int $scope_id, int $user_id = 0 ): b
 
 	if ( 'request' === $scope ) {
 		return \WPSellServices\PostTypes\BuyerRequestPostType::POST_TYPE === get_post_type( $scope_id )
-			&& ( (int) get_post_field( 'post_author', $scope_id ) === $user_id || ( get_current_user_id() === $user_id && wpss_can_view_request_attachments( $scope_id ) ) );
+			&& ( (int) get_post_field( 'post_author', $scope_id ) === $user_id
+				// Others only on a request they could open: a draft, private or trashed one is its author's.
+				|| ( get_current_user_id() === $user_id && is_post_publicly_viewable( $scope_id ) && wpss_can_view_request_attachments( $scope_id ) ) );
 	}
 
 	return false;

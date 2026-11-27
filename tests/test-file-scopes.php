@@ -131,6 +131,12 @@ try {
 	$as( (int) $f->buyer );
 	$check( '  but the request author still may', wpss_can_read_file( 'request', $req ) );
 	remove_filter( 'wpss_can_view_request_attachments', $closed );
+	wp_update_post( array( 'ID' => $req, 'post_status' => 'draft' ) );
+	$as( (int) $f->vendor );
+	$check( '  a draft request\'s files are refused to other members', ! wpss_can_read_file( 'request', $req ) );
+	$as( (int) $f->buyer );
+	$check( '  but its author still opens them', wpss_can_read_file( 'request', $req ) );
+	wp_update_post( array( 'ID' => $req, 'post_status' => 'publish' ) );
 	$check( '  and a file not listed on that request is not found through it', null === wpss_find_file( 'request', $req, (string) ( $bid + 999999 ) ) );
 	$located = wpss_locate_order_file( $req, (string) $bid, 'request' );
 	$check( '  the serve door finds the private bytes', is_array( $located ) && ( $located['path'] ?? '' ) === $path, is_wp_error( $located ) ? $located->get_error_code() : wp_json_encode( $located ) );
