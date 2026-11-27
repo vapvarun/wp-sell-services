@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "currency-decimals-any-case",
+    "run": "${WP_CLI:-wp} eval-file tests/test-currency-decimals-any-case.php"
+   },
+   {
     "id": "finish-payment-on-disabled-gateway",
     "run": "${WP_CLI:-wp} eval-file tests/test-finish-payment-on-disabled-gateway.php"
    },

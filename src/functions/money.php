@@ -184,6 +184,9 @@ function wpss_get_currency_decimals( string $currency = '' ): int {
 		$currency = wpss_get_currency();
 	}
 
+	// Stripe and Razorpay send lowercase codes; 'jpy' must read as JPY, not as a 2-decimal currency.
+	$currency = strtoupper( $currency );
+
 	$registry = wpss_get_currency_registry();
 	$decimals = isset( $registry[ $currency ] ) ? (int) $registry[ $currency ]['decimals'] : 2;
 

@@ -1420,6 +1420,14 @@
    "added": "2026-11-27",
    "fails_on": "bf988b96 (6 FAIL)",
    "check": "tests/test-finish-payment-on-disabled-gateway.php"
+  },
+  {
+   "card": "10551462915",
+   "title": "lowercase currency codes from Stripe read as 2 decimals, so JPY/KRW/BHD sales looked underpaid",
+   "guard": "static:currency-decimals-any-case",
+   "added": "2026-11-27",
+   "fails_on": "77c0fb1b (5 FAIL)",
+   "check": "tests/test-currency-decimals-any-case.php"
   }
  ]
 }
