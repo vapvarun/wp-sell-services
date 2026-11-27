@@ -107,7 +107,7 @@ It appears in two cases:
 
 Demo payments switch off for good the first time the store is live: a gateway such as Stripe, PayPal or Razorpay is turned on with its keys, or a real (non-test) order exists. They do not come back if you later turn every method off, for example to rotate keys; checkout then shows that no payment method is available. Offline payments, which are on from installation, do not count as live.
 
-See [Other Payment Gateways](other-gateways.md#test-gateway-development-only) for full details.
+See [Other Payment Gateways](other-gateways.md#test-gateway) for full details.
 
 ## What the Checkout Page Includes
 
