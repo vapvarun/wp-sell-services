@@ -94,6 +94,8 @@ The free plugin ships with Stripe, PayPal, and Offline (bank transfer) built in.
 
 See [Stripe Payments](stripe-payments.md) and [Other Payment Gateways](other-gateways.md) for setup details, including sandbox and test mode instructions for each gateway.
 
+Turning a gateway off removes it from new checkouts only. A buyer who is paying at that moment still gets their order, and refunds and webhooks for orders already paid through it keep working.
+
 ### Test Gateway (Development Only)
 
 When `WP_DEBUG` is enabled in `wp-config.php`, a **Test Gateway** option appears at checkout. It completes payments instantly with no external credentials -- useful for testing the full order lifecycle during development or QA. It is automatically hidden on production sites where `WP_DEBUG` is `false`.

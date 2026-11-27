@@ -579,6 +579,10 @@ function wpss_verify_gateway_nonce( array $actions ): bool {
  * boundary that decides whether a gateway can take money, and it should read
  * identically in all of them.
  *
+ * Start legs only (create intent, create order). Never call it on a leg that
+ * finishes a payment the buyer already made (confirm, verify, capture, return):
+ * a gateway switched off mid-payment would leave a charge with no order.
+ *
  * @since 1.7.0
  *
  * @param object $gateway Gateway exposing is_enabled() and get_name().

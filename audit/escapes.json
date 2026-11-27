@@ -1412,6 +1412,14 @@
    "added": "2026-11-27",
    "fails_on": "Pro a1fd28c (13 FAIL)",
    "check": "../wp-sell-services-pro/tests/test-store-order-sync-off-route.php"
+  },
+  {
+   "card": "10550988413",
+   "title": "a gateway switched off mid-payment refused the confirm, leaving a charged card with no order",
+   "guard": "static:finish-payment-on-disabled-gateway",
+   "added": "2026-11-27",
+   "fails_on": "bf988b96 (6 FAIL)",
+   "check": "tests/test-finish-payment-on-disabled-gateway.php"
   }
  ]
 }

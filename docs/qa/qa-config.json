@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "finish-payment-on-disabled-gateway",
+    "run": "${WP_CLI:-wp} eval-file tests/test-finish-payment-on-disabled-gateway.php"
+   },
+   {
     "id": "payment-callback-every-rail",
     "run": "${WP_CLI:-wp} eval-file tests/test-payment-callback-every-rail.php"
    },

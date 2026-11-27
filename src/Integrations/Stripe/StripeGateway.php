@@ -1188,9 +1188,8 @@ class StripeGateway extends AbstractPaymentGateway {
 			return;
 		}
 
-		// A disabled gateway does not start new money. Refunds and webhooks
-		// stay registered for historical orders; this does not.
-		wpss_gateway_require_enabled( $this );
+		// No enabled check: the buyer has already paid, so finishing must work even if the
+		// owner switched the gateway off mid-payment (Basecamp 10550988413).
 
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );

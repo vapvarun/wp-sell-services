@@ -281,7 +281,8 @@ class PaymentController extends RestController {
 		$package_id = (int) $request->get_param( 'package_id' );
 		$pay_order  = (int) $request->get_param( 'pay_order' );
 
-		$gateway = $this->get_gateway( $gateway_id );
+		// The buyer already paid: a gateway switched off since then still finishes it.
+		$gateway = $this->get_gateway( $gateway_id, false );
 
 		if ( ! $gateway ) {
 			return new WP_Error( 'invalid_gateway', __( 'Payment gateway not found or not enabled.', 'wp-sell-services' ), array( 'status' => 400 ) );
@@ -328,14 +329,18 @@ class PaymentController extends RestController {
 	/**
 	 * Get a gateway instance by ID.
 	 *
-	 * @param string $gateway_id Gateway ID.
+	 * "Enabled" gates starting a payment only. Confirming one the buyer already made never
+	 * checks it, or a gateway switched off mid-payment leaves a charge with no order.
+	 *
+	 * @param string $gateway_id      Gateway ID.
+	 * @param bool   $require_enabled False for legs that finish a payment already taken.
 	 * @return object|null Gateway instance or null if not found/enabled.
 	 */
-	private function get_gateway( string $gateway_id ): ?object {
+	private function get_gateway( string $gateway_id, bool $require_enabled = true ): ?object {
 		$gateways = wpss()->get_payment_gateways();
 
 		foreach ( $gateways as $gateway ) {
-			if ( $gateway->get_id() === $gateway_id && $gateway->is_enabled() ) {
+			if ( $gateway->get_id() === $gateway_id && ( ! $require_enabled || $gateway->is_enabled() ) ) {
 				return $gateway;
 			}
 		}

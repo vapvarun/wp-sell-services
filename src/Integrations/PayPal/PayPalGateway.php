@@ -897,9 +897,8 @@ class PayPalGateway extends AbstractPaymentGateway {
 		// Handle both GET (return URL) and POST (AJAX).
 		$paypal_order_id = sanitize_text_field( wp_unslash( $_REQUEST['token'] ?? $_REQUEST['paypal_order_id'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-		// A disabled gateway does not start new money. Refunds and webhooks
-		// stay registered for historical orders; this does not.
-		wpss_gateway_require_enabled( $this );
+		// No enabled check: the buyer has already paid, so finishing must work even if the
+		// owner switched the gateway off mid-payment (Basecamp 10550988413).
 
 		if ( ! wpss_verify_gateway_nonce( array( 'wpss_paypal_capture', 'wpss_paypal' ) ) ) {
 			$this->capture_fail( __( 'Invalid request.', 'wp-sell-services' ) );
