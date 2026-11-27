@@ -133,14 +133,16 @@ try {
 	// 6. A refund we are sending right now is not recorded again when the rail echoes it.
 	$txn3 = 'pi_lock_' . wp_generate_password( 6, false );
 	$e    = $seed( 80.0, $txn3 );
-	set_transient( 'wpss_refund_lock_' . $e, 1, 60 );
+	// Another request is refunding $e: a second database connection holds its refund lock.
+	$other = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+	$other->get_var( $other->prepare( 'SELECT GET_LOCK( %s, 0 )', wpss_lock_name( 'wpss_refund_' . $e ) ) );
 	do_action( 'wpss_gateway_refund_received', 'stripe', $txn3, 30.0, array( 'cumulative' => true, 'currency' => 'USD' ) );
 	$check( 'the echo of a refund in flight is skipped', 0.0 === $got( $e ) );
 	$locked = ( new OrderService() )->refund( $e, 30.0, ServiceOrder::STATUS_PARTIALLY_REFUNDED );
 	$check( '  and a second refund on the same order is refused', false === $locked['ok'] && 'refused' === $locked['outcome'] );
 	$queued = function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( 'wpss_gateway_refund_received' );
 	$check( '  and it is scheduled to be checked again, not dropped', $queued );
-	delete_transient( 'wpss_refund_lock_' . $e );
+	$other->query( $other->prepare( 'SELECT RELEASE_LOCK( %s )', wpss_lock_name( 'wpss_refund_' . $e ) ) );
 	do_action( 'wpss_gateway_refund_received', 'stripe', $txn3, 30.0, array( 'cumulative' => true, 'currency' => 'USD' ) );
 	$check( '  with the lock gone a refund from the rail is recorded', 30.0 === $got( $e ) );
 

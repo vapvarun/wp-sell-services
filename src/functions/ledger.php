@@ -600,6 +600,35 @@ function wpss_insert_ledger_row( array $row ): bool {
 			return false;
 		}
 
+		// A replay of the same row is fine. A different amount under the same reference is a
+		// second, real movement that the index swallowed; saying "done" would lose it.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT amount FROM {$wpdb->prefix}wpss_wallet_transactions WHERE reference_type = %s AND reference_id = %d AND type = %s",
+				(string) ( $row['reference_type'] ?? '' ),
+				(int) ( $row['reference_id'] ?? 0 ),
+				(string) ( $row['type'] ?? '' )
+			)
+		);
+
+		if ( null !== $existing && abs( (float) $existing - $amount ) > 0.000001 ) {
+			wpss_log(
+				sprintf(
+					'Ledger row %s %s#%s for user %d already exists with %s; this one (%s) was NOT written.',
+					(string) ( $row['type'] ?? '' ),
+					(string) ( $row['reference_type'] ?? '' ),
+					(string) ( $row['reference_id'] ?? '' ),
+					$user_id,
+					(string) $existing,
+					(string) $amount
+				),
+				'error'
+			);
+
+			return false;
+		}
+
 		wpss_log(
 			sprintf(
 				'Ledger row %s %s#%s for user %d already exists; the duplicate insert was ignored.',

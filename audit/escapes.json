@@ -1428,6 +1428,14 @@
    "added": "2026-11-27",
    "fails_on": "77c0fb1b (5 FAIL)",
    "check": "tests/test-currency-decimals-any-case.php"
+  },
+  {
+   "card": "10551462962",
+   "title": "refund lock was a get-then-set transient and rail refunds took none, so concurrent refunds double-booked or lost a clawback",
+   "guard": "static:refund-lock-across-requests",
+   "added": "2026-11-27",
+   "fails_on": "af9902d5 (4 FAIL)",
+   "check": "tests/test-refund-lock-across-requests.php"
   }
  ]
 }

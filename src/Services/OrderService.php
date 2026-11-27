@@ -344,58 +344,89 @@ class OrderService {
 	 *         failed (gateway refused - nothing recorded), refused (not refundable).
 	 */
 	public function refund( int $order_id, ?float $amount, string $status, array $ctx = array() ): array {
-		// One refund per order at a time. A refund that moves money holds the lock from the gateway
-		// call to the database write, so a double click or the gateway's own webhook for this very
-		// refund cannot be recorded a second time. A refund reported by the rail takes no lock; it
-		// checks it instead (OrderWorkflowManager::handle_gateway_refund()).
-		$takes_lock = empty( $ctx['settled_at_rail'] );
-
-		if ( $takes_lock ) {
-			if ( self::is_refund_locked( $order_id ) ) {
-				return array(
-					'ok'           => false,
-					'outcome'      => 'refused',
-					'amount'       => 0.0,
-					'status_after' => '',
-					'gateway'      => null,
-					'message'      => __( 'A refund for this order is already being processed. Reload it in a moment.', 'wp-sell-services' ),
-					'retryable'    => false,
-					'children'     => array(),
-				);
-			}
-
-			set_transient( self::refund_lock_key( $order_id ), 1, MINUTE_IN_SECONDS );
+		// One refund per order at a time, on every path: admin, vendor, dispute and a refund the rail
+		// reports. A MySQL named lock, because a get-then-set transient let two requests both pass
+		// (Basecamp 10551462962). OrderWorkflowManager::handle_gateway_refund() already holds it for a
+		// rail refund; the lock is re-entrant within one connection, so this call takes it again.
+		if ( ! self::acquire_refund_lock( $order_id ) ) {
+			return array(
+				'ok'           => false,
+				'outcome'      => 'refused',
+				'amount'       => 0.0,
+				'status_after' => '',
+				'gateway'      => null,
+				'message'      => __( 'A refund for this order is already being processed. Reload it in a moment.', 'wp-sell-services' ),
+				'retryable'    => true,
+				'children'     => array(),
+			);
 		}
 
 		try {
 			return $this->apply_refund( $order_id, $amount, $status, $ctx );
 		} finally {
-			if ( $takes_lock ) {
-				delete_transient( self::refund_lock_key( $order_id ) );
-			}
+			self::release_refund_lock( $order_id );
 		}
 	}
 
 	/**
-	 * Whether a refund that moves money is in flight for this order.
+	 * Take the per-order refund lock, without waiting.
+	 *
+	 * Shortcut: re-entrant GET_LOCK needs MySQL 5.7+ or MariaDB 10.0.2+; on MySQL 5.6 a second lock frees the first. Upgrade if 5.6 support is ever required.
+	 *
+	 * @since 1.9.4
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool False when another request holds it.
+	 */
+	public static function acquire_refund_lock( int $order_id ): bool {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 0 )', self::refund_lock_name( $order_id ) ) );
+	}
+
+	/**
+	 * Release one hold of the per-order refund lock.
+	 *
+	 * @since 1.9.4
+	 *
+	 * @param int $order_id Order ID.
+	 * @return void
+	 */
+	public static function release_refund_lock( int $order_id ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', self::refund_lock_name( $order_id ) ) );
+	}
+
+	/**
+	 * Whether another request holds the refund lock for this order.
 	 *
 	 * @since 1.9.0
+	 * @since 1.9.4 A MySQL named lock, held by a different connection.
 	 *
 	 * @param int $order_id Order ID.
 	 * @return bool
 	 */
 	public static function is_refund_locked( int $order_id ): bool {
-		return false !== get_transient( self::refund_lock_key( $order_id ) );
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$holder = $wpdb->get_var( $wpdb->prepare( 'SELECT IS_USED_LOCK( %s )', self::refund_lock_name( $order_id ) ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return null !== $holder && (string) $holder !== (string) $wpdb->get_var( 'SELECT CONNECTION_ID()' );
 	}
 
 	/**
-	 * Transient key of the per-order refund lock.
+	 * Name of the per-order refund lock.
 	 *
 	 * @param int $order_id Order ID.
 	 * @return string
 	 */
-	private static function refund_lock_key( int $order_id ): string {
-		return 'wpss_refund_lock_' . $order_id;
+	private static function refund_lock_name( int $order_id ): string {
+		return wpss_lock_name( 'wpss_refund_' . $order_id );
 	}
 
 	/**

@@ -1030,10 +1030,18 @@ class OrderWorkflowManager {
 		// has gone, when what we recorded makes our own echo add nothing and anything else still counts.
 		$deferred = (int) ( $context['deferred'] ?? 0 );
 
+		// Hold every gig's refund lock while this event is measured and written, so two events for one
+		// charge on two workers cannot both read the same "already recorded" (Basecamp 10551462962).
+		$held = array();
+
 		foreach ( array_keys( $orders ) as $oid ) {
-			if ( ! OrderService::is_refund_locked( (int) $oid ) ) {
+			if ( OrderService::acquire_refund_lock( (int) $oid ) ) {
+				$held[] = (int) $oid;
 				continue;
 			}
+
+			array_map( array( OrderService::class, 'release_refund_lock' ), $held );
+			$held = array();
 
 			if ( $deferred < 3 ) {
 				Scheduler::schedule_single(
@@ -1047,6 +1055,31 @@ class OrderWorkflowManager {
 
 			break; // The lock never cleared: go on, what is already recorded still prevents a double.
 		}
+
+		try {
+			$this->record_gateway_refund( $gateway, $transaction_id, $amount, $context, $orders, $named, $ambiguous, $currency, $decimals, $refund_id );
+		} finally {
+			array_map( array( OrderService::class, 'release_refund_lock' ), $held );
+		}
+	}
+
+	/**
+	 * Record one rail-reported refund on the orders it covers, under their refund locks.
+	 *
+	 * @param string                   $gateway        Rail slug.
+	 * @param string                   $transaction_id Transaction the orders were paid with.
+	 * @param float                    $amount         Amount refunded (see handle_gateway_refund()).
+	 * @param array<string, mixed>     $context        Context (see handle_gateway_refund()).
+	 * @param array<int, ServiceOrder> $orders         Orders the refund covers, by id.
+	 * @param ServiceOrder|null        $named          The gig the rail named, if any.
+	 * @param bool                     $ambiguous      The rail listed candidate gigs but named none.
+	 * @param string                   $currency       Currency code.
+	 * @param int                      $decimals       Currency decimals.
+	 * @param string                   $refund_id      Rail refund id, '' when unknown.
+	 * @return void
+	 */
+	private function record_gateway_refund( string $gateway, string $transaction_id, float $amount, array $context, array $orders, ?ServiceOrder $named, bool $ambiguous, string $currency, int $decimals, string $refund_id ): void {
+		$first = reset( $orders );
 
 		// A refund this site already recorded (one it sent, or an event the rail repeats) adds nothing,
 		// whichever gig of the charge it was recorded on. A rail that reports each refund on its own,

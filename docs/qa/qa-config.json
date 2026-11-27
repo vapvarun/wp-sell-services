@@ -813,6 +813,10 @@
     "run": "${WP_CLI:-wp} eval-file tests/test-featured-carousel-motion.php"
    },
    {
+    "id": "refund-lock-across-requests",
+    "run": "${WP_CLI:-wp} eval-file tests/test-refund-lock-across-requests.php"
+   },
+   {
     "id": "currency-decimals-any-case",
     "run": "${WP_CLI:-wp} eval-file tests/test-currency-decimals-any-case.php"
    },
