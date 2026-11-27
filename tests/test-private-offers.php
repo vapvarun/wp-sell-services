@@ -124,6 +124,21 @@ try {
 	$check( '  nor readable as an offer by them', null === wpss_private_offer_for_client( (int) $offer['id'], $outsider ) );
 	$check( '  another vendor cannot bid on it', false === ( new \WPSellServices\Services\ProposalService() )->submit( $rid, $rival, array( 'description' => 'Me too', 'price' => 90 ) ) );
 
+	// 3b. The buyer owns the hidden request but cannot rewrite the offer through any request door.
+	$put = static function ( int $user, array $body ) use ( $rid ) {
+		wp_set_current_user( $user );
+		$req = new WP_REST_Request( 'PUT', '/wpss/v1/buyer-requests/' . $rid );
+		$req->set_body_params( $body );
+		return rest_do_request( $req );
+	};
+	$expiry = get_post_meta( $rid, '_wpss_expires_at', true );
+	$check( 'the buyer cannot edit the offer over REST (title, deadline, status): 403', 403 === $put( (int) $f->buyer, array( 'title' => 'Free logo', 'deadline' => gmdate( 'Y-m-d', time() + 80 * DAY_IN_SECONDS ), 'status' => 'closed' ) )->get_status() );
+	wp_set_current_user( (int) $f->buyer );
+	$check( '  nor through the request service', false === ( new \WPSellServices\Services\BuyerRequestService() )->update( $rid, array( 'title' => 'Free logo' ) ) );
+	$check( '  title, expiry, status and privacy are unchanged', 'Logo refresh for the bakery' === get_the_title( $rid ) && get_post_meta( $rid, '_wpss_expires_at', true ) === $expiry && 'open' === get_post_meta( $rid, '_wpss_status', true ) && 'private' === get_post_status( $rid ) );
+	$check( '  the vendor cannot edit it either (not the owner): 403', 403 === $put( (int) $f->vendor, array( 'title' => 'Free logo' ) )->get_status() );
+	$check( '  an admin still can', 200 === $put( (int) $f->admin, array( 'description' => $terms['description'] ) )->get_status() );
+
 	// 4. The thread shows it to each side.
 	wp_set_current_user( (int) $f->buyer );
 	$rows = (array) rest_do_request( new WP_REST_Request( 'GET', '/wpss/v1/conversations/' . $conv_id . '/messages' ) )->get_data();

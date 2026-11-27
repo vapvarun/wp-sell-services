@@ -578,6 +578,10 @@ class BuyerRequestsController extends RestController {
 	public function update_item( $request ) {
 		$request_id = (int) $request->get_param( 'id' );
 
+		if ( wpss_private_offer_locked( $request_id ) ) {
+			return new WP_Error( 'wpss_offer_locked', __( 'A private offer cannot be edited. Accept or decline it instead.', 'wp-sell-services' ), [ 'status' => 403 ] );
+		}
+
 		$data = [];
 
 		if ( $request->get_param( 'title' ) ) {

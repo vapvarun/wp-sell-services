@@ -236,6 +236,8 @@ A seller's offer to one buyer from a pre-sale conversation
   answers `order_id` and `checkout_url`; an expired offer answers `400`.
 - `GET /buyer-requests/{id}` answers `404` for an offer's hidden request to anyone
   but its buyer, its seller and admins.
+- `PUT /buyer-requests/{id}` on an offer's request answers `403 wpss_offer_locked`
+  for anyone but an admin, so the agreed terms and the expiry cannot be rewritten.
 
 ## Payload conventions
 

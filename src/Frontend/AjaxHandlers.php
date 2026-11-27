@@ -1418,7 +1418,7 @@ class AjaxHandlers {
 
 		// Verify ownership.
 		$post = get_post( $request_id );
-		if ( ! $post || 'wpss_request' !== $post->post_type || (int) $post->post_author !== $user_id ) {
+		if ( ! $post || 'wpss_request' !== $post->post_type || (int) $post->post_author !== $user_id || wpss_private_offer_locked( $request_id, $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
@@ -1500,7 +1500,7 @@ class AjaxHandlers {
 
 		$post = get_post( $request_id );
 
-		if ( ! $post || 'wpss_request' !== $post->post_type || (int) $post->post_author !== $user_id ) {
+		if ( ! $post || 'wpss_request' !== $post->post_type || (int) $post->post_author !== $user_id || wpss_private_offer_locked( $request_id, $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
@@ -1558,7 +1558,7 @@ class AjaxHandlers {
 
 		$post = get_post( $request_id );
 
-		if ( ! $post || 'wpss_request' !== $post->post_type || (int) $post->post_author !== $user_id ) {
+		if ( ! $post || 'wpss_request' !== $post->post_type || (int) $post->post_author !== $user_id || wpss_private_offer_locked( $request_id, $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 

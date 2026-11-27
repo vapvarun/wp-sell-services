@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.1
+ * @version 2.0.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -33,6 +33,13 @@ $request = get_post( $request_id );
 if ( ! $request || 'wpss_request' !== $request->post_type || (int) $request->post_author !== $user_id ) {
 	echo '<div class="wpss-empty-state"><h3>' . esc_html__( 'You do not have permission to edit this request.', 'wp-sell-services' ) . '</h3>';
 	echo '<a href="' . esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'requests' ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Back to Requests', 'wp-sell-services' ) . '</a></div>';
+	return;
+}
+
+// A private offer is answered in its conversation, never edited.
+if ( wpss_private_offer_locked( $request_id, $user_id ) ) {
+	echo '<div class="wpss-empty-state"><h3>' . esc_html__( 'A private offer cannot be edited. Accept or decline it in the conversation.', 'wp-sell-services' ) . '</h3>';
+	echo '<a href="' . esc_url( wpss_private_offer_url( $request_id ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Open the conversation', 'wp-sell-services' ) . '</a></div>';
 	return;
 }
 

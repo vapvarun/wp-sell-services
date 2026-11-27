@@ -40,7 +40,7 @@ You need an account to receive an offer, because it lives in your conversations.
 | Withdrawn | The seller took it back |
 | Expired | Its window passed. It can no longer be accepted, even before the daily clean-up runs |
 
-To change the terms, send a new offer.
+To change the terms, send a new offer. The buyer cannot edit, reopen, publish or delete an offer; they accept or decline it. Only a site administrator can edit one.
 
 ## Who can see an offer
 

@@ -448,6 +448,21 @@ function wpss_offer_on_declined( $proposal_id, $proposal ): void {
 add_action( 'wpss_proposal_rejected', 'wpss_offer_on_declined', 10, 2 );
 
 /**
+ * Whether a member may not change or remove an offer's request. The buyer owns the hidden request,
+ * so without this the request edit doors would let them rewrite the agreed terms or the expiry;
+ * they answer through accept and decline only. Admins keep full control.
+ *
+ * @since 2.0.0
+ *
+ * @param int $request_id Request post ID.
+ * @param int $user_id    Member (0 = current user).
+ * @return bool
+ */
+function wpss_private_offer_locked( int $request_id, int $user_id = 0 ): bool {
+	return wpss_is_private_offer( $request_id ) && ! user_can( $user_id ?: get_current_user_id(), 'manage_options' );
+}
+
+/**
  * Withdrawn by its vendor: close the hidden request, so it cannot be accepted.
  *
  * @since 2.0.0

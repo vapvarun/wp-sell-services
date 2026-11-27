@@ -141,7 +141,8 @@ class BuyerRequestService {
 	public function update( int $request_id, array $data ): bool {
 		$request = get_post( $request_id );
 
-		if ( ! $request || $request->post_type !== BuyerRequestPostType::POST_TYPE ) {
+		// An offer's terms are the vendor's: no edit door may rewrite them.
+		if ( ! $request || $request->post_type !== BuyerRequestPostType::POST_TYPE || wpss_private_offer_locked( $request_id ) ) {
 			return false;
 		}
 
