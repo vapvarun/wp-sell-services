@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**589 hooks** across **812** firing sites.
+**590 hooks** across **813** firing sites.
 
 ## Actions (302)
 
@@ -319,7 +319,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (287)
+## Filters (288)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -432,6 +432,7 @@ guide; this is the complete index.
 | `wpss_locate_template` | 3 | `src/Frontend/TemplateLoader.php` |  |
 | `wpss_locked_billing_fields` | 1 | `src/functions/billing.php` | Filters the billing fields that cannot be disabled. |
 | `wpss_manual_order_currencies` | 1 | `src/Admin/Pages/ManualOrderPage.php` | Filter the currencies available on the Manual Order page dropdown. |
+| `wpss_manual_order_payment_methods` | 1 | `src/functions/payments.php` | Filter the payment methods a manual order can record. Each counts as manual: Mark as paid, the to-confirm queue, and never swept as abandoned. |
 | `wpss_max_order_quantity` | 2 | `src/Frontend/SingleServiceView.php` *(+2 more)* | Filters the maximum order quantity for a service. |
 | `wpss_max_upload_size` | 1 | `src/functions/files.php` | Filter the max upload size for requirements files. |
 | `wpss_max_upload_size_mb` | 3 | `src/functions/files.php` | Filter the maximum upload size, in megabytes. |

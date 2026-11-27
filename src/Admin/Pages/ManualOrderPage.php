@@ -370,10 +370,9 @@ class ManualOrderPage {
 									<div class="wpss-form-row">
 										<label for="wpss-payment-method"><?php esc_html_e( 'Payment Method', 'wp-sell-services' ); ?></label>
 										<select name="payment_method" id="wpss-payment-method">
-											<option value="manual" selected><?php esc_html_e( 'Manual', 'wp-sell-services' ); ?></option>
-											<option value="bank_transfer"><?php esc_html_e( 'Bank Transfer', 'wp-sell-services' ); ?></option>
-											<option value="cash"><?php esc_html_e( 'Cash', 'wp-sell-services' ); ?></option>
-											<option value="other"><?php esc_html_e( 'Other', 'wp-sell-services' ); ?></option>
+											<?php foreach ( wpss_manual_order_payment_methods() as $wpss_slug => $wpss_label ) : ?>
+												<option value="<?php echo esc_attr( $wpss_slug ); ?>" <?php selected( 'manual', $wpss_slug ); ?>><?php echo esc_html( $wpss_label ); ?></option>
+											<?php endforeach; ?>
 										</select>
 									</div>
 
@@ -521,6 +520,7 @@ class ManualOrderPage {
 			wp_send_json_error( array( 'message' => __( 'Only a Pending Payment order can be saved unpaid. Set Payment Status to Paid, or set the order status to Pending Payment.', 'wp-sell-services' ) ) );
 		}
 		$payment_method  = sanitize_key( $_POST['payment_method'] ?? 'manual' );
+		$payment_method  = isset( wpss_manual_order_payment_methods()[ $payment_method ] ) ? $payment_method : 'manual';
 		$transaction_id  = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
 		$delivery_days   = absint( $_POST['delivery_days'] ?? 7 );
 		$revisions_input = isset( $_POST['revisions_included'] ) && '' !== $_POST['revisions_included'] ? absint( $_POST['revisions_included'] ) : null;

@@ -1527,10 +1527,10 @@
   },
   {
    "card": "10551488242",
-   "title": "Payment modules keyed by name: an off Test gateway still confirmed payments, manual methods other than 'offline' were swept as abandoned and had no Mark as paid, checkout offered methods that cannot take the currency, Stripe hid itself from ZAR/KWD stores",
+   "title": "Payment modules keyed by name: an off Test gateway still confirmed payments, manual methods other than 'offline' were swept as abandoned and had no Mark as paid, checkout offered methods that cannot take the currency, Stripe hid itself from ZAR/KWD stores; QA bounce: an unregistered slug counted as manual, so Test (WP_DEBUG off) and Razorpay (Pro off) became manual and the test fataled when Test was unregistered",
    "guard": "static:payment-module-contract",
    "added": "2026-11-27",
-   "fails_on": "2e42cdce + Pro 19bf5ee (fatal on missing wpss_gateway_supports; behaviour probe: 3 FAIL)",
+   "fails_on": "2e42cdce + Pro 19bf5ee (fatal on missing wpss_gateway_supports; behaviour probe: 3 FAIL); bounce fix fails on 2d37126b (with Razorpay/Test unregistered both read as manual)",
    "check": "tests/test-payment-module-contract.php"
   }
  ]

@@ -61,7 +61,9 @@ class ManualPaymentService {
 
 		// A gateway that takes money itself records its own charges, and a refund calls that gateway with the
 		// stored id, so a hand-typed "stripe" plus an invented id would send the refund to Stripe and fail.
-		if ( ! wpss_is_manual_payment_method( $payment_method ) ) {
+		// Any other slug (flutterwave, a payment link) is recorded as given.
+		$gateway = wpss()->get_payment_gateways()[ $payment_method ] ?? null;
+		if ( $gateway && ! wpss_gateway_supports( $gateway, 'manual_confirmation' ) ) {
 			return new \WP_Error(
 				'wpss_method_is_a_gateway',
 				/* translators: %s: payment method slug, for example stripe. */

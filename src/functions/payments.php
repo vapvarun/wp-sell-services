@@ -752,8 +752,47 @@ function wpss_manual_gateway_ids(): array {
 }
 
 /**
- * Whether an order's payment method is confirmed by hand: a manual gateway, or a slug no gateway
- * registers (manual-order slugs such as bank_transfer or cash, or a provider an integration named).
+ * Payment methods the admin can record on a manual order (Sell Services > Manual Order).
+ *
+ * @since 2.0.0
+ *
+ * @return array<string, string> Slug => label.
+ */
+function wpss_manual_order_payment_methods(): array {
+	/**
+	 * Filter the payment methods a manual order can record. Each counts as manual: Mark as paid,
+	 * the to-confirm queue, and never swept as abandoned.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array<string, string> $methods Slug => label.
+	 */
+	return (array) apply_filters(
+		'wpss_manual_order_payment_methods',
+		array(
+			'manual'        => __( 'Manual', 'wp-sell-services' ),
+			'bank_transfer' => __( 'Bank Transfer', 'wp-sell-services' ),
+			'cash'          => __( 'Cash', 'wp-sell-services' ),
+			'other'         => __( 'Other', 'wp-sell-services' ),
+		)
+	);
+}
+
+/**
+ * Every payment method confirmed by hand: registered gateways that support manual_confirmation,
+ * plus the manual-order methods. An unknown slug is NOT manual: a gateway whose plugin is off
+ * (Razorpay with Pro deactivated, Test with demo payments off) still took or takes money itself.
+ *
+ * @since 2.0.0
+ *
+ * @return string[]
+ */
+function wpss_manual_payment_methods(): array {
+	return array_values( array_unique( array_merge( wpss_manual_gateway_ids(), array_map( 'strval', array_keys( wpss_manual_order_payment_methods() ) ) ) ) );
+}
+
+/**
+ * Whether an order's payment method is confirmed by hand (wpss_manual_payment_methods()).
  *
  * @since 2.0.0
  *
@@ -761,18 +800,12 @@ function wpss_manual_gateway_ids(): array {
  * @return bool
  */
 function wpss_is_manual_payment_method( string $method ): bool {
-	if ( '' === $method ) {
-		return false;
-	}
-
-	$gateways = wpss()->get_payment_gateways();
-
-	return ! isset( $gateways[ $method ] ) || wpss_gateway_supports( $gateways[ $method ], 'manual_confirmation' );
+	return '' !== $method && in_array( $method, wpss_manual_payment_methods(), true );
 }
 
 /**
- * SQL condition: the order's payment method is manual (wpss_is_manual_payment_method()). Negate it
- * with NOT ( ... ) for "no method yet, or one that confirms itself".
+ * SQL condition: the order's payment method is manual. Negate it with NOT ( ... ) for "no method
+ * yet, or one that confirms itself".
  *
  * @since 2.0.0
  *
@@ -780,10 +813,7 @@ function wpss_is_manual_payment_method( string $method ): bool {
  * @return string
  */
 function wpss_manual_payment_sql( string $column = 'payment_method' ): string {
-	$automatic = array_diff( array_keys( wpss()->get_payment_gateways() ), wpss_manual_gateway_ids() );
-	$list      = $automatic ? " AND {$column} NOT IN ('" . implode( "','", array_map( 'esc_sql', $automatic ) ) . "')" : '';
-
-	return "( {$column} IS NOT NULL AND {$column} <> ''{$list} )";
+	return "( {$column} IS NOT NULL AND {$column} IN ('" . implode( "','", array_map( 'esc_sql', wpss_manual_payment_methods() ) ) . "') )";
 }
 
 /**

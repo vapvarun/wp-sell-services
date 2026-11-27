@@ -26,8 +26,38 @@ $check = static function ( string $label, bool $ok, string $detail = '' ) use ( 
 
 global $wpdb;
 $orders   = $wpdb->prefix . 'wpss_orders';
-$gateways = wpss()->get_payment_gateways();
 $made     = array();
+
+// The registry depends on the site: Test registers only under WP_DEBUG or demo payments, and the
+// Free gateways only on our own checkout route. Run against a known registry, put back at the end.
+$registry  = new ReflectionProperty( wpss(), 'payment_gateways' );
+$real      = $registry->getValue( wpss() );
+$free      = array(
+	'stripe'  => \WPSellServices\Integrations\Stripe\StripeGateway::class,
+	'paypal'  => \WPSellServices\Integrations\PayPal\PayPalGateway::class,
+	'offline' => \WPSellServices\Integrations\Gateways\OfflineGateway::class,
+	'test'    => \WPSellServices\Integrations\Gateways\TestGateway::class,
+);
+$gateways = $real;
+foreach ( $free as $id => $class ) {
+	$gateways[ $id ] = $gateways[ $id ] ?? new $class();
+}
+// Test and Stripe with a switch the test controls, whatever WP_DEBUG, demo payments or saved keys say.
+$gateways['test']   = new class() extends \WPSellServices\Integrations\Gateways\TestGateway {
+	/** @var bool */
+	public $on = false;
+	public function is_enabled(): bool {
+		return $this->on;
+	}
+};
+$gateways['stripe'] = new class() extends \WPSellServices\Integrations\Stripe\StripeGateway {
+	/** @var bool */
+	public $on = false;
+	public function is_enabled(): bool {
+		return $this->on;
+	}
+};
+$registry->setValue( wpss(), $gateways );
 
 // 1. Registry: every gateway on the base, keyed by its own id; a mis-keyed entry is refused.
 foreach ( $gateways as $key => $gateway ) {
@@ -59,13 +89,16 @@ foreach ( $expect as $id => $features ) {
 // 3. Manual methods: Offline and unregistered slugs; never a gateway that takes money itself.
 $check( 'offline and bank_transfer are manual, stripe / test / none are not', wpss_is_manual_payment_method( 'offline' ) && wpss_is_manual_payment_method( 'bank_transfer' ) && ! wpss_is_manual_payment_method( 'stripe' ) && ! wpss_is_manual_payment_method( 'test' ) && ! wpss_is_manual_payment_method( '' ) );
 
+// A gateway whose plugin is off (Razorpay with Pro deactivated, Test with demo payments off) is not manual.
+$registry->setValue( wpss(), array_diff_key( $gateways, array( 'razorpay' => 1, 'test' => 1 ) ) );
+$check( 'with Razorpay and Test unregistered, neither becomes manual', ! wpss_is_manual_payment_method( 'razorpay' ) && ! wpss_is_manual_payment_method( 'test' ) && false === strpos( wpss_manual_payment_sql(), "'razorpay'" ) );
+$check( 'an unknown slug (flutterwave) is not manual either', ! wpss_is_manual_payment_method( 'flutterwave' ) );
+$registry->setValue( wpss(), $gateways );
+
 // 4. Checkout list: enabled + takes the currency, owner's order first, the same list for web and app.
 $on = static fn() => array( 'enabled' => '1' );
 add_filter( 'pre_option_wpss_offline_settings', $on );
-// Test is on under WP_DEBUG with its own switch; set it on the instance, restored below.
-$test_settings = new ReflectionProperty( $gateways['test'], 'settings' );
-$test_before   = $test_settings->getValue( $gateways['test'] );
-$test_settings->setValue( $gateways['test'], array_merge( (array) $test_before, array( 'enabled' => '1' ) ) );
+$gateways['test']->on = true;
 $general = (array) get_option( 'wpss_general', array() );
 add_filter( 'pre_option_wpss_general', static fn() => array_merge( $general, array( 'payment_methods' => array( 'test', 'offline' ) ) ) );
 $list = array_keys( wpss_get_checkout_gateways( 'USD' ) );
@@ -78,7 +111,7 @@ $rest = rest_do_request( new WP_REST_Request( 'GET', '/wpss/v1/payments/methods'
 $check( 'GET /payments/methods returns the same list', ! $rest->is_error() && array_column( (array) ( $rest->get_data()['methods'] ?? array() ), 'id' ) === array_keys( wpss_get_checkout_gateways() ), wp_json_encode( $rest->get_data() ) );
 
 // 5. A confirm leg on an off gateway: served only when it asks the provider.
-$test_settings->setValue( $gateways['test'], $test_before );
+$gateways['test']->on = false;
 $get = new ReflectionMethod( \WPSellServices\API\PaymentController::class, 'get_gateway' );
 $pc  = new \WPSellServices\API\PaymentController();
 $check( 'Test switched off cannot confirm (it settles on the caller\'s word)', ! $gateways['test']->is_enabled() && null === $get->invoke( $pc, 'test', false ) );
@@ -127,6 +160,9 @@ $check( 'Mark as paid refuses a gateway that records its own charges', is_wp_err
 $check( 'an unpaid bank_transfer tip is a Mark as paid door', $manual->is_unpaid_sub_order( wpss_get_order( $bank ) ) );
 $manual->settle( $bank, 'qa-ref' );
 $paid = wpss_get_order( $bank );
+$ext = $row( null );
+$res = $manual->settle( $ext, 'FLW-1', 'flutterwave' );
+$check( 'Mark as paid (REST door) still records a provider slug the plugin does not run', ! is_wp_error( $res ) && 'flutterwave' === ( wpss_get_order( $ext )->payment_method ?? '' ), is_wp_error( $res ) ? $res->get_error_message() : (string) ( wpss_get_order( $ext )->payment_method ?? '' ) );
 $check( 'settled as bank_transfer, not rewritten to offline', 'paid' === ( $paid->payment_status ?? '' ) && 'bank_transfer' === ( $paid->payment_method ?? '' ), ( $paid->payment_status ?? '' ) . '/' . ( $paid->payment_method ?? '' ) );
 
 // 9. One writer: no rail builds or prices its own order rows.
@@ -136,6 +172,7 @@ $check( 'Test settles through resolve + settle, never mark_as_paid or create_ord
 $check( 'Mark as paid lives on the order screen, not a gateway', str_contains( $src( 'src/Admin/OrderScreen.php' ), 'wp_ajax_wpss_admin_mark_order_paid' ) && ! str_contains( $src( 'src/Integrations/Gateways/OfflineGateway.php' ), 'wpss_admin_mark_order_paid' ) );
 
 // Cleanup.
+$registry->setValue( wpss(), $real );
 foreach ( $made as $id ) {
 	$wpdb->delete( $orders, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 	$wpdb->delete( $wpdb->prefix . 'wpss_wallet_transactions', array( 'reference_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
