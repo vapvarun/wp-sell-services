@@ -229,6 +229,14 @@ class CommissionService {
 			return false;
 		}
 
+		// A retry fires minutes later: credit only an order still standing as completed (a partial refund
+		// is netted by calculate()). Refunded, cancelled or disputed meanwhile: drop it.
+		if ( $attempt > 0 && ! in_array( (string) $order->status, array( ServiceOrder::STATUS_COMPLETED, ServiceOrder::STATUS_PARTIALLY_REFUNDED ), true ) ) {
+			wpss_log( sprintf( 'Order %d: commission retry dropped; the order is now %s.', $order_id, (string) $order->status ), 'warning' );
+
+			return false;
+		}
+
 		// A milestone phase has its own ledger row type; it is credited by
 		// MilestoneService::credit_phase() so a phase completed by approval, a
 		// dispute ruling or an admin is credited once (Basecamp 10336732073).

@@ -55,6 +55,12 @@ try {
 	$check( 'Retry: record() true, hook fired once', true === $res && 1 === $fired, var_export( $res, true ) . " {$fired}" );
 	$check( "  the credit is booked in the order's currency ({$other}), not the store's", $row && $other === $row->currency, $row ? $row->currency : 'none' );
 	$check( '  and its description shows that currency', $row && str_contains( $row->description, wpss_format_price( 50.0, $other ) ), $row ? $row->description : '' );
+
+	// 3. A retry for an order refunded in the meantime credits nothing.
+	$late = ( $f->order )( array( 'status' => 'refunded', 'total' => 50, 'subtotal' => 50, 'payment_status' => 'paid' ) );
+	$res  = ( new CommissionService() )->record( $late, 1 );
+	$got  = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$ledger} WHERE reference_type = 'order' AND reference_id = %d AND type = 'order_earning'", $late ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	$check( 'Retry on an order refunded meanwhile: dropped, no credit', false === $res && '0' === (string) $got, var_export( $res, true ) . " {$got}" );
 } finally {
 	remove_action( 'wpss_commission_recorded', $count );
 	\WPSellServices\Services\Scheduler::unschedule( 'wpss_retry_commission', array( $order, 1 ) );
