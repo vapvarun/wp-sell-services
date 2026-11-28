@@ -36,6 +36,9 @@
 
 .wpss-dashboard {
 	display: flex;
+	/* Base type for unclassed text: block themes set body to their own display size (TT5: 22px/300). */
+	font-size: 1rem;
+	font-weight: 400;
 	min-height: 600px;
 	background: var(--wpss-gray-50);
 	border-radius: var(--wpss-radius-lg);

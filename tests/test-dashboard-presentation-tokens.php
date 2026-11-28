@@ -75,6 +75,12 @@ $check( 'a dashboard section drops its card frame on a phone', 1 === preg_match(
 $check( 'the dashboard body keeps its inset on a phone', 0 === preg_match( '/\.wpss-dashboard__body\s*\{\s*padding-inline:\s*0;/', $ud ) );
 $check( 'the header does not repeat the nav bar title under 1024px', 1 === preg_match( '/@media \(max-width: 1024px\)\s*\{.*?\.wpss-dashboard__header \.wpss-dashboard__title\s*\{[^}]*clip:/s', $ud ) );
 
+// 4b. Unclassed p/li/label take the dashboard's base type, not a block theme's display body (TT5: 22px/300). Basecamp 10553821563.
+foreach ( array( 'unified-dashboard.css', 'unified-dashboard-rtl.css', 'unified-dashboard.min.css', 'unified-dashboard-rtl.min.css' ) as $copy ) {
+	$frame = preg_match( '/\.wpss-dashboard\s*\{[^}]*min-height:\s*600px[^}]*\}/', $read( $copy ), $m ) ? $m[0] : '';
+	$check( "{$copy} sets the dashboard's base font size and weight", 1 === preg_match( '/font-size:\s*1rem/', $frame ) && 1 === preg_match( '/font-weight:\s*400/', $frame ), $frame );
+}
+
 // 5. Text drawn in a fill colour.
 $check( 'conversation order line uses the muted ink, not gray-400', 1 === preg_match( '/\.wpss-conversation-card__order\s*\{[^}]*--wpss-text-muted/', $ud ) );
 $check( 'the dashboard pending pill reads the canonical status tokens', 1 === preg_match( '/\.wpss-status-pending\s*\{\s*background:\s*var\(--wpss-status-pending-bg/', $ud ) );
