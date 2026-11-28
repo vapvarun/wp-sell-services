@@ -141,6 +141,7 @@ try {
 	$v2 = $upload( (int) $f->vendor, 'version two' );
 	$current = wpss_get_product_file( $sid );
 	$check( '  a second upload is version 2 and becomes the current file', 2 === (int) ( $v2['data']['version'] ?? 0 ) && (string) ( $current['id'] ?? '' ) === (string) ( $v2['data']['id'] ?? 'x' ) );
+	$check( '  the store folder is a real path, however WP-CLI was started (Basecamp 10553806039)', ! str_contains( wpss_order_files_outside_base(), '..' ), wpss_order_files_outside_base() );
 	$path = $current ? wpss_find_local_order_file( wpss_file_folder( $current ), (string) $current['path'] ) : '';
 	$dir  = $path ? dirname( $path ) : '';
 	$check( '  its bytes are in the private store under s{service}/', '' !== $path && str_contains( $path, '/s' . $sid . '/' ) && 'version two' === trim( (string) file_get_contents( $path ) ), $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents

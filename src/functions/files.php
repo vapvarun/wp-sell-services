@@ -136,11 +136,16 @@ function wpss_get_order_files_dir(): string {
  * The folder above WordPress that order files prefer.
  *
  * @since 2.0.0
+ * @since 2.0.0 Resolves ABSPATH first, so a relative WP-CLI --path finds the same folder.
  *
  * @return string Absolute path with a trailing slash.
  */
 function wpss_order_files_outside_base(): string {
-	return trailingslashit( dirname( untrailingslashit( ABSPATH ) ) ) . 'wpss-order-files/';
+	// realpath(): WP-CLI started with a relative --path sets ABSPATH to '.../../../', and dirname()
+	// on that string drops a '..' instead of a folder (Basecamp 10553806039).
+	$root = realpath( ABSPATH );
+
+	return trailingslashit( dirname( false !== $root ? $root : untrailingslashit( ABSPATH ) ) ) . 'wpss-order-files/';
 }
 
 /**

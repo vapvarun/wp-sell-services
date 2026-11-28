@@ -1632,6 +1632,14 @@
    "added": "2026-11-28",
    "fails_on": "4a49e053 (heading reads 'Offline Payment - Awaiting Confirmation' on the sample's order)",
    "check": "tests/test-payment-module-contract.php"
+  },
+  {
+   "card": "10553806039",
+   "title": "A WP-CLI run started with a relative --path computed the private file store from ABSPATH '.../../../' by string, landed in the wrong folder and could not find files the website stored (3 digital-product checks failed that way)",
+   "guard": "static:digital-products",
+   "added": "2026-11-28",
+   "fails_on": "9c2dcd31 run as wp --path=../../.. from the plugin folder (4 FAIL: the store path contains '..', then the stored-bytes and both delete checks)",
+   "check": "tests/test-digital-products.php"
   }
  ]
 }
