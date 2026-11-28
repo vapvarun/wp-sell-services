@@ -636,13 +636,14 @@ class Admin {
 			$items = array();
 
 			foreach ( $review['failed'] as $order_id => $flag ) {
-				$items[] = '<li>' . $link( (int) $order_id ) . ': ' . esc_html( (string) ( $flag['error'] ?? '' ) ) . '</li>';
+				$cancelled = 'cancel' === ( $flag['origin'] ?? '' ) ? ' ' . esc_html__( '(order cancelled)', 'wp-sell-services' ) : '';
+				$items[]   = '<li>' . $link( (int) $order_id ) . $cancelled . ': ' . esc_html( (string) ( $flag['error'] ?? '' ) ) . '</li>';
 			}
 
 			printf(
 				'<div class="notice notice-error"><p><strong>%s</strong> %s</p><ul style="list-style: disc; margin-inline-start: 1.5em;">%s</ul></div>',
 				esc_html( _n( 'A refund was refused by the payment gateway.', 'Refunds were refused by the payment gateway.', count( $items ), 'wp-sell-services' ) ),
-				esc_html__( 'The buyer has not been refunded and nothing was changed on the order. Fix the cause at the gateway, then open the order and use Retry refund.', 'wp-sell-services' ),
+				esc_html__( 'The buyer has not been refunded. A cancelled order stays cancelled; any other order was left as it was. Fix the cause at the gateway, then open the order and use Retry refund.', 'wp-sell-services' ),
 				implode( '', $items ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each item escaped above.
 			);
 		}
@@ -3258,9 +3259,10 @@ class Admin {
 					<?php endif; ?>
 
 					<?php
-					// A refund the gateway refused. Nothing was recorded - the
-					// order kept its status and the vendor kept the credit - so
-					// the admin fixes the cause at the gateway and retries here.
+					// A refund the gateway refused. No refund was recorded, so the
+					// admin fixes the cause at the gateway and retries here. An
+					// accepted cancellation still stands (origin "cancel"); any other
+					// refund left the order as it was.
 					$wpss_refund_failed = current_user_can( 'manage_options' ) ? OrderWorkflowManager::get_failed_refund( $order_id ) : null;
 
 					if ( null !== $wpss_refund_failed ) :
@@ -3271,8 +3273,11 @@ class Admin {
 								<p>
 									<?php
 									printf(
-										/* translators: 1: amount, 2: payment method, 3: number of attempts */
-										esc_html( _n( '%1$s could not be refunded via %2$s (%3$d attempt). The buyer has not been refunded and the order was not changed.', '%1$s could not be refunded via %2$s (%3$d attempts). The buyer has not been refunded and the order was not changed.', (int) $wpss_refund_failed['attempts'], 'wp-sell-services' ) ),
+										'cancel' === (string) $wpss_refund_failed['origin']
+											/* translators: 1: amount, 2: payment method, 3: number of attempts */
+											? esc_html( _n( '%1$s could not be refunded via %2$s (%3$d attempt). The order was cancelled but the buyer has not been refunded.', '%1$s could not be refunded via %2$s (%3$d attempts). The order was cancelled but the buyer has not been refunded.', (int) $wpss_refund_failed['attempts'], 'wp-sell-services' ) )
+											/* translators: 1: amount, 2: payment method, 3: number of attempts */
+											: esc_html( _n( '%1$s could not be refunded via %2$s (%3$d attempt). The buyer has not been refunded and the order was not changed.', '%1$s could not be refunded via %2$s (%3$d attempts). The buyer has not been refunded and the order was not changed.', (int) $wpss_refund_failed['attempts'], 'wp-sell-services' ) ),
 										'<strong>' . esc_html( wpss_format_price( (float) $wpss_refund_failed['amount'], (string) $order->currency ) ) . '</strong>',
 										esc_html( wpss_get_payment_method_label( (string) $order->payment_method ) ?: __( 'a payment method', 'wp-sell-services' ) ),
 										(int) $wpss_refund_failed['attempts']
