@@ -100,7 +100,7 @@ $check( 'a long held message is queued', 1 === count( $held ), count( $held ) . 
 $held_args = $held ? ActionScheduler::store()->fetch_action( $held[0] )->get_args() : array();
 $check( 'its job carries no message text', strlen( (string) wp_json_encode( $held_args ) ) < 120, (string) wp_json_encode( $held_args ) );
 
-add_filter( 'wpss_should_skip_message_email', '__return_false' );
+add_filter( 'wpss_skip_message_email_when_online', '__return_false' );
 if ( $held ) {
 	do_action_ref_array( 'wpss_send_delayed_message_email', $held_args );
 	ActionScheduler::store()->delete_action( $held[0] );
@@ -115,6 +115,6 @@ if ( $held_args ) {
 }
 $check( 'a held job that runs twice does not send a second, empty email', array() === $sent, count( $sent ) . ' sent' );
 delete_transient( $cooldown );
-remove_filter( 'wpss_should_skip_message_email', '__return_false' );
+remove_filter( 'wpss_skip_message_email_when_online', '__return_false' );
 
 echo $fails ? "\n$fails FAILED\n" : "\nALL PASS\n";
