@@ -123,6 +123,24 @@
 			} );
 		}
 
+		// The method's own card below saves its whole option, Enabled box included: keep it in step with
+		// the table, or saving that card afterwards would quietly undo the switch made here.
+		function syncCard( id, enabled ) {
+			var card = document.getElementById( 'wpss-gateway-' + id );
+			if ( ! card ) {
+				return;
+			}
+			var box2 = card.querySelector( 'input[type="checkbox"][name$="_settings[enabled]"]' );
+			var badge = card.querySelector( '[data-card-status]' );
+			if ( box2 ) {
+				box2.checked = enabled;
+			}
+			if ( badge ) {
+				badge.className = 'wpss-gateway-badge wpss-gateway-badge--' + ( enabled ? 'enabled' : 'disabled' );
+				badge.textContent = badge.getAttribute( enabled ? 'data-on' : 'data-off' );
+			}
+		}
+
 		function refresh() {
 			return request( 'GET' ).then( function ( json ) {
 				( json.methods || [] ).forEach( function ( m ) {
@@ -133,6 +151,7 @@
 						badge.textContent = m.status_label;
 						row.querySelector( '.wpss-payment-methods__toggle' ).checked = !! m.enabled;
 					}
+					syncCard( m.id, !! m.enabled );
 				} );
 			} );
 		}

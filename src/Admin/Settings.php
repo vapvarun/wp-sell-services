@@ -2358,7 +2358,7 @@ class Settings {
 					<h2 class="wpss-card__title"><?php echo esc_html( $title ); ?></h2>
 					<p class="wpss-card__desc"><?php echo esc_html( $description ); ?></p>
 				</div>
-				<span class="wpss-gateway-badge <?php echo esc_attr( $badge_class ); ?>">
+				<span class="wpss-gateway-badge <?php echo esc_attr( $badge_class ); ?>" data-card-status data-on="<?php esc_attr_e( 'Enabled', 'wp-sell-services' ); ?>" data-off="<?php esc_attr_e( 'Disabled', 'wp-sell-services' ); ?>">
 					<?php echo esc_html( $badge_text ); ?>
 				</span>
 				<button type="button" class="wpss-card__toggle" aria-label="<?php esc_attr_e( 'Toggle', 'wp-sell-services' ); ?>">
@@ -2521,7 +2521,7 @@ class Settings {
 	 * @return void
 	 */
 	public function render_ecommerce_section(): void {
-		echo '<p>' . esc_html__( 'Configure e-commerce platform for service checkout. Standalone checkout is included. Pro adds WooCommerce, EDD, and more.', 'wp-sell-services' ) . '</p>';
+		echo '<p>' . esc_html__( 'Choose which platform runs service checkout. Standalone checkout is included; Pro adds WooCommerce.', 'wp-sell-services' ) . '</p>';
 	}
 
 	/**
