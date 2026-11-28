@@ -1660,6 +1660,15 @@
    "note": "Also bin/check-ux-conformance.php rules legacy-admin-tile and legacy-admin-tile-css fail on any retired tile class"
   },
   {
+   "card": "10268055975",
+   "title": "Dashboard lists disagreed with themselves: stat tiles beside the chips counted differently (Buyer Requests said 8 Active for a buyer with 1 open request), Requests, Proposals and Disputes had no filter, and Disputes stopped at 50 rows",
+   "guard": "static:dashboard-list-chips",
+   "added": "2026-11-28",
+   "fails_on": "cf0abb77 (orders: no stat tiles FAIL; requests, proposals and disputes have no chips to sum)",
+   "check": "tests/test-sales-active-count.php",
+   "note": "Every chip on orders and sales equals the rows it lists; on every list the chips add up to All"
+  },
+  {
    "card": "",
    "title": "One moment printed three ways: the order timeline said 'Jun 26, 2026 at 10:00 AM', the order details 'June 26, 2026 10:00 am' and admin tables 'Jun 26' - 23 date labels passed their own format instead of following Settings > General",
    "guard": "static:time-formatter",

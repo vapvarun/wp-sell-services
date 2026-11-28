@@ -26,10 +26,22 @@ defined( 'ABSPATH' ) || exit;
  */
 do_action( 'wpss_dashboard_section_before', 'requests', $user_id );
 
-// Get user's buyer requests (paginated so the list doesn't hard-cap at 20).
-// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination param.
-$requests_page = isset( $_GET['requests_page'] ) ? max( 1, absint( $_GET['requests_page'] ) ) : 1;
-$args          = array(
+$request_service = new \WPSellServices\Services\BuyerRequestService();
+
+// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only filter and pagination params.
+$requests_page   = isset( $_GET['requests_page'] ) ? max( 1, absint( $_GET['requests_page'] ) ) : 1;
+$requests_group  = isset( $_GET['requests_status'] ) ? sanitize_key( wp_unslash( $_GET['requests_status'] ) ) : 'all';
+$requests_search = isset( $_GET['requests_search'] ) ? sanitize_text_field( wp_unslash( $_GET['requests_search'] ) ) : '';
+// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+// Chips by the request's own status (the badge on each row), from one GROUP BY.
+$status_counts = $request_service->count_by_author_grouped( $user_id );
+$status_groups = wpss_status_filter_groups( $status_counts, \WPSellServices\Services\BuyerRequestService::get_statuses() );
+if ( ! isset( $status_groups[ $requests_group ] ) ) {
+	$requests_group = 'all';
+}
+
+$args = array(
 	'post_type'      => 'wpss_request',
 	'author'         => $user_id,
 	'posts_per_page' => 20,
@@ -37,33 +49,37 @@ $args          = array(
 	'post_status'    => array( 'publish', 'draft', 'pending' ),
 	'orderby'        => 'date',
 	'order'          => 'DESC',
+	's'              => $requests_search,
 );
+if ( 'all' !== $requests_group ) {
+	$args['meta_query'] = \WPSellServices\Services\BuyerRequestService::status_meta_query( $status_groups[ $requests_group ]['statuses'] ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one key, bounded by one author.
+}
 
-$requests = new WP_Query( $args );
-
-// Stat is a COUNT (found_posts), not a loaded id list.
-$active_count = (int) ( new WP_Query(
-	array(
-		'post_type'              => 'wpss_request',
-		'author'                 => $user_id,
-		'post_status'            => 'publish',
-		'posts_per_page'         => 1,
-		'fields'                 => 'ids',
-		'update_post_meta_cache' => false,
-		'update_post_term_cache' => false,
-	)
-) )->found_posts;
+$requests          = new WP_Query( $args );
+$requests_filtered = 'all' !== $requests_group || '' !== $requests_search;
 ?>
 
 <div class="wpss-section wpss-section--requests wpss-card">
-	<div class="wpss-stats-grid">
-		<div class="wpss-stat-card">
-			<span class="wpss-stat-card__value"><?php echo esc_html( $active_count ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Active Requests', 'wp-sell-services' ); ?></span>
-		</div>
-	</div>
+	<?php
+	if ( array_sum( $status_counts ) > 0 ) {
+		$filter_prefix      = 'requests';
+		$filter_group       = $requests_group;
+		$filter_search      = $requests_search;
+		$filter_label       = __( 'Filter requests by status.', 'wp-sell-services' );
+		$search_label       = __( 'Search your requests', 'wp-sell-services' );
+		$search_placeholder = __( 'Request title', 'wp-sell-services' );
+		wpss_get_template( 'dashboard/partials/order-filters.php', compact( 'filter_prefix', 'status_groups', 'status_counts', 'filter_group', 'filter_search', 'filter_label', 'search_label', 'search_placeholder' ) );
+	}
+	?>
 
-	<?php if ( ! $requests->have_posts() ) : ?>
+	<?php if ( ! $requests->have_posts() && $requests_filtered ) : ?>
+		<div class="wpss-empty-state">
+			<h3><?php esc_html_e( 'No requests match this filter', 'wp-sell-services' ); ?></h3>
+			<a href="<?php echo esc_url( remove_query_arg( array( 'requests_status', 'requests_search', 'requests_page' ) ) ); ?>" class="wpss-btn wpss-btn--outline">
+				<?php esc_html_e( 'Show all requests', 'wp-sell-services' ); ?>
+			</a>
+		</div>
+	<?php elseif ( ! $requests->have_posts() ) : ?>
 		<div class="wpss-empty-state">
 			<div class="wpss-empty-state__icon">
 				<i data-lucide="megaphone" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
@@ -91,7 +107,7 @@ $active_count = (int) ( new WP_Query(
 				// One rule for every budget reader, in the display-currency-aware wrapper;
 				// HTML from here, hence wp_kses_post() rather than esc_html() at the echo.
 				$budget_display = wpss_request_budget_html( $budget_min, $budget_max );
-				$offers         = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $request_id );
+				$offers         = $request_service->get_proposal_count( $request_id );
 				$item_status    = get_post_status();
 				?>
 				<div class="wpss-request-card">
@@ -143,57 +159,39 @@ $active_count = (int) ( new WP_Query(
 						<span class="<?php echo esc_attr( wpss_status_class( $request_state ) ); ?>">
 							<?php echo esc_html( \WPSellServices\Services\BuyerRequestService::get_statuses()[ $request_state ] ?? ucfirst( str_replace( '_', ' ', $request_state ) ) ); ?>
 						</span>
-						<?php
-						// Icon action buttons: label is visible on desktop and collapses to
-						// an icon + tooltip on mobile/tablet so the full action set stays on
-						// one line at every width (Basecamp #9985554351). aria-label + title
-						// keep every control named for assistive tech and hover tooltips.
-						$view_offers_label = __( 'View Offers', 'wp-sell-services' );
-						?>
-						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-btn--action" aria-label="<?php echo esc_attr( $view_offers_label ); ?>" title="<?php echo esc_attr( $view_offers_label ); ?>">
-							<i data-lucide="inbox" class="wpss-icon" aria-hidden="true"></i>
-							<span class="wpss-btn__label"><?php esc_html_e( 'View Offers', 'wp-sell-services' ); ?></span>
+						<?php // Outlined text buttons, the same as the Proposals rows. ?>
+						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+							<?php esc_html_e( 'View offers', 'wp-sell-services' ); ?>
 						</a>
 						<?php if ( 'publish' === $item_status ) : ?>
-							<?php $close_label = __( 'Close', 'wp-sell-services' ); ?>
-							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--action wpss-close-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo esc_attr( $close_label ); ?>" title="<?php echo esc_attr( $close_label ); ?>">
-								<i data-lucide="lock" class="wpss-icon" aria-hidden="true"></i>
-								<span class="wpss-btn__label"><?php esc_html_e( 'Close', 'wp-sell-services' ); ?></span>
+							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-close-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">
+								<?php esc_html_e( 'Close', 'wp-sell-services' ); ?>
 							</button>
 						<?php elseif ( 'draft' === $item_status ) : ?>
-							<?php $reopen_label = __( 'Reopen', 'wp-sell-services' ); ?>
-							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--action wpss-reopen-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo esc_attr( $reopen_label ); ?>" title="<?php echo esc_attr( $reopen_label ); ?>">
-								<i data-lucide="rotate-ccw" class="wpss-icon" aria-hidden="true"></i>
-								<span class="wpss-btn__label"><?php esc_html_e( 'Reopen', 'wp-sell-services' ); ?></span>
+							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-reopen-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">
+								<?php esc_html_e( 'Reopen', 'wp-sell-services' ); ?>
 							</button>
 						<?php endif; ?>
-						<?php $edit_label = __( 'Edit', 'wp-sell-services' ); ?>
-						<a href="
 						<?php
-						echo esc_url(
-							add_query_arg(
-								array(
-									'section'    => 'edit-request',
-									'request_id' => $request_id,
-								),
-								wpss_get_page_url( 'dashboard' ) ?: get_permalink()
-							)
+						$edit_url = add_query_arg(
+							array(
+								'section'    => 'edit-request',
+								'request_id' => $request_id,
+							),
+							wpss_get_page_url( 'dashboard' ) ?: get_permalink()
 						);
 						?>
-									" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-btn--action" aria-label="<?php echo esc_attr( $edit_label ); ?>" title="<?php echo esc_attr( $edit_label ); ?>">
-							<i data-lucide="pencil" class="wpss-icon" aria-hidden="true"></i>
-							<span class="wpss-btn__label"><?php esc_html_e( 'Edit', 'wp-sell-services' ); ?></span>
+						<a href="<?php echo esc_url( $edit_url ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+							<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
 						</a>
 						<?php
 						// Delete is offered only while no seller has proposed; after
 						// that the request can be closed with the control above.
-						if ( ( new \WPSellServices\Services\BuyerRequestService() )->is_untouched( $request_id ) ) :
-							$delete_label = __( 'Delete', 'wp-sell-services' );
+						if ( $request_service->is_untouched( $request_id ) ) :
 							?>
-						<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--danger wpss-btn--action wpss-delete-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo esc_attr( $delete_label ); ?>" title="<?php echo esc_attr( $delete_label ); ?>">
-							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
-							<span class="wpss-btn__label"><?php esc_html_e( 'Delete', 'wp-sell-services' ); ?></span>
-						</button>
+							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--danger wpss-delete-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">
+								<?php esc_html_e( 'Delete', 'wp-sell-services' ); ?>
+							</button>
 						<?php endif; ?>
 					</div>
 				</div>

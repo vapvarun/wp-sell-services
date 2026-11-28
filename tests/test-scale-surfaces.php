@@ -99,8 +99,8 @@ if ( 20 !== $cards ) {
 if ( false === strpos( $html, 'class="wpss-pagination"' ) ) {
 	$failures[] = 'Services section has no pagination element.';
 }
-if ( false === strpos( $html, '<span class="wpss-stat-card__value">60</span>' ) ) {
-	$failures[] = 'Services section Active stat is not 60.';
+if ( ! preg_match( '/services_status=publish[^>]*>\s*Active\s*<span class="wpss-order-filter__count">60</', $html ) ) {
+	$failures[] = 'Services section Active chip is not 60.';
 }
 
 // 2. Favourites REST: X-WP-Total describes the set, the body is one page.

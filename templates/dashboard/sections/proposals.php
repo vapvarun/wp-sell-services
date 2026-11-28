@@ -29,22 +29,33 @@ do_action( 'wpss_dashboard_section_before', 'proposals', $user_id );
 
 $proposal_service = new ProposalService();
 $per_page         = 20;
-// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination param.
-$proposals_page = isset( $_GET['proposals_page'] ) ? max( 1, absint( $_GET['proposals_page'] ) ) : 1;
-$counts         = $proposal_service->count_by_vendor( $user_id );
-$total_pages    = (int) ceil( $counts['total'] / $per_page );
-$proposals      = $proposal_service->get_by_vendor(
-	$user_id,
-	array(
-		'limit'  => $per_page,
-		'offset' => ( $proposals_page - 1 ) * $per_page,
-	)
-);
-$status_labels  = ProposalService::get_statuses();
+// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only filter and pagination params.
+$proposals_page  = isset( $_GET['proposals_page'] ) ? max( 1, absint( $_GET['proposals_page'] ) ) : 1;
+$proposals_group = isset( $_GET['proposals_status'] ) ? sanitize_key( wp_unslash( $_GET['proposals_status'] ) ) : 'all';
+// phpcs:enable WordPress.Security.NonceVerification.Recommended
+$status_labels = ProposalService::get_statuses();
 // One word for "the buyer went another way": the buyer never writes a reason,
 // whether they hired someone else or just declined. "Declined" and "Not
 // selected" both appeared for the same status, and the stat counted both.
 $status_labels[ ProposalService::STATUS_REJECTED ] = __( 'Not selected', 'wp-sell-services' );
+
+// Chips from the one GROUP BY the service already runs; empty statuses are not shown.
+$status_counts = array_diff_key( $proposal_service->count_by_vendor( $user_id ), array( 'total' => 0 ) );
+$status_groups = wpss_status_filter_groups( $status_counts, $status_labels );
+if ( ! isset( $status_groups[ $proposals_group ] ) ) {
+	$proposals_group = 'all';
+}
+$proposals_status = 'all' === $proposals_group ? '' : $proposals_group;
+$proposals_total  = '' === $proposals_status ? array_sum( $status_counts ) : (int) ( $status_counts[ $proposals_status ] ?? 0 );
+$total_pages      = (int) ceil( $proposals_total / $per_page );
+$proposals        = $proposal_service->get_by_vendor(
+	$user_id,
+	array(
+		'status' => $proposals_status,
+		'limit'  => $per_page,
+		'offset' => ( $proposals_page - 1 ) * $per_page,
+	)
+);
 
 // One query for the request posts and one for their meta, instead of two per row.
 $request_ids = array_values( array_unique( array_map( static fn( $p ) => (int) $p->request_id, $proposals ) ) );
@@ -55,20 +66,15 @@ if ( $request_ids ) {
 ?>
 
 <div class="wpss-section wpss-section--proposals wpss-card">
-	<div class="wpss-stats-grid">
-		<div class="wpss-stat-card">
-			<span class="wpss-stat-card__value"><?php echo esc_html( (string) $counts[ ProposalService::STATUS_PENDING ] ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
-		</div>
-		<div class="wpss-stat-card">
-			<span class="wpss-stat-card__value"><?php echo esc_html( (string) $counts[ ProposalService::STATUS_ACCEPTED ] ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Accepted', 'wp-sell-services' ); ?></span>
-		</div>
-		<div class="wpss-stat-card">
-			<span class="wpss-stat-card__value"><?php echo esc_html( (string) $counts[ ProposalService::STATUS_REJECTED ] ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Not selected', 'wp-sell-services' ); ?></span>
-		</div>
-	</div>
+	<?php
+	if ( array_sum( $status_counts ) > 0 ) {
+		$filter_prefix = 'proposals';
+		$filter_group  = $proposals_group;
+		$filter_label  = __( 'Filter proposals by status.', 'wp-sell-services' );
+		$show_search   = false;
+		wpss_get_template( 'dashboard/partials/order-filters.php', compact( 'filter_prefix', 'status_groups', 'status_counts', 'filter_group', 'filter_label', 'show_search' ) );
+	}
+	?>
 
 	<?php if ( empty( $proposals ) ) : ?>
 		<div class="wpss-empty-state">

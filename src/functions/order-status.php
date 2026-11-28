@@ -218,6 +218,37 @@ function wpss_get_order_filter_groups( array $status_counts ): array {
 }
 
 /**
+ * Filter chips for a dashboard list whose statuses are its own (requests, proposals, services, disputes).
+ *
+ * One chip per status that has rows, in the order of $labels, plus All. Built from the counts
+ * rather than from $labels, so a status with no label still gets a chip and the chips always
+ * add up to the list.
+ *
+ * @since 2.0.0
+ *
+ * @param array<string, int>    $status_counts Status => count.
+ * @param array<string, string> $labels        Status => label, in display order.
+ * @return array<string, array{label: string, statuses: string[]}> Groups keyed by chip.
+ */
+function wpss_status_filter_groups( array $status_counts, array $labels ): array {
+	$groups = array(
+		'all' => array(
+			'label'    => __( 'All', 'wp-sell-services' ),
+			'statuses' => array(),
+		),
+	);
+
+	foreach ( array_keys( $labels + $status_counts ) as $status ) {
+		$groups[ (string) $status ] = array(
+			'label'    => $labels[ $status ] ?? ucfirst( str_replace( '_', ' ', (string) $status ) ),
+			'statuses' => array( (string) $status ),
+		);
+	}
+
+	return $groups;
+}
+
+/**
  * Statuses present in the data that no group claims.
  *
  * The buckets are built from ServiceOrder's declared statuses, but the column

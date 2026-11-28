@@ -45,7 +45,7 @@ $wpss_offer_states = array(
 			<dd><?php echo esc_html( number_format_i18n( (int) $offer['revisions'] ) ); ?></dd>
 		</div>
 		<?php if ( 'pending' === $offer['state'] && $offer['expires_at'] ) : ?>
-			<div>
+			<div class="wpss-offer-card__term--wide">
 				<dt><?php esc_html_e( 'Valid until', 'wp-sell-services' ); ?></dt>
 				<dd><?php echo esc_html( wpss_date_label( (string) $offer['expires_at'] ) ); ?></dd>
 			</div>

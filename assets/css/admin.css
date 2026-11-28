@@ -3875,7 +3875,7 @@ button.wpss-change-status:focus {
 	margin: 0 0 20px;
 	border: 1px solid var(--wpss-wp-admin-border);
 	border-radius: 0;
-	box-shadow: none;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04); /* core .postbox */
 }
 
 .wpss-admin-order__blocks .wpss-order-section__header {

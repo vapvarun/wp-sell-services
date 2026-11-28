@@ -160,37 +160,14 @@ $total_in_period = $order_repo->count_by_vendor( $user_id, $filter_args );
 $total_pages     = max( 1, (int) ceil( $total_in_period / $per_page ) );
 $sales_filtered  = 'all' !== $sales_period || 'all' !== $sales_group || '' !== $sales_search;
 
-// Get order stats from vendor stats (lifetime totals — not affected by date filter).
-$stats           = $order_repo->get_vendor_stats( $user_id );
-$active_count    = (int) ( $stats['active_orders'] ?? 0 );
-$completed_count = (int) ( $stats['completed_orders'] ?? 0 );
-$total_count     = (int) ( $stats['total_orders'] ?? 0 );
-$total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
+// Lifetime earnings, shown beside the period picker; the chips carry the counts.
+$total_revenue = (float) ( $order_repo->get_vendor_stats( $user_id )['total_earnings'] ?? 0 );
 ?>
 
 <div class="wpss-section wpss-section--sales wpss-card">
-	<div class="wpss-stats-grid">
-		<div class="wpss-stat-card">
-			<span class="wpss-stat-card__value"><?php echo esc_html( $total_count ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?></span>
-		</div>
-		<div class="wpss-stat-card">
-			<span class="wpss-stat-card__value"><?php echo esc_html( $active_count ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Active', 'wp-sell-services' ); ?></span>
-		</div>
-		<div class="wpss-stat-card">
-			<span class="wpss-stat-card__value"><?php echo esc_html( $completed_count ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
-		</div>
-		<div class="wpss-stat-card wpss-stat-card--highlight">
-			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $total_revenue ) ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Earnings after commission, including tips', 'wp-sell-services' ); ?></span>
-		</div>
-	</div>
-
 	<?php
 	// VS10 — date-range filter (always visible if vendor has any lifetime orders).
-	if ( $total_count > 0 ) :
+	if ( array_sum( $status_counts ) > 0 ) :
 		$filter_prefix = 'sales';
 		$filter_group  = $sales_group;
 		$filter_search = $sales_search;
@@ -229,6 +206,14 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 					esc_html__( '%1$d orders in %2$s', 'wp-sell-services' ),
 					(int) $total_in_period,
 					esc_html( strtolower( $valid_periods[ $sales_period ]['label'] ) )
+				);
+				?>
+				<span aria-hidden="true">&middot;</span>
+				<?php
+				printf(
+					/* translators: %s: lifetime earnings amount */
+					esc_html__( 'Lifetime earnings after commission, including tips: %s', 'wp-sell-services' ),
+					'<strong>' . esc_html( wpss_format_price( $total_revenue ) ) . '</strong>'
 				);
 				?>
 			</p>

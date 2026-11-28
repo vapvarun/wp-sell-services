@@ -752,24 +752,28 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 					<?php echo get_avatar( $sender_id, 32 ); ?>
 				</div>
 			<?php endif; ?>
-			<div class="wpss-messaging__message-content">
-				<div class="wpss-messaging__bubble">
+			<?php $offer = 'offer' === $type ? wpss_private_offer_for_client( (int) ( wpss_message_metadata( $message )['proposal_id'] ?? 0 ), $current_user_id ) : null; ?>
+			<div class="wpss-messaging__message-content<?php echo $offer ? ' wpss-messaging__message-content--offer' : ''; ?>">
+				<?php if ( $offer ) : ?>
+					<?php // The offer is its own card, outside the bubble, so it reads the same to both people. ?>
 					<?php if ( ! $is_own ) : ?>
 						<span class="wpss-messaging__sender"><?php echo esc_html( $sender_name ); ?></span>
 					<?php endif; ?>
 					<?php
-					$offer = 'offer' === $type ? wpss_private_offer_for_client( (int) ( wpss_message_metadata( $message )['proposal_id'] ?? 0 ), $current_user_id ) : null;
-					if ( $offer ) :
-						wpss_get_template_part(
-							'partials/offer-card',
-							'',
-							array(
-								'offer'   => $offer,
-								'user_id' => $current_user_id,
-							)
-						);
-					else :
-						?>
+					wpss_get_template_part(
+						'partials/offer-card',
+						'',
+						array(
+							'offer'   => $offer,
+							'user_id' => $current_user_id,
+						)
+					);
+					?>
+				<?php else : ?>
+				<div class="wpss-messaging__bubble">
+					<?php if ( ! $is_own ) : ?>
+						<span class="wpss-messaging__sender"><?php echo esc_html( $sender_name ); ?></span>
+					<?php endif; ?>
 					<div class="wpss-messaging__text">
 						<?php
 						// Linkify, then break lines, then escape.
@@ -787,7 +791,6 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 						echo wp_kses_post( nl2br( make_clickable( $content ) ) );
 						?>
 					</div>
-					<?php endif; ?>
 					<?php if ( ! empty( $attachments ) ) : ?>
 						<div class="wpss-messaging__attachments">
 							<?php foreach ( $attachments as $attachment ) : ?>
@@ -818,6 +821,7 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 						</div>
 					<?php endif; ?>
 				</div>
+				<?php endif; ?>
 				<span class="wpss-messaging__message-time">
 					<?php echo esc_html( $time_text ); ?>
 					<?php $is_read = ! empty( array_diff_key( (array) $read_by, array( $current_user_id => '' ) ) ); ?>

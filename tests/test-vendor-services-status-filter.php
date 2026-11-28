@@ -58,9 +58,10 @@ include WPSS_PLUGIN_DIR . 'templates/dashboard/sections/services.php';
 $html = (string) ob_get_clean();
 unset( $_GET['services_status'] );
 
-$check( 'the tiles are links', substr_count( $html, 'wpss-stat-card wpss-stat-card--link' ) >= 4 );
-$check( 'each tile carries its status', false !== strpos( $html, 'services_status=publish' ) && false !== strpos( $html, 'services_status=pending' ) && false !== strpos( $html, 'services_status=rejected' ) );
-$check( 'the chosen tile is marked current', 1 === substr_count( $html, 'aria-current="true"' ) );
+$check( 'the chips are links', substr_count( $html, 'class="wpss-order-filter' ) >= 4 );
+$check( 'each chip carries its status', false !== strpos( $html, 'services_status=publish' ) && false !== strpos( $html, 'services_status=pending' ) && false !== strpos( $html, 'services_status=rejected' ) );
+$check( 'the chosen chip is marked current', 1 === substr_count( $html, 'aria-current="page"' ) );
+$check( 'no stat tiles remain', false === strpos( $html, 'wpss-stat-card' ) );
 $check( 'the filtered list shows the draft and not the active one', false !== strpos( $html, 'QA draft ' . $suffix ) && false === strpos( $html, 'QA active ' . $suffix ) );
 
 foreach ( array( $active, $draft, $rejected, $pending ) as $id ) {

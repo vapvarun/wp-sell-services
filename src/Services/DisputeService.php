@@ -1316,6 +1316,38 @@ class DisputeService {
 	}
 
 	/**
+	 * Disputes a member is party to, counted by status, for the dashboard chips.
+	 *
+	 * Same parties as get_by_user(): opened by them, or on an order they bought or sold.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int $user_id User ID.
+	 * @return array<string, int> Status => count.
+	 */
+	public function count_by_user_grouped( int $user_id ): array {
+		global $wpdb;
+
+		// shortcut: the OR across joined tables uses no single index; fine at dispute volumes, add a party column if a member ever has thousands.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT d.status, COUNT(*) AS n FROM {$this->table} d LEFT JOIN {$wpdb->prefix}wpss_orders o ON d.order_id = o.id WHERE ( d.initiated_by = %d OR o.customer_id = %d OR o.vendor_id = %d ) GROUP BY d.status", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$user_id,
+				$user_id,
+				$user_id
+			)
+		);
+
+		$counts = array();
+		foreach ( (array) $rows as $row ) {
+			$counts[ (string) $row->status ] = (int) $row->n;
+		}
+
+		return $counts;
+	}
+
+	/**
 	 * Count disputes by status.
 	 *
 	 * @return array<string, int> Status counts.

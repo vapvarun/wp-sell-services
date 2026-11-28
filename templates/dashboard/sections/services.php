@@ -36,7 +36,10 @@ $services_page = isset( $_GET['services_page'] ) ? max( 1, absint( $_GET['servic
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only filter, checked against an allow-list below.
 $services_filter = isset( $_GET['services_status'] ) ? sanitize_key( wp_unslash( $_GET['services_status'] ) ) : '';
 $services_filter = in_array( $services_filter, array( 'publish', 'draft', 'pending', 'rejected' ), true ) ? $services_filter : '';
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only search param.
+$services_search = isset( $_GET['services_search'] ) ? sanitize_text_field( wp_unslash( $_GET['services_search'] ) ) : '';
 $args            = wpss_vendor_services_list_args( $user_id, $services_filter, $services_page );
+$args['s']       = $services_search;
 
 $services = new WP_Query( $args );
 
@@ -62,30 +65,33 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 
 <div class="wpss-section wpss-section--services wpss-card">
 	<?php
-	// The tiles are the status filter: each links to the same list narrowed to that status.
-	$wpss_tiles = array(
-		array( '', __( 'All', 'wp-sell-services' ), $published_count + $draft_count + $pending_count + $rejected_count ),
-		array( 'publish', __( 'Active', 'wp-sell-services' ), $published_count ),
-		array( 'draft', __( 'Drafts', 'wp-sell-services' ), $draft_count ),
-		array( 'pending', __( 'Pending review', 'wp-sell-services' ), $pending_count ),
+	// Status chips: each narrows the list to that status. Rejected appears only when there is one.
+	$status_counts = array(
+		'publish'  => $published_count,
+		'draft'    => $draft_count,
+		'pending'  => $pending_count,
+		'rejected' => $rejected_count,
 	);
-	if ( $rejected_count > 0 ) {
-		$wpss_tiles[] = array( 'rejected', __( 'Rejected', 'wp-sell-services' ), $rejected_count );
+	$status_groups = wpss_status_filter_groups(
+		$status_counts,
+		array(
+			'publish'  => __( 'Active', 'wp-sell-services' ),
+			'draft'    => __( 'Drafts', 'wp-sell-services' ),
+			'pending'  => __( 'Pending review', 'wp-sell-services' ),
+			'rejected' => __( 'Rejected', 'wp-sell-services' ),
+		)
+	);
+	$wpss_all_url  = remove_query_arg( array( 'services_page', 'services_status', 'services_search' ) );
+	if ( array_sum( $status_counts ) > 0 ) {
+		$filter_prefix      = 'services';
+		$filter_group       = '' === $services_filter ? 'all' : $services_filter;
+		$filter_search      = $services_search;
+		$filter_label       = __( 'Filter services by status.', 'wp-sell-services' );
+		$search_label       = __( 'Search your services', 'wp-sell-services' );
+		$search_placeholder = __( 'Service title', 'wp-sell-services' );
+		wpss_get_template( 'dashboard/partials/order-filters.php', compact( 'filter_prefix', 'status_groups', 'status_counts', 'filter_group', 'filter_search', 'filter_label', 'search_label', 'search_placeholder' ) );
 	}
-	$wpss_tile_url = static function ( string $status ): string {
-		$url = remove_query_arg( array( 'services_page', 'services_status' ) );
-
-		return '' === $status ? $url : add_query_arg( 'services_status', $status, $url );
-	};
 	?>
-	<div class="wpss-stats-grid">
-		<?php foreach ( $wpss_tiles as $wpss_tile ) : ?>
-			<a class="wpss-stat-card wpss-stat-card--link" href="<?php echo esc_url( $wpss_tile_url( $wpss_tile[0] ) ); ?>"<?php echo $wpss_tile[0] === $services_filter ? ' aria-current="true"' : ''; ?>>
-				<span class="wpss-stat-card__value"><?php echo esc_html( $wpss_tile[2] ); ?></span>
-				<span class="wpss-stat-card__label"><?php echo esc_html( $wpss_tile[1] ); ?></span>
-			</a>
-		<?php endforeach; ?>
-	</div>
 
 	<?php
 	// Check service limit and display notice.
@@ -122,10 +128,10 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 	do_action( 'wpss_services_list_actions', $user_id );
 	?>
 
-	<?php if ( ! $services->have_posts() && '' !== $services_filter ) : ?>
+	<?php if ( ! $services->have_posts() && ( '' !== $services_filter || '' !== $services_search ) ) : ?>
 		<div class="wpss-empty-state">
-			<h3><?php esc_html_e( 'No services with this status', 'wp-sell-services' ); ?></h3>
-			<a href="<?php echo esc_url( $wpss_tile_url( '' ) ); ?>" class="wpss-btn wpss-btn--outline">
+			<h3><?php esc_html_e( 'No services match this filter', 'wp-sell-services' ); ?></h3>
+			<a href="<?php echo esc_url( $wpss_all_url ); ?>" class="wpss-btn wpss-btn--outline">
 				<?php esc_html_e( 'Show all services', 'wp-sell-services' ); ?>
 			</a>
 		</div>

@@ -1,26 +1,36 @@
 <?php
 /**
- * Dashboard partial: order list filters (status chips + order-number search).
+ * Dashboard partial: list filters (status chips + optional search).
  *
- * Shared by the buyer orders list and the vendor sales list so both sides
- * offer the same filter from the same status groups. Query args are
- * namespaced by $filter_prefix: {prefix}_status, {prefix}_search, {prefix}_page.
+ * Shared by every dashboard list (orders, sales, requests, proposals, services,
+ * disputes) so each offers the same filter row. Query args are namespaced by
+ * $filter_prefix: {prefix}_status, {prefix}_search, {prefix}_page.
  *
  * This template can be overridden in your theme:
  * yourtheme/wp-sell-services/dashboard/partials/order-filters.php
  *
  * @package WPSellServices\Templates
  * @since   1.7.1
- * @version 1.9.1
+ * @version 2.0.0
  *
- * @var string                                                   $filter_prefix Query-arg prefix: 'orders' or 'sales'.
+ * @var string                                                   $filter_prefix Query-arg prefix, e.g. 'orders', 'sales', 'requests'.
  * @var array<string, array{label: string, statuses: string[]}> $status_groups Status groups, incl. any runtime 'other' group.
  * @var array<string, int>                                       $status_counts Status => count for this user.
  * @var string                                                   $filter_group  Active group key.
  * @var string                                                   $filter_search Active search term.
+ * @var string                                                   $filter_label  Optional. Accessible name of the chip row.
+ * @var string                                                   $search_label  Optional. Accessible name of the search field.
+ * @var string                                                   $search_placeholder Optional. Search field placeholder.
+ * @var bool                                                     $show_search   Optional. False hides the search form.
  */
 
 defined( 'ABSPATH' ) || exit;
+
+$filter_label       = $filter_label ?? __( 'Filter orders by status.', 'wp-sell-services' );
+$search_label       = $search_label ?? __( 'Search by order number', 'wp-sell-services' );
+$search_placeholder = $search_placeholder ?? __( 'Order number', 'wp-sell-services' );
+$show_search        = $show_search ?? true;
+$filter_search      = $filter_search ?? '';
 
 $status_param = $filter_prefix . '_status';
 $search_param = $filter_prefix . '_search';
@@ -36,7 +46,7 @@ $chip_url = static function ( string $group ) use ( $status_param, $page_param )
 };
 ?>
 <div class="wpss-order-filters-bar">
-	<nav class="wpss-order-filters" aria-label="<?php esc_attr_e( 'Filter orders by status.', 'wp-sell-services' ); ?>">
+	<nav class="wpss-order-filters" aria-label="<?php echo esc_attr( $filter_label ); ?>">
 		<?php
 		// A chip with nothing in it is not rendered - someone who has never had
 		// a dispute should not be shown a "Needs attention 0" tab. `all` always renders.
@@ -65,6 +75,7 @@ $chip_url = static function ( string $group ) use ( $status_param, $page_param )
 		<?php endforeach; ?>
 	</nav>
 
+	<?php if ( $show_search ) : ?>
 	<form method="get" class="wpss-order-search" role="search">
 		<?php
 		// A GET form replaces the whole query string, so every other current
@@ -82,8 +93,8 @@ $chip_url = static function ( string $group ) use ( $status_param, $page_param )
 			printf( '<input type="hidden" name="%s" value="%s">', esc_attr( $param_key ), esc_attr( sanitize_text_field( $param_value ) ) );
 		}
 		?>
-		<label for="wpss-<?php echo esc_attr( $filter_prefix ); ?>-search" class="screen-reader-text"><?php esc_html_e( 'Search by order number', 'wp-sell-services' ); ?></label>
-		<input type="search" id="wpss-<?php echo esc_attr( $filter_prefix ); ?>-search" name="<?php echo esc_attr( $search_param ); ?>" class="wpss-input" value="<?php echo esc_attr( $filter_search ); ?>" placeholder="<?php esc_attr_e( 'Order number', 'wp-sell-services' ); ?>">
+		<label for="wpss-<?php echo esc_attr( $filter_prefix ); ?>-search" class="screen-reader-text"><?php echo esc_html( $search_label ); ?></label>
+		<input type="search" id="wpss-<?php echo esc_attr( $filter_prefix ); ?>-search" name="<?php echo esc_attr( $search_param ); ?>" class="wpss-input" value="<?php echo esc_attr( $filter_search ); ?>" placeholder="<?php echo esc_attr( $search_placeholder ); ?>">
 		<button type="submit" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 			<i data-lucide="search" class="wpss-icon" aria-hidden="true"></i>
 			<?php esc_html_e( 'Search', 'wp-sell-services' ); ?>
@@ -94,4 +105,5 @@ $chip_url = static function ( string $group ) use ( $status_param, $page_param )
 			</a>
 		<?php endif; ?>
 	</form>
+	<?php endif; ?>
 </div>

@@ -1,20 +1,18 @@
 <?php
 /**
- * Stat card / filter chip agreement contract (Basecamp 10268055975).
+ * Dashboard list chips add up (Basecamp 10268055975; 2.0.0 batch 4).
  *
- * The vendor Sales screen and the buyer Orders screen each pair a row of stat
- * cards with a row of filter chips. A card and the chip beside it carry the
- * same label, so they have to be the same number - and clicking the chip has
- * to list exactly that many rows.
+ * Every dashboard list (orders, sales, requests, proposals, services, disputes)
+ * filters through one chip row and carries no stat tiles. A chip's number has to
+ * be the rows its filter lists, and the chips other than All have to add up to
+ * All - otherwise a member reads one number and sees another.
  *
- * The seller's Active card counted two statuses (in_progress,
- * pending_approval) while the Active chip selected nine, so a vendor with a
- * delivered order read "1 Active" beside an Active chip showing 2.
- *
- * Seeds one throwaway vendor + buyer with an order in every one of the nine
- * active statuses plus a completed and a cancelled one, renders both screens,
- * and asserts card == chip == rendered row count for every card that has a
- * chip. Every seeded row is deleted at the end.
+ * The stat tiles this test once compared against are gone; it failed on a
+ * vendor whose Active card counted two statuses while the Active chip selected
+ * nine. Orders and sales are seeded with an order in every active status plus a
+ * completed and a cancelled one, and rows are counted per chip. The other lists
+ * render for whichever local member has the most rows, sum check only.
+ * Every seeded row is deleted at the end.
  *
  * Run: wp eval-file tests/test-sales-active-count.php
  *
@@ -116,29 +114,22 @@ $render = static function ( int $user_id, array $get ): string {
 };
 
 /**
- * Value of the stat card carrying the given label.
+ * Every chip in a rendered list: status key => count.
  *
- * @param string $html  Rendered HTML.
- * @param string $label Card label, e.g. "Active".
- * @return int|null Card value, null when the card is not rendered.
+ * @param string $html   Rendered HTML.
+ * @param string $prefix Query-arg prefix of the list.
+ * @return array<string, int>
  */
-$card_value = static function ( string $html, string $label ): ?int {
-	$pattern = '/wpss-stat-card__value">([\d,]+)<\/span>\s*<span class="wpss-stat-card__label">' . preg_quote( $label, '/' ) . '</';
+$chips = static function ( string $html, string $prefix ): array {
+	preg_match_all( '/<a href="([^"]*)"\s+class="wpss-order-filter[^"]*"[^>]*>.*?<span class="wpss-order-filter__count">([\d,]+)</s', $html, $m, PREG_SET_ORDER );
+	$out = array();
+	foreach ( $m as $chip ) {
+		$query = array();
+		wp_parse_str( (string) wp_parse_url( html_entity_decode( $chip[1] ), PHP_URL_QUERY ), $query );
+		$out[ $query[ $prefix . '_status' ] ?? 'all' ] = (int) str_replace( ',', '', $chip[2] );
+	}
 
-	return preg_match( $pattern, $html, $m ) ? (int) str_replace( ',', '', $m[1] ) : null;
-};
-
-/**
- * Count shown on the filter chip carrying the given label.
- *
- * @param string $html  Rendered HTML.
- * @param string $label Chip label, e.g. "Active".
- * @return int|null Chip count, null when the chip is not rendered.
- */
-$chip_count = static function ( string $html, string $label ): ?int {
-	$pattern = '/wpss-order-filter[^"]*"[^>]*>\s*' . preg_quote( $label, '/' ) . '\s*<span class="wpss-order-filter__count">([\d,]+)</';
-
-	return preg_match( $pattern, $html, $m ) ? (int) str_replace( ',', '', $m[1] ) : null;
+	return $out;
 };
 
 /**
@@ -153,15 +144,11 @@ $row_count = static function ( string $html ): int {
 	return preg_match_all( '/class="wpss-order-card__actions"/', $html );
 };
 
-// Card label => chip label, for every card that has a filter beside it.
-// Revenue is money, not a row count, so it has no chip and no assertion.
-$pairs = array(
-	'Total Orders'     => array( 'All', 'all' ),
-	'Active'           => array( 'Active', 'active' ),
-	'Completed'        => array( 'Completed', 'completed' ),
-	'Awaiting Payment' => array( 'Awaiting payment', 'awaiting' ),
-	'Disputed'         => array( 'Needs attention', 'disputed' ),
-);
+$sum_check = static function ( string $label, array $found ) use ( $check ): void {
+	$all = $found['all'] ?? null;
+	unset( $found['all'] );
+	$check( sprintf( '%s: chips (%d) add up to All (%s)', $label, array_sum( $found ), null === $all ? 'no All chip' : $all ), null !== $all && array_sum( $found ) === $all );
+};
 
 $screens = array(
 	'sales'  => array(
@@ -175,36 +162,40 @@ $screens = array(
 );
 
 foreach ( $screens as $section => $screen ) {
-	$html = $render( $screen['user'], array( 'section' => $section ) );
+	$html  = $render( $screen['user'], array( 'section' => $section ) );
+	$found = $chips( $html, $screen['prefix'] );
 
-	foreach ( $pairs as $card_label => $chip ) {
-		list( $chip_label, $group_key ) = $chip;
+	$check( "{$section}: no stat tiles", false === strpos( $html, 'wpss-stat-card' ) );
+	$sum_check( $section, $found );
 
-		$card = $card_value( $html, $card_label );
-
-		if ( null === $card ) {
-			// The buyer's Awaiting Payment / Disputed cards only render when
-			// they are non-zero, so an absent card is not a failure.
-			continue;
-		}
-
-		$chip_n = $chip_count( $html, $chip_label );
-
-		$check(
-			sprintf( '%s: "%s" card (%d) matches the "%s" chip (%s)', $section, $card_label, $card, $chip_label, null === $chip_n ? 'not rendered' : $chip_n ),
-			$card === $chip_n
-		);
-
+	foreach ( $found as $group_key => $count ) {
 		$filtered = 'all' === $group_key
 			? $html
 			: $render( $screen['user'], array( 'section' => $section, $screen['prefix'] . '_status' => $group_key ) );
 		$rows     = $row_count( $filtered );
 
-		$check(
-			sprintf( '%s: "%s" card (%d) matches the rows the "%s" filter renders (%d)', $section, $card_label, $card, $chip_label, $rows ),
-			$card === $rows
-		);
+		$check( sprintf( '%s: "%s" chip (%d) matches the rows it lists (%d)', $section, $group_key, $count, $rows ), $count === $rows );
 	}
+}
+
+// Lists whose statuses are their own: sum check on the member with the most rows.
+$busiest = static function ( string $sql ) use ( $wpdb ): int {
+	return (int) $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed SQL, no input.
+};
+$own_lists = array(
+	'requests'  => $busiest( "SELECT post_author FROM {$wpdb->posts} WHERE post_type = 'wpss_request' AND post_status IN ('publish','draft','pending') GROUP BY post_author ORDER BY COUNT(*) DESC LIMIT 1" ),
+	'proposals' => $busiest( "SELECT vendor_id FROM {$wpdb->prefix}wpss_proposals GROUP BY vendor_id ORDER BY COUNT(*) DESC LIMIT 1" ),
+	'services'  => $busiest( "SELECT post_author FROM {$wpdb->posts} WHERE post_type = 'wpss_service' AND post_status IN ('publish','draft','pending') GROUP BY post_author ORDER BY COUNT(*) DESC LIMIT 1" ),
+	'disputes'  => $busiest( "SELECT o.customer_id FROM {$wpdb->prefix}wpss_disputes d JOIN {$table} o ON o.id = d.order_id GROUP BY o.customer_id ORDER BY COUNT(*) DESC LIMIT 1" ),
+);
+foreach ( $own_lists as $section => $member ) {
+	if ( ! $member ) {
+		echo "SKIP  {$section}: no rows on this site\n";
+		continue;
+	}
+	$html = $render( $member, array( 'section' => $section ) );
+	$check( "{$section}: no stat tiles", false === strpos( $html, 'wpss-stat-card' ) );
+	$sum_check( $section, $chips( $html, $section ) );
 }
 
 // --- Cleanup ---------------------------------------------------------------

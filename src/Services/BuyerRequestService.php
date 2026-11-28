@@ -1407,6 +1407,72 @@ class BuyerRequestService {
 	}
 
 	/**
+	 * A buyer's own requests counted by request status, for the dashboard chips.
+	 *
+	 * Covers the post statuses the dashboard lists (publish, draft, pending). A request with no
+	 * status meta reads as open, as everywhere else.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int $user_id Buyer user ID.
+	 * @return array<string, int> Status => count.
+	 */
+	public function count_by_author_grouped( int $user_id ): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one GROUP BY, bounded by one author.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT COALESCE( NULLIF( st.meta_value, '' ), %s ) AS status, COUNT(*) AS n
+				FROM {$wpdb->posts} p
+				LEFT JOIN {$wpdb->postmeta} st ON st.post_id = p.ID AND st.meta_key = '_wpss_status'
+				WHERE p.post_type = %s AND p.post_author = %d AND p.post_status IN ( 'publish', 'draft', 'pending' )
+				GROUP BY 1",
+				self::STATUS_OPEN,
+				BuyerRequestPostType::POST_TYPE,
+				$user_id
+			)
+		);
+
+		$counts = array();
+		foreach ( (array) $rows as $row ) {
+			$counts[ (string) $row->status ] = (int) $row->n;
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * Meta query selecting requests in the given statuses; a missing status meta counts as open.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string[] $statuses Request statuses.
+	 * @return array<int|string, mixed> A meta_query clause.
+	 */
+	public static function status_meta_query( array $statuses ): array {
+		$has_open = in_array( self::STATUS_OPEN, $statuses, true );
+		$clause   = array(
+			'key'     => '_wpss_status',
+			'value'   => $has_open ? array_merge( $statuses, array( '' ) ) : $statuses,
+			'compare' => 'IN',
+		);
+
+		if ( ! $has_open ) {
+			return array( $clause );
+		}
+
+		return array(
+			'relation' => 'OR',
+			$clause,
+			array(
+				'key'     => '_wpss_status',
+				'compare' => 'NOT EXISTS',
+			),
+		);
+	}
+
+	/**
 	 * Delete a buyer request.
 	 *
 	 * @param int $request_id Request post ID.

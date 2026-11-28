@@ -653,7 +653,7 @@
 
 .wpss-dashboard .wpss-request-card__actions {
 	/* Footer action row: a hairline separates it from the content above; the
-	   status badge pins to the start and the icon buttons flow to the end. */
+	   status badge pins to the start and the buttons flow to the end. */
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -669,46 +669,10 @@
 	white-space: nowrap;
 }
 
-/* Status is state, not an action — hold the left edge so the icon buttons
+/* Status is state, not an action — hold the left edge so the buttons
    collect at the right of the footer. */
 .wpss-dashboard .wpss-request-card__actions > .wpss-status {
 	margin-inline-end: auto;
-}
-
-/* Compact icon actions — the fix for Basecamp #9985554351.
-   Five text buttons (status + View Offers + Close/Reopen + Edit + Delete) total
-   ~400px. On a wide card they sprawled with a dead gap; on a narrow card the
-   base rule's `flex-shrink: 0` sized __actions to its content and OVERFLOWED,
-   clipping Delete off the right edge. Collapsing every action to an icon button
-   (~40px) keeps the whole set on ONE tidy line at every width — desktop, iPad,
-   and mobile alike — while the label survives in the DOM for assistive tech and
-   as a hover tooltip (title attr). */
-.wpss-dashboard .wpss-request-card__actions .wpss-btn--action {
-	gap: 0;
-	padding-inline: 0;
-	min-width: 40px;
-	min-height: 40px;
-	justify-content: center;
-	flex-shrink: 0;
-}
-
-.wpss-dashboard .wpss-request-card__actions .wpss-btn--action .wpss-icon {
-	width: 18px;
-	height: 18px;
-}
-
-/* Visually hide the label but keep it for screen readers (the icon carries the
-   meaning visually; aria-label + title name the control for AT and on hover). */
-.wpss-dashboard .wpss-request-card__actions .wpss-btn--action .wpss-btn__label {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	padding: 0;
-	margin: -1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	white-space: nowrap;
-	border: 0;
 }
 
 /* ==========================================================================

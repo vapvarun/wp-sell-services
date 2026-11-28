@@ -316,7 +316,27 @@ if ( $view_dispute_id ) {
 /**
  * List view — every dispute the current user is a party to.
  */
-$disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
+// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only filter and pagination params.
+$disputes_page  = isset( $_GET['disputes_page'] ) ? max( 1, absint( $_GET['disputes_page'] ) ) : 1;
+$disputes_group = isset( $_GET['disputes_status'] ) ? sanitize_key( wp_unslash( $_GET['disputes_status'] ) ) : 'all';
+// phpcs:enable WordPress.Security.NonceVerification.Recommended
+$disputes_per  = 20;
+$status_counts = $dispute_service->count_by_user_grouped( $user_id );
+$status_groups = wpss_status_filter_groups( $status_counts, $statuses );
+if ( ! isset( $status_groups[ $disputes_group ] ) ) {
+	$disputes_group = 'all';
+}
+$disputes_status = 'all' === $disputes_group ? '' : $disputes_group;
+$disputes_total  = '' === $disputes_status ? array_sum( $status_counts ) : (int) ( $status_counts[ $disputes_status ] ?? 0 );
+$disputes_pages  = max( 1, (int) ceil( $disputes_total / $disputes_per ) );
+$disputes        = $dispute_service->get_by_user(
+	$user_id,
+	array(
+		'status' => $disputes_status,
+		'limit'  => $disputes_per,
+		'offset' => ( $disputes_page - 1 ) * $disputes_per,
+	)
+);
 ?>
 <div class="wpss-section wpss-section--disputes wpss-card wpss-disputes">
 	<?php
@@ -325,6 +345,16 @@ $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 	// that also printed its own, so the page showed "Disputes" twice. (It was
 	// hidden until now because the title map was missing 'disputes', so the
 	// header said "Dashboard" and this looked like the real title.)
+	?>
+
+	<?php
+	if ( array_sum( $status_counts ) > 0 ) {
+		$filter_prefix = 'disputes';
+		$filter_group  = $disputes_group;
+		$filter_label  = __( 'Filter disputes by status.', 'wp-sell-services' );
+		$show_search   = false;
+		wpss_get_template( 'dashboard/partials/order-filters.php', compact( 'filter_prefix', 'status_groups', 'status_counts', 'filter_group', 'filter_label', 'show_search' ) );
+	}
 	?>
 
 	<?php if ( empty( $disputes ) ) : ?>
@@ -389,5 +419,37 @@ $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 				<?php endforeach; ?>
 			</tbody>
 		</table>
+
+		<?php if ( $disputes_pages > 1 ) : ?>
+			<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Dispute pages', 'wp-sell-services' ); ?>">
+				<?php
+				$disputes_page_url = static function ( int $page ): string {
+					return $page > 1 ? add_query_arg( 'disputes_page', $page ) : remove_query_arg( 'disputes_page' );
+				};
+	?>
+				<?php if ( $disputes_page > 1 ) : ?>
+					<a href="<?php echo esc_url( $disputes_page_url( $disputes_page - 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--prev">
+						<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>
+						<?php esc_html_e( 'Previous', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
+				<span class="wpss-pagination__current">
+					<?php
+					printf(
+						/* translators: 1: current page, 2: total pages */
+						esc_html__( 'Page %1$d of %2$d', 'wp-sell-services' ),
+						(int) $disputes_page,
+						(int) $disputes_pages
+					);
+					?>
+				</span>
+				<?php if ( $disputes_page < $disputes_pages ) : ?>
+					<a href="<?php echo esc_url( $disputes_page_url( $disputes_page + 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--next">
+						<?php esc_html_e( 'Next', 'wp-sell-services' ); ?>
+						<i data-lucide="chevron-right" class="wpss-icon" aria-hidden="true"></i>
+					</a>
+				<?php endif; ?>
+			</nav>
+		<?php endif; ?>
 	<?php endif; ?>
 </div>

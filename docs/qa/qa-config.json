@@ -1059,6 +1059,10 @@
    {
     "id": "admin-shell-contract",
     "run": "${WP_CLI:-wp} eval-file tests/test-admin-shell-contract.php"
+   },
+   {
+    "id": "dashboard-list-chips",
+    "run": "${WP_CLI:-wp} eval-file tests/test-sales-active-count.php"
    }
   ]
  }

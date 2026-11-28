@@ -1234,7 +1234,12 @@
 	}
 }
 
-/* Private offer card: its own surface, so it reads the same in a sent or a received bubble (2.0.0). */
+/* Private offer card: rendered outside the bubble, at one width for both people (2.0.0).
+   The message column's max-width still caps it on narrow screens. */
+.wpss-messaging__message-content--offer {
+	width: 440px;
+}
+
 .wpss-offer-card {
 	min-width: min(280px, 100%);
 	padding: var(--wpss-space-3, 12px) var(--wpss-space-4, 16px);
@@ -1281,6 +1286,11 @@
 .wpss-offer-card__terms dd {
 	margin: 0;
 	font-weight: 600;
+}
+
+/* A date needs more room than a number; it takes two columns so it stays on one line. */
+.wpss-offer-card__term--wide {
+	grid-column: span 2;
 }
 
 .wpss-offer-card__actions {
