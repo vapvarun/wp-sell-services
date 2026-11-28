@@ -79,7 +79,7 @@ $check(
 	file_exists( $probe . '.htaccess' )
 		&& false !== strpos( (string) file_get_contents( $probe . '.htaccess' ), 'Require all denied' )
 );
-array_map( 'wp_delete_file', glob( $probe . '{.htaccess,index.php,web.config}', GLOB_BRACE ) ?: array() );
+array_map( static fn( $f ) => wp_delete_file( $probe . $f ), array( '.htaccess', 'index.php', 'web.config' ) ); // No GLOB_BRACE: musl (Alpine) PHP lacks it.
 @rmdir( $probe ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 
 // --- Access control -------------------------------------------------------

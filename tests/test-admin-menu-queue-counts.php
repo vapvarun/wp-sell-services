@@ -82,7 +82,7 @@ try {
 		$check( 'An empty queue has no bubble', false === strpos( (string) ( $menu()['wpss-vendors'] ?? '' ), 'awaiting-mod' ) );
 	}
 
-	$check( 'Every bubble is drawn by one helper', 1 === count( array_filter( array_map( static fn( $p ) => false !== strpos( (string) file_get_contents( $p ), 'awaiting-mod' ), glob( dirname( __DIR__ ) . '/src/{Admin,Admin/Pages,functions}/*.php', GLOB_BRACE ) ) ) ) );
+	$check( 'Every bubble is drawn by one helper', 1 === count( array_filter( array_map( static fn( $p ) => false !== strpos( (string) file_get_contents( $p ), 'awaiting-mod' ), array_merge( ...array_map( static fn( $d ) => glob( dirname( __DIR__ ) . "/src/$d/*.php" ) ?: array(), array( 'Admin', 'Admin/Pages', 'functions' ) ) ) ) ) ) );
 } finally {
 	$repo->upsert( $f->vendor, array( 'status' => 'active' ) );
 	if ( $withdrawal ) {
