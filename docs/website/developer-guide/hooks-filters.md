@@ -134,9 +134,9 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 |------|-----------|------|
 | `wpss_standalone_adapter_init` | `StandaloneAdapter $adapter` | `src/Integrations/Standalone/StandaloneAdapter.php:156` |
 | `wpss_standalone_checkout_processed` | `int $order_id, array $order_data` | `StandaloneCheckoutProvider.php:140` |
-| `wpss_standalone_order_complete` | `object $order` | `src/Integrations/Standalone/StandaloneOrderProvider.php:784` |
-| `wpss_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Standalone/StandaloneOrderProvider.php:480` |
-| `wpss_order_status_pending_requirements` | `int $order_id, string $old_status` | `src/Integrations/Standalone/StandaloneOrderProvider.php:470` |
+| `wpss_standalone_order_complete` | `object $order` | `src/Integrations/Standalone/StandaloneOrderProvider.php:790` |
+| `wpss_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Standalone/StandaloneOrderProvider.php:486` |
+| `wpss_order_status_pending_requirements` | `int $order_id, string $old_status` | `src/Integrations/Standalone/StandaloneOrderProvider.php:476` |
 | `wpss_payment_callback` | `string $gateway_id` | `src/Core/Plugin.php:1306` |
 
 ### Offline Gateway
@@ -654,9 +654,9 @@ These filters let you customize outgoing email content without modifying templat
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2651` |
-| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2627` |
-| `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1874` |
+| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2666` |
+| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2642` |
+| `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1893` |
 
 ```php
 // Change the "From" name on all marketplace emails
@@ -908,9 +908,9 @@ add_filter( 'wpss_reign_hide_left_panel', '__return_false' );
 | `wpss_open_graph_data` | `$data, $service_id` | `src/SEO/SEO.php:260` |
 | `wpss_sitemap_post_types` | `$post_types` | `src/SEO/SEO.php:324` |
 | `wpss_breadcrumbs` | `$breadcrumbs, $service_id` | `src/SEO/SEO.php:392` |
-| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2391` |
-| `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1825` |
-| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1980` |
+| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2410` |
+| `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1844` |
+| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1999` |
 
 ## Pro Plugin Actions **[PRO]**
 

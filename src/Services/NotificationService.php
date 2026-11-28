@@ -383,12 +383,16 @@ class NotificationService {
 		$vendor_name  = wpss_get_member_display_name( (int) ( $vendor->ID ?? 0 ), __( 'Vendor', 'wp-sell-services' ) );
 		$order_number = (string) ( $order->order_number ?? '' );
 		$amount       = wpss_format_price( (float) ( $order->total ?? 0 ) );
+		$is_digital   = wpss_order_delivers_instantly( $order );
 
 		// Notify vendor with detailed message.
 		$vendor_message = NotificationMessage::make()
 			->line(
-				/* translators: %s: buyer name */
-				__( 'Great news! %s has placed an order for your service.', 'wp-sell-services' ),
+				$is_digital
+					/* translators: %s: buyer name */
+					? __( 'Great news! %s has bought your product.', 'wp-sell-services' )
+					/* translators: %s: buyer name */
+					: __( 'Great news! %s has placed an order for your service.', 'wp-sell-services' ),
 				$buyer_name
 			)
 			->heading( __( 'Order Details:', 'wp-sell-services' ) )
@@ -407,12 +411,16 @@ class NotificationService {
 				__( 'Amount: %s', 'wp-sell-services' ),
 				$amount
 			)
-			->paragraph( __( 'The buyer will submit their requirements shortly. You\'ll be notified when they do so you can start working on the order.', 'wp-sell-services' ) );
+			->paragraph(
+				$is_digital
+					? __( 'The buyer has their download, so there is nothing to deliver.', 'wp-sell-services' )
+					: __( 'The buyer will submit their requirements shortly. You\'ll be notified when they do so you can start working on the order.', 'wp-sell-services' )
+			);
 
 		$this->create(
 			$order->vendor_id,
 			self::TYPE_ORDER_CREATED,
-			__( 'New Order Received', 'wp-sell-services' ),
+			$is_digital ? __( 'New Sale', 'wp-sell-services' ) : __( 'New Order Received', 'wp-sell-services' ),
 			$vendor_message,
 			array(
 				'order_id'     => $order_id,
@@ -449,13 +457,15 @@ class NotificationService {
 			->block()
 			->field(
 				__( 'Next Step:', 'wp-sell-services' ),
-				__( 'Please submit your requirements so the vendor can start working on your order.', 'wp-sell-services' )
+				$is_digital
+					? __( 'Your download is ready. Download it from this order or from Downloads in your dashboard.', 'wp-sell-services' )
+					: __( 'Please submit your requirements so the vendor can start working on your order.', 'wp-sell-services' )
 			);
 
 		$this->create(
 			$order->customer_id,
 			'order_confirmation',
-			__( 'Order Confirmed', 'wp-sell-services' ),
+			$is_digital ? __( 'Your Download Is Ready', 'wp-sell-services' ) : __( 'Order Confirmed', 'wp-sell-services' ),
 			$buyer_message,
 			array(
 				'order_id'     => $order_id,
@@ -582,6 +592,11 @@ class NotificationService {
 				break;
 
 			case 'in_progress':
+				// A paid digital product is handed over at once: the new-order pair, worded as a download.
+				if ( in_array( $old_status, array( 'pending_payment', '' ), true ) && wpss_order_delivers_instantly( $order ) ) {
+					$this->notify_order_created( $order_id );
+					break;
+				}
 				// No requirement questions, or the buyer skipped them: nothing was "submitted" to name.
 				$has_brief = wpss_order_needs_requirements( $order ) && ! get_post_meta( $order_id, '_wpss_requirements_skipped', true );
 				$this->create(
@@ -632,6 +647,10 @@ class NotificationService {
 				break;
 
 			case 'pending_approval':
+				// The automatic hand-over of a digital product: the receipt already said the download is ready.
+				if ( wpss_is_instant_delivery( $order_id ) ) {
+					break;
+				}
 				// Notify buyer that delivery is ready.
 				$this->create(
 					$order->customer_id,

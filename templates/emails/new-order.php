@@ -54,6 +54,8 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php if ( ! empty( $is_customer ) ) : ?>
 		<?php esc_html_e( 'Your order has been placed successfully! Here are the details.', 'wp-sell-services' ); ?>
+	<?php elseif ( ! empty( $is_digital ) ) : ?>
+		<?php esc_html_e( 'Great news! You have made a new sale.', 'wp-sell-services' ); ?>
 	<?php else : ?>
 		<?php esc_html_e( 'Great news! You have received a new service order.', 'wp-sell-services' ); ?>
 	<?php endif; ?>
@@ -103,7 +105,11 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 </table>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php if ( ! empty( $is_customer ) ) : ?>
+	<?php if ( ! empty( $is_digital ) && ! empty( $is_customer ) ) : ?>
+		<?php esc_html_e( 'Your download is ready. Download it from this order or from Downloads in your dashboard, any time. You always get the latest version.', 'wp-sell-services' ); ?>
+	<?php elseif ( ! empty( $is_digital ) ) : ?>
+		<?php esc_html_e( 'The buyer has their download, so there is nothing to deliver.', 'wp-sell-services' ); ?>
+	<?php elseif ( ! empty( $is_customer ) ) : ?>
 		<?php esc_html_e( 'Please submit your requirements so the vendor can start working on your order. Click the button below to get started.', 'wp-sell-services' ); ?>
 	<?php else : ?>
 		<?php esc_html_e( 'The buyer will submit their requirements shortly. You\'ll receive another notification when they do.', 'wp-sell-services' ); ?>
@@ -120,7 +126,10 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 	 * @param string                             $button_url Default button URL.
 	 * @param WPSellServices\Models\ServiceOrder $order Service order object.
 	 */
-	if ( ! empty( $is_customer ) ) {
+	if ( ! empty( $is_customer ) && ! empty( $is_digital ) ) {
+		$default_url  = wpss_get_order_url( $order->id );
+		$default_text = __( 'Download', 'wp-sell-services' );
+	} elseif ( ! empty( $is_customer ) ) {
 		$default_url  = wpss_get_order_requirements_url( $order->id );
 		$default_text = __( 'Submit requirements', 'wp-sell-services' );
 	} else {

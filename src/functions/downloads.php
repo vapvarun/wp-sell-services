@@ -223,11 +223,48 @@ function wpss_can_download_product( int $service_id, int $user_id ): bool {
 }
 
 /**
- * Deliver a paid digital order at once: record its kind, then hand the file over through DeliveryService.
+ * Whether a paid order is a digital product whose file is handed over the moment it is paid.
  *
- * Runs on wpss_order_paid, which every rail fires from mark_as_paid(). A digital order skips the brief
- * (wpss_order_needs_requirements()), so it arrives here in progress. With no file uploaded it stays in
- * progress and the vendor delivers by hand, as on any order.
+ * The new-order emails and notices word the purchase as a download when this is true. A digital product
+ * with no file uploaded is false: it waits in progress for the vendor to deliver by hand, as any order does.
+ *
+ * @since 2.0.0
+ *
+ * @param object $order Order row or model.
+ * @return bool
+ */
+function wpss_order_delivers_instantly( object $order ): bool {
+	return 'digital' === wpss_get_order_kind( $order ) && (bool) wpss_get_product_file( (int) ( $order->service_id ?? 0 ) );
+}
+
+/**
+ * Whether the automatic hand-over of a digital order is running now. The receipt already says the
+ * download is ready, so the delivery emails and notices stand down for it.
+ *
+ * @since 2.0.0
+ *
+ * @param int       $order_id Order ID.
+ * @param bool|null $running  Set by wpss_deliver_digital_order() around the delivery; omit to read.
+ * @return bool
+ */
+function wpss_is_instant_delivery( int $order_id, ?bool $running = null ): bool {
+	static $orders = array();
+
+	if ( true === $running ) {
+		$orders[ $order_id ] = true;
+	} elseif ( false === $running ) {
+		unset( $orders[ $order_id ] );
+	}
+
+	return isset( $orders[ $order_id ] );
+}
+
+/**
+ * Deliver a paid digital order at once through DeliveryService.
+ *
+ * Runs on wpss_order_paid, which every rail fires from mark_as_paid(), after mark_as_paid() has frozen
+ * the order's kind. A digital order skips the brief (wpss_order_needs_requirements()), so it arrives
+ * here in progress. With no file uploaded it stays in progress and the vendor delivers by hand.
  *
  * @since 2.0.0
  *
@@ -235,31 +272,15 @@ function wpss_can_download_product( int $service_id, int $user_id ): bool {
  * @return void
  */
 function wpss_deliver_digital_order( int $order_id ): void {
-	global $wpdb;
-
 	$order = wpss_get_order( $order_id );
 
-	if ( ! $order || in_array( (string) $order->platform, wpss_get_sub_order_platforms(), true ) ) {
+	if ( ! $order || ! wpss_order_delivers_instantly( $order ) || \WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS !== $order->status ) {
 		return;
 	}
 
-	$service_id = (int) $order->service_id;
+	$file = (array) wpss_get_product_file( (int) $order->service_id );
 
-	if ( ! $service_id || ! wpss_service_type_supports( $service_id, 'file' ) ) {
-		return;
-	}
-
-	$meta                 = is_array( $order->meta ?? null ) ? $order->meta : array();
-	$meta['service_type'] = 'digital';
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$wpdb->update( $wpdb->prefix . 'wpss_orders', array( 'meta' => wp_json_encode( $meta ) ), array( 'id' => $order_id ), array( '%s' ), array( '%d' ) );
-
-	$file = wpss_get_product_file( $service_id );
-
-	if ( ! $file || \WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS !== $order->status ) {
-		return;
-	}
-
+	wpss_is_instant_delivery( $order_id, true );
 	$delivered = ( new \WPSellServices\Services\DeliveryService() )->submit(
 		$order_id,
 		sprintf(
@@ -268,6 +289,7 @@ function wpss_deliver_digital_order( int $order_id ): void {
 			(string) ( $file['name'] ?? '' )
 		)
 	);
+	wpss_is_instant_delivery( $order_id, false );
 
 	if ( ! $delivered ) {
 		wpss_log( sprintf( 'Digital order %d was paid but could not be delivered automatically.', $order_id ), 'error' );
@@ -283,7 +305,7 @@ function wpss_deliver_digital_order( int $order_id ): void {
 	 * @param int                 $service_id Service post ID.
 	 * @param array<string,mixed> $file       The file record delivered.
 	 */
-	do_action( 'wpss_instant_delivery_created', $order_id, $service_id, $file );
+	do_action( 'wpss_instant_delivery_created', $order_id, (int) $order->service_id, $file );
 }
 add_action( 'wpss_order_paid', 'wpss_deliver_digital_order', 20 );
 

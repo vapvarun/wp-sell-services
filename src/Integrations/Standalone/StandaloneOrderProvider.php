@@ -416,6 +416,12 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			}
 		}
 
+		// What was bought is frozen with the payment, before the status hooks below, so the new-order
+		// emails and notices already know a digital product is a download (Basecamp 10553849784).
+		if ( ! $is_sub_order && wpss_service_type_supports( (int) $order->service_id, 'file' ) ) {
+			$update_data['meta'] = wp_json_encode( array_merge( $order->meta, array( 'service_type' => 'digital' ) ) );
+		}
+
 		// A service with no requirement questions starts at once; the others wait for the buyer.
 		$paid_status = ServiceOrder::STATUS_PENDING_REQUIREMENTS;
 

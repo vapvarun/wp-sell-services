@@ -282,6 +282,11 @@ class EmailService {
 				break;
 
 			case ServiceOrder::STATUS_IN_PROGRESS:
+				// A paid digital product is handed over at once: a receipt and a new sale, not "started working".
+				if ( in_array( $old_status, array( ServiceOrder::STATUS_PENDING_PAYMENT, '' ), true ) && wpss_order_delivers_instantly( $order ) ) {
+					$this->send_new_order( $order );
+					break;
+				}
 				$this->send_order_in_progress( $order );
 				break;
 
@@ -324,12 +329,16 @@ class EmailService {
 		$customer = get_user_by( 'id', $order->customer_id );
 
 		$service_title = wpss_get_order_title( $order );
+		$is_digital    = wpss_order_delivers_instantly( $order );
 
 		// Send to vendor.
 		if ( $vendor ) {
 			$subject = sprintf(
-				/* translators: %1$s: site name, %2$s: order number */
-				__( '[%1$s] New Service Order #%2$s', 'wp-sell-services' ),
+				$is_digital
+					/* translators: %1$s: site name, %2$s: order number */
+					? __( '[%1$s] New Sale #%2$s', 'wp-sell-services' )
+					/* translators: %1$s: site name, %2$s: order number */
+					: __( '[%1$s] New Service Order #%2$s', 'wp-sell-services' ),
 				wpss_get_platform_name(),
 				$order->order_number
 			);
@@ -341,10 +350,11 @@ class EmailService {
 				array(
 					'order'          => $order,
 					'recipient'      => $vendor,
-					'email_heading'  => __( 'New Order Received!', 'wp-sell-services' ),
+					'email_heading'  => $is_digital ? __( 'New Sale!', 'wp-sell-services' ) : __( 'New Order Received!', 'wp-sell-services' ),
 					'service_title'  => $service_title,
 					'customer_name'  => $this->get_customer_name( $order->customer_id ),
 					'is_customer'    => false,
+					'is_digital'     => $is_digital,
 					'reply_to_email' => $customer ? $customer->user_email : '',
 					'reply_to_name'  => $customer ? $customer->display_name : '',
 				)
@@ -367,10 +377,11 @@ class EmailService {
 				array(
 					'order'          => $order,
 					'recipient'      => $customer,
-					'email_heading'  => __( 'Order Confirmed!', 'wp-sell-services' ),
+					'email_heading'  => $is_digital ? __( 'Your Download Is Ready', 'wp-sell-services' ) : __( 'Order Confirmed!', 'wp-sell-services' ),
 					'service_title'  => $service_title,
 					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
 					'is_customer'    => true,
+					'is_digital'     => $is_digital,
 					'reply_to_email' => $vendor ? $vendor->user_email : '',
 					'reply_to_name'  => $vendor ? $vendor->display_name : '',
 				)
@@ -618,6 +629,10 @@ class EmailService {
 	 * @return bool
 	 */
 	public function send_delivery_ready( int $delivery_id, int $order_id ): bool {
+		// The automatic hand-over of a digital product: the receipt already said the download is ready.
+		if ( wpss_is_instant_delivery( $order_id ) ) {
+			return true;
+		}
 
 		$order = wpss_get_order( $order_id );
 		if ( ! $order ) {

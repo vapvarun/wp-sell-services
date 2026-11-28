@@ -29,6 +29,7 @@ Upload a new file in the wizard's **Your File** step, or in **Sell Services > Al
 - **Service page and cards:** **Instant download** instead of a delivery time. No revisions line.
 - **Checkout:** no delivery time and no revisions badge. **What happens next?** reads **Pay, Download, Complete**.
 - **After paying:** the order is delivered at once, whichever way they paid (card, PayPal, offline once the site owner confirms it). The order page shows **Your download** with the file and a **Download** button, and the delivery message says the download is ready.
+- **Emails and notifications:** the buyer gets one receipt, **Your Download Is Ready**, with a **Download** button, and the seller gets **New Sale**. Neither is told work has started or that a delivery needs review. A digital product with no file uploaded yet waits in progress like any order, and the seller delivers it by hand.
 - **Dashboard > Downloads:** every digital product they bought, newest first, each with its order and a **Download** button. The menu item appears once they have bought one.
 - **Offline payment:** while the payment waits, the order says the download is ready once it is confirmed.
 
