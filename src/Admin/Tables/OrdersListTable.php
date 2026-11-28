@@ -303,7 +303,7 @@ class OrdersListTable extends \WP_List_Table {
 					sprintf(
 						/* translators: %s: due date. */
 						$late ? __( 'Was due %s', 'wp-sell-services' ) : __( 'Due %s', 'wp-sell-services' ),
-						wpss_date_label( $item->delivery_deadline, '—', 'M j' ) // Stored in UTC (10351460106).
+						wpss_date_label( $item->delivery_deadline, '—' ) // Stored in UTC (10351460106).
 					)
 				)
 			);
@@ -325,7 +325,7 @@ class OrdersListTable extends \WP_List_Table {
 			'<time datetime="%s" title="%s">%s</time>',
 			esc_attr( gmdate( 'c', $date ) ),
 			esc_attr( wpss_datetime_label( $date ) ),
-			esc_html( wpss_date_label( $date, '—', 'M j, Y' ) )
+			esc_html( wpss_date_label( $date, '—' ) )
 		);
 	}
 

@@ -11,6 +11,10 @@
  * A call that is correct on purpose (a post_date, a one-time migration) carries
  * a `time-ok:` comment on its line.
  *
+ * Also fails, with no baseline, on a human day format passed to a label
+ * (wpss_date_label( $t, '—', 'M j, Y' )): the site's Date and Time settings decide
+ * how a date reads. Machine formats ('Y-m-d') and a month-year ('M Y') are fine.
+ *
  * Run: php bin/check-time-formatter.php [--update] [dir ...]   (default: src templates)
  *
  * @package WPSellServices
@@ -21,6 +25,8 @@ $baseline = $root . '/bin/time-formatter-baseline.json';
 $update   = in_array( '--update', $argv, true );
 $dirs     = array_values( array_filter( array_slice( $argv, 1 ), static fn( $a ) => '--update' !== $a ) ) ?: array( 'src', 'templates' );
 $pattern  = '/(?<![\w>:$])(wp_date|date_i18n|mysql2date|get_date_from_gmt)\s*\(/';
+$literal  = '/wpss_(date|datetime)_label\([^;]*\'[DlMF] j/';
+$literals = array();
 
 $counts = array();
 foreach ( $dirs as $dir ) {
@@ -37,6 +43,9 @@ foreach ( $dirs as $dir ) {
 			$trim = ltrim( $line );
 			if ( '' === $trim || in_array( $trim[0], array( '*', '/', '#' ), true ) || str_contains( $line, 'time-ok:' ) ) {
 				continue;
+			}
+			if ( preg_match( $literal, $line ) ) {
+				$literals[] = $rel;
 			}
 			if ( preg_match( $pattern, $line ) ) {
 				$counts[ $rel ] = ( $counts[ $rel ] ?? 0 ) + 1;
@@ -58,6 +67,11 @@ foreach ( $counts as $rel => $n ) {
 	if ( $n > ( $allowed[ $rel ] ?? 0 ) ) {
 		$bad[] = sprintf( '%s: %d raw formatter call(s), baseline %d', $rel, $n, $allowed[ $rel ] ?? 0 );
 	}
+}
+
+if ( $literals ) {
+	echo "FAIL  a date label with its own day format (use the default, which follows Settings > General):\n  " . implode( "\n  ", array_unique( $literals ) ) . "\n";
+	exit( 1 );
 }
 
 if ( $bad ) {

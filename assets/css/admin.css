@@ -3868,6 +3868,42 @@ button.wpss-change-status:focus {
 	margin-bottom: 20px;
 }
 
+/* The timeline, requirements and deliveries templates are shared with the
+   member's order page. In wp-admin they read as postboxes, like their
+   neighbours: square, no tinted head, no icon. The member page is unchanged. */
+.wpss-admin-order__blocks .wpss-order-section {
+	margin: 0 0 20px;
+	border: 1px solid var(--wpss-wp-admin-border);
+	border-radius: 0;
+	box-shadow: none;
+}
+
+.wpss-admin-order__blocks .wpss-order-section__header {
+	padding: 8px 12px;
+	background: transparent;
+	border-bottom: 0;
+}
+
+.wpss-admin-order__blocks .wpss-order-section__header .wpss-icon {
+	display: none;
+}
+
+.wpss-admin-order__blocks .wpss-order-section__title {
+	font-size: 1.3em; /* the size wp-admin gives a postbox .hndle */
+	line-height: 1.4;
+}
+
+.wpss-admin-order__blocks .wpss-order-section__body {
+	padding: 0 12px 12px;
+}
+
+/* The billing partial draws its own card; inside a postbox that was a box in a box. */
+.wpss-billing-postbox .wpss-billing-summary {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
 .wpss-admin-order__activity {
 	margin: 0;
 	list-style: none;

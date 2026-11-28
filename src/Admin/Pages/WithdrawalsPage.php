@@ -647,14 +647,14 @@ class WithdrawalsPage {
 				// Stored in UTC since 1.8.0 (10351460106), shown in site time.
 				// Same short date as the Orders list, full date and time on hover.
 				?>
-				<span title="<?php echo esc_attr( wpss_datetime_label( $withdrawal->created_at ) ); ?>"><?php echo esc_html( wpss_date_label( $withdrawal->created_at, '—', 'M j, Y' ) ); ?></span>
+				<span title="<?php echo esc_attr( wpss_datetime_label( $withdrawal->created_at ) ); ?>"><?php echo esc_html( wpss_date_label( $withdrawal->created_at, '—' ) ); ?></span>
 				<?php if ( ! empty( $withdrawal->processed_at ) ) : ?>
 					<div class="wpss-withdrawal-details">
 						<?php
 						printf(
 							/* translators: %s: date */
 							esc_html__( 'Processed: %s', 'wp-sell-services' ),
-							esc_html( wpss_date_label( $withdrawal->processed_at, '—', 'M j, Y' ) )
+							esc_html( wpss_date_label( $withdrawal->processed_at, '—' ) )
 						);
 						?>
 					</div>

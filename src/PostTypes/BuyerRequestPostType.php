@@ -155,7 +155,7 @@ class BuyerRequestPostType {
 			9  => sprintf(
 				/* translators: 1: Publish box date format, 2: Post permalink */
 				__( 'Request scheduled for: <strong>%1$s</strong>. <a target="_blank" href="%2$s">Preview Request</a>', 'wp-sell-services' ),
-				wpss_date_label( $post->post_date_gmt, '', __( 'M j, Y @ G:i', 'wp-sell-services' ) ),
+				wpss_datetime_label( $post->post_date_gmt, '' ),
 				esc_url( $permalink )
 			),
 			/* translators: %s: post permalink */

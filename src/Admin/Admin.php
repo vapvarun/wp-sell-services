@@ -2148,7 +2148,7 @@ class Admin {
 												<?php echo esc_html( wpss_get_order_status_label( (string) $order->status ) ); ?>
 											</span>
 										</td>
-										<td data-colname="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>"><?php echo esc_html( wpss_date_label( $order->created_at, '—', 'M j, Y' ) ); ?></td>
+										<td data-colname="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>"><?php echo esc_html( wpss_date_label( $order->created_at, '—' ) ); ?></td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>
@@ -2923,7 +2923,7 @@ class Admin {
 								<ol class="wpss-admin-order__activity">
 									<?php foreach ( $wpss_activity as $wpss_event ) : ?>
 										<li>
-											<time datetime="<?php echo esc_attr( (string) $wpss_event['created_at'] ); ?>"><?php echo esc_html( $wpss_event['created_at'] ? wpss_date_label( (string) $wpss_event['created_at'], '—', 'M j, Y g:i a' ) : '—' ); ?></time>
+											<time datetime="<?php echo esc_attr( (string) $wpss_event['created_at'] ); ?>"><?php echo esc_html( $wpss_event['created_at'] ? wpss_datetime_label( (string) $wpss_event['created_at'], '—' ) : '—' ); ?></time>
 											<span><?php echo esc_html( $wpss_event['actor']['name'] ?? __( 'System', 'wp-sell-services' ) ); ?></span>
 											<span><?php echo esc_html( (string) $wpss_event['message'] ); ?></span>
 										</li>

@@ -10,7 +10,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.2
+ * @version 2.0.0
  *
  * @var int    $order_id     Order ID.
  * @var object $order        Order object.
@@ -207,7 +207,7 @@ do_action( 'wpss_before_conversation', $order );
 				if ( $message_ts >= $week_threshold_ts ) {
 					return wpss_date_label( $message_ts, '—', $weekday_format );
 				}
-				return wpss_date_label( $message_ts, '—', get_option( 'date_format', 'F j, Y' ) );
+				return wpss_date_label( $message_ts, '—' );
 			};
 
 	foreach ( $messages as $message ) :

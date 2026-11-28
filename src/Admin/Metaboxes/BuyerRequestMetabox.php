@@ -221,7 +221,7 @@ class BuyerRequestMetabox {
 							);
 							?>
 						</td>
-						<td><?php echo esc_html( wpss_date_label( $proposal->created_at, '—', 'M j, Y' ) ); ?></td>
+						<td><?php echo esc_html( wpss_date_label( $proposal->created_at, '—' ) ); ?></td>
 					</tr>
 				<?php endforeach; ?>
 			</tbody>

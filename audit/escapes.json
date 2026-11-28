@@ -1658,6 +1658,15 @@
    "fails_on": "eeed16e5 with Pro cdfb4b4 (3 FAIL: licence reminder printed off the Dashboard twice, Orders with no type not filtered to service orders)",
    "check": "tests/test-admin-shell-contract.php",
    "note": "Also bin/check-ux-conformance.php rules legacy-admin-tile and legacy-admin-tile-css fail on any retired tile class"
+  },
+  {
+   "card": "",
+   "title": "One moment printed three ways: the order timeline said 'Jun 26, 2026 at 10:00 AM', the order details 'June 26, 2026 10:00 am' and admin tables 'Jun 26' - 23 date labels passed their own format instead of following Settings > General",
+   "guard": "static:time-formatter",
+   "added": "2026-11-28",
+   "fails_on": "551281e2 (timeline.php, conversation.php and 9 admin files carry a literal day format)",
+   "check": "bin/check-time-formatter.php",
+   "note": "Machine formats (Y-m-d keys, input values) and the month-year 'Member since' stay literal; the rule only matches a day format"
   }
  ]
 }
