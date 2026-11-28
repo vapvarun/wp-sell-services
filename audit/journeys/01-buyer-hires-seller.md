@@ -80,8 +80,8 @@ Click Pay → `?pay_order={id}` → choose **Offline** → Pay.
   buyer's order page shows the Payment Instructions.
 
 Then confirm it is not a dead end: wp-admin → the order → the
-**Offline Payment - Awaiting Confirmation** box must be present with
-**Mark as Paid**. That box is gated on `payment_method === 'offline'`, so if the
+**Offline payment - Awaiting Confirmation** box (the heading names the order's own payment method) must be present with
+**Mark as Paid**. That box is gated on a manual payment method (`wpss_is_manual_payment_method()`), so if the
 checkout failed to record the rail the order can never be confirmed by anyone.
 Mark as Paid → status `pending_requirements`, `payment_status = paid`.
 Each party gets exactly one mail: the branded **Order Confirmed** (buyer) and

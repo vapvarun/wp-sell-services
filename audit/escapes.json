@@ -1624,6 +1624,14 @@
    "added": "2026-11-28",
    "fails_on": "5ec991f6 (no open_pending_cart_orders: the sample's cart checkout fatals) + Pro 3a7fc34 (TypeError in RazorpayGateway::process_refund on a failed provider call)",
    "check": "tests/test-payment-module-contract.php"
+  },
+  {
+   "card": "10553802439",
+   "title": "The admin Payment Actions box said 'Offline Payment - Awaiting Confirmation' for every manual gateway, so a bank transfer order was labelled Offline at the moment the owner confirmed it",
+   "guard": "static:payment-module-contract",
+   "added": "2026-11-28",
+   "fails_on": "4a49e053 (heading reads 'Offline Payment - Awaiting Confirmation' on the sample's order)",
+   "check": "tests/test-payment-module-contract.php"
   }
  ]
 }

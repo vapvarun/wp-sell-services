@@ -336,13 +336,22 @@ class OrderScreen {
 		}
 
 		$nonce = wp_create_nonce( 'wpss_admin_mark_paid' );
+		// The method's own name (the Payments column's), so a bank transfer is not called Offline. Empty: none chosen yet.
+		$method_label = wpss_get_payment_method_label( (string) ( $order->payment_method ?? '' ) );
 		?>
 		<div class="wpss-offline-admin-actions" style="background: #fff3cd; border: 1px solid #ffc107; padding: 16px; border-radius: 4px; margin: 16px 0;">
 			<h4 style="margin-top: 0; color: #856404;">
-				<?php esc_html_e( 'Offline Payment - Awaiting Confirmation', 'wp-sell-services' ); ?>
+				<?php
+				if ( '' !== $method_label ) {
+					/* translators: %s: payment method name, e.g. Offline payment, Bank transfer */
+					echo esc_html( sprintf( __( '%s - Awaiting Confirmation', 'wp-sell-services' ), $method_label ) );
+				} else {
+					esc_html_e( 'Payment - Awaiting Confirmation', 'wp-sell-services' );
+				}
+				?>
 			</h4>
 			<p style="color: #856404; margin-bottom: 12px;">
-				<?php esc_html_e( 'This order is awaiting offline payment. Mark it as paid once you receive the payment.', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'This order is waiting for payment. Mark it as paid once you receive the payment.', 'wp-sell-services' ); ?>
 			</p>
 
 			<?php

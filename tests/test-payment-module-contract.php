@@ -186,7 +186,8 @@ foreach ( $gateways as $id => $gateway ) {
 	$card   = $gateway->get_settings_card();
 	$refund = $gateway->process_refund( 'qa-contract-ref', 1.0, 'contract' );
 	$hook   = $gateway->handle_webhook( array() );
-	$check( "{$id}: a settings card with its own option group", is_array( $card ) && '' !== (string) ( $card['option_group'] ?? '' ) && '' !== (string) ( $card['title'] ?? '' ) );
+	// No card is allowed (Test without WP_DEBUG); a card must name its own option group.
+	$check( "{$id}: no settings card, or one with its own option group", null === $card || ( is_array( $card ) && '' !== (string) ( $card['option_group'] ?? '' ) && '' !== (string) ( $card['title'] ?? '' ) ) );
 	$check( "{$id}: declares only known features", array() === array_diff( (array) ( new ReflectionProperty( $gateway, 'supports' ) )->getValue( $gateway ), $known ) );
 	$check( "{$id}: a refund answers with success, and a manual one says so", is_array( $refund ) && array_key_exists( 'success', $refund ) && ( ! wpss_gateway_supports( $gateway, 'manual_confirmation' ) || ! empty( $refund['manual'] ) ), wp_json_encode( $refund ) );
 	$check( "{$id}: a webhook answers with success", is_array( $hook ) && array_key_exists( 'success', $hook ) );
@@ -247,6 +248,11 @@ if ( ! $service || is_wp_error( $line ) ) {
 	$page = (string) ob_get_clean();
 	$check( 'sample: the order page shows the account and the waiting notice', str_contains( $page, 'IBAN QA00 1234' ) && str_contains( $page, 'wpss-offline-awaiting' ) );
 	$check( 'sample: the order waits for the owner, and counts as to confirm', wpss_order_awaits_payment_confirmation( $order ) && wpss_count_payments_to_confirm() >= 1 );
+	// The owner's Payment Actions box names the order's own method (Basecamp 10553802439).
+	ob_start();
+	( new \WPSellServices\Admin\OrderScreen() )->render_admin_order_actions( wpss_get_order( (int) $order->id ), 'pending_payment' );
+	$box = (string) ob_get_clean();
+	$check( 'sample: the admin box says "Bank transfer - Awaiting Confirmation", not Offline', str_contains( $box, 'Bank transfer - Awaiting Confirmation' ) && ! str_contains( $box, 'Offline' ), wp_strip_all_tags( substr( $box, 0, 400 ) ) );
 
 	// An existing order (a tip) paid through /checkout/pay/{id}/ goes on the method too, and the sweep leaves it.
 	$tip = $row( null );
