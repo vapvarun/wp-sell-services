@@ -252,8 +252,9 @@ function wpss_get_header(): void {
 	// Core prints the script-module import map in <head> for block themes because its canvas renders
 	// the template first. Here the header part renders after wp_head(), so its modules (the navigation
 	// block's) would miss the map and fail. Print them in the footer, as core does for classic rendering.
-	$modules = wp_script_modules();
-	foreach ( array( 'print_import_map', 'print_script_module_preloads', 'print_head_enqueued_script_modules' ) as $method ) {
+	// wp_script_modules() arrived in WP 6.5; on 6.4 there are no modules to move.
+	$modules = function_exists( 'wp_script_modules' ) ? wp_script_modules() : null;
+	foreach ( $modules ? array( 'print_import_map', 'print_script_module_preloads', 'print_head_enqueued_script_modules' ) : array() as $method ) {
 		if ( false !== has_action( 'wp_head', array( $modules, $method ) ) ) {
 			remove_action( 'wp_head', array( $modules, $method ) );
 			if ( 'print_head_enqueued_script_modules' !== $method ) {
