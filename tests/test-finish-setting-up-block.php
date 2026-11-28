@@ -37,7 +37,6 @@ $other    = 'sell-services_page_wpss-orders';
 $notices  = static fn() => $capture(
 	static function () use ( $admin ) {
 		$admin->setup_health_notice();
-		$admin->missing_terms_notice();
 	}
 );
 $page     = static fn() => $capture( array( $admin, 'render_dashboard_page' ) );

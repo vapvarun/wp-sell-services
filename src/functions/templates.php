@@ -53,6 +53,30 @@ function wpss_status_class( string $status ): string {
 }
 
 /**
+ * The label for a service's post status, the same on the vendor dashboard and in admin.
+ *
+ * @since 2.0.0
+ *
+ * @param string $status Post status (publish, pending, draft, paused, rejected...).
+ * @return string
+ */
+function wpss_service_status_label( string $status ): string {
+	$labels = array(
+		'pending'  => __( 'Pending review', 'wp-sell-services' ),
+		'paused'   => __( 'Paused', 'wp-sell-services' ),
+		'rejected' => __( 'Rejected', 'wp-sell-services' ),
+	);
+
+	if ( isset( $labels[ $status ] ) ) {
+		return $labels[ $status ];
+	}
+
+	$status_obj = get_post_status_object( $status );
+
+	return $status_obj ? (string) $status_obj->label : ucfirst( $status );
+}
+
+/**
  * Render a five-star rating row.
  *
  * The ONE star renderer. Every surface that showed a rating used to draw its

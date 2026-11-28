@@ -662,14 +662,14 @@ class VendorsPage {
 				</div>
 			<?php endif; ?>
 
-			<div class="wpss-listing-stats wpss-vendor-stats">
-				<div class="wpss-admin-stat-card">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['total'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Total Vendors', 'wp-sell-services' ); ?></span>
+			<div class="wpss-stats-grid wpss-vendor-stats">
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $stats['total'] ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Vendors', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card">
-					<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( $stats['total_earnings'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Total Earned', 'wp-sell-services' ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $stats['total_earnings'] ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Earned', 'wp-sell-services' ); ?></span>
 				</div>
 			</div>
 
@@ -1220,14 +1220,14 @@ class VendorsPage {
 			</div>
 
 			<!-- Stats Cards Row -->
-			<div class="wpss-detail-stats-row">
-				<div class="wpss-detail-stat-card">
-					<span class="wpss-detail-stat-number"><?php echo esc_html( number_format_i18n( $services_count ) ); ?></span>
-					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Active services', 'wp-sell-services' ); ?></span>
+			<div class="wpss-stats-grid wpss-stats-grid--4">
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $services_count ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Active services', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-detail-stat-card">
-					<span class="wpss-detail-stat-number"><?php echo esc_html( number_format_i18n( (int) ( $vendor->total_orders ?? 0 ) ) ); ?></span>
-					<span class="wpss-detail-stat-label">
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( (int) ( $vendor->total_orders ?? 0 ) ) ); ?></span>
+					<span class="wpss-stat-card__label">
 						<?php
 						printf(
 							/* translators: %s: number of completed orders */
@@ -1237,19 +1237,19 @@ class VendorsPage {
 						?>
 					</span>
 				</div>
-				<div class="wpss-detail-stat-card">
-					<span class="wpss-detail-stat-number"><?php echo esc_html( wpss_format_price( (float) $money_summary['available_balance'] ) ); ?></span>
-					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Available to withdraw', 'wp-sell-services' ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( (float) $money_summary['available_balance'] ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Available to withdraw', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-detail-stat-card">
-					<span class="wpss-detail-stat-number">
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value">
 						<?php if ( $reviews > 0 ) : ?>
 							<?php echo esc_html( number_format_i18n( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 						<?php else : ?>
 							-
 						<?php endif; ?>
 					</span>
-					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?> (<?php echo esc_html( number_format_i18n( $reviews ) ); ?>)</span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?> (<?php echo esc_html( number_format_i18n( $reviews ) ); ?>)</span>
 				</div>
 				<?php // No Response card: nothing measures response time yet, and a big "N/A" stat reads as a fault. ?>
 			</div>
@@ -1724,16 +1724,24 @@ class VendorsPage {
 				</tr>
 			</thead>
 			<tbody>
+				<?php
+				// One grouped count for the page of services, not one query per row.
+				$service_ids  = array_map( 'intval', wp_list_pluck( $services, 'ID' ) );
+				$order_counts = wp_list_pluck(
+					(array) $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from the id count.
+						$wpdb->prepare(
+							"SELECT service_id, COUNT(*) AS n FROM {$wpdb->prefix}wpss_orders WHERE service_id IN (" . implode( ', ', array_fill( 0, count( $service_ids ), '%d' ) ) . ') GROUP BY service_id',
+							$service_ids
+						)
+					),
+					'n',
+					'service_id'
+				);
+				?>
 				<?php foreach ( $services as $service ) : ?>
 					<?php
-					$price           = get_post_meta( $service->ID, '_wpss_starting_price', true );
-					$order_count     = (int) $wpdb->get_var(
-						$wpdb->prepare(
-							"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_orders WHERE service_id = %d",
-							$service->ID
-						)
-					);
-					$wpss_status_obj = get_post_status_object( $service->post_status );
+					$price       = get_post_meta( $service->ID, '_wpss_starting_price', true );
+					$order_count = (int) ( $order_counts[ $service->ID ] ?? 0 );
 					?>
 					<tr>
 						<td>
@@ -1741,7 +1749,7 @@ class VendorsPage {
 						</td>
 						<td>
 							<span class="<?php echo esc_attr( wpss_status_class( $service->post_status ) ); ?>">
-								<?php echo esc_html( $wpss_status_obj ? $wpss_status_obj->label : ucfirst( $service->post_status ) ); ?>
+								<?php echo esc_html( wpss_service_status_label( $service->post_status ) ); ?>
 							</span>
 						</td>
 						<td><?php echo $price ? esc_html( wpss_format_price( (float) $price ) ) : '-'; ?></td>

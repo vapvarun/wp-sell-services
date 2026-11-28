@@ -158,7 +158,6 @@
    mouse click (ux-foundation Rule 14). */
 .wpss-btn:focus-visible,
 .wpss-action-btn:focus-visible,
-.wpss-admin-stat-card--action:focus-visible,
 .wpss-package-toggle:focus-visible,
 .wpss-package-nav-btn:focus-visible,
 .wpss-detail-tab:focus-visible,
@@ -508,87 +507,8 @@ h2.wpss-settings-subhead__title {
 	margin: 8px 0 4px;
 }
 
-.wpss-stats-row {
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
-	gap: 20px;
-}
-
-.wpss-admin-stat-card {
-	background: var(--wpss-admin-white);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 4px;
-	padding: 20px;
-	display: flex;
-	align-items: center;
-	gap: 15px;
-}
-
-/* Action-item tile variant. Highlight when there's something to do (.is-active),
-   dim out when count is 0 (.is-empty) so the row keeps its shape but the admin
-   can confirm "nothing on my plate" at a glance. */
-.wpss-admin-stat-card--action {
-	text-decoration: none;
-	color: inherit;
-	transition: border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.wpss-admin-stat-card--action:hover,
-.wpss-admin-stat-card--action:focus {
-	border-color: var(--wpss-admin-primary, #2271b1);
-	background: var(--wpss-wp-admin-bg-alt, #f6f7f7);
-	color: inherit;
-}
-
-.wpss-admin-stat-card--action.is-active {
-	border-right: 3px solid var(--wpss-admin-primary, #2271b1);
-}
-
-.wpss-admin-stat-card--action.is-empty {
-	opacity: 0.55;
-}
-
-.wpss-stat-icon {
-	font-size: 36px;
-	width: 36px;
-	height: 36px;
-	color: var(--wpss-admin-primary);
-}
-
-/* Stat-icon semantics. These three carried inline hex colours in the markup,
-   which put a literal #1dbf73 on the revenue icon and kept the retired accent
-   alive on the dashboard no matter what the tokens said. Colour belongs to the
-   status, not to the element: amber for work in flight, green for a completed
-   outcome (a genuine success signal, not the brand accent), and the accent
-   itself for revenue. */
 .wpss-stat-icon--pending {
 	color: var(--wpss-warning, #dba617);
-}
-
-.wpss-stat-icon--success {
-	color: var(--wpss-success, #10b981);
-}
-
-.wpss-stat-icon--revenue {
-	color: var(--wpss-primary-accent, #4f46e5);
-}
-
-.wpss-stat-info {
-	display: flex;
-	flex-direction: column;
-}
-
-.wpss-stat-number {
-	font-size: 24px;
-	font-weight: 600;
-	color: var(--wpss-admin-text);
-	line-height: 1.2;
-}
-
-.wpss-stat-label {
-	font-size: 13px;
-	color: var(--wpss-admin-text-light);
-	margin-top: 2px;
 }
 
 /* Dashboard Columns */
@@ -1979,47 +1899,6 @@ h2.wpss-settings-subhead__title {
 	max-width: 1400px;
 }
 
-.wpss-listing-stats {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-	gap: 15px;
-	margin: 20px 0;
-}
-
-.wpss-listing-stats .wpss-admin-stat-card {
-	display: block;
-	text-align: center;
-}
-
-.wpss-listing-stats .wpss-stat-number {
-	display: block;
-	font-size: 28px;
-	font-weight: 600;
-	color: var(--wpss-admin-text);
-}
-
-.wpss-listing-stats .wpss-stat-label {
-	display: block;
-	font-size: 13px;
-	color: var(--wpss-admin-text-light);
-	margin-top: 5px;
-}
-
-.wpss-listing-stats .wpss-stat-amount {
-	display: block;
-	font-size: 13px;
-	color: var(--wpss-admin-text-light);
-	margin-top: 3px;
-}
-
-/* Shared status color accents for listing stat cards. */
-.wpss-listing-stats .wpss-stat-active .wpss-stat-number    { color: var(--wpss-admin-success); }
-.wpss-listing-stats .wpss-stat-approved .wpss-stat-number  { color: var(--wpss-admin-primary); }
-.wpss-listing-stats .wpss-stat-completed .wpss-stat-number { color: var(--wpss-admin-success); }
-.wpss-listing-stats .wpss-stat-pending .wpss-stat-number   { color: var(--wpss-admin-warning); }
-.wpss-listing-stats .wpss-stat-suspended .wpss-stat-number,
-.wpss-listing-stats .wpss-stat-rejected .wpss-stat-number  { color: var(--wpss-admin-danger); }
-
 /* Keep bulk-actions block inline with the filter row (canonical filter
    layout lives further down under `.wpss-list-card__filters`). */
 .wpss-list-card__filters .bulkactions {
@@ -2493,36 +2372,6 @@ h2.wpss-settings-subhead__title {
 	color: var(--wpss-admin-text-light);
 }
 
-/* Stats Row */
-.wpss-detail-stats-row {
-	display: grid;
-	grid-template-columns: repeat(5, 1fr);
-	gap: 15px;
-	margin-bottom: 20px;
-}
-
-.wpss-detail-stat-card {
-	background: var(--wpss-admin-white);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 4px;
-	padding: 20px;
-	text-align: center;
-}
-
-.wpss-detail-stat-number {
-	display: block;
-	font-size: 28px;
-	font-weight: 600;
-	color: var(--wpss-admin-text);
-}
-
-.wpss-detail-stat-label {
-	display: block;
-	font-size: 13px;
-	color: var(--wpss-admin-text-light);
-	margin-top: 5px;
-}
-
 /* Tab Navigation */
 .wpss-detail-tabs {
 	display: flex;
@@ -2780,9 +2629,6 @@ h2.wpss-settings-subhead__title {
 	margin: 0;
 }
 
-/* Vendor Page Responsive (stats grid handled by shared .wpss-listing-stats
-   auto-fit; filter-row stacking handled by shared .wpss-list-card__filters). */
-
 /* ==========================================================================
    Shared empty-state block for admin list screens
    Used on Orders, Disputes, Vendors, Withdrawals, and Moderation pages when
@@ -2951,10 +2797,6 @@ h2.wpss-settings-subhead__title {
 
 .wpss-audit-stats {
 	margin-bottom: 16px;
-}
-
-.wpss-audit-stats .wpss-stat-forced .wpss-stat-number {
-	color: var(--wpss-admin-danger);
 }
 
 .wpss-audit-filters form {
@@ -3141,14 +2983,6 @@ h2.wpss-settings-subhead__title {
    ========================================================================== */
 
 @media (max-width: 1024px) {
-	.wpss-stats-row {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
-	.wpss-detail-stats-row {
-		grid-template-columns: repeat(3, 1fr);
-	}
-
 	.wpss-earnings-summary {
 		grid-template-columns: repeat(2, 1fr);
 	}
@@ -3165,10 +2999,6 @@ h2.wpss-settings-subhead__title {
 	}
 
 	.wpss-package-body {
-		grid-template-columns: 1fr;
-	}
-
-	.wpss-stats-row {
 		grid-template-columns: 1fr;
 	}
 
@@ -3270,10 +3100,6 @@ h2.wpss-settings-subhead__title {
 
 	.wpss-detail-status-row {
 		justify-content: center;
-	}
-
-	.wpss-detail-stats-row {
-		grid-template-columns: repeat(2, 1fr);
 	}
 
 	.wpss-detail-tabs {
@@ -4158,10 +3984,33 @@ button.wpss-change-status:focus {
 	.wpss-admin-dispute__parties { order: 5; }
 }
 
-/* Dashboard (Basecamp 10337159668): five owner queues fill the row at any
+/* Dashboard (Basecamp 10337159668): the owner queues (up to eight) fill the row at any
    width; Content Overview is the one box left in its row. */
-.wpss-stats-row.wpss-stats-row--queues {
-	grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+.wpss-stats-grid.wpss-stats-grid--queues {
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+/* Admin deltas on the shared stat card (design-system.css section 13): a queue
+   with work gets an accent edge, an empty one a grey icon; a figure that links
+   reads as the figure until hovered. */
+.wpss-stat-card--link.is-active {
+	border-inline-start: 3px solid var(--wpss-primary);
+}
+
+.wpss-stat-card--link.is-empty .wpss-stat-card__icon {
+	background: var(--wpss-bg-subtle);
+	color: var(--wpss-text-muted);
+}
+
+a.wpss-stat-card__value {
+	color: var(--wpss-text);
+	text-decoration: none;
+}
+
+a.wpss-stat-card__value:hover,
+a.wpss-stat-card__value:focus {
+	color: var(--wpss-primary);
+	text-decoration: underline;
 }
 
 .wpss-dashboard-wrap .wpss-dashboard-columns {

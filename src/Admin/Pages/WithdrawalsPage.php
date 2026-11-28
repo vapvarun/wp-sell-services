@@ -387,25 +387,25 @@ class WithdrawalsPage {
 			?>
 
 			<!-- Stats Cards -->
-			<div class="wpss-listing-stats wpss-withdrawal-stats">
-				<div class="wpss-admin-stat-card wpss-stat-pending">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['pending'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
-					<span class="wpss-stat-amount"><?php echo esc_html( wpss_format_price( $stats['pending_amount'] ) ); ?></span>
+			<div class="wpss-stats-grid wpss-withdrawal-stats">
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $stats['pending'] ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
+					<span class="wpss-stat-card__meta"><?php echo esc_html( wpss_format_price( $stats['pending_amount'] ) ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card wpss-stat-approved">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['approved'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Approved, not yet paid', 'wp-sell-services' ); ?></span>
-					<span class="wpss-stat-amount"><?php echo esc_html( wpss_format_price( $stats['approved_amount'] ) ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $stats['approved'] ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Approved, not yet paid', 'wp-sell-services' ); ?></span>
+					<span class="wpss-stat-card__meta"><?php echo esc_html( wpss_format_price( $stats['approved_amount'] ) ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card wpss-stat-completed">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['completed'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
-					<span class="wpss-stat-amount"><?php echo esc_html( wpss_format_price( $stats['completed_amount'] ) ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $stats['completed'] ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
+					<span class="wpss-stat-card__meta"><?php echo esc_html( wpss_format_price( $stats['completed_amount'] ) ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card wpss-stat-rejected">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['rejected'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $stats['rejected'] ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
 				</div>
 			</div>
 

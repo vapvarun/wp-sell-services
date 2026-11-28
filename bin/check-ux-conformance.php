@@ -11,6 +11,8 @@
  *   10  an inline <script> block in PHP output (enqueue a file or wp_add_inline_script)
  *    9  a shared primitive (.wpss-btn, .wpss-stat-card, .wpss-stats-grid and their modifiers) declared outside design-system.css
  *   14  `outline: none|0` in source CSS (each needs a :focus-visible replacement)
+ *    9  a retired admin tile class (wpss-admin-stat-card, wpss-listing-stats, wpss-detail-stat-*, wpss-stats-row,
+ *       wpss-stat-number) in markup or CSS; admin tiles use .wpss-stat-card
  *
  * Run: php bin/check-ux-conformance.php [--update]
  * A line that is correct on purpose carries `ux-ok:` in a comment.
@@ -34,6 +36,8 @@ $rules = array(
 	'legacy-modal-js'  => array( array( 'assets/js' ), 'js', '/wpss-modal(-(overlay|backdrop|dialog|content|header|body|footer|title|close|close-btn|dismiss|cancel|large|lg|error)|__(overlay|content|cancel))(?![\w-])/' ),
 	'legacy-modal-css' => array( array( 'assets/css' ), 'css', '/wpss-modal(-(overlay|backdrop|dialog|content|header|body|footer|title|close|close-btn|dismiss|cancel|large|lg|error)|__(overlay|content|cancel))(?![\w-])/' ),
 	// Selector line of a rule that opens with the owned base; admin.css is the wp-admin chrome surface.
+	'legacy-admin-tile' => array( array( 'src', 'templates' ), 'php', '/wpss-(admin-stat-card|listing-stats|detail-stat-(card|number|label)|detail-stats-row|stats-row|stat-number)(?![\w-])/' ),
+	'legacy-admin-tile-css' => array( array( 'assets/css' ), 'css', '/wpss-(admin-stat-card|listing-stats|detail-stat-(card|number|label)|detail-stats-row|stats-row|stat-number)(?![\w-])/' ),
 	'duplicate-primitive' => array( array( 'assets/css' ), 'css', '/^((a\.)?\.wpss-btn(--(primary|secondary|outline|success|danger|sm|lg|block|icon|ghost|disabled|full|danger-outline))?|\.wpss-(stat-card|stats-grid)(__[a-z]+|--[a-z0-9]+)*)\s*[,{]/' ),
 );
 

@@ -342,10 +342,8 @@ class OrdersListTable extends \WP_List_Table {
 	protected function get_views(): array {
 		$counts  = $this->get_status_counts();
 		$current = $this->get_current_group();
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filter.
-		$type  = isset( $_GET['suborder_type'] ) ? sanitize_key( wp_unslash( $_GET['suborder_type'] ) ) : '';
-		$base  = admin_url( 'admin.php?page=wpss-orders' . ( $type ? '&suborder_type=' . $type : '' ) ); // Tabs keep the type their counts describe.
-		$views = array();
+		$base    = $this->type_base_url(); // Tabs keep the type their counts describe.
+		$views   = array();
 
 		foreach ( wpss_get_order_filter_groups( $counts ) as $key => $group ) {
 			$count = 'all' === $key ? array_sum( $counts ) : array_sum( array_intersect_key( $counts, array_flip( $group['statuses'] ) ) );
@@ -377,9 +375,7 @@ class OrdersListTable extends \WP_List_Table {
 
 		$counts  = $this->get_status_counts();
 		$current = $this->get_current_group();
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filter.
-		$type = isset( $_GET['suborder_type'] ) ? sanitize_key( wp_unslash( $_GET['suborder_type'] ) ) : '';
-		$base = admin_url( 'admin.php?page=wpss-orders' . ( $type ? '&suborder_type=' . $type : '' ) ); // Tabs keep the type their counts describe.
+		$base    = $this->type_base_url(); // Tabs keep the type their counts describe.
 		?>
 		<label class="screen-reader-text" for="wpss-orders-group-select"><?php esc_html_e( 'Show orders', 'wp-sell-services' ); ?></label>
 		<select id="wpss-orders-group-select" class="wpss-orders-group-select" data-wpss-nav>
@@ -582,13 +578,12 @@ class OrdersListTable extends \WP_List_Table {
 			$present_subtypes = $this->get_present_sub_order_types();
 
 			if ( ! empty( $present_subtypes ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				$selected_type = isset( $_GET['suborder_type'] ) ? sanitize_key( wp_unslash( $_GET['suborder_type'] ) ) : '';
+				$selected_type = $this->selected_type();
 				?>
 				<label for="wpss-orders-suborder-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by sub-order type', 'wp-sell-services' ); ?></label>
 				<select name="suborder_type" id="wpss-orders-suborder-filter">
-					<option value=""><?php esc_html_e( 'All order types', 'wp-sell-services' ); ?></option>
-					<option value="main" <?php selected( $selected_type, 'main' ); ?>><?php esc_html_e( 'Service orders only', 'wp-sell-services' ); ?></option>
+					<option value="main" <?php selected( $selected_type, 'main' ); ?>><?php esc_html_e( 'Service orders', 'wp-sell-services' ); ?></option>
+					<option value="all" <?php selected( $selected_type, 'all' ); ?>><?php esc_html_e( 'All order types', 'wp-sell-services' ); ?></option>
 					<?php foreach ( $present_subtypes as $type ) : ?>
 						<option value="<?php echo esc_attr( $type ); ?>" <?php selected( $selected_type, $type ); ?>>
 							<?php echo esc_html( $sub_order_types[ $type ] ?? ucfirst( $type ) ); ?>
@@ -654,8 +649,7 @@ class OrdersListTable extends \WP_List_Table {
 	private function order_type_sql(): string {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filter.
-		$type = isset( $_GET['suborder_type'] ) ? sanitize_key( wp_unslash( $_GET['suborder_type'] ) ) : '';
+		$type = $this->selected_type();
 
 		// Service orders only: the same definition the dashboard counts with.
 		if ( 'main' === $type ) {
@@ -668,6 +662,31 @@ class OrdersListTable extends \WP_List_Table {
 		}
 
 		return '';
+	}
+
+	/**
+	 * The order type in the request. With none chosen the list shows service
+	 * orders, the rows the Dashboard's Total orders counts; 'all' adds tips,
+	 * milestones and extensions (owner decision 2026-11-28).
+	 *
+	 * @return string 'main', 'all' or a sub-order type slug.
+	 */
+	private function selected_type(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filter.
+		$type = isset( $_GET['suborder_type'] ) ? sanitize_key( wp_unslash( $_GET['suborder_type'] ) ) : '';
+
+		return '' === $type ? 'main' : $type;
+	}
+
+	/**
+	 * The list URL that keeps the chosen order type.
+	 *
+	 * @return string
+	 */
+	private function type_base_url(): string {
+		$type = $this->selected_type();
+
+		return admin_url( 'admin.php?page=wpss-orders' . ( 'main' === $type ? '' : '&suborder_type=' . $type ) );
 	}
 
 	/**

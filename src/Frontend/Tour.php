@@ -406,7 +406,7 @@ final class Tour {
 				'title'    => __( 'Marketplace at a glance', 'wp-sell-services' ),
 				'text'     => __( '<i data-lucide="bar-chart-3"></i> These cards surface live totals for vendors, services, and orders so you can spot momentum (or trouble) at a glance.', 'wp-sell-services' ),
 				'attachTo' => array(
-					'element' => '.wpss-stats-row, .wpss-dashboard-grid',
+					'element' => '.wpss-stats-grid, .wpss-dashboard-grid',
 					'on'      => 'bottom',
 				),
 				'buttons'  => array( $back_btn, $next_btn ),

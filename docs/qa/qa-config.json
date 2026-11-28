@@ -1055,6 +1055,10 @@
    {
     "id": "status-badge-contract",
     "run": "${WP_CLI:-wp} eval-file tests/test-status-badge-contract.php"
+   },
+   {
+    "id": "admin-shell-contract",
+    "run": "${WP_CLI:-wp} eval-file tests/test-admin-shell-contract.php"
    }
   ]
  }

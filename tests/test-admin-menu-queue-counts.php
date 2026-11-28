@@ -49,7 +49,7 @@ $dash   = static function (): string {
 	( new \WPSellServices\Admin\Admin() )->render_dashboard_page();
 	return (string) ob_get_clean();
 };
-$card   = static fn( string $html, string $label ): int => preg_match( '#wpss-stat-number">([\d,]+)</span>\s*<span class="wpss-stat-label">' . preg_quote( $label, '#' ) . '#', $html, $m ) ? (int) str_replace( ',', '', $m[1] ) : -1;
+$card   = static fn( string $html, string $label ): int => preg_match( '#wpss-stat-card__value">([\d,]+)</span>\s*<span class="wpss-stat-card__label">' . preg_quote( $label, '#' ) . '#', $html, $m ) ? (int) str_replace( ',', '', $m[1] ) : -1;
 $withdrawal = 0;
 $dispute    = 0;
 

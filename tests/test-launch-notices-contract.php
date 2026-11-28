@@ -82,8 +82,9 @@ wpss_t(
 // ---------------------------------------------------------------- terms notice
 
 $admin  = new \WPSellServices\Admin\Admin();
-$has_it = method_exists( $admin, 'missing_terms_notice' );
-wpss_t( $has_it, 'the missing-Terms notice exists' );
+// The missing Terms page is a Finish setting up row on the Dashboard (Basecamp 10550887795), not a notice.
+$has_it = method_exists( $admin, 'get_setup_steps' ) && ! method_exists( $admin, 'missing_terms_notice' );
+wpss_t( $has_it, 'the missing-Terms check lives in the Dashboard setup steps only' );
 
 $admin_src = file_get_contents( dirname( __DIR__ ) . '/src/Admin/Admin.php' );
 
@@ -102,7 +103,7 @@ wpss_t(
 // Dismissible, unlike the demo-payments notice - and the dismissal is scoped
 // to the gateway set, so enabling another gateway asks again.
 wpss_t(
-	false !== strpos( $admin_src, 'is-dismissible wpss-dismissible-notice' ),
+	false !== strpos( $admin_src, "'dismiss' => \$signature," ),
 	'it is dismissible'
 );
 wpss_t(

@@ -32,7 +32,7 @@ The marketplace supports 148 currencies. See the [full list with codes, symbols 
 
 ### Setting Your Currency
 
-1. Go to **General Settings**
+1. Go to **Settings > General**
 2. Select your currency from the dropdown
 3. Click **Save Changes**
 

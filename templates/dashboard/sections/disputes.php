@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.2.2
- * @version 1.9.0
+ * @version 2.0.0
  *
  * @var int           $user_id        Current user ID.
  * @var VendorService $vendor_service Vendor service instance.

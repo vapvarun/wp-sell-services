@@ -188,14 +188,14 @@ class AuditLogPage {
 				<?php esc_html_e( 'A record of sensitive marketplace events. This view is read-only.', 'wp-sell-services' ); ?>
 			</p>
 
-			<div class="wpss-listing-stats wpss-audit-stats">
-				<div class="wpss-admin-stat-card wpss-stat-total">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $total ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Matching events', 'wp-sell-services' ); ?></span>
+			<div class="wpss-stats-grid wpss-audit-stats">
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $total ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Matching events', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card wpss-stat-forced">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $forced ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Forced overrides (all time)', 'wp-sell-services' ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $forced ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Forced overrides (all time)', 'wp-sell-services' ); ?></span>
 				</div>
 			</div>
 

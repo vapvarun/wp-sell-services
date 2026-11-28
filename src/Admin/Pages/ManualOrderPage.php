@@ -334,7 +334,7 @@ class ManualOrderPage {
 											<?php endforeach; ?>
 										</select>
 										<?php // The labels used to carry this in brackets and were cut off on a phone. ?>
-										<p class="description"><?php esc_html_e( 'Pending Requirements asks the buyer for their brief first; In Progress skips it.', 'wp-sell-services' ); ?></p>
+										<p class="description"><?php esc_html_e( 'Awaiting requirements asks the buyer for their brief first; In progress skips it.', 'wp-sell-services' ); ?></p>
 									</div>
 
 									<div class="wpss-form-row">

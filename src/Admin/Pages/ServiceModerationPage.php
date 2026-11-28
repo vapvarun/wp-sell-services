@@ -294,14 +294,10 @@ class ServiceModerationPage {
 	 * @return void
 	 */
 	public function render_page(): void {
-		// Check if moderation is enabled.
-		if ( ! ModerationService::is_enabled() ) {
-			$this->render_disabled_notice();
-			return;
-		}
-
+		// Moderation off still lists the services, as Review moderation does; there is no queue, so All opens first.
+		$is_enabled = ModerationService::is_enabled();
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$status_filter = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : ModerationService::STATUS_PENDING;
+		$status_filter = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : ( $is_enabled ? ModerationService::STATUS_PENDING : 'all' );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$paged = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
 
@@ -344,6 +340,20 @@ class ServiceModerationPage {
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Service Moderation', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
 
+			<?php if ( ! $is_enabled ) : ?>
+				<div class="notice notice-info inline">
+					<p>
+						<?php
+						printf(
+							/* translators: %s: settings page URL. */
+							wp_kses_post( __( 'Service moderation is currently <strong>disabled</strong>, so new services go live without approval. You can still review existing services below, or <a href="%s">enable moderation in Settings</a>.', 'wp-sell-services' ) ),
+							esc_url( wpss_get_settings_url( 'vendor' ) )
+						);
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+
 			<!-- Stats Cards -->
 			<?php
 			$moderation_total    = array_sum( $counts );
@@ -351,22 +361,22 @@ class ServiceModerationPage {
 			$moderation_approved = $counts[ ModerationService::STATUS_APPROVED ] ?? 0;
 			$moderation_rejected = $counts[ ModerationService::STATUS_REJECTED ] ?? 0;
 			?>
-			<div class="wpss-listing-stats wpss-moderation-stats">
-				<div class="wpss-admin-stat-card">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_total ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Total Services', 'wp-sell-services' ); ?></span>
+			<div class="wpss-stats-grid wpss-moderation-stats">
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $moderation_total ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Services', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card wpss-stat-pending">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_pending ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $moderation_pending ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card wpss-stat-approved">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_approved ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Approved', 'wp-sell-services' ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $moderation_approved ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Approved', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card wpss-stat-rejected">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_rejected ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $moderation_rejected ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
 				</div>
 			</div>
 
@@ -1157,34 +1167,6 @@ class ServiceModerationPage {
 					<?php esc_html_e( 'This decision sets the service status: Approved publishes it, Rejected moves it to draft and tells the vendor, Pending holds it for review.', 'wp-sell-services' ); ?>
 				<?php endif; ?>
 			</p>
-		</div>
-		<?php
-	}
-
-	/**
-	 * Render disabled notice when moderation is off.
-	 *
-	 * @return void
-	 */
-	private function render_disabled_notice(): void {
-		$settings_url = wpss_get_settings_url( 'vendor' );
-		?>
-		<div class="wrap wpss-listing-page wpss-moderation-page">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Service Moderation', 'wp-sell-services' ); ?></h1>
-
-			<div class="notice notice-info inline" style="margin-top: 20px;">
-				<p>
-					<strong><?php esc_html_e( 'Service moderation is currently disabled.', 'wp-sell-services' ); ?></strong>
-				</p>
-				<p>
-					<?php esc_html_e( 'When enabled, new services submitted by vendors will require admin approval before they become visible on the marketplace.', 'wp-sell-services' ); ?>
-				</p>
-				<p>
-					<a href="<?php echo esc_url( $settings_url ); ?>" class="button button-primary">
-						<?php esc_html_e( 'Enable in Settings', 'wp-sell-services' ); ?>
-					</a>
-				</p>
-			</div>
 		</div>
 		<?php
 	}

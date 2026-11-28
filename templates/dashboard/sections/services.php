@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.2
+ * @version 2.0.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -193,18 +193,7 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 							</div>
 						<?php endif; ?>
 						<span class="wpss-service-card__status <?php echo esc_attr( wpss_status_class( $item_status ) ); ?>">
-							<?php
-							if ( 'rejected' === $item_status ) {
-								esc_html_e( 'Rejected', 'wp-sell-services' );
-							} elseif ( 'pending' === $item_status ) {
-								esc_html_e( 'Pending review', 'wp-sell-services' );
-							} elseif ( 'paused' === $item_status ) {
-								esc_html_e( 'Paused', 'wp-sell-services' );
-							} else {
-								$status_obj = get_post_status_object( $item_status );
-								echo esc_html( $status_obj ? $status_obj->label : ucfirst( $item_status ) );
-							}
-							?>
+							<?php echo esc_html( wpss_service_status_label( $item_status ) ); ?>
 						</span>
 					</div>
 					<div class="wpss-service-card__body">

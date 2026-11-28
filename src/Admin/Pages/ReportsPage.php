@@ -261,40 +261,44 @@ class ReportsPage {
 				<?php esc_html_e( 'What members have reported to you, newest first. Acting on a member here applies everywhere: on the website and in the app.', 'wp-sell-services' ); ?>
 			</p>
 
-			<div class="wpss-listing-stats wpss-reports-stats">
-				<div class="wpss-admin-stat-card wpss-stat-pending">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $open_count ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Needs review', 'wp-sell-services' ); ?></span>
+			<div class="wpss-stats-grid wpss-reports-stats">
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $open_count ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Needs review', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card wpss-stat-completed">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $done_count ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Dealt with', 'wp-sell-services' ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $done_count ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Dealt with', 'wp-sell-services' ); ?></span>
 				</div>
 			</div>
 
 			<div class="wpss-list-card">
 				<div class="wpss-list-card__filters wpss-reports-filters">
-					<?php
-					$filters = array(
-						'open'     => __( 'Needs review', 'wp-sell-services' ),
-						'resolved' => __( 'Dealt with', 'wp-sell-services' ),
-						'any'      => __( 'All', 'wp-sell-services' ),
-					);
-					foreach ( $filters as $key => $label ) :
-						$url = add_query_arg(
-							array(
-								'page'   => 'wpss-reports',
-								'status' => $key,
-							),
-							admin_url( 'admin.php' )
+					<ul class="subsubsub">
+						<?php
+						// WordPress status links, as on Review moderation. Reports are open or resolved, so All is their sum.
+						$filters = array(
+							'any'      => array( __( 'All', 'wp-sell-services' ), $open_count + $done_count ),
+							'open'     => array( __( 'Needs review', 'wp-sell-services' ), $open_count ),
+							'resolved' => array( __( 'Dealt with', 'wp-sell-services' ), $done_count ),
 						);
-						?>
-						<a href="<?php echo esc_url( $url ); ?>"
-							class="button <?php echo $status === $key ? 'button-primary' : ''; ?>"
-							<?php echo $status === $key ? 'aria-current="page"' : ''; ?>>
-							<?php echo esc_html( $label ); ?>
-						</a>
-					<?php endforeach; ?>
+						foreach ( $filters as $key => list( $label, $count ) ) :
+							$url = add_query_arg(
+								array(
+									'page'   => 'wpss-reports',
+									'status' => $key,
+								),
+								admin_url( 'admin.php' )
+							);
+							?>
+							<li>
+								<a href="<?php echo esc_url( $url ); ?>"<?php echo $status === $key ? ' class="current" aria-current="page"' : ''; ?>>
+									<?php echo esc_html( $label ); ?>
+									<span class="count">(<?php echo esc_html( number_format_i18n( $count ) ); ?>)</span>
+								</a><?php echo 'resolved' !== $key ? ' |' : ''; ?>
+							</li>
+						<?php endforeach; ?>
+					</ul>
 				</div>
 
 				<div class="wpss-list-card__body">

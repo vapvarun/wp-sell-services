@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.1
+ * @version 2.0.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -135,11 +135,13 @@ $active_count = (int) ( new WP_Query(
 						</div>
 					</div>
 					<div class="wpss-request-card__actions">
-						<span class="<?php echo esc_attr( wpss_status_class( $item_status ) ); ?>">
-							<?php
-							$status_obj = get_post_status_object( $item_status );
-							echo esc_html( $status_obj ? $status_obj->label : ucfirst( $item_status ) );
-							?>
+						<?php
+						// The request's own status, as on its page and in admin; the post status only drives Close / Reopen.
+						$request_state = (string) get_post_meta( $request_id, '_wpss_status', true );
+						$request_state = '' !== $request_state ? $request_state : \WPSellServices\Services\BuyerRequestService::STATUS_OPEN;
+						?>
+						<span class="<?php echo esc_attr( wpss_status_class( $request_state ) ); ?>">
+							<?php echo esc_html( \WPSellServices\Services\BuyerRequestService::get_statuses()[ $request_state ] ?? ucfirst( str_replace( '_', ' ', $request_state ) ) ); ?>
 						</span>
 						<?php
 						// Icon action buttons: label is visible on desktop and collapses to

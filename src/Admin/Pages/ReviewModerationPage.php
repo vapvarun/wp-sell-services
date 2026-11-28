@@ -256,31 +256,29 @@ JS;
 						printf(
 							/* translators: %s: settings page URL. */
 							wp_kses_post( __( 'Review moderation is currently <strong>disabled</strong>, so new reviews are auto-approved. You can still review existing entries below, or <a href="%s">enable moderation in Settings</a>.', 'wp-sell-services' ) ),
-							// #vendor so the owner lands on the section holding the
-							// setting, as every other cross-link here does.
-							esc_url( admin_url( 'admin.php?page=wpss-settings#vendor' ) )
+							esc_url( wpss_get_settings_url( 'vendor' ) )
 						);
 						?>
 					</p>
 				</div>
 			<?php endif; ?>
 
-			<div class="wpss-listing-stats wpss-review-moderation-stats">
-				<div class="wpss-admin-stat-card">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( (int) array_sum( $counts ) ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Total Reviews', 'wp-sell-services' ); ?></span>
+			<div class="wpss-stats-grid wpss-review-moderation-stats">
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( (int) array_sum( $counts ) ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Reviews', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card wpss-stat-pending">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( (int) ( $counts[ Review::STATUS_PENDING ] ?? 0 ) ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( (int) ( $counts[ Review::STATUS_PENDING ] ?? 0 ) ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card wpss-stat-approved">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( (int) ( $counts[ Review::STATUS_APPROVED ] ?? 0 ) ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Approved', 'wp-sell-services' ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( (int) ( $counts[ Review::STATUS_APPROVED ] ?? 0 ) ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Approved', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-admin-stat-card wpss-stat-rejected">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( (int) ( $counts[ Review::STATUS_REJECTED ] ?? 0 ) ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( (int) ( $counts[ Review::STATUS_REJECTED ] ?? 0 ) ) ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
 				</div>
 			</div>
 

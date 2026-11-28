@@ -1649,6 +1649,15 @@
    "fails_on": "1f3aab51 (30 FAIL: missing colours for hired, publish, paused, draft, expired, declined and others; text-transform on featured, pro and status badges)",
    "check": "tests/test-status-badge-contract.php",
    "note": "Removed the dashboard's second palette (.wpss-status--*), the service-card and request-badge palettes, and two copied order-status maps"
+  },
+  {
+   "card": "",
+   "title": "wp-admin had no one shell: Pro's licence banner showed on every wp-admin screen, a 'Needs your attention' line repeated on every WPSS page, four tile styles drifted, the Orders All view counted tips and extensions that the Dashboard tile left out, and Service Moderation off showed no list",
+   "guard": "static:admin-shell-contract",
+   "added": "2026-11-28",
+   "fails_on": "eeed16e5 with Pro cdfb4b4 (3 FAIL: licence reminder printed off the Dashboard twice, Orders with no type not filtered to service orders)",
+   "check": "tests/test-admin-shell-contract.php",
+   "note": "Also bin/check-ux-conformance.php rules legacy-admin-tile and legacy-admin-tile-css fail on any retired tile class"
   }
  ]
 }

@@ -515,7 +515,7 @@ class Settings {
 
 		add_settings_section(
 			'wpss_general_section',
-			__( 'General Settings', 'wp-sell-services' ),
+			__( 'General', 'wp-sell-services' ),
 			array( $this, 'render_general_section' ),
 			'wpss_general'
 		);
@@ -819,7 +819,7 @@ class Settings {
 
 		add_settings_section(
 			'wpss_payouts_section',
-			__( 'Withdrawal Settings', 'wp-sell-services' ),
+			__( 'Payouts', 'wp-sell-services' ),
 			array( $this, 'render_payouts_section' ),
 			'wpss_payouts'
 		);
@@ -1203,7 +1203,7 @@ class Settings {
 
 		add_settings_section(
 			'wpss_orders_section',
-			__( 'Order Settings', 'wp-sell-services' ),
+			__( 'Orders', 'wp-sell-services' ),
 			array( $this, 'render_orders_section' ),
 			'wpss_orders'
 		);
@@ -1486,7 +1486,7 @@ class Settings {
 
 		add_settings_section(
 			'wpss_pages_section',
-			__( 'Page Settings', 'wp-sell-services' ),
+			__( 'Pages', 'wp-sell-services' ),
 			array( $this, 'render_pages_section' ),
 			'wpss_pages'
 		);
@@ -1552,7 +1552,7 @@ class Settings {
 
 		add_settings_section(
 			'wpss_advanced_section',
-			__( 'System Settings', 'wp-sell-services' ),
+			__( 'System', 'wp-sell-services' ),
 			array( $this, 'render_advanced_section' ),
 			'wpss_advanced'
 		);
@@ -1995,7 +1995,7 @@ class Settings {
 	 */
 	private function render_pages_tab(): void {
 		?>
-		<?php // The "Page Settings" section heads this card; a card head repeated it. ?>
+		<?php // The "Pages" section heads this card; a card head repeated it. ?>
 		<div class="wpss-card">
 			<div class="wpss-card__body">
 				<form method="post" action="options.php">
@@ -2092,7 +2092,7 @@ class Settings {
 			array(
 				array(
 					'id'           => 'payouts',
-					'title'        => __( 'Withdrawal Settings', 'wp-sell-services' ),
+					'title'        => __( 'Payouts', 'wp-sell-services' ),
 					'description'  => __( 'Configure vendor withdrawal and payout settings.', 'wp-sell-services' ),
 					'option_group' => 'wpss_payouts',
 					'settings_id'  => 'wpss_payouts',
@@ -2410,7 +2410,7 @@ class Settings {
 			array(
 				array(
 					'id'           => 'system',
-					'title'        => __( 'System Settings', 'wp-sell-services' ),
+					'title'        => __( 'System', 'wp-sell-services' ),
 					'description'  => __( 'Configure advanced system options.', 'wp-sell-services' ),
 					'option_group' => 'wpss_advanced',
 					'settings_id'  => 'wpss_advanced',
@@ -2884,7 +2884,7 @@ class Settings {
 			array(
 				array(
 					'id'           => 'order-settings',
-					'title'        => __( 'Order Settings', 'wp-sell-services' ),
+					'title'        => __( 'Orders', 'wp-sell-services' ),
 					'description'  => __( 'Configure order workflow and policies.', 'wp-sell-services' ),
 					'option_group' => 'wpss_orders',
 					'settings_id'  => 'wpss_orders',
@@ -3564,7 +3564,7 @@ class Settings {
 		// Disputes: SLA timing + escalation contact.
 		add_settings_section(
 			'wpss_disputes_section',
-			__( 'Dispute settings', 'wp-sell-services' ),
+			__( 'Disputes', 'wp-sell-services' ),
 			'__return_empty_string',
 			'wpss_orders'
 		);
