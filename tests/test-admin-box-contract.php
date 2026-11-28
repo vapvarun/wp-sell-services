@@ -45,7 +45,7 @@ foreach ( array(
 }
 
 // Box classes: any *-card, *-box, *-panel, *-section, *-widget, *-postbox, *-tile, plus the boxes named otherwise.
-$box = '/\.wpss-(?:[a-z0-9-]*?(?:card|box|panel|section|widget|postbox|tile)|empty-state|commission-form|setup-steps|detail-header|detail-tabs|detail-tab-content|wallet-balance|subscription-plan-form|chart-container|analytics-header|(?:package|faq|requirement|addon)-item|requirement-choices)(?:--[a-z0-9-]+)*(?![\w-])/';
+$box = '/\.wpss-(?:[a-z0-9-]*?(?:card|box|panel|section|widget|postbox|tile)|empty-state|commission-form|setup-steps|wizard-step|detail-header|detail-tabs|detail-tab-content|wallet-balance|subscription-plan-form|chart-container|analytics-header|(?:package|faq|requirement|addon)-item|requirement-choices)(?:--[a-z0-9-]+)*(?![\w-])/';
 $own = array();
 foreach ( $files as $name => $sheet ) {
 	$sheet = preg_replace_callback( '#/\*(?!\s*box-ok:).*?\*/#s', static fn( $m ) => str_repeat( "\n", substr_count( $m[0], "\n" ) ), $sheet );
