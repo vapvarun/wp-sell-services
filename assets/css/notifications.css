@@ -38,15 +38,13 @@
 .wpss-notif-row__time { font-size: 12px; color: var( --wpss-text-muted, #6b7280 ); }
 /* Muted on the unread tint read 4.33:1. */
 .wpss-notif-row--unread .wpss-notif-row__time { color: var( --wpss-text-secondary, #374151 ); }
-.wpss-notif-row__mark { flex: 0 0 auto; background: none; border: none; cursor: pointer; color: var( --wpss-text-light, #6b7280 ); padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
+.wpss-notif-row__mark { flex: 0 0 auto; background: none; border: none; cursor: pointer; color: var( --wpss-text-light, #6b7280 ); padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; } /* 44px everywhere: it measured 24px on iPad, and the hit area is transparent */
 .wpss-notif-row__mark svg { width: 18px; height: 18px; }
 .wpss-notif-row__mark:hover { color: var(--wpss-primary-accent, #4f46e5); }
 
 @media (max-width: 640px) {
 	.wpss-notif-filter select { flex: 1 1 100%; }
 	.wpss-notif-row { padding: 12px; }
-	/* Same 44px reach as the filter controls above the list. */
-	.wpss-notif-row__mark { width: 44px; height: 44px; }
 	.wpss-notif-mark-all { min-height: 44px; }
 }
 

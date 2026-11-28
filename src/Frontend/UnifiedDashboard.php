@@ -766,6 +766,12 @@ class UnifiedDashboard {
 				?>
 				<div class="wpss-dashboard__nav-bar">
 					<span class="wpss-dashboard__nav-bar-title"><?php echo esc_html( $section_data['title'] ); ?></span>
+					<?php // Replay tour sits in this bar on a phone or iPad; a header row of its own pushed the section down 73px. ?>
+					<?php if ( ! $this->resolve_requested_order_id() ) : ?>
+						<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-dashboard__tour-replay wpss-dashboard__tour-replay--bar" aria-label="<?php esc_attr_e( 'Replay tour', 'wp-sell-services' ); ?>" title="<?php esc_attr_e( 'Replay tour', 'wp-sell-services' ); ?>">
+							<i data-lucide="help-circle" class="wpss-icon" aria-hidden="true"></i>
+						</button>
+					<?php endif; ?>
 					<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-dashboard__nav-toggle" aria-expanded="false" aria-controls="wpss-dashboard-drawer">
 						<?php $this->render_icon( 'menu' ); ?>
 						<span><?php esc_html_e( 'Menu', 'wp-sell-services' ); ?></span>
@@ -918,7 +924,7 @@ class UnifiedDashboard {
 					<?php endif; ?>
 					<?php // The tour does not load on an order URL (Tour::should_load), so neither does its button. ?>
 					<?php if ( 'h1' === $title_tag ) : ?>
-						<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-dashboard__tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
+						<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-dashboard__tour-replay">
 							<i data-lucide="help-circle" class="wpss-icon" aria-hidden="true"></i>
 							<span><?php esc_html_e( 'Replay tour', 'wp-sell-services' ); ?></span>
 						</button>

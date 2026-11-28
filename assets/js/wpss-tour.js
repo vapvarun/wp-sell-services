@@ -214,6 +214,14 @@
 			}
 		};
 
+		// The dashboard's Replay tour buttons (header on desktop, bar beside Menu on a phone or iPad).
+		document.addEventListener( 'click', function ( e ) {
+			if ( e.target.closest && e.target.closest( '.wpss-dashboard__tour-replay' ) ) {
+				e.preventDefault();
+				window.wpssTour.start();
+			}
+		} );
+
 		// Only the dashboard root starts the tour by itself; elsewhere it waits for Replay.
 		if ( 0 === steps.length || false === window.wpssTour.autostart || '' === window.wpssTour.autostart ) {
 			return;

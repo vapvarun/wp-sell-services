@@ -847,8 +847,8 @@ a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
 
 .wpss-btn--sm { min-height: 34px; padding: var(--wpss-space-2) var(--wpss-space-4); font-size: var(--wpss-text-sm); }
 /* On a touch screen the small button keeps the 40px tap floor (a link-style
-   Cancel measured 34px). */
-@media (max-width: 640px) { .wpss-btn--sm { min-height: var(--wpss-space-10, 40px); } }
+   Cancel measured 34px; at iPad width Menu and Complete payment measured 38px). */
+@media (max-width: 1024px), (pointer: coarse) { .wpss-btn--sm { min-height: var(--wpss-space-10, 40px); } }
 .wpss-btn--lg { padding: var(--wpss-space-4) var(--wpss-space-8); font-size: var(--wpss-text-lg); }
 .wpss-btn--block { display: flex; width: 100%; }
 .wpss-btn--disabled, .wpss-btn.wpss-btn--disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
@@ -1345,7 +1345,7 @@ body.wpss-modal-active { overflow: hidden; }
    measured 1.18:1 (Basecamp 10300330443). Same shape as wpss-btn--ghost and the
    toast: a class the markup uses that the loaded stylesheets never define.
    --wpss-primary-accent carries a dark value, so it follows the mode. */
-.wpss-btn--link { background: none; border: none; padding: 0; color: var(--wpss-primary-accent, #4f46e5); text-decoration: none; }
+.wpss-btn--link { background: none; border: none; padding: 0; min-width: var(--wpss-space-10, 40px); /* a one-word "Edit" link measured 26px wide */ color: var(--wpss-primary-accent, #4f46e5); text-decoration: none; }
 /* Qualified with .wpss-btn on purpose.
    frontend.css carries a blanket `.wpss-btn:hover { text-decoration: none; }`
    at the same specificity as a bare `.wpss-btn--link:hover`, and it loads after

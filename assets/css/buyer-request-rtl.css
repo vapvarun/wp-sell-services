@@ -1048,6 +1048,12 @@
 }
 
 .wpss-sidebar-close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	/* 40px tap target, as on the services archive (it measured 16x26 here). */
+	width: 40px;
+	height: 40px;
 	background: none !important;
 	border: none !important;
 	font-size: 1.5rem !important;

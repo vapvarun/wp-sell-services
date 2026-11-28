@@ -609,6 +609,12 @@
 	border-top: 1px solid var(--wpss-gray-100);
 }
 
+/* Edit, View, Pause and Delete on one line in a two-column grid: at iPad width
+   the default button padding pushed Delete onto a line of its own. */
+.wpss-service-card__actions .wpss-btn--sm {
+	padding-inline: var(--wpss-space-3, 12px);
+}
+
 /* ==========================================================================
    Request Cards
    ========================================================================== */
@@ -857,7 +863,7 @@
 }
 
 .wpss-section--messages .wpss-conversation-thread__subject {
-	margin-right: auto;
+	margin-inline-start: auto;
 	padding: 6px 10px;
 	font-size: 12px;
 	font-weight: 500;
@@ -1007,13 +1013,30 @@
 		border-radius: 12px;
 	}
 
+	/* Back beside a name over its topic: wrapping the topic onto a row of its
+	   own made the header take 100px of a phone's thread (C11). */
 	.wpss-section--messages .wpss-conversation-thread__header {
-		flex-wrap: wrap;
-		padding: 16px;
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		column-gap: var(--wpss-space-3, 12px);
+		row-gap: var(--wpss-space-1, 4px);
+		padding: var(--wpss-space-3, 12px) var(--wpss-space-4, 16px);
+	}
+
+	.wpss-section--messages .wpss-conversation-thread__header > .wpss-btn {
+		grid-row: span 2;
+	}
+
+	.wpss-section--messages .wpss-conversation-thread__header h3 {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.wpss-section--messages .wpss-conversation-thread__subject {
-		margin-right: 0;
+		justify-self: start;
+		margin-inline-start: 0;
+		padding: 2px var(--wpss-space-2, 8px);
 	}
 
 	.wpss-section--messages .wpss-conversation-thread__messages {
@@ -1912,7 +1935,12 @@ select.wpss-input option,
 		white-space: nowrap;
 	}
 
-	.wpss-dashboard__header:not(:has(> :not(.wpss-dashboard__title))) {
+	.wpss-dashboard__header:not(:has(> :not(.wpss-dashboard__title, .wpss-dashboard__tour-replay))) {
+		display: none;
+	}
+
+	/* Replay tour moves into the bar beside Menu (W4: on its own it took a 73px row). */
+	.wpss-dashboard__header .wpss-dashboard__tour-replay {
 		display: none;
 	}
 
@@ -1925,6 +1953,7 @@ select.wpss-input option,
 	}
 
 	.wpss-dashboard__nav-bar-title {
+		flex: 1;
 		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -1933,8 +1962,13 @@ select.wpss-input option,
 		color: var(--wpss-gray-900);
 	}
 
-	.wpss-dashboard__nav-toggle {
+	.wpss-dashboard__nav-toggle,
+	.wpss-dashboard__tour-replay--bar {
 		flex-shrink: 0;
+	}
+
+	.wpss-dashboard__tour-replay--bar {
+		padding-inline: var(--wpss-space-2);
 	}
 
 	.wpss-dashboard__sidebar:not(.wpss-dashboard__sidebar--open) .wpss-dashboard__drawer {
