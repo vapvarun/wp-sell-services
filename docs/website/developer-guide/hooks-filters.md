@@ -731,7 +731,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:752` |
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1547` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/order-status.php:85` |
-| `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:677` |
+| `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:682` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:445` |
 | `wpss_wallet_manager` | `null` | `src/functions/ledger.php:763` |
 
@@ -839,8 +839,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/Services/ReviewService.php:489` |
 | `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:654` |
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:134` |
-| `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:440` |
-| `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:450` |
+| `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:445` |
+| `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:455` |
 | `wpss_payout_method_registry` | `$methods` (id => label + fields; optional `render` callable( $user_id ) draws the method's card in the vendor's Payout Methods, `withdrawal` => false keeps a connect-only rail out of the withdrawal choices) | `src/Services/EarningsService.php:1373` |
 | `wpss_order_needs_requirements` | `$needs, $order`: whether a paid order waits in pending_requirements (Pro answers false for a recurring renewal) | `src/functions/requirements.php:285` |
 | `wpss_vendor_reserved_payouts` | `$reserved` (default 0), `$vendor_id`: money a payout rail has committed but not yet debited; counted as a withdrawal in progress | `src/Services/EarningsService.php:175` |
