@@ -865,11 +865,12 @@ class EmailService {
 			return false;
 		}
 
-		$gateways = wpss()->get_payment_gateways();
-		$gateway  = (string) ( $record['gateway'] ?? '' );
-		$label    = isset( $gateways[ $gateway ] ) ? $gateways[ $gateway ]->get_name() : ucfirst( $gateway );
-		$numbers  = implode( ', ', array_map( static fn( $o ): string => '#' . $o->order_number, $orders ) );
-		$content  = sprintf(
+		$recipient = get_user_by( 'email', $to ) ?: null;
+		$gateways  = wpss()->get_payment_gateways();
+		$gateway   = (string) ( $record['gateway'] ?? '' );
+		$label     = isset( $gateways[ $gateway ] ) ? $gateways[ $gateway ]->get_name() : ucfirst( $gateway );
+		$numbers   = implode( ', ', array_map( static fn( $o ): string => '#' . $o->order_number, $orders ) );
+		$content   = sprintf(
 			/* translators: 1: payment provider, e.g. Stripe, 2: amount with currency, 3: order numbers */
 			__( 'A buyer\'s bank has opened a chargeback at %1$s for %2$s on order %3$s. Nothing has moved yet: the order and the vendor\'s earnings stay as they are while the dispute is open. Answer it with your evidence from your %1$s dashboard.', 'wp-sell-services' ),
 			$label,
@@ -881,7 +882,7 @@ class EmailService {
 			$content .= ' ' . sprintf(
 				/* translators: %s: date */
 				__( 'Evidence is due by %s.', 'wp-sell-services' ),
-				wpss_date_label( (string) $record['due_by'] )
+				wpss_date_label( (string) $record['due_by'], '—', null, $recipient ? (int) $recipient->ID : 0 )
 			);
 		}
 
@@ -895,7 +896,7 @@ class EmailService {
 			),
 			self::TYPE_CHARGEBACK_OPENED,
 			array(
-				'recipient'     => get_user_by( 'email', $to ) ?: null,
+				'recipient'     => $recipient,
 				'email_heading' => __( 'A chargeback was opened', 'wp-sell-services' ),
 				'content'       => $content,
 				'button_url'    => admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . (int) $orders[0]->id ),
