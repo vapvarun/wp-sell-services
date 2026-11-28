@@ -265,6 +265,65 @@ Three auto-calculated levels plus one admin-granted: New Vendor (default), Risin
 
 == Changelog ==
 
+= 2.0.0 - November 2026 =
+
+Digital products, private offers, one payment path for every gateway, and one store currency.
+
+* New      - Digital products: a service type that sells one file buyers download the moment they pay, with versioned uploads, a Downloads page and a record of every download.
+* New      - Service types: a vendor chooses fixed price or custom quote in the wizard, and a custom-quote service shows Ask for a quote and Post a request instead of an order button.
+* New      - Private offers: a vendor sends one buyer a custom offer from a pre-sale conversation, and the buyer accepts and pays or declines; an accepted offer becomes a normal order at those terms.
+* New      - Settings > Features gives every optional feature one on/off switch, also available to apps through GET and POST /modules; your existing choices carry over on upgrade.
+* New      - A Payment methods table at the top of Settings > Payment Gateways shows each method's status (Ready, Test Mode, Needs setup, Off) with an on/off switch, drag ordering and a Manage link, and checkout follows that order.
+* New      - Chargebacks: an opened Stripe or PayPal dispute emails the site owner and marks the order "Chargeback open" without moving money, and the mark clears when the dispute closes.
+* New      - A lost chargeback is recorded as a refund on the order, and a won one changes nothing.
+* New      - A Finish setting up block on the Dashboard lists what is left after the setup wizard.
+* New      - A Payments to confirm card on the Dashboard and a bubble on the Orders menu count offline payments waiting for Mark as paid.
+* New      - Every owner queue on the Dashboard (vendors awaiting approval, escalated disputes, withdrawals to approve) has a matching menu bubble.
+* New      - Buyers get a reminder the day before a delivery auto-completes, and both parties see the auto-complete date on the order and in the Delivery Ready email.
+* New      - A developer guide and a sample bank transfer gateway plugin show how to add a payment method.
+* Improve  - One store currency is used everywhere: your symbol position, separators and decimals apply to every price, email and button, and amounts show in the order's own currency.
+* Improve  - The store currency locks after the first order, and on a WooCommerce, EDD or FluentCart route the shop sets the currency and its format, shown read-only in settings.
+* Improve  - Checkout, the order screens and the app ask what a gateway can do instead of checking its name, so a third-party pay-later gateway gets Mark as paid and the Payments to confirm queue.
+* Improve  - Payout methods use one registry, so an add-on can offer its own payout method.
+* Improve  - Request briefs and pre-sale contact files use the same private file store as order files, with one access check and one download link.
+* Improve  - Files keep their original name on request pages and in the API, and same-named files in one order no longer overwrite each other.
+* Improve  - Files too large to upload safely on your server stay on local disk instead of failing a cloud upload, and each cloud file remembers its bucket and region.
+* Improve  - A refused requirements upload is reported to the buyer with the file name and reason instead of being dropped.
+* Improve  - Checkout links and the webhook URLs in the Stripe and PayPal setup guides work with Plain permalinks.
+* Improve  - Payment webhooks still reach their gateway after you switch checkout to WooCommerce, EDD or FluentCart, and a failed settle answers 500 so the provider sends the event again.
+* Improve  - Sales Orders for a vendor with no services, an empty catalog and the Payouts clearance field each point to the next step, and Start selling is hidden from visitors while sign-up is off.
+* Improve  - The setup wizard has a "Let visitors create accounts" box, and setup health names a mismatch between open vendor registration and closed WordPress sign-up.
+* Improve  - The Featured Services carousel follows its Columns setting and no longer moves on its own unless autoplay is turned on.
+* Improve  - Buyer request cards offer Send Proposal only to vendors who can send one, and Open until shows the request's closing date on every screen.
+* Improve  - The vendor bio reads the same on the Vendor Card, profile page, shortcode and API.
+* Improve  - A buyer with an offline-payment order sees View payment instructions in My Orders and keeps the bank details after Offline is turned off.
+* Improve  - The welcome tour starts by itself only on the dashboard home, and archive filter columns pin below a sticky theme header.
+* Improve  - The docs for the Pro licence, database tables, capabilities, moderation and reviews now match the plugin.
+* Fix      - A payment confirms only for the member who paid, priced from what the site stored, so a quantity or add-on purchase is charged the page total.
+* Fix      - A payment the buyer already started finishes even if the gateway is switched off or checkout moves to a shop plugin mid-payment.
+* Fix      - Stripe amounts in zero- and three-decimal currencies such as JPY, KRW and KWD are read correctly, so those orders are no longer treated as underpaid and refunded.
+* Fix      - Two refunds on one order can no longer both go through at the same moment.
+* Fix      - A vendor commission is recorded only when the vendor credit lands, in the order's currency.
+* Fix      - An admin can no longer mark a withdrawal paid for money a payout method already has in flight.
+* Fix      - Demo payments switch off for good once the store is live, so turning a gateway off to rotate keys no longer lets buyers order without paying.
+* Fix      - An unknown or switched-off gateway is no longer treated as a manual payment method.
+* Fix      - Orders placed through a shop plugin stay with that shop after it is deactivated, and a refund reported twice for one shop order is recorded once.
+* Fix      - Reviews: a posted review's stars and text can no longer be changed, and a review with no words is refused with a reason.
+* Fix      - A pay link is no longer offered for an order the pay page would refuse, and Back to order on a proposal order opens the order.
+* Fix      - Decline on an extension quote works on the extension page.
+* Fix      - A FAQ needs both a question and an answer everywhere, and FAQs sent from the app are saved and returned.
+* Fix      - Closing a buyer request from the dashboard records it as closed, and the proposal-accepted notice tells the vendor when the order or first milestone still waits for payment.
+* Fix      - File cleanup never touches another site's files on shared hosting, and an older file no longer returns 404 after a folder change.
+* Fix      - Uninstall with delete data on removes everything, including every plugin capability, and leaves former vendors' accounts usable.
+* Fix      - The Settings colour picker no longer jumps the page to General, an empty box no longer shows under completed orders, and bank-instruction links stay readable in dark mode.
+* Fix      - On block themes the theme's menu and scripts work on the services archive, single service and buyer request pages.
+* Fix      - The service card level badge stays inside the card, wizard gallery icons show after adding or removing an image, and the wizard step bar centres on phones.
+* Security - Buyer request briefs are private with unguessable names, and other members can open a request's files only if they can open the request.
+* Security - Message routes refuse file records built by the client and keep only the sender's own uploads.
+* Dev      - New hooks: wpss_modules, wpss_service_types, wpss_private_offer_fields, wpss_private_offer_sent, wpss_private_offer_accepted, wpss_private_offer_declined, wpss_private_offer_expired, wpss_chargeback_opened, wpss_cloud_upload_max_bytes, wpss_order_needs_requirements and wpss_currency_locked.
+* Dev      - Templates changed since 1.9.3 carry @version 2.0.0, so theme overrides of them are reported as outdated.
+* Compat   - Aligned with WP Sell Services Pro 2.0.0. Install both updates together.
+
 = 1.9.3 - November 2026 =
 
 Clearer emails, honest publish errors, and a demo that looks like a marketplace.
@@ -1245,6 +1304,9 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * WP 6.7+ compatible (lazy-loaded translations)
 
 == Upgrade Notice ==
+
+= 2.0.0 =
+Update Free and Pro together. The store currency now locks after the first order, and your optional features have their own switches under Settings > Features (existing choices carry over). To record chargebacks, add the dispute events listed in the Stripe and PayPal setup guides to your webhooks.
 
 = 1.9.2 =
 Update Free and Pro together. No database change. Gateway and realtime secrets can now be set as wp-config.php constants.
