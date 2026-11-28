@@ -1616,6 +1616,14 @@
    "guard": "static:private-offers",
    "added": "2026-11-28",
    "fails_on": "67e0644c (no wpss_send_private_offer: the first check fails and the test stops)"
+  },
+  {
+   "card": "10551488457",
+   "title": "A third-party payment method had no guide and no template, and had to copy Offline's 40-line cart order writer; the contract test checked only our own gateways, and a Razorpay refund fataled when the provider answered without a refund",
+   "guard": "static:payment-module-contract",
+   "added": "2026-11-28",
+   "fails_on": "5ec991f6 (no open_pending_cart_orders: the sample's cart checkout fatals) + Pro 3a7fc34 (TypeError in RazorpayGateway::process_refund on a failed provider call)",
+   "check": "tests/test-payment-module-contract.php"
   }
  ]
 }

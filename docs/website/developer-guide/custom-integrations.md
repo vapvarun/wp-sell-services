@@ -107,21 +107,7 @@ interface PaymentGatewayInterface {
 
 ### Creating a Custom Gateway
 
-The plugin includes a reference implementation at `src/Integrations/Gateways/TestGateway.php` (debug-only, auto-completes payments). Register your gateway via the `wpss_payment_gateways` filter (`Plugin.php:813`):
-
-```php
-add_filter( 'wpss_payment_gateways', function( $gateways ) {
-    $gateways['custom_pay'] = new \MyPlugin\CustomGateway();
-    return $gateways;
-} );
-```
-
-Key methods to implement:
-- `create_payment()` should return `['success' => true, 'id' => '...', 'client_secret' => '...']`
-- `process_payment()` should return `['success' => true, 'transaction_id' => '...', 'status' => 'completed']`
-- `process_refund()` should return `['success' => true, 'refund_id' => '...', 'status' => 'completed']`
-- `get_settings_fields()` returns an array of field definitions (type, label)
-- `render_payment_form()` returns HTML for the payment form
+Extend `AbstractPaymentGateway` rather than implementing the interface yourself, and register it through the `wpss_payment_gateways` filter under its own id. The step-by-step guide, with a complete sample bank transfer plugin and the contract test every gateway must pass, is **[Add a Payment Method](add-a-payment-method.md)**.
 
 ### The CheckoutIntent seam (gateway-agnostic)
 

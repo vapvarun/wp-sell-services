@@ -670,57 +670,11 @@ class OfflineGateway extends AbstractPaymentGateway {
 
 		// Multi-service checkout: create one order per cart item. An existing order (pay_order) comes first.
 		if ( ! $request['pay_order'] && $request['is_multi_checkout'] ) {
-			$order_provider = wpss_get_order_provider();
-
 			$customer_id = get_current_user_id();
+			$order_ids   = $this->open_pending_cart_orders( $customer_id );
 
-			// A new purchase: the same standing rule CheckoutIntentService::resolve() applies.
-			$standing = wpss_account_status_block( $customer_id );
-			if ( $standing ) {
-				wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
-				return;
-			}
-
-			// The one cart reader. Read raw, this charged for services the
-			// seller had paused or deleted - the cart screen said they could
-			// not be bought and this rail billed for them anyway.
-			$cart = wpss_get_user_cart( $customer_id );
-
-			if ( empty( $cart ) ) {
-				wp_send_json_error( array( 'message' => __( 'Your cart is empty.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			/*
-			 * Same rule on the multi-item path, against the number the buyer was
-			 * actually shown: each cart row carries its own `total`, and
-			 * CartController sums exactly these to render the cart.
-			 *
-			 * Checked against the basket as a whole rather than per row - a
-			 * maximum is a limit on what the owner is willing to take in one
-			 * transaction, and three $9 rows under a $10 cap would otherwise
-			 * pass while a single $11 order is refused.
-			 */
-			$cart_total = 0.0;
-
-			foreach ( $cart as $cart_row ) {
-				$cart_total += (float) ( $cart_row['total'] ?? 0 );
-			}
-
-			$limit_error = wpss_check_order_limits( $cart_total, 'offline_cart' );
-
-			if ( null !== $limit_error ) {
-				wp_send_json_error( array( 'message' => $limit_error->get_error_message() ) );
-				return;
-			}
-
-			// For offline payments there is no shared transaction ID yet — generate a placeholder.
-			$transaction_id = self::GENERATED_MULTI_PREFIX . wp_generate_uuid4();
-
-			$order_ids = $order_provider->create_orders_from_cart( $cart, 'offline', $transaction_id, $customer_id );
-
-			if ( empty( $order_ids ) ) {
-				wp_send_json_error( array( 'message' => __( 'Failed to create orders. Please try again.', 'wp-sell-services' ) ) );
+			if ( is_wp_error( $order_ids ) ) {
+				wp_send_json_error( array( 'message' => $order_ids->get_error_message() ) );
 				return;
 			}
 
@@ -737,9 +691,6 @@ class OfflineGateway extends AbstractPaymentGateway {
 			 * @param int    $customer_id Buyer user ID.
 			 */
 			do_action( 'wpss_offline_multi_orders_created', $order_ids, $customer_id );
-
-			// Clear entire cart.
-			delete_user_meta( $customer_id, '_wpss_cart' );
 
 			wp_send_json_success(
 				array(

@@ -39,6 +39,11 @@ $free      = array(
 	'test'    => \WPSellServices\Integrations\Gateways\TestGateway::class,
 );
 $gateways = $real;
+// The sample third-party gateway (docs/examples), installed as a plugin or not: the template new gateways follow.
+if ( ! class_exists( \WPSSSampleBankTransfer\Gateway::class ) ) {
+	require_once WPSS_PLUGIN_DIR . 'docs/examples/wpss-sample-bank-transfer/class-gateway.php';
+}
+$free['sample_bank_transfer'] = \WPSSSampleBankTransfer\Gateway::class;
 foreach ( $free as $id => $class ) {
 	$gateways[ $id ] = $gateways[ $id ] ?? new $class();
 }
@@ -76,6 +81,7 @@ $expect = array(
 	'paypal'   => array( 'verified_confirmation' ),
 	'razorpay' => array( 'verified_confirmation' ),
 	'test'     => array(),
+	'sample_bank_transfer' => array( 'manual_confirmation' ),
 );
 foreach ( $expect as $id => $features ) {
 	if ( ! isset( $gateways[ $id ] ) ) {
@@ -171,11 +177,113 @@ $check( 'Offline checkout writes through open_pending_order()', str_contains( $s
 $check( 'Test settles through resolve + settle, never mark_as_paid or create_order', str_contains( $src( 'src/Integrations/Gateways/TestGateway.php' ), '$checkout->settle(' ) && ! preg_match( '/mark_as_paid\(|create_order\(/', $src( 'src/Integrations/Gateways/TestGateway.php' ) ) );
 $check( 'Mark as paid lives on the order screen, not a gateway', str_contains( $src( 'src/Admin/OrderScreen.php' ), 'wp_ajax_wpss_admin_mark_order_paid' ) && ! str_contains( $src( 'src/Integrations/Gateways/OfflineGateway.php' ), 'wpss_admin_mark_order_paid' ) );
 
+// 10. Every registered gateway, ours or a third party's, meets the same contract.
+$known = array( 'manual_confirmation', 'redirect_return', 'verified_confirmation' );
+// No provider is called: every request answers 500 with a non-JSON body, and a gateway must fail cleanly.
+$offline_http = static fn() => array( 'headers' => array(), 'body' => 'Bad gateway', 'response' => array( 'code' => 500, 'message' => 'Bad gateway' ), 'cookies' => array() );
+add_filter( 'pre_http_request', $offline_http );
+foreach ( $gateways as $id => $gateway ) {
+	$card   = $gateway->get_settings_card();
+	$refund = $gateway->process_refund( 'qa-contract-ref', 1.0, 'contract' );
+	$hook   = $gateway->handle_webhook( array() );
+	$check( "{$id}: a settings card with its own option group", is_array( $card ) && '' !== (string) ( $card['option_group'] ?? '' ) && '' !== (string) ( $card['title'] ?? '' ) );
+	$check( "{$id}: declares only known features", array() === array_diff( (array) ( new ReflectionProperty( $gateway, 'supports' ) )->getValue( $gateway ), $known ) );
+	$check( "{$id}: a refund answers with success, and a manual one says so", is_array( $refund ) && array_key_exists( 'success', $refund ) && ( ! wpss_gateway_supports( $gateway, 'manual_confirmation' ) || ! empty( $refund['manual'] ) ), wp_json_encode( $refund ) );
+	$check( "{$id}: a webhook answers with success", is_array( $hook ) && array_key_exists( 'success', $hook ) );
+	$check( "{$id}: manual exactly when it declares manual_confirmation", wpss_is_manual_payment_method( $id ) === wpss_gateway_supports( $gateway, 'manual_confirmation' ) );
+	if ( ! wpss_gateway_supports( $gateway, 'manual_confirmation' ) && 'test' !== $id ) {
+		$check( "{$id}: a provider that fails is a failed refund, not a success", empty( $refund['success'] ), wp_json_encode( $refund ) );
+	}
+}
+remove_filter( 'pre_http_request', $offline_http );
+
+// 11. The sample pay-later gateway, end to end through its own checkout handler.
+$sample  = $gateways['sample_bank_transfer'];
+if ( false === has_action( 'wpss_order_view_details', array( $sample, 'show_account_details' ) ) ) {
+	$sample->init(); // Not installed as a plugin here: hook it as its plugin file would.
+}
+$opt     = \WPSSSampleBankTransfer\Gateway::OPTION;
+$was_opt = get_option( $opt, null );
+delete_option( $opt ); // Start from a fresh install's state, whatever this site saved.
+$check( 'sample: off by default, so no checkout offers it', ! isset( wpss_get_checkout_gateways( 'USD' )['sample_bank_transfer'] ) );
+( new \WPSSSampleBankTransfer\Gateway() )->register_settings(); // admin_init has not run under eval-file.
+update_option( $opt, array( 'account' => "Acme Bank\nIBAN QA00 1234" ) );
+$saved = wpss_save_payment_methods( array(), array( 'sample_bank_transfer' => true ) );
+$rows  = array_column( wpss_payment_method_rows(), 'status', 'id' );
+$check( 'sample: the Payment methods switch turns it on and keeps the account', true === $saved && 'live' === ( $rows['sample_bank_transfer'] ?? '' ) && str_contains( (string) ( get_option( $opt )['account'] ?? '' ), 'IBAN' ), wp_json_encode( $rows ) );
+$check( 'sample: now offered at checkout, with "Place order"', isset( wpss_get_checkout_gateways( 'USD' )['sample_bank_transfer'] ) && 'Place order' === wpss_checkout_button_label( $sample, 10.0, 'USD' ) );
+
+$buyer   = 3;
+$service = get_posts( array( 'post_type' => 'wpss_service', 'post_status' => 'publish', 'author__not_in' => array( $buyer ), 'numberposts' => 20, 'fields' => 'ids' ) );
+$service = current( array_filter( $service, static fn( $sid ) => '' === wpss_service_unavailable_reason( (int) $sid ) && 'fixed' === wpss_get_service_type( (int) $sid ) ) );
+$line    = $service ? \WPSellServices\Checkout\CheckoutIntentService::price_service_line( (int) $service, 0, 1, array() ) : null;
+add_filter( 'wp_doing_ajax', '__return_true' );
+add_filter( 'wp_die_ajax_handler', static fn() => static function () {
+	throw new RuntimeException( 'done' );
+} );
+$place = static function ( array $post ) use ( $sample ): array {
+	$_POST = $_REQUEST = array_merge( array( 'nonce' => wp_create_nonce( 'wpss_checkout' ) ), $post ); // phpcs:ignore
+	ob_start();
+	try {
+		$sample->ajax_place_order();
+	} catch ( RuntimeException $e ) {
+		unset( $e );
+	}
+	return (array) json_decode( (string) ob_get_clean(), true );
+};
+wp_set_current_user( $buyer );
+$was_cart = get_user_meta( $buyer, '_wpss_cart', true );
+
+if ( ! $service || is_wp_error( $line ) ) {
+	echo "SKIP  sample checkout: no published fixed-price service a member can buy\n";
+} else {
+	$res   = $place( array( 'service_id' => $service, 'package_id' => (int) $line['package_id'] ) );
+	$order = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$orders} WHERE customer_id = %d AND payment_method = %s ORDER BY id DESC LIMIT 1", $buyer, 'sample_bank_transfer' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$made[] = (int) ( $order->id ?? 0 );
+	$check( 'sample: checkout opens a pending order on the method, priced by Free', ! empty( $res['success'] ) && $order && 'pending_payment' === $order->status && abs( (float) $order->total - (float) $line['subtotal'] ) < 0.01, wp_json_encode( $res ) );
+	$check( 'sample: the buyer is sent to the order', $order && ! empty( $res['data']['redirect_url'] ) );
+	ob_start();
+	do_action( 'wpss_order_view_details', wpss_get_order( (int) $order->id ) );
+	$page = (string) ob_get_clean();
+	$check( 'sample: the order page shows the account and the waiting notice', str_contains( $page, 'IBAN QA00 1234' ) && str_contains( $page, 'wpss-offline-awaiting' ) );
+	$check( 'sample: the order waits for the owner, and counts as to confirm', wpss_order_awaits_payment_confirmation( $order ) && wpss_count_payments_to_confirm() >= 1 );
+
+	// An existing order (a tip) paid through /checkout/pay/{id}/ goes on the method too, and the sweep leaves it.
+	$tip = $row( null );
+	$wpdb->update( $orders, array( 'customer_id' => $buyer ), array( 'id' => $tip ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+	$res = $place( array( 'pay_order' => $tip ) );
+	( new \WPSellServices\Services\TippingService() )->cleanup_abandoned_tips();
+	$check( 'sample: a tip paid on it waits, the abandoned sweep leaves it', ! empty( $res['success'] ) && 'sample_bank_transfer' === ( wpss_get_order( $tip )->payment_method ?? '' ) && 'pending_payment' === $st( $tip ), wp_json_encode( $res ) );
+
+	// The cart: one order per line through the shared writer, cart emptied.
+	update_user_meta( $buyer, '_wpss_cart', array() );
+	\WPSellServices\Checkout\ServiceCart::add( $buyer, (int) $service, $line );
+	$before = (int) $wpdb->get_var( "SELECT MAX(id) FROM {$orders}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$res    = $place( array( 'is_multi_checkout' => 1 ) );
+	$cart   = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$orders} WHERE id > %d AND customer_id = %d AND payment_method = %s", $before, $buyer, 'sample_bank_transfer' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$made   = array_merge( $made, array_map( 'intval', $cart ) );
+	$check( 'sample: the cart checkout opens one order per line and empties the cart', ! empty( $res['success'] ) && 1 === count( $cart ) && empty( get_user_meta( $buyer, '_wpss_cart', true ) ), wp_json_encode( $res ) );
+
+	// Switched off: existing orders stay payable by Mark as paid, new checkouts are refused.
+	wpss_save_payment_methods( array(), array( 'sample_bank_transfer' => false ) );
+	$check( 'sample: switched off, a new checkout through it is refused', empty( $place( array( 'service_id' => $service, 'package_id' => (int) $line['package_id'] ) )['success'] ) );
+	wp_set_current_user( 1 );
+	$settled = $manual->settle( (int) $order->id, 'BANK-REF-1' );
+	$paid    = wpss_get_order( (int) $order->id );
+	$check( 'sample: Mark as paid settles it and keeps the method', ! is_wp_error( $settled ) && 'paid' === ( $paid->payment_status ?? '' ) && 'sample_bank_transfer' === ( $paid->payment_method ?? '' ), is_wp_error( $settled ) ? $settled->get_error_message() : '' );
+}
+remove_all_filters( 'wp_doing_ajax' );
+remove_all_filters( 'wp_die_ajax_handler' );
+null === $was_opt ? delete_option( $opt ) : update_option( $opt, $was_opt );
+$was_cart ? update_user_meta( $buyer, '_wpss_cart', $was_cart ) : delete_user_meta( $buyer, '_wpss_cart' );
+wp_set_current_user( 1 );
+
 // Cleanup.
 $registry->setValue( wpss(), $real );
 foreach ( $made as $id ) {
 	$wpdb->delete( $orders, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 	$wpdb->delete( $wpdb->prefix . 'wpss_wallet_transactions', array( 'reference_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+	$wpdb->delete( $wpdb->prefix . 'wpss_conversations', array( 'order_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 }
 
 echo $fails ? "\n{$fails} FAILED\n" : "\nall passed\n";

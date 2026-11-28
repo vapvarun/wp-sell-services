@@ -1,6 +1,6 @@
 # Take Payments Outside the Plugin
 
-Some sites collect money with something the plugin does not ship, such as Flutterwave, Mobile Money or a payment link sent by hand. Adding a full payment gateway is custom development. This page shows the lighter route: let the buyer place an order with the **Offline** method, collect the money your own way, then tell the plugin the order is paid.
+Some sites collect money with something the plugin does not ship, such as Flutterwave, Mobile Money or a payment link sent by hand. To add the provider as a real payment method, see [Add a Payment Method](add-a-payment-method.md). This page shows the lighter route: let the buyer place an order with the **Offline** method, collect the money your own way, then tell the plugin the order is paid.
 
 You need two things: a signal when an order is placed, and a way to say it is paid.
 

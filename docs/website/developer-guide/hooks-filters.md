@@ -143,8 +143,8 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_offline_multi_orders_created` | `array $order_ids, int $customer_id` | `src/Integrations/Gateways/OfflineGateway.php:738` |
-| `wpss_offline_order_created` | `int $order_id, object $order` | `src/Integrations/Gateways/OfflineGateway.php:779` |
+| `wpss_offline_multi_orders_created` | `array $order_ids, int $customer_id` | `src/Integrations/Gateways/OfflineGateway.php:692` |
+| `wpss_offline_order_created` | `int $order_id, object $order` | `src/Integrations/Gateways/OfflineGateway.php:730` |
 | `wpss_offline_order_paid` | `int $order_id, string $transaction_id, string $payment_method` | `src/Services/ManualPaymentService.php:90` |
 
 ### Stripe Gateway
@@ -173,7 +173,7 @@ Fired by every gateway through one door on the base gateway. An opened chargebac
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/Integrations/Gateways/AbstractPaymentGateway.php:345` |
+| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `src/Integrations/Gateways/AbstractPaymentGateway.php:389` |
 
 ### Payment Filters
 
@@ -981,7 +981,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:946` |
+| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:947` |
 
 ### Stripe Connect Actions
 

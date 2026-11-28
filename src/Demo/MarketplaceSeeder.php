@@ -859,7 +859,7 @@ class MarketplaceSeeder {
 				'status'             => $db_status,
 				'delivery_deadline'  => $deadline,
 				'original_deadline'  => $deadline,
-				'payment_method'     => $is_paid ? 'standalone' : null,
+				'payment_method'     => $is_paid ? 'test' : null, // Demo money is the Test gateway's; 'standalone' is a rail, not a gateway.
 				'payment_status'     => $is_paid ? 'paid' : 'pending',
 				'transaction_id'     => $is_paid ? 'demo_txn_' . wp_generate_password( 12, false ) : null,
 				'paid_at'            => $is_paid ? $created_at : null,
@@ -1365,7 +1365,7 @@ class MarketplaceSeeder {
 		$table        = $wpdb->prefix . 'wpss_withdrawals';
 		$ledger_table = $wpdb->prefix . 'wpss_wallet_transactions';
 		$statuses     = array_keys( EarningsService::get_withdrawal_statuses() );
-		$methods      = array( 'paypal', 'bank_transfer', 'paypal', 'stripe' );
+		$methods      = array_keys( EarningsService::get_withdrawal_methods() ) ?: array( 'bank_transfer' ); // The methods this site offers.
 		$created      = 0;
 
 		foreach ( $vendors as $index => $vendor ) {

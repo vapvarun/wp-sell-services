@@ -701,7 +701,7 @@ class ServiceCommands extends WP_CLI_Command {
 					'currency'       => wpss_get_currency(),
 					'status'         => 'completed',
 					'payment_status' => 'paid',
-					'payment_method' => 'standalone',
+					'payment_method' => 'test',
 					'created_at'     => $created_at,
 					'completed_at'   => $created_at,
 					'meta'           => wp_json_encode(

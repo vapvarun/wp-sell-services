@@ -239,6 +239,50 @@ abstract class AbstractPaymentGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Open one pending-payment order per line of the buyer's cart, on this rail, and empty the cart.
+	 *
+	 * The cart checkout's writer for every rail that is paid later (Offline, a third-party bank
+	 * transfer): the same standing rule, cart reader and order limits as a single purchase, with the
+	 * limit applied to the basket as a whole, the number the buyer was shown.
+	 *
+	 * @since 2.0.0 Lifted from OfflineGateway so every pay-later gateway has it.
+	 *
+	 * @param int $customer_id Buyer.
+	 * @return int[]|WP_Error Created order ids.
+	 */
+	public function open_pending_cart_orders( int $customer_id ) {
+		$standing = wpss_account_status_block( $customer_id );
+		if ( $standing ) {
+			return $standing;
+		}
+
+		// The one cart reader: it drops services the seller paused or deleted.
+		$cart = wpss_get_user_cart( $customer_id );
+
+		if ( empty( $cart ) ) {
+			return new WP_Error( 'wpss_empty_cart', __( 'Your cart is empty.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		// A maximum limits one transaction, so three $9 rows under a $10 cap are refused like one $11 order.
+		$limit_error = wpss_check_order_limits( (float) array_sum( array_map( static fn( $row ) => (float) ( $row['total'] ?? 0 ), $cart ) ), $this->get_id() . '_cart' );
+
+		if ( null !== $limit_error ) {
+			return $limit_error;
+		}
+
+		// No payment reference exists yet; the placeholder is one every reader knows is not a real one.
+		$order_ids = wpss_get_order_provider()->create_orders_from_cart( $cart, $this->get_id(), OfflineGateway::GENERATED_MULTI_PREFIX . wp_generate_uuid4(), $customer_id );
+
+		if ( empty( $order_ids ) ) {
+			return new WP_Error( 'wpss_order_failed', __( 'Failed to create orders. Please try again.', 'wp-sell-services' ), array( 'status' => 500 ) );
+		}
+
+		delete_user_meta( $customer_id, '_wpss_cart' );
+
+		return array_map( 'intval', $order_ids );
+	}
+
+	/**
 	 * Create a pending-payment order for one service, priced by the one pricer.
 	 *
 	 * Shared by the checkout form (AJAX) and the app (POST

@@ -1382,6 +1382,13 @@
         "wpss_get_order_subject 'Private offer: %s'"
       ],
       "test": "tests/test-private-offers.php (guard static:private-offers)"
+    },
+    "payment_method_kit": {
+      "card": "10551488457 (2.0.0)",
+      "guide": "docs/website/developer-guide/add-a-payment-method.md",
+      "sample": "docs/examples/wpss-sample-bank-transfer/ (separate plugin, id sample_bank_transfer, manual_confirmation; excluded from the dist zip with docs/)",
+      "base_writers": "AbstractPaymentGateway::open_pending_order() (one purchase or an existing order) and open_pending_cart_orders( $customer_id ) (one order per cart line, basket-wide limits, empties the cart). Offline and the sample both call them; no gateway prices or writes order rows.",
+      "contract": "tests/test-payment-module-contract.php sections 10-11: every registered gateway (ours or third-party) is checked with outbound HTTP stubbed to fail; the sample is walked through its own checkout handler."
     }
   },
   "coverage": {

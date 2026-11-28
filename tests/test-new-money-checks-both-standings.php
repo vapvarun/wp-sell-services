@@ -109,9 +109,10 @@ if ( ! $service ) {
 	wp_set_current_user( 0 );
 }
 
-// The cart branch of the offline AJAX handler carries the same gate (it exits, so read the source).
-$src  = (string) file_get_contents( dirname( __DIR__ ) . '/src/Integrations/Gateways/OfflineGateway.php' );
-$cart = substr( $src, (int) strpos( $src, "\$request['is_multi_checkout'] ) {" ), 1200 );
-$check( 'offline cart branch checks the buyer standing', str_contains( $cart, 'wpss_account_status_block( $customer_id )' ) );
+// The cart checkout, through the writer every pay-later gateway shares (Offline, third-party ones).
+$set( $buyer, 'banned' );
+$cart_made = ( new OfflineGateway() )->open_pending_cart_orders( $buyer );
+$check( 'cart checkout: a banned buyer gets the standing refusal before the cart is read', is_wp_error( $cart_made ) && 'wpss_account_banned' === $cart_made->get_error_code(), is_wp_error( $cart_made ) ? $cart_made->get_error_code() : wp_json_encode( $cart_made ) );
+$set( $buyer, '' );
 
 echo $fails ? "FAILED: {$fails}\n" : "OK\n";
