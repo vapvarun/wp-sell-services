@@ -38,7 +38,6 @@ Every option the code reads, with the default it falls back to. **A blank defaul
 | `wpss_min_order_amount` | `5` | 2 |  | src/API/API.php |
 | `wpss_max_order_amount` | `10000` | 2 |  | src/API/API.php |
 | `wpss_order_confirmation_page` | `` | 2 |  | src/functions/orders.php |
-| `wpss_popular_searches` | `array(` | 2 |  | src/Services/SearchService.php |
 | `wpss_standalone_migrated` | `` | 1 |  | wp-sell-services.php |
 | `wpss_version` | `''` | 1 |  | src/Core/Plugin.php |
 | `wpss_ledger_reconciled` | `false` | 1 |  | src/Core/Plugin.php |
@@ -753,9 +752,6 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 57
 - `wpss_email_before_send` — src/Services/EmailService.php
 - `wpss_pre_submit_delivery` — src/Services/DeliveryService.php
 - `wpss_cascade_preserve_shared_records` — src/Services/DataCascadeHandler.php
-- `wpss_search_results` — src/Services/SearchService.php
-- `wpss_search_query_args` — src/Services/SearchService.php
-- `wpss_search_suggestions` — src/Services/SearchService.php
 
 </details>
 

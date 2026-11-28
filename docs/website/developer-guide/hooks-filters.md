@@ -681,7 +681,6 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_validate_add_to_cart` | `bool $valid, int $service_id, int $package_id, int $user_id` | `CartController.php` |
 | `wpss_cart_item_data` | `array $cart_item, int $service_id, int $package_id` | `CartController.php` |
 | `wpss_email_subject` | `string $subject, string $type, string $to` | `EmailService.php` |
-| `wpss_search_query_args` | `array $query_args, string $query` | `SearchService.php` |
 | `wpss_template_args` | `array $args, string $template_name` | `functions.php` |
 
 | Hook | Parameters | File |
@@ -844,8 +843,6 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_payout_method_registry` | `$methods` (id => label + fields; optional `render` callable( $user_id ) draws the method's card in the vendor's Payout Methods, `withdrawal` => false keeps a connect-only rail out of the withdrawal choices) | `src/Services/EarningsService.php:1373` |
 | `wpss_order_needs_requirements` | `$needs, $order`: whether a paid order waits in pending_requirements (Pro answers false for a recurring renewal) | `src/functions/requirements.php:285` |
 | `wpss_vendor_reserved_payouts` | `$reserved` (default 0), `$vendor_id`: money a payout rail has committed but not yet debited; counted as a withdrawal in progress | `src/Services/EarningsService.php:175` |
-| `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
-| `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:763` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:265` |

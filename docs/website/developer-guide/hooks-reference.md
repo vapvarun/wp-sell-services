@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**612 hooks** across **836** firing sites.
+**609 hooks** across **833** firing sites.
 
 ## Actions (312)
 
@@ -329,7 +329,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (300)
+## Filters (297)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -542,9 +542,6 @@ guide; this is the complete index.
 | `wpss_review_window_days` | 1 | `src/Services/ReviewService.php` | Filter the review time window in days. |
 | `wpss_reviews_per_page` | 2 | `src/Frontend/AjaxHandlers.php` *(+1 more)* | Filters the number of reviews to display per page. |
 | `wpss_search_categories_limit` | 1 | `src/Blocks/ServiceSearch.php` |  |
-| `wpss_search_query_args` | 2 | `src/Services/SearchService.php` | Filter the WP_Query arguments for service search. |
-| `wpss_search_results` | 3 | `src/Services/SearchService.php` | Filter search results. |
-| `wpss_search_suggestions` | 2 | `src/Services/SearchService.php` | Filter search suggestions. |
 | `wpss_secret_constants` | 1 | `src/functions/security.php` | Filters the secret fields that wp-config.php constants can supply. |
 | `wpss_seller_levels` | 1 | `src/API/SellerLevelsController.php` | Filter seller level definitions. |
 | `wpss_seo_integrations` | 1 | `src/SEO/SEO.php` | Filter the SEO plugin integrations. |

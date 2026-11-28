@@ -1281,9 +1281,6 @@
             "wpss_search_categories_limit": [
                 "audit/render-coverage.json"
             ],
-            "wpss_search_query_args": [],
-            "wpss_search_results": [],
-            "wpss_search_suggestions": [],
             "wpss_secret_constants": [
                 "tests/test-secret-constants.php"
             ],
