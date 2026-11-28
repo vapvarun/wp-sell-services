@@ -50,6 +50,9 @@ if ( 'closed' === $mode ) {
 	return;
 }
 
+// The signup limit is 3 per IP per 10 minutes, so back-to-back guard sweeps would hit 429.
+\WPSellServices\Core\RateLimiter::clear( 'auth_register' );
+
 $tag     = 'qa' . wp_rand( 1000, 9999 );
 $request = new WP_REST_Request( 'POST', '/wpss/v1/auth/register' );
 $request->set_body_params(
