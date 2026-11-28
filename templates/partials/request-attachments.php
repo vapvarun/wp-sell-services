@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 $wpss_files_locked   = ! empty( $wpss_files_locked );
 $wpss_attachment_ids = array_filter( array_map( 'absint', (array) ( $wpss_attachment_ids ?? array() ) ) );
 $wpss_file_types     = array_filter( array_map( 'trim', explode( ',', strtolower( (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ) ) ) );
-$wpss_file_max       = (int) wpss_get_option( 'advanced', 'max_file_size' );
+$wpss_file_max       = wpss_get_max_upload_size();
 ?>
 <div class="wpss-form-row">
 	<label for="request_attachments"><?php esc_html_e( 'Attachments', 'wp-sell-services' ); ?></label>
@@ -55,7 +55,7 @@ $wpss_file_max       = (int) wpss_get_option( 'advanced', 'max_file_size' );
 		printf(
 			/* translators: %s: maximum file size */
 			esc_html__( 'A brief, mockups or reference images. Vendors see them on your request. Up to %s each.', 'wp-sell-services' ),
-			esc_html( size_format( $wpss_file_max * MB_IN_BYTES ) )
+			esc_html( size_format( $wpss_file_max ) )
 		);
 		?>
 	</p>

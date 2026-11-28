@@ -668,15 +668,18 @@ function wpss_limit_media_library_to_own( array $query ): array {
 add_filter( 'ajax_query_attachments_args', 'wpss_limit_media_library_to_own' );
 
 /**
- * Get max upload size in bytes.
+ * The largest file a member can upload, in bytes: the owner's Max File Upload
+ * Size setting, capped by the server's own PHP limit. Every upload hint and the
+ * app config read this, so no screen promises a size that is refused
+ * (Basecamp 10553847173).
  *
  * @return int
  */
 function wpss_get_max_upload_size(): int {
-	$upload_max = wp_max_upload_size();
+	$upload_max = min( (int) wpss_get_option( 'advanced', 'max_file_size' ) * MB_IN_BYTES, (int) wp_max_upload_size() );
 
 	/**
-	 * Filter the max upload size for requirements files.
+	 * Filter the largest upload size shown to members.
 	 *
 	 * @param int $max_size Max size in bytes.
 	 */

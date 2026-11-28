@@ -705,7 +705,7 @@ class API {
 			'vendor_registration' => wpss_get_option( 'vendor', 'vendor_registration' ),
 			'service_moderation'  => (bool) wpss_get_option( 'vendor', 'require_service_moderation' ),
 			'review_moderation'   => (bool) wpss_get_option( 'vendor', 'moderate_reviews' ),
-			'max_file_size'       => (int) wpss_get_option( 'advanced', 'max_file_size' ) * 1024 * 1024, // MB to bytes.
+			'max_file_size'       => wpss_get_max_upload_size(), // Bytes: the setting, capped by the server's PHP limit.
 			'allowed_file_types'  => explode( ',', (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ),
 			// Page IDs, or NULL where the site has no published page for that
 			// key. `vendors` and `terms` are never created by the installer, so

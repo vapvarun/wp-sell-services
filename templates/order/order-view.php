@@ -1941,9 +1941,9 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 					<p class="wpss-form-help">
 						<?php
 						printf(
-							/* translators: %d: maximum upload size in megabytes */
-							esc_html__( 'Max file size: %dMB. Supported: images, documents, archives.', 'wp-sell-services' ),
-							(int) wpss_get_option( 'advanced', 'max_file_size' )
+							/* translators: %s: maximum upload size, e.g. 10 MB */
+							esc_html__( 'Max file size: %s. Supported: images, documents, archives.', 'wp-sell-services' ),
+							esc_html( size_format( wpss_get_max_upload_size() ) )
 						);
 						?>
 					</p>

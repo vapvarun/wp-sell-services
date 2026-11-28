@@ -450,7 +450,7 @@ guide; this is the complete index.
 | `wpss_locked_billing_fields` | 1 | `src/functions/billing.php` | Filters the billing fields that cannot be disabled. |
 | `wpss_manual_order_payment_methods` | 1 | `src/functions/payments.php` | Filter the payment methods a manual order can record. Each counts as manual: Mark as paid, the to-confirm queue, and never swept as abandoned. |
 | `wpss_max_order_quantity` | 2 | `src/Frontend/SingleServiceView.php` *(+2 more)* | Filters the maximum order quantity for a service. |
-| `wpss_max_upload_size` | 1 | `src/functions/files.php` | Filter the max upload size for requirements files. |
+| `wpss_max_upload_size` | 1 | `src/functions/files.php` | Filter the largest upload size shown to members. |
 | `wpss_max_upload_size_mb` | 3 | `src/functions/files.php` | Filter the maximum upload size, in megabytes. |
 | `wpss_member_bypasses_limits` | 2 | `src/functions/vendors.php` | Filter whether a member is exempt from vendor selling limits. |
 | `wpss_member_display_name` | 3 | `src/functions/vendors.php` *(+1 more)* | This filter is documented below. |

@@ -985,7 +985,7 @@ class ServiceWizard {
 					printf(
 						/* translators: %s: maximum file size, e.g. 10 MB. */
 						esc_html__( 'One file, up to %s. To sell several files, put them in one ZIP.', 'wp-sell-services' ),
-						esc_html( (int) wpss_get_option( 'advanced', 'max_file_size' ) . ' MB' )
+						esc_html( size_format( wpss_get_max_upload_size() ) )
 					);
 					?>
 				</p>

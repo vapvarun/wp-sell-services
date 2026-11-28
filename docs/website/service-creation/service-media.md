@@ -34,7 +34,7 @@ Gallery images let vendors showcase more of their work. Think of these as a port
 
 **Supported formats:** JPG, JPEG, PNG, GIF, WebP
 
-**Maximum file size:** 5MB per image
+**Maximum file size:** the limit the site owner sets under **Settings > System > Max Upload Size** (10 MB by default; see [System Settings](../platform-settings/advanced-settings.md#max-upload-size)), or the server's own upload limit if that is lower.
 
 In the free version, you can add up to 4 additional images. With **[PRO]**, there is no limit.
 

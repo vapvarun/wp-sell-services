@@ -730,7 +730,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:752` |
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1547` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/order-status.php:85` |
-| `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:682` |
+| `wpss_max_upload_size` | `$upload_max` | `src/functions/files.php:685` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/requirements.php:445` |
 | `wpss_wallet_manager` | `null` | `src/functions/ledger.php:763` |
 
