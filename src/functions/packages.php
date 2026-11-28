@@ -293,6 +293,11 @@ function wpss_save_service_addons( int $service_id, array $addons ): void {
  * @return int Delivery days, 0 when neither key is set.
  */
 function wpss_get_service_delivery_days( int $service_id ): int {
+	// A type delivered at payment (a digital product) has no delivery time, whatever its packages store.
+	if ( ! wpss_service_type_supports( $service_id, 'delivery' ) ) {
+		return 0;
+	}
+
 	$delivery_days = (int) get_post_meta( $service_id, '_wpss_delivery_days', true );
 
 	if ( $delivery_days <= 0 ) {

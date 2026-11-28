@@ -146,7 +146,7 @@ abstract class AbstractSeoIntegration implements SeoIntegrationInterface {
 
 		$service_id    = get_the_ID();
 		$price         = get_post_meta( $service_id, '_wpss_starting_price', true );
-		$delivery_days = wpss_service_type_supports( $service_id, 'delivery' ) ? wpss_get_service_delivery_days( $service_id ) : 0;
+		$delivery_days = wpss_get_service_delivery_days( $service_id );
 
 		$additions = array();
 

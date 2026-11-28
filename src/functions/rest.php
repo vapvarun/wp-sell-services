@@ -411,7 +411,8 @@ function wpss_rest_service_card( \WP_Post $service ): array {
 		// currency, which is the helper's default.
 		'pricing'      => wpss_rest_money( 'base_price', (float) get_post_meta( $service->ID, '_wpss_starting_price', true ) ),
 		'delivery'     => array(
-			'time'      => wpss_get_service_delivery_days( $service->ID ) ?: 7,
+			// 0: delivered at payment (a digital product). Otherwise a service with no stored time reads as 7 days.
+			'time'      => wpss_service_type_supports( $service->ID, 'delivery' ) ? ( wpss_get_service_delivery_days( $service->ID ) ?: 7 ) : 0,
 			'revisions' => wpss_get_service_revisions( $service->ID ),
 		),
 		'images'       => wpss_rest_service_images( $service->ID ),
