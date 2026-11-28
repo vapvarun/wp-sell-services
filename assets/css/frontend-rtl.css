@@ -4213,6 +4213,13 @@ a.wpss-back-link:focus {
 	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
+/* 40px tap floor on any touch screen: the chips measured 35px on iPad. */
+@media (max-width: 1024px), (pointer: coarse) {
+	.wpss-order-filter {
+		min-height: var(--wpss-space-10, 40px);
+	}
+}
+
 /* Themes restyle bare <a>, so hover/focus/visited are all stated explicitly -
    otherwise the chip changes colour on a visited filter. */
 .wpss-order-filter:visited {
