@@ -48,7 +48,8 @@ class OrderTimelineService {
 			$this->delivery_events( $order_id ),
 			$this->sub_order_events( $order_id ),
 			$this->status_events( $order ),
-			$this->chargeback_events( $order )
+			// Owner rule: a chargeback is the site owner's alone; the buyer and the vendor are not told (Basecamp 10553225092).
+			current_user_can( 'manage_options' ) ? $this->chargeback_events( $order ) : array()
 		);
 
 		// Oldest first: an activity log reads top-down in the order things

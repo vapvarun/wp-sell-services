@@ -2051,7 +2051,7 @@ class Admin {
 			array(
 				'count' => $payments_to_confirm,
 				'label' => __( 'Payments to confirm', 'wp-sell-services' ),
-				'url'   => admin_url( 'admin.php?page=wpss-orders&status=pending_payment&payment_method=offline' ),
+				'url'   => admin_url( 'admin.php?page=wpss-orders&status=pending_payment&to_confirm=1' ),
 				'icon'  => 'hand-coins',
 			),
 			array(
@@ -2294,7 +2294,9 @@ class Admin {
 		// A filter that matches nothing keeps the table (and its filters) so it
 		// can be changed; only a store with no orders at all gets the empty state.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filters.
-		$is_filtered = (bool) array_filter( array_intersect_key( $_GET, array_flip( array( 'group', 'status', 'm', 'suborder_type', 's', 'vendor_id', 'customer_id' ) ) ) );
+		// Every filter OrdersListTable::get_filter_sql() reads, so the export file is the list on screen.
+		$filter_keys = array( 'group', 'status', 'm', 'suborder_type', 's', 'vendor_id', 'customer_id', 'payment_method', 'to_confirm' );
+		$is_filtered = (bool) array_filter( array_intersect_key( $_GET, array_flip( $filter_keys ) ) );
 		$has_items   = ! empty( $list_table->items ) || $is_filtered;
 		?>
 		<div class="wrap">
@@ -2305,7 +2307,7 @@ class Admin {
 				</a>
 				<?php
 				// Export the CURRENT filter, so the file is what the owner is looking at.
-				$export_args = array_intersect_key( wp_unslash( $_GET ), array_flip( array( 'group', 'status', 'm', 'suborder_type', 's', 'vendor_id', 'customer_id' ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only filters, sanitized in the handler.
+				$export_args = array_intersect_key( wp_unslash( $_GET ), array_flip( $filter_keys ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only filters, sanitized in the handler.
 				$export_url  = wp_nonce_url( add_query_arg( array_merge( array( 'action' => 'wpss_export_orders' ), $export_args ), admin_url( 'admin-post.php' ) ), 'wpss_export_orders' );
 				?>
 				<a href="<?php echo esc_url( $export_url ); ?>" class="page-title-action"><?php esc_html_e( 'Export CSV', 'wp-sell-services' ); ?></a>
@@ -2745,7 +2747,7 @@ class Admin {
 			// A bank chargeback still open on this order's payment (Basecamp 10553225092). Cleared when the
 			// provider closes it; a lost one then shows as a refund like any other.
 			$wpss_gateways = wpss()->get_payment_gateways();
-			foreach ( \WPSellServices\Services\ChargebackService::open_for_order( $order ) as $wpss_cb ) :
+			foreach ( current_user_can( 'manage_options' ) ? \WPSellServices\Services\ChargebackService::open_for_order( $order ) : array() as $wpss_cb ) :
 				$wpss_cb_gateway = (string) ( $wpss_cb['gateway'] ?? '' );
 				$wpss_cb_label   = isset( $wpss_gateways[ $wpss_cb_gateway ] ) ? $wpss_gateways[ $wpss_cb_gateway ]->get_name() : ucfirst( $wpss_cb_gateway );
 				?>

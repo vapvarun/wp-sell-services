@@ -474,7 +474,14 @@ class OrdersListTable extends \WP_List_Table {
 			}
 		}
 
-		// Payment method: the Dashboard's Payments to confirm card links here with payment_method=offline.
+		// Payments to confirm (Dashboard card, Orders bubble): every method confirmed by hand, the same rows
+		// wpss_count_payments_to_confirm() counts - Offline, Manual Order's bank transfer/cash/other, add-on gateways.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! empty( $_GET['to_confirm'] ) ) {
+			$where .= ' AND ' . wpss_manual_payment_sql();
+		}
+
+		// Payment method: one exact method.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! empty( $_GET['payment_method'] ) ) {
 			$where .= ' AND payment_method = %s';

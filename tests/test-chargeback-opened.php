@@ -105,8 +105,12 @@ try {
 	$check( '  the order status and payment stay as they were', 'in_progress' === $row( $a )->status && 'paid' === $row( $a )->payment_status );
 	$check( '  no money moves', $ledger0 === $ledgers() );
 	$check( '  the evidence date is kept', gmdate( 'Y-m-d H:i:s', $due ) === ( $open( $a )['dp_qa_one']['due_by'] ?? '' ) );
+	wp_set_current_user( $vendor ); // The administrator: the owner reads the order's Activity.
 	$timeline = ( new OrderTimelineService() )->get_timeline( $a );
 	$check( '  Activity shows when it opened and when evidence is due', (bool) array_filter( $timeline, static fn( $e ) => 'chargeback_opened' === $e['type'] && str_contains( $e['message'], 'Evidence due' ) ) );
+	wp_set_current_user( $buyer ); // GET /orders/{id}/timeline answers the buyer and the vendor too.
+	$check( '  the buyer\'s timeline (REST, the app) does not mention it', ! array_filter( ( new OrderTimelineService() )->get_timeline( $a ), static fn( $e ) => str_starts_with( (string) $e['type'], 'chargeback_' ) ) );
+	wp_set_current_user( $vendor );
 
 	$stripe->handle_webhook( $event );
 	$check( 'the same event resent: no second email', 1 === count( $mails ), (string) count( $mails ) );
