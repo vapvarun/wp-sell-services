@@ -71,7 +71,7 @@ foreach ( array( 'pending', 'failed' ) as $payment ) {
 	list( $id, $msg ) = $create( 'completed', $payment );
 	$check( "Completed + {$payment}: refused, no order", 0 === $id, "order #{$id}" );
 	$check( "Completed + {$payment}: no earning credited", 0 === $id || 0 === $earned( $id ) );
-	$check( "Completed + {$payment}: the notice says what to do", false !== stripos( $msg, 'Pending Payment' ), $msg );
+	$check( "Completed + {$payment}: the notice says what to do", false !== stripos( $msg, 'Awaiting payment' ), $msg );
 }
 list( $id ) = $create( 'in_progress', 'pending' );
 $check( 'In Progress + pending: refused', 0 === $id, "order #{$id}" );

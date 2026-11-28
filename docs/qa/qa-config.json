@@ -1051,6 +1051,10 @@
    {
     "id": "private-offers",
     "run": "${WP_CLI:-wp} eval-file tests/test-private-offers.php"
+   },
+   {
+    "id": "status-badge-contract",
+    "run": "${WP_CLI:-wp} eval-file tests/test-status-badge-contract.php"
    }
   ]
  }

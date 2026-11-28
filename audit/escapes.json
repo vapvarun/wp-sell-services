@@ -1640,6 +1640,15 @@
    "added": "2026-11-28",
    "fails_on": "9c2dcd31 run as wp --path=../../.. from the plugin folder (4 FAIL: the store path contains '..', then the stored-bytes and both delete checks)",
    "check": "tests/test-digital-products.php"
+  },
+  {
+   "card": "",
+   "title": "One order state showed two names (chip 'Awaiting payment', badge 'Pending Payment'), badges came in three cases from CSS text-transform, and statuses with no palette rule (admin 'Hired') rendered as plain text: every status pill now renders through wpss_status_class() from a sentence-case label map, and every status key a badge can show has a colour in both palette copies",
+   "guard": "static:status-badge-contract",
+   "added": "2026-11-28",
+   "fails_on": "1f3aab51 (30 FAIL: missing colours for hired, publish, paused, draft, expired, declined and others; text-transform on featured, pro and status badges)",
+   "check": "tests/test-status-badge-contract.php",
+   "note": "Removed the dashboard's second palette (.wpss-status--*), the service-card and request-badge palettes, and two copied order-status maps"
   }
  ]
 }

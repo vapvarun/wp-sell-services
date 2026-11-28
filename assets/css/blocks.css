@@ -578,7 +578,6 @@
 	color: var(--wpss-block-white);
 	font-size: 0.6875rem;
 	font-weight: 600;
-	text-transform: uppercase;
 	border-radius: var(--wpss-block-radius);
 }
 

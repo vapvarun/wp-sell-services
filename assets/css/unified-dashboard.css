@@ -563,37 +563,7 @@
 .wpss-service-card__status {
 	position: absolute;
 	top: 8px;
-	right: 8px;
-	padding: 4px 10px;
-	font-size: 11px;
-	font-weight: 600;
-	border-radius: 4px;
-	text-transform: uppercase;
-}
-
-.wpss-service-card__status--publish {
-	background: var(--wpss-success-light);
-	color: var(--wpss-success-dark, #065f46);
-}
-
-.wpss-service-card__status--draft {
-	background: var(--wpss-gray-200);
-	color: var(--wpss-gray-600);
-}
-
-.wpss-service-card__status--paused {
-	background: var(--wpss-info-light, #eff6ff);
-	color: var(--wpss-info-dark, #1e40af);
-}
-
-.wpss-service-card__status--pending {
-	background: var(--wpss-warning-light);
-	color: var(--wpss-warning-dark, #92400e);
-}
-
-.wpss-service-card__status--rejected {
-	background: var(--wpss-status-rejected-bg, #f8d7da);
-	color: var(--wpss-status-rejected-fg, #721c24);
+	inset-inline-end: 8px;
 }
 
 .wpss-service-card__body {
@@ -1394,93 +1364,6 @@
 /* ==========================================================================
    Status Badges
    ========================================================================== */
-
-.wpss-status {
-	display: inline-flex;
-	align-items: center;
-	padding: 4px 10px;
-	font-size: 12px;
-	font-weight: 600;
-	border-radius: 4px;
-	white-space: nowrap;
-}
-
-.wpss-status--pending,
-.wpss-status--pending_requirements,
-.wpss-status--pending_payment {
-	background: var(--wpss-warning-light);
-	color: var(--wpss-warning-dark, #92400e);
-}
-
-.wpss-status--pending_approval {
-	background: var(--wpss-status-pending-approval-bg, #c6e1c6);
-	color: var(--wpss-status-pending-approval-fg, #3f5c13);
-}
-
-.wpss-status--in_progress {
-	background: var(--wpss-status-in-progress-bg, #e0e7ff);
-	color: var(--wpss-status-in-progress-fg, #3730a3);
-}
-
-.wpss-status--completed {
-	background: var(--wpss-success-light);
-	color: var(--wpss-success-dark, #065f46);
-}
-
-.wpss-status--cancelled {
-	background: var(--wpss-danger-light);
-	color: var(--wpss-danger-dark, #991b1b);
-}
-
-.wpss-status--publish {
-	background: var(--wpss-success-light);
-	color: var(--wpss-success-dark, #065f46);
-}
-
-.wpss-status--draft {
-	background: var(--wpss-gray-200);
-	color: var(--wpss-gray-600);
-}
-
-.wpss-status--revision_requested {
-	background: var(--wpss-status-revision-bg, #e0f2fe);
-	color: var(--wpss-status-revision-fg, #075985);
-}
-
-.wpss-status--delivered {
-	background: var(--wpss-status-delivered-bg, #dbeafe);
-	color: var(--wpss-status-delivered-fg, #1e40af);
-}
-
-.wpss-status--disputed {
-	background: var(--wpss-status-disputed-bg, #fed7aa);
-	color: var(--wpss-status-disputed-fg, #9a3412);
-}
-
-.wpss-status--refunded {
-	background: var(--wpss-status-refunded-bg, #f3e8ff);
-	color: var(--wpss-status-refunded-fg, #6b21a8);
-}
-
-.wpss-status--cancellation_requested {
-	background: var(--wpss-danger-light, #fee2e2);
-	color: var(--wpss-danger-dark, #991b1b);
-}
-
-.wpss-status--partially_refunded {
-	background: var(--wpss-status-partially-refunded-bg, #ecfeff);
-	color: var(--wpss-status-partially-refunded-fg, #155e75);
-}
-
-.wpss-status--late {
-	background: var(--wpss-status-late-bg, #fef9c3);
-	color: var(--wpss-status-late-fg, #854d0e);
-}
-
-.wpss-status--on_hold {
-	background: var(--wpss-status-on-hold-bg, #e5e7eb);
-	color: var(--wpss-status-on-hold-fg, #374151);
-}
 
 /* ==========================================================================
    Alerts
@@ -2819,8 +2702,6 @@ select.wpss-input option,
 	padding: 2px 8px;
 	font-size: 11px;
 	font-weight: 700;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
 	color: var(--wpss-badge-tip-fg, #b91c1c);
 	background: var(--wpss-badge-tip-bg, #fee2e2);
 	border-radius: 999px;
@@ -2847,8 +2728,6 @@ select.wpss-input option,
 	padding: 2px 8px;
 	font-size: 11px;
 	font-weight: 700;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
 	color: var(--wpss-badge-extension-fg, #92400e);
 	background: var(--wpss-badge-extension-bg, #fef3c7);
 	border-radius: 999px;
@@ -2876,8 +2755,6 @@ select.wpss-input option,
 	padding: 2px 8px;
 	font-size: 11px;
 	font-weight: 700;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
 	color: var(--wpss-badge-milestone-fg, #115e59);
 	background: var(--wpss-badge-milestone-bg, #ccfbf1);
 	border-radius: 999px;
@@ -3305,7 +3182,6 @@ select.wpss-input option,
 	border-radius: 4px;
 	font-size: 12px;
 	font-weight: 500;
-	text-transform: capitalize;
 }
 
 .wpss-status-open {

@@ -1410,16 +1410,6 @@ article.wpss-service-card:hover {
 	color: var(--wpss-text-light);
 }
 
-/* Status Badges */
-.wpss-status {
-	display: inline-flex;
-	padding: 4px 10px;
-	font-size: 12px;
-	font-weight: 600;
-	border-radius: var(--wpss-radius);
-	text-transform: capitalize;
-}
-
 /* Status pills (.wpss-status-badge + .wpss-status-*) are now owned by the ONE
    canonical palette in design-system.css, which loads before this file on
    every frontend cascade. The copies that used to live here disagreed with

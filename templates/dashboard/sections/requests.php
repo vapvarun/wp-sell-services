@@ -135,7 +135,7 @@ $active_count = (int) ( new WP_Query(
 						</div>
 					</div>
 					<div class="wpss-request-card__actions">
-						<span class="wpss-status wpss-status--<?php echo esc_attr( $item_status ); ?>">
+						<span class="<?php echo esc_attr( wpss_status_class( $item_status ) ); ?>">
 							<?php
 							$status_obj = get_post_status_object( $item_status );
 							echo esc_html( $status_obj ? $status_obj->label : ucfirst( $item_status ) );

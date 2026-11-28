@@ -300,7 +300,6 @@
 	font-size: 0.75rem;
 	font-weight: 500;
 	border-radius: var(--wpss-radius-full, 9999px);
-	text-transform: capitalize;
 }
 
 .wpss-badge--primary {

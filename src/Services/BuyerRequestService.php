@@ -1470,8 +1470,9 @@ class BuyerRequestService {
 	public static function get_statuses(): array {
 		return array(
 			self::STATUS_OPEN      => __( 'Open', 'wp-sell-services' ),
-			self::STATUS_IN_REVIEW => __( 'In Review', 'wp-sell-services' ),
+			self::STATUS_IN_REVIEW => __( 'In review', 'wp-sell-services' ),
 			self::STATUS_HIRED     => __( 'Hired', 'wp-sell-services' ),
+			self::STATUS_CLOSED    => __( 'Closed', 'wp-sell-services' ),
 			self::STATUS_EXPIRED   => __( 'Expired', 'wp-sell-services' ),
 			self::STATUS_CANCELLED => __( 'Cancelled', 'wp-sell-services' ),
 		);

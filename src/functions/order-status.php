@@ -58,16 +58,16 @@ function wpss_get_order_status_label( string $status ): string {
  */
 function wpss_get_order_statuses(): array {
 	$statuses = array(
-		'pending_payment'        => __( 'Pending Payment', 'wp-sell-services' ),
-		'pending_requirements'   => __( 'Pending Requirements', 'wp-sell-services' ),
-		'pending_approval'       => __( 'Pending Approval', 'wp-sell-services' ),
+		'pending_payment'        => __( 'Awaiting payment', 'wp-sell-services' ),
+		'pending_requirements'   => __( 'Awaiting requirements', 'wp-sell-services' ),
+		'pending_approval'       => __( 'Awaiting approval', 'wp-sell-services' ),
 		'pending'                => __( 'Pending', 'wp-sell-services' ),
 		'accepted'               => __( 'Accepted', 'wp-sell-services' ),
 		'rejected'               => __( 'Rejected', 'wp-sell-services' ),
 		'requirements_submitted' => __( 'Requirements submitted', 'wp-sell-services' ),
-		'in_progress'            => __( 'In Progress', 'wp-sell-services' ),
+		'in_progress'            => __( 'In progress', 'wp-sell-services' ),
 		'delivered'              => __( 'Delivered', 'wp-sell-services' ),
-		'on_hold'                => __( 'On Hold', 'wp-sell-services' ),
+		'on_hold'                => __( 'On hold', 'wp-sell-services' ),
 		'late'                   => __( 'Late', 'wp-sell-services' ),
 		'cancellation_requested' => __( 'Cancellation requested', 'wp-sell-services' ),
 		'revision_requested'     => __( 'Revision requested', 'wp-sell-services' ),
@@ -75,7 +75,7 @@ function wpss_get_order_statuses(): array {
 		'cancelled'              => __( 'Cancelled', 'wp-sell-services' ),
 		'disputed'               => __( 'Disputed', 'wp-sell-services' ),
 		'refunded'               => __( 'Refunded', 'wp-sell-services' ),
-		'partially_refunded'     => __( 'Partially Refunded', 'wp-sell-services' ),
+		'partially_refunded'     => __( 'Partially refunded', 'wp-sell-services' ),
 	);
 
 	/**

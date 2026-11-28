@@ -150,9 +150,9 @@ do_action( 'wpss_before_single_request', $request_id );
 					?>
 
 					<header class="wpss-request-header">
-						<div class="wpss-request-status-badge wpss-status-<?php echo esc_attr( $request_status ); ?>">
-							<?php echo esc_html( ucfirst( str_replace( '_', ' ', $request_status ) ) ); ?>
-						</div>
+						<span class="<?php echo esc_attr( wpss_status_class( $request_status ) ); ?>">
+							<?php echo esc_html( \WPSellServices\Services\BuyerRequestService::get_statuses()[ $request_status ] ?? ucfirst( str_replace( '_', ' ', $request_status ) ) ); ?>
+						</span>
 
 						<?php
 						/*
@@ -426,8 +426,8 @@ do_action( 'wpss_before_single_request', $request_id );
 											</div>
 										<?php else : ?>
 											<div class="wpss-proposal-status">
-												<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $proposal->status ); ?>">
-													<?php echo esc_html( ucfirst( $proposal->status ) ); ?>
+												<span class="<?php echo esc_attr( wpss_status_class( $proposal->status ) ); ?>">
+													<?php echo esc_html( \WPSellServices\Services\ProposalService::get_statuses()[ $proposal->status ] ?? ucfirst( $proposal->status ) ); ?>
 												</span>
 											</div>
 										<?php endif; ?>

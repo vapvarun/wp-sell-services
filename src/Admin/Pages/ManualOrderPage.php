@@ -345,7 +345,7 @@ class ManualOrderPage {
 											<option value="failed"><?php esc_html_e( 'Failed', 'wp-sell-services' ); ?></option>
 											<option value="refunded"><?php esc_html_e( 'Refunded', 'wp-sell-services' ); ?></option>
 										</select>
-										<p class="description"><?php esc_html_e( 'An order set to Pending Payment is saved as unpaid, whatever this says. Any later status needs Paid.', 'wp-sell-services' ); ?></p>
+										<p class="description"><?php esc_html_e( 'An order set to Awaiting payment is saved as unpaid, whatever this says. Any later status needs Paid.', 'wp-sell-services' ); ?></p>
 									</div>
 
 									<div class="wpss-form-row">
@@ -498,7 +498,7 @@ class ManualOrderPage {
 		// Completed order would fire the completion pipeline and credit the
 		// vendor for money nobody received. Unpaid work is saved as Pending Payment.
 		if ( 'pending_payment' !== $status && 'paid' !== $payment_status ) {
-			wp_send_json_error( array( 'message' => __( 'Only a Pending Payment order can be saved unpaid. Set Payment Status to Paid, or set the order status to Pending Payment.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Only an Awaiting payment order can be saved unpaid. Set Payment Status to Paid, or set the order status to Awaiting payment.', 'wp-sell-services' ) ) );
 		}
 		$payment_method  = sanitize_key( $_POST['payment_method'] ?? 'manual' );
 		$payment_method  = isset( wpss_manual_order_payment_methods()[ $payment_method ] ) ? $payment_method : 'manual';
@@ -916,12 +916,6 @@ class ManualOrderPage {
 	 * @return array<string, string>
 	 */
 	private function get_initial_statuses(): array {
-		return array(
-			'pending_payment'      => __( 'Pending Payment', 'wp-sell-services' ),
-			'pending_requirements' => __( 'Pending Requirements', 'wp-sell-services' ),
-			'in_progress'          => __( 'In Progress', 'wp-sell-services' ),
-			'delivered'            => __( 'Delivered', 'wp-sell-services' ),
-			'completed'            => __( 'Completed', 'wp-sell-services' ),
-		);
+		return array_intersect_key( wpss_get_order_statuses(), array_flip( array( 'pending_payment', 'pending_requirements', 'in_progress', 'delivered', 'completed' ) ) );
 	}
 }

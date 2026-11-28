@@ -366,7 +366,13 @@ class ReportsPage {
 										<?php $this->action_button( 'wpss_resolve_report', (int) $row->id, 'upheld', __( 'Uphold', 'wp-sell-services' ), 'button-primary' ); ?>
 										<?php $this->action_button( 'wpss_resolve_report', (int) $row->id, 'dismissed', __( 'Dismiss', 'wp-sell-services' ), '' ); ?>
 									<?php else : ?>
-										<span class="wpss-badge"><?php echo esc_html( (string) $row->resolution ); ?></span>
+										<?php
+										$wpss_resolutions = array(
+											'upheld'    => __( 'Upheld', 'wp-sell-services' ),
+											'dismissed' => __( 'Dismissed', 'wp-sell-services' ),
+										);
+										?>
+										<span class="<?php echo esc_attr( wpss_status_class( (string) $row->resolution ) ); ?>"><?php echo esc_html( $wpss_resolutions[ (string) $row->resolution ] ?? ucfirst( (string) $row->resolution ) ); ?></span>
 									<?php endif; ?>
 
 									<?php if ( get_userdata( (int) $row->reported_user_id ) ) : ?>

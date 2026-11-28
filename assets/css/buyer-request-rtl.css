@@ -666,36 +666,8 @@
 	margin-bottom: 1.5rem;
 }
 
-.wpss-request-status-badge {
-	display: inline-block;
-	padding: 0.25rem 0.75rem;
-	font-size: 0.75rem;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-	border-radius: var(--wpss-radius-sm, 4px);
+.wpss-request-header > .wpss-status-badge {
 	margin-bottom: 0.75rem;
-}
-
-.wpss-request-status-badge.wpss-status-open {
-	background: var(--wpss-success-light, #dcfce7);
-	color: var(--wpss-success-dark, #166534);
-}
-
-.wpss-request-status-badge.wpss-status-in_review {
-	background: var(--wpss-warning-light, #fef3c7);
-	color: var(--wpss-warning-dark, #92400e);
-}
-
-.wpss-request-status-badge.wpss-status-hired {
-	background: var(--wpss-status-delivered-bg, #dbeafe);
-	color: var(--wpss-status-delivered-fg, #1e40af);
-}
-
-.wpss-request-status-badge.wpss-status-expired,
-.wpss-request-status-badge.wpss-status-cancelled {
-	background: var(--wpss-danger-light, #fee2e2);
-	color: var(--wpss-danger-dark, #991b1b);
 }
 
 .wpss-request-header .wpss-request-title {
@@ -1400,8 +1372,6 @@
 	padding: 2px 8px;
 	font-size: 11px;
 	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
 	border-radius: 999px;
 }
 

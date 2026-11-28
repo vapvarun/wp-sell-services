@@ -250,11 +250,6 @@ class BuyerRequest {
 	 * @return array<string, string>
 	 */
 	public static function get_statuses(): array {
-		return [
-			self::STATUS_OPEN    => __( 'Open', 'wp-sell-services' ),
-			self::STATUS_CLOSED  => __( 'Closed', 'wp-sell-services' ),
-			self::STATUS_HIRED   => __( 'Hired', 'wp-sell-services' ),
-			self::STATUS_EXPIRED => __( 'Expired', 'wp-sell-services' ),
-		];
+		return \WPSellServices\Services\BuyerRequestService::get_statuses();
 	}
 }

@@ -192,7 +192,7 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 								<i data-lucide="image" class="wpss-icon wpss-service-card__placeholder-icon" aria-hidden="true"></i>
 							</div>
 						<?php endif; ?>
-						<span class="wpss-service-card__status wpss-service-card__status--<?php echo esc_attr( $item_status ); ?>">
+						<span class="wpss-service-card__status <?php echo esc_attr( wpss_status_class( $item_status ) ); ?>">
 							<?php
 							if ( 'rejected' === $item_status ) {
 								esc_html_e( 'Rejected', 'wp-sell-services' );

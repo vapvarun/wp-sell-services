@@ -901,7 +901,7 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 .wpss-badge {
 	display: inline-flex; align-items: center; gap: var(--wpss-space-1);
 	padding: 3px var(--wpss-space-3); font-size: var(--wpss-text-xs); font-weight: 600;
-	border-radius: var(--wpss-radius-full); text-transform: uppercase; letter-spacing: 0.03em; line-height: 1.5;
+	border-radius: var(--wpss-radius-full); line-height: 1.5;
 }
 .wpss-badge--primary { background: var(--wpss-primary-light); color: var(--wpss-primary-dark); }
 .wpss-badge--success { background: var(--wpss-success-light); color: var(--wpss-success-dark, #065f46); }
@@ -939,7 +939,8 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 .wpss-status-open,
 .wpss-status-requirements-submitted,
 .wpss-status-cancellation-requested,
-.wpss-status-withdrawn {
+.wpss-status-in-review,
+.wpss-status-pending-review {
 	background: var(--wpss-status-pending-bg, #fff3cd);
 	color: var(--wpss-status-pending-fg, #856404);
 }
@@ -948,7 +949,8 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 .wpss-status-in-progress,
 .wpss-status-accepted,
 .wpss-status-processing,
-.wpss-status-escalated {
+.wpss-status-escalated,
+.wpss-status-future {
 	background: var(--wpss-status-in-progress-bg, #e0e7ff);
 	color: var(--wpss-status-in-progress-fg, #3730a3);
 }
@@ -970,7 +972,9 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 .wpss-status-approved,
 .wpss-status-active,
 .wpss-status-resolved,
-.wpss-status-closed {
+.wpss-status-closed,
+.wpss-status-hired,
+.wpss-status-publish {
 	background: var(--wpss-status-completed-bg, #d4edda);
 	color: var(--wpss-status-completed-fg, #155724);
 }
@@ -979,9 +983,22 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 .wpss-status-cancelled,
 .wpss-status-rejected,
 .wpss-status-failed,
-.wpss-status-suspended {
+.wpss-status-suspended,
+.wpss-status-declined,
+.wpss-status-upheld {
 	background: var(--wpss-status-rejected-bg, #f8d7da);
 	color: var(--wpss-status-rejected-fg, #721c24);
+}
+
+/* Grey — inactive: not live, no longer in play */
+.wpss-status-draft,
+.wpss-status-paused,
+.wpss-status-private,
+.wpss-status-expired,
+.wpss-status-withdrawn,
+.wpss-status-dismissed {
+	background: var(--wpss-status-on-hold-bg, #e5e7eb);
+	color: var(--wpss-status-on-hold-fg, #374151);
 }
 
 /* Orange — disputed */

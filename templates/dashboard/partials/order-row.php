@@ -195,11 +195,11 @@ $is_working = in_array( $order_item->status, array( 'in_progress', 'revision_req
 	</div>
 	<div class="wpss-order-card__actions">
 		<?php if ( $is_late ) : ?>
-			<span class="wpss-badge wpss-badge--danger"><?php esc_html_e( 'Late', 'wp-sell-services' ); ?></span>
+			<span class="<?php echo esc_attr( wpss_status_class( 'late' ) ); ?>"><?php echo esc_html( wpss_get_order_status_label( 'late' ) ); ?></span>
 		<?php endif; ?>
 		<?php if ( 'late' !== $order_item->status ) : ?>
-			<span class="wpss-status wpss-status--<?php echo esc_attr( sanitize_html_class( $order_item->status ) ); ?>">
-				<?php echo esc_html( $status_labels[ $order_item->status ] ?? $order_item->status ); ?>
+			<span class="<?php echo esc_attr( wpss_status_class( $order_item->status ) ); ?>">
+				<?php echo esc_html( $status_labels[ $order_item->status ] ?? wpss_get_order_status_label( $order_item->status ) ); ?>
 			</span>
 		<?php endif; ?>
 		<a href="<?php echo esc_url( wpss_get_order_url( (int) $order_item->id, $wpss_is_seller ? 'sales' : '', $order_item ) ); ?>" class="wpss-btn wpss-btn--sm <?php echo '' !== $next_action ? 'wpss-btn--primary' : 'wpss-btn--outline'; ?>">

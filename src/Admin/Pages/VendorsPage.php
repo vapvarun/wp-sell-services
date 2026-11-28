@@ -1726,22 +1726,22 @@ class VendorsPage {
 			<tbody>
 				<?php foreach ( $services as $service ) : ?>
 					<?php
-					$price        = get_post_meta( $service->ID, '_wpss_starting_price', true );
-					$order_count  = (int) $wpdb->get_var(
+					$price           = get_post_meta( $service->ID, '_wpss_starting_price', true );
+					$order_count     = (int) $wpdb->get_var(
 						$wpdb->prepare(
 							"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_orders WHERE service_id = %d",
 							$service->ID
 						)
 					);
-					$status_class = 'publish' === $service->post_status ? 'active' : ( 'draft' === $service->post_status ? 'pending' : $service->post_status );
+					$wpss_status_obj = get_post_status_object( $service->post_status );
 					?>
 					<tr>
 						<td>
 							<strong><?php echo esc_html( $service->post_title ); ?></strong>
 						</td>
 						<td>
-							<span class="<?php echo esc_attr( wpss_status_class( $status_class ) ); ?>">
-								<?php echo esc_html( ucfirst( $service->post_status ) ); ?>
+							<span class="<?php echo esc_attr( wpss_status_class( $service->post_status ) ); ?>">
+								<?php echo esc_html( $wpss_status_obj ? $wpss_status_obj->label : ucfirst( $service->post_status ) ); ?>
 							</span>
 						</td>
 						<td><?php echo $price ? esc_html( wpss_format_price( (float) $price ) ) : '-'; ?></td>
@@ -1840,16 +1840,8 @@ class VendorsPage {
 		$total_pages = ceil( $total / $per_page );
 
 		// Get available statuses for filter.
-		$statuses = array(
-			''                     => __( 'All statuses', 'wp-sell-services' ),
-			'pending_payment'      => __( 'Pending Payment', 'wp-sell-services' ),
-			'pending_requirements' => __( 'Pending Requirements', 'wp-sell-services' ),
-			'in_progress'          => __( 'In Progress', 'wp-sell-services' ),
-			'pending_approval'     => __( 'Pending Approval', 'wp-sell-services' ),
-			'completed'            => __( 'Completed', 'wp-sell-services' ),
-			'cancelled'            => __( 'Cancelled', 'wp-sell-services' ),
-			'refunded'             => __( 'Refunded', 'wp-sell-services' ),
-		);
+		$statuses = array( '' => __( 'All statuses', 'wp-sell-services' ) )
+			+ array_intersect_key( wpss_get_order_statuses(), array_flip( array( 'pending_payment', 'pending_requirements', 'in_progress', 'pending_approval', 'completed', 'cancelled', 'refunded' ) ) );
 		?>
 		<div class="wpss-orders-filter" style="margin-bottom: 15px;">
 			<select id="wpss-order-status-filter">

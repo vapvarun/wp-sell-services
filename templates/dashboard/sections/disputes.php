@@ -102,7 +102,7 @@ if ( $view_dispute_id ) {
 				);
 				?>
 			</h2>
-			<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status_key ); ?>">
+			<span class="<?php echo esc_attr( wpss_status_class( $status_key ) ); ?>">
 				<?php echo esc_html( $statuses[ $status_key ] ?? $status_key ); ?>
 			</span>
 		</div>
@@ -374,7 +374,7 @@ $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 						<?php $wpss_reason_key = (string) ( $dispute->reason ?? '' ); ?>
 						<td data-title="<?php esc_attr_e( 'Reason', 'wp-sell-services' ); ?>"><?php echo esc_html( $wpss_dispute_reasons[ $wpss_reason_key ] ?? $wpss_reason_key ); ?></td>
 						<td data-title="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
-							<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status_key ); ?>">
+							<span class="<?php echo esc_attr( wpss_status_class( $status_key ) ); ?>">
 								<?php echo esc_html( $statuses[ $status_key ] ?? $status_key ); ?>
 							</span>
 						</td>

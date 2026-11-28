@@ -26,7 +26,7 @@ $wpss_offer_states = array(
 <div class="wpss-offer-card wpss-offer-card--<?php echo esc_attr( $offer['state'] ); ?>" data-offer-id="<?php echo esc_attr( (string) $offer['id'] ); ?>">
 	<p class="wpss-offer-card__label">
 		<?php esc_html_e( 'Private offer', 'wp-sell-services' ); ?>
-		<span class="wpss-badge"><?php echo esc_html( $wpss_offer_states[ $offer['state'] ] ?? '' ); ?></span>
+		<span class="<?php echo esc_attr( wpss_status_class( $offer['state'] ) ); ?>"><?php echo esc_html( $wpss_offer_states[ $offer['state'] ] ?? '' ); ?></span>
 	</p>
 	<h4 class="wpss-offer-card__title"><?php echo esc_html( $offer['title'] ); ?></h4>
 	<p class="wpss-offer-card__description"><?php echo wp_kses_post( nl2br( esc_html( $offer['description'] ) ) ); ?></p>

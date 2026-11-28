@@ -656,8 +656,8 @@
 						const shown = paused ? 'paused' : newStatus;
 						const badgeStatus = labels[shown] ? shown : 'draft';
 						$badge.text(labels[badgeStatus]);
-						$badge.removeClass('wpss-service-card__status--publish wpss-service-card__status--paused wpss-service-card__status--pending wpss-service-card__status--draft');
-						$badge.addClass('wpss-service-card__status--' + badgeStatus);
+						$badge.removeClass('wpss-status-publish wpss-status-paused wpss-status-pending wpss-status-draft');
+						$badge.addClass('wpss-status-' + badgeStatus);
 
 						// With moderation on, Publish sends it to review: the card
 						// then has no toggle, as the template renders a pending one.

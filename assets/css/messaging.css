@@ -1253,7 +1253,6 @@
 	font-size: 12px;
 	font-weight: 600;
 	color: var(--wpss-text-muted);
-	text-transform: uppercase;
 }
 
 .wpss-offer-card__title {
