@@ -68,7 +68,7 @@ The vendor receives a notification that they can now start selling.
 
 ### Rejecting an Application
 
-Click **Reject** on a pending applicant. The dialog asks for an optional reason. Whatever you type is shown in the rejection email and the applicant's notification, and kept in the audit log, so tell them what to change before they apply again.
+Click **Reject** on a pending applicant. The dialog asks for an optional reason. Whatever you type is shown in the rejection email, the applicant's notification and their dashboard (where the Start selling button was), and kept in the audit log. A rejected applicant cannot apply again on their own: the email and the dashboard ask them to contact you, and you can approve them later from this screen.
 
 ## Custom Commission Per Vendor
 

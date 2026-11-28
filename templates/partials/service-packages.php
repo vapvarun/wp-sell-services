@@ -40,6 +40,9 @@ $wpss_by_quote = ! wpss_service_type_supports( $service_id, 'purchasable' );
 // A digital product is delivered the moment it is paid: no delivery time or revisions to show.
 $wpss_instant     = ! wpss_service_type_supports( $service_id, 'delivery' );
 $wpss_request_url = $wpss_by_quote ? wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'create-request' ) : '';
+// A buyer who already owns this product gets its download first, the same file the Downloads screen links.
+$wpss_owned = $wpss_instant ? ( wpss_get_buyer_downloads( get_current_user_id(), $service_id, 1 )[0] ?? null ) : null;
+$wpss_owned = $wpss_owned ? wpss_buyer_download_for_client( $wpss_owned ) : null;
 
 // If no packages, show single price (omit description to avoid duplicating "About This Service").
 if ( empty( $packages ) ) {
@@ -341,12 +344,23 @@ do_action( 'wpss_before_service_packages', $service_id );
 								<?php esc_html_e( 'This package is not available for purchase yet.', 'wp-sell-services' ); ?>
 							</p>
 						<?php else : ?>
+							<?php if ( $wpss_owned ) : ?>
+								<p class="wpss-package-owned"><?php esc_html_e( 'You own this', 'wp-sell-services' ); ?></p>
+								<?php if ( $wpss_owned['file'] ) : ?>
+									<a class="wpss-btn wpss-btn--primary wpss-btn--block" href="<?php echo esc_url( $wpss_owned['file']['url'] ); ?>">
+										<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
+										<?php esc_html_e( 'Download', 'wp-sell-services' ); ?>
+									</a>
+								<?php else : ?>
+									<a class="wpss-btn wpss-btn--primary wpss-btn--block" href="<?php echo esc_url( $wpss_owned['order_url'] ); ?>"><?php esc_html_e( 'View your order', 'wp-sell-services' ); ?></a>
+								<?php endif; ?>
+							<?php endif; ?>
 							<button type="button"
-									class="wpss-btn wpss-btn--primary wpss-btn--block wpss-order-btn"
+									class="wpss-btn <?php echo $wpss_owned ? 'wpss-btn--secondary' : 'wpss-btn--primary'; ?> wpss-btn--block wpss-order-btn"
 									data-service="<?php echo esc_attr( $service_id ); ?>"
 									data-package="<?php echo esc_attr( $index ); ?>"
 									data-price="<?php echo esc_attr( $package['price'] ?? 0 ); ?>">
-								<?php echo esc_html( $button_text ); ?>
+								<?php echo esc_html( $wpss_owned ? __( 'Buy again', 'wp-sell-services' ) : $button_text ); ?>
 								<span class="wpss-btn-price">(<?php echo esc_html( wpss_format_price( (float) ( $package['price'] ?? 0 ) ) ); ?>)</span>
 							</button>
 						<?php endif; ?>

@@ -52,11 +52,13 @@ $restore   = static function () use ( $wpdb, $profiles, $vendor_id ) {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->update( $profiles, array( 'status' => 'active' ), array( 'user_id' => $vendor_id ) );
 	wp_cache_flush();
+	\WPSellServices\Models\VendorProfile::flush_memo(); // Raw writes skip the writers that flush the request memo.
 };
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $wpdb->update( $profiles, array( 'status' => 'suspended' ), array( 'user_id' => $vendor_id ) );
 wp_cache_flush();
+\WPSellServices\Models\VendorProfile::flush_memo(); // Raw writes skip the writers that flush the request memo.
 wp_set_current_user( $vendor_id );
 
 $render = static function ( string $section ) {
@@ -75,12 +77,17 @@ $check( 'Sales Orders tells the vendor they are suspended', false !== strpos( $s
 // Control: an active vendor's Sales Orders carries no suspension notice.
 $wpdb->update( $profiles, array( 'status' => 'active' ), array( 'user_id' => $vendor_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 wp_cache_flush();
+\WPSellServices\Models\VendorProfile::flush_memo(); // Raw writes skip the writers that flush the request memo.
 $check( 'an active vendor sees no suspension notice', false === strpos( $render( 'sales' ), 'Your vendor account is suspended.' ) );
 $wpdb->update( $profiles, array( 'status' => 'suspended' ), array( 'user_id' => $vendor_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 wp_cache_flush();
+\WPSellServices\Models\VendorProfile::flush_memo(); // Raw writes skip the writers that flush the request memo.
 
-foreach ( array( 'services', 'earnings', 'proposals', 'create' ) as $section ) {
-	$check( "suspended vendor is still refused {$section}", false !== strpos( $render( $section ), 'Vendor Access Required' ) || '' === trim( $render( $section ) ) );
+foreach ( array( 'services', 'earnings', 'proposals', 'create', 'become-vendor' ) as $section ) {
+	$html = $render( $section );
+	// Since 2.0.0 the refusal says why (wpss_vendor_closed_notice) instead of the generic access wall.
+	$check( "suspended vendor is still refused {$section}", str_contains( $html, 'wpss-vendor-closed' ) || str_contains( $html, 'Vendor Access Required' ) || '' === trim( $html ) );
+	$check( "the {$section} refusal offers no Start selling form", ! str_contains( $html, 'wpss-become-vendor' ) && ! str_contains( $html, 'Start selling' ) );
 }
 
 // A buyer starting a new pre-sale thread with the suspended vendor is refused.

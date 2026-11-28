@@ -28,7 +28,7 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 	do_action( 'woocommerce_email_header', $email_heading, $email );
 }
 
-$base_color = $base_color ?? '#7f54b3';
+$base_color = $base_color ?? '#4f46e5';
 
 /**
  * Fires before the email content for the dispute opened email.

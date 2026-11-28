@@ -97,6 +97,12 @@ $active_message_statuses = array(
 );
 $can_message             = in_array( $order->status, $active_message_statuses, true );
 
+// A finished order nobody wrote in has nothing to read and nowhere to write: no panel at all.
+$wpss_has_words = $has_older || array_filter( $messages, static fn( $m ) => 'system' !== ( $m->type ?? '' ) && (int) $m->sender_id > 0 );
+if ( ! $can_message && ! $wpss_has_words ) {
+	return;
+}
+
 /**
  * Hook: wpss_before_conversation
  *

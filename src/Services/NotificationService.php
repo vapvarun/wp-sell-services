@@ -2099,7 +2099,10 @@ class NotificationService {
 				__( 'Your vendor application on %s was not approved at this time.', 'wp-sell-services' ),
 				$platform_name
 			) . $this->reason_suffix( $reason ),
-			array( 'user_id' => $user_id )
+			array(
+				'user_id' => $user_id,
+				'reason'  => $reason,
+			)
 		);
 
 		( new EmailService() )->send(
@@ -2116,6 +2119,31 @@ class NotificationService {
 				'rejection_reason' => $reason,
 			)
 		);
+	}
+
+	/**
+	 * The reason stored on a member's newest notification of one type, or ''.
+	 *
+	 * The vendor decision reason lives only on the in-app row (not the profile),
+	 * so this is where the dashboard reads it back.
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $type    Notification type.
+	 * @return string
+	 */
+	public function latest_reason( int $user_id, string $type ): string {
+		global $wpdb;
+
+		$data = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one row, read on render.
+			$wpdb->prepare(
+				"SELECT data FROM {$wpdb->prefix}wpss_notifications WHERE user_id = %d AND type = %s ORDER BY id DESC LIMIT 1",
+				$user_id,
+				$type
+			)
+		);
+		$data = json_decode( (string) $data, true );
+
+		return is_array( $data ) ? (string) ( $data['reason'] ?? '' ) : '';
 	}
 
 	/**

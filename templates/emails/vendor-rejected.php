@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.2.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var string  $rejection_reason Reason the application was rejected (optional).
  * @var string  $site_url         Site home URL.
@@ -21,7 +21,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$base_color = $base_color ?? '#7f54b3';
+$base_color = $base_color ?? '#4f46e5';
 
 /**
  * Fires before the email content for the vendor rejected email.
@@ -69,7 +69,7 @@ do_action( 'wpss_email_content_before', 'vendor_rejected', $recipient ?? null );
 <?php endif; ?>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php esc_html_e( 'If you believe this was a mistake or you would like more information, please contact our support team. You are welcome to apply again in the future.', 'wp-sell-services' ); ?>
+	<?php esc_html_e( 'If you have questions about this decision, please contact us.', 'wp-sell-services' ); ?>
 </p>
 
 <p style="text-align: center; margin: 30px 0;">

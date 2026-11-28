@@ -214,11 +214,13 @@ class EmailService {
 		// must not change who these mails come from.
 		$from_name  = wpss_get_platform_name();
 		$from_email = get_option( 'admin_email' );
+		$base_color = '#4f46e5';
 		$adapter    = wpss_get_active_adapter();
 
 		if ( $adapter && 'woocommerce' === $adapter->get_id() && function_exists( 'WC' ) && WC()->mailer() ) {
 			$from_name  = WC()->mailer()->get_from_name();
 			$from_email = WC()->mailer()->get_from_address();
+			$base_color = sanitize_hex_color( (string) get_option( 'woocommerce_email_base_color' ) ) ?: $base_color;
 		}
 
 		return array(
@@ -231,7 +233,7 @@ class EmailService {
 				gmdate( 'Y' ),
 				wpss_get_platform_name()
 			),
-			'base_color'   => '#7f54b3',
+			'base_color'   => $base_color,
 			'bg_color'     => '#f7f7f7',
 			'body_color'   => '#ffffff',
 			'text_color'   => '#3c3c3c',

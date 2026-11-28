@@ -24,7 +24,7 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 	do_action( 'woocommerce_email_header', $email_heading, $email );
 }
 
-$base_color    = $base_color ?? '#7f54b3';
+$base_color    = $base_color ?? '#4f46e5';
 $customer      = get_user_by( 'id', $order->customer_id );
 $customer_name = wpss_get_member_display_name( (int) ( $customer->ID ?? 0 ), __( 'A buyer', 'wp-sell-services' ) );
 $recipient     = ( $recipient ?? null ) ?: get_user_by( 'id', $order->vendor_id );

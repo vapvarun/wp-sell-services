@@ -1067,6 +1067,10 @@
    {
     "id": "public-pages-shell",
     "run": "${WP_CLI:-wp} eval-file tests/test-request-archive-toolbar.php && ${WP_CLI:-wp} eval-file tests/test-public-pages-shell.php"
+   },
+   {
+    "id": "finished-surfaces",
+    "run": "${WP_CLI:-wp} eval-file tests/test-finished-surfaces.php"
    }
   ]
  }

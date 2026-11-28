@@ -846,12 +846,16 @@ class UnifiedDashboard {
 					</div>
 				</nav>
 
+				<?php $closed_notice = $is_vendor || $is_pending ? '' : wpss_vendor_closed_notice( $user_id ); ?>
 				<?php if ( $is_pending ) : ?>
 					<div class="wpss-dashboard__pending-notice">
 						<p><?php esc_html_e( 'Your vendor application is pending admin approval. You will be notified once your application is reviewed.', 'wp-sell-services' ); ?></p>
 					</div>
 					<?php
-				elseif ( ! $is_vendor && ! $is_pending && 'suspended' !== $vendor_status ) :
+				elseif ( '' !== $closed_notice ) :
+					// The Become a Vendor section shows it in the page itself: once is enough.
+					echo 'become-vendor' === $this->current_section ? '' : $closed_notice; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the partial.
+				elseif ( ! $is_vendor && ! $is_pending ) :
 					if ( ! wpss_vendor_registration_closed_for( $user_id ) ) :
 						?>
 					<div class="wpss-dashboard__become-vendor">
@@ -1110,8 +1114,12 @@ class UnifiedDashboard {
 		// Vendor-only sections: show a CTA to become a vendor.
 		$vendor_only_sections = self::VENDOR_SECTIONS;
 
-		// A suspended vendor is not an applicant: the Start selling button would only be refused after the click.
-		if ( 'become-vendor' === $section && ! $is_vendor && $registration_is_open && 'suspended' !== wpss_get_vendor_status( $user_id ) ) {
+		// A rejected or suspended member is not an applicant: the button would only be refused after the click.
+		$closed_notice = $is_vendor ? '' : wpss_vendor_closed_notice( $user_id );
+
+		if ( '' !== $closed_notice && ( 'become-vendor' === $section || in_array( $section, $vendor_only_sections, true ) ) ) {
+			echo $closed_notice; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the partial.
+		} elseif ( 'become-vendor' === $section && ! $is_vendor && $registration_is_open ) {
 			// The become-vendor section should show the vendor onboarding prompt, not an error.
 			// The confirmation link lands here: say it worked.
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only flag set by the verification redirect.

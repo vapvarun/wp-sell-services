@@ -116,6 +116,34 @@ function wpss_get_vendor_status( int $user_id ): string {
 }
 
 /**
+ * The notice a member sees where the "Start selling" form would be, when they cannot apply again.
+ *
+ * One answer for the dashboard sidebar, its Become a Vendor section and the
+ * become-a-vendor page, so none of them offers a button the server refuses.
+ *
+ * @since 2.0.0
+ *
+ * @param int $user_id User ID.
+ * @return string Notice markup, or '' when the member may apply.
+ */
+function wpss_vendor_closed_notice( int $user_id ): string {
+	$status = wpss_get_vendor_status( $user_id );
+
+	if ( ! in_array( $status, array( 'rejected', 'suspended' ), true ) || user_can( $user_id, 'manage_options' ) ) {
+		return '';
+	}
+
+	$wpss_status = $status;
+	$wpss_reason = 'rejected' === $status
+		? ( new \WPSellServices\Services\NotificationService() )->latest_reason( $user_id, \WPSellServices\Services\NotificationService::TYPE_VENDOR_REJECTED )
+		: '';
+
+	ob_start();
+	require wpss_locate_template( 'partials/vendor-closed-notice.php' );
+	return (string) ob_get_clean();
+}
+
+/**
  * Get the datetime of a vendor's most recent completed delivery.
  *
  * Shared accessor for every "Last Delivery" display (single-service page,

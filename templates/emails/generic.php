@@ -22,7 +22,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$base_color = $base_color ?? '#7f54b3';
+$base_color = $base_color ?? '#4f46e5';
 
 do_action( 'wpss_email_content_before', 'generic', $recipient ?? null );
 ?>

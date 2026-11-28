@@ -1137,6 +1137,21 @@ do_action( 'wpss_before_order_view', $order );
 	do_action( 'wpss_order_view_sidebar', $order );
 	?>
 
+	<?php
+	// The thread renders nothing on a finished order nobody wrote in; skip its frame too.
+	ob_start();
+	wpss_get_template(
+		'order/conversation.php',
+		array(
+			'order_id'    => $order_id,
+			'order'       => $order,
+			'is_vendor'   => $is_vendor,
+			'is_customer' => $is_customer,
+		)
+	);
+	$wpss_conversation_html = (string) ob_get_clean();
+	?>
+	<?php if ( '' !== trim( $wpss_conversation_html ) ) : ?>
 	<!-- Conversation Section -->
 	<section class="wpss-order-section wpss-order-section--conversation">
 		<div class="wpss-order-section__header">
@@ -1146,20 +1161,10 @@ do_action( 'wpss_before_order_view', $order );
 			</h2>
 		</div>
 		<div class="wpss-order-section__body">
-			<?php
-			// Include the conversation template.
-			wpss_get_template(
-				'order/conversation.php',
-				array(
-					'order_id'    => $order_id,
-					'order'       => $order,
-					'is_vendor'   => $is_vendor,
-					'is_customer' => $is_customer,
-				)
-			);
-			?>
+			<?php echo $wpss_conversation_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the template. ?>
 		</div>
 	</section>
+	<?php endif; ?>
 
 	<!-- Review: the CTA, or the review that was already left -->
 	<?php
@@ -1825,7 +1830,7 @@ do_action( 'wpss_before_order_view', $order );
 						<button type="button" class="wpss-tip-form__preset" data-amount="<?php echo esc_attr( (string) $preset ); ?>">
 							<?php
 							echo esc_html(
-								wpss_format_price( (float) $preset, $currency )
+								wpss_format_price( (float) $preset, (string) $order->currency )
 							);
 							?>
 						</button>

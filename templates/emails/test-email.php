@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$base_color = $base_color ?? '#7f54b3';
+$base_color = $base_color ?? '#4f46e5';
 $site_name  = isset( $site_name ) ? $site_name : get_bloginfo( 'name' );
 
 /**

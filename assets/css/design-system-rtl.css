@@ -2084,6 +2084,16 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	margin-bottom: var(--wpss-space-5, 20px);
 }
 
+/* Why a member cannot apply to sell (templates/partials/vendor-closed-notice.php): lines stack. */
+.wpss-vendor-closed {
+	flex-direction: column;
+	gap: var(--wpss-space-1, 4px);
+}
+
+.wpss-vendor-closed p {
+	margin: 0;
+}
+
 /* Dispute thread (templates/partials/dispute-thread.php) - the buyer and seller
    dashboard and the admin dispute screen. Moved from unified-dashboard.css,
    which the admin does not load (Basecamp 10337171525). */

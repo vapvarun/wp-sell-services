@@ -527,6 +527,7 @@ class ConversationRepository extends AbstractRepository {
 		// Order-linked: join with orders table where user is customer or vendor.
 		// Direct: order_id = 0 and user appears in participants JSON array.
 		// Uses pre-aggregated max-message subquery to fetch last message in one pass.
+		// The preview is the last thing a person wrote: status lines are not conversation.
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT conversations.*,
@@ -583,6 +584,7 @@ class ConversationRepository extends AbstractRepository {
 					INNER JOIN (
 						SELECT conversation_id, MAX(id) AS max_id
 						FROM {$messages_table}
+						WHERE type <> 'system'
 						GROUP BY conversation_id
 					) latest ON m1.conversation_id = latest.conversation_id AND m1.id = latest.max_id
 				) lm ON lm.conversation_id = conversations.id

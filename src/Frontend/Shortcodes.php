@@ -1230,13 +1230,14 @@ class Shortcodes {
 			return ob_get_clean();
 		}
 
-		// A suspended vendor is not offered registration: it would only toast a refusal.
-		if ( 'suspended' === wpss_get_vendor_status( $user_id ) ) {
+		// A rejected or suspended member is not offered registration: it would only toast a refusal.
+		$closed_notice = wpss_vendor_closed_notice( $user_id );
+		if ( '' !== $closed_notice ) {
 			?>
 			<div class="wpss-vr">
 				<div class="wpss-vr__card">
-					<<?php echo esc_attr( $wpss_h ); ?> class="wpss-vr__title"><?php esc_html_e( 'Vendor Account Suspended', 'wp-sell-services' ); ?></<?php echo esc_attr( $wpss_h ); ?>>
-					<p class="wpss-vr__desc"><?php esc_html_e( 'You cannot register again while the suspension is in place. Please contact the site owner.', 'wp-sell-services' ); ?></p>
+					<<?php echo esc_attr( $wpss_h ); ?> class="wpss-vr__title"><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></<?php echo esc_attr( $wpss_h ); ?>>
+					<?php echo $closed_notice; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the partial. ?>
 				</div>
 			</div>
 			<?php

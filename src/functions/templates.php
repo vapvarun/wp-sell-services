@@ -445,7 +445,8 @@ add_action( 'wpss_single_request_header', 'wpss_request_breadcrumb', 5 );
  * @return string
  */
 function wpss_time_ago( string $datetime ): string {
-	$timestamp = strtotime( $datetime . ' UTC' );
+	// strtotime( ' UTC' ) is "now": an empty date would read as "1 second ago".
+	$timestamp = '' === trim( $datetime ) ? false : strtotime( $datetime . ' UTC' );
 
 	if ( ! $timestamp ) {
 		return '';

@@ -204,6 +204,13 @@
 }
 
 /* Pending Vendor Notice */
+/* In the sidebar the closed notice sits where the Start selling form was. */
+.wpss-dashboard__sidebar .wpss-vendor-closed {
+	margin: var(--wpss-space-4, 16px) var(--wpss-space-5, 20px);
+	padding: var(--wpss-space-3, 12px) var(--wpss-space-4, 16px);
+	font-size: var(--wpss-text-sm, 13px);
+}
+
 .wpss-dashboard__pending-notice {
 	padding: 16px 20px;
 	border-top: 1px solid var(--wpss-gray-100);
@@ -2538,15 +2545,11 @@ select.wpss-input option,
 	color: var(--wpss-primary-dark);
 }
 
+/* The dashboard panel is already the box: the receipt sits in it, not in a second one. */
 .wpss-tip-view__card {
-	background: var(--wpss-surface, #fff);
-	border: 1px solid var(--wpss-gray-100);
-	border-radius: 14px;
-	padding: 32px 28px;
 	max-width: 520px;
 	width: 100%;
 	text-align: center;
-	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 
 .wpss-tip-view__icon {
@@ -2623,11 +2626,6 @@ select.wpss-input option,
 		padding: var(--wpss-space-3, 12px) 0;
 	}
 
-	.wpss-tip-view__card {
-		padding: var(--wpss-space-5, 20px) var(--wpss-space-4, 16px);
-		border-radius: var(--wpss-radius-lg, 12px);
-	}
-
 	.wpss-tip-view__meta > div {
 		grid-template-columns: 1fr;
 		gap: 2px;
@@ -2646,10 +2644,6 @@ select.wpss-input option,
 }
 
 @media (max-width: 390px) {
-	.wpss-tip-view__card {
-		padding: var(--wpss-space-4, 16px) var(--wpss-space-3, 12px);
-	}
-
 	.wpss-tip-view__title {
 		font-size: var(--wpss-text-xl, 18px);
 	}

@@ -1679,6 +1679,15 @@
   },
   {
    "card": "",
+   "title": "Finished surfaces read as unfinished: emails in WooCommerce purple on every rail, a rejected applicant shown a Start selling button the server refuses, message previews showing status lines, no way to see or filter how a service is sold, an owned digital product offered only as a new purchase, an empty conversation panel and an undated Delivered step on finished orders, a boxed tip receipt, and the finished order page cut off by a fatal in the tip presets",
+   "guard": "static:finished-surfaces",
+   "added": "2026-11-28",
+   "fails_on": "f209ae10 (email colour #7f54b3, white-label default overrides the store colour, no closed-notice helper: 4 FAIL then fatal)",
+   "check": "tests/test-finished-surfaces.php",
+   "note": "The order page fatal came from c84df1f6 removing $currency while the tip modal still read it; the test renders the whole finished order page"
+  },
+  {
+   "card": "",
    "title": "One moment printed three ways: the order timeline said 'Jun 26, 2026 at 10:00 AM', the order details 'June 26, 2026 10:00 am' and admin tables 'Jun 26' - 23 date labels passed their own format instead of following Settings > General",
    "guard": "static:time-formatter",
    "added": "2026-11-28",

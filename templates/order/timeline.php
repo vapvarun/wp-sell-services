@@ -52,6 +52,15 @@ if ( empty( $wpss_order ) ) {
 					<div class="wpss-timeline__marker"></div>
 					<div class="wpss-timeline__content">
 						<span class="wpss-timeline__title"><?php esc_html_e( 'Delivered', 'wp-sell-services' ); ?></span>
+						<?php
+						global $wpdb;
+						// The first delivery: when the work first reached the buyer, revisions or not.
+						// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one indexed MIN per order view.
+						$wpss_delivered_ts = wpss_utc_timestamp( $wpdb->get_var( $wpdb->prepare( "SELECT MIN( created_at ) FROM {$wpdb->prefix}wpss_deliveries WHERE order_id = %d", (int) $wpss_order->id ) ) );
+						?>
+						<?php if ( $wpss_delivered_ts ) : ?>
+							<span class="wpss-timeline__date"><?php echo esc_html( wpss_datetime_label( $wpss_delivered_ts, '—' ) ); ?></span>
+						<?php endif; ?>
 					</div>
 				</div>
 			<?php endif; ?>
