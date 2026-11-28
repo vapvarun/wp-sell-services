@@ -2379,11 +2379,8 @@ class Settings {
 					<div class="wpss-settings-section__footer">
 						<?php
 						submit_button(
-							sprintf(
-								/* translators: %s: gateway name */
-								__( 'Save %s settings', 'wp-sell-services' ),
-								$title
-							),
+							// The button sits in the gateway's own card; a title mid-sentence read "Save Test gateway settings".
+							__( 'Save changes', 'wp-sell-services' ),
 							'primary',
 							'submit',
 							false,
