@@ -11,7 +11,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
- * @version 1.9.3
+ * @version 1.9.4
  *
  * @var \WPSellServices\Models\ServiceOrder $wpss_order                The order.
  * @var string                              $wpss_viewer               'buyer', 'vendor' or 'admin'.
@@ -36,7 +36,10 @@ $submitted_attachments = $wpss_submitted['attachments'];
 $submitted_at          = $wpss_submitted['submitted_at'];
 
 $wpss_has_submitted = ! empty( $submitted_data ) || ! empty( $submitted_attachments );
-$wpss_not_provided  = ! $wpss_has_submitted && ! empty( $service_requirements ) && empty( $wpss_hide_not_provided )
+// A request order carries the brief from the accepted proposal before the buyer confirms it, so
+// while it waits it is a brief to confirm, not a submission (Basecamp 10553847193).
+$wpss_to_confirm   = 'pending_requirements' === $wpss_order->status;
+$wpss_not_provided = ! $wpss_has_submitted && ! empty( $service_requirements ) && empty( $wpss_hide_not_provided )
 	&& in_array( $wpss_order->status, array( 'in_progress', 'pending_approval', 'completed', 'delivered', 'late', 'revision_requested' ), true );
 ?>
 <?php if ( $wpss_has_submitted ) : ?>
@@ -44,9 +47,17 @@ $wpss_not_provided  = ! $wpss_has_submitted && ! empty( $service_requirements ) 
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
 				<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
+				<?php $wpss_to_confirm ? esc_html_e( 'Brief to confirm', 'wp-sell-services' ) : esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
 			</h2>
-			<?php if ( $submitted_at ) : ?>
+			<?php if ( $wpss_to_confirm ) : ?>
+				<span class="wpss-order-section__timestamp">
+					<?php
+					'buyer' === $wpss_viewer
+						? esc_html_e( 'From your request. Confirm it to start the order.', 'wp-sell-services' )
+						: esc_html_e( 'From the request. Waiting for the buyer to confirm.', 'wp-sell-services' );
+					?>
+				</span>
+			<?php elseif ( $submitted_at ) : ?>
 				<span class="wpss-order-section__timestamp">
 					<?php
 					printf(
@@ -148,12 +159,19 @@ $wpss_not_provided  = ! $wpss_has_submitted && ! empty( $service_requirements ) 
 				$rendered_keys[] = $requirement['label'];
 			}
 
+			$wpss_same_text = static fn( $a, $b ): bool => is_scalar( $a ) && is_scalar( $b )
+				&& preg_replace( '/\s+/', ' ', trim( wp_strip_all_tags( (string) $a ) ) ) === preg_replace( '/\s+/', ' ', trim( wp_strip_all_tags( (string) $b ) ) );
+
 			$orphan_answers = array();
 			foreach ( (array) $submitted_data as $key => $value ) {
 				if ( in_array( (string) $key, $rendered_keys, true ) ) {
 					continue;
 				}
 				if ( '' === trim( (string) ( is_scalar( $value ) ? $value : wp_json_encode( $value ) ) ) ) {
+					continue;
+				}
+				// The confirm form is pre-filled from the request, so an unedited brief arrives twice.
+				if ( 'request_description' === $key && $wpss_same_text( $value, $submitted_data['description'] ?? '' ) ) {
 					continue;
 				}
 				$orphan_answers[ $key ] = $value;
