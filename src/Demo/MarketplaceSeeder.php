@@ -50,7 +50,7 @@ class MarketplaceSeeder {
 		array(
 			'login'   => 'wpss_vendor_maya',
 			'name'    => 'Maya Chen',
-			'country' => 'Singapore',
+			'country' => 'SG',
 			'tier'    => VendorProfile::TIER_PRO,
 			'tagline' => 'Brand & logo designer with 10+ years crafting identities',
 			'skills'  => array( 'Logo Design', 'Branding', 'Illustration' ),
@@ -58,7 +58,7 @@ class MarketplaceSeeder {
 		array(
 			'login'   => 'wpss_vendor_diego',
 			'name'    => 'Diego Alvarez',
-			'country' => 'Spain',
+			'country' => 'ES',
 			'tier'    => VendorProfile::TIER_TOP_RATED,
 			'tagline' => 'Full-stack WordPress developer & plugin specialist',
 			'skills'  => array( 'WordPress', 'PHP', 'REST API' ),
@@ -66,7 +66,7 @@ class MarketplaceSeeder {
 		array(
 			'login'   => 'wpss_vendor_aisha',
 			'name'    => 'Aisha Khan',
-			'country' => 'United Arab Emirates',
+			'country' => 'AE',
 			'tier'    => VendorProfile::TIER_TOP_RATED,
 			'tagline' => 'SEO strategist driving organic growth for SaaS brands',
 			'skills'  => array( 'SEO', 'Content Strategy', 'Analytics' ),
@@ -74,7 +74,7 @@ class MarketplaceSeeder {
 		array(
 			'login'   => 'wpss_vendor_liam',
 			'name'    => 'Liam O\'Connor',
-			'country' => 'Ireland',
+			'country' => 'IE',
 			'tier'    => VendorProfile::TIER_RISING,
 			'tagline' => 'Motion designer & explainer-video producer',
 			'skills'  => array( 'Animation', 'Video Editing', 'After Effects' ),
@@ -82,7 +82,7 @@ class MarketplaceSeeder {
 		array(
 			'login'   => 'wpss_vendor_yuki',
 			'name'    => 'Yuki Tanaka',
-			'country' => 'Japan',
+			'country' => 'JP',
 			'tier'    => VendorProfile::TIER_RISING,
 			'tagline' => 'Copywriter turning features into stories that sell',
 			'skills'  => array( 'Copywriting', 'Editing', 'Localization' ),
@@ -90,7 +90,7 @@ class MarketplaceSeeder {
 		array(
 			'login'   => 'wpss_vendor_sofia',
 			'name'    => 'Sofia Rossi',
-			'country' => 'Italy',
+			'country' => 'IT',
 			'tier'    => VendorProfile::TIER_NEW,
 			'tagline' => 'UI/UX designer focused on conversion-first interfaces',
 			'skills'  => array( 'UI Design', 'Figma', 'Prototyping' ),
@@ -481,11 +481,12 @@ class MarketplaceSeeder {
 				'bio'                 => sprintf(
 					'%s. Based in %s, I have helped %d+ clients ship work they are proud of. Let us build something great together.',
 					$blueprint['tagline'],
-					$blueprint['country'],
+					wpss_get_country_name( $blueprint['country'] ),
 					$completed
 				),
 				'status'              => 'active',
 				'verification_tier'   => $blueprint['tier'],
+				// An ISO code, as the profile form stores it: a name here listed Italy twice in the directory's country filter.
 				'country'             => $blueprint['country'],
 				'social_links'        => wp_json_encode(
 					array(

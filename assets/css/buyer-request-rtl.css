@@ -29,7 +29,7 @@
 }
 
 /* Reset theme heading styles */
-.wpss-requests-archive h1,
+/* No archive h1: the only one is the shared page header, which owns its own type. */
 .wpss-requests-archive h2,
 .wpss-requests-archive h3,
 .wpss-requests-archive h4,
@@ -849,8 +849,15 @@
 	white-space: nowrap;
 }
 
+.wpss-details-list .wpss-detail-item {
+	flex-wrap: wrap;
+}
+
+/* A value too long for the row moves under its label whole, instead of orphaning "am (UTC)". */
 .wpss-details-list .wpss-detail-value {
 	text-align: end;
+	white-space: nowrap;
+	margin-inline-start: auto;
 }
 
 .wpss-detail-label {

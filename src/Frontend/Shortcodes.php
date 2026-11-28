@@ -491,7 +491,12 @@ class Shortcodes {
 				endforeach;
 			else :
 				?>
-				<p class="wpss-no-results"><?php esc_html_e( 'No vendors found.', 'wp-sell-services' ); ?></p>
+				<p class="wpss-no-results">
+					<?php esc_html_e( 'No vendors found.', 'wp-sell-services' ); ?>
+					<?php if ( '' !== $search || $available || '' !== $country ) : ?>
+						<a href="<?php echo esc_url( remove_query_arg( array( 'search', 'available', 'country', 'vpage' ) ) ); ?>"><?php esc_html_e( 'Show all vendors', 'wp-sell-services' ); ?></a>
+					<?php endif; ?>
+				</p>
 			<?php endif; ?>
 		</div>
 		<?php if ( $toolbar && $pages > 1 ) : ?>

@@ -24,7 +24,7 @@
 }
 
 /* Reset theme heading styles */
-.wpss-services-archive h1,
+/* No h1: the archive's only H1 is the shared page header, which owns its own type. */
 .wpss-services-archive h2,
 .wpss-services-archive h3,
 .wpss-services-archive h4,
