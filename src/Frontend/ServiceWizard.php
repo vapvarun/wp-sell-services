@@ -1965,7 +1965,7 @@ class ServiceWizard {
 		$this->refuse_unsupported_video( $data );
 
 		// Validate required fields.
-		$errors = $this->validate_service_data( $data );
+		$errors = $this->validate_service_data( $data, $service_id );
 		if ( ! empty( $errors ) ) {
 			wp_send_json_error(
 				array(
@@ -2329,7 +2329,7 @@ class ServiceWizard {
 	 * @param array $data Service data.
 	 * @return array Validation errors.
 	 */
-	private function validate_service_data( array $data ): array {
+	private function validate_service_data( array $data, int $service_id = 0 ): array {
 		// One authority. This used to be a second, hand-written copy of the same
 		// six rules, and its parent card (#10289819803) was filed because the
 		// wizard's copy and wp-admin's had drifted apart. Fixing the drift while
@@ -2365,6 +2365,8 @@ class ServiceWizard {
 			$packages[ $tier ] = $package;
 		}
 
+		$type = (string) ( $data['service_type'] ?? '' );
+
 		return wpss_validate_service_publishable(
 			array(
 				'title'        => (string) ( $data['title'] ?? '' ),
@@ -2372,7 +2374,12 @@ class ServiceWizard {
 				'description'  => (string) ( $data['description'] ?? '' ),
 				'packages'     => $packages,
 				'thumbnail_id' => $data['gallery']['main'] ?? 0,
-				'service_type' => (string) ( $data['service_type'] ?? '' ),
+				'service_type' => $type,
+			) + (
+				// A type that sells a file (a digital product) goes live only with one; the wizard uploads it to the saved draft.
+				in_array( 'file', (array) ( wpss_get_service_types()[ $type ]['steps'] ?? array() ), true )
+					? array( 'product_file' => $service_id ? wpss_get_product_file( $service_id ) : null )
+					: array()
 			)
 		);
 	}
