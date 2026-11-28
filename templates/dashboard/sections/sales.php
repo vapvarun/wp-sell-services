@@ -255,11 +255,11 @@ $total_revenue = (float) ( $order_repo->get_vendor_stats( $user_id )['total_earn
 				</a>
 			<?php elseif ( $wpss_has_services ) : ?>
 				<a href="<?php echo esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'services' ) ); ?>" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'View My Services', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'View my services', 'wp-sell-services' ); ?>
 				</a>
 			<?php else : ?>
 				<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Create Your First Service', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Create your first service', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
 		</div>

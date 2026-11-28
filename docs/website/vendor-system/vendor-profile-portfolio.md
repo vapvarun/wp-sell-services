@@ -45,14 +45,14 @@ Your portfolio showcases previous work to potential buyers. Think of it as your 
 ### Adding Portfolio Items
 
 1. Go to **Dashboard > Portfolio**.
-2. Click **Add Portfolio Item**.
+2. Click **Add portfolio item**.
 3. Fill in the details:
    - **Title** -- The project name.
    - **Description** -- What you did and why it matters.
    - **Images/Media** -- Upload screenshots, photos, or samples of the work.
    - **External URL** -- Link to the live project (if applicable).
    - **Tags** -- Keywords describing the work.
-   - **Related Service** -- Optionally link this item to one of your services.
+   - **Related service** -- Optionally link this item to one of your services.
 
 4. Toggle **Featured** to highlight your best pieces.
 5. Save the item.

@@ -285,7 +285,7 @@ do_action( 'wpss_before_request_card', $request_id );
 					&& 'suspended' !== wpss_get_vendor_status( $wpss_viewer );
 				?>
 				<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
-					<?php echo $wpss_can_propose ? esc_html__( 'Send Proposal', 'wp-sell-services' ) : esc_html__( 'View Request', 'wp-sell-services' ); ?>
+					<?php echo $wpss_can_propose ? esc_html__( 'Send proposal', 'wp-sell-services' ) : esc_html__( 'View request', 'wp-sell-services' ); ?>
 				</a>
 			<?php else : ?>
 				<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">

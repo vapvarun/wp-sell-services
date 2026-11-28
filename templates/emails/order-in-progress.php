@@ -97,7 +97,7 @@ do_action( 'wpss_email_content_before', 'order_in_progress', $order, $recipient 
 		<?php endif; ?>
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; font-weight: 600; color: #007bff;"><?php esc_html_e( 'In Progress', 'wp-sell-services' ); ?></td>
+			<td style="padding: 12px; font-weight: 600; color: #007bff;"><?php esc_html_e( 'In progress', 'wp-sell-services' ); ?></td>
 		</tr>
 	</tbody>
 </table>

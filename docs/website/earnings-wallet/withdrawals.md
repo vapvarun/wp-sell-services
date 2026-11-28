@@ -39,9 +39,9 @@ Vendors choose how they want to be paid when they submit a request:
 
 From the vendor dashboard:
 
-1. Go to the **Earnings & Payouts** section
+1. Go to the **Earnings & payouts** section
 2. Check the available balance (must meet minimum threshold)
-3. Click **Request Withdrawal**
+3. Click **Request withdrawal**
 4. Enter the amount (or click **Withdraw All** for the full balance)
 5. Select payment method: **Bank Transfer** or **PayPal**
 6. Fill in that method's details. PayPal needs your PayPal email; a bank

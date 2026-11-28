@@ -15,7 +15,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
- * @version 1.9.0
+ * @version 2.0.0
  *
  * @var array<string,object> $wpss_gateways Enabled gateways keyed by id.
  * @var float                $wpss_amount   Amount handed to each gateway form.
@@ -32,7 +32,7 @@ $wpss_order_id = isset( $wpss_order_id ) ? (int) $wpss_order_id : 0;
 ?>
 <div class="wpss-card">
 	<div class="wpss-card__header">
-		<h3 class="wpss-card__title"><?php esc_html_e( 'Payment Method', 'wp-sell-services' ); ?></h3>
+		<h3 class="wpss-card__title"><?php esc_html_e( 'Payment method', 'wp-sell-services' ); ?></h3>
 	</div>
 	<div class="wpss-card__body">
 		<div class="wpss-co-methods">

@@ -82,7 +82,7 @@ class ServiceWizard {
 			// The render template reads ['icon'] into an <i data-lucide="…">.
 			$this->steps = array(
 				'basic'        => array(
-					'title' => __( 'Basic Info', 'wp-sell-services' ),
+					'title' => __( 'Basic info', 'wp-sell-services' ),
 					'icon'  => 'pencil',
 				),
 				'pricing'      => array(
@@ -95,7 +95,7 @@ class ServiceWizard {
 				),
 				// Only a digital product's type lists this step (wpss_get_service_types()).
 				'file'         => array(
-					'title' => __( 'Your File', 'wp-sell-services' ),
+					'title' => __( 'Your file', 'wp-sell-services' ),
 					'icon'  => 'file-down',
 				),
 				'requirements' => array(
@@ -107,7 +107,7 @@ class ServiceWizard {
 					'icon'  => 'plus-circle',
 				),
 				'review'       => array(
-					'title' => __( 'Review', 'wp-sell-services' ),
+					'title' => __( 'Review & publish', 'wp-sell-services' ),
 					'icon'  => 'eye',
 				),
 			);
@@ -336,7 +336,7 @@ class ServiceWizard {
 					<?php if ( ! $service_id || ! in_array( get_post_status( $service_id ), array( 'publish', 'pending' ), true ) ) : ?>
 						<button type="button" class="wpss-btn wpss-btn--ghost wpss-wizard__btn-save" @click="saveDraft()" :disabled="saving">
 							<i data-lucide="upload-cloud" class="wpss-icon" aria-hidden="true"></i>
-							<span><?php esc_html_e( 'Save Draft', 'wp-sell-services' ); ?></span>
+							<span><?php esc_html_e( 'Save draft', 'wp-sell-services' ); ?></span>
 						</button>
 					<?php endif; ?>
 					<?php
@@ -363,9 +363,9 @@ class ServiceWizard {
 						<i data-lucide="check-circle-2" class="wpss-icon" x-show="!publishing" aria-hidden="true"></i>
 						<span class="wpss-spinner" x-show="publishing" x-cloak></span>
 						<?php if ( $service_id && in_array( get_post_status( $service_id ), array( 'publish', 'pending' ), true ) ) : // A draft is published here, not updated. ?>
-						<span x-text="publishing ? '<?php esc_attr_e( 'Updating...', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Update Service', 'wp-sell-services' ); ?>'"></span>
+						<span x-text="publishing ? '<?php esc_attr_e( 'Updating...', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Update service', 'wp-sell-services' ); ?>'"></span>
 					<?php else : ?>
-						<span x-text="publishing ? '<?php esc_attr_e( 'Publishing...', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Publish Service', 'wp-sell-services' ); ?>'"></span>
+						<span x-text="publishing ? '<?php esc_attr_e( 'Publishing...', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Publish service', 'wp-sell-services' ); ?>'"></span>
 					<?php endif; ?>
 					</button>
 				</div>
@@ -454,7 +454,7 @@ class ServiceWizard {
 		</script>
 
 		<div class="wpss-wizard__step-header">
-			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Basic Information', 'wp-sell-services' ); ?></h2>
+			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Basic info', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-wizard__step-desc"><?php esc_html_e( 'Start by giving your service a catchy title and detailed description.', 'wp-sell-services' ); ?></p>
 		</div>
 
@@ -587,7 +587,7 @@ class ServiceWizard {
 		?>
 		<div class="wpss-wizard__step-header">
 			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Pricing', 'wp-sell-services' ); ?></h2>
-			<p class="wpss-wizard__step-desc"><?php esc_html_e( 'Set your starting price. You can offer Standard and Premium tiers for buyers who need more — but they are optional.', 'wp-sell-services' ); ?></p>
+			<p class="wpss-wizard__step-desc"><?php esc_html_e( 'Set your starting price. You can offer Standard and Premium tiers for buyers who need more, but they are optional.', 'wp-sell-services' ); ?></p>
 		</div>
 
 		<div class="wpss-wizard__step-body">
@@ -859,7 +859,7 @@ class ServiceWizard {
 			<?php /* Main image — the only required field on this step. */ ?>
 			<div class="wpss-form-group">
 				<label class="wpss-form-label" for="wpss-wizard-main-image">
-					<?php esc_html_e( 'Main Image', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Main image', 'wp-sell-services' ); ?>
 					<span class="wpss-required">*</span>
 				</label>
 				<div id="wpss-wizard-main-image"
@@ -902,7 +902,7 @@ class ServiceWizard {
 
 				<div class="wpss-form-disclosure__body">
 					<div class="wpss-form-group">
-						<label class="wpss-form-label" id="wpss-gallery-images-label"><?php esc_html_e( 'Additional Images', 'wp-sell-services' ); ?></label>
+						<label class="wpss-form-label" id="wpss-gallery-images-label"><?php esc_html_e( 'Additional images', 'wp-sell-services' ); ?></label>
 						<div class="wpss-gallery-grid" role="group" aria-labelledby="wpss-gallery-images-label">
 							<template x-for="(image, index) in data.gallery.images" :key="image.id">
 								<div class="wpss-gallery-item">
@@ -924,7 +924,7 @@ class ServiceWizard {
 							?>
 							<button type="button" class="wpss-gallery-add" @click="openMediaUploader('images')" x-show="canAddGalleryImage()" aria-label="<?php esc_attr_e( 'Add a gallery image', 'wp-sell-services' ); ?>">
 								<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
-								<span><?php esc_html_e( 'Add Image', 'wp-sell-services' ); ?></span>
+								<span><?php esc_html_e( 'Add image', 'wp-sell-services' ); ?></span>
 							</button>
 						</div>
 						<div class="wpss-form-hint">
@@ -955,7 +955,7 @@ class ServiceWizard {
 	private function render_step_file(): void {
 		?>
 		<div class="wpss-wizard__step-header">
-			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Your File', 'wp-sell-services' ); ?></h2>
+			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Your file', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-wizard__step-desc"><?php esc_html_e( 'Buyers download this file the moment they pay. Upload a new version any time: buyers always get the latest.', 'wp-sell-services' ); ?></p>
 		</div>
 
@@ -1003,7 +1003,7 @@ class ServiceWizard {
 	private function render_step_requirements( ?\WP_Post $_service ): void {
 		?>
 		<div class="wpss-wizard__step-header">
-			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Buyer Requirements', 'wp-sell-services' ); ?></h2>
+			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-wizard__step-desc"><?php esc_html_e( 'Define what information you need from buyers before starting work.', 'wp-sell-services' ); ?></p>
 		</div>
 
@@ -1029,7 +1029,7 @@ class ServiceWizard {
 							</div>
 							<div class="wpss-form-row wpss-form-row--2col">
 								<div class="wpss-form-group">
-									<label class="wpss-form-label" :for="'wpss-req-type-' + index"><?php esc_html_e( 'Answer Type', 'wp-sell-services' ); ?></label>
+									<label class="wpss-form-label" :for="'wpss-req-type-' + index"><?php esc_html_e( 'Answer type', 'wp-sell-services' ); ?></label>
 									<?php
 									/*
 									 * Rendered from the shared map, not hardcoded. This list
@@ -1080,7 +1080,7 @@ class ServiceWizard {
 
 			<button type="button" class="wpss-btn wpss-btn--outline" @click="addRequirement()" x-show="canAddRequirement()">
 				<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Add Requirement', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Add requirement', 'wp-sell-services' ); ?>
 			</button>
 
 			<div class="wpss-form-hint" x-show="!canAddRequirement()" x-cloak>
@@ -1117,21 +1117,21 @@ class ServiceWizard {
 			<?php $this->render_error_summary(); ?>
 			<!-- Service Extras -->
 			<div class="wpss-section" x-show="typeHasAddons()">
-				<h3 class="wpss-section__title"><?php esc_html_e( 'Service Extras', 'wp-sell-services' ); ?></h3>
+				<h3 class="wpss-section__title"><?php esc_html_e( 'Service extras', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-section__desc"><?php esc_html_e( 'Offer additional services buyers can add to their order.', 'wp-sell-services' ); ?></p>
 
 				<div class="wpss-extras-list">
 					<template x-for="(extra, index) in data.extras" :key="index">
 						<div class="wpss-extra-item">
 							<div class="wpss-extra-header">
-								<span class="wpss-extra-title" x-text="extra.title || '<?php esc_attr_e( 'New Extra', 'wp-sell-services' ); ?>'"></span>
+								<span class="wpss-extra-title" x-text="extra.title || '<?php esc_attr_e( 'New extra', 'wp-sell-services' ); ?>'"></span>
 								<button type="button" aria-label="<?php esc_attr_e( 'Remove this extra', 'wp-sell-services' ); ?>" class="wpss-btn--icon" @click="removeExtra(index)">
 									<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 								</button>
 							</div>
 							<div class="wpss-extra-fields">
 								<div class="wpss-form-group">
-									<label class="wpss-form-label" :for="'wpss-extra-title-' + index"><?php esc_html_e( 'Extra Title', 'wp-sell-services' ); ?></label>
+									<label class="wpss-form-label" :for="'wpss-extra-title-' + index"><?php esc_html_e( 'Extra title', 'wp-sell-services' ); ?></label>
 									<input type="text"
 										class="wpss-form-input"
 										x-model="extra.title"
@@ -1212,7 +1212,7 @@ class ServiceWizard {
 
 				<button type="button" class="wpss-btn wpss-btn--outline" @click="addExtra()" x-show="canAddExtra()">
 					<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Add Extra', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Add extra', 'wp-sell-services' ); ?>
 				</button>
 
 				<div class="wpss-form-hint" x-show="!canAddExtra()" x-cloak>
@@ -1227,7 +1227,7 @@ class ServiceWizard {
 
 			<!-- FAQs -->
 			<div class="wpss-section">
-				<h3 class="wpss-section__title"><?php esc_html_e( 'Frequently Asked Questions', 'wp-sell-services' ); ?></h3>
+				<h3 class="wpss-section__title"><?php esc_html_e( 'Frequently asked questions', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-section__desc"><?php esc_html_e( 'Answer common questions to help buyers make decisions.', 'wp-sell-services' ); ?></p>
 
 				<div class="wpss-faqs-list">
@@ -1289,7 +1289,7 @@ class ServiceWizard {
 		$wpss_publish_floors = wpss_service_publish_thresholds();
 		?>
 		<div class="wpss-wizard__step-header">
-			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Review & Publish', 'wp-sell-services' ); ?></h2>
+			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Review & publish', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-wizard__step-desc"><?php esc_html_e( 'Review your service details before publishing.', 'wp-sell-services' ); ?></p>
 		</div>
 
@@ -1298,7 +1298,7 @@ class ServiceWizard {
 			<div class="wpss-review-grid">
 				<!-- Service Preview Card -->
 				<div class="wpss-review-section">
-					<h4 class="wpss-review-section__title"><?php esc_html_e( 'Service Preview', 'wp-sell-services' ); ?></h4>
+					<h4 class="wpss-review-section__title"><?php esc_html_e( 'Service preview', 'wp-sell-services' ); ?></h4>
 					<div class="wpss-service-preview-card">
 						<div class="wpss-service-preview-image">
 							<template x-if="data.gallery.main">
@@ -1311,7 +1311,7 @@ class ServiceWizard {
 							</template>
 						</div>
 						<div class="wpss-service-preview-info">
-							<h3 class="wpss-service-preview-title" x-text="data.title || '<?php esc_attr_e( 'Untitled Service', 'wp-sell-services' ); ?>'"></h3>
+							<h3 class="wpss-service-preview-title" x-text="data.title || '<?php esc_attr_e( 'Untitled service', 'wp-sell-services' ); ?>'"></h3>
 							<div class="wpss-service-preview-price">
 								<?php esc_html_e( 'Starting at', 'wp-sell-services' ); ?>
 								<strong x-text="window.wpssMoney.format(data.packages.basic.price || 0)"></strong>
@@ -1322,7 +1322,7 @@ class ServiceWizard {
 
 				<!-- Checklist -->
 				<div class="wpss-review-section">
-					<h4 class="wpss-review-section__title"><?php esc_html_e( 'Completion Checklist', 'wp-sell-services' ); ?></h4>
+					<h4 class="wpss-review-section__title"><?php esc_html_e( 'Completion checklist', 'wp-sell-services' ); ?></h4>
 					<?php
 					/*
 					 * Two STATIC icons per row, toggled with x-show - not one icon
@@ -1399,7 +1399,7 @@ class ServiceWizard {
 
 				<!-- Summary Sections -->
 				<div class="wpss-review-section wpss-review-section--full">
-					<h4 class="wpss-review-section__title"><?php esc_html_e( 'Pricing Summary', 'wp-sell-services' ); ?></h4>
+					<h4 class="wpss-review-section__title"><?php esc_html_e( 'Pricing summary', 'wp-sell-services' ); ?></h4>
 					<div class="wpss-pricing-summary">
 						<template x-for="tier in ['basic', 'standard', 'premium']" :key="tier">
 							<div class="wpss-pricing-summary-item" x-show="tier === 'basic' || data.packages[tier].enabled" x-cloak>
@@ -1732,8 +1732,8 @@ class ServiceWizard {
 					'limitExtras'                => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),
 					'limitFaq'                   => __( 'You have reached the maximum number of FAQs. Upgrade to Pro for unlimited FAQs.', 'wp-sell-services' ),
 					'limitRequirements'          => __( 'You have reached the maximum number of requirements. Upgrade to Pro for unlimited requirements.', 'wp-sell-services' ),
-					'selectMainImage'            => __( 'Select Main Image', 'wp-sell-services' ),
-					'addGalleryImage'            => __( 'Add Gallery Image', 'wp-sell-services' ),
+					'selectMainImage'            => __( 'Select main image', 'wp-sell-services' ),
+					'addGalleryImage'            => __( 'Add gallery image', 'wp-sell-services' ),
 					'delete'                     => __( 'Delete', 'wp-sell-services' ),
 					'validationFile'             => __( 'Upload the file buyers download.', 'wp-sell-services' ),
 					'chooseFile'                 => __( 'Choose a file', 'wp-sell-services' ),
@@ -2503,7 +2503,7 @@ class ServiceWizard {
 			if ( ! $registration_url ) {
 				$registration_url = home_url();
 			}
-			$message .= ' <a href="' . esc_url( $registration_url ) . '">' . esc_html__( 'Become a Vendor', 'wp-sell-services' ) . '</a>';
+			$message .= ' <a href="' . esc_url( $registration_url ) . '">' . esc_html__( 'Become a vendor', 'wp-sell-services' ) . '</a>';
 		}
 
 		return '<div class="wpss-notice wpss-notice-info">' . $message . '</div>';

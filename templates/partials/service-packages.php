@@ -452,7 +452,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 			</button>
 			<?php // The same Contact Me button as the seller block and the vendor profile; it opens the contact modal. ?>
 			<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--block wpss-contact-btn" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
-				<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Contact me', 'wp-sell-services' ); ?>
 			</button>
 		</div>
 	<?php endif; ?>

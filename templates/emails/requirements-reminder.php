@@ -81,7 +81,7 @@ do_action( 'wpss_email_content_before', 'requirements_reminder', $order, $recipi
 		<th style="padding: 12px; text-align: left;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
 		<td style="padding: 12px;">
 			<span style="background-color: #ffc107; color: #333; padding: 4px 8px; border-radius: 3px; font-size: 13px;">
-				<?php esc_html_e( 'Awaiting Requirements', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Awaiting requirements', 'wp-sell-services' ); ?>
 			</span>
 		</td>
 	</tr>
@@ -110,7 +110,7 @@ do_action( 'wpss_email_content_before', 'requirements_reminder', $order, $recipi
 	 *
 	 * @param string $button_text Default button text.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'Submit Requirements Now', 'wp-sell-services' ), 'requirements_reminder' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'Submit requirements now', 'wp-sell-services' ), 'requirements_reminder' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" class="button" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 16px;">
 		<?php echo esc_html( $button_text ); ?>

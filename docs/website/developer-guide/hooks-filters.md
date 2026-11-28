@@ -234,8 +234,8 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 |--------|-----------|------|
 | `wpss_pre_vendor_register` | `array $profile_data, int $user_id` | `VendorService.php` |
 | `wpss_vendor_profile_allowed_fields` | `array $allowed_fields` | `VendorService.php` |
-| `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:968` |
-| `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1373` |
+| `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:996` |
+| `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1406` |
 
 | Hook | Parameters | File |
 |------|-----------|------|
@@ -315,7 +315,7 @@ tip. Tips are excluded from commission by default, so the two usually match.
 | `wpss_proposal_withdrawn` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:522` |
 | `wpss_proposal_deleted` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:928` |
 | `wpss_proposal_status_updated` | `int $proposal_id, string $status` | `src/Services/BuyerRequestService.php:1192` |
-| `wpss_buyer_request_deleted` | `int $request_id` | `src/Services/BuyerRequestService.php:1439` |
+| `wpss_buyer_request_deleted` | `int $request_id` | `src/Services/BuyerRequestService.php:1505` |
 | `wpss_buyer_request_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/BuyerRequestMetabox.php:349` |
 
 ## Milestone and Extension Actions
@@ -356,7 +356,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:3327` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:3222` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:2194` |
 
 ### Admin Filters
@@ -534,7 +534,7 @@ add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:1080` |
+| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:1084` |
 
 ### Dashboard Filters
 
@@ -654,8 +654,8 @@ These filters let you customize outgoing email content without modifying templat
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2667` |
-| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2643` |
+| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2669` |
+| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2645` |
 | `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1893` |
 
 ```php
@@ -724,7 +724,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:55` |
 | `wpss_currency` | `$currency` | `src/functions/money.php:689` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/core.php:34` |
-| `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:184` |
+| `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:212` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:98` |
 | `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:725` |
 | `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:752` |
@@ -793,8 +793,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_get_template_part` | `$template, $slug, $name` | `src/functions/templates.php:125` |
-| `wpss_get_template` | `$template, $template_name, $args` | `src/functions/templates.php:162` |
+| `wpss_get_template_part` | `$template, $slug, $name` | `src/functions/templates.php:149` |
+| `wpss_get_template` | `$template, $template_name, $args` | `src/functions/templates.php:186` |
 | `wpss_locate_template` | `$template, $template_name, $template_path` | `src/Frontend/TemplateLoader.php:591` |
 | `wpss_dashboard_section_template` | `$template_path, $section` | `src/functions/urls.php:427` |
 
@@ -843,7 +843,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_payout_method_registry` | `$methods` (id => label + fields; optional `render` callable( $user_id ) draws the method's card in the vendor's Payout Methods, `withdrawal` => false keeps a connect-only rail out of the withdrawal choices) | `src/Services/EarningsService.php:1373` |
 | `wpss_order_needs_requirements` | `$needs, $order`: whether a paid order waits in pending_requirements (Pro answers false for a recurring renewal) | `src/functions/requirements.php:285` |
 | `wpss_vendor_reserved_payouts` | `$reserved` (default 0), `$vendor_id`: money a payout rail has committed but not yet debited; counted as a withdrawal in progress | `src/Services/EarningsService.php:175` |
-| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:763` |
+| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:768` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:265` |
 | `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1643` |
@@ -852,7 +852,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
 | `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:535` |
 | `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:666` |
-| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:1018` |
+| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:1022` |
 
 **`wpss_realtime_settings`** - filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
 
@@ -908,7 +908,7 @@ add_filter( 'wpss_reign_hide_left_panel', '__return_false' );
 | `wpss_open_graph_data` | `$data, $service_id` | `src/SEO/SEO.php:260` |
 | `wpss_sitemap_post_types` | `$post_types` | `src/SEO/SEO.php:324` |
 | `wpss_breadcrumbs` | `$breadcrumbs, $service_id` | `src/SEO/SEO.php:392` |
-| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2410` |
+| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2438` |
 | `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1844` |
 | `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1999` |
 

@@ -12,7 +12,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var \WPSellServices\Models\ServiceOrder $current_order The tip order row.
  * @var int                                 $user_id       Current user ID.
@@ -98,9 +98,9 @@ do_action( 'wpss_before_tip_view', $current_order );
 		<h2 class="wpss-tip-view__title">
 			<?php
 			if ( $is_vendor ) {
-				echo esc_html( $is_paid ? __( 'Tip received', 'wp-sell-services' ) : ( $awaiting ? __( 'Tip pending — payment awaiting confirmation', 'wp-sell-services' ) : __( "Tip pending — buyer hasn't paid yet", 'wp-sell-services' ) ) );
+				echo esc_html( $is_paid ? __( 'Tip received', 'wp-sell-services' ) : ( $awaiting ? __( 'Tip pending, payment awaiting confirmation', 'wp-sell-services' ) : __( "Tip pending, buyer hasn't paid yet", 'wp-sell-services' ) ) );
 			} elseif ( $is_buyer ) {
-				echo esc_html( $is_paid ? __( 'Tip sent', 'wp-sell-services' ) : ( $awaiting ? __( 'Tip sent — payment awaiting confirmation', 'wp-sell-services' ) : __( "Tip not sent yet — payment didn't complete", 'wp-sell-services' ) ) );
+				echo esc_html( $is_paid ? __( 'Tip sent', 'wp-sell-services' ) : ( $awaiting ? __( 'Tip sent, payment awaiting confirmation', 'wp-sell-services' ) : __( "Tip not sent yet, payment didn't complete", 'wp-sell-services' ) ) );
 			} else {
 				echo esc_html__( 'Tip', 'wp-sell-services' );
 			}

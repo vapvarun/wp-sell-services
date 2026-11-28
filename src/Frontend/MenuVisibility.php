@@ -75,13 +75,13 @@ class MenuVisibility {
 	 */
 	public static function dashboard_sections(): array {
 		return array(
-			'orders'        => __( 'My Orders', 'wp-sell-services' ),
+			'orders'        => __( 'My orders', 'wp-sell-services' ),
 			'favorites'     => __( 'Favorites', 'wp-sell-services' ),
 			'downloads'     => __( 'Downloads', 'wp-sell-services' ),
-			'requests'      => __( 'Buyer Requests', 'wp-sell-services' ),
-			'services'      => __( 'My Services', 'wp-sell-services' ),
-			'sales'         => __( 'Sales Orders', 'wp-sell-services' ),
-			'earnings'      => __( 'Earnings & Payouts', 'wp-sell-services' ),
+			'requests'      => __( 'Buyer requests', 'wp-sell-services' ),
+			'services'      => __( 'My services', 'wp-sell-services' ),
+			'sales'         => __( 'Sales orders', 'wp-sell-services' ),
+			'earnings'      => __( 'Earnings & payouts', 'wp-sell-services' ),
 			'portfolio'     => __( 'Portfolio', 'wp-sell-services' ),
 			'analytics'     => __( 'Analytics', 'wp-sell-services' ),
 			'messages'      => __( 'Messages', 'wp-sell-services' ),
@@ -242,7 +242,7 @@ class MenuVisibility {
 		?>
 		<div class="wpss-card" data-section="menu-visibility">
 			<div class="wpss-card__head">
-				<h2 class="wpss-card__title"><?php esc_html_e( 'Menu Visibility', 'wp-sell-services' ); ?></h2>
+				<h2 class="wpss-card__title"><?php esc_html_e( 'Menu visibility', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-card__desc">
 					<?php esc_html_e( 'Choose which dashboard sections each role can see. Everything is visible by default; unticking a section also blocks its direct URL for that role.', 'wp-sell-services' ); ?>
 				</p>
@@ -298,7 +298,7 @@ class MenuVisibility {
 					<?php endforeach; ?>
 
 					<div class="wpss-settings-section__footer">
-						<?php wpss_submit_button( __( 'Save Menu Visibility', 'wp-sell-services' ), 'primary', 'submit', 'wpss-save-menu-visibility' ); ?>
+						<?php wpss_submit_button( __( 'Save menu visibility', 'wp-sell-services' ), 'primary', 'submit', 'wpss-save-menu-visibility' ); ?>
 					</div>
 				</form>
 			</div>

@@ -48,8 +48,8 @@ The system checks every vendor's stats daily and compares them against the crite
 
 Here is what each metric measures:
 
-- **Completed Orders** -- The total number of orders you have successfully delivered.
-- **Average Rating** -- The average star rating across all your approved reviews.
+- **Completed orders** -- The total number of orders you have successfully delivered.
+- **Average rating** -- The average star rating across all your approved reviews.
 - **Total Reviews** -- How many reviews buyers have left for you.
 - **On-Time Delivery Rate** -- The percentage of orders you delivered before the deadline.
 - **Days Active** -- How many days since you registered as a vendor.

@@ -44,7 +44,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 		<?php wp_nonce_field( 'wpss_update_profile', 'wpss_profile_nonce' ); ?>
 
 		<div class="wpss-profile-form__section">
-			<h3><?php esc_html_e( 'Basic Information', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Basic information', 'wp-sell-services' ); ?></h3>
 
 			<?php
 			// Check user meta first (works for all users), then vendor profile table.
@@ -61,7 +61,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					<input type="hidden" name="avatar_id" id="wpss-avatar-id" value="<?php echo esc_attr( $avatar_id ); ?>">
 					<div class="wpss-avatar-upload__actions">
 						<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--secondary" id="wpss-avatar-upload-btn">
-							<?php esc_html_e( 'Upload Photo', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Upload photo', 'wp-sell-services' ); ?>
 						</button>
 						<?php if ( $avatar_id ) : ?>
 							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-avatar-remove-btn">
@@ -92,7 +92,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					</div>
 					<div class="wpss-cover-upload__actions" style="margin-top:8px;">
 						<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--secondary" id="wpss-cover-upload-btn">
-							<?php esc_html_e( 'Upload Cover', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Upload cover', 'wp-sell-services' ); ?>
 						</button>
 						<?php if ( $cover_id ) : ?>
 							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-cover-remove-btn">
@@ -110,7 +110,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			</div>
 
 			<div class="wpss-form-row">
-				<label for="email"><?php esc_html_e( 'Email Address', 'wp-sell-services' ); ?></label>
+				<label for="email"><?php esc_html_e( 'Email address', 'wp-sell-services' ); ?></label>
 				<input type="email" id="email" name="email" value="<?php echo esc_attr( $user->user_email ); ?>" class="wpss-input" readonly>
 				<p class="wpss-form-hint"><?php esc_html_e( 'Email cannot be changed here.', 'wp-sell-services' ); ?></p>
 			</div>
@@ -146,7 +146,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 
 		<?php if ( $is_vendor && $vendor_profile ) : ?>
 			<div class="wpss-profile-form__section">
-				<h3><?php esc_html_e( 'Vendor Profile', 'wp-sell-services' ); ?></h3>
+				<h3><?php esc_html_e( 'Vendor profile', 'wp-sell-services' ); ?></h3>
 
 				<div class="wpss-form-row">
 					<label for="tagline"><?php esc_html_e( 'Tagline', 'wp-sell-services' ); ?></label>
@@ -233,7 +233,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				<?php endforeach; ?>
 
 				<div class="wpss-form-row">
-					<label for="intro_video_url"><?php esc_html_e( 'Intro Video', 'wp-sell-services' ); ?></label>
+					<label for="intro_video_url"><?php esc_html_e( 'Intro video', 'wp-sell-services' ); ?></label>
 					<input type="url" id="intro_video_url" name="intro_video_url" value="<?php echo esc_url( $vendor_profile->intro_video_url ?? '' ); ?>" class="wpss-input" placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/...">
 					<p class="wpss-form-hint"><?php esc_html_e( 'Paste a YouTube or Vimeo URL. Shown on your profile and on every service detail page, so buyers can get a quick pitch before ordering.', 'wp-sell-services' ); ?></p>
 				</div>
@@ -245,13 +245,13 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				<div class="wpss-form-row">
 					<label class="wpss-toggle">
 						<input type="checkbox" name="vacation_mode" value="1" <?php checked( ! empty( $vendor_profile->vacation_mode ) ); ?>>
-						<span class="wpss-toggle__label"><?php esc_html_e( 'Vacation Mode', 'wp-sell-services' ); ?></span>
+						<span class="wpss-toggle__label"><?php esc_html_e( 'Vacation mode', 'wp-sell-services' ); ?></span>
 					</label>
 					<p class="wpss-form-hint"><?php esc_html_e( 'When enabled, your services will be hidden from search and buyers cannot place new orders.', 'wp-sell-services' ); ?></p>
 				</div>
 
 				<div class="wpss-form-row">
-					<label for="vacation_message"><?php esc_html_e( 'Vacation Message (optional)', 'wp-sell-services' ); ?></label>
+					<label for="vacation_message"><?php esc_html_e( 'Vacation message (optional)', 'wp-sell-services' ); ?></label>
 					<textarea id="vacation_message" name="vacation_message" rows="3" class="wpss-textarea" placeholder="<?php esc_attr_e( 'e.g., Out of office until March 15. Orders will resume then.', 'wp-sell-services' ); ?>"><?php echo esc_textarea( $vendor_profile->vacation_message ?? '' ); ?></textarea>
 					<p class="wpss-form-hint"><?php esc_html_e( 'Shown to buyers on your profile and services while Vacation Mode is on. Leave empty for the default notice.', 'wp-sell-services' ); ?></p>
 				</div>
@@ -322,7 +322,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			?>
 
 			<button type="submit" class="wpss-btn wpss-btn--primary">
-				<?php esc_html_e( 'Save Changes', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Save changes', 'wp-sell-services' ); ?>
 			</button>
 		</div>
 	</form>

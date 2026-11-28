@@ -44,7 +44,7 @@ Test keys start with `pk_test_` and `sk_test_`. Live keys start with `pk_live_` 
 4. Paste your Publishable Key and Secret Key
 5. Turn on **Test Mode** while you are setting up
 6. Set a display title like "Credit Card" (this is what buyers see)
-7. Click **Save Changes**
+7. Click **Save changes**
 
 ### Set Up Webhooks
 
@@ -57,7 +57,7 @@ Webhooks let Stripe tell your site when a payment succeeds or fails.
 5. Click **Add endpoint**
 6. Copy the **Signing secret** that appears
 7. Paste it into **Sell Services > Settings > Payment Gateways**
-8. Click **Save Changes**
+8. Click **Save changes**
 
 ### Sharing One Stripe Account Between Sites
 

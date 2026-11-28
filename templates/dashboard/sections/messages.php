@@ -94,7 +94,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 		$other_user = $other_user_id ? get_userdata( $other_user_id ) : null;
 		$conv_title = $other_user
 			? $other_user->display_name
-			: ( $active_conversation->subject ?: __( 'Direct Message', 'wp-sell-services' ) );
+			: ( $active_conversation->subject ?: __( 'Direct message', 'wp-sell-services' ) );
 
 		// Mark conversation as read.
 		$conversation_repo->mark_read( $active_conversation_id, $user_id );
@@ -260,7 +260,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 	<?php else : ?>
 		<div class="wpss-notice wpss-notice--error">
 			<p><?php esc_html_e( 'Conversation not found or you do not have permission to view it.', 'wp-sell-services' ); ?></p>
-			<a href="<?php echo esc_url( wpss_get_dashboard_url( 'messages' ) ); ?>">&larr; <?php esc_html_e( 'Back to Messages', 'wp-sell-services' ); ?></a>
+			<a href="<?php echo esc_url( wpss_get_dashboard_url( 'messages' ) ); ?>">&larr; <?php esc_html_e( 'Back to messages', 'wp-sell-services' ); ?></a>
 		</div>
 	<?php endif; ?>
 
@@ -404,7 +404,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				$conversation_title = $other_user
 					? $other_user->display_name
 					: ( $is_direct
-						? ( ! empty( $conversation->subject ) ? $conversation->subject : __( 'Direct Message', 'wp-sell-services' ) )
+						? ( ! empty( $conversation->subject ) ? $conversation->subject : __( 'Direct message', 'wp-sell-services' ) )
 						: $conversation_subject );
 				?>
 				<a href="<?php echo esc_url( $conv_url ); ?>" class="wpss-conversation-card <?php echo $is_unread ? 'wpss-conversation-card--unread' : ''; ?>">
@@ -485,7 +485,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 								// An order opens its conversation before anyone has
 								// written in it. Those rows rendered an empty line and
 								// no timestamp, which read as broken rather than new.
-								echo '<em>' . esc_html__( 'No messages yet — say hello', 'wp-sell-services' ) . '</em>';
+								echo '<em>' . esc_html__( 'No messages yet. Say hello', 'wp-sell-services' ) . '</em>';
 							}
 							?>
 						</p>
@@ -495,7 +495,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 								// A message about a service names the service; a generic
 								// stored subject ("Order discussion") told three rows apart
 								// by nothing.
-								echo esc_html( $service ? wp_trim_words( $service->post_title, 6 ) : ( ! empty( $conversation->subject ) ? $conversation->subject : __( 'Direct Message', 'wp-sell-services' ) ) );
+								echo esc_html( $service ? wp_trim_words( $service->post_title, 6 ) : ( ! empty( $conversation->subject ) ? $conversation->subject : __( 'Direct message', 'wp-sell-services' ) ) );
 								?>
 							</span>
 						<?php else : ?>

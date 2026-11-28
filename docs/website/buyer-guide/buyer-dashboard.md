@@ -72,8 +72,8 @@ If you are currently only a buyer and want to start selling services too, look f
 
 Once approved, additional sections appear in your sidebar:
 
-- **My Services** -- Create and manage service listings
-- **Sales Orders** -- Handle incoming orders from buyers
+- **My services** -- Create and manage service listings
+- **Sales orders** -- Handle incoming orders from buyers
 - **Earnings** -- Track revenue and request withdrawals
 - **Portfolio** -- Showcase your work
 - **Analytics** **[PRO]** -- Sales performance data

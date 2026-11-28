@@ -16,7 +16,7 @@ This is the default setting and works well for marketplaces that trust their ven
 
 When moderation is turned on, submitting a service sends it to a review queue instead of publishing it immediately. Here is the flow:
 
-1. Vendor clicks "Publish Service" in the wizard
+1. Vendor clicks "Publish service" in the wizard
 2. Service status becomes "Pending Review"
 3. The admin receives an email notification
 4. The admin reviews the service and either approves or rejects it
@@ -54,7 +54,7 @@ Rejection is not permanent -- it is feedback. Here is how to handle it:
 1. **Read the rejection reason carefully** -- The admin explains what needs to change
 2. **Fix everything mentioned** -- Do not just address one issue if multiple were flagged
 3. **Improve beyond the minimum** -- Use the feedback as an opportunity to strengthen your listing
-4. **Resubmit** -- Open your service in the wizard and click "Publish Service" again
+4. **Resubmit** -- Open your service in the wizard and click "Publish service" again
 
 The service goes back into the review queue for the admin to check again.
 
@@ -77,7 +77,7 @@ Vendors can update their published services at any time through the Dashboard.
 
 ### Saving as Draft
 
-At any point during service creation, vendors can click "Save Draft" to save their progress without publishing. Draft services are only visible to the vendor and admins. There is no time limit on drafts.
+At any point during service creation, vendors can click "Save draft" to save their progress without publishing. Draft services are only visible to the vendor and admins. There is no time limit on drafts.
 
 ### Deleting a Service
 

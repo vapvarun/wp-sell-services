@@ -49,7 +49,7 @@ obliged to accept either -- nothing changes unless you approve it. See
 [Tipping & Extensions](../order-management/tipping-extensions.md).
 
 **Can I cancel?**
-You can request cancellation while an order is **In Progress**, before anything is
+You can request cancellation while an order is **In progress**, before anything is
 delivered and within the cancellation window the marketplace sets (24 hours after
 work starts by default). The vendor accepts or declines. If they decline and you cannot resolve it between you, open
 a dispute. Once the work is delivered, use revisions or a dispute instead.

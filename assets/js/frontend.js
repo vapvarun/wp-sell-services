@@ -1210,7 +1210,7 @@
 				const base = (wpssData.i18n?.confirmAcceptMilestoneProposal || 'Accept this {phases}-phase milestone plan ({total} total)?');
 				message = base.replace('{phases}', phases).replace('{total}', total) +
 					'\n\n' +
-					(wpssData.i18n?.milestoneLockstepNote || 'You pay each phase as the seller finishes the one before it. No parent payment — every phase is its own payment.');
+					(wpssData.i18n?.milestoneLockstepNote || 'You pay each phase as the seller finishes the one before it. No parent payment: every phase is its own payment.');
 			} else {
 				message = (wpssData.i18n?.confirmAcceptFixedProposal || 'Accept this fixed-price proposal ({total})?').replace('{total}', total);
 			}

@@ -40,7 +40,7 @@ try {
 
 	$check( 'Visitor: Start selling, to that page', array( array( 'Start selling', $page ) ) === $actions( 0 ), wp_json_encode( $actions( 0 ) ) );
 	$check( 'Buyer: Start selling too', array( array( 'Start selling', $page ) ) === $actions( $f->buyer ), wp_json_encode( $actions( $f->buyer ) ) );
-	$check( 'Vendor: Create a Service, as before', array( 'Create a Service' ) === array_column( $actions( $f->vendor ), 0 ) );
+	$check( 'Vendor: Create a Service, as before', array( 'Create a service' ) === array_column( $actions( $f->vendor ), 0 ) );
 
 	$admin_is_vendor = wpss_is_vendor( $f->admin );
 	$check( 'Owner who does not sell: Add your first service', $admin_is_vendor || array( 'Add your first service' ) === array_column( $actions( $f->admin ), 0 ), wp_json_encode( $actions( $f->admin ) ) );

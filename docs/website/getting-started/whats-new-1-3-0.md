@@ -30,7 +30,7 @@ Buyers and vendors can now message each other and attach evidence directly on a 
 ## Quality of life
 
 - A Log Out link now appears in the dashboard navigation.
-- Add-to-cart continues straight to checkout so "Continue to Checkout" matches its label.
+- Add-to-cart continues straight to checkout so "Continue to checkout" matches its label.
 - Buyer request cards keep their actions on one line on mobile and tablet.
 - Accessibility pass: visible keyboard focus, form-field labels, and ARIA labels on search and category controls.
 

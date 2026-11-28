@@ -52,7 +52,7 @@ do_action( 'wpss_email_content_before', 'withdrawal_auto', $vendor, $withdrawal_
 
 <p style="text-align: center; margin: 30px 0;">
 	<a href="<?php echo esc_url( $admin_panel_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
-		<?php esc_html_e( 'Review Withdrawal', 'wp-sell-services' ); ?>
+		<?php esc_html_e( 'Review withdrawal', 'wp-sell-services' ); ?>
 	</a>
 </p>
 

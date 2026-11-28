@@ -18,7 +18,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var \WPSellServices\Models\ServiceOrder $current_order Milestone sub-order row.
  * @var int                                 $user_id       Current user ID.
@@ -120,18 +120,18 @@ do_action( 'wpss_before_milestone_view', $current_order );
 				if ( $is_completed ) {
 					esc_html_e( 'Phase approved', 'wp-sell-services' );
 				} elseif ( $is_submitted ) {
-					esc_html_e( 'Delivery submitted — awaiting buyer', 'wp-sell-services' );
+					esc_html_e( 'Delivery submitted, awaiting buyer', 'wp-sell-services' );
 				} elseif ( $in_revision ) {
-					esc_html_e( 'Changes requested — over to you', 'wp-sell-services' );
+					esc_html_e( 'Changes requested, over to you', 'wp-sell-services' );
 				} elseif ( $is_working ) {
-					esc_html_e( 'Paid — ready for delivery', 'wp-sell-services' );
+					esc_html_e( 'Paid, ready for delivery', 'wp-sell-services' );
 				} elseif ( $is_unpaid ) {
-					esc_html_e( 'Proposal sent — awaiting buyer payment', 'wp-sell-services' );
+					esc_html_e( 'Proposal sent, awaiting buyer payment', 'wp-sell-services' );
 				} elseif ( $is_cancelled ) {
 					// Cancelled reason differs by actor — you can re-propose after a buyer-decline
 					// but not after an admin/system cancellation, so hinting the path here removes
 					// the "what now?" uncertainty.
-					esc_html_e( 'Phase cancelled by vendor — you can propose a revised phase any time', 'wp-sell-services' );
+					esc_html_e( 'Phase cancelled by vendor. You can propose a revised phase any time', 'wp-sell-services' );
 				}
 			} elseif ( $is_buyer ) {
 				if ( $is_completed ) {
@@ -141,11 +141,11 @@ do_action( 'wpss_before_milestone_view', $current_order );
 				} elseif ( $in_revision ) {
 					esc_html_e( 'Sent back to your vendor', 'wp-sell-services' );
 				} elseif ( $is_working ) {
-					esc_html_e( 'Paid — vendor working', 'wp-sell-services' );
+					esc_html_e( 'Paid, vendor working', 'wp-sell-services' );
 				} elseif ( $is_unpaid ) {
 					esc_html_e( 'New phase from your vendor', 'wp-sell-services' );
 				} elseif ( $is_cancelled ) {
-					esc_html_e( 'Phase cancelled — your vendor can send a revised one', 'wp-sell-services' );
+					esc_html_e( 'Phase cancelled. Your vendor can send a revised one', 'wp-sell-services' );
 				}
 			} else {
 				esc_html_e( 'Phase', 'wp-sell-services' );
@@ -229,7 +229,7 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					<?php
 					printf(
 						/* translators: %s: amount */
-						esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
+						esc_html__( 'Accept & pay %s', 'wp-sell-services' ),
 						esc_html( $format( $gross ) )
 					);
 					?>

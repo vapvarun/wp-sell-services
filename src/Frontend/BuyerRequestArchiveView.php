@@ -200,7 +200,7 @@ class BuyerRequestArchiveView {
 			<?php
 			ShellHeader::render(
 				array(
-					'title'    => __( 'Buyer Requests', 'wp-sell-services' ),
+					'title'    => __( 'Buyer requests', 'wp-sell-services' ),
 					'subtitle' => sprintf(
 						/* translators: %s: platform name */
 						__( 'Browse buyer job postings on %s and submit proposals for projects that match your skills.', 'wp-sell-services' ),
@@ -283,10 +283,10 @@ class BuyerRequestArchiveView {
 				<?php esc_html_e( 'Sort: Oldest', 'wp-sell-services' ); ?>
 			</option>
 			<option value="<?php echo esc_url( add_query_arg( 'sort', 'budget_high' ) ); ?>" <?php selected( $current_sort, 'budget_high' ); ?>>
-				<?php esc_html_e( 'Sort: Budget High to Low', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Sort: Budget high to low', 'wp-sell-services' ); ?>
 			</option>
 			<option value="<?php echo esc_url( add_query_arg( 'sort', 'budget_low' ) ); ?>" <?php selected( $current_sort, 'budget_low' ); ?>>
-				<?php esc_html_e( 'Sort: Budget Low to High', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Sort: Budget low to high', 'wp-sell-services' ); ?>
 			</option>
 		</select>
 		<?php
@@ -425,7 +425,7 @@ class BuyerRequestArchiveView {
 
 				<!-- Budget Range -->
 				<div class="wpss-filter-section">
-					<h4><?php esc_html_e( 'Budget Range', 'wp-sell-services' ); ?></h4>
+					<h4><?php esc_html_e( 'Budget range', 'wp-sell-services' ); ?></h4>
 					<div class="wpss-price-inputs">
 						<input type="number" name="min_budget" placeholder="<?php esc_attr_e( 'Min', 'wp-sell-services' ); ?>"
 								value="<?php echo esc_attr( $min_budget ); ?>" min="0" step="1">
@@ -438,10 +438,10 @@ class BuyerRequestArchiveView {
 				<div class="wpss-filter-actions">
 					<?php // Filters apply as soon as they are picked (frontend.js); this stays for keyboard and no-JS use and shows when focused. ?>
 					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--block screen-reader-text">
-						<?php esc_html_e( 'Apply Filters', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Apply filters', 'wp-sell-services' ); ?>
 					</button>
 					<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_request' ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--block">
-						<?php esc_html_e( 'Clear All', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Clear all', 'wp-sell-services' ); ?>
 					</a>
 				</div>
 			</form>

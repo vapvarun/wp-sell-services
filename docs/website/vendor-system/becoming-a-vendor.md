@@ -24,7 +24,7 @@ The registration form is hidden from the public. Only you (the admin) can create
 
 ## The Registration Form
 
-When registration is open or requires approval, your "Become a Vendor" page
+When registration is open or requires approval, your "Become a vendor" page
 opens with what your marketplace offers -- how many vendors and services you
 already have, and how much of each order a vendor keeps -- followed by how
 selling works, with the sign-up card beside it.
@@ -41,7 +41,7 @@ afterwards in the profile editor, so nobody is asked to write a bio before they
 have decided to sign up.
 
 If a user is already signed in with a buyer account, the card offers a single
-**Register as Vendor** button instead: they upgrade in one click without
+**Register as vendor** button instead: they upgrade in one click without
 creating a second account.
 
 The figures in the header come from your own site, and any that would not
@@ -55,7 +55,7 @@ Filter them with `wpss_vendor_pitch_stats`, and the "How it works" steps with
 
 **Open mode:** The vendor can immediately access their dashboard, set up their profile, and create services.
 
-**Approval mode:** The vendor sees a "Pending Approval" message and waits for your review. Typical review time is 1-3 business days. Once approved, they receive an email and can start selling right away.
+**Approval mode:** The vendor sees a "Pending approval" message and waits for your review. Typical review time is 1-3 business days. Once approved, they receive an email and can start selling right away.
 
 **Closed mode:** The vendor is created by you, so they are active from the start.
 

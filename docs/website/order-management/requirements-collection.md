@@ -22,7 +22,7 @@ After payment is confirmed, the order moves to "Pending Requirements" status and
 3. They upload any requested files.
 4. They click **Submit Requirements**.
 
-Once submitted, the order moves to "In Progress" and the vendor's delivery deadline starts.
+Once submitted, the order moves to "In progress" and the vendor's delivery deadline starts.
 
 ![Submit requirements button and form interface](../images/frontend-submit-requirements.webp)
 

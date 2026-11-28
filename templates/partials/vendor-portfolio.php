@@ -433,7 +433,7 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 							rel="noopener noreferrer"
 						>
 							<i data-lucide="external-link" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
-							<?php esc_html_e( 'View Project', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'View project', 'wp-sell-services' ); ?>
 						</a>
 					<?php endif; ?>
 				</div>
@@ -462,7 +462,7 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 					</div>
 				<?php endif; ?>
 				<?php if ( $external ) : ?>
-					<a href="<?php echo esc_url( $external ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View Project', 'wp-sell-services' ); ?></a>
+					<a href="<?php echo esc_url( $external ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View project', 'wp-sell-services' ); ?></a>
 				<?php endif; ?>
 			</dialog>
 		<?php endforeach; ?>

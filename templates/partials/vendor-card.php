@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var int    $vendor_id         Vendor user ID.
  * @var object $vendor            Vendor WP_User object.
@@ -71,7 +71,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 				<span class="wpss-online-indicator" title="<?php esc_attr_e( 'Online', 'wp-sell-services' ); ?>"></span>
 			<?php endif; ?>
 			<?php if ( $is_verified ) : ?>
-				<span class="wpss-verified-badge" title="<?php esc_attr_e( 'Verified Vendor', 'wp-sell-services' ); ?>">
+				<span class="wpss-verified-badge" title="<?php esc_attr_e( 'Verified vendor', 'wp-sell-services' ); ?>">
 					<i data-lucide="badge-check" class="wpss-icon" aria-hidden="true"></i>
 				</span>
 			<?php endif; ?>
@@ -159,7 +159,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 				<span class="wpss-detail-icon wpss-icon-activity">
 					<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
 				</span>
-				<span class="wpss-detail-label"><?php esc_html_e( 'Last Delivery', 'wp-sell-services' ); ?></span>
+				<span class="wpss-detail-label"><?php esc_html_e( 'Last delivery', 'wp-sell-services' ); ?></span>
 				<span class="wpss-detail-value"><?php echo esc_html( wpss_time_ago( $last_delivery ) ); ?></span>
 			</li>
 		<?php endif; ?>
@@ -168,7 +168,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 	<div class="wpss-vendor-actions">
 		<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor_id ) ); ?>"
 			class="wpss-btn wpss-btn--outline wpss-btn--block">
-			<?php esc_html_e( 'View Profile', 'wp-sell-services' ); ?>
+			<?php esc_html_e( 'View profile', 'wp-sell-services' ); ?>
 		</a>
 	</div>
 </div>

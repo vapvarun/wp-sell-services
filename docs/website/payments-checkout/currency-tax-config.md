@@ -10,7 +10,7 @@ Your currency applies everywhere -- service prices, order totals, vendor earning
 
 1. Go to **Sell Services > Settings > General**
 2. Select your **Currency** from the dropdown
-3. Click **Save Changes**
+3. Click **Save changes**
 
 ### Supported Currencies
 

@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.1
+ * @version 2.0.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -111,11 +111,11 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 
 		<!-- Budget & Timeline Section -->
 		<div class="wpss-profile-form__section">
-			<h3><?php esc_html_e( 'Budget & Timeline', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Budget & timeline', 'wp-sell-services' ); ?></h3>
 
 			<div class="wpss-form-row wpss-form-row--half">
 				<div>
-					<label for="request_budget_min"><?php esc_html_e( 'Minimum Budget', 'wp-sell-services' ); ?></label>
+					<label for="request_budget_min"><?php esc_html_e( 'Minimum budget', 'wp-sell-services' ); ?></label>
 					<div class="wpss-input-group">
 						<span class="wpss-input-group__prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 						<input
@@ -158,7 +158,7 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 			</div>
 
 			<div class="wpss-form-row">
-				<label for="request_skills"><?php esc_html_e( 'Required Skills', 'wp-sell-services' ); ?></label>
+				<label for="request_skills"><?php esc_html_e( 'Required skills', 'wp-sell-services' ); ?></label>
 				<input
 					type="text"
 					name="skills_required"
@@ -176,7 +176,7 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 		<div class="wpss-profile-form__actions">
 			<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg">
 				<i data-lucide="megaphone" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Post request', 'wp-sell-services' ); ?>
 			</button>
 			<p class="wpss-form-hint wpss-form-hint--center">
 				<?php esc_html_e( 'Your request will be visible to all vendors who can then send you proposals.', 'wp-sell-services' ); ?>
@@ -227,10 +227,10 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 							'<div class="wpss-empty-state__icon" style="color: var(--wpss-success);">' +
 								'<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>' +
 							'</div>' +
-							'<h3><?php echo esc_js( __( 'Request Posted!', 'wp-sell-services' ) ); ?></h3>' +
+							'<h3><?php echo esc_js( __( 'Request posted!', 'wp-sell-services' ) ); ?></h3>' +
 							'<p><?php echo esc_js( __( 'Your request is now live. Vendors will be able to send you proposals.', 'wp-sell-services' ) ); ?></p>' +
 							'<a href="' + (response.data.redirect || '<?php echo esc_url( wpss_get_dashboard_url( 'requests' ) ); ?>') + '" class="wpss-btn wpss-btn--primary">' +
-								'<?php echo esc_js( __( 'View My Requests', 'wp-sell-services' ) ); ?>' +
+								'<?php echo esc_js( __( 'View my requests', 'wp-sell-services' ) ); ?>' +
 							'</a>' +
 						'</div>'
 					);

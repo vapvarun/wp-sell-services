@@ -13,7 +13,7 @@ After a buyer places an order, the vendor needs specific information to get star
 1. Buyer purchases the service
 2. Order status becomes "Pending Requirements"
 3. Buyer sees a form with the vendor's questions and fills it out
-4. Once submitted, the order status moves to "In Progress"
+4. Once submitted, the order status moves to "In progress"
 5. The vendor receives a notification and starts working
 
 If the buyer does not submit requirements, the vendor cannot begin. This protects both parties by ensuring the vendor has what they need upfront.

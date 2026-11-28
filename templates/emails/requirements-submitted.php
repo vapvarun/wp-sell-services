@@ -100,7 +100,7 @@ do_action( 'wpss_email_content_before', 'requirements_submitted', $order, $recip
 	 *
 	 * @param string $button_text Default button text.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'View Requirements', 'wp-sell-services' ), 'requirements_submitted' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'View requirements', 'wp-sell-services' ), 'requirements_submitted' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>

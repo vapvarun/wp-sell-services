@@ -88,7 +88,7 @@ do_action( 'wpss_email_content_before', 'vendor_approved', $recipient ?? null );
 	 * @param string $button_text Default button text.
 	 * @param string $type        Email type identifier.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'Go to Your Dashboard', 'wp-sell-services' ), 'vendor_approved' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'Go to your dashboard', 'wp-sell-services' ), 'vendor_approved' );
 	?>
 	<?php if ( ! empty( $button_url ) ) : ?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: #28a745; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">

@@ -87,7 +87,7 @@ $requests_filtered = 'all' !== $requests_group || '' !== $requests_search;
 			<h3><?php esc_html_e( 'No requests yet', 'wp-sell-services' ); ?></h3>
 			<p><?php esc_html_e( "Can't find the right service? Post a request and let vendors come to you.", 'wp-sell-services' ); ?></p>
 			<a href="<?php echo esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'create-request' ) ); ?>" class="wpss-btn wpss-btn--primary">
-				<?php esc_html_e( 'Post a Request', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Post a request', 'wp-sell-services' ); ?>
 			</a>
 		</div>
 	<?php else : ?>

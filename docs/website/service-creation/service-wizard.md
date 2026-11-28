@@ -8,7 +8,7 @@ The service creation wizard walks vendors through building a professional servic
 
 Vendors access the wizard from their Dashboard. The six steps are:
 
-1. **Basic Info** -- Title, category, and description
+1. **Basic info** -- Title, category, and description
 2. **Pricing** -- Packages with prices, delivery times, and features
 3. **Gallery** -- Images and videos to showcase work
 4. **Requirements** -- Questions buyers answer before work starts
@@ -149,8 +149,8 @@ If anything is missing, the wizard highlights what needs to be fixed.
 
 **Publishing options:**
 
-- **Save Draft** -- Save progress and come back later. Only the vendor and admins can see draft services.
-- **Publish Service** -- If your marketplace has moderation turned on, the service is submitted for admin review. If moderation is off, it goes live immediately.
+- **Save draft** -- Save progress and come back later. Only the vendor and admins can see draft services.
+- **Publish service** -- If your marketplace has moderation turned on, the service is submitted for admin review. If moderation is off, it goes live immediately.
 
 ---
 

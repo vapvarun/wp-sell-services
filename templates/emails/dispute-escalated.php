@@ -64,7 +64,7 @@ do_action( 'wpss_email_content_before', 'dispute_escalated', $dispute_id, $recip
 
 <?php if ( ! empty( $reason ) ) : ?>
 <div style="background: #f8d7da; padding: 16px; border-radius: 4px; margin: 20px 0;">
-	<strong style="color: #721c24;"><?php esc_html_e( 'Escalation Reason:', 'wp-sell-services' ); ?></strong>
+	<strong style="color: #721c24;"><?php esc_html_e( 'Escalation reason:', 'wp-sell-services' ); ?></strong>
 	<p style="margin: 8px 0 0; color: #721c24;"><?php echo esc_html( $reason ); ?></p>
 </div>
 <?php endif; ?>
@@ -97,7 +97,7 @@ do_action( 'wpss_email_content_before', 'dispute_escalated', $dispute_id, $recip
 	 *
 	 * @param string $button_text Default button text.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'Review Dispute', 'wp-sell-services' ), 'dispute_escalated' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'Review dispute', 'wp-sell-services' ), 'dispute_escalated' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: #dc3545; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>

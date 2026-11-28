@@ -12,7 +12,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var \WPSellServices\Models\ServiceOrder      $milestone    Milestone sub-order.
  * @var \WPSellServices\Models\ServiceOrder|null $parent_order Parent order (may be null).
@@ -74,7 +74,7 @@ do_action( 'wpss_email_content_before', 'milestone_proposed', $milestone, $recip
 		<?php
 		printf(
 			/* translators: %s: amount */
-			esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
+			esc_html__( 'Accept & pay %s', 'wp-sell-services' ),
 			esc_html( $format( $amount ) )
 		);
 		?>

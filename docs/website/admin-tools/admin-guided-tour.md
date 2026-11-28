@@ -21,13 +21,13 @@ The tour auto-opens the first time a logged-in admin lands on **Sell Services > 
 5. **Vendors** -- all vendor accounts and the registration flow
 6. **Orders** -- the 11-status order lifecycle
 7. **Settings** -- commission, payouts, tax, notifications
-8. **You're all set** -- sign-off with a pointer to the "Replay guide" button
+8. **You're all set** -- sign-off with a pointer to the "Replay tour" button
 
 Each step carries a short explainer, a Lucide icon, and Back / Next / Skip controls.
 
 ## Replaying The Tour
 
-After the first run, the Dashboard header shows a **Replay guide** button next to the page title. Click it any time to walk through again - you don't need to reset any user meta.
+After the first run, the Dashboard header shows a **Replay tour** button next to the page title. Click it any time to walk through again - you don't need to reset any user meta.
 
 ## Letting Pro Or Custom Code Add Steps
 

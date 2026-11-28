@@ -12,13 +12,13 @@ When a vendor goes to **Dashboard > Earnings & Payouts**, they see these key num
 |--------|-------------|
 | **Total Earned** | Lifetime earnings from all completed orders (after commission) |
 
-The **Sales Orders** screen has its own earnings tile, labelled "Earnings after commission, including tips". It is higher than the sum of the order rows whenever you have received tips, because tips have no row in that list. A refunded order shows $0.00 on its row and adds nothing to the tile.
+The **Sales orders** screen has its own earnings tile, labelled "Earnings after commission, including tips". It is higher than the sum of the order rows whenever you have received tips, because tips have no row in that list. A refunded order shows $0.00 on its row and adds nothing to the tile.
 | **Available Balance** | Money ready to withdraw right now |
 | **Pending Clearance** | Earnings from recent orders still in the clearance period |
 | **Withdrawn** | Total amount successfully paid out over time |
 | **Pending Withdrawal** | Amount currently in a withdrawal request awaiting admin approval |
 
-There is also a count of **Completed Orders** so vendors can see their overall activity.
+There is also a count of **Completed orders** so vendors can see their overall activity.
 
 ## Understanding the Numbers
 
@@ -68,7 +68,7 @@ Each period shows the number of orders completed, total earnings, and average pe
 
 ## Requesting a Withdrawal
 
-From the earnings dashboard, vendors can click **Request Withdrawal** to start a payout. They will need to:
+From the earnings dashboard, vendors can click **Request withdrawal** to start a payout. They will need to:
 
 1. Enter the amount they want to withdraw (must meet the minimum threshold)
 2. Select a payment method (bank transfer or PayPal)

@@ -66,7 +66,7 @@ do_action( 'wpss_email_content_before', 'moderation_response', $service_title, $
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; font-weight: 600; color: <?php echo $is_approved ? '#28a745' : '#dc3545'; ?>;">
-				<?php echo $is_approved ? esc_html__( 'Approved', 'wp-sell-services' ) : esc_html__( 'Requires Changes', 'wp-sell-services' ); ?>
+				<?php echo $is_approved ? esc_html__( 'Approved', 'wp-sell-services' ) : esc_html__( 'Requires changes', 'wp-sell-services' ); ?>
 			</td>
 		</tr>
 	</tbody>
@@ -74,7 +74,7 @@ do_action( 'wpss_email_content_before', 'moderation_response', $service_title, $
 
 <?php if ( ! empty( $message ) && ! $is_approved ) : ?>
 <div style="background: #f8d7da; padding: 16px; border-radius: 4px; margin: 20px 0;">
-	<strong style="color: #721c24;"><?php esc_html_e( 'Feedback from the Reviewer:', 'wp-sell-services' ); ?></strong>
+	<strong style="color: #721c24;"><?php esc_html_e( 'Feedback from the reviewer:', 'wp-sell-services' ); ?></strong>
 	<p style="margin: 8px 0 0; color: #721c24;"><?php echo wp_kses_post( $message ); ?></p>
 </div>
 <?php elseif ( ! empty( $message ) ) : ?>
@@ -106,8 +106,8 @@ do_action( 'wpss_email_content_before', 'moderation_response', $service_title, $
 	$button_url = apply_filters( 'wpss_email_button_url', $default_cta_url, 'moderation_response', $service_title );
 
 	$default_cta_text = $is_approved
-		? __( 'View Your Service', 'wp-sell-services' )
-		: __( 'Edit Your Service', 'wp-sell-services' );
+		? __( 'View your service', 'wp-sell-services' )
+		: __( 'Edit your service', 'wp-sell-services' );
 
 	/**
 	 * Filters the button text for the moderation response email.

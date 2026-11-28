@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var \WPSellServices\Models\ServiceOrder $extension
  * @var \WP_User                            $recipient Vendor.
@@ -49,7 +49,7 @@ do_action( 'wpss_email_content_before', 'extension_declined', $extension, $recip
 	<?php
 	printf(
 		/* translators: 1: buyer name, 2: amount */
-		esc_html__( '%1$s declined the extension quote for %2$s. The original order scope stays unchanged — you can propose a revised quote any time.', 'wp-sell-services' ),
+		esc_html__( '%1$s declined the extension quote for %2$s. The original order scope stays unchanged, and you can propose a revised quote any time.', 'wp-sell-services' ),
 		'<strong>' . esc_html( $buyer_name ) . '</strong>',
 		'<strong>' . esc_html( $format( $amount ) ) . '</strong>'
 	);

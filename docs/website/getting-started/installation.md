@@ -75,7 +75,7 @@ Pro features become available immediately -- no migration or extra setup needed.
 
 ### Service pages show "Page Not Found"
 
-Go to **Settings > Permalinks** in your WordPress dashboard and click **Save Changes**. You do not need to change anything -- just saving refreshes the links.
+Go to **Settings > Permalinks** in your WordPress dashboard and click **Save changes**. You do not need to change anything -- just saving refreshes the links.
 
 ### Plugin will not activate
 

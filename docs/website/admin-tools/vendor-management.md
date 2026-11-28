@@ -51,7 +51,7 @@ If you want to screen vendors before they can sell, enable vendor verification:
 
 1. Go to **Sell Services > Settings > Vendor Settings**
 2. Check **Require Verification**
-3. Click **Save Changes**
+3. Click **Save changes**
 
 **When enabled:** New vendors start with "Pending" status and cannot create services until you approve them.
 

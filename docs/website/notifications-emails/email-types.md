@@ -68,7 +68,7 @@ Every email type can be turned on or off individually.
 1. Go to **Sell Services > Settings > Emails**
 2. You will see a list of all notification types with checkboxes
 3. Uncheck any email you do not want sent
-4. Click **Save Changes**
+4. Click **Save changes**
 
 When you disable an email type, no emails of that type are sent to anyone. In-app notifications are still created regardless of email settings, so users will still see alerts in their dashboard.
 

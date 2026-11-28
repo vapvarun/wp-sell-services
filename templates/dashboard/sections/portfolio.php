@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.1
+ * @version 2.0.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -62,7 +62,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 		</p>
 		<?php if ( $item_count < $max_items ) : ?>
 			<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--sm" id="wpss-portfolio-add-btn">
-				<?php esc_html_e( 'Add Portfolio Item', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Add portfolio item', 'wp-sell-services' ); ?>
 			</button>
 		<?php endif; ?>
 	</div>
@@ -174,7 +174,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 					<p class="wpss-portfolio-lightbox__desc"></p>
 					<div class="wpss-portfolio-lightbox__tags"></div>
 					<a class="wpss-portfolio-lightbox__link" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">
-						<?php esc_html_e( 'View Project', 'wp-sell-services' ); ?> &rarr;
+						<?php esc_html_e( 'View project', 'wp-sell-services' ); ?> &rarr;
 					</a>
 				</div>
 			</div>
@@ -224,7 +224,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 		<div class="wpss-modal__backdrop"></div>
 		<div class="wpss-modal__dialog">
 			<div class="wpss-modal__header">
-				<h3 id="wpss-portfolio-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Add Portfolio Item', 'wp-sell-services' ); ?></h3>
+				<h3 id="wpss-portfolio-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Add portfolio item', 'wp-sell-services' ); ?></h3>
 				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 			</div>
 			<form id="wpss-portfolio-form" class="wpss-modal__form" method="post">
@@ -247,7 +247,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 					<div class="wpss-portfolio-media-preview" id="wpss-portfolio-media-preview"></div>
 					<input type="hidden" name="media" id="wpss-portfolio-media" value="[]">
 					<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--secondary" id="wpss-portfolio-upload-media">
-						<?php esc_html_e( 'Upload Images', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Upload images', 'wp-sell-services' ); ?>
 					</button>
 				</div>
 
@@ -264,7 +264,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 
 				<?php if ( ! empty( $vendor_services ) ) : ?>
 					<div class="wpss-form-row">
-						<label for="portfolio-service"><?php esc_html_e( 'Related Service', 'wp-sell-services' ); ?></label>
+						<label for="portfolio-service"><?php esc_html_e( 'Related service', 'wp-sell-services' ); ?></label>
 						<select id="portfolio-service" name="service_id" class="wpss-input">
 							<option value="0"><?php esc_html_e( '-- None --', 'wp-sell-services' ); ?></option>
 							<?php foreach ( $vendor_services as $service_id_opt ) : ?>

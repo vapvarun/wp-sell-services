@@ -41,12 +41,12 @@ Your marketplace needs 4 pages to function. The plugin can create them for you a
 |------|-------------|
 | **Services** | The public browsing page where buyers discover and search for services |
 | **Dashboard** | Where both vendors and buyers manage orders, messages, earnings, and services |
-| **Become a Vendor** | The registration page for new vendors |
+| **Become a vendor** | The registration page for new vendors |
 | **Checkout** | Where buyers complete payment in standalone mode |
 
-The **Become a Vendor** page only appears in this list while vendor registration is open. If you have closed registration, the field is hidden and your existing mapping is left untouched.
+The **Become a vendor** page only appears in this list while vendor registration is open. If you have closed registration, the field is hidden and your existing mapping is left untouched.
 
-After creating these pages, add the **Services** and **Become a Vendor** pages to your site's main menu at **Appearance > Menus**.
+After creating these pages, add the **Services** and **Become a vendor** pages to your site's main menu at **Appearance > Menus**.
 
 ## Finish Setting Up
 
@@ -124,7 +124,7 @@ Tax lives with commission, in **Sell Services > Settings > Commission & Tax**:
 
 Before going live, run through a quick test:
 
-1. **Create a test vendor account** -- Visit the "Become a Vendor" page and register. Your admin account becomes a vendor the first time it creates a service, or at once when you click **Start Selling**, even with vendor approval on
+1. **Create a test vendor account** -- Visit the "Become a vendor" page and register. Your admin account becomes a vendor the first time it creates a service, or at once when you click **Start Selling**, even with vendor approval on
 2. **Create a test service** -- Go to the Dashboard and walk through the service creation wizard
 3. **Place a test order** -- Log in as a different user, find the test service, and purchase it
 4. **Complete the order** -- Submit a delivery as the vendor, accept it as the buyer, and leave a review

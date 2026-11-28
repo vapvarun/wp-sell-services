@@ -69,7 +69,7 @@ Vendors often include answers to common questions about their service. Check thi
 
 ### Reviews
 
-Scroll down to see ratings and reviews from previous buyers. Each review includes a star rating, written feedback, and the buyer's name. Look for the **Verified Purchase** badge to confirm the reviewer actually bought the service.
+Scroll down to see ratings and reviews from previous buyers. Each review includes a star rating, written feedback, and the buyer's name. Look for the **Verified purchase** badge to confirm the reviewer actually bought the service.
 
 ### Vendor Info
 
@@ -113,7 +113,7 @@ If a listing looks like spam, a scam, or breaks the marketplace's rules, use the
 
 ## Step 5: Complete Checkout
 
-Click **Proceed to Checkout** to reach the checkout page.
+Click **Proceed to checkout** to reach the checkout page.
 
 ### Billing Details
 
@@ -148,7 +148,7 @@ After your order is placed:
 2. **The vendor is notified** about the new order
 3. **You are asked to submit requirements** -- project details the vendor needs to start working (budget, preferences, files, etc.)
 4. **The vendor begins work** once your requirements are submitted
-5. **Track progress** from your [Dashboard](buyer-dashboard.md) under **My Orders**
+5. **Track progress** from your [Dashboard](buyer-dashboard.md) under **My orders**
 
 If the service has requirements, submit them as soon as possible. The vendor cannot start until they have your project details. The system sends you reminders on day 1, 3, and 5 if you have not submitted yet.
 

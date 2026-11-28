@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var array $services       WordPress posts.
  * @var int   $services_pages Number of pages, when the list is paginated.
@@ -29,9 +29,9 @@ do_action( 'wpss_vendor_services_before', $user_id );
 
 <div class="wpss-vendor-services">
 	<div class="wpss-services-header">
-		<h2><?php esc_html_e( 'My Services', 'wp-sell-services' ); ?></h2>
+		<h2><?php esc_html_e( 'My services', 'wp-sell-services' ); ?></h2>
 		<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>" class="button button-primary">
-			<?php esc_html_e( 'Add New Service', 'wp-sell-services' ); ?>
+			<?php esc_html_e( 'Add new service', 'wp-sell-services' ); ?>
 		</a>
 	</div>
 
@@ -39,7 +39,7 @@ do_action( 'wpss_vendor_services_before', $user_id );
 		<div class="wpss-no-services">
 			<p><?php esc_html_e( 'You haven\'t created any services yet.', 'wp-sell-services' ); ?></p>
 			<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>" class="button button-primary">
-				<?php esc_html_e( 'Create Your First Service', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Create your first service', 'wp-sell-services' ); ?>
 			</a>
 		</div>
 	<?php else : ?>
@@ -53,7 +53,7 @@ do_action( 'wpss_vendor_services_before', $user_id );
 						<?php if ( $service->thumbnail_id ) : ?>
 							<img src="<?php echo esc_url( $service->get_thumbnail_url( 'medium' ) ); ?>" alt="">
 						<?php else : ?>
-							<div class="wpss-no-image"><?php esc_html_e( 'No Image', 'wp-sell-services' ); ?></div>
+							<div class="wpss-no-image"><?php esc_html_e( 'No image', 'wp-sell-services' ); ?></div>
 						<?php endif; ?>
 						<span class="wpss-service-status wpss-status-<?php echo esc_attr( $service->status ); ?>">
 							<?php echo esc_html( get_post_status_object( $service->status )->label ); ?>

@@ -269,11 +269,11 @@ class Frontend {
 					'confirmAcceptFixedProposal'     => __( 'Accept this fixed-price proposal ({total})?', 'wp-sell-services' ),
 					/* translators: {phases} is the number of milestone phases, {total} the formatted price; both are filled by the script. */
 					'confirmAcceptMilestoneProposal' => __( 'Accept this {phases}-phase milestone plan ({total} total)?', 'wp-sell-services' ),
-					'milestoneLockstepNote'          => __( 'You pay each phase as the vendor finishes the one before it. No parent payment — every phase is its own payment.', 'wp-sell-services' ),
+					'milestoneLockstepNote'          => __( 'You pay each phase as the vendor finishes the one before it. No parent payment: every phase is its own payment.', 'wp-sell-services' ),
 					'milestonePhaseRequired'         => __( 'Add at least one milestone phase.', 'wp-sell-services' ),
 					'milestonePhaseInvalid'          => __( 'Each phase needs a title and an amount greater than zero.', 'wp-sell-services' ),
 					'sendMessage'                    => __( 'Send', 'wp-sell-services' ),
-					'uploadFile'                     => __( 'Upload File', 'wp-sell-services' ),
+					'uploadFile'                     => __( 'Upload file', 'wp-sell-services' ),
 					'confirmTitle'                   => __( 'Are you sure?', 'wp-sell-services' ),
 					'submitting'                     => __( 'Submitting...', 'wp-sell-services' ),
 					'saved'                          => __( 'Saved', 'wp-sell-services' ),
@@ -304,7 +304,7 @@ class Frontend {
 					'promptDispute'                  => __( 'Please describe your issue:', 'wp-sell-services' ),
 					'promptDefault'                  => __( 'Please provide details:', 'wp-sell-services' ),
 					'actionFailed'                   => __( 'Action failed. Please try again.', 'wp-sell-services' ),
-					'loadMoreReviews'                => __( 'Load More Reviews', 'wp-sell-services' ),
+					'loadMoreReviews'                => __( 'Load more reviews', 'wp-sell-services' ),
 					'reviewsFailed'                  => __( 'Failed to load reviews.', 'wp-sell-services' ),
 					'addedToCart'                    => __( 'Added to cart!', 'wp-sell-services' ),
 					'cartFailed'                     => __( 'Failed to add to cart.', 'wp-sell-services' ),
@@ -318,7 +318,7 @@ class Frontend {
 					'revisionSubmitted'              => __( 'Revision requested successfully!', 'wp-sell-services' ),
 					'revisionFailed'                 => __( 'Failed to request revision.', 'wp-sell-services' ),
 					'vendorRegistered'               => __( 'Application submitted successfully!', 'wp-sell-services' ),
-					'sellerResponse'                 => __( 'Vendor Response:', 'wp-sell-services' ),
+					'sellerResponse'                 => __( 'Vendor response:', 'wp-sell-services' ),
 					'justNow'                        => __( 'Just now', 'wp-sell-services' ),
 					'confirm'                        => __( 'Confirm', 'wp-sell-services' ),
 					'decline'                        => __( 'Decline', 'wp-sell-services' ),
@@ -441,7 +441,7 @@ class Frontend {
 		$checkout_url = wpss_get_cart_url();
 		?>
 		<div id="wpss-mini-cart" class="wpss-mini-cart"<?php echo $hidden; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-			<a href="<?php echo esc_url( $checkout_url ); ?>" class="wpss-mini-cart-link" title="<?php esc_attr_e( 'View Cart', 'wp-sell-services' ); ?>">
+			<a href="<?php echo esc_url( $checkout_url ); ?>" class="wpss-mini-cart-link" title="<?php esc_attr_e( 'View cart', 'wp-sell-services' ); ?>">
 				<i data-lucide="shopping-cart" class="wpss-icon wpss-icon--lg wpss-mini-cart-icon" aria-hidden="true"></i>
 				<span class="screen-reader-text"><?php esc_html_e( 'View cart, items:', 'wp-sell-services' ); ?></span>
 				<span class="wpss-cart-count"><?php echo esc_html( (string) $cart_count ); ?></span>

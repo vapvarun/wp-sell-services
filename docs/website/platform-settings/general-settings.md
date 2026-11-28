@@ -10,7 +10,7 @@ Give your marketplace a custom name that appears throughout the platform: in ema
 
 1. Go to **Sell Services > Settings > General**
 2. Enter your marketplace name in the **Platform Name** field
-3. Click **Save Changes**
+3. Click **Save changes**
 
 **Default:** Your WordPress site name is used if no custom name is set.
 
@@ -34,7 +34,7 @@ The marketplace supports 148 currencies. See the [full list with codes, symbols 
 
 1. Go to **Settings > General**
 2. Select your currency from the dropdown
-3. Click **Save Changes**
+3. Click **Save changes**
 
 **Default:** USD (US Dollar)
 

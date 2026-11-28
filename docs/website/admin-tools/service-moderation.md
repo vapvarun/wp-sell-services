@@ -8,7 +8,7 @@ Keep your marketplace quality high by reviewing vendor services before they go l
 
 1. Go to **Sell Services > Settings > Vendor Settings**
 2. Check **Require Service Moderation**
-3. Click **Save Changes**
+3. Click **Save changes**
 
 **When moderation is on:** New services are submitted as "Pending" and stay hidden until you approve them. Vendors are notified when their service is approved or rejected.
 

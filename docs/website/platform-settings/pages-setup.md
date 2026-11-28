@@ -13,7 +13,7 @@ Services > Settings > Pages**. You do not have to create any of them by hand.
 |------|------|-------------|----------|
 | **Services** | `services` | The main browsing page where visitors find and explore services | Yes |
 | **Dashboard** | `dashboard` | The unified account area for buyers and vendors | Yes |
-| **Become a Vendor** | `become-vendor` | The registration page for users who want to sell | Yes |
+| **Become a vendor** | `become-vendor` | The registration page for users who want to sell | Yes |
 | **Service Checkout** | `service-checkout` | The checkout page for standalone mode purchases | Yes |
 | **Vendors** | `vendors` | A directory of every approved vendor, sorted by rating | No |
 | **Service Cart** | `service-cart` | Where buyers review selected services before checkout | No |
@@ -89,11 +89,11 @@ The dashboard automatically shows different content based on who is logged in:
 - **Vendors** see their services, sales, earnings, analytics, messages, and portfolio
 - **Users with both roles** see everything
 
-Logged-in buyers who are not yet vendors will see a "Become a Vendor" button in their dashboard.
+Logged-in buyers who are not yet vendors will see a "Become a vendor" button in their dashboard.
 
 ### Become a Vendor Page
 
-1. Create a new page titled "Become a Vendor" or "Start Selling"
+1. Create a new page titled "Become a vendor" or "Start Selling"
 2. Add the Vendor Registration block (or the vendor registration page element)
 3. Add some persuasive content above the form -- explain why someone should sell on your marketplace, highlight benefits like no listing fees and flexible pricing
 4. Publish and assign it in **Settings > Pages**
@@ -137,7 +137,7 @@ six, using a block or shortcode on any page you like:
 |------|------------|
 | **Featured Services** | A curated showcase of your best services |
 | **Top Vendors** | Your highest-rated vendors |
-| **Buyer Requests** | The request board with a "Post a Request" form |
+| **Buyer Requests** | The request board with a "Post a request" form |
 
 See [Shortcodes Reference](../marketplace-display/shortcodes-reference.md) for
 the full list, including `[wpss_vendors]` if you want a second vendor directory

@@ -93,7 +93,7 @@ This moved to **Sell Services > Settings > General**, next to the currency it fo
 
 ## Menu Visibility
 
-Hide dashboard sections from specific roles. The **Menu Visibility** card is a
+Hide dashboard sections from specific roles. The **Menu visibility** card is a
 grid: dashboard sections down the side, every role on your site across the top.
 **A ticked box means that role can see that section.**
 

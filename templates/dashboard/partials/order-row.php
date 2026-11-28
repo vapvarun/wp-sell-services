@@ -65,7 +65,7 @@ if ( $is_sub_order ) {
 		}
 	}
 } else {
-	$order_title = $service ? $service->post_title : ( $request_post ? $request_post->post_title : __( 'Deleted Service', 'wp-sell-services' ) );
+	$order_title = $service ? $service->post_title : ( $request_post ? $request_post->post_title : __( 'Deleted service', 'wp-sell-services' ) );
 }
 
 // What the viewer has to do next, if anything. The button carries it; with

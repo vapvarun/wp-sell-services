@@ -125,7 +125,7 @@ do_action( 'wpss_email_content_before', 'vendor_contact', $recipient, $sender );
 <p style="text-align: center; margin: 30px 0;">
 	<?php
 	$button_url  = apply_filters( 'wpss_email_button_url', $dashboard_url ?? wpss_get_dashboard_url(), 'vendor_contact' );
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'View Message', 'wp-sell-services' ), 'vendor_contact' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'View message', 'wp-sell-services' ), 'vendor_contact' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>

@@ -21,7 +21,7 @@ EDD is a popular choice if your site focuses on digital products and services. I
 2. Configure your payment gateways in **Downloads > Settings**
 3. Go to **Sell Services > Settings > General**
 4. Select **Easy Digital Downloads** as your e-commerce platform
-5. Click **Save Changes**
+5. Click **Save changes**
 
 **Where vendors and buyers work:** in the marketplace dashboard, the same as on every other platform. EDD's account page keeps receipts and downloads, and a buyer with service orders sees a link from Order History to their dashboard. The old EDD account addresses (`/service-orders/`, `/my-services/`, `/service-inbox/`, `/service-order/<id>/`) redirect to the matching dashboard section. A service download made in EDD and not linked to a marketplace service is not listed in the dashboard.
 
@@ -41,7 +41,7 @@ FluentCart is a newer, lightweight checkout plugin that focuses on speed and sim
 2. Configure Stripe or PayPal in **FluentCart > Settings**
 3. Go to **Sell Services > Settings > General**
 4. Select **FluentCart** as your e-commerce platform
-5. Click **Save Changes**
+5. Click **Save changes**
 
 FluentCart provides a single-page checkout experience with Stripe and PayPal built in.
 

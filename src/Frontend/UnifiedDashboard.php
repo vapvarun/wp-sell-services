@@ -229,19 +229,19 @@ class UnifiedDashboard {
 					/* translators: %d: number of saved services. */
 					'favoriteCountPlural'    => __( '%d saved services', 'wp-sell-services' ),
 					'favoriteRemoveFailed'   => __( 'Could not remove favorite. Please try again.', 'wp-sell-services' ),
-					'chooseProfilePhoto'     => __( 'Choose Profile Photo', 'wp-sell-services' ),
-					'useAsProfilePhoto'      => __( 'Use as Profile Photo', 'wp-sell-services' ),
-					'selectCoverImage'       => __( 'Select Cover Image', 'wp-sell-services' ),
+					'chooseProfilePhoto'     => __( 'Choose profile photo', 'wp-sell-services' ),
+					'useAsProfilePhoto'      => __( 'Use as profile photo', 'wp-sell-services' ),
+					'selectCoverImage'       => __( 'Select cover image', 'wp-sell-services' ),
 					'setCoverImage'          => __( 'Set cover image', 'wp-sell-services' ),
-					'addPortfolioItem'       => __( 'Add Portfolio Item', 'wp-sell-services' ),
-					'editPortfolioItem'      => __( 'Edit Portfolio Item', 'wp-sell-services' ),
-					'selectPortfolioImages'  => __( 'Select Portfolio Images', 'wp-sell-services' ),
+					'addPortfolioItem'       => __( 'Add portfolio item', 'wp-sell-services' ),
+					'editPortfolioItem'      => __( 'Edit portfolio item', 'wp-sell-services' ),
+					'selectPortfolioImages'  => __( 'Select portfolio images', 'wp-sell-services' ),
 					'removeImage'            => __( 'Remove image', 'wp-sell-services' ),
-					'addToPortfolio'         => __( 'Add to Portfolio', 'wp-sell-services' ),
+					'addToPortfolio'         => __( 'Add to portfolio', 'wp-sell-services' ),
 					'remove'                 => __( 'Remove', 'wp-sell-services' ),
 					'reviewReplySent'        => __( 'Your reply has been posted.', 'wp-sell-services' ),
 					'reviewReplyFailed'      => __( 'Could not post your reply. Please try again.', 'wp-sell-services' ),
-					'sellerResponse'         => __( 'Vendor Response:', 'wp-sell-services' ),
+					'sellerResponse'         => __( 'Vendor response:', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -556,7 +556,7 @@ class UnifiedDashboard {
 				'items' => array(
 					'orders'    => array(
 						'icon'  => 'shopping-bag',
-						'label' => __( 'My Orders', 'wp-sell-services' ),
+						'label' => __( 'My orders', 'wp-sell-services' ),
 					),
 					'favorites' => array(
 						'icon'  => 'heart',
@@ -564,7 +564,7 @@ class UnifiedDashboard {
 					),
 					'requests'  => array(
 						'icon'  => 'megaphone',
-						'label' => __( 'Buyer Requests', 'wp-sell-services' ),
+						'label' => __( 'Buyer requests', 'wp-sell-services' ),
 					),
 				),
 			),
@@ -588,7 +588,7 @@ class UnifiedDashboard {
 				'items' => array(
 					'sales' => array(
 						'icon'  => 'receipt',
-						'label' => __( 'Sales Orders', 'wp-sell-services' ),
+						'label' => __( 'Sales orders', 'wp-sell-services' ),
 					),
 				),
 			);
@@ -597,7 +597,7 @@ class UnifiedDashboard {
 			if ( wpss_suspended_vendor_money_access( $user_id ) ) {
 				$sections['selling']['items']['earnings'] = array(
 					'icon'  => 'wallet',
-					'label' => __( 'Earnings & Payouts', 'wp-sell-services' ),
+					'label' => __( 'Earnings & payouts', 'wp-sell-services' ),
 				);
 			}
 		}
@@ -608,11 +608,11 @@ class UnifiedDashboard {
 				'items' => array(
 					'services'  => array(
 						'icon'  => 'briefcase',
-						'label' => __( 'My Services', 'wp-sell-services' ),
+						'label' => __( 'My services', 'wp-sell-services' ),
 					),
 					'sales'     => array(
 						'icon'  => 'receipt',
-						'label' => __( 'Sales Orders', 'wp-sell-services' ),
+						'label' => __( 'Sales orders', 'wp-sell-services' ),
 					),
 					'proposals' => array(
 						'icon'  => 'send',
@@ -624,7 +624,7 @@ class UnifiedDashboard {
 					),
 					'earnings'  => array(
 						'icon'  => 'wallet',
-						'label' => __( 'Earnings & Payouts', 'wp-sell-services' ),
+						'label' => __( 'Earnings & payouts', 'wp-sell-services' ),
 					),
 					'portfolio' => array(
 						'icon'  => 'folder',
@@ -782,7 +782,7 @@ class UnifiedDashboard {
 						<?php if ( $is_active ) : ?>
 							<span class="wpss-dashboard__user-badge"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></span>
 						<?php elseif ( $is_pending ) : ?>
-							<span class="wpss-dashboard__user-badge wpss-dashboard__user-badge--pending"><?php esc_html_e( 'Pending Approval', 'wp-sell-services' ); ?></span>
+							<span class="wpss-dashboard__user-badge wpss-dashboard__user-badge--pending"><?php esc_html_e( 'Pending approval', 'wp-sell-services' ); ?></span>
 						<?php endif; ?>
 					</div>
 				</div>
@@ -839,7 +839,7 @@ class UnifiedDashboard {
 								<a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"
 									class="wpss-dashboard__nav-item wpss-dashboard__nav-item--logout">
 									<?php $this->render_icon( 'log-out' ); ?>
-									<span><?php esc_html_e( 'Log Out', 'wp-sell-services' ); ?></span>
+									<span><?php esc_html_e( 'Log out', 'wp-sell-services' ); ?></span>
 								</a>
 							</li>
 						</ul>
@@ -909,11 +909,11 @@ class UnifiedDashboard {
 					if ( 'services' === $this->current_section && $this->vendor_has_any_services( $user_id ) ) :
 						?>
 						<a href="<?php echo esc_url( $this->get_section_url( 'create' ) ); ?>" class="wpss-btn wpss-btn--primary">
-							<?php esc_html_e( 'Create Service', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Create service', 'wp-sell-services' ); ?>
 						</a>
 					<?php elseif ( 'requests' === $this->current_section ) : ?>
 						<a href="<?php echo esc_url( $this->get_section_url( 'create-request' ) ); ?>" class="wpss-btn wpss-btn--primary">
-							<?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Post request', 'wp-sell-services' ); ?>
 						</a>
 					<?php endif; ?>
 					<?php // The tour does not load on an order URL (Tour::should_load), so neither does its button. ?>
@@ -983,16 +983,16 @@ class UnifiedDashboard {
 	 */
 	private function get_section_data( string $section ): array {
 		$titles = array(
-			'orders'         => __( 'My Orders', 'wp-sell-services' ),
+			'orders'         => __( 'My orders', 'wp-sell-services' ),
 			'favorites'      => __( 'Favorites', 'wp-sell-services' ),
 			'downloads'      => __( 'Downloads', 'wp-sell-services' ),
-			'requests'       => __( 'Buyer Requests', 'wp-sell-services' ),
-			'services'       => __( 'My Services', 'wp-sell-services' ),
-			'sales'          => __( 'Sales Orders', 'wp-sell-services' ),
+			'requests'       => __( 'Buyer requests', 'wp-sell-services' ),
+			'services'       => __( 'My services', 'wp-sell-services' ),
+			'sales'          => __( 'Sales orders', 'wp-sell-services' ),
 			'proposals'      => __( 'Proposals', 'wp-sell-services' ),
 			'reviews'        => __( 'Reviews', 'wp-sell-services' ),
-			'earnings'       => __( 'Earnings & Payouts', 'wp-sell-services' ),
-			'wallet'         => __( 'Earnings & Payouts', 'wp-sell-services' ),
+			'earnings'       => __( 'Earnings & payouts', 'wp-sell-services' ),
+			'wallet'         => __( 'Earnings & payouts', 'wp-sell-services' ),
 			'analytics'      => __( 'Analytics', 'wp-sell-services' ),
 			'portfolio'      => __( 'Portfolio', 'wp-sell-services' ),
 			'messages'       => __( 'Messages', 'wp-sell-services' ),
@@ -1009,9 +1009,9 @@ class UnifiedDashboard {
 			// longer say "Update Service" and "Create Service" at once
 			// (Basecamp 10337227125).
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.
-			'create'         => ! empty( $_GET['id'] ) ? __( 'Update Service', 'wp-sell-services' ) : __( 'Create Service', 'wp-sell-services' ),
-			'create-request' => __( 'Post a Request', 'wp-sell-services' ),
-			'edit-request'   => __( 'Edit Request', 'wp-sell-services' ),
+			'create'         => ! empty( $_GET['id'] ) ? __( 'Update service', 'wp-sell-services' ) : __( 'Create service', 'wp-sell-services' ),
+			'create-request' => __( 'Post a request', 'wp-sell-services' ),
+			'edit-request'   => __( 'Edit request', 'wp-sell-services' ),
 		);
 
 		/**
@@ -1133,7 +1133,7 @@ class UnifiedDashboard {
 				<div class="wpss-dashboard__empty-icon">
 					<?php $this->render_icon( 'briefcase' ); ?>
 				</div>
-				<h3><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></h3>
+				<h3><?php esc_html_e( 'Become a vendor', 'wp-sell-services' ); ?></h3>
 				<p><?php esc_html_e( 'Start selling your services on this marketplace. Click the button below to register as a vendor and begin offering your skills.', 'wp-sell-services' ); ?></p>
 				<?php $this->render_application_fields(); ?>
 				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor"<?php echo $this->become_vendor_attrs(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed literal. ?>>
@@ -1148,7 +1148,7 @@ class UnifiedDashboard {
 				<div class="wpss-dashboard__empty-icon">
 					<?php $this->render_icon( 'briefcase' ); ?>
 				</div>
-				<h3><?php esc_html_e( 'Vendor Access Required', 'wp-sell-services' ); ?></h3>
+				<h3><?php esc_html_e( 'Vendor access required', 'wp-sell-services' ); ?></h3>
 				<p><?php esc_html_e( 'This section is available to vendors. Become a vendor to access this feature and start selling your services.', 'wp-sell-services' ); ?></p>
 				<?php if ( $registration_is_open ) : ?>
 					<?php $this->render_application_fields(); ?>
@@ -1173,7 +1173,7 @@ class UnifiedDashboard {
 				<div class="wpss-dashboard__empty-icon">
 					<?php $this->render_icon( 'folder' ); ?>
 				</div>
-				<h3><?php esc_html_e( 'Section Not Available', 'wp-sell-services' ); ?></h3>
+				<h3><?php esc_html_e( 'Section not available', 'wp-sell-services' ); ?></h3>
 				<p>
 					<?php
 					if ( $pro_active ) {
@@ -1184,7 +1184,7 @@ class UnifiedDashboard {
 					?>
 				</p>
 				<a href="<?php echo esc_url( wpss_get_dashboard_url() ); ?>" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Back to Dashboard', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Back to dashboard', 'wp-sell-services' ); ?>
 				</a>
 			</div>
 			<?php

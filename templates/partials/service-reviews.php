@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var WPSellServices\Models\Service $service      Service object.
  * @var int                            $service_id   Service post ID.
@@ -154,7 +154,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 						class="wpss-btn wpss-btn--outline wpss-load-more-reviews"
 						data-service="<?php echo esc_attr( $service_id ); ?>"
 						data-page="2">
-					<?php esc_html_e( 'Load More Reviews', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Load more reviews', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 		<?php endif; ?>

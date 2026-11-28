@@ -68,7 +68,7 @@
 
 			return el(Fragment, {},
 				el(InspectorControls, {},
-					el(PanelBody, { title: __('Layout Settings', 'wp-sell-services'), initialOpen: true },
+					el(PanelBody, { title: __('Layout settings', 'wp-sell-services'), initialOpen: true },
 						el(RangeControl, {
 							label: __('Columns', 'wp-sell-services'),
 							value: attributes.columns,
@@ -84,12 +84,12 @@
 							max: 24
 						})
 					),
-					el(PanelBody, { title: __('Filter Settings', 'wp-sell-services'), initialOpen: false },
+					el(PanelBody, { title: __('Filter settings', 'wp-sell-services'), initialOpen: false },
 						el(SelectControl, {
 							label: __('Category', 'wp-sell-services'),
 							value: attributes.category,
 							options: [
-								{ value: 0, label: __('All Categories', 'wp-sell-services') },
+								{ value: 0, label: __('All categories', 'wp-sell-services') },
 								...categories
 							],
 							onChange: (value) => setAttributes({ category: parseInt(value) })
@@ -103,7 +103,7 @@
 								{ value: 'rating', label: __('Rating', 'wp-sell-services') },
 								{ value: 'sales', label: __('Popularity (completed orders)', 'wp-sell-services') },
 								{ value: 'price', label: __('Price', 'wp-sell-services') },
-								{ value: 'menu_order', label: __('Menu Order', 'wp-sell-services') },
+								{ value: 'menu_order', label: __('Menu order', 'wp-sell-services') },
 								{ value: 'rand', label: __('Random', 'wp-sell-services') }
 							],
 							onChange: (value) => setAttributes({ orderBy: value })
@@ -123,7 +123,7 @@
 							onChange: (value) => setAttributes({ featured: value })
 						})
 					),
-					el(PanelBody, { title: __('Display Settings', 'wp-sell-services'), initialOpen: false },
+					el(PanelBody, { title: __('Display settings', 'wp-sell-services'), initialOpen: false },
 						el(ToggleControl, {
 							label: __('Show pagination', 'wp-sell-services'),
 							checked: attributes.showPagination,
@@ -191,7 +191,7 @@
 
 			return el(Fragment, {},
 				el(InspectorControls, {},
-					el(PanelBody, { title: __('Search Settings', 'wp-sell-services'), initialOpen: true },
+					el(PanelBody, { title: __('Search settings', 'wp-sell-services'), initialOpen: true },
 						el(TextControl, {
 							label: __('Placeholder text', 'wp-sell-services'),
 							value: attributes.placeholder,
@@ -267,7 +267,7 @@
 
 			return el(Fragment, {},
 				el(InspectorControls, {},
-					el(PanelBody, { title: __('Layout Settings', 'wp-sell-services'), initialOpen: true },
+					el(PanelBody, { title: __('Layout settings', 'wp-sell-services'), initialOpen: true },
 						el(SelectControl, {
 							label: __('Layout', 'wp-sell-services'),
 							value: attributes.layout,
@@ -292,7 +292,7 @@
 							max: 20
 						})
 					),
-					el(PanelBody, { title: __('Display Settings', 'wp-sell-services'), initialOpen: false },
+					el(PanelBody, { title: __('Display settings', 'wp-sell-services'), initialOpen: false },
 						el(ToggleControl, {
 							label: __('Show service count', 'wp-sell-services'),
 							checked: attributes.showCount,
@@ -371,12 +371,12 @@
 
 			return el(Fragment, {},
 				el(InspectorControls, {},
-					el(PanelBody, { title: __('Layout Settings', 'wp-sell-services'), initialOpen: true },
+					el(PanelBody, { title: __('Layout settings', 'wp-sell-services'), initialOpen: true },
 						el(TextControl, {
 							label: __('Title', 'wp-sell-services'),
 							value: attributes.title,
 							onChange: (value) => setAttributes({ title: value }),
-							placeholder: __('Featured Services', 'wp-sell-services')
+							placeholder: __('Featured services', 'wp-sell-services')
 						}),
 						el(SelectControl, {
 							label: __('Layout', 'wp-sell-services'),
@@ -402,7 +402,7 @@
 							max: 16
 						})
 					),
-					attributes.layout === 'carousel' && el(PanelBody, { title: __('Carousel Settings', 'wp-sell-services'), initialOpen: false },
+					attributes.layout === 'carousel' && el(PanelBody, { title: __('Carousel settings', 'wp-sell-services'), initialOpen: false },
 						el(ToggleControl, {
 							label: __('Autoplay', 'wp-sell-services'),
 							checked: attributes.autoplay,
@@ -427,7 +427,7 @@
 							onChange: (value) => setAttributes({ showArrows: value })
 						})
 					),
-					el(PanelBody, { title: __('Display Settings', 'wp-sell-services'), initialOpen: false },
+					el(PanelBody, { title: __('Display settings', 'wp-sell-services'), initialOpen: false },
 						el(ToggleControl, {
 							label: __('Show rating', 'wp-sell-services'),
 							checked: attributes.showRating,
@@ -487,7 +487,7 @@
 
 			return el(Fragment, {},
 				el(InspectorControls, {},
-					el(PanelBody, { title: __('Vendor Settings', 'wp-sell-services'), initialOpen: true },
+					el(PanelBody, { title: __('Vendor settings', 'wp-sell-services'), initialOpen: true },
 						el(TextControl, {
 							label: __('User ID', 'wp-sell-services'),
 							help: __('Leave empty to show current user.', 'wp-sell-services'),
@@ -505,7 +505,7 @@
 							onChange: (value) => setAttributes({ layout: value })
 						})
 					),
-					el(PanelBody, { title: __('Display Settings', 'wp-sell-services'), initialOpen: false },
+					el(PanelBody, { title: __('Display settings', 'wp-sell-services'), initialOpen: false },
 						el(ToggleControl, {
 							label: __('Show bio', 'wp-sell-services'),
 							checked: attributes.showBio,
@@ -585,7 +585,7 @@
 
 			return el(Fragment, {},
 				el(InspectorControls, {},
-					el(PanelBody, { title: __('Query Settings', 'wp-sell-services'), initialOpen: true },
+					el(PanelBody, { title: __('Query settings', 'wp-sell-services'), initialOpen: true },
 						el(RangeControl, {
 							label: __('Requests per page', 'wp-sell-services'),
 							value: attributes.perPage,
@@ -597,7 +597,7 @@
 							label: __('Category', 'wp-sell-services'),
 							value: attributes.category,
 							options: [
-								{ value: 0, label: __('All Categories', 'wp-sell-services') },
+								{ value: 0, label: __('All categories', 'wp-sell-services') },
 								...categories
 							],
 							onChange: (value) => setAttributes({ category: parseInt(value) })
@@ -621,7 +621,7 @@
 							onChange: (value) => setAttributes({ order: value })
 						})
 					),
-					el(PanelBody, { title: __('Display Settings', 'wp-sell-services'), initialOpen: false },
+					el(PanelBody, { title: __('Display settings', 'wp-sell-services'), initialOpen: false },
 						el(ToggleControl, {
 							label: __('Show pagination', 'wp-sell-services'),
 							checked: attributes.showPagination,

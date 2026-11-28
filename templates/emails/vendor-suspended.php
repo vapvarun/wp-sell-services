@@ -93,7 +93,7 @@ do_action( 'wpss_email_content_before', 'vendor_suspended', $recipient ?? null )
 	 * @param string $button_text Default button text.
 	 * @param string $type        Email type identifier.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'Contact Support', 'wp-sell-services' ), 'vendor_suspended' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'Contact support', 'wp-sell-services' ), 'vendor_suspended' );
 	?>
 	<?php if ( ! empty( $button_url ) ) : ?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">

@@ -1221,7 +1221,7 @@ class Shortcodes {
 					<p class="wpss-vr__desc"><?php esc_html_e( 'Your vendor account is active. Head to your dashboard to manage services, view orders, and track earnings.', 'wp-sell-services' ); ?></p>
 					<div class="wpss-vr__actions">
 						<a href="<?php echo esc_url( $dashboard_url ); ?>" class="wpss-btn wpss-btn--primary">
-							<?php esc_html_e( 'Go to Dashboard', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Go to dashboard', 'wp-sell-services' ); ?>
 						</a>
 					</div>
 				</div>
@@ -1236,7 +1236,7 @@ class Shortcodes {
 			?>
 			<div class="wpss-vr">
 				<div class="wpss-vr__card">
-					<<?php echo esc_attr( $wpss_h ); ?> class="wpss-vr__title"><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></<?php echo esc_attr( $wpss_h ); ?>>
+					<<?php echo esc_attr( $wpss_h ); ?> class="wpss-vr__title"><?php esc_html_e( 'Become a vendor', 'wp-sell-services' ); ?></<?php echo esc_attr( $wpss_h ); ?>>
 					<?php echo $closed_notice; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the partial. ?>
 				</div>
 			</div>
@@ -1279,7 +1279,7 @@ class Shortcodes {
 
 						<div class="wpss-vr__actions">
 							<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg" data-action="become-vendor">
-								<?php esc_html_e( 'Register as Vendor', 'wp-sell-services' ); ?>
+								<?php esc_html_e( 'Register as vendor', 'wp-sell-services' ); ?>
 							</button>
 						</div>
 					</div>
@@ -1314,12 +1314,12 @@ class Shortcodes {
 						} else {
 							showMessage(r.data.message || <?php echo wp_json_encode( __( 'An error occurred.', 'wp-sell-services' ) ); ?>, 'error');
 							btn.disabled = false;
-							btn.textContent = <?php echo wp_json_encode( __( 'Register as Vendor', 'wp-sell-services' ) ); ?>;
+							btn.textContent = <?php echo wp_json_encode( __( 'Register as vendor', 'wp-sell-services' ) ); ?>;
 						}
 					} catch(e) {
 						showMessage(<?php echo wp_json_encode( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>, 'error');
 						btn.disabled = false;
-						btn.textContent = <?php echo wp_json_encode( __( 'Register as Vendor', 'wp-sell-services' ) ); ?>;
+						btn.textContent = <?php echo wp_json_encode( __( 'Register as vendor', 'wp-sell-services' ) ); ?>;
 					}
 				};
 				xhr.send('action=wpss_become_vendor&nonce=' + <?php echo wp_json_encode( wp_create_nonce( 'wpss_dashboard_nonce' ) ); ?>);
@@ -1703,7 +1703,7 @@ class Shortcodes {
 	private static function cart_heading(): string {
 		return \WPSellServices\Frontend\ShellHeader::render(
 			array(
-				'title' => __( 'Your Cart', 'wp-sell-services' ),
+				'title' => __( 'Your cart', 'wp-sell-services' ),
 				'echo'  => false,
 			)
 		);

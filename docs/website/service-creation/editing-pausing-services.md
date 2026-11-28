@@ -4,7 +4,7 @@ After publishing a service, you can update it, temporarily hide it, or remove it
 
 ## Accessing Your Services
 
-Go to your **Dashboard** and click **My Services** in the sidebar. You will see a list of all your services with their:
+Go to your **Dashboard** and click **My services** in the sidebar. You will see a list of all your services with their:
 
 - **Title** and featured image
 - **Status** -- Published, Draft, Pending, or Suspended

@@ -12,7 +12,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
- * @version 1.9.0
+ * @version 2.0.0
  *
  * @var string $wpss_title    Card title.
  * @var array  $wpss_lines    Lines, each: label (string), amount (float), and
@@ -25,7 +25,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$wpss_title        = isset( $wpss_title ) ? (string) $wpss_title : __( 'Order Summary', 'wp-sell-services' );
+$wpss_title        = isset( $wpss_title ) ? (string) $wpss_title : __( 'Order summary', 'wp-sell-services' );
 $wpss_lines        = isset( $wpss_lines ) && is_array( $wpss_lines ) ? $wpss_lines : array();
 $wpss_total        = isset( $wpss_total ) ? (float) $wpss_total : 0.0;
 $wpss_currency     = isset( $wpss_currency ) ? (string) $wpss_currency : wpss_get_currency();

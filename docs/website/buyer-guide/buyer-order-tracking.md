@@ -6,7 +6,7 @@ After you purchase a service, your order moves through a series of stages from p
 
 ## Finding Your Orders
 
-Go to your **Dashboard** and click **My Orders** in the sidebar. You will see a list of all your orders with their current status, vendor, amount, and date.
+Go to your **Dashboard** and click **My orders** in the sidebar. You will see a list of all your orders with their current status, vendor, amount, and date.
 
 Use the status filters at the top to narrow the list:
 - **Active** -- Orders that need your attention or are in progress
@@ -66,7 +66,7 @@ If you take too long (default: 7 days), the marketplace may either auto-start th
 | Action | When to Use |
 |--------|-------------|
 | **Accept Delivery** | The work meets your expectations. The order is marked complete. |
-| **Request Revision** | The work needs changes. Provide specific feedback so the vendor knows what to fix. Only available if you have revisions remaining. |
+| **Request revision** | The work needs changes. Provide specific feedback so the vendor knows what to fix. Only available if you have revisions remaining. |
 | **Open Dispute** | Something is seriously wrong -- the delivery does not match what was promised, or there is a significant quality issue. |
 
 **Auto-complete:** If you do not respond within the auto-complete window (default: 3 days), the order automatically completes and the vendor gets paid. Review deliveries promptly to keep control.
@@ -79,7 +79,7 @@ If you take too long (default: 7 days), the marketplace may either auto-start th
 
 **What to do:** Wait for the vendor to submit their updated delivery. Use the messaging system if you need to clarify your revision feedback.
 
-**Revision limits:** Each package includes a set number of revisions. You can see how many you have remaining on the order detail page. Once you have used all included revisions, the "Request Revision" option is no longer available.
+**Revision limits:** Each package includes a set number of revisions. You can see how many you have remaining on the order detail page. Once you have used all included revisions, the "Request revision" option is no longer available.
 
 ---
 

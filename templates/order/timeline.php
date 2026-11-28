@@ -24,7 +24,7 @@ if ( empty( $wpss_order ) ) {
 	<div class="wpss-order-section__header">
 		<h2 class="wpss-order-section__title">
 			<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
-			<?php esc_html_e( 'Order Timeline', 'wp-sell-services' ); ?>
+			<?php esc_html_e( 'Order timeline', 'wp-sell-services' ); ?>
 		</h2>
 	</div>
 	<div class="wpss-order-section__body">
@@ -89,7 +89,7 @@ if ( empty( $wpss_order ) ) {
 							if ( 'refunded' === $wpss_order->status ) {
 								esc_html_e( 'Refunded', 'wp-sell-services' );
 							} elseif ( 'partially_refunded' === $wpss_order->status ) {
-								esc_html_e( 'Partially Refunded', 'wp-sell-services' );
+								esc_html_e( 'Partially refunded', 'wp-sell-services' );
 							} else {
 								esc_html_e( 'Cancelled', 'wp-sell-services' );
 							}
@@ -151,7 +151,7 @@ if ( empty( $wpss_order ) ) {
 				<div class="wpss-timeline__item wpss-timeline__item--completed">
 					<div class="wpss-timeline__marker" style="background: var(--wpss-info, #3b82f6);"></div>
 					<div class="wpss-timeline__content">
-						<span class="wpss-timeline__title"><?php esc_html_e( 'Awaiting Approval', 'wp-sell-services' ); ?></span>
+						<span class="wpss-timeline__title"><?php esc_html_e( 'Awaiting approval', 'wp-sell-services' ); ?></span>
 						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wpss_datetime_label( $wpss_order->updated_at->getTimestamp(), '—' ) : '' ); ?></span>
 					</div>
 				</div>
@@ -160,7 +160,7 @@ if ( empty( $wpss_order ) ) {
 				<div class="wpss-timeline__item wpss-timeline__item--completed">
 					<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
 					<div class="wpss-timeline__content">
-						<span class="wpss-timeline__title"><?php esc_html_e( 'On Hold', 'wp-sell-services' ); ?></span>
+						<span class="wpss-timeline__title"><?php esc_html_e( 'On hold', 'wp-sell-services' ); ?></span>
 						<span class="wpss-timeline__date"><?php echo esc_html( $wpss_order->updated_at ? wpss_datetime_label( $wpss_order->updated_at->getTimestamp(), '—' ) : '' ); ?></span>
 					</div>
 				</div>

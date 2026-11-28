@@ -86,7 +86,7 @@ This is not a light add-on -- it is a fully built-out feature with its own CPT (
 | Mode | Best For | Example |
 |------|----------|---------|
 | **Browse and Buy** | Standardized services with clear deliverables | "I need a logo -- here are the packages" |
-| **Post a Request** | Custom projects where scope needs discussion | "I need a website redesign -- what can you do for $2,000?" |
+| **Post a request** | Custom projects where scope needs discussion | "I need a website redesign -- what can you do for $2,000?" |
 
 Most successful marketplaces use both. Some buyers know exactly what they want (Mode 1). Others need to describe their project and let experts propose solutions (Mode 2). Supporting both means you never lose a potential transaction.
 

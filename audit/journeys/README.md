@@ -18,7 +18,7 @@ not speculative coverage. The 2026-08-17 sweep found, among others:
 - a dispute conversation split across two stores, so members and admins each saw
   half of it
 - an order that went silent about its own open dispute
-- a "View Dispute" link the theme rendered as borderless text
+- a "View dispute" link the theme rendered as borderless text
 
 None of those fail a unit test. All of them fail a journey.
 

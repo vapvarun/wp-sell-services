@@ -80,7 +80,7 @@ do_action( 'wpss_email_content_before', 'seller_level_promotion', null, $recipie
 </p>
 
 <h3 style="margin: 30px 0 15px 0; font-size: 18px; color: #3c3c3c;">
-	<?php esc_html_e( 'What This Means For You:', 'wp-sell-services' ); ?>
+	<?php esc_html_e( 'What this means for you:', 'wp-sell-services' ); ?>
 </h3>
 
 <ul style="margin: 0 0 20px 0; padding: 0 0 0 20px; color: #3c3c3c; line-height: 1.8;">
@@ -117,7 +117,7 @@ do_action( 'wpss_email_content_before', 'seller_level_promotion', null, $recipie
 	 *
 	 * @param string $button_text Default button text.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'View My Dashboard', 'wp-sell-services' ), 'seller_level_promotion' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'View my dashboard', 'wp-sell-services' ), 'seller_level_promotion' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" class="button" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 16px;">
 		<?php echo esc_html( $button_text ); ?>

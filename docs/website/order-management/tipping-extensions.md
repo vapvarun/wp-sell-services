@@ -60,7 +60,7 @@ Sometimes a project takes longer than expected. Instead of delivering late, vend
 
 The buyer receives a notification and can either approve or deny the request. If the buyer does not respond within 48 hours, the request is automatically denied.
 
-- **Approved** -- The delivery deadline is extended by the requested number of days. If the order was already marked as late, it moves back to "In Progress" with the new deadline.
+- **Approved** -- The delivery deadline is extended by the requested number of days. If the order was already marked as late, it moves back to "In progress" with the new deadline.
 - **Denied** -- The original deadline stays in place. The vendor should deliver as soon as possible.
 
 ### Extension Rules
@@ -78,7 +78,7 @@ The buyer receives a notification and can either approve or deny the request. If
 
 ### How Extension Approval Helps Late Orders
 
-If an order is already marked as late and the buyer approves an extension, the late status is removed. The order goes back to "In Progress" with a new deadline, giving the vendor a clean slate to finish the work.
+If an order is already marked as late and the buyer approves an extension, the late status is removed. The order goes back to "In progress" with a new deadline, giving the vendor a clean slate to finish the work.
 
 ## Related Documentation
 

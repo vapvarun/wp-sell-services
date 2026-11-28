@@ -10,7 +10,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var int $order_id Order ID passed from parent template.
  *
@@ -113,7 +113,7 @@ do_action( 'wpss_before_requirements_form', $order );
 			<!-- Order Details -->
 			<div class="wpss-order-card">
 				<div class="wpss-order-card__header">
-					<h4 class="wpss-order-card__title"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h4>
+					<h4 class="wpss-order-card__title"><?php esc_html_e( 'Order details', 'wp-sell-services' ); ?></h4>
 				</div>
 				<div class="wpss-order-card__body">
 					<dl class="wpss-order-card__list">
@@ -124,7 +124,7 @@ do_action( 'wpss_before_requirements_form', $order );
 						<dd><strong><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></strong></dd>
 
 						<?php if ( $order->delivery_deadline ) : ?>
-							<dt><?php esc_html_e( 'Expected Delivery', 'wp-sell-services' ); ?></dt>
+							<dt><?php esc_html_e( 'Expected delivery', 'wp-sell-services' ); ?></dt>
 							<dd>
 								<?php
 								$deadline = $order->delivery_deadline instanceof \DateTimeImmutable
@@ -172,7 +172,7 @@ do_action( 'wpss_before_requirements_form', $order );
 			<!-- Help Box -->
 			<div class="wpss-order-card wpss-order-card--info">
 				<div class="wpss-order-card__header">
-					<h4 class="wpss-order-card__title"><?php esc_html_e( 'Need Help?', 'wp-sell-services' ); ?></h4>
+					<h4 class="wpss-order-card__title"><?php esc_html_e( 'Need help?', 'wp-sell-services' ); ?></h4>
 				</div>
 				<div class="wpss-order-card__body">
 					<p><?php esc_html_e( 'Be as detailed as possible so the vendor can deliver exactly what you need.', 'wp-sell-services' ); ?></p>

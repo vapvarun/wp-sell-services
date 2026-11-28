@@ -53,7 +53,7 @@ Once submitted, the review is published immediately (unless the admin has turned
 
 ## Verified Purchase Badge
 
-Every review on the marketplace comes from a real, completed order with confirmed payment. A "Verified Purchase" badge appears next to the reviewer's name, so buyers know the feedback is authentic.
+Every review on the marketplace comes from a real, completed order with confirmed payment. A "Verified purchase" badge appears next to the reviewer's name, so buyers know the feedback is authentic.
 
 ## Vendor Replies
 

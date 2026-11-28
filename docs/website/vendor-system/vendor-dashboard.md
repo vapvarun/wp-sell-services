@@ -14,7 +14,7 @@ Track the services you have purchased. You can see each order's status, the vend
 
 This is where vendors manage incoming orders from buyers. Each entry shows the order number, buyer name, service purchased, your earnings, delivery deadline, and current status.
 
-A new vendor with no services yet sees **Create your first service** here, which opens the service wizard. Once they have any service, including a draft, the button reads **View My Services**.
+A new vendor with no services yet sees **Create your first service** here, which opens the service wizard. Once they have any service, including a draft, the button reads **View my services**.
 
 From here you can:
 - View order details
@@ -47,7 +47,7 @@ Browse service requests posted by buyers looking for help. Vendors can submit pr
 ### Earnings
 
 Your financial dashboard showing:
-- **Total Earnings** -- Lifetime gross income.
+- **Total earnings** -- Lifetime gross income.
 - **Pending Earnings** -- Income still in the clearance period.
 - **Available for Withdrawal** -- What you can withdraw right now.
 - **Withdrawn Amount** -- What you have already taken out.

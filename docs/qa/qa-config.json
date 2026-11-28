@@ -1075,6 +1075,10 @@
    {
     "id": "admin-box-contract",
     "run": "${WP_CLI:-wp} eval-file tests/test-admin-box-contract.php"
+   },
+   {
+    "id": "button-copy-sentence-case",
+    "run": "${WP_CLI:-wp} eval-file tests/test-button-copy-sentence-case.php"
    }
   ]
  }

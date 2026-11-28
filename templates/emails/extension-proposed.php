@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var \WPSellServices\Models\ServiceOrder $extension
  * @var \WP_User                            $recipient Buyer.
@@ -66,7 +66,7 @@ do_action( 'wpss_email_content_before', 'extension_proposed', $extension, $recip
 		<?php
 		printf(
 			/* translators: %s: amount */
-			esc_html__( 'Accept &amp; Pay %s', 'wp-sell-services' ),
+			esc_html__( 'Accept &amp; pay %s', 'wp-sell-services' ),
 			esc_html( $format( $amount ) )
 		);
 		?>
@@ -74,7 +74,7 @@ do_action( 'wpss_email_content_before', 'extension_proposed', $extension, $recip
 </p>
 
 <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
-	<?php esc_html_e( 'Not sure? Open the order and discuss in chat first — the vendor can send a revised quote.', 'wp-sell-services' ); ?>
+	<?php esc_html_e( 'Not sure? Open the order and discuss in chat first. The vendor can send a revised quote.', 'wp-sell-services' ); ?>
 </p>
 
 <?php

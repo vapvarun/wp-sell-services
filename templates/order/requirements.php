@@ -11,7 +11,7 @@
  *
  * @package WPSellServices
  * @since   1.8.0
- * @version 1.9.4
+ * @version 2.0.0
  *
  * @var \WPSellServices\Models\ServiceOrder $wpss_order                The order.
  * @var string                              $wpss_viewer               'buyer', 'vendor' or 'admin'.
@@ -47,7 +47,7 @@ $wpss_not_provided = ! $wpss_has_submitted && ! empty( $service_requirements ) &
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
 				<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-				<?php $wpss_to_confirm ? esc_html_e( 'Brief to confirm', 'wp-sell-services' ) : esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
+				<?php $wpss_to_confirm ? esc_html_e( 'Brief to confirm', 'wp-sell-services' ) : esc_html_e( 'Order requirements', 'wp-sell-services' ); ?>
 			</h2>
 			<?php if ( $wpss_to_confirm ) : ?>
 				<span class="wpss-order-section__timestamp">
@@ -246,7 +246,7 @@ $wpss_not_provided = ! $wpss_has_submitted && ! empty( $service_requirements ) &
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
 				<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Order requirements', 'wp-sell-services' ); ?>
 			</h2>
 		</div>
 		<div class="wpss-order-section__body">
@@ -284,7 +284,7 @@ $wpss_not_provided = ! $wpss_has_submitted && ! empty( $service_requirements ) &
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
 				<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Order requirements', 'wp-sell-services' ); ?>
 			</h2>
 		</div>
 		<div class="wpss-order-section__body">

@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
- * @version 1.9.0
+ * @version 2.0.0
  *
  * @var string $footer_text Footer text.
  * @var string $base_color  Primary brand color.
@@ -63,7 +63,7 @@ $footer_text = $footer_text ?? sprintf(
 								</a>
 								&nbsp;|&nbsp;
 								<a href="<?php echo esc_url( wpss_get_page_url( 'dashboard' ) ); ?>" style="color: #bbbbbb; text-decoration: none;">
-									<?php esc_html_e( 'My Account', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'My account', 'wp-sell-services' ); ?>
 								</a>
 							</p>
 						</td>

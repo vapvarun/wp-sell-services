@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var array $orders  Service orders.
  * @var int   $user_id Current user ID.
@@ -36,11 +36,11 @@ do_action( 'wpss_service_orders_before', $user_id );
 <div class="wpss-orders">
 	<!-- Header with filters -->
 	<div class="wpss-orders__header">
-		<h2 class="wpss-orders__title"><?php esc_html_e( 'My Orders', 'wp-sell-services' ); ?></h2>
+		<h2 class="wpss-orders__title"><?php esc_html_e( 'My orders', 'wp-sell-services' ); ?></h2>
 		<div class="wpss-orders__filters">
 			<select class="wpss-select" onchange="if(this.value) window.location.href=this.value">
 				<option value="<?php echo esc_url( remove_query_arg( 'status' ) ); ?>" <?php selected( $current_filter, '' ); ?>>
-					<?php esc_html_e( 'All Orders', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'All orders', 'wp-sell-services' ); ?>
 				</option>
 				<?php foreach ( $statuses as $status_key => $status_label ) : ?>
 					<option value="<?php echo esc_url( add_query_arg( 'status', $status_key ) ); ?>" <?php selected( $current_filter, $status_key ); ?>>

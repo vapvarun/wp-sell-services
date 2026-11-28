@@ -1990,7 +1990,7 @@ class Admin {
 		<div class="wrap wpss-dashboard-wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'WP Sell Services Dashboard', 'wp-sell-services' ); ?></h1>
 			<button type="button" class="page-title-action wpss-tour-replay">
-				<?php esc_html_e( 'Replay guide', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Replay tour', 'wp-sell-services' ); ?>
 			</button>
 			<hr class="wp-header-end">
 

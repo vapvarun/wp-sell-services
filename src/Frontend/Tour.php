@@ -414,7 +414,7 @@ final class Tour {
 			array(
 				'id'       => 'quick-actions',
 				'title'    => __( 'Quick actions', 'wp-sell-services' ),
-				'text'     => __( '<i data-lucide="zap"></i> Jump straight to the four things most admins do first — add a service, review vendors, check orders, or fine-tune settings.', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="zap"></i> Jump straight to the four things most admins do first: add a service, review vendors, check orders, or fine-tune settings.', 'wp-sell-services' ),
 				'attachTo' => array(
 					'element' => '.wpss-quick-actions',
 					'on'      => 'top',
@@ -424,7 +424,7 @@ final class Tour {
 			array(
 				'id'       => 'services-menu',
 				'title'    => __( 'Services', 'wp-sell-services' ),
-				'text'     => __( '<i data-lucide="package"></i> This is where vendor services live — browse, moderate, or edit any listing on your marketplace.', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="package"></i> This is where vendor services live. Browse, moderate, or edit any listing on your marketplace.', 'wp-sell-services' ),
 				'attachTo' => array(
 					'element' => '#adminmenu a[href="edit.php?post_type=wpss_service"]',
 					'on'      => 'right',
@@ -444,7 +444,7 @@ final class Tour {
 			array(
 				'id'       => 'orders-menu',
 				'title'    => __( 'Orders', 'wp-sell-services' ),
-				'text'     => __( '<i data-lucide="shopping-cart"></i> Orders flow through 11 statuses from <code>pending_payment</code> to <code>completed</code> — every transition is logged here.', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="shopping-cart"></i> Orders flow through 11 statuses from <code>pending_payment</code> to <code>completed</code>, and every transition is logged here.', 'wp-sell-services' ),
 				'attachTo' => array(
 					'element' => '#adminmenu a[href="admin.php?page=wpss-orders"]',
 					'on'      => 'right',
@@ -464,7 +464,7 @@ final class Tour {
 			array(
 				'id'      => 'finish',
 				'title'   => __( 'You\'re all set', 'wp-sell-services' ),
-				'text'    => __( '<i data-lucide="check-circle-2"></i> That\'s the whole marketplace. Use the "Replay guide" button on the dashboard any time you want to run through this again. Happy selling!', 'wp-sell-services' ),
+				'text'    => __( '<i data-lucide="check-circle-2"></i> That\'s the whole marketplace. Use the "Replay tour" button on the dashboard any time you want to run through this again. Happy selling!', 'wp-sell-services' ),
 				'buttons' => array(
 					$back_btn,
 					array(
@@ -532,7 +532,7 @@ final class Tour {
 			array(
 				'id'       => 'sidebar',
 				'title'    => __( 'Your dashboard', 'wp-sell-services' ),
-				'text'     => __( '<i data-lucide="layout-dashboard"></i> Everything you do on this marketplace — buying, selling, conversations — routes through this sidebar. The current section is highlighted.', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="layout-dashboard"></i> Everything you do on this marketplace (buying, selling, conversations) routes through this sidebar. The current section is highlighted.', 'wp-sell-services' ),
 				'attachTo' => array(
 					'element' => '.wpss-dashboard__sidebar',
 					'on'      => 'right',
@@ -541,8 +541,8 @@ final class Tour {
 			),
 			array(
 				'id'       => 'orders',
-				'title'    => __( 'My Orders', 'wp-sell-services' ),
-				'text'     => __( '<i data-lucide="shopping-bag"></i> Every service you buy lives here — current orders in progress, completed history, and any open disputes. Click an order to open the conversation, requirements, and deliveries.', 'wp-sell-services' ),
+				'title'    => __( 'My orders', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="shopping-bag"></i> Every service you buy lives here: current orders in progress, completed history, and any open disputes. Click an order to open the conversation, requirements, and deliveries.', 'wp-sell-services' ),
 				'attachTo' => array(
 					'element' => '.wpss-dashboard__nav-item[href$="/dashboard/"], .wpss-dashboard__nav-group:first-child .wpss-dashboard__nav-item:first-child',
 					'on'      => 'right',
@@ -551,8 +551,8 @@ final class Tour {
 			),
 			array(
 				'id'       => 'requests',
-				'title'    => __( 'Buyer Requests', 'wp-sell-services' ),
-				'text'     => __( '<i data-lucide="megaphone"></i> Need something custom? Post a request with your budget and deadline — vendors reply with proposals you can compare side by side.', 'wp-sell-services' ),
+				'title'    => __( 'Buyer requests', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="megaphone"></i> Need something custom? Post a request with your budget and deadline, and vendors reply with proposals you can compare side by side.', 'wp-sell-services' ),
 				'attachTo' => array(
 					'element' => '.wpss-dashboard__nav-item[href*="section=requests"], .wpss-dashboard__nav-item[href*="/requests/"]',
 					'on'      => 'right',
@@ -565,7 +565,7 @@ final class Tour {
 			// Active vendor — show selling-side tools.
 			$steps[] = array(
 				'id'       => 'services',
-				'title'    => __( 'My Services', 'wp-sell-services' ),
+				'title'    => __( 'My services', 'wp-sell-services' ),
 				'text'     => __( '<i data-lucide="briefcase"></i> Your service listings. Create new ones, edit pricing tiers, toggle availability, or pause a service with vacation mode.', 'wp-sell-services' ),
 				'attachTo' => array(
 					'element' => '.wpss-dashboard__nav-item[href*="section=services"], .wpss-dashboard__nav-item[href*="/services/"]',
@@ -575,8 +575,8 @@ final class Tour {
 			);
 			$steps[] = array(
 				'id'       => 'sales',
-				'title'    => __( 'Sales Orders', 'wp-sell-services' ),
-				'text'     => __( '<i data-lucide="receipt"></i> Orders buyers have placed with you — deliver, request revisions, propose milestones or extensions, and track every status from pending requirements to completion.', 'wp-sell-services' ),
+				'title'    => __( 'Sales orders', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="receipt"></i> Orders buyers have placed with you. Deliver, request revisions, propose milestones or extensions, and track every status from pending requirements to completion.', 'wp-sell-services' ),
 				'attachTo' => array(
 					'element' => '.wpss-dashboard__nav-item[href*="section=sales"], .wpss-dashboard__nav-item[href*="/sales/"]',
 					'on'      => 'right',
@@ -585,8 +585,8 @@ final class Tour {
 			);
 			$steps[] = array(
 				'id'       => 'earnings',
-				'title'    => __( 'Earnings & Wallet', 'wp-sell-services' ),
-				'text'     => __( '<i data-lucide="wallet"></i> Your NET earnings, wallet balance, and withdrawal controls. The ledger surfaces every transaction — earning, tip, milestone, extension, withdrawal — with a CSV export for your bookkeeping.', 'wp-sell-services' ),
+				'title'    => __( 'Earnings & wallet', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="wallet"></i> Your NET earnings, wallet balance, and withdrawal controls. The ledger surfaces every transaction (earning, tip, milestone, extension, withdrawal) with a CSV export for your bookkeeping.', 'wp-sell-services' ),
 				'attachTo' => array(
 					'element' => '.wpss-dashboard__nav-item[href*="section=earnings"], .wpss-dashboard__nav-item[href*="/earnings/"]',
 					'on'      => 'right',
@@ -622,7 +622,7 @@ final class Tour {
 			'id'      => 'finish',
 			'title'   => __( 'You\'re set', 'wp-sell-services' ),
 			'text'    => $is_active
-				? __( '<i data-lucide="check-circle-2"></i> That\'s the full dashboard. Your Profile link is in the bottom group — keep it up to date so buyers trust your services.', 'wp-sell-services' )
+				? __( '<i data-lucide="check-circle-2"></i> That\'s the full dashboard. Your Profile link is in the bottom group. Keep it up to date so buyers trust your services.', 'wp-sell-services' )
 				: __( '<i data-lucide="check-circle-2"></i> That\'s the whole dashboard. Browse services, post a request, or open a conversation whenever you need.', 'wp-sell-services' ),
 			'buttons' => array(
 				$back_btn,

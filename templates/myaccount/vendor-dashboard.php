@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var \WPSellServices\Models\VendorProfile|null $vendor  Vendor profile.
  * @var object                                     $stats   Vendor statistics.
@@ -33,7 +33,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 
 <div class="wpss-dashboard wpss-dashboard--embedded">
 	<header class="wpss-dashboard__header">
-		<h1 class="wpss-dashboard__title"><?php esc_html_e( 'Vendor Dashboard', 'wp-sell-services' ); ?></h1>
+		<h1 class="wpss-dashboard__title"><?php esc_html_e( 'Vendor dashboard', 'wp-sell-services' ); ?></h1>
 		<div class="wpss-dashboard__actions">
 			<?php
 			// `vendor-services` IS a registered endpoint, but the My Account page
@@ -44,14 +44,14 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 				: wpss_get_dashboard_url( 'services' );
 			?>
 			<a href="<?php echo esc_url( $wpss_services_url ); ?>" class="wpss-btn wpss-btn--secondary">
-				<?php esc_html_e( 'Manage Services', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Manage services', 'wp-sell-services' ); ?>
 			</a>
 			<?php
 			$create_service_url = wpss_get_create_service_url();
 			if ( $create_service_url ) :
 				?>
 				<a href="<?php echo esc_url( $create_service_url ); ?>" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Create New Service', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Create new service', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
 		</div>
@@ -103,7 +103,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 					</div>
 					<div class="wpss-stat-card__content">
 						<div class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( (float) ( $stats->total_earnings ?? 0 ) ) ); ?></div>
-						<div class="wpss-stat-card__label"><?php esc_html_e( 'Total Earnings', 'wp-sell-services' ); ?></div>
+						<div class="wpss-stat-card__label"><?php esc_html_e( 'Total earnings', 'wp-sell-services' ); ?></div>
 					</div>
 				</div>
 
@@ -113,7 +113,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 					</div>
 					<div class="wpss-stat-card__content">
 						<div class="wpss-stat-card__value"><?php echo esc_html( $stats->completed_orders ?? 0 ); ?></div>
-						<div class="wpss-stat-card__label"><?php esc_html_e( 'Completed Orders', 'wp-sell-services' ); ?></div>
+						<div class="wpss-stat-card__label"><?php esc_html_e( 'Completed orders', 'wp-sell-services' ); ?></div>
 					</div>
 				</div>
 
@@ -123,7 +123,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 					</div>
 					<div class="wpss-stat-card__content">
 						<div class="wpss-stat-card__value"><?php echo esc_html( $stats->active_orders ?? 0 ); ?></div>
-						<div class="wpss-stat-card__label"><?php esc_html_e( 'Active Orders', 'wp-sell-services' ); ?></div>
+						<div class="wpss-stat-card__label"><?php esc_html_e( 'Active orders', 'wp-sell-services' ); ?></div>
 					</div>
 				</div>
 
@@ -133,7 +133,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 					</div>
 					<div class="wpss-stat-card__content">
 						<div class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $vendor->rating, 1 ) ); ?></div>
-						<div class="wpss-stat-card__label"><?php esc_html_e( 'Average Rating', 'wp-sell-services' ); ?></div>
+						<div class="wpss-stat-card__label"><?php esc_html_e( 'Average rating', 'wp-sell-services' ); ?></div>
 					</div>
 				</div>
 			</div>
@@ -141,20 +141,20 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 			<!-- Performance Metrics -->
 			<div class="wpss-card">
 				<div class="wpss-card__header">
-					<h3 class="wpss-card__title"><?php esc_html_e( 'Performance Metrics', 'wp-sell-services' ); ?></h3>
+					<h3 class="wpss-card__title"><?php esc_html_e( 'Performance metrics', 'wp-sell-services' ); ?></h3>
 				</div>
 				<div class="wpss-card__body">
 					<div class="wpss-metrics-grid">
 						<div class="wpss-metric">
 							<div class="wpss-metric__header">
-								<span class="wpss-metric__label"><?php esc_html_e( 'Response Time', 'wp-sell-services' ); ?></span>
+								<span class="wpss-metric__label"><?php esc_html_e( 'Response time', 'wp-sell-services' ); ?></span>
 								<span class="wpss-metric__value"><?php echo esc_html( $vendor->get_response_time_label() ); ?></span>
 							</div>
 						</div>
 
 						<div class="wpss-metric">
 							<div class="wpss-metric__header">
-								<span class="wpss-metric__label"><?php esc_html_e( 'On-Time Delivery', 'wp-sell-services' ); ?></span>
+								<span class="wpss-metric__label"><?php esc_html_e( 'On-time delivery', 'wp-sell-services' ); ?></span>
 								<span class="wpss-metric__value"><?php echo esc_html( number_format_i18n( $vendor->delivery_rate, 0 ) ); ?>%</span>
 							</div>
 							<div class="wpss-metric__bar">
@@ -164,7 +164,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 
 						<div class="wpss-metric">
 							<div class="wpss-metric__header">
-								<span class="wpss-metric__label"><?php esc_html_e( 'Order Completion', 'wp-sell-services' ); ?></span>
+								<span class="wpss-metric__label"><?php esc_html_e( 'Order completion', 'wp-sell-services' ); ?></span>
 								<span class="wpss-metric__value"><?php echo esc_html( number_format_i18n( $vendor->completion_rate, 0 ) ); ?>%</span>
 							</div>
 							<div class="wpss-metric__bar">
@@ -235,10 +235,10 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 				<div class="wpss-empty-state__icon">
 					<i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
-				<h3 class="wpss-empty-state__title"><?php esc_html_e( 'Set Up Your Vendor Profile', 'wp-sell-services' ); ?></h3>
+				<h3 class="wpss-empty-state__title"><?php esc_html_e( 'Set up your vendor profile', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-empty-state__text"><?php esc_html_e( 'Complete your profile to start selling services on our marketplace.', 'wp-sell-services' ); ?></p>
 				<a href="<?php echo esc_url( wpss_get_become_vendor_url() ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--lg">
-					<?php esc_html_e( 'Get Started', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Get started', 'wp-sell-services' ); ?>
 				</a>
 			</div>
 		</div>

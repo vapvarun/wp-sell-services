@@ -11,7 +11,7 @@
  *
  * @package WPSellServices
  * @since   1.7.0
- * @version 1.9.0
+ * @version 2.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -25,8 +25,8 @@ if ( empty( $wpss_legal ) ) {
 <p class="wpss-co-legal">
 	<?php
 	$wpss_labels = array(
-		'terms_url'          => __( 'Terms & Conditions', 'wp-sell-services' ),
-		'privacy_policy_url' => __( 'Privacy Policy', 'wp-sell-services' ),
+		'terms_url'          => __( 'Terms & conditions', 'wp-sell-services' ),
+		'privacy_policy_url' => __( 'Privacy policy', 'wp-sell-services' ),
 	);
 
 	$wpss_links = array();

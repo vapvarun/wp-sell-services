@@ -159,7 +159,7 @@ class ServiceArchiveView {
 					<input type="hidden" name="category" value="<?php echo esc_attr( (string) $current_category ); ?>">
 				<?php endif; ?>
 				<input type="search" name="search" class="wpss-search-input" value="<?php echo esc_attr( $current_search ); ?>"
-					placeholder="<?php esc_attr_e( 'Search services...', 'wp-sell-services' ); ?>" aria-label="<?php esc_attr_e( 'Search Services', 'wp-sell-services' ); ?>">
+					placeholder="<?php esc_attr_e( 'Search services...', 'wp-sell-services' ); ?>" aria-label="<?php esc_attr_e( 'Search services', 'wp-sell-services' ); ?>">
 			</form>
 
 			<div class="wpss-filters-bar-controls">
@@ -172,13 +172,13 @@ class ServiceArchiveView {
 						<?php esc_html_e( 'Sort: Newest', 'wp-sell-services' ); ?>
 					</option>
 					<option value="<?php echo esc_url( add_query_arg( 'sort', 'rating' ) ); ?>" <?php selected( $current_sort, 'rating' ); ?>>
-						<?php esc_html_e( 'Sort: Best Rated', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Sort: Best rated', 'wp-sell-services' ); ?>
 					</option>
 					<option value="<?php echo esc_url( add_query_arg( 'sort', 'price_low' ) ); ?>" <?php selected( $current_sort, 'price_low' ); ?>>
-						<?php esc_html_e( 'Sort: Price Low to High', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Sort: Price low to high', 'wp-sell-services' ); ?>
 					</option>
 					<option value="<?php echo esc_url( add_query_arg( 'sort', 'price_high' ) ); ?>" <?php selected( $current_sort, 'price_high' ); ?>>
-						<?php esc_html_e( 'Sort: Price High to Low', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Sort: Price high to low', 'wp-sell-services' ); ?>
 					</option>
 				</select>
 			</div>
@@ -412,7 +412,7 @@ class ServiceArchiveView {
 
 				<!-- Price Range -->
 				<div class="wpss-filter-section">
-					<h4><?php esc_html_e( 'Price Range', 'wp-sell-services' ); ?></h4>
+					<h4><?php esc_html_e( 'Price range', 'wp-sell-services' ); ?></h4>
 					<div class="wpss-price-inputs">
 						<input type="number" name="min_price" placeholder="<?php esc_attr_e( 'Min', 'wp-sell-services' ); ?>"
 								value="<?php echo esc_attr( $min_price ); ?>" min="0" step="1">
@@ -424,7 +424,7 @@ class ServiceArchiveView {
 
 				<!-- Seller Rating -->
 				<div class="wpss-filter-section">
-					<h4><?php esc_html_e( 'Vendor Rating', 'wp-sell-services' ); ?></h4>
+					<h4><?php esc_html_e( 'Vendor rating', 'wp-sell-services' ); ?></h4>
 					<div class="wpss-rating-options">
 						<?php for ( $i = 4; $i >= 1; $i-- ) : ?>
 							<label class="wpss-rating-option">
@@ -484,14 +484,14 @@ class ServiceArchiveView {
 				<div class="wpss-filter-actions">
 					<?php // Filters apply as soon as they are picked, like sort (frontend.js); this stays for keyboard and no-JS use and shows when focused. ?>
 					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--block screen-reader-text">
-						<?php esc_html_e( 'Apply Filters', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Apply filters', 'wp-sell-services' ); ?>
 					</button>
 					<?php
 					$services_page_url = wpss_get_page_url( 'services_page' );
 					$clear_url         = $services_page_url ? $services_page_url : get_post_type_archive_link( 'wpss_service' );
 					?>
 					<a href="<?php echo esc_url( $clear_url ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--block">
-						<?php esc_html_e( 'Clear All', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Clear all', 'wp-sell-services' ); ?>
 					</a>
 				</div>
 			</form>
@@ -547,7 +547,7 @@ class ServiceArchiveView {
 			}
 		}
 
-		return __( 'All Services', 'wp-sell-services' );
+		return __( 'All services', 'wp-sell-services' );
 	}
 
 	/**

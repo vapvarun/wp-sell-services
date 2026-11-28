@@ -23,7 +23,7 @@
  *
  * @package WPSellServices
  * @since   1.7.0
- * @version 1.9.0
+ * @version 2.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -63,7 +63,7 @@ $wpss_listing_copy = apply_filters(
 			<i data-lucide="palette" class="wpss-icon" aria-hidden="true"></i>
 		</span>
 		<div>
-			<strong><?php esc_html_e( 'Create Services', 'wp-sell-services' ); ?></strong>
+			<strong><?php esc_html_e( 'Create services', 'wp-sell-services' ); ?></strong>
 			<span><?php echo esc_html( $wpss_listing_copy ); ?></span>
 		</div>
 	</div>
@@ -72,7 +72,7 @@ $wpss_listing_copy = apply_filters(
 			<i data-lucide="wallet" class="wpss-icon" aria-hidden="true"></i>
 		</span>
 		<div>
-			<strong><?php esc_html_e( 'Get Paid', 'wp-sell-services' ); ?></strong>
+			<strong><?php esc_html_e( 'Get paid', 'wp-sell-services' ); ?></strong>
 			<span><?php esc_html_e( 'Secure payments with flexible withdrawal options', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>
@@ -81,7 +81,7 @@ $wpss_listing_copy = apply_filters(
 			<i data-lucide="trending-up" class="wpss-icon" aria-hidden="true"></i>
 		</span>
 		<div>
-			<strong><?php esc_html_e( 'Grow Your Business', 'wp-sell-services' ); ?></strong>
+			<strong><?php esc_html_e( 'Grow your business', 'wp-sell-services' ); ?></strong>
 			<span><?php esc_html_e( 'Track your orders, earnings and reviews from one dashboard', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>

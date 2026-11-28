@@ -35,12 +35,12 @@ $render = static function () use ( $f ): array {
 
 try {
 	list( $label, $url ) = $render();
-	$check( 'No services: Create Your First Service', 'Create Your First Service' === $label, $label );
+	$check( 'No services: Create Your First Service', 'Create your first service' === $label, $label );
 	$check( '  to the service editor', wpss_get_service_editor_url() === $url, $url );
 
 	( $f->service )( 'draft' );
 	list( $label, $url ) = $render();
-	$check( 'A draft service: View My Services, as before', 'View My Services' === $label, $label );
+	$check( 'A draft service: View My Services, as before', 'View my services' === $label, $label );
 } finally {
 	wp_set_current_user( 0 );
 }

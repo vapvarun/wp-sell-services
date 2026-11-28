@@ -15,7 +15,7 @@ PayPal lets buyers pay with their PayPal balance, linked bank account, or credit
 3. Create an app to get your **Client ID** and **Secret**
 4. In WordPress, go to **Sell Services > Settings > Payment Gateways**
 5. Check **Enable PayPal** and paste your credentials
-6. Click **Save Changes**
+6. Click **Save changes**
 
 ### Sandbox (Test) Mode
 
@@ -88,7 +88,7 @@ Razorpay is the go-to payment gateway for marketplaces serving buyers in India. 
 3. Get your API keys from **Settings > API Keys** in the Razorpay Dashboard
 4. In WordPress, go to **Sell Services > Settings > Payment Gateways**
 5. Check **Enable Razorpay** and enter your Key ID and Key Secret
-6. Click **Save Changes**
+6. Click **Save changes**
 
 **Keeping the secrets out of the database:** define `WPSS_RAZORPAY_LIVE_KEY_SECRET`, `WPSS_RAZORPAY_TEST_KEY_SECRET` and `WPSS_RAZORPAY_WEBHOOK_SECRET` in `wp-config.php`. Each constant wins over the saved value, its field is locked, and the next save clears the stored copy. The Key IDs stay on the settings screen.
 
@@ -146,7 +146,7 @@ Offline payments let you accept bank transfers, checks, or any manual payment me
 2. Check **Enable Offline Payments**
 3. Set a title like "Bank Transfer" or "Pay by Check"
 4. In the **Instructions** field, add your payment details (bank name, account number, routing number, etc.)
-5. Click **Save Changes**
+5. Click **Save changes**
 
 ### How It Works
 
@@ -155,7 +155,7 @@ Offline payments let you accept bank transfers, checks, or any manual payment me
 3. Buyer sees your payment instructions and sends money
 4. You check your bank statement and verify the payment
 5. In the order, click **Mark as paid**
-6. Order moves to **In Progress** and the vendor is notified to begin work
+6. Order moves to **In progress** and the vendor is notified to begin work
 
 Orders waiting for you are counted on the **Sell Services > Dashboard** under Action items as **Payments to confirm**, and on the **Orders** menu item. The card links to the Orders list filtered to those orders.
 

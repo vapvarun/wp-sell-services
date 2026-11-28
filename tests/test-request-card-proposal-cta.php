@@ -44,21 +44,21 @@ $cta = static function ( int $viewer ) use ( $request ): string {
 };
 
 try {
-	$check( 'A vendor sees Send Proposal on an open request', 'Send Proposal' === $cta( $f->vendor ), $cta( $f->vendor ) );
-	$check( 'The request\'s own buyer does not', 'View Request' === $cta( $f->buyer ), $cta( $f->buyer ) );
-	$check( 'A member who is not a vendor does not', 'View Request' === $cta( (int) $member ), $cta( (int) $member ) );
+	$check( 'A vendor sees Send Proposal on an open request', 'Send proposal' === $cta( $f->vendor ), $cta( $f->vendor ) );
+	$check( 'The request\'s own buyer does not', 'View request' === $cta( $f->buyer ), $cta( $f->buyer ) );
+	$check( 'A member who is not a vendor does not', 'View request' === $cta( (int) $member ), $cta( (int) $member ) );
 
 	wp_update_post( array( 'ID' => $request, 'post_author' => $f->vendor ) );
-	$check( 'A vendor viewing their own request does not', 'View Request' === $cta( $f->vendor ), $cta( $f->vendor ) );
+	$check( 'A vendor viewing their own request does not', 'View request' === $cta( $f->vendor ), $cta( $f->vendor ) );
 	wp_update_post( array( 'ID' => $request, 'post_author' => $f->buyer ) );
 
 	update_post_meta( $request, '_wpss_status', 'closed' );
-	$check( 'Nobody is offered it on a closed request', 'View Request' === $cta( $f->vendor ), $cta( $f->vendor ) );
+	$check( 'Nobody is offered it on a closed request', 'View request' === $cta( $f->vendor ), $cta( $f->vendor ) );
 	update_post_meta( $request, '_wpss_status', 'open' );
 
 	( new VendorProfileRepository() )->upsert( $f->vendor, array( 'status' => 'suspended' ) );
 	wp_cache_flush();
-	$check( 'A suspended vendor gets View Request', 'View Request' === $cta( $f->vendor ), $cta( $f->vendor ) );
+	$check( 'A suspended vendor gets View Request', 'View request' === $cta( $f->vendor ), $cta( $f->vendor ) );
 } finally {
 	wp_set_current_user( 0 );
 }

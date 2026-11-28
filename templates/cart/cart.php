@@ -352,7 +352,7 @@ defined( 'ABSPATH' ) || exit;
 	<?php
 	// The shared page header (ShellHeader), the same band as checkout and the
 	// dashboard - and the same one the cart's logged-out branch prints.
-	\WPSellServices\Frontend\ShellHeader::render( array( 'title' => __( 'Your Cart', 'wp-sell-services' ) ) );
+	\WPSellServices\Frontend\ShellHeader::render( array( 'title' => __( 'Your cart', 'wp-sell-services' ) ) );
 	?>
 
 	<?php if ( ! empty( $wpss_guest ) ) : ?>
@@ -567,7 +567,7 @@ defined( 'ABSPATH' ) || exit;
 
 			<!-- Totals Sidebar -->
 			<div class="wpss-cart-summary">
-				<h2 class="wpss-cart-summary__heading"><?php esc_html_e( 'Order Summary', 'wp-sell-services' ); ?></h2>
+				<h2 class="wpss-cart-summary__heading"><?php esc_html_e( 'Order summary', 'wp-sell-services' ); ?></h2>
 
 				<div class="wpss-cart-summary__line">
 					<span>
@@ -657,7 +657,7 @@ defined( 'ABSPATH' ) || exit;
 						</p>
 					<?php else : ?>
 					<a href="<?php echo esc_url( wpss_get_checkout_base_url() ); ?>" class="wpss-btn wpss-btn--primary">
-						<?php esc_html_e( 'Proceed to Checkout', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Proceed to checkout', 'wp-sell-services' ); ?>
 					</a>
 					<?php endif; ?>
 				</div>

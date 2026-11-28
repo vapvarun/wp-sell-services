@@ -217,7 +217,7 @@ class SellerCard extends AbstractBlock {
 				<?php if ( $attributes['showButton'] ) : ?>
 					<div class="wpss-seller-actions">
 						<a href="<?php echo esc_url( wpss_get_vendor_url( $user_id ) ); ?>" class="wpss-btn wpss-btn--primary">
-							<?php esc_html_e( 'View Profile', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'View profile', 'wp-sell-services' ); ?>
 						</a>
 						<a href="<?php echo esc_url( add_query_arg( 'contact', $user_id, wpss_get_vendor_url( $user_id ) ) ); ?>" class="wpss-btn wpss-btn--secondary">
 							<?php esc_html_e( 'Contact', 'wp-sell-services' ); ?>
@@ -318,7 +318,7 @@ class SellerCard extends AbstractBlock {
 		}
 		?>
 		<div class="wpss-seller-services">
-			<h4 class="wpss-seller-services-title"><?php esc_html_e( 'Popular Services', 'wp-sell-services' ); ?></h4>
+			<h4 class="wpss-seller-services-title"><?php esc_html_e( 'Popular services', 'wp-sell-services' ); ?></h4>
 			<ul class="wpss-seller-services-list">
 				<?php foreach ( $services as $service ) : ?>
 					<li>

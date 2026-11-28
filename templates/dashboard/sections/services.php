@@ -143,7 +143,7 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 			<h3><?php esc_html_e( 'No services yet', 'wp-sell-services' ); ?></h3>
 			<p><?php esc_html_e( 'Create your first service to start receiving orders from buyers.', 'wp-sell-services' ); ?></p>
 			<a href="<?php echo esc_url( wpss_append_dashboard_section( $dashboard_url, 'create' ) ); ?>" class="wpss-btn wpss-btn--primary">
-				<?php esc_html_e( 'Create Your First Service', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Create your first service', 'wp-sell-services' ); ?>
 			</a>
 		</div>
 	<?php else : ?>

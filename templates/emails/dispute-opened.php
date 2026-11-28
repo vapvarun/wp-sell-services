@@ -137,7 +137,7 @@ else :
 
 <?php if ( ! empty( $dispute_reason ) ) : ?>
 <div style="background: #f8d7da; padding: 16px; border-radius: 4px; margin: 20px 0;">
-	<strong style="color: #721c24;"><?php esc_html_e( 'Dispute Reason:', 'wp-sell-services' ); ?></strong>
+	<strong style="color: #721c24;"><?php esc_html_e( 'Dispute reason:', 'wp-sell-services' ); ?></strong>
 	<p style="margin: 8px 0 0; color: #721c24;"><?php echo esc_html( $dispute_reason ); ?></p>
 </div>
 <?php endif; ?>
@@ -168,7 +168,7 @@ else :
 	 *
 	 * @param string $button_text Default button text.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'View Dispute Details', 'wp-sell-services' ), 'dispute_opened' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'View dispute details', 'wp-sell-services' ), 'dispute_opened' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>

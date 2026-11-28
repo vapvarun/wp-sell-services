@@ -63,7 +63,7 @@ $message = apply_filters( 'wpss_no_services_message', $default_message );
 			<?php if ( is_search() || is_tax() ) : ?>
 				<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_service' ) ); ?>"
 					class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Browse All Services', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Browse all services', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
 
@@ -78,7 +78,7 @@ $message = apply_filters( 'wpss_no_services_message', $default_message );
 			<?php if ( wpss_is_vendor() ) : ?>
 				<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>"
 					class="wpss-btn wpss-btn--outline">
-					<?php esc_html_e( 'Create a Service', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Create a service', 'wp-sell-services' ); ?>
 				</a>
 			<?php elseif ( current_user_can( 'manage_options' ) ) : ?>
 				<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>"

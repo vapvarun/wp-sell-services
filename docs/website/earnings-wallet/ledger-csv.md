@@ -21,7 +21,7 @@ withdrawals.
 
 A dropdown above the ledger scopes the view to a time window:
 
-- **Last 30 Days**
+- **Last 30 days**
 - **This Month**
 - **Last Month**
 - **This Year**

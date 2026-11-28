@@ -140,7 +140,7 @@ class FeaturedServices extends AbstractBlock {
 			'showArrows' => true,
 			'showRating' => true,
 			'showPrice'  => true,
-			'title'      => __( 'Featured Services', 'wp-sell-services' ),
+			'title'      => __( 'Featured services', 'wp-sell-services' ),
 		);
 
 		$attributes = wp_parse_args( $attributes, $defaults );

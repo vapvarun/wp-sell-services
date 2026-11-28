@@ -91,7 +91,7 @@ Go to **Dashboard > Buyer Requests** and click on your request to see all propos
 
 ### Accepting a Proposal
 
-When you find the right vendor, click **Accept Proposal**. Here is what happens:
+When you find the right vendor, click **Accept proposal**. Here is what happens:
 
 1. An order is created automatically
 2. All other proposals are declined

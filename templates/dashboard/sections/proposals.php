@@ -86,7 +86,7 @@ if ( $request_ids ) {
 			<?php $requests_url = get_post_type_archive_link( 'wpss_request' ); ?>
 			<?php if ( $requests_url ) : ?>
 				<a href="<?php echo esc_url( $requests_url ); ?>" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Browse Requests', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Browse requests', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
 		</div>
@@ -147,7 +147,7 @@ if ( $request_ids ) {
 					<div class="wpss-request-card__actions">
 						<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>"><?php echo esc_html( $status_text ); ?></span>
 						<?php if ( '' !== $request_title ) : ?>
-							<?php $view_label = $is_offer ? __( 'View conversation', 'wp-sell-services' ) : __( 'View Request', 'wp-sell-services' ); ?>
+							<?php $view_label = $is_offer ? __( 'View conversation', 'wp-sell-services' ) : __( 'View request', 'wp-sell-services' ); ?>
 							<a href="<?php echo esc_url( $is_offer ? wpss_private_offer_url( $request_id ) : (string) get_permalink( $request_id ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 								<?php echo esc_html( $view_label ); ?>
 							</a>

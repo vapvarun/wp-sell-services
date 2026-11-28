@@ -54,7 +54,7 @@ The pricing summary shows:
 | Delivered | Order with delivery already submitted |
 | Completed | Historical order that is already finished |
 
-If you select "Pending Requirements" but the service has no requirements, the order automatically moves to "In Progress" instead.
+If you select "Pending Requirements" but the service has no requirements, the order automatically moves to "In progress" instead.
 
 **Payment details:**
 
@@ -85,7 +85,7 @@ After creation, you see:
 The order follows the same workflow as any checkout-created order:
 
 - If status is **Pending Requirements**, the buyer (or you) fills in requirements, then the vendor starts work
-- If status is **In Progress**, the vendor is notified and the delivery deadline starts
+- If status is **In progress**, the vendor is notified and the delivery deadline starts
 - If status is **Completed**, no further action is needed
 
 ## Things to Keep in Mind

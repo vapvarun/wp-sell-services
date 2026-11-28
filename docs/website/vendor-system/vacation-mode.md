@@ -7,7 +7,7 @@ Need a break? Vacation mode lets you temporarily stop accepting new orders while
 ## How to Turn It On
 
 1. Go to **Dashboard > Profile** (or Settings).
-2. Toggle **Vacation Mode** to ON.
+2. Toggle **Vacation mode** to ON.
 3. Enter an optional vacation message for buyers.
 4. Save changes.
 
@@ -46,7 +46,7 @@ Keep it brief, professional, and optionally mention when you plan to return.
 When you are ready to accept orders again:
 
 1. Go to **Dashboard > Profile** (or Settings).
-2. Toggle **Vacation Mode** to OFF.
+2. Toggle **Vacation mode** to OFF.
 3. Save changes.
 
 Your services become available instantly. Order buttons reappear and your vacation message is removed.

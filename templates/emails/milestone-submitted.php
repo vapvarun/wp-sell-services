@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.1
+ * @version 2.0.0
  *
  * @var \WPSellServices\Models\ServiceOrder $milestone
  * @var \WP_User                            $recipient Buyer.
@@ -59,7 +59,7 @@ do_action( 'wpss_email_content_before', 'milestone_submitted', $milestone, $reci
 </p>
 
 <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
-	<?php esc_html_e( 'If something is not right, head to the order page and use the conversation thread to ask for changes — the vendor can resubmit when ready.', 'wp-sell-services' ); ?>
+	<?php esc_html_e( 'If something is not right, head to the order page and use the conversation thread to ask for changes. The vendor can resubmit when ready.', 'wp-sell-services' ); ?>
 </p>
 
 <?php

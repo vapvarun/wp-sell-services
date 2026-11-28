@@ -15,7 +15,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
- * @version 1.9.1
+ * @version 2.0.0
  *
  * @var int    $order_id        Order ID.
  * @var object $order           Order object (service_id is read).
@@ -113,7 +113,7 @@ do_action( 'wpss_before_requirements_form_component', $order_id, $order );
 		<!-- Default form: the vendor configured no questions -->
 		<div class="wpss-requirements-form__field">
 			<label class="wpss-requirements-form__label" for="req_description_<?php echo esc_attr( $order_id ); ?>">
-				<?php esc_html_e( 'Project Description', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Project description', 'wp-sell-services' ); ?>
 				<span class="wpss-requirements-form__required">*</span>
 			</label>
 			<textarea
@@ -131,7 +131,7 @@ do_action( 'wpss_before_requirements_form_component', $order_id, $order );
 
 		<div class="wpss-requirements-form__field">
 			<label class="wpss-requirements-form__label" for="req_files_<?php echo esc_attr( $order_id ); ?>">
-				<?php esc_html_e( 'Reference Files (Optional)', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Reference files (optional)', 'wp-sell-services' ); ?>
 			</label>
 			<div class="wpss-requirements-form__upload">
 				<input
@@ -334,7 +334,7 @@ do_action( 'wpss_before_requirements_form_component', $order_id, $order );
 
 	<div class="wpss-requirements-form__field">
 		<label class="wpss-requirements-form__label" for="req_notes_<?php echo esc_attr( $order_id ); ?>">
-			<?php esc_html_e( 'Additional Notes (Optional)', 'wp-sell-services' ); ?>
+			<?php esc_html_e( 'Additional notes (optional)', 'wp-sell-services' ); ?>
 		</label>
 		<textarea
 			name="requirements[additional_notes]"
@@ -350,7 +350,7 @@ do_action( 'wpss_before_requirements_form_component', $order_id, $order );
 			<span class="wpss-requirements-form__submit-text"><?php esc_html_e( 'Submit requirements', 'wp-sell-services' ); ?></span>
 			<span class="wpss-requirements-form__submit-loading" style="display: none;">
 				<span class="wpss-requirements-form__spinner"></span>
-				<?php esc_html_e( 'Submitting...', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Submitting…', 'wp-sell-services' ); ?>
 			</span>
 		</button>
 		<p class="wpss-requirements-form__notice">

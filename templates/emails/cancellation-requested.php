@@ -100,11 +100,11 @@ do_action( 'wpss_email_content_before', 'cancellation_requested', $order, $recip
 </table>
 
 <div style="background: #fff8e1; padding: 16px; border-radius: 4px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-	<strong style="color: #92400e;"><?php esc_html_e( 'Cancellation Reason:', 'wp-sell-services' ); ?></strong>
+	<strong style="color: #92400e;"><?php esc_html_e( 'Cancellation reason:', 'wp-sell-services' ); ?></strong>
 	<p style="margin: 8px 0 0; color: #92400e;"><?php echo esc_html( $reason ); ?></p>
 	<?php if ( ! empty( $note ) ) : ?>
 		<p style="margin: 8px 0 0; color: #92400e;">
-			<strong><?php esc_html_e( 'Additional Details:', 'wp-sell-services' ); ?></strong>
+			<strong><?php esc_html_e( 'Additional details:', 'wp-sell-services' ); ?></strong>
 			<?php echo esc_html( $note ); ?>
 		</p>
 	<?php endif; ?>
@@ -132,11 +132,11 @@ do_action( 'wpss_email_content_before', 'cancellation_requested', $order, $recip
 	<?php esc_html_e( 'You can:', 'wp-sell-services' ); ?>
 </p>
 <ul style="margin: 0 0 20px 0; padding-left: 20px; color: #3c3c3c; line-height: 1.8;">
-	<li><strong><?php esc_html_e( 'Accept Cancellation', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'the order will be cancelled and a refund may be initiated.', 'wp-sell-services' ); ?></li>
+	<li><strong><?php esc_html_e( 'Accept cancellation', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'the order will be cancelled and a refund may be initiated.', 'wp-sell-services' ); ?></li>
 	<?php if ( ! empty( $requested_by_vendor ) ) : ?>
-		<li><strong><?php esc_html_e( 'Decline Cancellation', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'the work continues.', 'wp-sell-services' ); ?></li>
+		<li><strong><?php esc_html_e( 'Decline cancellation', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'the work continues.', 'wp-sell-services' ); ?></li>
 	<?php else : ?>
-		<li><strong><?php esc_html_e( 'Dispute Cancellation', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'the case will be escalated to admin mediation.', 'wp-sell-services' ); ?></li>
+		<li><strong><?php esc_html_e( 'Dispute cancellation', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'the case will be escalated to admin mediation.', 'wp-sell-services' ); ?></li>
 	<?php endif; ?>
 </ul>
 <?php endif; ?>
@@ -144,7 +144,7 @@ do_action( 'wpss_email_content_before', 'cancellation_requested', $order, $recip
 <p style="text-align: center; margin: 30px 0;">
 	<?php
 	$button_url  = apply_filters( 'wpss_email_button_url', wpss_get_order_url( $order->id ), 'cancellation_requested', $order );
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'Respond to Request', 'wp-sell-services' ), 'cancellation_requested' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'Respond to request', 'wp-sell-services' ), 'cancellation_requested' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>

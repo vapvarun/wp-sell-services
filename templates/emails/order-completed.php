@@ -152,7 +152,7 @@ do_action( 'wpss_email_content_before', 'order_completed', $order, $recipient );
 	 * @param string $button_text Default button text.
 	 */
 	$default_button_text = $is_customer
-		? __( 'View Order & Leave Review', 'wp-sell-services' )
+		? __( 'View order & leave review', 'wp-sell-services' )
 		: __( 'View order', 'wp-sell-services' );
 	$button_text         = apply_filters( 'wpss_email_button_text', $default_button_text, 'order_completed' );
 	?>

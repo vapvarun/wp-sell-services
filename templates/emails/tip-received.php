@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var WPSellServices\Models\ServiceOrder      $tip_order     The paid tip sub-order.
  * @var WPSellServices\Models\ServiceOrder|null $parent_order  Parent service order (may be null if deleted).
@@ -56,7 +56,7 @@ $earnings_url = wpss_get_dashboard_url( 'wallet' ) ?: ( wpss_get_dashboard_url()
 	<?php
 	printf(
 		/* translators: 1: buyer name, 2: net tip amount */
-		esc_html__( 'Great news — %1$s just sent you a tip of %2$s. It has been credited to your wallet.', 'wp-sell-services' ),
+		esc_html__( 'Great news: %1$s just sent you a tip of %2$s. It has been credited to your wallet.', 'wp-sell-services' ),
 		'<strong>' . esc_html( $customer_name ) . '</strong>',
 		'<strong>' . esc_html( $format( $net_amount ) ) . '</strong>'
 	);

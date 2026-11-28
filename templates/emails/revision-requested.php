@@ -107,7 +107,7 @@ do_action( 'wpss_email_content_before', 'revision_requested', $order, $recipient
 	 *
 	 * @param string $button_text Default button text.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'View Feedback', 'wp-sell-services' ), 'revision_requested' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'View feedback', 'wp-sell-services' ), 'revision_requested' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>

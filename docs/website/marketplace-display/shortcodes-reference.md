@@ -257,7 +257,7 @@ accounts. No attributes.
 ### `[wpss_vendor_registration]` -- Become a vendor
 
 The vendor-specific registration form. Different from `[wpss_register]` -- use
-this on your "Become a Vendor" page. What it does depends on your registration
+this on your "Become a vendor" page. What it does depends on your registration
 mode (open, requires approval, or closed); see
 [Vendor Settings](../vendor-system/vendor-settings.md). No attributes.
 

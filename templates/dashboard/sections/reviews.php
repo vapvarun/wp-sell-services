@@ -14,7 +14,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.7.1
- * @version 1.9.1
+ * @version 2.0.0
  *
  * @var int           $user_id        Current user ID.
  * @var VendorService $vendor_service Vendor service instance.
@@ -52,7 +52,7 @@ $avg_rating   = $profile ? (float) $profile->rating : 0.0;
 		</div>
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $avg_rating, 1 ) ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Average Rating', 'wp-sell-services' ); ?></span>
+			<span class="wpss-stat-card__label"><?php esc_html_e( 'Average rating', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>
 
@@ -91,7 +91,7 @@ $avg_rating   = $profile ? (float) $profile->rating : 0.0;
 								placeholder="<?php esc_attr_e( 'Thank the buyer or add context. Your reply is public.', 'wp-sell-services' ); ?>"></textarea>
 							<div class="wpss-review-reply-form__row">
 								<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--sm">
-									<?php esc_html_e( 'Post Reply', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'Post reply', 'wp-sell-services' ); ?>
 								</button>
 							</div>
 						</form>

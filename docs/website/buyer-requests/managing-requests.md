@@ -49,7 +49,7 @@ Take your time comparing. The cheapest option is not always the best -- look for
 
 ## Accepting a Proposal
 
-When you find the right vendor, click **Accept Proposal**. Here is what happens automatically:
+When you find the right vendor, click **Accept proposal**. Here is what happens automatically:
 
 1. **An order is created** with the vendor's proposed price and timeline
 2. **The accepted proposal** is marked as accepted
@@ -58,7 +58,7 @@ When you find the right vendor, click **Accept Proposal**. Here is what happens 
 5. **The vendor is notified** by email and in-app
 6. **You are redirected to checkout** to complete payment
 
-After payment, the order moves to "In Progress" and the vendor begins work.
+After payment, the order moves to "In progress" and the vendor begins work.
 
 ---
 

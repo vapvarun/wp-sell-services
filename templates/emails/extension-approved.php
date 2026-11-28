@@ -11,7 +11,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.1.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var \WPSellServices\Models\ServiceOrder $extension
  * @var \WP_User                            $recipient Vendor.
@@ -62,7 +62,7 @@ do_action( 'wpss_email_content_before', 'extension_approved', $extension, $recip
 	<?php
 	printf(
 		/* translators: 1: buyer name, 2: net amount */
-		esc_html__( '%1$s approved your extension quote — %2$s is in your wallet, and the order deadline has been updated. You can continue working on the expanded scope.', 'wp-sell-services' ),
+		esc_html__( '%1$s approved your extension quote. %2$s is in your wallet, and the order deadline has been updated. You can continue working on the expanded scope.', 'wp-sell-services' ),
 		'<strong>' . esc_html( $buyer_name ) . '</strong>',
 		'<strong>' . esc_html( $format( $net_amount ) ) . '</strong>'
 	);

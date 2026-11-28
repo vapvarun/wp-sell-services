@@ -56,7 +56,7 @@ do_action( 'wpss_email_content_before', 'vendor_rejected', $recipient ?? null );
 		</tr>
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; font-weight: 600; color: #dc3545;"><?php esc_html_e( 'Not Approved', 'wp-sell-services' ); ?></td>
+			<td style="padding: 12px; font-weight: 600; color: #dc3545;"><?php esc_html_e( 'Not approved', 'wp-sell-services' ); ?></td>
 		</tr>
 	</tbody>
 </table>
@@ -92,7 +92,7 @@ do_action( 'wpss_email_content_before', 'vendor_rejected', $recipient ?? null );
 	 * @param string $button_text Default button text.
 	 * @param string $type        Email type identifier.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'Visit Marketplace', 'wp-sell-services' ), 'vendor_rejected' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'Visit marketplace', 'wp-sell-services' ), 'vendor_rejected' );
 	?>
 	<?php if ( ! empty( $button_url ) ) : ?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">

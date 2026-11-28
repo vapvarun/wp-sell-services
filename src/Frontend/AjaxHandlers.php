@@ -1690,7 +1690,7 @@ class AjaxHandlers {
 			$is_milestone_contract = ProposalService::CONTRACT_TYPE_MILESTONE === ( $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED );
 			if ( $is_milestone_contract ) {
 				$redirect_url = wpss_get_post_checkout_url( (int) $result['order_id'], wpss_get_order_url( (int) $result['order_id'] ), 'ajax' );
-				$message      = __( 'Proposal accepted — your project is set up. Opening the order…', 'wp-sell-services' );
+				$message      = __( 'Proposal accepted. Your project is set up. Opening the order…', 'wp-sell-services' );
 			} else {
 				$redirect_url = wpss_ensure_pay_order( (int) $result['order_id'] );
 				$message      = __( 'Proposal accepted! Redirecting to payment…', 'wp-sell-services' );
@@ -1960,7 +1960,7 @@ class AjaxHandlers {
 				__( 'Inquiry about "%s"', 'wp-sell-services' ),
 				$service_title
 			)
-			: __( 'Direct Message', 'wp-sell-services' );
+			: __( 'Direct message', 'wp-sell-services' );
 
 		$conversation = $conversation_service->create_direct( $user_id, $vendor_id, $conv_subject, $service_id );
 

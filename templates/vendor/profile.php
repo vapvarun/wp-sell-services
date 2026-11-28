@@ -182,7 +182,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 					<img src="<?php echo esc_url( get_avatar_url( $vendor_id, [ 'size' => 150 ] ) ); ?>"
 						 alt="<?php echo esc_attr( $vendor->display_name ); ?>">
 					<?php if ( $is_verified ) : ?>
-						<span class="wpss-verified-badge" title="<?php esc_attr_e( 'Verified Vendor', 'wp-sell-services' ); ?>">
+						<span class="wpss-verified-badge" title="<?php esc_attr_e( 'Verified vendor', 'wp-sell-services' ); ?>">
 							<i data-lucide="badge-check" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 						</span>
 					<?php endif; ?>
@@ -258,11 +258,11 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 					<?php if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) : ?>
 						<button type="button" class="wpss-btn wpss-btn--primary wpss-contact-btn"
 							data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
-							<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Contact me', 'wp-sell-services' ); ?>
 						</button>
 					<?php elseif ( ! is_user_logged_in() ) : ?>
 						<a href="<?php echo esc_url( wp_login_url( wpss_get_vendor_url( $vendor_id ) ) ); ?>" class="wpss-btn wpss-btn--primary">
-							<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Contact me', 'wp-sell-services' ); ?>
 						</a>
 					<?php endif; ?>
 				</div>
@@ -474,7 +474,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 					<ul class="wpss-quick-stats">
 						<?php if ( $response_time ) : ?>
 							<li>
-								<span class="wpss-stat-label"><?php esc_html_e( 'Avg. Response Time', 'wp-sell-services' ); ?></span>
+								<span class="wpss-stat-label"><?php esc_html_e( 'Avg. response time', 'wp-sell-services' ); ?></span>
 								<span class="wpss-stat-value"><?php echo esc_html( $response_time ); ?></span>
 							</li>
 						<?php endif; ?>
@@ -483,7 +483,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							<span class="wpss-stat-value"><?php echo esc_html( $total_services ); ?></span>
 						</li>
 						<li>
-							<span class="wpss-stat-label"><?php esc_html_e( 'Orders Completed', 'wp-sell-services' ); ?></span>
+							<span class="wpss-stat-label"><?php esc_html_e( 'Orders completed', 'wp-sell-services' ); ?></span>
 							<span class="wpss-stat-value"><?php echo esc_html( $completed_orders ); ?></span>
 						</li>
 					</ul>
@@ -632,7 +632,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 		<div class="wpss-modal__backdrop"></div>
 		<div class="wpss-modal__dialog">
 			<div class="wpss-modal__header">
-				<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact Vendor', 'wp-sell-services' ); ?></h3>
+				<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact vendor', 'wp-sell-services' ); ?></h3>
 				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 			</div>
 
@@ -662,7 +662,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 					<input type="hidden" name="service_id" value="0">
 
 					<div class="wpss-form-field">
-						<label for="wpss-contact-message"><?php esc_html_e( 'Your Message', 'wp-sell-services' ); ?></label>
+						<label for="wpss-contact-message"><?php esc_html_e( 'Your message', 'wp-sell-services' ); ?></label>
 						<textarea id="wpss-contact-message"
 									name="message"
 									rows="5"
@@ -674,7 +674,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 					</div>
 
 					<div class="wpss-form-field">
-						<label for="wpss-contact-attachment"><?php esc_html_e( 'Attach Files (optional)', 'wp-sell-services' ); ?></label>
+						<label for="wpss-contact-attachment"><?php esc_html_e( 'Attach files (optional)', 'wp-sell-services' ); ?></label>
 						<input type="file"
 								id="wpss-contact-attachment"
 								name="attachments[]"

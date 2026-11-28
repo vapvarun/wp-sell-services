@@ -103,9 +103,9 @@ do_action( 'wpss_before_extension_view', $current_order );
 				if ( $is_paid ) {
 					esc_html_e( 'Extra work paid', 'wp-sell-services' );
 				} elseif ( $is_pending ) {
-					esc_html_e( 'Quote sent — awaiting buyer payment', 'wp-sell-services' );
+					esc_html_e( 'Quote sent, awaiting buyer payment', 'wp-sell-services' );
 				} elseif ( $awaiting_confirmation ) {
-					esc_html_e( 'Payment submitted — awaiting your confirmation', 'wp-sell-services' );
+					esc_html_e( 'Payment submitted, awaiting your confirmation', 'wp-sell-services' );
 				} else {
 					esc_html_e( 'Quote declined', 'wp-sell-services' );
 				}
@@ -115,7 +115,7 @@ do_action( 'wpss_before_extension_view', $current_order );
 				} elseif ( $is_pending ) {
 					esc_html_e( 'Quote from vendor', 'wp-sell-services' );
 				} elseif ( $awaiting_confirmation ) {
-					esc_html_e( 'Payment submitted — awaiting confirmation', 'wp-sell-services' );
+					esc_html_e( 'Payment submitted, awaiting confirmation', 'wp-sell-services' );
 				} else {
 					esc_html_e( 'Quote declined', 'wp-sell-services' );
 				}
@@ -188,7 +188,7 @@ do_action( 'wpss_before_extension_view', $current_order );
 					<?php
 					printf(
 						/* translators: %s: amount */
-						esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
+						esc_html__( 'Accept & pay %s', 'wp-sell-services' ),
 						esc_html( $format( $gross ) )
 					);
 					?>

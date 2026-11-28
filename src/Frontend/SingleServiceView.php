@@ -130,27 +130,27 @@ class SingleServiceView {
 				'i18n'        => array(
 					'addingToCart'       => __( 'Adding to cart...', 'wp-sell-services' ),
 					'added'              => __( 'Added to cart!', 'wp-sell-services' ),
-					'viewCart'           => __( 'View Cart', 'wp-sell-services' ),
+					'viewCart'           => __( 'View cart', 'wp-sell-services' ),
 					'checkout'           => __( 'Checkout', 'wp-sell-services' ),
 					'error'              => __( 'Could not add to cart. Please try again.', 'wp-sell-services' ),
 					'selectExtra'        => __( 'Select extras', 'wp-sell-services' ),
 					'total'              => __( 'Total', 'wp-sell-services' ),
 					'loading'            => __( 'Loading...', 'wp-sell-services' ),
-					'loadMoreReviews'    => __( 'Load More Reviews', 'wp-sell-services' ),
-					'sellerResponse'     => __( 'Vendor Response:', 'wp-sell-services' ),
+					'loadMoreReviews'    => __( 'Load more reviews', 'wp-sell-services' ),
+					'sellerResponse'     => __( 'Vendor response:', 'wp-sell-services' ),
 					'anonymous'          => __( 'Anonymous', 'wp-sell-services' ),
 					'day'                => __( 'Day', 'wp-sell-services' ),
 					'days'               => __( 'Days', 'wp-sell-services' ),
 					'sending'            => __( 'Sending…', 'wp-sell-services' ),
 					'sendMessage'        => __( 'Send message', 'wp-sell-services' ),
 					'contactFailed'      => __( 'Failed to send message. Please try again.', 'wp-sell-services' ),
-					'comparePackages'    => __( 'Compare Packages', 'wp-sell-services' ),
+					'comparePackages'    => __( 'Compare packages', 'wp-sell-services' ),
 					'close'              => __( 'Close', 'wp-sell-services' ),
 					'price'              => __( 'Price', 'wp-sell-services' ),
 					'delivery'           => __( 'Delivery', 'wp-sell-services' ),
 					'revisions'          => __( 'Revisions', 'wp-sell-services' ),
 					'copied'             => __( 'Copied!', 'wp-sell-services' ),
-					'continueToCheckout' => __( 'Continue to Checkout', 'wp-sell-services' ),
+					'continueToCheckout' => __( 'Continue to checkout', 'wp-sell-services' ),
 					/* translators: %s: tax name, for example VAT */
 					'taxIncluded'        => __( 'Includes %s', 'wp-sell-services' ),
 					/* translators: 1: tax name, for example VAT, 2: tax rate number. %% prints a percent sign. */
@@ -345,7 +345,12 @@ class SingleServiceView {
 	public function render_description( Service $service ): void {
 		?>
 		<div class="wpss-service-description">
-			<h2><?php esc_html_e( 'About This Service', 'wp-sell-services' ); ?></h2>
+			<h2>
+				<?php
+				// A digital product has no delivery; it reads as a product, not a service.
+				wpss_service_type_supports( $service->id, 'delivery' ) ? esc_html_e( 'About this service', 'wp-sell-services' ) : esc_html_e( 'About this product', 'wp-sell-services' );
+				?>
+			</h2>
 			<div class="wpss-description-content">
 				<?php echo wp_kses_post( apply_filters( 'the_content', $service->description ) ); ?>
 			</div>
@@ -413,7 +418,7 @@ class SingleServiceView {
 		$completed_orders = (int) ( $profile->completed_orders ?? 0 );
 		?>
 		<div class="wpss-about-vendor">
-			<h2><?php esc_html_e( 'About the Vendor', 'wp-sell-services' ); ?></h2>
+			<h2><?php esc_html_e( 'About the vendor', 'wp-sell-services' ); ?></h2>
 
 			<div class="wpss-vendor-profile">
 				<div class="wpss-vendor-header">
@@ -470,7 +475,7 @@ class SingleServiceView {
 					<?php // Opens a modal, it does not navigate - so a button, not an anchor with href="#" (Basecamp 10240020534). ?>
 					<button type="button" class="wpss-btn wpss-btn--outline wpss-contact-btn"
 						data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
-						<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Contact me', 'wp-sell-services' ); ?>
 					</button>
 				</div>
 
@@ -518,7 +523,7 @@ class SingleServiceView {
 					if ( $response_time ) :
 						?>
 						<div class="wpss-vendor-meta-item">
-							<span class="wpss-meta-label"><?php esc_html_e( 'Avg. Response Time', 'wp-sell-services' ); ?></span>
+							<span class="wpss-meta-label"><?php esc_html_e( 'Avg. response time', 'wp-sell-services' ); ?></span>
 							<span class="wpss-meta-value"><?php echo esc_html( $response_time ); ?></span>
 						</div>
 					<?php endif; ?>
@@ -530,7 +535,7 @@ class SingleServiceView {
 					if ( $last_delivery ) :
 						?>
 						<div class="wpss-vendor-meta-item">
-							<span class="wpss-meta-label"><?php esc_html_e( 'Last Delivery', 'wp-sell-services' ); ?></span>
+							<span class="wpss-meta-label"><?php esc_html_e( 'Last delivery', 'wp-sell-services' ); ?></span>
 							<span class="wpss-meta-value"><?php echo esc_html( wpss_time_ago( $last_delivery ) ); ?></span>
 						</div>
 					<?php endif; ?>
@@ -771,7 +776,7 @@ class SingleServiceView {
 		}
 		?>
 		<div class="wpss-related-services">
-			<h2><?php esc_html_e( 'Related Services', 'wp-sell-services' ); ?></h2>
+			<h2><?php esc_html_e( 'Related services', 'wp-sell-services' ); ?></h2>
 
 			<div class="wpss-services-grid wpss-services-grid--4">
 				<?php
@@ -854,7 +859,7 @@ class SingleServiceView {
 			<div class="wpss-modal__backdrop"></div>
 			<div class="wpss-modal__dialog">
 				<div class="wpss-modal__header">
-					<h3 id="wpss-order-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Order Options', 'wp-sell-services' ); ?></h3>
+					<h3 id="wpss-order-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Order options', 'wp-sell-services' ); ?></h3>
 					<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 				</div>
 
@@ -895,7 +900,7 @@ class SingleServiceView {
 
 						<?php if ( ! empty( $extras ) ) : ?>
 							<div class="wpss-order-extras">
-								<h4><?php esc_html_e( 'Add Extras', 'wp-sell-services' ); ?></h4>
+								<h4><?php esc_html_e( 'Add extras', 'wp-sell-services' ); ?></h4>
 								<?php
 								foreach ( $extras as $index => $extra ) :
 									$field_type = (string) ( $extra['field_type'] ?? 'checkbox' );
@@ -989,7 +994,7 @@ class SingleServiceView {
 					</div>
 
 					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--block wpss-add-to-cart-btn">
-						<?php esc_html_e( 'Continue to Checkout', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Continue to checkout', 'wp-sell-services' ); ?>
 					</button>
 				</div>
 			</div>
@@ -1020,7 +1025,7 @@ class SingleServiceView {
 			<div class="wpss-modal__backdrop"></div>
 			<div class="wpss-modal__dialog">
 				<div class="wpss-modal__header">
-					<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact Vendor', 'wp-sell-services' ); ?></h3>
+					<h3 id="wpss-contact-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Contact vendor', 'wp-sell-services' ); ?></h3>
 					<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 				</div>
 
@@ -1070,7 +1075,7 @@ class SingleServiceView {
 							<input type="hidden" name="service_id" value="<?php echo esc_attr( (string) $service->id ); ?>">
 
 							<div class="wpss-form-field">
-								<label for="wpss-contact-message"><?php esc_html_e( 'Your Message', 'wp-sell-services' ); ?></label>
+								<label for="wpss-contact-message"><?php esc_html_e( 'Your message', 'wp-sell-services' ); ?></label>
 								<textarea id="wpss-contact-message"
 											name="message"
 											rows="5"
@@ -1082,7 +1087,7 @@ class SingleServiceView {
 							</div>
 
 							<div class="wpss-form-field">
-								<label for="wpss-contact-attachment"><?php esc_html_e( 'Attach Files (optional)', 'wp-sell-services' ); ?></label>
+								<label for="wpss-contact-attachment"><?php esc_html_e( 'Attach files (optional)', 'wp-sell-services' ); ?></label>
 								<input type="file"
 										id="wpss-contact-attachment"
 										name="attachments[]"

@@ -57,7 +57,7 @@ Admin seeing only the opening statement is the old split resurfacing.
 Open the order as buyer, then as vendor.
 
 **Expect**
-- A **View Dispute** action in the order header.
+- A **View dispute** action in the order header.
 - It is a real `<a href>` to `dashboard/disputes/?dispute={id}`.
 - **Computed style:** 1px solid border in the danger colour at rest; solid fill
   on hover. Borderless red text means a theme rule outranked ours — BuddyX sets

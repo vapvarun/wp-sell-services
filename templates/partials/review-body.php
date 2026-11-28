@@ -17,7 +17,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.6.0
- * @version 1.9.1
+ * @version 2.0.0
  *
  * @var WPSellServices\Models\Review $wpss_review Review to render.
  */
@@ -41,7 +41,7 @@ $wpss_reviewer_name = $wpss_review->get_reviewer_name();
 		<?php if ( $wpss_review->is_imported() ) : ?>
 			<span class="wpss-review-imported"><?php esc_html_e( 'Imported review', 'wp-sell-services' ); ?></span>
 		<?php else : ?>
-			<span class="wpss-review-verified"><?php esc_html_e( 'Verified Purchase', 'wp-sell-services' ); ?></span>
+			<span class="wpss-review-verified"><?php esc_html_e( 'Verified purchase', 'wp-sell-services' ); ?></span>
 		<?php endif; ?>
 		<div class="wpss-review-rating">
 			<?php echo wpss_star_rating( (float) $wpss_review->rating ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper. ?>
@@ -89,7 +89,7 @@ if ( $wpss_review_subs ) :
 <?php if ( '' !== $wpss_review->response ) : ?>
 	<div class="wpss-review-reply">
 		<div class="wpss-reply-header">
-			<strong><?php esc_html_e( 'Vendor Response:', 'wp-sell-services' ); ?></strong>
+			<strong><?php esc_html_e( 'Vendor response:', 'wp-sell-services' ); ?></strong>
 			<?php if ( $wpss_review->response_at ) : ?>
 				<span class="wpss-reply-date">
 					<?php echo esc_html( wpss_time_ago( $wpss_review->response_at->format( 'Y-m-d H:i:s' ) ) ); ?>

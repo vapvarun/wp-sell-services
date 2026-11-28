@@ -1703,6 +1703,15 @@
    "fails_on": "edde222f (6 failures with the HEAD admin CSS of Free and Pro swapped in)",
    "check": "tests/test-admin-box-contract.php",
    "note": "Covers every wp-admin-only sheet in Free plus Pro admin.css; shared sheets keep the frontend look and get admin overrides under .wp-admin. A line marked box-ok: is an allowed exception"
+  },
+  {
+   "card": "",
+   "title": "Buttons in mixed case, even within one row: 'View Request' beside 'View order', 'Create Service', 'Contact Vendor' beside 'Save to favorites'",
+   "guard": "static:button-copy-sentence-case",
+   "added": "2026-11-28",
+   "fails_on": "60de9ed5 (templates/content-request-card.php: 'Send Proposal', 'View Request')",
+   "check": "tests/test-button-copy-sentence-case.php",
+   "note": "Reads every <button>/<a> with .wpss-btn in member-facing templates, src/Frontend and src/Blocks (Free and Pro). Product names, package tiers and acronyms keep their capitals; block titles in the editor follow core's Title Case"
   }
  ]
 }

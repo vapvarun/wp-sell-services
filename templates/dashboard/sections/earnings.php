@@ -157,7 +157,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 				</span>
 			</div>
 			<a href="#wpss-withdrawal" class="wpss-btn wpss-btn--primary wpss-payout-banner__btn">
-				<?php esc_html_e( 'Set Up Payouts', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Set up payouts', 'wp-sell-services' ); ?>
 			</a>
 		</div>
 	<?php endif; ?>
@@ -253,7 +253,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 		</div>
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( $earnings['completed_orders'] ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Completed Orders', 'wp-sell-services' ); ?></span>
+			<span class="wpss-stat-card__label"><?php esc_html_e( 'Completed orders', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>
 
@@ -288,7 +288,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 
 	<!-- Withdrawal Request Form -->
 	<div id="wpss-withdrawal" class="wpss-earnings__withdrawal" style="margin-top: 2rem;">
-		<h3><?php esc_html_e( 'Request Withdrawal', 'wp-sell-services' ); ?></h3>
+		<h3><?php esc_html_e( 'Request withdrawal', 'wp-sell-services' ); ?></h3>
 
 		<?php // One withdrawal at a time: say so up front instead of offering a form the service refuses after submit. ?>
 		<?php if ( $earnings['available_balance'] >= $min_withdrawal && (float) $earnings['pending_withdrawal'] <= 0 ) : ?>
@@ -320,7 +320,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 					</div>
 
 					<div class="wpss-form-group">
-						<label for="withdrawal_method"><?php esc_html_e( 'Payment Method', 'wp-sell-services' ); ?></label>
+						<label for="withdrawal_method"><?php esc_html_e( 'Payment method', 'wp-sell-services' ); ?></label>
 						<select name="method" id="withdrawal_method" class="wpss-select" required>
 							<option value=""><?php esc_html_e( 'Select method', 'wp-sell-services' ); ?></option>
 							<?php foreach ( $methods as $key => $label ) : ?>
@@ -362,7 +362,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 
 				<div class="wpss-form-group">
 					<button type="submit" class="wpss-btn wpss-btn--primary" id="wpss-withdrawal-submit">
-						<?php esc_html_e( 'Request Withdrawal', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Request withdrawal', 'wp-sell-services' ); ?>
 					</button>
 				</div>
 
@@ -441,7 +441,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 	if ( $payout_rails || has_action( 'wpss_payout_methods' ) ) :
 		?>
 		<div class="wpss-earnings__payout-methods wpss-payout-methods" style="margin-top: 2rem;">
-			<h3><?php esc_html_e( 'Payout Methods', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Payout methods', 'wp-sell-services' ); ?></h3>
 			<p class="wpss-payout-methods__intro">
 				<?php esc_html_e( 'Set up how you would like to get paid. Your site can pay you manually using the withdrawal request above, or through one of the connected methods below.', 'wp-sell-services' ); ?>
 			</p>
@@ -464,7 +464,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 	<div class="wpss-earnings__wallet wpss-wallet wpss-card">
 		<div class="wpss-wallet__header">
 			<div>
-				<h3><?php esc_html_e( 'Wallet Transactions', 'wp-sell-services' ); ?></h3>
+				<h3><?php esc_html_e( 'Wallet transactions', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-form-hint"><?php esc_html_e( 'Every credit and debit on your wallet, newest first.', 'wp-sell-services' ); ?></p>
 			</div>
 			<?php
@@ -517,7 +517,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 
 	<!-- Withdrawal History -->
 	<div class="wpss-earnings__history wpss-card" style="margin-top: 2rem;">
-		<h3><?php esc_html_e( 'Withdrawal History', 'wp-sell-services' ); ?></h3>
+		<h3><?php esc_html_e( 'Withdrawal history', 'wp-sell-services' ); ?></h3>
 
 		<?php if ( ! empty( $withdrawals ) ) : ?>
 			<div class="wpss-table-responsive">

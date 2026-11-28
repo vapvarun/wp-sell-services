@@ -82,7 +82,7 @@ do_action( 'wpss_email_content_before', 'moderation_approved', $service_title, $
 	 *
 	 * @param string $button_text Default button text.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'View Your Service', 'wp-sell-services' ), 'moderation_approved' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'View your service', 'wp-sell-services' ), 'moderation_approved' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: #28a745; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>

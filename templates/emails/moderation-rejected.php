@@ -53,14 +53,14 @@ do_action( 'wpss_email_content_before', 'moderation_rejected', $service_title, $
 		</tr>
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; font-weight: 600; color: #dc3545;"><?php esc_html_e( 'Requires Changes', 'wp-sell-services' ); ?></td>
+			<td style="padding: 12px; font-weight: 600; color: #dc3545;"><?php esc_html_e( 'Requires changes', 'wp-sell-services' ); ?></td>
 		</tr>
 	</tbody>
 </table>
 
 <?php if ( ! empty( $rejection_reason ) ) : ?>
 <div style="background: #f8d7da; padding: 16px; border-radius: 4px; margin: 20px 0;">
-	<strong style="color: #721c24;"><?php esc_html_e( 'Reason for Rejection:', 'wp-sell-services' ); ?></strong>
+	<strong style="color: #721c24;"><?php esc_html_e( 'Reason for rejection:', 'wp-sell-services' ); ?></strong>
 	<p style="margin: 8px 0 0; color: #721c24;"><?php echo esc_html( $rejection_reason ); ?></p>
 </div>
 <?php endif; ?>
@@ -88,7 +88,7 @@ do_action( 'wpss_email_content_before', 'moderation_rejected', $service_title, $
 	 *
 	 * @param string $button_text Default button text.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'Edit Your Service', 'wp-sell-services' ), 'moderation_rejected' );
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'Edit your service', 'wp-sell-services' ), 'moderation_rejected' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>

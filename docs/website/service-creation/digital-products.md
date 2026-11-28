@@ -5,12 +5,12 @@ Sell a file buyers download the moment they pay: a template, a preset pack, an e
 ## Create a digital product
 
 1. Open **Dashboard > Create Service**.
-2. In **Basic Info**, under **How do buyers pay you?**, choose **Digital product**.
+2. In **Basic info**, under **How do buyers pay you?**, choose **Digital product**.
 3. Fill in **Pricing**. Each package needs a title and a price. A digital product has no delivery time, revisions or express delivery, so those fields are hidden.
 4. Add images in **Gallery**, as for any service.
-5. In **Your File**, choose the file buyers download. One file per product, up to the site's upload size limit (10 MB by default). To sell several files, put them in one ZIP.
+5. In **Your file**, choose the file buyers download. One file per product, up to the site's upload size limit (10 MB by default). To sell several files, put them in one ZIP.
 6. Add FAQs in **Extras & FAQs**. Add-ons are not offered on a digital product.
-7. **Review** shows **File for buyers uploaded** in the checklist and **Instant download** in the pricing summary. Press **Publish Service**.
+7. **Review** shows **File for buyers uploaded** in the checklist and **Instant download** in the pricing summary. Press **Publish service**.
 
 A digital product cannot be published, or bought, until it has a file. The wizard and the publish check both say **Please upload the file buyers download.**
 
@@ -18,7 +18,7 @@ The **Requirements** step is skipped: a file needs no brief.
 
 ## Update the file
 
-Upload a new file in the wizard's **Your File** step, or in **Sell Services > All Services > edit > Overview > Product file** and press **Update**. Each upload is a new version.
+Upload a new file in the wizard's **Your file** step, or in **Sell Services > All Services > edit > Overview > Product file** and press **Update**. Each upload is a new version.
 
 - Buyers always get the latest version, including everyone who bought earlier.
 - Earlier versions are kept, so a download already in progress is never cut off.

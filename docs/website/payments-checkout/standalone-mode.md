@@ -77,7 +77,7 @@ accounts at checkout adds no new fields to the form.
 
 1. Go to **Sell Services > Settings > General**
 2. Under **E-commerce Platform**, select **Standalone Mode**
-3. Click **Save Changes**
+3. Click **Save changes**
 4. Go to **Settings > Payment Gateways** and enable at least one payment gateway
 5. Test the full checkout with a sample service
 

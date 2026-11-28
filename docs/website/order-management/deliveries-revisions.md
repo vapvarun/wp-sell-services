@@ -12,7 +12,7 @@ Once an order is in progress (or a revision has been requested), the vendor can 
 4. Write a message explaining what is included.
 5. Click **Submit**.
 
-The order immediately moves to "Pending Approval" and the buyer gets an email notification.
+The order immediately moves to "Pending approval" and the buyer gets an email notification.
 
 **Supported file types include:** images, documents, archives, audio, video, design files, and data files. For security, SVG, HTML, CSS, and JavaScript files are not allowed -- use a ZIP archive if you need to deliver those formats.
 
@@ -30,7 +30,7 @@ If the work meets expectations, the buyer clicks **Accept Delivery**. The order 
 
 ### Request a Revision
 
-If changes are needed, the buyer clicks **Request Revision** and provides specific feedback about what needs to be fixed. The order goes back to the vendor, who makes the changes and submits a new delivery.
+If changes are needed, the buyer clicks **Request revision** and provides specific feedback about what needs to be fixed. The order goes back to the vendor, who makes the changes and submits a new delivery.
 
 ### Open a Dispute
 

@@ -23,7 +23,7 @@ $request_id = absint( $_GET['request_id'] ?? 0 ); // phpcs:ignore WordPress.Secu
 
 if ( ! $request_id ) {
 	echo '<div class="wpss-empty-state"><h3>' . esc_html__( 'Request not found.', 'wp-sell-services' ) . '</h3>';
-	echo '<a href="' . esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'requests' ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Back to Requests', 'wp-sell-services' ) . '</a></div>';
+	echo '<a href="' . esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'requests' ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Back to requests', 'wp-sell-services' ) . '</a></div>';
 	return;
 }
 
@@ -32,7 +32,7 @@ $request = get_post( $request_id );
 
 if ( ! $request || 'wpss_request' !== $request->post_type || (int) $request->post_author !== $user_id ) {
 	echo '<div class="wpss-empty-state"><h3>' . esc_html__( 'You do not have permission to edit this request.', 'wp-sell-services' ) . '</h3>';
-	echo '<a href="' . esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'requests' ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Back to Requests', 'wp-sell-services' ) . '</a></div>';
+	echo '<a href="' . esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'requests' ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Back to requests', 'wp-sell-services' ) . '</a></div>';
 	return;
 }
 
@@ -84,7 +84,7 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 <div class="wpss-request-wizard">
 	<div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
 		<a href="<?php echo esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'requests' ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
-			<?php esc_html_e( 'Back to Requests', 'wp-sell-services' ); ?>
+			<?php esc_html_e( 'Back to requests', 'wp-sell-services' ); ?>
 		</a>
 	</div>
 
@@ -94,7 +94,7 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 
 		<!-- Request Details Section -->
 		<div class="wpss-profile-form__section">
-			<h3><?php esc_html_e( 'Request Details', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Request details', 'wp-sell-services' ); ?></h3>
 
 			<div class="wpss-form-row">
 				<label for="request_title">
@@ -172,11 +172,11 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 
 		<!-- Budget & Timeline Section -->
 		<div class="wpss-profile-form__section">
-			<h3><?php esc_html_e( 'Budget & Timeline', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Budget & timeline', 'wp-sell-services' ); ?></h3>
 
 			<div class="wpss-form-row wpss-form-row--half">
 				<div>
-					<label for="request_budget_min"><?php esc_html_e( 'Minimum Budget', 'wp-sell-services' ); ?></label>
+					<label for="request_budget_min"><?php esc_html_e( 'Minimum budget', 'wp-sell-services' ); ?></label>
 					<div class="wpss-input-group">
 						<span class="wpss-input-group__prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 						<input
@@ -219,7 +219,7 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 			</div>
 
 			<div class="wpss-form-row">
-				<label for="request_skills"><?php esc_html_e( 'Required Skills', 'wp-sell-services' ); ?></label>
+				<label for="request_skills"><?php esc_html_e( 'Required skills', 'wp-sell-services' ); ?></label>
 				<input
 					type="text"
 					name="skills_required"
@@ -245,7 +245,7 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 		<div class="wpss-profile-form__actions">
 			<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg">
 				<i data-lucide="save" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Update Request', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Update request', 'wp-sell-services' ); ?>
 			</button>
 		</div>
 	</form>
@@ -286,9 +286,9 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 							'<div class="wpss-empty-state__icon" style="color: var(--wpss-success);">' +
 								'<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>' +
 							'</div>' +
-							'<h3><?php echo esc_js( __( 'Request Updated!', 'wp-sell-services' ) ); ?></h3>' +
+							'<h3><?php echo esc_js( __( 'Request updated!', 'wp-sell-services' ) ); ?></h3>' +
 							'<a href="<?php echo esc_url( wpss_get_dashboard_url( 'requests' ) ); ?>" class="wpss-btn wpss-btn--primary">' +
-								'<?php echo esc_js( __( 'View My Requests', 'wp-sell-services' ) ); ?>' +
+								'<?php echo esc_js( __( 'View my requests', 'wp-sell-services' ) ); ?>' +
 							'</a>' +
 						'</div>'
 					);

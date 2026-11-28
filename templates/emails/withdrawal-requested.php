@@ -44,7 +44,7 @@ do_action( 'wpss_email_content_before', 'withdrawal_requested', $vendor, $withdr
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $vendor ? $vendor->user_email : '' ); ?></td>
 		</tr>
 		<tr>
-			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Amount Requested', 'wp-sell-services' ); ?></th>
+			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Amount requested', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; font-weight: 600; color: <?php echo esc_attr( $base_color ); ?>;"><?php echo wp_kses_post( wpss_format_price( $amount ) ); ?></td>
 		</tr>
 	</tbody>
@@ -52,7 +52,7 @@ do_action( 'wpss_email_content_before', 'withdrawal_requested', $vendor, $withdr
 
 <p style="text-align: center; margin: 30px 0;">
 	<a href="<?php echo esc_url( $admin_panel_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
-		<?php esc_html_e( 'Review Withdrawal', 'wp-sell-services' ); ?>
+		<?php esc_html_e( 'Review withdrawal', 'wp-sell-services' ); ?>
 	</a>
 </p>
 

@@ -126,8 +126,8 @@ do_action( 'wpss_before_order_view', $order );
 		 */
 		$back_section = ( $is_vendor && ! $is_customer ) ? 'sales' : 'orders';
 		$back_label   = 'sales' === $back_section
-			? __( 'Back to Sales Orders', 'wp-sell-services' )
-			: __( 'Back to Orders', 'wp-sell-services' );
+			? __( 'Back to sales orders', 'wp-sell-services' )
+			: __( 'Back to orders', 'wp-sell-services' );
 		?>
 		<a href="<?php echo esc_url( wpss_get_dashboard_url( $back_section ) ); ?>" class="wpss-order-view__back">
 			<i data-lucide="arrow-left" class="wpss-icon" aria-hidden="true"></i>
@@ -262,7 +262,7 @@ do_action( 'wpss_before_order_view', $order );
 
 			if ( in_array( $order->status, array( 'accepted', 'requirements_submitted' ), true ) ) {
 				$actions['start'] = array(
-					'label' => __( 'Start Working', 'wp-sell-services' ),
+					'label' => __( 'Start working', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--primary wpss-order-action',
 					'attrs' => 'data-action="start" data-order="' . esc_attr( $order_id ) . '"',
 				);
@@ -270,7 +270,7 @@ do_action( 'wpss_before_order_view', $order );
 
 			if ( in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) {
 				$actions['deliver'] = array(
-					'label' => 'revision_requested' === $order->status ? __( 'Deliver revision', 'wp-sell-services' ) : __( 'Deliver Work', 'wp-sell-services' ),
+					'label' => 'revision_requested' === $order->status ? __( 'Deliver revision', 'wp-sell-services' ) : __( 'Deliver work', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--success wpss-deliver-btn',
 					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
 				);
@@ -344,7 +344,7 @@ do_action( 'wpss_before_order_view', $order );
 			// (owner decision 2026-09-25, DeliveryService::accept() refuses).
 			if ( 'pending_approval' === $order->status && ! empty( $deliveries ) ) {
 				$actions['complete'] = array(
-					'label' => __( 'Accept & Complete', 'wp-sell-services' ),
+					'label' => __( 'Accept & complete', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--success wpss-order-action',
 					'attrs' => 'data-action="complete" data-order="' . esc_attr( $order_id ) . '"',
 				);
@@ -352,9 +352,9 @@ do_action( 'wpss_before_order_view', $order );
 				if ( $order->can_request_revision() ) {
 					$remaining = $order->get_remaining_revisions();
 					$rev_label = -1 === $remaining
-						? __( 'Request Revision', 'wp-sell-services' )
+						? __( 'Request revision', 'wp-sell-services' )
 						/* translators: %d: number of revisions remaining */
-						: sprintf( __( 'Request Revision (%d left)', 'wp-sell-services' ), $remaining );
+						: sprintf( __( 'Request revision (%d left)', 'wp-sell-services' ), $remaining );
 
 					$actions['revision'] = array(
 						'label' => $rev_label,
@@ -366,7 +366,7 @@ do_action( 'wpss_before_order_view', $order );
 
 			if ( 'revision_requested' === $order->status ) {
 				$actions['revision_notice'] = array(
-					'label' => __( 'Waiting for Revised Delivery', 'wp-sell-services' ),
+					'label' => __( 'Waiting for revised delivery', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
 					'attrs' => 'disabled="disabled" title="' . esc_attr__( 'The vendor is working on your requested revision.', 'wp-sell-services' ) . '"',
 				);
@@ -375,7 +375,7 @@ do_action( 'wpss_before_order_view', $order );
 			// Only the buyer's own request waits on the vendor; a seller's request waits on the buyer, who has the answer buttons.
 			if ( 'cancellation_requested' === $order->status && ! $order->is_cancellation_requested_by_vendor() ) {
 				$actions['cancel_pending_notice'] = array(
-					'label' => __( 'Cancellation Pending', 'wp-sell-services' ),
+					'label' => __( 'Cancellation pending', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
 					'attrs' => 'disabled="disabled" title="' . esc_attr__( 'Waiting for vendor response to your cancellation request.', 'wp-sell-services' ) . '"',
 				);
@@ -385,7 +385,7 @@ do_action( 'wpss_before_order_view', $order );
 			$buyer_cancel_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted' );
 			if ( in_array( $order->status, $buyer_cancel_statuses, true ) ) {
 				$actions['cancel'] = array(
-					'label' => __( 'Cancel Order', 'wp-sell-services' ),
+					'label' => __( 'Cancel order', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
 					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
 				);
@@ -398,7 +398,7 @@ do_action( 'wpss_before_order_view', $order );
 
 				if ( $hours_since_start <= wpss_cancel_window_hours() && ! $has_deliveries ) {
 					$actions['cancel'] = array(
-						'label' => __( 'Request Cancellation', 'wp-sell-services' ),
+						'label' => __( 'Request cancellation', 'wp-sell-services' ),
 						'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
 						'attrs' => 'data-order="' . esc_attr( $order_id ) . '" title="' . esc_attr( wpss_cancel_window_rule() ) . '"',
 					);
@@ -410,7 +410,7 @@ do_action( 'wpss_before_order_view', $order );
 						: wpss_cancel_window_rule();
 
 					$actions['cancel_closed_notice'] = array(
-						'label' => __( 'Cancellation Closed', 'wp-sell-services' ),
+						'label' => __( 'Cancellation closed', 'wp-sell-services' ),
 						'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
 						'attrs' => 'disabled="disabled" title="' . esc_attr( $closed_reason ) . '"',
 						'hint'  => $closed_reason,
@@ -422,7 +422,7 @@ do_action( 'wpss_before_order_view', $order );
 		// Seller: ask the buyer to cancel an order they cannot complete.
 		if ( $is_vendor && in_array( $order->status, \WPSellServices\Services\OrderService::seller_cancellation_statuses(), true ) ) {
 			$actions['cancel'] = array(
-				'label' => __( 'Ask Buyer to Cancel', 'wp-sell-services' ),
+				'label' => __( 'Ask buyer to cancel', 'wp-sell-services' ),
 				'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
 				'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
 			);
@@ -432,12 +432,12 @@ do_action( 'wpss_before_order_view', $order );
 		$wpss_cancel_by_vendor = 'cancellation_requested' === $order->status && $order->is_cancellation_requested_by_vendor();
 		if ( 'cancellation_requested' === $order->status && ( $wpss_cancel_by_vendor ? $is_customer : $is_vendor ) ) {
 			$actions['accept-cancellation'] = array(
-				'label' => __( 'Accept Cancellation', 'wp-sell-services' ),
+				'label' => __( 'Accept cancellation', 'wp-sell-services' ),
 				'class' => 'wpss-btn wpss-btn--success wpss-order-action',
 				'attrs' => 'data-action="accept-cancellation" data-order="' . esc_attr( $order_id ) . '"',
 			);
 			$actions['reject-cancellation'] = array(
-				'label' => $wpss_cancel_by_vendor ? __( 'Decline Cancellation', 'wp-sell-services' ) : __( 'Dispute Cancellation', 'wp-sell-services' ),
+				'label' => $wpss_cancel_by_vendor ? __( 'Decline cancellation', 'wp-sell-services' ) : __( 'Dispute cancellation', 'wp-sell-services' ),
 				'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
 				'attrs' => 'data-action="reject-cancellation" data-order="' . esc_attr( $order_id ) . '"'
 					// Declining a seller's request only keeps the order going; it is not a dispute, so the confirm must not say so.
@@ -458,7 +458,7 @@ do_action( 'wpss_before_order_view', $order );
 
 			if ( $dispute_url ) {
 				$actions['view-dispute'] = array(
-					'label' => __( 'View Dispute', 'wp-sell-services' ),
+					'label' => __( 'View dispute', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--danger-outline',
 					'url'   => add_query_arg( 'dispute', (int) $order_dispute->id, $dispute_url ),
 				);
@@ -646,7 +646,7 @@ do_action( 'wpss_before_order_view', $order );
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
 				<i data-lucide="file-text" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Order Summary', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Order summary', 'wp-sell-services' ); ?>
 			</h2>
 		</div>
 		<div class="wpss-order-section__body">
@@ -683,7 +683,7 @@ do_action( 'wpss_before_order_view', $order );
 					<?php endif; ?>
 				</div>
 				<div class="wpss-order-detail-item">
-					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Date', 'wp-sell-services' ); ?></span>
+					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order date', 'wp-sell-services' ); ?></span>
 					<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wpss_datetime_label( $order->created_at->getTimestamp() ) : '—' ); ?></span>
 				</div>
 				<?php wpss_get_template_part( 'order/payment', '', array( 'wpss_order' => $order ) ); ?>
@@ -725,7 +725,7 @@ do_action( 'wpss_before_order_view', $order );
 						if ( $show_phase_total ) {
 							esc_html_e( 'Contract total', 'wp-sell-services' );
 						} else {
-							esc_html_e( 'Total Amount', 'wp-sell-services' );
+							esc_html_e( 'Total amount', 'wp-sell-services' );
 						}
 						?>
 					</span>
@@ -741,7 +741,7 @@ do_action( 'wpss_before_order_view', $order );
 				</div>
 				<?php if ( $show_phase_total ) : ?>
 					<div class="wpss-order-detail-item">
-						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Paid So Far', 'wp-sell-services' ); ?></span>
+						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Paid so far', 'wp-sell-services' ); ?></span>
 						<span class="wpss-order-detail-item__value">
 							<?php
 							printf(
@@ -785,7 +785,7 @@ do_action( 'wpss_before_order_view', $order );
 							<?php
 							echo $is_full_refund
 								? esc_html__( 'Refunded', 'wp-sell-services' )
-								: esc_html__( 'Partially Refunded', 'wp-sell-services' );
+								: esc_html__( 'Partially refunded', 'wp-sell-services' );
 							?>
 						</span>
 						<span class="wpss-order-detail-item__value">
@@ -823,7 +823,7 @@ do_action( 'wpss_before_order_view', $order );
 							<span class="wpss-order-detail-item__value">−<?php echo esc_html( wpss_format_price( $detail_fee, $order->currency ) ); ?></span>
 						</div>
 						<div class="wpss-order-detail-item wpss-order-detail-item--highlight">
-							<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Your Earnings', 'wp-sell-services' ); ?></span>
+							<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Your earnings', 'wp-sell-services' ); ?></span>
 							<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_format_price( $detail_net, $order->currency ) ); ?></span>
 						</div>
 						<?php
@@ -852,7 +852,7 @@ do_action( 'wpss_before_order_view', $order );
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
 				<i data-lucide="image" class="wpss-icon" aria-hidden="true"></i>
-				<?php echo 'project' === $wpss_subject['kind'] ? esc_html__( 'Project', 'wp-sell-services' ) : esc_html__( 'Service Details', 'wp-sell-services' ); ?>
+				<?php echo 'project' === $wpss_subject['kind'] ? esc_html__( 'Project', 'wp-sell-services' ) : esc_html__( 'Service details', 'wp-sell-services' ); ?>
 			</h2>
 		</div>
 		<div class="wpss-order-section__body">
@@ -1057,7 +1057,7 @@ do_action( 'wpss_before_order_view', $order );
 					);
 				}
 			} else {
-				$time_remaining_label = __( 'Auto-cancellation pending — will process within the hour.', 'wp-sell-services' );
+				$time_remaining_label = __( 'Auto-cancellation pending. It will process within the hour.', 'wp-sell-services' );
 			}
 		}
 		?>
@@ -1203,7 +1203,7 @@ do_action( 'wpss_before_order_view', $order );
 		<section class="wpss-order-section wpss-order-section--review">
 			<div class="wpss-review-cta">
 				<i data-lucide="star" class="wpss-icon wpss-icon--lg wpss-review-cta__icon" aria-hidden="true"></i>
-				<h3 class="wpss-review-cta__title"><?php esc_html_e( 'Rate Your Experience', 'wp-sell-services' ); ?></h3>
+				<h3 class="wpss-review-cta__title"><?php esc_html_e( 'Rate your experience', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-review-cta__text"><?php esc_html_e( 'How was your experience with this order? Your feedback helps other buyers.', 'wp-sell-services' ); ?></p>
 				<?php
 				// Say how long is left while there is still time to act on it.
@@ -1222,7 +1222,7 @@ do_action( 'wpss_before_order_view', $order );
 				<?php endif; ?>
 				<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-write-review-btn"
 						data-order="<?php echo esc_attr( $order_id ); ?>">
-					<?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Write a review', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 		</section>
@@ -1233,8 +1233,8 @@ do_action( 'wpss_before_order_view', $order );
 					<i data-lucide="star" class="wpss-icon" aria-hidden="true"></i>
 					<?php
 					echo $is_vendor
-						? esc_html__( 'Buyer Review', 'wp-sell-services' )
-						: esc_html__( 'Your Review', 'wp-sell-services' );
+						? esc_html__( 'Buyer review', 'wp-sell-services' )
+						: esc_html__( 'Your review', 'wp-sell-services' );
 					?>
 				</h2>
 			</div>
@@ -1258,7 +1258,7 @@ do_action( 'wpss_before_order_view', $order );
 				<?php // The vendor Reviews section lists approved reviews only, so the link leads nowhere while this one is pending. ?>
 				<?php if ( $is_vendor && $wpss_order_review->is_approved() && '' === $wpss_order_review->response ) : ?>
 					<p class="wpss-text-muted wpss-review-respond-hint">
-						<a href="<?php echo esc_url( wpss_get_dashboard_url( 'reviews' ) ); ?>"><?php esc_html_e( 'Respond to this review from your Reviews section.', 'wp-sell-services' ); ?></a>
+						<a href="<?php echo esc_url( wpss_get_dashboard_url( 'reviews' ) ); ?>"><?php esc_html_e( 'Respond to this review from your reviews section.', 'wp-sell-services' ); ?></a>
 					</p>
 				<?php endif; ?>
 			</div>
@@ -1303,7 +1303,7 @@ do_action( 'wpss_before_order_view', $order );
 					<p class="wpss-milestone-empty">
 						<?php
 						if ( $is_vendor ) {
-							esc_html_e( 'This is a custom project — break it into paid phases so the buyer can approve each stage as you deliver.', 'wp-sell-services' );
+							esc_html_e( 'This is a custom project. Break it into paid phases so the buyer can approve each stage as you deliver.', 'wp-sell-services' );
 						} else {
 							esc_html_e( 'Your vendor will propose the first phase. You pay each phase up front; they deliver and you approve.', 'wp-sell-services' );
 						}
@@ -1330,7 +1330,7 @@ do_action( 'wpss_before_order_view', $order );
 								case 'pending_payment':
 									if ( ! empty( $m['is_locked'] ) ) {
 										$ms_state_label  = $is_customer
-											? __( 'Locked — finish the earlier phase first', 'wp-sell-services' )
+											? __( 'Locked: finish the earlier phase first', 'wp-sell-services' )
 											: __( 'Locked behind earlier phase', 'wp-sell-services' );
 										$ms_state_class .= ' wpss-ms-state--locked';
 									} elseif ( $ms_awaiting ) {
@@ -1405,14 +1405,14 @@ do_action( 'wpss_before_order_view', $order );
 												<span class="wpss-btn__lock-icon" aria-hidden="true">
 													<i data-lucide="lock" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 												</span>
-												<?php esc_html_e( 'Locked — finish the earlier phase first', 'wp-sell-services' ); ?>
+												<?php esc_html_e( 'Locked: finish the earlier phase first', 'wp-sell-services' ); ?>
 											</span>
 										<?php elseif ( '' !== $ms_pay_url ) : ?>
 											<a href="<?php echo esc_url( $ms_pay_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
 												<?php
 												printf(
 													/* translators: %s: amount */
-													esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
+													esc_html__( 'Accept & pay %s', 'wp-sell-services' ),
 													esc_html( wpss_format_price( (float) $m['amount'], $milestone_currency ) )
 												);
 												?>
@@ -1466,7 +1466,7 @@ do_action( 'wpss_before_order_view', $order );
 						<?php wp_nonce_field( 'wpss_propose_milestone', 'wpss_milestone_nonce' ); ?>
 						<div class="wpss-form-row">
 							<label for="wpss-ms-title"><?php esc_html_e( 'Phase title', 'wp-sell-services' ); ?></label>
-							<input type="text" id="wpss-ms-title" name="title" required maxlength="120" class="wpss-input" placeholder="<?php esc_attr_e( 'e.g. Phase 1 — Concepts & Wireframes', 'wp-sell-services' ); ?>">
+							<input type="text" id="wpss-ms-title" name="title" required maxlength="120" class="wpss-input" placeholder="<?php esc_attr_e( 'e.g. Phase 1: Concepts and wireframes', 'wp-sell-services' ); ?>">
 						</div>
 						<div class="wpss-form-row">
 							<label for="wpss-ms-description"><?php esc_html_e( 'Description (buyer sees this)', 'wp-sell-services' ); ?></label>
@@ -1625,7 +1625,7 @@ do_action( 'wpss_before_order_view', $order );
 					<p class="wpss-notice wpss-notice--warning" role="status"><?php esc_html_e( 'Your vendor sent a quote for additional work. It is on hold while the order is not active: you can pay it once the order is back in progress, or decline it now.', 'wp-sell-services' ); ?></p>
 				<?php else : ?>
 					<p class="wpss-extension-pending-card__body">
-						<?php esc_html_e( 'Your vendor sent a quote for additional work on this order. Review the details — pay to approve and they will continue with the expanded scope, or decline and discuss first in chat.', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Your vendor sent a quote for additional work on this order. Review the details, then pay to approve and they will continue with the expanded scope, or decline and discuss first in chat.', 'wp-sell-services' ); ?>
 					</p>
 				<?php endif; ?>
 				<div class="wpss-extension-pending-card__meta">
@@ -1656,7 +1656,7 @@ do_action( 'wpss_before_order_view', $order );
 							<?php
 							printf(
 								/* translators: %s: amount */
-								esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
+								esc_html__( 'Accept & pay %s', 'wp-sell-services' ),
 								esc_html( wpss_format_price( (float) $pending_extension->amount, $ext_currency ) )
 							);
 							?>
@@ -1771,7 +1771,7 @@ do_action( 'wpss_before_order_view', $order );
 					<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					<div>
 						<h3 class="wpss-tip-receipt__title">
-							<?php echo esc_html( $is_paid ? __( 'Tip sent', 'wp-sell-services' ) : ( wpss_order_awaits_payment_confirmation( $tip_order_row ) ? __( 'Tip sent — payment awaiting confirmation', 'wp-sell-services' ) : __( "Tip not sent yet — payment didn't complete", 'wp-sell-services' ) ) ); ?>
+							<?php echo esc_html( $is_paid ? __( 'Tip sent', 'wp-sell-services' ) : ( wpss_order_awaits_payment_confirmation( $tip_order_row ) ? __( 'Tip sent, payment awaiting confirmation', 'wp-sell-services' ) : __( "Tip not sent yet, payment didn't complete", 'wp-sell-services' ) ) ); ?>
 						</h3>
 						<p class="wpss-tip-receipt__amount">
 							<?php
@@ -1911,7 +1911,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 
 				<div class="wpss-form-group">
 					<label class="wpss-label" for="deliver-message">
-						<?php esc_html_e( 'Delivery Message', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Delivery message', 'wp-sell-services' ); ?>
 						<span class="wpss-required">*</span>
 					</label>
 					<textarea
@@ -1926,7 +1926,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 
 				<div class="wpss-form-group">
 					<label class="wpss-label" for="deliver-files">
-						<?php esc_html_e( 'Attachments (Optional)', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Attachments (optional)', 'wp-sell-services' ); ?>
 					</label>
 					<div class="wpss-file-upload">
 						<input
@@ -1975,7 +1975,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">
-			<h3 id="wpss-review-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?></h3>
+			<h3 id="wpss-review-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Write a review', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
@@ -1986,7 +1986,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 
 			<div class="wpss-modal__body">
 				<div class="wpss-form-group">
-					<label class="wpss-label"><?php esc_html_e( 'Overall Rating', 'wp-sell-services' ); ?> <span class="wpss-required">*</span></label>
+					<label class="wpss-label"><?php esc_html_e( 'Overall rating', 'wp-sell-services' ); ?> <span class="wpss-required">*</span></label>
 					<div class="wpss-star-rating" role="group" aria-label="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
 						<?php for ( $i = 5; $i >= 1; $i-- ) : ?>
 							<input type="radio" name="rating" id="star-<?php echo esc_attr( $i ); ?>" value="<?php echo esc_attr( $i ); ?>" required>
@@ -2020,7 +2020,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 				</fieldset>
 
 				<div class="wpss-form-group">
-					<label for="review-comment" class="wpss-label"><?php esc_html_e( 'Your Review', 'wp-sell-services' ); ?> <span class="wpss-required">*</span></label>
+					<label for="review-comment" class="wpss-label"><?php esc_html_e( 'Your review', 'wp-sell-services' ); ?> <span class="wpss-required">*</span></label>
 					<textarea name="comment" id="review-comment" class="wpss-textarea" rows="4" required
 								placeholder="<?php esc_attr_e( 'Share your experience with this service...', 'wp-sell-services' ); ?>"></textarea>
 				</div>
@@ -2031,7 +2031,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 					<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
 				</button>
 				<button type="submit" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Submit Review', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Submit review', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 		</form>
@@ -2045,7 +2045,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">
-			<h3 id="wpss-revision-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Request Revision', 'wp-sell-services' ); ?></h3>
+			<h3 id="wpss-revision-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Request revision', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
@@ -2072,7 +2072,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 					<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
 				</button>
 				<button type="submit" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Submit Revision Request', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Submit revision request', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 		</form>
@@ -2112,7 +2112,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 				</div>
 
 				<div class="wpss-form-group">
-					<label for="dispute-reason" class="wpss-label"><?php esc_html_e( 'Reason for Dispute', 'wp-sell-services' ); ?> <span class="wpss-required">*</span></label>
+					<label for="dispute-reason" class="wpss-label"><?php esc_html_e( 'Reason for dispute', 'wp-sell-services' ); ?> <span class="wpss-required">*</span></label>
 					<select name="reason" id="dispute-reason" class="wpss-select" required>
 						<option value=""><?php esc_html_e( 'Select a reason', 'wp-sell-services' ); ?></option>
 						<?php // One map, shared with the REST options endpoint, so the web form and every client offer the same reasons. ?>
@@ -2148,7 +2148,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">
-			<h3 id="wpss-cancel-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Cancel Order', 'wp-sell-services' ); ?></h3>
+			<h3 id="wpss-cancel-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Cancel order', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
@@ -2172,7 +2172,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 
 				<div class="wpss-form-group">
 					<label for="cancel-reason" class="wpss-label">
-						<?php esc_html_e( 'Reason for Cancellation', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Reason for cancellation', 'wp-sell-services' ); ?>
 						<span class="wpss-required">*</span>
 					</label>
 					<select name="reason" id="cancel-reason" class="wpss-select" required>
@@ -2195,7 +2195,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 
 				<div class="wpss-form-group">
 					<label for="cancel-note" class="wpss-label">
-						<?php esc_html_e( 'Additional Details (optional)', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Additional details (optional)', 'wp-sell-services' ); ?>
 					</label>
 					<textarea name="note" id="cancel-note" class="wpss-textarea" rows="3"
 						placeholder="<?php esc_attr_e( 'Any additional details about why you want to cancel...', 'wp-sell-services' ); ?>"></textarea>
@@ -2204,14 +2204,14 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 
 			<div class="wpss-modal__footer">
 				<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">
-					<?php esc_html_e( 'Keep Order', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Keep order', 'wp-sell-services' ); ?>
 				</button>
 				<button type="submit" class="wpss-btn wpss-btn--danger">
 					<?php
 					if ( $can_cancel_request || $seller_can_request ) {
-						esc_html_e( 'Submit Cancellation Request', 'wp-sell-services' );
+						esc_html_e( 'Submit cancellation request', 'wp-sell-services' );
 					} else {
-						esc_html_e( 'Cancel Order', 'wp-sell-services' );
+						esc_html_e( 'Cancel order', 'wp-sell-services' );
 					}
 					?>
 				</button>
@@ -2338,7 +2338,7 @@ $can_cancel         = $can_cancel_immediate || $can_cancel_request || $seller_ca
 		<div class="wpss-modal__backdrop"></div>
 		<div class="wpss-modal__dialog">
 			<div class="wpss-modal__header">
-				<h3 id="wpss-extension-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Quote Extra Work', 'wp-sell-services' ); ?></h3>
+				<h3 id="wpss-extension-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Quote extra work', 'wp-sell-services' ); ?></h3>
 				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 					<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 				</button>

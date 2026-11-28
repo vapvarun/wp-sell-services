@@ -37,7 +37,7 @@ do_action( 'wpss_before_service_faqs', $service_id );
 ?>
 
 <div class="wpss-service-faqs">
-	<h2><?php esc_html_e( 'Frequently Asked Questions', 'wp-sell-services' ); ?></h2>
+	<h2><?php esc_html_e( 'Frequently asked questions', 'wp-sell-services' ); ?></h2>
 
 	<div class="wpss-faq-list">
 		<?php foreach ( $faqs as $index => $faq ) : ?>
