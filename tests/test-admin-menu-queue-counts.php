@@ -51,6 +51,7 @@ $dash   = static function (): string {
 };
 $card   = static fn( string $html, string $label ): int => preg_match( '#wpss-stat-number">([\d,]+)</span>\s*<span class="wpss-stat-label">' . preg_quote( $label, '#' ) . '#', $html, $m ) ? (int) str_replace( ',', '', $m[1] ) : -1;
 $withdrawal = 0;
+$dispute    = 0;
 
 try {
 	wp_set_current_user( 1 );
@@ -59,6 +60,9 @@ try {
 	$repo->upsert( $f->vendor, array( 'status' => 'pending' ) );
 	$wpdb->insert( $wpdb->prefix . 'wpss_withdrawals', array( 'vendor_id' => $f->vendor, 'amount' => 10, 'method' => 'paypal', 'status' => 'pending', 'created_at' => gmdate( 'Y-m-d H:i:s' ) ) );
 	$withdrawal = (int) $wpdb->insert_id;
+	// Own escalated dispute, so the disputes queue is never empty by luck of the site's data.
+	$wpdb->insert( $wpdb->prefix . 'wpss_disputes', array( 'order_id' => 0, 'initiated_by' => $f->vendor, 'reason' => 'qa', 'description' => 'qa queue-count fixture', 'status' => 'escalated' ) );
+	$dispute = (int) $wpdb->insert_id;
 
 	$titles = $menu();
 	$html   = $dash();
@@ -87,6 +91,9 @@ try {
 	$repo->upsert( $f->vendor, array( 'status' => 'active' ) );
 	if ( $withdrawal ) {
 		$wpdb->delete( $wpdb->prefix . 'wpss_withdrawals', array( 'id' => $withdrawal ) );
+	}
+	if ( $dispute ) {
+		$wpdb->delete( $wpdb->prefix . 'wpss_disputes', array( 'id' => $dispute ) );
 	}
 	wp_set_current_user( 0 );
 }
