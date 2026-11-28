@@ -42,6 +42,15 @@ if ( ! function_exists( 'wpss_test_fixtures' ) ) {
 				return;
 			}
 			$done = true;
+			// Ledger rows first: deleting a user zeroes its rows' user_id, and a test's own orders are
+			// not in $f->orders, so rows are matched by fixture user as well as by fixture order.
+			$ledger = $wpdb->prefix . 'wpss_wallet_transactions';
+			foreach ( $f->users as $id ) {
+				$wpdb->delete( $ledger, array( 'user_id' => $id ) );
+			}
+			foreach ( $f->orders as $id ) {
+				$wpdb->delete( $ledger, array( 'reference_type' => 'order', 'reference_id' => $id ) );
+			}
 			foreach ( $f->orders as $id ) {
 				$wpdb->delete( $f->orders_t, array( 'id' => $id ) );
 			}
