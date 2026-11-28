@@ -1564,7 +1564,7 @@ class VendorsPage {
 			<div class="wpss-info-grid">
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Bio', 'wp-sell-services' ); ?></span>
-					<span class="wpss-info-value"><?php echo $profile->bio ? wp_kses_post( $profile->bio ) : '<em>' . esc_html__( 'Not provided', 'wp-sell-services' ) . '</em>'; ?></span>
+					<span class="wpss-info-value"><?php echo '' !== wpss_get_vendor_bio( $vendor_id ) ? wp_kses_post( wpss_get_vendor_bio( $vendor_id ) ) : '<em>' . esc_html__( 'Not provided', 'wp-sell-services' ) . '</em>'; ?></span>
 				</div>
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Tagline', 'wp-sell-services' ); ?></span>

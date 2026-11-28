@@ -7,7 +7,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.1.0
- * @version 1.9.1
+ * @version 2.0.0
  *
  * @var int            $user_id        Current user ID.
  * @var VendorService  $vendor_service Vendor service instance.
@@ -154,7 +154,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 
 				<div class="wpss-form-row">
 					<label for="bio"><?php esc_html_e( 'Bio', 'wp-sell-services' ); ?></label>
-					<textarea id="bio" name="bio" rows="4" class="wpss-textarea" placeholder="<?php esc_attr_e( 'Tell buyers about yourself and your expertise...', 'wp-sell-services' ); ?>"><?php echo esc_textarea( $vendor_profile->bio ?? '' ); ?></textarea>
+					<textarea id="bio" name="bio" rows="4" class="wpss-textarea" placeholder="<?php esc_attr_e( 'Tell buyers about yourself and your expertise...', 'wp-sell-services' ); ?>"><?php echo esc_textarea( $vendor_profile ? wpss_get_vendor_bio( $user_id ) : '' ); // The bio buyers see, WordPress profile bio included. ?></textarea>
 				</div>
 
 				<div class="wpss-form-row wpss-form-row--half">
