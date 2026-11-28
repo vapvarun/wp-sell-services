@@ -939,15 +939,6 @@ article.wpss-service-card:hover {
 	text-decoration: line-through;
 }
 
-.wpss-contact-seller {
-	padding: 15px 20px;
-	border-top: 1px solid var(--wpss-border);
-	text-align: center;
-}
-
-/* .wpss-contact-link: see single-service.css (single owner). The copy that was
-   here set a different colour and weight, and whichever loaded last won. */
-
 /* Contact Modal
    -------------------------------------------------------------------------- */
 
@@ -2499,24 +2490,9 @@ a.wpss-back-link:focus {
    Vendor directory toolbar ([wpss_vendors] sort / filter row)
    ========================================================================== */
 
-.wpss-vendors-toolbar {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--wpss-space-3);
-	margin-bottom: var(--wpss-space-5);
-}
-
 .wpss-vendors-toolbar__count {
-	margin: 0;
+	margin: 0 0 var(--wpss-space-5);
 	color: var(--wpss-text-light);
-}
-
-.wpss-vendors-toolbar__controls {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--wpss-space-3);
 }
 
 .wpss-vendors-toolbar__controls select {
@@ -2529,12 +2505,6 @@ a.wpss-back-link:focus {
 }
 
 @media (max-width: 640px) {
-	.wpss-vendors-toolbar,
-	.wpss-vendors-toolbar__controls {
-		flex-direction: column;
-		align-items: stretch;
-	}
-
 	.wpss-vendors-toolbar__controls select {
 		width: 100%;
 	}
@@ -4459,4 +4429,79 @@ a.wpss-order-filter.is-active:focus {
 .wpss-offline-instructions a {
 	color: inherit;
 	text-decoration: underline;
+}
+
+/* ==========================================================================
+   Archive toolbar: services, requests and vendors share one search-and-sort bar.
+   ========================================================================== */
+
+.wpss-filters-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1rem;
+	padding: 1rem;
+	background: var(--wpss-surface);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	margin-bottom: 1.5rem;
+}
+
+.wpss-filters-bar-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-inline-start: auto;
+	flex-shrink: 0;
+}
+
+.wpss-search-form {
+	flex: 1;
+	min-width: 200px;
+	display: flex;
+}
+
+.wpss-search-input {
+	width: 100%;
+	/* 40px tap-target floor per the responsive contract. */
+	min-height: 40px;
+	padding: 0.625rem 1rem;
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	background: var(--wpss-bg);
+	font-size: 0.875rem;
+	color: var(--wpss-text);
+	transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.wpss-search-input::placeholder {
+	color: var(--wpss-text-muted);
+}
+
+.wpss-search-input:focus-visible {
+	border-color: var(--wpss-primary);
+	box-shadow: 0 0 0 3px var(--wpss-primary-ring);
+	/* Transparent, not none: forced-colors mode paints it when the shadow ring is dropped. */
+	outline: 2px solid transparent;
+}
+
+@media (max-width: 640px) {
+	.wpss-filters-bar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-filters-bar-controls {
+		flex-direction: column;
+		margin-inline-start: 0;
+	}
+
+	/* Themes style form[role=search] (BuddyX centres it at a fixed width), so set every
+	   property that decides the box's width rather than inheriting one. */
+	.wpss-filters-bar .wpss-search-form {
+		min-width: 0;
+		width: 100%;
+		max-width: none;
+		margin: 0;
+	}
 }

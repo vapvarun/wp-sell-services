@@ -19,7 +19,7 @@
  *
  * @package WPSellServices
  * @since   1.2.3
- * @version 1.9.0
+ * @version 2.0.0
  *
  * @var array<string,string> $wpss_billing  Current values (profile or posted).
  * @var bool                 $wpss_complete Whether every required field is set.
@@ -27,6 +27,9 @@
  *                                          so a member without an address can
  *                                          still save the rest of the form.
  *                                          Checkout requires the fields.
+ * @var bool                 $wpss_card     Render as a .wpss-card like the other
+ *                                          checkout sections (default). The
+ *                                          profile form passes false.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -34,6 +37,7 @@ defined( 'ABSPATH' ) || exit;
 $wpss_billing  = isset( $wpss_billing ) && is_array( $wpss_billing ) ? $wpss_billing : wpss_get_billing_address();
 $wpss_complete = isset( $wpss_complete ) ? (bool) $wpss_complete : wpss_is_billing_address_complete( $wpss_billing );
 $wpss_fields   = wpss_get_billing_fields();
+$wpss_card     = $wpss_card ?? true;
 
 // One-line summary for the collapsed state.
 $wpss_summary_name = trim( ( $wpss_billing['billing_first_name'] ?? '' ) . ' ' . ( $wpss_billing['billing_last_name'] ?? '' ) );
@@ -53,9 +57,9 @@ $wpss_summary_addr = array_filter(
 	)
 );
 ?>
-<section class="wpss-billing" data-wpss-billing data-complete="<?php echo $wpss_complete ? '1' : '0'; ?>">
-	<div class="wpss-billing__header">
-		<h3 class="wpss-billing__title"><?php esc_html_e( 'Billing details', 'wp-sell-services' ); ?></h3>
+<section class="wpss-billing<?php echo $wpss_card ? ' wpss-card' : ''; ?>" data-wpss-billing data-complete="<?php echo $wpss_complete ? '1' : '0'; ?>">
+	<div class="wpss-billing__header<?php echo $wpss_card ? ' wpss-card__header' : ''; ?>">
+		<h3 class="wpss-billing__title<?php echo $wpss_card ? ' wpss-card__title' : ''; ?>"><?php esc_html_e( 'Billing details', 'wp-sell-services' ); ?></h3>
 		<?php if ( $wpss_complete ) : ?>
 			<button type="button" class="wpss-btn wpss-btn--link wpss-billing__edit" data-wpss-billing-edit>
 				<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
@@ -63,6 +67,7 @@ $wpss_summary_addr = array_filter(
 		<?php endif; ?>
 	</div>
 
+	<div class="wpss-billing__body<?php echo $wpss_card ? ' wpss-card__body' : ''; ?>">
 	<?php if ( $wpss_complete ) : ?>
 		<div class="wpss-billing__summary" data-wpss-billing-summary>
 			<strong><?php echo esc_html( $wpss_summary_name ); ?></strong>
@@ -126,5 +131,6 @@ $wpss_summary_addr = array_filter(
 				<?php endif; ?>
 			</div>
 		<?php endforeach; ?>
+	</div>
 	</div>
 </section>

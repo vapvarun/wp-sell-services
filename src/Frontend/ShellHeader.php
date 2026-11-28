@@ -126,8 +126,11 @@ class ShellHeader {
 		 * a single, correct H1 today, and it is the theme's. Give one of them its
 		 * own ShellHeader::render() heading first, then add it here - in that
 		 * order.
+		 *
+		 * 2.0.0: Become a Vendor, Log In and Create account print their own H1
+		 * through ShellHeader::heading_tag() (hero or card title), so they joined.
 		 */
-		$page_keys = array( 'dashboard', 'services_page', 'cart', 'checkout', 'vendors_page' );
+		$page_keys = array( 'dashboard', 'services_page', 'cart', 'checkout', 'vendors_page', 'become_vendor', 'login', 'registration' );
 
 		foreach ( $page_keys as $page_key ) {
 			if ( \wpss_is_page( $page_key ) ) {
@@ -135,6 +138,10 @@ class ShellHeader {
 				// heading of its own, so the theme's title band keeps the H1,
 				// as on Become a Vendor (Basecamp 10337197376).
 				if ( 'dashboard' === $page_key && ! \is_user_logged_in() ) {
+					return self::filter_shell_surface( false );
+				}
+				// Signed in (or sign-up off), Log In and Create account print only a notice, so the theme keeps the H1.
+				if ( in_array( $page_key, array( 'login', 'registration' ), true ) && ( \is_user_logged_in() || ( 'registration' === $page_key && ! \get_option( 'users_can_register' ) ) ) ) {
 					return self::filter_shell_surface( false );
 				}
 				return self::filter_shell_surface( true );
@@ -152,6 +159,21 @@ class ShellHeader {
 		);
 
 		return self::filter_shell_surface( $is_shell );
+	}
+
+	/**
+	 * Heading level for the top heading of a page's own shortcode.
+	 *
+	 * H1 on that page when the theme's title is suppressed there, so the page keeps
+	 * exactly one H1; H2 anywhere else the shortcode is placed.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $page_key Page key from wpss_get_page_definitions().
+	 * @return string 'h1' or 'h2'.
+	 */
+	public static function heading_tag( string $page_key ): string {
+		return \wpss_is_page( $page_key ) && self::is_shell_surface() ? 'h1' : 'h2';
 	}
 
 	/**

@@ -209,7 +209,7 @@ class PublicSignup {
 
 		if ( ! wpss_checkout_creates_accounts() ) {
 			wp_send_json_error(
-				array( 'message' => __( 'Please log in to complete your purchase.', 'wp-sell-services' ) ),
+				array( 'message' => __( 'Please sign in to complete your purchase.', 'wp-sell-services' ) ),
 				403
 			);
 		}
@@ -267,7 +267,7 @@ class PublicSignup {
 				array(
 					'code'      => 'account_exists',
 					'field'     => 'billing_email',
-					'message'   => __( 'You already have an account with this email. Please log in to continue - your purchase is saved.', 'wp-sell-services' ),
+					'message'   => __( 'You already have an account with this email. Please sign in to continue - your purchase is saved.', 'wp-sell-services' ),
 					'login_url' => wp_login_url( self::checkout_return_url() ),
 				),
 				409

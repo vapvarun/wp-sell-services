@@ -1055,7 +1055,7 @@ class SingleServiceView {
 								printf(
 									wp_kses(
 										/* translators: 1: login URL, 2: register URL */
-										__( 'Please <a href="%1$s">log in</a> or <a href="%2$s">register</a> to contact this vendor.', 'wp-sell-services' ),
+										__( 'Please <a href="%1$s">sign in</a> or <a href="%2$s">register</a> to contact this vendor.', 'wp-sell-services' ),
 										array( 'a' => array( 'href' => array() ) )
 									),
 									esc_url( wp_login_url( get_permalink() ) ),

@@ -133,6 +133,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					'wpss_billing'  => $wpss_billing,
 					'wpss_complete' => $wpss_complete,
 					'wpss_optional' => true,
+					'wpss_card'     => false,
 				)
 			);
 			// The partial carries the "Billing details" heading (checkout shows

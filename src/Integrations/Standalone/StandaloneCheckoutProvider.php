@@ -491,9 +491,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		if ( ! is_user_logged_in() ) {
 			return sprintf(
 				'<p class="wpss-alert wpss-alert-info">%s</p><p><a class="wpss-btn wpss-btn--primary" href="%s">%s</a></p>',
-				esc_html__( 'Please log in to pay for this order.', 'wp-sell-services' ),
+				esc_html__( 'Please sign in to pay for this order.', 'wp-sell-services' ),
 				esc_url( wp_login_url( wpss_get_pay_order_url( $order_id, $order ) ) ),
-				esc_html__( 'Log In', 'wp-sell-services' )
+				esc_html__( 'Sign in', 'wp-sell-services' )
 			);
 		}
 
@@ -1023,11 +1023,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					<div class="wpss-empty__icon"><i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i></div>
 					<h3 class="wpss-heading-3"><?php esc_html_e( 'Sign in to continue', 'wp-sell-services' ); ?></h3>
 					<p class="wpss-caption" style="margin-top:var(--wpss-space-2);">
-						<?php esc_html_e( 'Please log in or create an account to complete your purchase.', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Please sign in or create an account to complete your purchase.', 'wp-sell-services' ); ?>
 					</p>
 					<div class="wpss-co-login__actions">
 						<a href="<?php echo esc_url( wp_login_url( $this->get_checkout_url( $service->id, array( 'package_id' => $package_id ) ) ) ); ?>" class="wpss-btn wpss-btn--primary">
-							<?php esc_html_e( 'Log In', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Sign in', 'wp-sell-services' ); ?>
 						</a>
 						<a href="<?php echo esc_url( wp_registration_url() ); ?>" class="wpss-btn wpss-btn--outline">
 							<?php esc_html_e( 'Register', 'wp-sell-services' ); ?>
@@ -1660,11 +1660,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					<div class="wpss-empty__icon"><i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i></div>
 					<h3 class="wpss-heading-3"><?php esc_html_e( 'Sign in to continue', 'wp-sell-services' ); ?></h3>
 					<p class="wpss-caption" style="margin-top:var(--wpss-space-2);">
-						<?php esc_html_e( 'Please log in or create an account to complete your purchase.', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Please sign in or create an account to complete your purchase.', 'wp-sell-services' ); ?>
 					</p>
 					<div style="display:flex;gap:var(--wpss-space-3);justify-content:center;margin-top:var(--wpss-space-5);">
 						<a href="<?php echo esc_url( wp_login_url( wpss_get_page_url( 'checkout' ) ) ); ?>" class="wpss-btn wpss-btn--primary">
-							<?php esc_html_e( 'Log In', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Sign in', 'wp-sell-services' ); ?>
 						</a>
 						<a href="<?php echo esc_url( wp_registration_url() ); ?>" class="wpss-btn wpss-btn--outline">
 							<?php esc_html_e( 'Register', 'wp-sell-services' ); ?>
@@ -1867,7 +1867,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					'processing'    => __( 'Processing...', 'wp-sell-services' ),
 					'paymentFailed' => __( 'Payment failed. Please try again.', 'wp-sell-services' ),
 					'genericError'  => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'logIn'         => __( 'Log In', 'wp-sell-services' ),
+					'logIn'         => __( 'Sign in', 'wp-sell-services' ),
 					'accountFailed' => __( 'We could not create your account. Please check your details.', 'wp-sell-services' ),
 				),
 			)

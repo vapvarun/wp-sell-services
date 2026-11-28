@@ -106,18 +106,6 @@
    Filters Bar
    ========================================================================== */
 
-.wpss-filters-bar {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 1rem;
-	padding: 1rem;
-	background: var(--wpss-surface);
-	border: 1px solid var(--wpss-border);
-	border-radius: var(--wpss-radius);
-	margin-bottom: 1.5rem;
-}
-
 .wpss-filter-toggle {
 	display: flex;
 	align-items: center;
@@ -126,22 +114,6 @@
 
 .wpss-filter-toggle .wpss-icon-filter::before {
 	content: "\2630";
-}
-
-.wpss-filters-bar-controls {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 1rem;
-	margin-right: auto;
-}
-
-/* Count at the start, sort at the end of the same row. */
-.wpss-requests-archive .wpss-results-info {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.75rem 1rem;
 }
 
 .wpss-category-filter,
@@ -420,16 +392,8 @@
 	border-bottom: 1px solid var(--wpss-border);
 }
 
-.wpss-request-archive-header .wpss-archive-title {
-	margin: 0 0 0.5rem;
-	font-size: 1.75rem;
-	color: var(--wpss-text);
-}
-
-.wpss-request-archive-header .wpss-archive-description {
-	margin: 0;
-	color: var(--wpss-text);
-	font-size: 1rem;
+.wpss-request-archive-header .wpss-page-header {
+	margin-bottom: 0;
 }
 
 /* ==========================================================================
@@ -875,7 +839,18 @@
 .wpss-detail-item {
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
+	align-items: baseline;
+	gap: 1rem;
+}
+
+/* The label keeps one line; frontend.css gives .wpss-detail-label flex: 1 for the package list, which split "Open until" in two here. */
+.wpss-details-list .wpss-detail-label {
+	flex: none;
+	white-space: nowrap;
+}
+
+.wpss-details-list .wpss-detail-value {
+	text-align: end;
 }
 
 .wpss-detail-label {
@@ -1089,19 +1064,14 @@
 	.wpss-requests-archive .wpss-container {
 		display: grid;
 		grid-template-columns: 280px 1fr;
-		grid-template-rows: auto 1fr;
-		gap: 2rem;
+		grid-template-rows: auto auto 1fr;
+		column-gap: 2rem;
 	}
 
-	/* Header spans both columns */
-	.wpss-request-archive-header {
-		grid-column: 1 / -1;
-	}
-
-	/* The bar holds only the drawer toggle, hidden here, so the bar goes too; the sort is in the
-	   results row (Basecamp 10450931965). */
+	/* Header and the search-and-sort bar span both columns, as on the services archive. */
+	.wpss-request-archive-header,
 	.wpss-requests-archive .wpss-filters-bar {
-		display: none;
+		grid-column: 1 / -1;
 	}
 
 	/* Sidebar in left column */
@@ -1118,7 +1088,7 @@
 		border: 1px solid var(--wpss-border, #e5e7eb);
 		border-radius: var(--wpss-radius, 8px);
 		grid-column: 1;
-		grid-row: 2;
+		grid-row: 3;
 		align-self: start;
 		/* The drawer's 9991 is for the overlay only; a sticky column must slide under the theme's
 		   sticky header, as the services archive does (Basecamp 10550832206). */
@@ -1128,7 +1098,7 @@
 	/* Content in right column */
 	.wpss-requests-content {
 		grid-column: 2;
-		grid-row: 2;
+		grid-row: 3;
 	}
 
 	/* Hide the drawer toggle while the sidebar is on screen - one filter UI
@@ -1186,16 +1156,6 @@
 }
 
 @media (max-width: 640px) {
-	.wpss-filters-bar {
-		flex-direction: column;
-		align-items: stretch;
-	}
-
-	.wpss-filters-bar-controls {
-		flex-direction: column;
-		margin-right: 0;
-	}
-
 	.wpss-category-filter,
 	.wpss-sort-filter {
 		width: 100%;

@@ -645,7 +645,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		wpss_gateway_require_enabled( $this );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please sign in to continue.', 'wp-sell-services' ) ) );
 			return;
 		}
 

@@ -61,7 +61,7 @@ $root = dirname( __DIR__ );
 $src  = static fn( string $f ): string => (string) file_get_contents( "$root/$f" );
 $check( 'request page does not offer Become a Vendor to a suspended vendor', str_contains( $src( 'templates/single-request.php' ), "'suspended' !== wpss_get_vendor_status" ) );
 $check( 'the become-vendor section does not offer Start selling to a suspended vendor', str_contains( $src( 'src/Frontend/UnifiedDashboard.php' ), "'suspended' !== wpss_get_vendor_status( \$user_id )" ) );
-$check( 'a logged-out pay link asks for a sign-in', str_contains( $src( 'src/Integrations/Standalone/StandaloneCheckoutProvider.php' ), 'Please log in to pay for this order.' ) );
+$check( 'a logged-out pay link asks for a sign-in', str_contains( $src( 'src/Integrations/Standalone/StandaloneCheckoutProvider.php' ), 'Please sign in to pay for this order.' ) );
 $check( 'a proposal order goes back to the order, not the home page', str_contains( $src( 'src/Integrations/Standalone/StandaloneCheckoutProvider.php' ), "'Back to order'" ) );
 $check( 'the withdrawal form is replaced by the in-progress notice while one is open', str_contains( $src( 'templates/dashboard/sections/earnings.php' ), "(float) \$earnings['pending_withdrawal'] <= 0" ) );
 // One helper since 1.9.4 (Basecamp 10511340927); its behaviour per order type is in test-pay-page-back-link.php.

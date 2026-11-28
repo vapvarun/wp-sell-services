@@ -9,7 +9,7 @@
  *
  * @package WPSellServices\Templates
  * @since   1.6.0
- * @version 1.9.2
+ * @version 2.0.0
  *
  * @var array $cart_items Cart items from _wpss_cart user meta.
  * @var bool  $wpss_guest Whether the visitor is logged out (the cart needs an account).
@@ -360,10 +360,10 @@ defined( 'ABSPATH' ) || exit;
 			<div class="wpss-cart-empty__icon">
 				<i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 			</div>
-			<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Log in to use your cart', 'wp-sell-services' ); ?></h2>
+			<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Sign in to use your cart', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-cart-empty__text"><?php esc_html_e( 'Your cart is saved to your account. You can also buy any service straight from its page.', 'wp-sell-services' ); ?></p>
 			<div class="wpss-cart-empty__actions">
-				<a href="<?php echo esc_url( wp_login_url( wpss_get_cart_url() ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Log In', 'wp-sell-services' ); ?></a>
+				<a href="<?php echo esc_url( wp_login_url( wpss_get_cart_url() ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Sign in', 'wp-sell-services' ); ?></a>
 				<?php if ( get_option( 'users_can_register' ) ) : ?>
 					<a href="<?php echo esc_url( wp_registration_url() ); ?>" class="wpss-btn wpss-btn--outline"><?php esc_html_e( 'Create account', 'wp-sell-services' ); ?></a>
 				<?php endif; ?>

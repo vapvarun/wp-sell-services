@@ -18,7 +18,7 @@ Services > Settings > Pages**. You do not have to create any of them by hand.
 | **Vendors** | `vendors` | A directory of every approved vendor, sorted by rating | No |
 | **Service Cart** | `service-cart` | Where buyers review selected services before checkout | No |
 | **Create Account** | `create-account` | The marketplace's own registration form. When mapped, every Register link on the site goes to it | No |
-| **Log In** | `login` | The marketplace's own sign-in form. When mapped, every Log in link on the site goes to it. Created on new installs only, see below | No |
+| **Sign in** | `login` | The marketplace's own sign-in form. When mapped, every Sign in link on the site goes to it. Created on new installs only, see below | No |
 
 "Required" means the marketplace cannot run without the page mapped, so a
 missing one raises a setup notice. The others are created for you as well;

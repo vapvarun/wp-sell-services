@@ -532,7 +532,7 @@ function wpss_get_page_definitions(): array {
 		// or adopts one, and the owner maps or unmaps it in Settings > Pages
 		// (owner decision, Basecamp 10352980066).
 		'login'         => array(
-			'title'      => __( 'Log In', 'wp-sell-services' ),
+			'title'      => __( 'Sign in', 'wp-sell-services' ),
 			'shortcode'  => '[wpss_login]',
 			'slug'       => 'login',
 			'required'   => false,

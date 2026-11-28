@@ -1670,6 +1670,15 @@
   },
   {
    "card": "",
+   "title": "Public pages did not share one shell: Buyer Requests had a hand-written heading and no search, Vendors had no search, Log In and Become a Vendor printed two headings, the single service had a plain Contact Vendor link beside the profile's Contact Me button, and a hired request offered visitors a proposal",
+   "guard": "static:public-pages-shell",
+   "added": "2026-11-28",
+   "fails_on": "def958ba (vendor search ignored: a no-match search counted every vendor, 2 FAIL; request toolbar had no search box)",
+   "check": "tests/test-public-pages-shell.php",
+   "note": "Also tests/test-request-archive-toolbar.php: the requests search narrows the real archive query and keeps sort and budget"
+  },
+  {
+   "card": "",
    "title": "One moment printed three ways: the order timeline said 'Jun 26, 2026 at 10:00 AM', the order details 'June 26, 2026 10:00 am' and admin tables 'Jun 26' - 23 date labels passed their own format instead of following Settings > General",
    "guard": "static:time-formatter",
    "added": "2026-11-28",

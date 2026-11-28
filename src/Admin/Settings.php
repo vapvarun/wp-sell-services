@@ -3992,7 +3992,7 @@ class Settings {
 		if ( $takes_over ) {
 			printf(
 				'<p class="description">%s</p>',
-				esc_html__( 'When a page is chosen, every Log in link on the site (the theme and other plugins included) goes to it. Choose None if a membership, security or two-factor plugin already provides your login page.', 'wp-sell-services' )
+				esc_html__( 'When a page is chosen, every Sign in link on the site (the theme and other plugins included) goes to it. Choose None if a membership, security or two-factor plugin already provides your sign in page.', 'wp-sell-services' )
 			);
 		}
 	}

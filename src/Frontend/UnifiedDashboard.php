@@ -727,9 +727,9 @@ class UnifiedDashboard {
 				</div>
 			</div>',
 			esc_html__( 'Access your dashboard', 'wp-sell-services' ),
-			esc_html__( 'Log in to view your orders, messages, and manage your services.', 'wp-sell-services' ),
+			esc_html__( 'Sign in to view your orders, messages, and manage your services.', 'wp-sell-services' ),
 			esc_url( $login_url ),
-			esc_html__( 'Log In', 'wp-sell-services' ),
+			esc_html__( 'Sign in', 'wp-sell-services' ),
 			$signup // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above.
 		);
 	}
@@ -1270,7 +1270,7 @@ class UnifiedDashboard {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in first.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please sign in first.', 'wp-sell-services' ) ) );
 		}
 
 		// Reject if vendor registration is closed.

@@ -481,9 +481,14 @@ do_action( 'wpss_before_single_request', $request_id );
 									<?php esc_html_e( 'Submit Proposal', 'wp-sell-services' ); ?>
 								</button>
 							<?php endif; ?>
+						<?php elseif ( ! $is_open ) : ?>
+							<?php // Checked before the sign-in and become-a-vendor prompts: a hired or closed request offered visitors a proposal they could never send. ?>
+							<div class="wpss-request-closed">
+								<p><?php esc_html_e( 'This request is no longer accepting proposals.', 'wp-sell-services' ); ?></p>
+							</div>
 						<?php elseif ( ! is_user_logged_in() ) : ?>
 							<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--block">
-								<?php esc_html_e( 'Log in to send a proposal', 'wp-sell-services' ); ?>
+								<?php esc_html_e( 'Sign in to send a proposal', 'wp-sell-services' ); ?>
 							</a>
 							<?php
 						elseif ( ! $is_vendor && ! $is_buyer ) :
@@ -494,10 +499,6 @@ do_action( 'wpss_before_single_request', $request_id );
 								<?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?>
 							</a>
 							<?php endif; ?>
-						<?php elseif ( ! $is_open ) : ?>
-							<div class="wpss-request-closed">
-								<p><?php esc_html_e( 'This request is no longer accepting proposals.', 'wp-sell-services' ); ?></p>
-							</div>
 						<?php endif; ?>
 					</div>
 

@@ -1763,7 +1763,7 @@ class ServiceWizard {
 		check_ajax_referer( 'wpss_service_wizard', 'nonce' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please sign in to continue.', 'wp-sell-services' ) ) );
 		}
 
 		$user_id = get_current_user_id();
@@ -1906,7 +1906,7 @@ class ServiceWizard {
 		check_ajax_referer( 'wpss_service_wizard', 'nonce' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please sign in to continue.', 'wp-sell-services' ) ) );
 		}
 
 		$user_id = get_current_user_id();
@@ -2486,8 +2486,8 @@ class ServiceWizard {
 	 */
 	private function render_login_required(): string {
 		return '<div class="wpss-notice wpss-notice-warning">' .
-			esc_html__( 'Please log in to create a service.', 'wp-sell-services' ) .
-			' <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">' . esc_html__( 'Log In', 'wp-sell-services' ) . '</a></div>';
+			esc_html__( 'Please sign in to create a service.', 'wp-sell-services' ) .
+			' <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">' . esc_html__( 'Sign in', 'wp-sell-services' ) . '</a></div>';
 	}
 
 	/**

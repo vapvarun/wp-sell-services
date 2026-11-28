@@ -52,7 +52,7 @@ class CheckoutIntentService {
 		$buyer_id = $buyer_id > 0 ? $buyer_id : get_current_user_id();
 
 		if ( $buyer_id <= 0 ) {
-			return new \WP_Error( 'wpss_not_logged_in', __( 'Please log in to continue.', 'wp-sell-services' ) );
+			return new \WP_Error( 'wpss_not_logged_in', __( 'Please sign in to continue.', 'wp-sell-services' ) );
 		}
 
 		$pay_order_id = absint( $request['pay_order'] ?? 0 );

@@ -619,7 +619,7 @@ class AuthController extends RestController {
 		if ( ! $user ) {
 			return new \WP_Error(
 				'user_lookup_failed',
-				__( 'Account created but user lookup failed. Please log in.', 'wp-sell-services' ),
+				__( 'Account created but user lookup failed. Please sign in.', 'wp-sell-services' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -631,7 +631,7 @@ class AuthController extends RestController {
 				array(
 					'success' => true,
 					'user'    => $this->format_user( $user ),
-					'message' => __( 'Account created. Please log in.', 'wp-sell-services' ),
+					'message' => __( 'Account created. Please sign in.', 'wp-sell-services' ),
 				),
 				201
 			);

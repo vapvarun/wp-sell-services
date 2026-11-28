@@ -289,7 +289,7 @@ do_action( 'wpss_before_request_card', $request_id );
 				</a>
 			<?php else : ?>
 				<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
-					<?php esc_html_e( 'Log in to send a proposal', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Sign in to send a proposal', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
 		</div>

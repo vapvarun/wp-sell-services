@@ -312,7 +312,7 @@
             const self = this;
 
             // Contact seller link.
-            $(document).on('click', '.wpss-contact-link, .wpss-contact-btn', function(e) {
+            $(document).on('click', '.wpss-contact-btn', function(e) {
                 e.preventDefault();
                 self.openContactModal();
             });

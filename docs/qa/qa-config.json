@@ -1063,6 +1063,10 @@
    {
     "id": "dashboard-list-chips",
     "run": "${WP_CLI:-wp} eval-file tests/test-sales-active-count.php"
+   },
+   {
+    "id": "public-pages-shell",
+    "run": "${WP_CLI:-wp} eval-file tests/test-request-archive-toolbar.php && ${WP_CLI:-wp} eval-file tests/test-public-pages-shell.php"
    }
   ]
  }

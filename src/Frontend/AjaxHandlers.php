@@ -833,7 +833,7 @@ class AjaxHandlers {
 		$user_id         = get_current_user_id();
 
 		if ( ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ) );
 		}
 
 		if ( ! $conversation_id || ! $content ) {
@@ -2102,7 +2102,7 @@ class AjaxHandlers {
 
 		wp_send_json_error(
 			array(
-				'message'   => __( 'Please log in to continue to checkout.', 'wp-sell-services' ),
+				'message'   => __( 'Please sign in to continue to checkout.', 'wp-sell-services' ),
 				'login_url' => wp_login_url( $this->guest_return_url( $service_id, $checkout_url ) ),
 			)
 		);
@@ -2474,7 +2474,7 @@ class AjaxHandlers {
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ) );
 		}
 
 		ob_start();
@@ -2684,7 +2684,7 @@ class AjaxHandlers {
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ) );
 		}
 
 		ob_start();
@@ -2716,7 +2716,7 @@ class AjaxHandlers {
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ) );
 		}
 
 		ob_start();
@@ -2748,7 +2748,7 @@ class AjaxHandlers {
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ) );
 		}
 
 		ob_start();
@@ -2782,7 +2782,7 @@ class AjaxHandlers {
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			wp_die( esc_html__( 'Please log in.', 'wp-sell-services' ) );
+			wp_die( esc_html__( 'Please sign in.', 'wp-sell-services' ) );
 		}
 
 		global $wpdb;
@@ -2889,7 +2889,7 @@ class AjaxHandlers {
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ) );
 		}
 
 		// Billing address, display name and avatar — available to ALL users, not
@@ -3181,7 +3181,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_request_extension' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ), 401 );
 		}
 
 		$order_id   = isset( $_POST['order_id'] ) ? absint( wp_unslash( $_POST['order_id'] ) ) : 0;
@@ -3222,7 +3222,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_decline_extension' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ), 401 );
 		}
 
 		$request_id = isset( $_POST['request_id'] ) ? absint( wp_unslash( $_POST['request_id'] ) ) : 0;
@@ -3251,7 +3251,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_propose_milestone' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ), 401 );
 		}
 
 		$order_id     = isset( $_POST['order_id'] ) ? absint( wp_unslash( $_POST['order_id'] ) ) : 0;
@@ -3290,7 +3290,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_milestone_action' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ), 401 );
 		}
 
 		$milestone_id = isset( $_POST['milestone_id'] ) ? absint( wp_unslash( $_POST['milestone_id'] ) ) : 0;
@@ -3314,7 +3314,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_milestone_action' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ), 401 );
 		}
 
 		$milestone_id = isset( $_POST['milestone_id'] ) ? absint( wp_unslash( $_POST['milestone_id'] ) ) : 0;
@@ -3339,7 +3339,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_milestone_action' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ), 401 );
 		}
 
 		$milestone_id = isset( $_POST['milestone_id'] ) ? absint( wp_unslash( $_POST['milestone_id'] ) ) : 0;
@@ -3363,7 +3363,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_milestone_action' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ), 401 );
 		}
 
 		$milestone_id = isset( $_POST['milestone_id'] ) ? absint( wp_unslash( $_POST['milestone_id'] ) ) : 0;
@@ -3386,7 +3386,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_milestone_action' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+			wp_send_json_error( array( 'message' => __( 'Please sign in.', 'wp-sell-services' ) ), 401 );
 		}
 
 		$milestone_id = isset( $_POST['milestone_id'] ) ? absint( wp_unslash( $_POST['milestone_id'] ) ) : 0;

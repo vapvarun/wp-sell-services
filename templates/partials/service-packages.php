@@ -436,11 +436,10 @@ do_action( 'wpss_before_service_packages', $service_id );
 				<i data-lucide="heart" class="wpss-icon wpss-icon--sm wpss-fav-toggle__icon" aria-hidden="true"></i>
 				<span class="wpss-fav-toggle__label"><?php echo esc_html( $wpss_pkg_fav_label ); ?></span>
 			</button>
-			<div class="wpss-contact-seller">
-				<button type="button" class="wpss-contact-link" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
-					<?php esc_html_e( 'Contact Vendor', 'wp-sell-services' ); ?>
-				</button>
-			</div>
+			<?php // The same Contact Me button as the seller block and the vendor profile; it opens the contact modal. ?>
+			<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--block wpss-contact-btn" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
+				<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
+			</button>
 		</div>
 	<?php endif; ?>
 </div>

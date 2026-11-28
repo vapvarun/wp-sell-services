@@ -1156,36 +1156,6 @@
 	margin-bottom: 1rem;
 }
 
-.wpss-contact-seller {
-	text-align: center;
-	padding-top: 1rem;
-	border-top: 1px solid var(--wpss-border);
-}
-
-/*
- * This is a <button>, so it needs its chrome reset explicitly. Without the
- * background it kept the browser's default buttonface grey, which stays light
- * when the theme goes dark - light-grey text on a light-grey button, measured
- * at 2.21:1 on Reign dark mode.
- */
-.wpss-contact-link {
-	display: inline-flex;
-	align-items: center;
-	min-height: 40px;
-	color: var(--wpss-text-muted);
-	text-decoration: none;
-	font-size: 0.875rem;
-	background: none;
-	border: 0;
-	padding: 0;
-	font-family: inherit;
-	cursor: pointer;
-}
-
-.wpss-contact-link:hover {
-	color: var(--wpss-primary-accent);
-}
-
 /* Sidebar order actions: favourite toggle + contact seller, below the packages. */
 .wpss-package-actions {
 	display: flex;
@@ -1210,13 +1180,6 @@
 	align-items: center;
 	justify-content: center;
 	gap: 0.4rem;
-}
-
-/* Divider is owned by the actions wrapper now, so the nested contact block
-   drops its own border/padding to avoid a double rule. */
-.wpss-package-actions .wpss-contact-seller {
-	padding-top: 0;
-	border-top: 0;
 }
 
 /* ==========================================================================

@@ -346,7 +346,9 @@ class Shortcodes {
 		$available = 'true' === (string) $atts['available'];
 		$country   = (string) $atts['country'];
 		$paged     = max( 1, absint( $atts['paged'] ) );
+		$search    = '';
 		if ( $toolbar ) {
+			$search    = isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : '';
 			$orderby   = isset( $_GET['sort'] ) ? sanitize_key( wp_unslash( $_GET['sort'] ) ) : $orderby;
 			$available = isset( $_GET['available'] ) ? '1' === sanitize_key( wp_unslash( $_GET['available'] ) ) : $available;
 			$country   = isset( $_GET['country'] ) ? sanitize_text_field( wp_unslash( $_GET['country'] ) ) : $country;
@@ -360,6 +362,7 @@ class Shortcodes {
 		$filters = array(
 			'available' => $available,
 			'country'   => $country,
+			'search'    => $search,
 		);
 
 		$vendor_service = new VendorService();
@@ -405,17 +408,20 @@ class Shortcodes {
 			// Option values are URLs: .wpss-url-select navigates on change (frontend.js).
 			$link = static fn ( array $args ): string => add_query_arg( $args + array( 'vpage' => false ) );
 			?>
-			<div class="wpss-vendors-toolbar">
-				<p class="wpss-vendors-toolbar__count">
-					<?php
-					printf(
-						/* translators: %s: number of vendors */
-						esc_html( _n( '%s vendor found', '%s vendors found', $total, 'wp-sell-services' ) ),
-						esc_html( number_format_i18n( $total ) )
-					);
-					?>
-				</p>
-				<div class="wpss-vendors-toolbar__controls">
+			<div class="wpss-filters-bar wpss-vendors-toolbar">
+				<?php // Same search-and-sort bar as the services and requests archives. ?>
+				<form class="wpss-search-form" method="get" action="<?php echo esc_url( remove_query_arg( array( 'search', 'vpage' ) ) ); ?>" role="search">
+					<?php foreach ( array( 'sort', 'available', 'country' ) as $param ) : ?>
+						<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filters. ?>
+						<?php if ( isset( $_GET[ $param ] ) && '' !== $_GET[ $param ] ) : ?>
+							<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filters. ?>
+							<input type="hidden" name="<?php echo esc_attr( $param ); ?>" value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_GET[ $param ] ) ) ); ?>">
+						<?php endif; ?>
+					<?php endforeach; ?>
+					<input type="search" name="search" class="wpss-search-input" value="<?php echo esc_attr( $search ); ?>"
+						placeholder="<?php esc_attr_e( 'Search vendors...', 'wp-sell-services' ); ?>" aria-label="<?php esc_attr_e( 'Search vendors', 'wp-sell-services' ); ?>">
+				</form>
+				<div class="wpss-filters-bar-controls wpss-vendors-toolbar__controls">
 					<select class="wpss-url-select" aria-label="<?php esc_attr_e( 'Sort vendors', 'wp-sell-services' ); ?>">
 						<?php foreach ( $sorts as $sort_key => $sort_label ) : ?>
 							<option value="<?php echo esc_url( $link( array( 'sort' => 'rating' === $sort_key ? false : $sort_key ) ) ); ?>" <?php selected( $orderby, $sort_key ); ?>>
@@ -446,6 +452,24 @@ class Shortcodes {
 					<?php endif; ?>
 				</div>
 			</div>
+			<p class="wpss-vendors-toolbar__count">
+				<?php
+				if ( '' !== $search ) {
+					printf(
+						/* translators: 1: search words, 2: number of vendors found */
+						esc_html__( 'Results for “%1$s” (%2$s)', 'wp-sell-services' ),
+						esc_html( $search ),
+						esc_html( number_format_i18n( $total ) )
+					);
+				} else {
+					printf(
+						/* translators: %s: number of vendors */
+						esc_html( _n( '%s vendor found', '%s vendors found', $total, 'wp-sell-services' ) ),
+						esc_html( number_format_i18n( $total ) )
+					);
+				}
+				?>
+			</p>
 		<?php endif; ?>
 		<div class="wpss-vendors-grid wpss-columns-<?php echo esc_attr( $atts['columns'] ); ?>">
 			<?php
@@ -688,7 +712,7 @@ class Shortcodes {
 		if ( ! is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . sprintf(
 				/* translators: %s: login URL */
-				__( 'Please <a href="%s">log in</a> to post a request.', 'wp-sell-services' ),
+				__( 'Please <a href="%s">sign in</a> to post a request.', 'wp-sell-services' ),
 				esc_url( wp_login_url( get_permalink() ) )
 			) . '</div>';
 		}
@@ -725,7 +749,7 @@ class Shortcodes {
 		if ( ! is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . sprintf(
 				/* translators: %s: login URL */
-				__( 'Please <a href="%s">log in</a> to view your orders.', 'wp-sell-services' ),
+				__( 'Please <a href="%s">sign in</a> to view your orders.', 'wp-sell-services' ),
 				esc_url( wp_login_url( get_permalink() ) )
 			) . '</div>';
 		}
@@ -862,7 +886,7 @@ class Shortcodes {
 		if ( ! is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . sprintf(
 				/* translators: %s: login URL */
-				__( 'Please <a href="%s">log in</a> to view order details.', 'wp-sell-services' ),
+				__( 'Please <a href="%s">sign in</a> to view order details.', 'wp-sell-services' ),
 				esc_url( wp_login_url( get_permalink() ) )
 			) . '</div>';
 		}
@@ -947,7 +971,8 @@ class Shortcodes {
 		?>
 		<div class="wpss-vr">
 			<div class="wpss-vr__card wpss-signup-card">
-				<h2 class="wpss-vr__card-title"><?php esc_html_e( 'Welcome back', 'wp-sell-services' ); ?></h2>
+				<?php $wpss_h = ShellHeader::heading_tag( 'login' ); ?>
+				<<?php echo esc_attr( $wpss_h ); ?> class="wpss-vr__card-title"><?php esc_html_e( 'Welcome back', 'wp-sell-services' ); ?></<?php echo esc_attr( $wpss_h ); ?>>
 				<p class="wpss-vr__card-sub"><?php esc_html_e( 'Sign in to your orders, messages and services.', 'wp-sell-services' ); ?></p>
 				<form class="wpss-signup-form" method="post" action="<?php echo esc_url( site_url( 'wp-login.php', 'login_post' ) ); ?>">
 					<?php if ( $failed ) : ?>
@@ -1029,7 +1054,8 @@ class Shortcodes {
 		?>
 		<div class="wpss-vr">
 			<div class="wpss-vr__card wpss-signup-card">
-				<h2 class="wpss-vr__card-title"><?php esc_html_e( 'Create your account', 'wp-sell-services' ); ?></h2>
+				<?php $wpss_h = ShellHeader::heading_tag( 'registration' ); ?>
+				<<?php echo esc_attr( $wpss_h ); ?> class="wpss-vr__card-title"><?php esc_html_e( 'Create your account', 'wp-sell-services' ); ?></<?php echo esc_attr( $wpss_h ); ?>>
 				<p class="wpss-vr__card-sub"><?php esc_html_e( 'Buy services, message vendors, and follow your orders.', 'wp-sell-services' ); ?></p>
 				<?php ( new \WPSellServices\Frontend\PublicSignup() )->render_form( 'buyer' ); ?>
 			</div>
@@ -1092,6 +1118,8 @@ class Shortcodes {
 
 		ob_start();
 		$this->render_vendor_registration_styles();
+		// Every branch below opens with one page heading.
+		$wpss_h = ShellHeader::heading_tag( 'become_vendor' );
 
 		// Closed registration is the same card for everyone, signed in or not;
 		// the logged-out form used to render before this check (Basecamp 10351455160).
@@ -1102,7 +1130,7 @@ class Shortcodes {
 					<div class="wpss-vr__hero-icon wpss-vr__hero-icon--muted">
 						<i data-lucide="lock" class="wpss-icon" aria-hidden="true"></i>
 					</div>
-					<h2 class="wpss-vr__title"><?php esc_html_e( 'Registration is closed', 'wp-sell-services' ); ?></h2>
+					<<?php echo esc_attr( $wpss_h ); ?> class="wpss-vr__title"><?php esc_html_e( 'Registration is closed', 'wp-sell-services' ); ?></<?php echo esc_attr( $wpss_h ); ?>>
 					<p class="wpss-vr__desc"><?php esc_html_e( 'We\'re not accepting new vendors at the moment. Please check back later.', 'wp-sell-services' ); ?></p>
 				</div>
 			</div>
@@ -1115,7 +1143,7 @@ class Shortcodes {
 			?>
 			<div class="wpss-vr">
 				<div class="wpss-vr__card">
-					<h2 class="wpss-vr__title"><?php esc_html_e( 'Sign-up is closed', 'wp-sell-services' ); ?></h2>
+					<<?php echo esc_attr( $wpss_h ); ?> class="wpss-vr__title"><?php esc_html_e( 'Sign-up is closed', 'wp-sell-services' ); ?></<?php echo esc_attr( $wpss_h ); ?>>
 					<p class="wpss-vr__desc"><?php echo esc_html( wpss_signup_closed_message() ); ?></p>
 					<p><a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"><?php esc_html_e( 'Sign in', 'wp-sell-services' ); ?></a></p>
 				</div>
@@ -1184,7 +1212,7 @@ class Shortcodes {
 					<div class="wpss-vr__hero-icon wpss-vr__hero-icon--success">
 						<i data-lucide="badge-check" class="wpss-icon" aria-hidden="true"></i>
 					</div>
-					<h2 class="wpss-vr__title"><?php esc_html_e( 'You\'re already a vendor', 'wp-sell-services' ); ?></h2>
+					<<?php echo esc_attr( $wpss_h ); ?> class="wpss-vr__title"><?php esc_html_e( 'You\'re already a vendor', 'wp-sell-services' ); ?></<?php echo esc_attr( $wpss_h ); ?>>
 					<p class="wpss-vr__desc"><?php esc_html_e( 'Your vendor account is active. Head to your dashboard to manage services, view orders, and track earnings.', 'wp-sell-services' ); ?></p>
 					<div class="wpss-vr__actions">
 						<a href="<?php echo esc_url( $dashboard_url ); ?>" class="wpss-btn wpss-btn--primary">
@@ -1202,7 +1230,7 @@ class Shortcodes {
 			?>
 			<div class="wpss-vr">
 				<div class="wpss-vr__card">
-					<h2 class="wpss-vr__title"><?php esc_html_e( 'Vendor Account Suspended', 'wp-sell-services' ); ?></h2>
+					<<?php echo esc_attr( $wpss_h ); ?> class="wpss-vr__title"><?php esc_html_e( 'Vendor Account Suspended', 'wp-sell-services' ); ?></<?php echo esc_attr( $wpss_h ); ?>>
 					<p class="wpss-vr__desc"><?php esc_html_e( 'You cannot register again while the suspension is in place. Please contact the site owner.', 'wp-sell-services' ); ?></p>
 				</div>
 			</div>
@@ -1316,8 +1344,8 @@ class Shortcodes {
 		?>
 		<section class="wpss-vr__hero">
 			<p class="wpss-vr__eyebrow"><?php esc_html_e( 'Sell on this marketplace', 'wp-sell-services' ); ?></p>
-			<?php // H2: the page's H1 is the theme's title band (see ShellHeader::is_shell_surface()). ?>
-			<h2 class="wpss-vr__hero-title"><?php esc_html_e( 'Turn what you are good at into income', 'wp-sell-services' ); ?></h2>
+			<?php $wpss_h = ShellHeader::heading_tag( 'become_vendor' ); ?>
+			<<?php echo esc_attr( $wpss_h ); ?> class="wpss-vr__hero-title"><?php esc_html_e( 'Turn what you are good at into income', 'wp-sell-services' ); ?></<?php echo esc_attr( $wpss_h ); ?>>
 			<p class="wpss-vr__hero-sub">
 				<?php esc_html_e( 'List a service, set your own prices and delivery times, and get paid once the work is approved. You choose what you take on.', 'wp-sell-services' ); ?>
 			</p>

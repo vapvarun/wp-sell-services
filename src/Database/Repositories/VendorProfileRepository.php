@@ -208,7 +208,7 @@ class VendorProfileRepository extends AbstractRepository {
 	 *
 	 * @param array<string, mixed> $args Filters: status (default 'active', '' for any),
 	 *                                   available (bool: taking orders and not on vacation),
-	 *                                   country, plus orderby/order/limit/offset.
+	 *                                   country, search (name, tagline or bio), plus orderby/order/limit/offset.
 	 * @return array<object>
 	 */
 	public function get_directory( array $args = array() ): array {
@@ -337,6 +337,13 @@ class VendorProfileRepository extends AbstractRepository {
 		if ( '' !== $country ) {
 			$clauses[] = 'country = %s';
 			$values[]  = $country;
+		}
+		$search = trim( (string) ( $args['search'] ?? '' ) );
+		if ( '' !== $search ) {
+			// shortcut: a leading-wildcard LIKE scans the table; fine for a directory of thousands, add FULLTEXT past that.
+			$like      = '%' . $this->wpdb->esc_like( $search ) . '%';
+			$clauses[] = '( display_name LIKE %s OR tagline LIKE %s OR bio LIKE %s )';
+			array_push( $values, $like, $like, $like );
 		}
 
 		if ( empty( $clauses ) ) {

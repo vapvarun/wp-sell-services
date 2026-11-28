@@ -154,6 +154,11 @@ class BuyerRequestArchiveView {
 
 		$query->set( 'meta_query', $meta_query );
 
+		$search = self::current_search();
+		if ( '' !== $search ) {
+			$query->set( 's', $search );
+		}
+
 		// Handle sorting.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : 'newest';
@@ -190,19 +195,20 @@ class BuyerRequestArchiveView {
 	 * @return void
 	 */
 	public function render_header(): void {
-		$platform_name = wpss_get_platform_name();
 		?>
 		<header class="wpss-request-archive-header">
-			<h1 class="wpss-archive-title"><?php esc_html_e( 'Buyer Requests', 'wp-sell-services' ); ?></h1>
-			<p class="wpss-archive-description">
-				<?php
-				printf(
-					/* translators: %s: platform name */
-					esc_html__( 'Browse buyer job postings on %s and submit proposals for projects that match your skills.', 'wp-sell-services' ),
-					esc_html( $platform_name )
-				);
-				?>
-			</p>
+			<?php
+			ShellHeader::render(
+				array(
+					'title'    => __( 'Buyer Requests', 'wp-sell-services' ),
+					'subtitle' => sprintf(
+						/* translators: %s: platform name */
+						__( 'Browse buyer job postings on %s and submit proposals for projects that match your skills.', 'wp-sell-services' ),
+						wpss_get_platform_name()
+					),
+				)
+			);
+			?>
 		</header>
 		<?php
 	}
@@ -213,17 +219,48 @@ class BuyerRequestArchiveView {
 	 * @return void
 	 */
 	public function render_filters_bar(): void {
-		// Only the drawer toggle lives here, and it shows only where the filters are a drawer. The sort
-		// sits in the results row: alone in this bar it left a bordered card two-thirds empty on
-		// desktop (Basecamp 10450931965).
+		// Same toolbar as the services archive: search, then sort; the toggle shows only where the filters are a drawer.
+		$keep = array( 'sort', 'category', 'min_budget', 'max_budget' );
 		?>
 		<div class="wpss-filters-bar">
 			<button type="button" class="wpss-btn wpss-btn--outline wpss-filter-toggle" aria-expanded="false" aria-controls="wpss-sidebar">
 				<span class="wpss-icon-filter"></span>
 				<?php esc_html_e( 'Filters', 'wp-sell-services' ); ?>
 			</button>
+
+			<form class="wpss-search-form" method="get" action="<?php echo esc_url( (string) get_post_type_archive_link( 'wpss_request' ) ); ?>" role="search">
+				<?php
+				foreach ( $keep as $param ) :
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					$value = isset( $_GET[ $param ] ) ? sanitize_text_field( wp_unslash( $_GET[ $param ] ) ) : '';
+					if ( '' !== $value ) :
+						?>
+						<input type="hidden" name="<?php echo esc_attr( $param ); ?>" value="<?php echo esc_attr( $value ); ?>">
+						<?php
+					endif;
+				endforeach;
+				?>
+				<input type="search" name="search" class="wpss-search-input" value="<?php echo esc_attr( self::current_search() ); ?>"
+					placeholder="<?php esc_attr_e( 'Search requests...', 'wp-sell-services' ); ?>" aria-label="<?php esc_attr_e( 'Search requests', 'wp-sell-services' ); ?>">
+			</form>
+
+			<div class="wpss-filters-bar-controls">
+				<?php $this->render_sort_select(); ?>
+			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * The words the visitor searched for (?search=, as on the services archive).
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return string
+	 */
+	private static function current_search(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : '';
 	}
 
 	/**
@@ -263,10 +300,18 @@ class BuyerRequestArchiveView {
 	public function render_results_info(): void {
 		global $wp_query;
 		$total = $wp_query->found_posts;
+		$term  = self::current_search();
 		?>
 		<div class="wpss-results-info">
-			<span class="wpss-results-info__count">
-				<?php
+			<?php
+			if ( '' !== $term ) {
+				printf(
+					/* translators: 1: search words, 2: number of open requests found */
+					esc_html__( 'Results for “%1$s” (%2$s)', 'wp-sell-services' ),
+					esc_html( $term ),
+					esc_html( number_format_i18n( $total ) )
+				);
+			} else {
 				// "Open": closed, hired and expired requests are not listed, which is
 				// why the count is lower than the admin list (Basecamp 10337197376).
 				printf(
@@ -274,9 +319,8 @@ class BuyerRequestArchiveView {
 					esc_html( _n( '%s open request', '%s open requests', $total, 'wp-sell-services' ) ),
 					esc_html( number_format_i18n( $total ) )
 				);
-				?>
-			</span>
-			<?php $this->render_sort_select(); ?>
+			}
+			?>
 		</div>
 		<?php
 	}
@@ -294,7 +338,7 @@ class BuyerRequestArchiveView {
 		}
 
 		// Preserve current filter parameters in pagination links.
-		$filter_params = array( 'category', 'min_budget', 'max_budget', 'sort' );
+		$filter_params = array( 'category', 'min_budget', 'max_budget', 'sort', 'search' );
 		$add_args      = array();
 
 		foreach ( $filter_params as $param ) {
@@ -347,6 +391,18 @@ class BuyerRequestArchiveView {
 			</div>
 
 			<form class="wpss-filter-form" method="get">
+				<?php
+				// The budget form keeps the search, sort and category already chosen.
+				foreach ( array( 'search', 'sort', 'category' ) as $param ) :
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					$value = isset( $_GET[ $param ] ) ? sanitize_text_field( wp_unslash( $_GET[ $param ] ) ) : '';
+					if ( '' !== $value ) :
+						?>
+						<input type="hidden" name="<?php echo esc_attr( $param ); ?>" value="<?php echo esc_attr( $value ); ?>">
+						<?php
+					endif;
+				endforeach;
+				?>
 				<!-- Categories -->
 				<?php if ( ! empty( $categories ) ) : ?>
 					<div class="wpss-filter-section">
