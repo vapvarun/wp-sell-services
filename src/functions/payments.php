@@ -351,9 +351,10 @@ function wpss_store_is_live(): bool {
 
 	global $wpdb;
 
+	// An order with no payment method yet (demo-seeded or an unpaid checkout) proves nothing: only one paid some other way than Test does.
 	// shortcut: unindexed on payment_method, but LIMIT 1 stops at the first real order and the answer latches; index it if demo stores grow huge.
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	return (bool) $wpdb->get_var( "SELECT 1 FROM {$wpdb->prefix}wpss_orders WHERE payment_method IS NULL OR payment_method <> 'test' LIMIT 1" );
+	return (bool) $wpdb->get_var( "SELECT 1 FROM {$wpdb->prefix}wpss_orders WHERE payment_method <> 'test' LIMIT 1" );
 }
 
 /**
