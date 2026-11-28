@@ -192,7 +192,7 @@ class Service {
 		// since 1.2.0, and filled in by nothing until 1.7.2 - so every reader
 		// of $service->addons saw an empty list on a service that had them.
 		$service->addons       = wpss_get_service_extras( $post->ID );
-		$service->faqs         = get_post_meta( $post->ID, '_wpss_faqs', true ) ?: array();
+		$service->faqs         = wpss_get_service_faqs( $post->ID );
 		$service->platform_ids = get_post_meta( $post->ID, '_wpss_platform_ids', true ) ?: array();
 
 		/*

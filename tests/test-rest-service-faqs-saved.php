@@ -73,6 +73,8 @@ foreach ( array(
 	$check( "an {$kind} row is not stored", array() === $stored(), wp_json_encode( $stored() ) );
 	update_post_meta( $service, '_wpss_faqs', array( $row ) ); // Older data saved before 1.9.4.
 	$check( "  and a stored {$kind} row prints no FAQ box", false === strpos( $faq_box(), 'wpss-service-faqs' ) );
+	$check( "  nor goes out through GET /services/{id}/faqs", array() === rest_do_request( new WP_REST_Request( 'GET', "/wpss/v1/services/{$service}/faqs" ) )->get_data() );
+	$check( "  nor in the service detail the app reads", array() === ( rest_do_request( new WP_REST_Request( 'GET', "/wpss/v1/services/{$service}" ) )->get_data()['faqs'] ?? null ) );
 }
 
 $put( array( 'faqs' => array() ) );

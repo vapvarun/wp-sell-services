@@ -1323,6 +1323,22 @@ function wpss_user_can_edit_service( ?\WP_Post $service, int $user_id ): bool {
 }
 
 /**
+ * A service's FAQs as buyers see them: only rows with both a question and an answer.
+ *
+ * The one reader for every display door (service page, REST, the Service model). Rows saved before
+ * 1.9.4 could hold a question or an answer alone; the editors still read the raw meta so the vendor
+ * can finish such a row.
+ *
+ * @since 2.0.0
+ *
+ * @param int $service_id Service post ID.
+ * @return array<int, array{question: string, answer: string}>
+ */
+function wpss_get_service_faqs( int $service_id ): array {
+	return wpss_sanitize_service_faqs( (array) ( get_post_meta( $service_id, '_wpss_faqs', true ) ?: array() ) );
+}
+
+/**
  * The one FAQ rule: a row is kept only when it has both a question and an answer.
  *
  * Shared by every writer (wizard, admin metabox, REST, WP-CLI) and by the

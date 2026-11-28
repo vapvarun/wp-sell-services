@@ -605,7 +605,7 @@ class ServicesController extends RestController {
 			'packages'       => array_values( $packages ),
 			'extras'         => array_values( (array) wpss_get_service_extras( $service_id ) ),
 			'requirements'   => array_values( (array) wpss_get_service_requirements( $service_id ) ),
-			'faqs'           => array_values( (array) ( get_post_meta( $service_id, '_wpss_faqs', true ) ?: array() ) ),
+			'faqs'           => wpss_get_service_faqs( $service_id ),
 			// The full vendor profile, not the compact actor shape already on the
 			// card. A service page shows the seller's tagline, rating and
 			// completed orders; without this a client had to make a second call
@@ -1231,13 +1231,7 @@ class ServicesController extends RestController {
 			return $this->service_not_found();
 		}
 
-		$faqs = get_post_meta( $service_id, '_wpss_faqs', true );
-
-		if ( ! is_array( $faqs ) ) {
-			$faqs = array();
-		}
-
-		return new WP_REST_Response( $faqs, 200 );
+		return new WP_REST_Response( wpss_get_service_faqs( $service_id ), 200 );
 	}
 
 	/**

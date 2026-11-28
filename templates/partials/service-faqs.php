@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 $service_id = get_the_ID();
 // Only complete rows render, so an incomplete stored row cannot print an empty box.
-$faqs = wpss_sanitize_service_faqs( (array) ( get_post_meta( $service_id, '_wpss_faqs', true ) ?: [] ) );
+$faqs = wpss_get_service_faqs( (int) $service_id );
 
 if ( empty( $faqs ) ) {
 	return;
