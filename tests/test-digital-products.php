@@ -91,8 +91,12 @@ $upload = static function ( int $user, string $bytes ) use ( $base, $token, $sid
 };
 
 // A browser request as one member, through the web door the order page links.
-$fetch = static function ( string $url, int $user ) {
-	$exp     = time() + HOUR_IN_SECONDS;
+// Links the plugin builds carry home_url(); a runner that reaches the site at another address
+// (a CLI container, WPSS_QA_BASE_URL) fetches them there, same path and query.
+$fetch = static function ( string $url, int $user ) use ( $base ) {
+	$home = untrailingslashit( home_url() );
+	$url  = 0 === strpos( $url, $home ) ? $base . substr( $url, strlen( $home ) ) : $url;
+	$exp  = time() + HOUR_IN_SECONDS;
 	$cookies = $user ? array(
 		AUTH_COOKIE      => wp_generate_auth_cookie( $user, $exp, 'auth' ),
 		LOGGED_IN_COOKIE => wp_generate_auth_cookie( $user, $exp, 'logged_in' ),
