@@ -8,7 +8,7 @@
  *
  * @package WPSellServices\Templates\Emails
  * @since   1.0.0
- * @version 1.9.3
+ * @version 2.0.0
  *
  * @var WP_User $recipient Recipient user object (current admin).
  */

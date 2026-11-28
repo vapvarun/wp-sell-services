@@ -40,6 +40,7 @@ $check( 'every template header says it can be overridden' . ( $no_note ? ' (' . 
 
 // 1b. A template changed since the last release carries this release's @version, or a theme
 // override of the old copy is never reported outdated (1.9.2 shipped 13 such templates).
+// Compares the tag with the working tree, so it bites before the commit too.
 // shortcut: needs git history and tags; a shallow CI checkout skips it, so it bites locally and at release.
 $git_dir  = escapeshellarg( WPSS_PLUGIN_DIR );
 $last_tag = trim( (string) shell_exec( "git -C {$git_dir} describe --tags --abbrev=0 HEAD 2>/dev/null" ) );
@@ -52,7 +53,7 @@ if ( '' === $last_tag ) {
 	$bumped      = version_compare( WPSS_VERSION, $tag_version, '>' );
 	$want        = $bumped ? WPSS_VERSION : 'newer than ' . $tag_version;
 	$unbumped    = array();
-	foreach ( array_filter( explode( "\n", (string) shell_exec( "git -C {$git_dir} diff --name-only " . escapeshellarg( $last_tag ) . '..HEAD -- templates' ) ) ) as $rel ) {
+	foreach ( array_filter( explode( "\n", (string) shell_exec( "git -C {$git_dir} diff --name-only " . escapeshellarg( $last_tag ) . ' -- templates' ) ) ) as $rel ) {
 		$path = WPSS_PLUGIN_DIR . $rel;
 		if ( ! str_ends_with( $rel, '.php' ) || ! is_file( $path ) ) {
 			continue;
