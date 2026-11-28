@@ -81,6 +81,11 @@ foreach ( array( 'unified-dashboard.css', 'unified-dashboard-rtl.css', 'unified-
 	$check( "{$copy} sets the dashboard's base font size and weight", 1 === preg_match( '/font-size:\s*1rem/', $frame ) && 1 === preg_match( '/font-weight:\s*400/', $frame ), $frame );
 }
 
+// 4c. Plugin form controls get border-box and the page font on themes with no reset (TT5 brief textarea stuck out 30px, in monospace). Basecamp 10553851012.
+foreach ( array( 'design-system.css', 'design-system-rtl.css', 'design-system.min.css', 'design-system-rtl.min.css' ) as $copy ) {
+	$check( "{$copy} resets plugin form controls", 1 === preg_match( '/:where\(\[class\*="?wpss-"?\]\)\s*:where\(input,\s*textarea,\s*select\)\s*\{\s*box-sizing:\s*border-box;\s*font-family:\s*inherit;?\s*\}/', $read( $copy ) ) );
+}
+
 // 5. Text drawn in a fill colour.
 $check( 'conversation order line uses the muted ink, not gray-400', 1 === preg_match( '/\.wpss-conversation-card__order\s*\{[^}]*--wpss-text-muted/', $ud ) );
 $check( 'the dashboard pending pill reads the canonical status tokens', 1 === preg_match( '/\.wpss-status-pending\s*\{\s*background:\s*var\(--wpss-status-pending-bg/', $ud ) );

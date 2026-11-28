@@ -1096,6 +1096,12 @@ select.wpss-form-input::-ms-expand {
 
 .wpss-btn { box-sizing: border-box; }
 
+/* Form controls inside plugin markup get the reset that Reign and BuddyX apply globally and block
+   themes such as Twenty Twenty-Five do not: border-box sizing, so a width:100% field with padding
+   stays inside its card, and the page font instead of the browser's monospace textarea. :where()
+   keeps it at zero specificity, so any explicit rule in plugin or theme CSS still wins. */
+:where([class*="wpss-"]) :where(input, textarea, select) { box-sizing: border-box; font-family: inherit; }
+
 .wpss-field { margin-bottom: var(--wpss-space-5); }
 .wpss-field__label { display: block; font-size: var(--wpss-text-base); font-weight: 500; color: var(--wpss-text); margin-bottom: var(--wpss-space-2); }
 /* The required star, everywhere. danger-text lightens in dark mode; plain
