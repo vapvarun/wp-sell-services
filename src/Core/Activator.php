@@ -452,7 +452,7 @@ class Activator {
 				'wpss_offline_settings',
 				array(
 					'enabled'      => '1',
-					'title'        => __( 'Manual / Offline Payment', 'wp-sell-services' ),
+					'title'        => __( 'Manual / Offline payment', 'wp-sell-services' ),
 					'instructions' => __( 'The site owner will send you payment instructions by email.', 'wp-sell-services' ),
 				)
 			);

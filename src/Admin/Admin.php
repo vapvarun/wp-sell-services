@@ -797,7 +797,7 @@ class Admin {
 			'title'   => __( 'Checkout can take payments on this site, but no Terms page is mapped.', 'wp-sell-services' ),
 			'text'    => __( 'Checkout has nothing to link to, so buyers agree to nothing in writing - which is the gap owners usually find out about during a dispute. Map a page you have written; we never publish one for you.', 'wp-sell-services' ),
 			'url'     => wpss_get_settings_url( 'pages' ),
-			'label'   => __( 'Map a Terms page', 'wp-sell-services' ),
+			'label'   => __( 'Map a terms page', 'wp-sell-services' ),
 			'dismiss' => $signature,
 		);
 	}
@@ -1558,9 +1558,9 @@ class Admin {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'wpss_admin_nonce' ),
 				'i18n'    => array(
-					'selectImage'  => __( 'Select Image', 'wp-sell-services' ),
-					'selectImages' => __( 'Select Images', 'wp-sell-services' ),
-					'useImage'     => __( 'Use Image', 'wp-sell-services' ),
+					'selectImage'  => __( 'Select image', 'wp-sell-services' ),
+					'selectImages' => __( 'Select images', 'wp-sell-services' ),
+					'useImage'     => __( 'Use image', 'wp-sell-services' ),
 					'confirm'      => __( 'Are you sure?', 'wp-sell-services' ),
 				),
 			)
@@ -1639,9 +1639,9 @@ class Admin {
 					'noTitle'        => __( 'Page title not defined.', 'wp-sell-services' ),
 					'confirmCreate'  => __( 'Create a new page titled', 'wp-sell-services' ),
 					'creating'       => __( 'Creating...', 'wp-sell-services' ),
-					'existingLinked' => __( 'Existing Page Linked!', 'wp-sell-services' ),
-					'pageCreated'    => __( 'Page Created!', 'wp-sell-services' ),
-					'createPage'     => __( 'Create Page', 'wp-sell-services' ),
+					'existingLinked' => __( 'Existing page linked!', 'wp-sell-services' ),
+					'pageCreated'    => __( 'Page created!', 'wp-sell-services' ),
+					'createPage'     => __( 'Create page', 'wp-sell-services' ),
 					'createFailed'   => __( 'Failed to create page.', 'wp-sell-services' ),
 					'ajaxError'      => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 				)
@@ -1662,7 +1662,7 @@ class Admin {
 				'wpssSettingsEmails',
 				array(
 					'sending'   => __( 'Sending…', 'wp-sell-services' ),
-					'sendTest'  => __( 'Send Test Email', 'wp-sell-services' ),
+					'sendTest'  => __( 'Send test email', 'wp-sell-services' ),
 					'ajaxError' => __( 'Request failed. Please try again.', 'wp-sell-services' ),
 				)
 			);
@@ -1686,13 +1686,13 @@ class Admin {
 					'pleaseWait'    => __( 'Please wait, this may take a moment...', 'wp-sell-services' ),
 					'importSuccess' => __( 'Demo content imported successfully!', 'wp-sell-services' ),
 					'importFailed'  => __( 'Import failed', 'wp-sell-services' ),
-					'importBtn'     => __( 'Import Demo Content', 'wp-sell-services' ),
+					'importBtn'     => __( 'Import demo content', 'wp-sell-services' ),
 					'confirmDelete' => __( 'Delete all demo content? This will permanently remove demo services, vendors, and empty categories. A demo service that a buyer has ordered is kept, with its vendor.', 'wp-sell-services' ),
 					'deleting'      => __( 'Deleting...', 'wp-sell-services' ),
 					'removing'      => __( 'Removing demo content...', 'wp-sell-services' ),
 					'deleteSuccess' => __( 'Demo content deleted successfully!', 'wp-sell-services' ),
 					'deleteFailed'  => __( 'Deletion failed.', 'wp-sell-services' ),
-					'deleteBtn'     => __( 'Delete Demo Content', 'wp-sell-services' ),
+					'deleteBtn'     => __( 'Delete demo content', 'wp-sell-services' ),
 					'ajaxError'     => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 				)
 			);
@@ -1755,7 +1755,7 @@ class Admin {
 		// Add taxonomy submenu (not auto-added when using show_in_menu).
 		add_submenu_page(
 			'wp-sell-services',
-			__( 'Service Categories', 'wp-sell-services' ),
+			__( 'Service categories', 'wp-sell-services' ),
 			__( 'Categories', 'wp-sell-services' ),
 			'manage_categories',
 			'edit-tags.php?taxonomy=wpss_service_category&post_type=wpss_service'
@@ -1988,7 +1988,7 @@ class Admin {
 		}
 		?>
 		<div class="wrap wpss-dashboard-wrap">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'WP Sell Services Dashboard', 'wp-sell-services' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'WP Sell Services dashboard', 'wp-sell-services' ); ?></h1>
 			<button type="button" class="page-title-action wpss-tour-replay">
 				<?php esc_html_e( 'Replay tour', 'wp-sell-services' ); ?>
 			</button>
@@ -2053,7 +2053,7 @@ class Admin {
 						<span class="wpss-stat-card__icon" aria-hidden="true"><i data-lucide="shopping-cart" class="wpss-icon"></i></span>
 						<div class="wpss-stat-card__content">
 							<a class="wpss-stat-card__value" href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders' ) ); ?>"><?php echo esc_html( (string) $order_stats->total ); ?></a>
-							<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?></span>
+							<span class="wpss-stat-card__label"><?php esc_html_e( 'Total orders', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
 
@@ -2061,7 +2061,7 @@ class Admin {
 						<span class="wpss-stat-card__icon wpss-stat-card__icon--warning" aria-hidden="true"><i data-lucide="clock" class="wpss-icon"></i></span>
 						<div class="wpss-stat-card__content">
 							<a class="wpss-stat-card__value" href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&status=in_progress' ) ); ?>"><?php echo esc_html( (string) $order_stats->in_progress ); ?></a>
-							<span class="wpss-stat-card__label"><?php esc_html_e( 'In Progress', 'wp-sell-services' ); ?></span>
+							<span class="wpss-stat-card__label"><?php esc_html_e( 'In progress', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
 
@@ -2091,24 +2091,24 @@ class Admin {
 				<div class="wpss-dashboard-columns">
 					<!-- Content Stats -->
 					<div class="wpss-dashboard-box">
-						<h2><?php esc_html_e( 'Content Overview', 'wp-sell-services' ); ?></h2>
+						<h2><?php esc_html_e( 'Content overview', 'wp-sell-services' ); ?></h2>
 						<ul class="wpss-content-stats">
 							<li>
 								<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wpss_service' ) ); ?>">
 									<span class="count"><?php echo esc_html( $services_count->publish ?? 0 ); ?></span>
-									<?php esc_html_e( 'Published Services', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'Published services', 'wp-sell-services' ); ?>
 								</a>
 							</li>
 							<li>
 								<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wpss_service&post_status=draft' ) ); ?>">
 									<span class="count"><?php echo esc_html( $services_count->draft ?? 0 ); ?></span>
-									<?php esc_html_e( 'Draft Services', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'Draft services', 'wp-sell-services' ); ?>
 								</a>
 							</li>
 							<li>
 								<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wpss_request' ) ); ?>">
 									<span class="count"><?php echo esc_html( $requests_count->publish ?? 0 ); ?></span>
-									<?php esc_html_e( 'Buyer Requests', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'Buyer requests', 'wp-sell-services' ); ?>
 								</a>
 							</li>
 						</ul>
@@ -2118,7 +2118,7 @@ class Admin {
 				<!-- Recent Orders -->
 				<div class="wpss-dashboard-box wpss-recent-orders">
 					<h2>
-						<?php esc_html_e( 'Recent Orders', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Recent orders', 'wp-sell-services' ); ?>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders' ) ); ?>" class="wpss-recent-orders__all"><?php esc_html_e( 'View all orders', 'wp-sell-services' ); ?></a>
 					</h2>
 					<?php if ( ! empty( $recent_orders ) ) : ?>
@@ -2196,7 +2196,7 @@ class Admin {
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></h1>
 			<?php if ( current_user_can( 'manage_options' ) ) : ?>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-create-order' ) ); ?>" class="page-title-action">
-					<?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Create order', 'wp-sell-services' ); ?>
 				</a>
 				<?php
 				// Export the CURRENT filter, so the file is what the owner is looking at.
@@ -2217,7 +2217,7 @@ class Admin {
 					<div class="wpss-list-card__filters">
 						<?php
 						$list_table->views();
-						$list_table->search_box( __( 'Search Orders', 'wp-sell-services' ), 'order' );
+						$list_table->search_box( __( 'Search orders', 'wp-sell-services' ), 'order' );
 						?>
 					</div>
 					<div class="wpss-list-card__body">
@@ -2632,7 +2632,7 @@ class Admin {
 				?>
 			</h1>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders' ) ); ?>" class="page-title-action">
-				<?php esc_html_e( 'Back to Orders', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Back to orders', 'wp-sell-services' ); ?>
 			</a>
 			<hr class="wp-header-end">
 
@@ -2728,7 +2728,7 @@ class Admin {
 							(<?php echo esc_html( $wpss_order_dispute->dispute_number ); ?>)
 						<?php endif; ?>
 						<a href="<?php echo esc_url( $wpss_dispute_url ); ?>" class="button button-small" style="margin-inline-start: 8px;">
-							<?php echo $wpss_dispute_live ? esc_html__( 'Open dispute', 'wp-sell-services' ) : esc_html__( 'View Dispute', 'wp-sell-services' ); ?>
+							<?php echo $wpss_dispute_live ? esc_html__( 'Open dispute', 'wp-sell-services' ) : esc_html__( 'View dispute', 'wp-sell-services' ); ?>
 						</a>
 					</p>
 					<?php if ( $wpss_dispute_live && 'completed' === $order->status ) : ?>
@@ -2754,7 +2754,7 @@ class Admin {
 				<div class="wpss-order-main wpss-admin-order__main">
 					<!-- Order Info -->
 					<div class="postbox">
-						<h2 class="hndle"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle"><?php esc_html_e( 'Order details', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<div class="wpss-order-details-grid">
 								<div class="wpss-order-detail-item">
@@ -2801,7 +2801,7 @@ class Admin {
 								if ( ! empty( $order->platform_order_id ) && 'woocommerce' === ( $order->platform ?? '' ) ) :
 									?>
 									<div class="wpss-order-detail-item">
-										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'WooCommerce Order', 'wp-sell-services' ); ?></span>
+										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'WooCommerce order', 'wp-sell-services' ); ?></span>
 										<span class="wpss-order-detail-item__value">
 											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-orders&action=edit&id=' . $order->platform_order_id ) ); ?>">#<?php echo esc_html( (string) $order->platform_order_id ); ?></a>
 										</span>
@@ -2813,7 +2813,7 @@ class Admin {
 
 					<!-- Financial Summary -->
 					<div class="postbox wpss-admin-order__money">
-						<h2 class="hndle"><?php esc_html_e( 'Financial Summary', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle"><?php esc_html_e( 'Financial summary', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<?php
 							// A milestone contract keeps its money on the phases and the parent
@@ -2873,7 +2873,7 @@ class Admin {
 								<?php endif; ?>
 								<?php if ( isset( $order->vendor_earnings ) && $order->vendor_earnings > 0 ) : ?>
 									<tr>
-										<td><?php esc_html_e( 'Vendor Earning', 'wp-sell-services' ); ?></td>
+										<td><?php esc_html_e( 'Vendor earning', 'wp-sell-services' ); ?></td>
 										<td><?php echo esc_html( wpss_format_price( (float) $order->vendor_earnings, $order->currency ) ); ?></td>
 									</tr>
 								<?php endif; ?>
@@ -3003,10 +3003,10 @@ class Admin {
 					<!-- Update Status -->
 					<?php if ( ! in_array( $order->status, array( 'completed', 'cancelled' ), true ) ) : ?>
 						<div class="postbox">
-							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Update Order', 'wp-sell-services' ); ?></h2>
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Update order', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<form method="post" class="wpss-order-status-form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
-									data-wpss-confirm-completed="<?php echo esc_attr__( 'Mark this order as Completed? The vendor is credited for it.', 'wp-sell-services' ); ?>"
+									data-wpss-confirm-completed="<?php echo esc_attr__( 'Mark this order as completed? The vendor is credited for it.', 'wp-sell-services' ); ?>"
 									data-wpss-confirm-cancelled="<?php echo esc_attr__( 'Cancel this order? The buyer is refunded through the gateway (or it is listed for a manual refund) and vendor earnings are taken back.', 'wp-sell-services' ); ?>">
 									<?php wp_nonce_field( 'wpss_update_order', 'wpss_order_nonce' ); ?>
 									<input type="hidden" name="action" value="wpss_update_order">
@@ -3029,7 +3029,7 @@ class Admin {
 										<li><?php esc_html_e( 'Any other status moves no money.', 'wp-sell-services' ); ?></li>
 									</ul>
 
-									<?php submit_button( __( 'Update Status', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-order-update-status' ) ); ?>
+									<?php submit_button( __( 'Update status', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-order-update-status' ) ); ?>
 								</form>
 							</div>
 						</div>
@@ -3097,7 +3097,7 @@ class Admin {
 						$wpss_refundable_left  = max( 0, (float) $order->total - $wpss_already_refunded );
 						?>
 						<div class="postbox">
-							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Admin Actions', 'wp-sell-services' ); ?></h2>
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Admin actions', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<p>
 									<label for="wpss-refund-amount-<?php echo esc_attr( $order_id ); ?>">
@@ -3112,7 +3112,7 @@ class Admin {
 								<button type="button" class="button button-link-delete wpss-process-refund"
 									data-order="<?php echo esc_attr( (string) $order_id ); ?>"
 									data-order-total="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>">
-									<?php esc_html_e( 'Process Refund', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'Process refund', 'wp-sell-services' ); ?>
 								</button>
 								<p class="description">
 									<?php esc_html_e( 'Leave the amount blank for a full refund. A smaller amount issues a partial refund and claws back the vendor\'s proportional share. The gateway payment is refunded where supported.', 'wp-sell-services' ); ?>
@@ -3227,7 +3227,7 @@ class Admin {
 					if ( '' !== $wpss_gateway_actions ) :
 						?>
 						<div class="postbox">
-							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Payment Actions', 'wp-sell-services' ); ?></h2>
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Payment actions', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<?php echo $wpss_gateway_actions; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Listener output; each gateway escapes its own markup. ?>
 							</div>
@@ -3299,7 +3299,7 @@ class Admin {
 					<div class="wpss-list-card__filters">
 						<?php
 						$list_table->views();
-						$list_table->search_box( __( 'Search Disputes', 'wp-sell-services' ), 'dispute' );
+						$list_table->search_box( __( 'Search disputes', 'wp-sell-services' ), 'dispute' );
 						?>
 					</div>
 					<div class="wpss-list-card__body">
@@ -3416,7 +3416,7 @@ class Admin {
 		<p>
 			<label for="<?php echo esc_attr( $id ); ?>"><strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong></label><br>
 			<select name="resolution" id="<?php echo esc_attr( $id ); ?>" class="wpss-dispute-resolution" style="width: 100%;">
-				<option value=""><?php esc_html_e( '— Select Resolution —', 'wp-sell-services' ); ?></option>
+				<option value=""><?php esc_html_e( '— Select resolution —', 'wp-sell-services' ); ?></option>
 				<?php
 				// Five labels, three outcomes (DisputeService::handle_resolution):
 				// the buyer gets everything back, part of it, or nothing and the
@@ -3439,7 +3439,7 @@ class Admin {
 		<p class="wpss-dispute-refund-amount" data-wpss-partial="<?php echo esc_attr( $partial ); ?>"
 			style="<?php echo $partial === $selected ? '' : 'display:none;'; ?>">
 			<label for="<?php echo esc_attr( $id ); ?>_amount">
-				<strong><?php esc_html_e( 'Refund Amount:', 'wp-sell-services' ); ?></strong>
+				<strong><?php esc_html_e( 'Refund amount:', 'wp-sell-services' ); ?></strong>
 			</label><br>
 			<input
 				type="number"
@@ -3563,7 +3563,7 @@ class Admin {
 			<div class="wpss-admin-dispute__layout">
 				<div class="wpss-admin-dispute__main">
 					<div class="postbox wpss-admin-dispute__details">
-						<h2 class="hndle"><?php esc_html_e( 'Dispute Details', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle"><?php esc_html_e( 'Dispute details', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<div class="wpss-order-details-grid">
 								<div class="wpss-order-detail-item">
@@ -3577,7 +3577,7 @@ class Admin {
 									<span class="wpss-order-detail-item__value"><?php echo esc_html( $reasons[ $dispute->reason ] ?? ucwords( str_replace( '_', ' ', (string) $dispute->reason ) ) ); ?></span>
 								</div>
 								<div class="wpss-order-detail-item">
-									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'At Stake', 'wp-sell-services' ); ?></span>
+									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'At stake', 'wp-sell-services' ); ?></span>
 									<span class="wpss-order-detail-item__value"><?php echo $order ? esc_html( wpss_format_price( (float) $order->total, (string) $order->currency ) ) : '&mdash;'; ?></span>
 								</div>
 								<div class="wpss-order-detail-item">
@@ -3620,7 +3620,7 @@ class Admin {
 					<?php if ( $order ) : ?>
 						<?php $wpss_order_model = \WPSellServices\Models\ServiceOrder::find( (int) $order->id ); ?>
 						<div class="postbox wpss-admin-dispute__order">
-							<h2 class="hndle"><?php esc_html_e( 'The Order', 'wp-sell-services' ); ?></h2>
+							<h2 class="hndle"><?php esc_html_e( 'The order', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<div class="wpss-order-details-grid">
 									<div class="wpss-order-detail-item">
@@ -3670,7 +3670,7 @@ class Admin {
 
 				<div class="wpss-admin-dispute__side">
 					<div class="postbox wpss-admin-dispute__parties">
-						<h2 class="hndle"><?php esc_html_e( 'Parties Involved', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle"><?php esc_html_e( 'Parties involved', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<?php
 							$wpss_dispute_service = new DisputeService();
@@ -3720,7 +3720,7 @@ class Admin {
 									<input type="hidden" name="dispute_id" value="<?php echo esc_attr( (string) $dispute_id ); ?>">
 
 									<p>
-										<label for="dispute_status"><strong><?php esc_html_e( 'Update Status:', 'wp-sell-services' ); ?></strong></label><br>
+										<label for="dispute_status"><strong><?php esc_html_e( 'Update status:', 'wp-sell-services' ); ?></strong></label><br>
 										<select name="dispute_status" id="dispute_status" style="width: 100%;">
 											<?php foreach ( $statuses as $value => $label ) : ?>
 												<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $dispute->status, $value ); ?>>
@@ -3744,7 +3744,7 @@ class Admin {
 										<span class="description"><?php esc_html_e( 'Saved with the decision and shown to both parties. To ask a question first, use the thread.', 'wp-sell-services' ); ?></span>
 									</p>
 
-									<?php submit_button( __( 'Update Dispute', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+									<?php submit_button( __( 'Update dispute', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
 								</form>
 							</div>
 						</div>
@@ -3764,7 +3764,7 @@ class Admin {
 								<?php endif; ?>
 								<?php if ( ! empty( $dispute->resolved_at ) ) : ?>
 									<p>
-										<strong><?php esc_html_e( 'Resolved At:', 'wp-sell-services' ); ?></strong><br>
+										<strong><?php esc_html_e( 'Resolved at:', 'wp-sell-services' ); ?></strong><br>
 										<?php echo esc_html( wpss_datetime_label( $dispute->resolved_at ) ); ?>
 									</p>
 								<?php endif; ?>

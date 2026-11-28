@@ -46,6 +46,6 @@ $check(
 	has_action( 'wpss_proposal_withdrawn' ) || ! preg_match( '/Withdraw\*\*\. The buyer is notified/i', $docs )
 );
 
-$check( 'the close docs name the real button and say vendors are not notified', str_contains( $docs, 'click **Close** next to the request in **Dashboard > Buyer Requests**' ) && str_contains( $docs, 'are not notified' ) );
+$check( 'the close docs name the real button and say vendors are not notified', str_contains( $docs, 'click **Close** next to the request in **Dashboard > Buyer requests**' ) && str_contains( $docs, 'are not notified' ) );
 
 echo $fails ? "{$fails} FAILED\n" : "All passed\n";

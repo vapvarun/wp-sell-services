@@ -127,13 +127,13 @@ function wpss_requirement_types(): array {
  */
 function wpss_requirement_type_labels(): array {
 	return array(
-		'text'     => __( 'Short Text', 'wp-sell-services' ),
-		'textarea' => __( 'Long Text', 'wp-sell-services' ),
+		'text'     => __( 'Short text', 'wp-sell-services' ),
+		'textarea' => __( 'Long text', 'wp-sell-services' ),
 		'number'   => __( 'Number', 'wp-sell-services' ),
 		'checkbox' => __( 'Yes/No', 'wp-sell-services' ),
 		'select'   => __( 'Dropdown', 'wp-sell-services' ),
-		'radio'    => __( 'Multiple Choice', 'wp-sell-services' ),
-		'file'     => __( 'File Upload', 'wp-sell-services' ),
+		'radio'    => __( 'Multiple choice', 'wp-sell-services' ),
+		'file'     => __( 'File upload', 'wp-sell-services' ),
 		'date'     => __( 'Date', 'wp-sell-services' ),
 	);
 }

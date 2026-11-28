@@ -21,11 +21,11 @@ Here is the flow:
 ## Setting Up Auto-Payouts
 
 1. Go to **Sell Services > Settings > Payouts**
-2. Scroll to the **Automatic Withdrawals** section
-3. Check **Enable Auto-Withdrawal**
+2. Scroll to the **Automatic withdrawals** section
+3. Check **Enable auto-withdrawal**
 4. Set the **Threshold Amount** -- the minimum balance that triggers an auto-payout (default: $500)
 5. Choose the **Schedule**: Weekly (every Monday), Bi-weekly (1st and 15th), or Monthly (1st of the month)
-6. Click **Save Payout Settings**
+6. Click **Save payout settings**
 
 ### Threshold Amount
 
@@ -36,7 +36,7 @@ This is the minimum available balance a vendor must have for an auto-payout to t
 - Vendor A has $750 available -- auto-payout created for $750
 - Vendor B has $450 available -- skipped (below threshold)
 
-An automatic request follows the same rules as one a vendor makes by hand. A vendor is skipped when they already have a pending request, when the amount is below your **Minimum Withdrawal**, when their saved payout details are incomplete or invalid, or when their account is suspended. The amount is the balance available at the moment the request is written.
+An automatic request follows the same rules as one a vendor makes by hand. A vendor is skipped when they already have a pending request, when the amount is below your **Minimum withdrawal**, when their saved payout details are incomplete or invalid, or when their account is suspended. The amount is the balance available at the moment the request is written.
 
 ### Schedule Options
 
@@ -101,8 +101,8 @@ With WP Sell Services Pro, you can process PayPal payouts in bulk instead of one
 To turn off automatic payouts:
 
 1. Go to **Settings > Payouts**
-2. Uncheck **Enable Auto-Withdrawal**
-3. Click **Save Payout Settings**
+2. Uncheck **Enable auto-withdrawal**
+3. Click **Save payout settings**
 
 Existing pending requests remain in the queue and still need processing. No new auto-withdrawals will be created.
 

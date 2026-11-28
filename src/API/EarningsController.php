@@ -353,7 +353,7 @@ class EarningsController extends RestController {
 			$items[] = array(
 				'order_id'              => (int) $order['id'],
 				'order_number'          => $order['order_number'],
-				'service_title'         => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
+				'service_title'         => $service ? $service->post_title : __( 'Deleted service', 'wp-sell-services' ),
 				'total'                 => (float) $order['total'],
 				'vendor_earnings'       => (float) $order['vendor_earnings'],
 				'commission'            => (float) $order['platform_fee'],
@@ -429,9 +429,9 @@ class EarningsController extends RestController {
 		// vendor-facing link label.
 		$reference_labels = array(
 			'order'     => __( 'View order', 'wp-sell-services' ),
-			'tip'       => __( 'View Tip', 'wp-sell-services' ),
-			'extension' => __( 'View Extension', 'wp-sell-services' ),
-			'milestone' => __( 'View Milestone', 'wp-sell-services' ),
+			'tip'       => __( 'View tip', 'wp-sell-services' ),
+			'extension' => __( 'View extension', 'wp-sell-services' ),
+			'milestone' => __( 'View milestone', 'wp-sell-services' ),
 		);
 
 		// No link into a tip when tipping is off: the tip view is hidden, so the

@@ -2,9 +2,10 @@
 /**
  * Button copy is sentence case (2.0.0 copy sweep, C5).
  *
- * "View Request" sat beside "View order" on one card. Every member-facing button and link styled
- * .wpss-btn now reads in sentence case; this fails a label inside one that capitalises a word other
- * than the first of a sentence, a product or proper name, or a package tier.
+ * "View Request" sat beside "View order" on one card. Every button and link styled .wpss-btn
+ * (member pages) or .button (wp-admin), and every submit_button() label, now reads in sentence case;
+ * this fails a label that capitalises a word other than the first of a sentence, a product or proper
+ * name, or a package tier.
  *
  * Run: wp eval-file tests/test-button-copy-sentence-case.php
  *
@@ -37,10 +38,18 @@ $offenders = static function ( string $label, array $keep ): array {
 	return $bad;
 };
 
-$roots = array( WP_PLUGIN_DIR . '/wp-sell-services' => array( 'templates', 'src/Frontend', 'src/Blocks' ) );
+$roots = array( WP_PLUGIN_DIR . '/wp-sell-services' => array( 'templates', 'src' ) );
 if ( is_dir( WP_PLUGIN_DIR . '/wp-sell-services-pro' ) ) {
-	$roots[ WP_PLUGIN_DIR . '/wp-sell-services-pro' ] = array( 'templates', 'src/Frontend' );
+	$roots[ WP_PLUGIN_DIR . '/wp-sell-services-pro' ] = array( 'templates', 'src' );
 }
+
+$report = static function ( string $path, string $label ) use ( &$fails, &$buttons, $offenders, $keep ): void {
+	++$buttons;
+	$bad = $offenders( stripslashes( $label ), $keep );
+	if ( $bad ) {
+		$fails[] = str_replace( WP_PLUGIN_DIR . '/', '', $path ) . ": '{$label}' (" . implode( ', ', $bad ) . ')';
+	}
+};
 
 $fails   = array();
 $buttons = 0;
@@ -50,24 +59,24 @@ foreach ( $roots as $root => $dirs ) {
 			continue;
 		}
 		foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( "{$root}/{$dir}", FilesystemIterator::SKIP_DOTS ) ) as $file ) {
-			if ( 'php' !== $file->getExtension() ) {
+			if ( 'php' !== $file->getExtension() || str_contains( $file->getPathname(), '/src/CLI/' ) ) {
 				continue;
 			}
 			$src = (string) file_get_contents( $file->getPathname() );
+			// submit_button( __( 'Label' ) ) renders a wp-admin button with no markup in the file.
+			preg_match_all( '/submit_button\(\s*(?:esc_html__|__)\(\s*\'((?:\\\\.|[^\'])*)\'/', $src, $submits );
+			foreach ( $submits[1] as $label ) {
+				$report( $file->getPathname(), $label );
+			}
 			// An attribute may hold a PHP block, whose closing bracket must not end the tag.
 			preg_match_all( '#<(button|a)\b((?:<\?(?:php|=).*?\?>|[^>])*)>(.*?)</\1>#s', $src, $els, PREG_SET_ORDER );
 			foreach ( $els as $el ) {
-				if ( ! preg_match( '/class="[^"]*\bwpss-btn\b/', $el[2] ) ) {
+				if ( ! preg_match( '/class="(?:[^"]*\s)?(?:wpss-btn|button)(?=[\s"])/', $el[2] ) ) {
 					continue;
 				}
-				$el[2] = $el[3];
-				preg_match_all( '/(?:__|_e|esc_html__|esc_html_e|esc_attr__|esc_attr_e|_x|esc_html_x)\(\s*\'((?:\\\\.|[^\'])*)\'/', $el[2], $labels );
+				preg_match_all( '/(?:__|_e|esc_html__|esc_html_e|esc_attr__|esc_attr_e|_x|esc_html_x)\(\s*\'((?:\\\\.|[^\'])*)\'/', $el[3], $labels );
 				foreach ( $labels[1] as $label ) {
-					++$buttons;
-					$bad = $offenders( stripslashes( $label ), $keep );
-					if ( $bad ) {
-						$fails[] = str_replace( WP_PLUGIN_DIR . '/', '', $file->getPathname() ) . ": '{$label}' (" . implode( ', ', $bad ) . ')';
-					}
+					$report( $file->getPathname(), $label );
 				}
 			}
 		}
@@ -75,7 +84,7 @@ foreach ( $roots as $root => $dirs ) {
 }
 
 echo ( $buttons > 100 ? 'PASS' : 'FAIL' ) . "  found the button labels ({$buttons})\n";
-echo ( $fails ? 'FAIL' : 'PASS' ) . '  every .wpss-btn label is sentence case' . ( $fails ? ":\n  " . implode( "\n  ", array_slice( $fails, 0, 20 ) ) : '' ) . "\n";
+echo ( $fails ? 'FAIL' : 'PASS' ) . '  every .wpss-btn, .button and submit_button() label is sentence case' . ( $fails ? ":\n  " . implode( "\n  ", array_slice( $fails, 0, 20 ) ) : '' ) . "\n";
 
 // The checker itself: it must catch Title Case and pass sentence case, tiers and product names.
 $self = array(

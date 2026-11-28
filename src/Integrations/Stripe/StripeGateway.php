@@ -863,42 +863,42 @@ class StripeGateway extends AbstractPaymentGateway {
 			),
 			'test_mode'            => array(
 				'type'        => 'checkbox',
-				'label'       => __( 'Test Mode', 'wp-sell-services' ),
+				'label'       => __( 'Test mode', 'wp-sell-services' ),
 				'description' => __( 'Use Stripe test environment.', 'wp-sell-services' ),
 			),
 			'test_secret_key'      => array(
 				'type'        => 'password',
-				'label'       => __( 'Test Secret Key', 'wp-sell-services' ),
+				'label'       => __( 'Test secret key', 'wp-sell-services' ),
 				'description' => __( 'Your Stripe test secret key (starts with sk_test_).', 'wp-sell-services' ),
 			),
 			'test_publishable_key' => array(
 				'type'        => 'text',
-				'label'       => __( 'Test Publishable Key', 'wp-sell-services' ),
+				'label'       => __( 'Test publishable key', 'wp-sell-services' ),
 				'description' => __( 'Your Stripe test publishable key (starts with pk_test_).', 'wp-sell-services' ),
 			),
 			'live_secret_key'      => array(
 				'type'        => 'password',
-				'label'       => __( 'Live Secret Key', 'wp-sell-services' ),
+				'label'       => __( 'Live secret key', 'wp-sell-services' ),
 				'description' => __( 'Your Stripe live secret key (starts with sk_live_).', 'wp-sell-services' ),
 			),
 			'live_publishable_key' => array(
 				'type'        => 'text',
-				'label'       => __( 'Live Publishable Key', 'wp-sell-services' ),
+				'label'       => __( 'Live publishable key', 'wp-sell-services' ),
 				'description' => __( 'Your Stripe live publishable key (starts with pk_live_).', 'wp-sell-services' ),
 			),
 			'webhook_secret'       => array(
 				'type'        => 'password',
-				'label'       => __( 'Webhook Secret', 'wp-sell-services' ),
+				'label'       => __( 'Webhook secret', 'wp-sell-services' ),
 				'description' => __( 'Webhook signing secret for verifying events.', 'wp-sell-services' ),
 			),
 			'pass_fees_to_buyer'   => array(
 				'type'        => 'checkbox',
-				'label'       => __( 'Pass Gateway Fees to Buyer', 'wp-sell-services' ),
+				'label'       => __( 'Pass gateway fees to buyer', 'wp-sell-services' ),
 				'description' => __( 'Add gateway processing fees to the buyer\'s total instead of deducting from vendor earnings.', 'wp-sell-services' ),
 			),
 			'gateway_fee_percent'  => array(
 				'type'        => 'number',
-				'label'       => __( 'Gateway Fee (%)', 'wp-sell-services' ),
+				'label'       => __( 'Gateway fee (%)', 'wp-sell-services' ),
 				'description' => __( 'Percentage fee charged by Stripe (default: 2.9% for US cards).', 'wp-sell-services' ),
 				'default'     => '2.9',
 				'step'        => '0.01',
@@ -907,7 +907,7 @@ class StripeGateway extends AbstractPaymentGateway {
 			),
 			'gateway_fee_fixed'    => array(
 				'type'        => 'number',
-				'label'       => __( 'Gateway Fee (Fixed)', 'wp-sell-services' ),
+				'label'       => __( 'Gateway fee (fixed)', 'wp-sell-services' ),
 				'description' => __( 'Fixed fee per transaction in your currency (default: $0.30 for US).', 'wp-sell-services' ),
 				'default'     => '0.30',
 				'step'        => '0.01',
@@ -1718,16 +1718,16 @@ class StripeGateway extends AbstractPaymentGateway {
 		</table>
 
 		<div class="wpss-gateway-setup-guide" style="margin-top: 20px; padding: 15px; background: #f0f6fc; border: 1px solid #c8d8e6; border-radius: 4px;">
-			<h3 style="margin-top: 0;"><?php esc_html_e( 'Stripe Setup Guide', 'wp-sell-services' ); ?></h3>
+			<h3 style="margin-top: 0;"><?php esc_html_e( 'Stripe setup guide', 'wp-sell-services' ); ?></h3>
 
 			<p><strong><?php esc_html_e( 'Step 1: Get your API keys', 'wp-sell-services' ); ?></strong></p>
 			<ol style="margin-left: 20px;">
 				<li><?php esc_html_e( 'Go to your Stripe Dashboard → Developers → API keys', 'wp-sell-services' ); ?></li>
-				<li><?php esc_html_e( 'Copy your Publishable key and Secret key', 'wp-sell-services' ); ?></li>
+				<li><?php esc_html_e( 'Copy your publishable key and secret key', 'wp-sell-services' ); ?></li>
 				<li><?php esc_html_e( 'For testing, use the Test mode keys (starting with pk_test_ and sk_test_)', 'wp-sell-services' ); ?></li>
 			</ol>
 
-			<p><strong><?php esc_html_e( 'Step 2: Configure Webhook', 'wp-sell-services' ); ?></strong></p>
+			<p><strong><?php esc_html_e( 'Step 2: Configure webhook', 'wp-sell-services' ); ?></strong></p>
 			<ol style="margin-left: 20px;">
 				<li><?php esc_html_e( 'Go to your Stripe Dashboard → Developers → Webhooks', 'wp-sell-services' ); ?></li>
 				<li><?php esc_html_e( 'Click "Add endpoint" and enter this URL:', 'wp-sell-services' ); ?>
@@ -1767,7 +1767,7 @@ class StripeGateway extends AbstractPaymentGateway {
 				<?php echo esc_html( $wpss_health['message'] ); ?>
 			</p>
 
-			<p><strong><?php esc_html_e( 'Step 3: Required Permissions (for Restricted API Keys)', 'wp-sell-services' ); ?></strong></p>
+			<p><strong><?php esc_html_e( 'Step 3: Required permissions (for restricted API keys)', 'wp-sell-services' ); ?></strong></p>
 			<p style="margin-left: 20px; margin-bottom: 5px;">
 				<?php esc_html_e( 'If you use a restricted API key instead of a standard (unrestricted) key, enable these Core resource permissions in your Stripe Dashboard:', 'wp-sell-services' ); ?>
 			</p>
@@ -1777,7 +1777,7 @@ class StripeGateway extends AbstractPaymentGateway {
 						<th style="text-align: left; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Resource', 'wp-sell-services' ); ?></th>
 						<th style="text-align: center; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Read', 'wp-sell-services' ); ?></th>
 						<th style="text-align: center; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Write', 'wp-sell-services' ); ?></th>
-						<th style="text-align: left; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Used For', 'wp-sell-services' ); ?></th>
+						<th style="text-align: left; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Used for', 'wp-sell-services' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -1788,13 +1788,13 @@ class StripeGateway extends AbstractPaymentGateway {
 						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Create and retrieve payment intents', 'wp-sell-services' ); ?></td>
 					</tr>
 					<tr>
-						<td style="padding: 6px 12px; border: 1px solid #ddd;"><strong><?php esc_html_e( 'Charges and Refunds', 'wp-sell-services' ); ?></strong></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><strong><?php esc_html_e( 'Charges and refunds', 'wp-sell-services' ); ?></strong></td>
 						<td style="padding: 6px 12px; border: 1px solid #ddd; text-align: center;">&#10003;</td>
 						<td style="padding: 6px 12px; border: 1px solid #ddd; text-align: center;">&#10003;</td>
 						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Process charge webhooks and create refunds', 'wp-sell-services' ); ?></td>
 					</tr>
 					<tr>
-						<td style="padding: 6px 12px; border: 1px solid #ddd;"><strong><?php esc_html_e( 'Payment Methods', 'wp-sell-services' ); ?></strong></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><strong><?php esc_html_e( 'Payment methods', 'wp-sell-services' ); ?></strong></td>
 						<td style="padding: 6px 12px; border: 1px solid #ddd; text-align: center;">&#10003;</td>
 						<td style="padding: 6px 12px; border: 1px solid #ddd; text-align: center;"></td>
 						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Required by automatic payment methods', 'wp-sell-services' ); ?></td>

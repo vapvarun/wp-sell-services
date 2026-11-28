@@ -84,7 +84,7 @@ Then confirm it is not a dead end: wp-admin → the order → the
 **Mark as Paid**. That box is gated on a manual payment method (`wpss_is_manual_payment_method()`), so if the
 checkout failed to record the rail the order can never be confirmed by anyone.
 Mark as Paid → status `pending_requirements`, `payment_status = paid`.
-Each party gets exactly one mail: the branded **Order Confirmed** (buyer) and
+Each party gets exactly one mail: the branded **Order confirmed** (buyer) and
 **New Service Order** (vendor), and the in-app rows are Order Confirmed / New
 Order Received. A third "Order status updated" mail or row is the bug
 (card:10475484149); the same holds on every rail, because Woo, EDD and
@@ -102,7 +102,7 @@ wp-admin → Orders → the new order.
 buyer request post. **Not** "Deleted" — that is what `service_id = 0` produced before
 `get_service()` guarded the ID (card 10208199238, same root cause as 7).
 
-Same check on the admin **Recent Orders** table and the admin Orders list: every
+Same check on the admin **Recent orders** table and the admin Orders list: every
 request order and every sub-order names its source, and only a genuinely removed
 service post says "Deleted service #N".
 

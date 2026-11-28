@@ -9,7 +9,7 @@ Configure the basics of your marketplace -- your platform name, currency, and wh
 Give your marketplace a custom name that appears throughout the platform: in emails, page headers, notifications, and payment receipts.
 
 1. Go to **Sell Services > Settings > General**
-2. Enter your marketplace name in the **Platform Name** field
+2. Enter your marketplace name in the **Platform name** field
 3. Click **Save changes**
 
 **Default:** Your WordPress site name is used if no custom name is set.
@@ -48,9 +48,9 @@ Four settings on the same screen control how every price is written, on service 
 
 | Setting | Options | Default |
 |---|---|---|
-| **Currency Symbol Position** | Before ($99), After (99$), Before with a space ($ 99), After with a space (99 $) | Before |
-| **Thousand Separator** | Any character, including a space | `,` |
-| **Decimal Separator** | Any character except the thousand separator | `.` |
+| **Currency symbol position** | Before ($99), After (99$), Before with a space ($ 99), After with a space (99 $) | Before |
+| **Thousand separator** | Any character, including a space | `,` |
+| **Decimal separator** | Any character except the thousand separator | `.` |
 | **Price Decimal Places** | 0 to 4 | The currency's own (2 for USD, 0 for JPY, 3 for KWD) |
 
 The decimal places apply to your store currency. An order in another currency shows that currency's own decimals, and a currency without minor units (JPY, KRW) always shows whole amounts, so a yen price never shows `.00`.

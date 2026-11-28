@@ -56,7 +56,7 @@ left unfinished at the moment you update is not charged; the buyer pays again.
 
 A **Report this service** link on the service page and **Report this vendor** on
 the vendor profile open a short form. Every report lands on **Sell Services >
-Member Reports**, where you close it and, if needed, suspend or close the
+Member reports**, where you close it and, if needed, suspend or close the
 member's account. See [Member Reports](../admin-tools/member-reports.md).
 
 ## Express delivery

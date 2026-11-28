@@ -34,7 +34,7 @@ Reporting from reviews and messages is planned for a later release. The mobile a
 
 ## Reviewing Reports
 
-Go to **Sell Services > Member Reports**. The menu shows a count while reports are waiting.
+Go to **Sell Services > Member reports**. The menu shows a count while reports are waiting.
 
 Three tabs filter the list:
 

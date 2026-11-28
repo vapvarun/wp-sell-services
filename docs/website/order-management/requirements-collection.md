@@ -57,11 +57,11 @@ Some services do not need upfront details from the buyer. If a vendor does not a
 
 ## Requirement Timeout Settings
 
-You can control what happens if a buyer never submits their requirements. Go to **Settings > Orders & Disputes** and adjust these:
+You can control what happens if a buyer never submits their requirements. Go to **Settings > Orders & disputes** and adjust these:
 
 **Requirements Timeout Days** -- How many days to wait before taking action. Set to 0 to disable (the order waits indefinitely).
 
-**Auto-Start on Timeout** -- What happens when the timeout expires:
+**Auto-start on timeout** -- What happens when the timeout expires:
 - **Enabled** -- The order starts without requirements. The vendor begins work and can ask the buyer for details through messaging.
 - **Disabled** -- The order is cancelled and the buyer gets a refund.
 

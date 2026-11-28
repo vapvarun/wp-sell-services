@@ -142,8 +142,8 @@ class Message {
 			self::TYPE_TEXT          => __( 'Text', 'wp-sell-services' ),
 			self::TYPE_ATTACHMENT    => __( 'Attachment', 'wp-sell-services' ),
 			self::TYPE_DELIVERY      => __( 'Delivery', 'wp-sell-services' ),
-			self::TYPE_REVISION      => __( 'Revision Request', 'wp-sell-services' ),
-			self::TYPE_STATUS_CHANGE => __( 'Status Change', 'wp-sell-services' ),
+			self::TYPE_REVISION      => __( 'Revision request', 'wp-sell-services' ),
+			self::TYPE_STATUS_CHANGE => __( 'Status change', 'wp-sell-services' ),
 			self::TYPE_SYSTEM        => __( 'System', 'wp-sell-services' ),
 			self::TYPE_OFFER         => __( 'Private offer', 'wp-sell-services' ),
 		];

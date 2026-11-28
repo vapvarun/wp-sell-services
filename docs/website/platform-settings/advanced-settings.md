@@ -53,7 +53,7 @@ Enable detailed logging when you need to troubleshoot issues. When active, the p
 
 **Where to view logs:**
 - **Free version:** Check the WordPress debug log at `wp-content/debug.log`
-- Go to **Sell Services > Audit Log** for a filterable record of admin and marketplace actions
+- Go to **Sell Services > Audit log** for a filterable record of admin and marketplace actions
 
 **Tip:** Enable debug mode only when troubleshooting. Disable it in normal operation to keep your logs clean and avoid any (minor) overhead.
 
@@ -149,7 +149,7 @@ WP Sell Services runs three scheduled tasks automatically to keep your marketpla
 
 **Runs every hour.** If a buyer does not accept or request revisions on a delivered order within the configured time limit (default: 3 days), the order is automatically marked as complete and payment is released to the vendor.
 
-Configure the auto-complete delay at **Settings > Orders & Disputes**.
+Configure the auto-complete delay at **Settings > Orders & disputes**.
 
 ### Expire Old Buyer Requests
 
@@ -181,4 +181,4 @@ Install the free WP Crontrol plugin to check if scheduled tasks are registered. 
 Make sure WordPress debugging is also enabled in your `wp-config.php` file, and that the `wp-content` directory is writable.
 
 **Data still present after uninstall?**
-The "Delete Data on Uninstall" option must be enabled before you uninstall. Also, use the proper WordPress uninstall process (Plugins page) rather than deleting files via FTP.
+The "Delete data on uninstall" option must be enabled before you uninstall. Also, use the proper WordPress uninstall process (Plugins page) rather than deleting files via FTP.

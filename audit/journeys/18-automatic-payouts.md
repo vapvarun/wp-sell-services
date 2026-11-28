@@ -8,7 +8,7 @@
 ## Steps
 
 ### 1. Stripe Connect: owner setup
-Settings > Payment Gateways > Stripe Connect: enable, set the platform fee (default 20%). Stripe itself must already be configured.
+Settings > Payment gateways > Stripe Connect: enable, set the platform fee (default 20%). Stripe itself must already be configured.
 
 **Expect** the setting saves; with Stripe keys missing the card says so instead of pretending to work.
 

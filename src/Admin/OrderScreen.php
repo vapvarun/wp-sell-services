@@ -344,9 +344,9 @@ class OrderScreen {
 				<?php
 				if ( '' !== $method_label ) {
 					/* translators: %s: payment method name, e.g. Offline payment, Bank transfer */
-					echo esc_html( sprintf( __( '%s - Awaiting Confirmation', 'wp-sell-services' ), $method_label ) );
+					echo esc_html( sprintf( __( '%s - Awaiting confirmation', 'wp-sell-services' ), $method_label ) );
 				} else {
-					esc_html_e( 'Payment - Awaiting Confirmation', 'wp-sell-services' );
+					esc_html_e( 'Payment - Awaiting confirmation', 'wp-sell-services' );
 				}
 				?>
 			</h4>

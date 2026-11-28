@@ -30,7 +30,7 @@ Click **Edit** next to any service to open the service editor. You can update:
 
 ### What Happens After Editing
 
-The behavior depends on two admin settings, Require Service Moderation and Re-review Live Edits (both off by default, see [Vendor Settings](../vendor-system/vendor-settings.md#re-review-live-edits)):
+The behavior depends on two admin settings, Require service moderation and Re-review live edits (both off by default, see [Vendor Settings](../vendor-system/vendor-settings.md#re-review-live-edits)):
 
 | Moderation Setting | What Happens |
 |--------------------|-------------|

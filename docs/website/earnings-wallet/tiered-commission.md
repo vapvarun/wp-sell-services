@@ -8,7 +8,7 @@ Free already gives you a global rate and per-vendor overrides. Tiered rules are
 for when "which rate applies" is a question about the *sale*, not about a
 specific vendor you hand-picked.
 
-![Commission rules on the Commission & Tax tab](../images/settings-tiered-commission.webp)
+![Commission rules on the Commission & tax tab](../images/settings-tiered-commission.webp)
 
 ## The three rule types
 
@@ -25,7 +25,7 @@ applying.
 
 ## Creating rules
 
-1. Go to **Sell Services > Settings > Commission & Tax**.
+1. Go to **Sell Services > Settings > Commission & tax**.
 2. Find the **Tiered Commission** card.
 3. Add a rule: pick the type, what it matches, and the rate.
 4. Set a **priority** number.

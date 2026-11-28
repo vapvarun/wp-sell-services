@@ -1002,7 +1002,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				</a>
 				<span class="wpss-co-header__secure">
 					<i data-lucide="lock" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
-					<?php esc_html_e( 'Secure Checkout', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Secure checkout', 'wp-sell-services' ); ?>
 				</span>
 			</div>
 
@@ -1110,7 +1110,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							<div class="wpss-card">
 								<div class="wpss-card__header">
 									<h3 class="wpss-card__title">
-										<?php echo $is_pay_order ? esc_html__( 'Order Details', 'wp-sell-services' ) : esc_html__( 'Service Details', 'wp-sell-services' ); ?>
+										<?php echo $is_pay_order ? esc_html__( 'Order details', 'wp-sell-services' ) : esc_html__( 'Service details', 'wp-sell-services' ); ?>
 									</h3>
 								</div>
 								<div class="wpss-card__body">
@@ -1218,7 +1218,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							wpss_get_template(
 								'checkout/summary.php',
 								array(
-									'wpss_title'        => $is_pay_order ? __( 'Order Payment', 'wp-sell-services' ) : __( 'Order Summary', 'wp-sell-services' ),
+									'wpss_title'        => $is_pay_order ? __( 'Order payment', 'wp-sell-services' ) : __( 'Order summary', 'wp-sell-services' ),
 									'wpss_lines'        => $summary_lines,
 									'wpss_total'        => $total,
 									'wpss_currency'     => $currency,
@@ -1243,13 +1243,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								?>
 							<div class="wpss-card" style="margin-top: var(--wpss-space-4);">
 								<div class="wpss-card__header">
-									<h3 class="wpss-card__title"><?php esc_html_e( 'About the Vendor', 'wp-sell-services' ); ?></h3>
+									<h3 class="wpss-card__title"><?php esc_html_e( 'About the vendor', 'wp-sell-services' ); ?></h3>
 								</div>
 								<div class="wpss-card__body">
 									<div class="wpss-co-seller-stats">
 										<div class="wpss-co-seller-stat">
 											<span class="wpss-co-seller-stat__value"><?php echo esc_html( $vendor_orders ); ?></span>
-											<span class="wpss-co-seller-stat__label"><?php esc_html_e( 'Orders Completed', 'wp-sell-services' ); ?></span>
+											<span class="wpss-co-seller-stat__label"><?php esc_html_e( 'Orders completed', 'wp-sell-services' ); ?></span>
 										</div>
 										<?php if ( $review_count > 0 ) : ?>
 										<div class="wpss-co-seller-stat">
@@ -1276,7 +1276,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									<?php if ( $latest_review ) : ?>
 									<div class="wpss-co-testimonial">
 										<p class="wpss-co-testimonial__text">&ldquo;<?php echo esc_html( wp_trim_words( $latest_review->content ?? $latest_review->review ?? '', 30 ) ); ?>&rdquo;</p>
-										<span class="wpss-co-testimonial__author">&mdash; <?php echo esc_html( $latest_review->reviewer_display_name ?? __( 'Verified Buyer', 'wp-sell-services' ) ); ?></span>
+										<span class="wpss-co-testimonial__author">&mdash; <?php echo esc_html( $latest_review->reviewer_display_name ?? __( 'Verified buyer', 'wp-sell-services' ) ); ?></span>
 									</div>
 									<?php endif; ?>
 								</div>
@@ -1335,7 +1335,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								<?php
 								// A digital product has no brief and no work: it is downloaded on payment.
 								$wpss_steps = wpss_service_type_supports( (int) $service->id, 'delivery' )
-									? array( __( 'Pay', 'wp-sell-services' ), __( 'Requirements', 'wp-sell-services' ), __( 'Vendor Works', 'wp-sell-services' ), __( 'Review', 'wp-sell-services' ), __( 'Complete', 'wp-sell-services' ) )
+									? array( __( 'Pay', 'wp-sell-services' ), __( 'Requirements', 'wp-sell-services' ), __( 'Vendor works', 'wp-sell-services' ), __( 'Review', 'wp-sell-services' ), __( 'Complete', 'wp-sell-services' ) )
 									: array( __( 'Pay', 'wp-sell-services' ), __( 'Download', 'wp-sell-services' ), __( 'Complete', 'wp-sell-services' ) );
 								?>
 								<div class="wpss-co-steps__track">
@@ -1639,7 +1639,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				</a>
 				<span class="wpss-co-header__secure">
 					<i data-lucide="lock" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
-					<?php esc_html_e( 'Secure Checkout', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Secure checkout', 'wp-sell-services' ); ?>
 				</span>
 			</div>
 
@@ -1706,7 +1706,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 										<?php
 										printf(
 											/* translators: %d: number of items */
-											esc_html( _n( 'Your Order (%d Service)', 'Your Order (%d Services)', count( $enriched_items ), 'wp-sell-services' ) ),
+											esc_html( _n( 'Your order (%d service)', 'Your Order (%d Services)', count( $enriched_items ), 'wp-sell-services' ) ),
 											absint( count( $enriched_items ) )
 										);
 										?>

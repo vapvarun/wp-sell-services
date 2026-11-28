@@ -53,7 +53,7 @@ class AbilitiesRegistrar {
 		wp_register_ability_category(
 			'wpss-marketplace',
 			array(
-				'label'       => __( 'Service Marketplace', 'wp-sell-services' ),
+				'label'       => __( 'Service marketplace', 'wp-sell-services' ),
 				'description' => __( 'Manage your service marketplace — services, orders, vendors, and earnings.', 'wp-sell-services' ),
 			)
 		);
@@ -176,7 +176,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/view-service',
 			array(
-				'label'               => __( 'View Service', 'wp-sell-services' ),
+				'label'               => __( 'View service', 'wp-sell-services' ),
 				'description'         => __( 'Get detailed service information including packages, reviews, and vendor profile.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(
@@ -219,7 +219,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/create-service',
 			array(
-				'label'               => __( 'Create Service', 'wp-sell-services' ),
+				'label'               => __( 'Create service', 'wp-sell-services' ),
 				'description'         => __( 'Create a new service listing with packages, pricing, and delivery time. Requires vendor role.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(
@@ -301,7 +301,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/manage-orders',
 			array(
-				'label'               => __( 'Manage Orders', 'wp-sell-services' ),
+				'label'               => __( 'Manage orders', 'wp-sell-services' ),
 				'description'         => __( 'View, accept, deliver, complete, or cancel service orders.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(
@@ -412,7 +412,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/view-earnings',
 			array(
-				'label'               => __( 'View Earnings', 'wp-sell-services' ),
+				'label'               => __( 'View earnings', 'wp-sell-services' ),
 				'description'         => __( 'Check earnings summary, available balance, and withdrawal history. Requires vendor role.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(
@@ -465,7 +465,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/request-withdrawal',
 			array(
-				'label'               => __( 'Request Withdrawal', 'wp-sell-services' ),
+				'label'               => __( 'Request withdrawal', 'wp-sell-services' ),
 				'description'         => __( 'Request a withdrawal of available earnings. Requires vendor role.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(
@@ -518,7 +518,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/post-buyer-request',
 			array(
-				'label'               => __( 'Post Buyer Request', 'wp-sell-services' ),
+				'label'               => __( 'Post buyer request', 'wp-sell-services' ),
 				'description'         => __( 'Post a buyer request for vendors to bid on with proposals.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(
@@ -582,7 +582,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/submit-proposal',
 			array(
-				'label'               => __( 'Submit Proposal', 'wp-sell-services' ),
+				'label'               => __( 'Submit proposal', 'wp-sell-services' ),
 				'description'         => __( 'Submit a proposal for a buyer request. Requires vendor role.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(
@@ -641,7 +641,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/leave-review',
 			array(
-				'label'               => __( 'Leave Review', 'wp-sell-services' ),
+				'label'               => __( 'Leave review', 'wp-sell-services' ),
 				'description'         => __( 'Leave a review for a completed order.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(
@@ -698,7 +698,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/view-notifications',
 			array(
-				'label'               => __( 'View Notifications', 'wp-sell-services' ),
+				'label'               => __( 'View notifications', 'wp-sell-services' ),
 				'description'         => __( 'Check unread marketplace notifications.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(
@@ -757,7 +757,7 @@ class AbilitiesRegistrar {
 		wp_register_ability(
 			'wpss/manage-favorites',
 			array(
-				'label'               => __( 'Manage Favorites', 'wp-sell-services' ),
+				'label'               => __( 'Manage favorites', 'wp-sell-services' ),
 				'description'         => __( 'Add or remove services from your favorites list.', 'wp-sell-services' ),
 				'category'            => 'wpss-marketplace',
 				'input_schema'        => array(

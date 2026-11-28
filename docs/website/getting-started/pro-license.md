@@ -10,7 +10,7 @@ support. Every Pro feature works with or without it.
 1. Buy Pro. Your key is in the purchase receipt email and on your account page at [wbcomdesigns.com](https://wbcomdesigns.com).
 2. Install and activate the free **WP Sell Services** plugin first, then Pro.
 3. In WordPress, go to **Sell Services > License**.
-4. Paste the key and click **Activate License**.
+4. Paste the key and click **Activate license**.
 
 The License screen is its own menu item under **Sell Services** -- not a tab
 inside Settings.
@@ -52,8 +52,8 @@ before retrying.
 
 Deactivate on the old site first, then activate on the new one:
 
-1. On the old site, go to **Sell Services > License** and click **Deactivate License**. This frees the site slot.
-2. On the new site, paste the same key and click **Activate License**.
+1. On the old site, go to **Sell Services > License** and click **Deactivate license**. This frees the site slot.
+2. On the new site, paste the same key and click **Activate license**.
 
 If you no longer have access to the old site -- it was deleted, or a client took
 it over -- contact support and we will free the slot for you.

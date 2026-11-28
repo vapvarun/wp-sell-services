@@ -69,8 +69,8 @@
 						if ( response.success ) {
 							var isExisting = response.data.existing || false;
 							var successMsg = isExisting
-								? ( l10n.existingLinked || 'Existing Page Linked!' )
-								: ( l10n.pageCreated || 'Page Created!' );
+								? ( l10n.existingLinked || 'Existing page linked!' )
+								: ( l10n.pageCreated || 'Page created!' );
 
 							if ( $select.find( 'option[value="' + response.data.page_id + '"]' ).length === 0 ) {
 								$select.append( '<option value="' + response.data.page_id + '">' + $( '<span>' ).text( response.data.title ).html() + '</option>' );
@@ -80,16 +80,16 @@
 							$btn.removeClass( 'creating' ).text( successMsg ).addClass( 'button-primary' );
 
 							setTimeout( function() {
-								$btn.removeClass( 'button-primary' ).text( l10n.createPage || 'Create Page' );
+								$btn.removeClass( 'button-primary' ).text( l10n.createPage || 'Create page' );
 							}, 2000 );
 						} else {
 							adminNotice( response.data.message || ( l10n.createFailed || 'Failed to create page.' ), 'error' );
-							$btn.removeClass( 'creating' ).text( l10n.createPage || 'Create Page' );
+							$btn.removeClass( 'creating' ).text( l10n.createPage || 'Create page' );
 						}
 					},
 					error: function() {
 						adminNotice( l10n.ajaxError || 'An error occurred. Please try again.', 'error' );
-						$btn.removeClass( 'creating' ).text( l10n.createPage || 'Create Page' );
+						$btn.removeClass( 'creating' ).text( l10n.createPage || 'Create page' );
 					},
 				} );
 			} );

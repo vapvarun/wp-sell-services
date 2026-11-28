@@ -20,7 +20,7 @@ so only the empty branch of `templates/order/requirements.php` ever rendered.
 ## Steps
 
 ### 1. Buyer posts a request with a file
-Dashboard > Buyer Requests > new request, attach one file.
+Dashboard > Buyer requests > new request, attach one file.
 
 **Expect** the request page lists the file, and it opens.
 

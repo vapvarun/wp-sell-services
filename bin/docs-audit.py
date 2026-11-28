@@ -47,8 +47,8 @@ ADMIN_PATH_ROOTS = [
 # The Settings tabs that actually exist (src/Admin/Settings.php::init_tabs,
 # plus Branding added by Pro). Anything else in a "Settings > X" path is stale.
 VALID_TABS = {
-    "General", "Checkout", "Pages", "Payment Gateways", "Commission & Tax", "Payouts",
-    "Vendor Settings", "Orders & Disputes", "Emails", "Integrations", "System", "Branding",
+    "General", "Checkout", "Pages", "Payment gateways", "Commission & tax", "Payouts",
+    "Vendor settings", "Orders & disputes", "Emails", "Integrations", "System", "Branding",
     "Features",
 }
 
@@ -56,15 +56,17 @@ VALID_TABS = {
 # so they are called out by name rather than lumped into "not a real tab" -
 # each one has a specific successor and the message should say which.
 RETIRED_TABS = {
-    "Payments": "Payment Gateways (gateways) / Payouts (withdrawals, clearance)",
-    "Vendor": "Vendor Settings",
-    "Vendors": "Vendor Settings",
+    "Payments": "Payment gateways (gateways) / Payouts (withdrawals, clearance)",
+    "Vendor": "Vendor settings",
+    "Vendors": "Vendor settings",
     "Advanced": "System (site plumbing) or Integrations (outside services)",
-    "Orders": "Orders & Disputes",
-    "Gateways": "Payment Gateways",
-    "Commission": "Commission & Tax",
+    "Orders": "Orders & disputes",
+    "Gateways": "Payment gateways",
+    "Commission": "Commission & tax",
     "License": "not a Settings tab - License is a top-level page, 'Sell Services > License'",
     "Notifications": "Emails",
+    "Payment Gateways": "Payment gateways", "Commission & Tax": "Commission & tax",
+    "Vendor Settings": "Vendor settings", "Orders & Disputes": "Orders & disputes",
 }
 
 # Top-level items under the "Sell Services" admin menu (src/Admin/Admin.php,
@@ -72,22 +74,26 @@ RETIRED_TABS = {
 # not always the page title - the service queue's menu label is "Moderation"
 # even though its page heading says "Service Moderation".
 VALID_MENU_ITEMS = {
-    "Dashboard", "Setup Wizard", "All Services", "Add New Service",
-    "Buyer Requests", "Add New Request", "Categories", "Tags",
-    "Moderation", "Review Moderation", "Disputes", "Vendors", "Orders",
-    "Create Order", "Subscriptions", "Withdrawals", "Analytics",
-    "Audit Log", "My Notifications", "Settings", "License", "Upgrade to Pro",
-    "Member Reports", "Import Reviews",
+    "Dashboard", "Setup wizard", "All services", "Add new service",
+    "Buyer requests", "Add new request", "Categories", "Tags",
+    "Moderation", "Review moderation", "Disputes", "Vendors", "Orders",
+    "Create order", "Subscriptions", "Withdrawals", "Analytics",
+    "Audit log", "My notifications", "Settings", "License", "Upgrade to Pro",
+    "Member reports", "Import reviews",
 }
 
 # Menu labels that used to exist, or that docs keep inventing.
 RETIRED_MENU_ITEMS = {
-    "Reviews": "Review Moderation",
-    "Services": "All Services (browse) / Moderation (the pending queue)",
-    "System": "no such menu - the log viewer is 'Sell Services > Audit Log'",
-    "Logs": "Audit Log",
+    "Reviews": "Review moderation",
+    "Services": "All services (browse) / Moderation (the pending queue)",
+    "System": "no such menu - the log viewer is 'Sell Services > Audit log'",
+    "Logs": "Audit log",
     "Payouts": "Withdrawals (the payout queue) / Settings > Payouts (the rules)",
     "Earnings": "Withdrawals",
+    "Setup Wizard": "Setup wizard", "All Services": "All services", "Add New Service": "Add new service",
+    "Buyer Requests": "Buyer requests", "Add New Request": "Add new request", "Review Moderation": "Review moderation",
+    "Create Order": "Create order", "Audit Log": "Audit log", "My Notifications": "My notifications",
+    "Member Reports": "Member reports", "Import Reviews": "Import reviews",
 }
 
 # Other products' settings screens - not ours to validate. Covers both
@@ -676,7 +682,7 @@ if not stale:
 # Left column: names that appeared in docs but are not what the UI says.
 # Right column: the string the plugin actually renders.
 WRONG_LABELS = {
-    "Dashboard > My Requests": "Dashboard > Buyer Requests",
+    "Dashboard > My Requests": "Dashboard > Buyer requests",
     "Wallet & Earnings": "Earnings & Payouts",
     # "Delivery Submitted" was on this list and should not have been: Settings.php
     # renders exactly that string as the label for the delivery_submitted
@@ -685,9 +691,9 @@ WRONG_LABELS = {
     # If the STATUS ever gets described that way, catch it with the status name
     # rather than a substring that also matches the notification.
     "Recurring Subscriptions page": "the Subscriptions page",
-    # The review-moderation switch is on the Vendor Settings tab, labelled "Review Moderation".
-    "Settings > General** and enable **Moderate Reviews": "Settings > Vendor Settings > Review Moderation",
-    "Enable **Moderate Reviews**": "Review Moderation (Settings > Vendor Settings)",
+    # The review-moderation switch is on the Vendor settings tab, labelled "Review moderation".
+    "Settings > General** and enable **Moderate Reviews": "Settings > Vendor settings > Review moderation",
+    "Enable **Moderate Reviews**": "Review moderation (Settings > Vendor settings)",
 }
 # "Settings > <Tab> > <Field>" must name a field registered on that tab. Fields are read from
 # Settings.php (add_settings_field label + settings page), so a field that lives on another tab -

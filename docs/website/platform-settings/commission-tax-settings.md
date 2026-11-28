@@ -1,6 +1,6 @@
 # Commission & Tax Settings
 
-**Sell Services > Settings > Commission & Tax**
+**Sell Services > Settings > Commission & tax**
 Direct link: `wp-admin/admin.php?page=wpss-settings#commission`
 
 Two things live here: **what the platform keeps** from every sale, and **whether
@@ -94,7 +94,7 @@ buyer is quoted what the store charges. On WooCommerce, configure that tax under
 
 **Milestone phases and paid extensions still carry this card's tax** on every
 store, because the marketplace creates and prices them. Tips carry it only when
-**Tax Tips** is on.
+**Tax tips** is on.
 
 ### Prices Include Tax
 

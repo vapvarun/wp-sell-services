@@ -99,7 +99,7 @@ normal page flow and never touched the renderer this journey exercises — which
 is worth confirming precisely because it is easy to assume one fix covered both.
 
 ### 8. Tax reads the same on one item and on a cart
-Settings > Payment Gateways > Tax: enable, label VAT, 20%. Buy one service, then a cart of two.
+Settings > Payment gateways > Tax: enable, label VAT, 20%. Buy one service, then a cart of two.
 
 **Expect** (card:10403205865, card:10403205035)
 - Both summaries read "VAT (20%)" and the total equals the charge.

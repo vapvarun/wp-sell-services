@@ -4,7 +4,7 @@ Anyone on your marketplace can apply to become a vendor and start selling servic
 
 ## Three Registration Modes
 
-You control how vendors join your marketplace from **Settings > Vendor Settings**:
+You control how vendors join your marketplace from **Settings > Vendor settings**:
 
 ### Open Registration
 
@@ -20,7 +20,7 @@ Users can submit a vendor application, but their account stays in "Pending" stat
 
 The registration form is hidden from the public. Only you (the admin) can create vendor accounts manually. This is ideal for invite-only or exclusive marketplaces.
 
-**To add a vendor manually:** Go to **Users > Add New**, create a WordPress account, and assign the vendor role.
+**To add a vendor manually:** Go to **Users > Add new**, create a WordPress account, and assign the vendor role.
 
 ## The Registration Form
 

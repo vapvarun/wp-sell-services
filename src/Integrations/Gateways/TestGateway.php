@@ -64,7 +64,7 @@ class TestGateway extends AbstractPaymentGateway {
 	 * @return string
 	 */
 	public function get_name(): string {
-		return __( 'Test Gateway', 'wp-sell-services' );
+		return __( 'Test gateway', 'wp-sell-services' );
 	}
 
 	/**
@@ -196,7 +196,7 @@ class TestGateway extends AbstractPaymentGateway {
 		return array(
 			'enabled' => array(
 				'type'        => 'checkbox',
-				'label'       => __( 'Enable Test Gateway', 'wp-sell-services' ),
+				'label'       => __( 'Enable test gateway', 'wp-sell-services' ),
 				'description' => __( 'Enable test payment gateway (only works when WP_DEBUG is true).', 'wp-sell-services' ),
 			),
 		);
@@ -220,7 +220,7 @@ class TestGateway extends AbstractPaymentGateway {
 		<div class="wpss-test-gateway-form">
 			<div class="wpss-test-gateway-notice" style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 16px;">
 				<strong style="color: #856404;">
-					<?php esc_html_e( 'Development Mode', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Development mode', 'wp-sell-services' ); ?>
 				</strong>
 				<p style="color: #856404; margin: 8px 0 0;">
 					<?php esc_html_e( 'This is a test payment. No real charges will be made.', 'wp-sell-services' ); ?>
@@ -380,7 +380,7 @@ class TestGateway extends AbstractPaymentGateway {
 		?>
 		<div class="wpss-test-gateway-warning" style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 16px;">
 			<strong style="color: #856404;">
-				<?php esc_html_e( 'Development Only', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Development only', 'wp-sell-services' ); ?>
 			</strong>
 			<p style="color: #856404; margin: 8px 0 0;">
 				<?php esc_html_e( 'This gateway is only available when WP_DEBUG is enabled. It should never be used in production.', 'wp-sell-services' ); ?>
@@ -463,7 +463,7 @@ class TestGateway extends AbstractPaymentGateway {
 		}
 
 		return array(
-			'title'        => __( 'Test Gateway', 'wp-sell-services' ),
+			'title'        => __( 'Test gateway', 'wp-sell-services' ),
 			'description'  => __( 'Test payment gateway for development. No real charges.', 'wp-sell-services' ),
 			'option_group' => 'wpss_test_gateway_settings',
 			'test_mode'    => true,

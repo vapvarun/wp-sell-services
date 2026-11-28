@@ -743,7 +743,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1526` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:428` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:651` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4508` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4505` |
 | `wpss_decimal_places` | `int $places, string $currency` | `src/functions/money.php:186` |
 | `wpss_currency_position` | `string $position` | `src/functions/money.php:88` |
 | `wpss_price_separators` | `array{thousand:string, decimal:string} $separators` | `src/functions/money.php:143` |

@@ -16,7 +16,7 @@ Manual orders work exactly like regular orders once created. Vendors and buyers 
 
 ## How to Create a Manual Order
 
-Go to **Sell Services > Orders** and click **Create Order**. The form walks you through each step:
+Go to **Sell Services > Orders** and click **Create order**. The form walks you through each step:
 
 ### 1. Pick the Service and Package
 
@@ -73,12 +73,12 @@ Add any internal notes about the order. These are only visible to admins, not to
 
 ### 6. Submit
 
-Click **Create Order**. The system generates an order number, creates the order record, and sets up the conversation thread between buyer and vendor.
+Click **Create order**. The system generates an order number, creates the order record, and sets up the conversation thread between buyer and vendor.
 
 After creation, you see:
 - The order number and a link to view it
 - A **Submit Requirements** button (if the service has requirements and the order is in "Pending Requirements" status)
-- A **Create Another Order** button to start a new one
+- A **Create another order** button to start a new one
 
 ## What Happens After Creation
 

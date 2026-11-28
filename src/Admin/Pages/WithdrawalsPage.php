@@ -182,12 +182,12 @@ class WithdrawalsPage {
 						'complete' => __( 'Mark as paid', 'wp-sell-services' ),
 						'reject'   => __( 'Reject', 'wp-sell-services' ),
 					),
-					'noteLabel'    => __( 'Admin Note (Optional)', 'wp-sell-services' ),
+					'noteLabel'    => __( 'Admin note (optional)', 'wp-sell-services' ),
 					'titles'       => array(
-						'approve'  => __( 'Approve Withdrawal', 'wp-sell-services' ),
+						'approve'  => __( 'Approve withdrawal', 'wp-sell-services' ),
 						'complete' => __( 'Mark as paid', 'wp-sell-services' ),
-						'reject'   => __( 'Reject Withdrawal', 'wp-sell-services' ),
-						'fallback' => __( 'Process Withdrawal', 'wp-sell-services' ),
+						'reject'   => __( 'Reject withdrawal', 'wp-sell-services' ),
+						'fallback' => __( 'Process withdrawal', 'wp-sell-services' ),
 					),
 					'descriptions' => array(
 						/* translators: %amount% / %vendor% placeholders are replaced in JS. */
@@ -501,7 +501,7 @@ class WithdrawalsPage {
 				<div class="alignleft actions bulkactions">
 					<label for="bulk-action-selector-top" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'wp-sell-services' ); ?></label>
 					<select name="bulk_action" id="bulk-action-selector-top" class="wpss-withdrawals-bulk-select">
-						<option value=""><?php esc_html_e( 'Bulk Actions', 'wp-sell-services' ); ?></option>
+						<option value=""><?php esc_html_e( 'Bulk actions', 'wp-sell-services' ); ?></option>
 						<option value="approve"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></option>
 						<option value="complete"><?php esc_html_e( 'Mark as paid', 'wp-sell-services' ); ?></option>
 						<option value="reject"><?php esc_html_e( 'Reject', 'wp-sell-services' ); ?></option>

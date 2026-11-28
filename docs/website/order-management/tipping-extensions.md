@@ -14,7 +14,7 @@ Without Pro, or with Buyer Tips switched off, buyers see no tip option and past 
 
 After an order is completed, the buyer can send a tip to the vendor as a thank-you for great work. The tip is paid like any other order and credited to the vendor's wallet.
 
-**Tips are commissioned at your normal rate by default.** Marketplace owners can change this with the **Tip commission rate** setting under **Sell Services > Settings > Commission & Tax**, which appears directly below the Buyer Tips switch while tipping is on: leave it empty to use the regular rate, or set it to `0` so vendors keep 100% of every tip.
+**Tips are commissioned at your normal rate by default.** Marketplace owners can change this with the **Tip commission rate** setting under **Sell Services > Settings > Commission & tax**, which appears directly below the Buyer Tips switch while tipping is on: leave it empty to use the regular rate, or set it to `0` so vendors keep 100% of every tip.
 
 To send a tip:
 

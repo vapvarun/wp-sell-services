@@ -499,7 +499,7 @@ class OrderWorkflowManager {
 			$this->notification_service->create(
 				(int) $order->vendor_id,
 				'deadline_reminder',
-				__( 'Deadline Approaching', 'wp-sell-services' ),
+				__( 'Deadline approaching', 'wp-sell-services' ),
 				sprintf(
 					/* translators: %d: hours remaining */
 					__( 'Your order deadline is in %d hours. Please ensure timely delivery.', 'wp-sell-services' ),
@@ -547,15 +547,15 @@ class OrderWorkflowManager {
 
 			if ( $days_since_order >= 1 && $reminders_sent < 1 ) {
 				$should_send = true;
-				$subject     = __( 'Submit Your Requirements', 'wp-sell-services' );
+				$subject     = __( 'Submit your requirements', 'wp-sell-services' );
 				$message     = __( 'Your vendor is waiting for your project requirements. Please submit them so work can begin.', 'wp-sell-services' );
 			} elseif ( $days_since_order >= 3 && $reminders_sent < 2 ) {
 				$should_send = true;
-				$subject     = __( 'Reminder: Requirements Needed', 'wp-sell-services' );
+				$subject     = __( 'Reminder: Requirements needed', 'wp-sell-services' );
 				$message     = __( 'Your vendor is still waiting for requirements. Please submit them to avoid delays.', 'wp-sell-services' );
 			} elseif ( $days_since_order >= 5 && $reminders_sent < 3 ) {
 				$should_send = true;
-				$subject     = __( 'Final Reminder: Action Required', 'wp-sell-services' );
+				$subject     = __( 'Final reminder: Action required', 'wp-sell-services' );
 				$message     = __( 'This is your final reminder. Please submit your requirements or contact the vendor if you need assistance.', 'wp-sell-services' );
 			}
 
@@ -582,7 +582,7 @@ class OrderWorkflowManager {
 					$this->notification_service->create(
 						(int) $order->vendor_id,
 						'requirements_pending',
-						__( 'Buyer Requirements Pending', 'wp-sell-services' ),
+						__( 'Buyer requirements pending', 'wp-sell-services' ),
 						__( 'The buyer has not yet submitted requirements. We have sent them a reminder.', 'wp-sell-services' ),
 						[ 'order_id' => $order->id ]
 					);
@@ -647,7 +647,7 @@ class OrderWorkflowManager {
 				$this->notification_service->create(
 					(int) $order->vendor_id,
 					'requirements_timeout',
-					__( 'Order Auto-Started', 'wp-sell-services' ),
+					__( 'Order auto-started', 'wp-sell-services' ),
 					sprintf(
 						/* translators: %d: number of days */
 						__( 'The buyer did not submit requirements within %d days. The order has been auto-started. You may contact the buyer for details.', 'wp-sell-services' ),
@@ -659,7 +659,7 @@ class OrderWorkflowManager {
 				$this->notification_service->create(
 					(int) $order->customer_id,
 					'requirements_timeout',
-					__( 'Order Started Without Requirements', 'wp-sell-services' ),
+					__( 'Order started without requirements', 'wp-sell-services' ),
 					sprintf(
 						/* translators: %d: number of days */
 						__( 'You did not submit requirements within %d days. The order has been started. Please contact the vendor with your project details.', 'wp-sell-services' ),
@@ -1744,7 +1744,7 @@ class OrderWorkflowManager {
 
 			$this->notification_service->notify_admins(
 				'refund_pending',
-				__( 'Manual Refund Required', 'wp-sell-services' ),
+				__( 'Manual refund required', 'wp-sell-services' ),
 				sprintf(
 					/* translators: 1: order ID, 2: amount, 3: payment method */
 					__( 'Order #%1$d was paid via %3$s, which cannot refund automatically. Send %2$s to the buyer and mark the refund as sent on the order.', 'wp-sell-services' ),
@@ -1814,7 +1814,7 @@ class OrderWorkflowManager {
 		// Tell every administrator so someone processes it by hand.
 		$this->notification_service->notify_admins(
 			'refund_failed',
-			__( 'Auto-Refund Failed', 'wp-sell-services' ),
+			__( 'Auto-refund failed', 'wp-sell-services' ),
 			sprintf(
 				/* translators: 1: order ID, 2: error message */
 				__( 'Automatic refund failed for order #%1$d. Error: %2$s. Please process the refund manually via the payment gateway dashboard.', 'wp-sell-services' ),
@@ -1912,7 +1912,7 @@ class OrderWorkflowManager {
 			$this->notification_service->create(
 				(int) $order->vendor_id,
 				'cancellation_auto_approved',
-				__( 'Order Auto-Cancelled', 'wp-sell-services' ),
+				__( 'Order auto-cancelled', 'wp-sell-services' ),
 				__( 'The cancellation request was automatically approved because you did not respond within 48 hours.', 'wp-sell-services' ),
 				[ 'order_id' => $order_id ]
 			);
@@ -1997,7 +1997,7 @@ class OrderWorkflowManager {
 			$this->notification_service->create(
 				(int) $order->customer_id,
 				'order_cancelled',
-				__( 'Order Cancelled - Payment Not Received', 'wp-sell-services' ),
+				__( 'Order cancelled - Payment not received', 'wp-sell-services' ),
 				sprintf(
 					/* translators: %d: number of hours */
 					__( 'Your order was automatically cancelled because offline payment was not received within %d hours.', 'wp-sell-services' ),
@@ -2011,7 +2011,7 @@ class OrderWorkflowManager {
 				$this->notification_service->create(
 					(int) $order->vendor_id,
 					'order_cancelled',
-					__( 'Order Cancelled - Payment Not Received', 'wp-sell-services' ),
+					__( 'Order cancelled - Payment not received', 'wp-sell-services' ),
 					sprintf(
 						/* translators: %d: number of hours */
 						__( 'An order was automatically cancelled because the buyer did not complete offline payment within %d hours.', 'wp-sell-services' ),

@@ -8,7 +8,7 @@ It uses **Stripe Connect Express**: each vendor completes a short Stripe-hosted
 onboarding to connect their bank account. Stripe handles their identity and
 compliance checks, so you never collect or store vendor bank details.
 
-![The Stripe Connect card on the Payment Gateways tab](../images/settings-stripe-connect.webp)
+![The Stripe Connect card on the Payment gateways tab](../images/settings-stripe-connect.webp)
 
 ## How it works
 
@@ -23,14 +23,14 @@ compliance checks, so you never collect or store vendor bank details.
 already set up for Stripe payments -- there is nothing new to paste.
 
 1. Enable Connect in your [Stripe Dashboard](https://dashboard.stripe.com/connect) if you have not already.
-2. In WordPress, go to **Sell Services > Settings > Payment Gateways**.
+2. In WordPress, go to **Sell Services > Settings > Payment gateways**.
 3. Make sure the **Stripe** card is configured with your keys.
 4. Find the **Stripe Connect** card below it and tick **Enable Stripe Connect**.
 5. Set the **Platform Fee (%)** -- or leave it blank to use your normal commission rate.
-6. Click **Save Connect Settings**.
+6. Click **Save Connect settings**.
 
 Stripe Connect needs Stripe checkout switched on, because it pays vendors out of
-Stripe charges. While Stripe is off under **Payment Methods**, vendors cannot connect
+Stripe charges. While Stripe is off under **Payment methods**, vendors cannot connect
 a new account and the Connect card says so. Payouts and refunds on payments already
 taken keep working.
 7. Add the webhook endpoint shown on the settings screen to Stripe, covering payment and account events.
@@ -54,7 +54,7 @@ Once Connect is enabled, vendors see a **Connect with Stripe** option in their
 dashboard. Clicking it sends them to Stripe's hosted onboarding, where they
 supply their identity and bank details directly to Stripe.
 
-You can watch progress under the **Connected Vendor Accounts** table on the
+You can watch progress under the **Connected vendor accounts** table on the
 Connect settings screen, which lists each vendor's Stripe account, status,
 whether charges and payouts are enabled, country, and connection date.
 

@@ -28,7 +28,7 @@ using one of the routes below.
 
 ### Option A: Upload from WordPress Admin (Recommended)
 
-1. Go to **Plugins > Add New** in your WordPress dashboard
+1. Go to **Plugins > Add new** in your WordPress dashboard
 2. Click **Upload Plugin** at the top
 3. Choose the `wp-sell-services.zip` file from your computer
 4. Click **Install Now**
@@ -63,11 +63,11 @@ To protect people who were already trading, the update creates an approved vendo
 The Pro version adds premium features on top of the free plugin. Both run together.
 
 1. Make sure the **free version is installed and active** first
-2. Go to **Plugins > Add New > Upload Plugin**
+2. Go to **Plugins > Add new > Upload Plugin**
 3. Upload `wp-sell-services-pro.zip`
 4. Click **Install Now**, then **Activate Plugin**
 5. Go to **Sell Services > License**
-6. Enter your license key and click **Activate License**
+6. Enter your license key and click **Activate license**
 
 Pro features become available immediately -- no migration or extra setup needed.
 

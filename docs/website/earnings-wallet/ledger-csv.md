@@ -22,9 +22,9 @@ withdrawals.
 A dropdown above the ledger scopes the view to a time window:
 
 - **Last 30 days**
-- **This Month**
-- **Last Month**
-- **This Year**
+- **This month**
+- **Last month**
+- **This year**
 - **All Time** (default)
 
 Changing the selector re-filters the ledger AND the **Export CSV**
@@ -44,7 +44,7 @@ came from:
 | **Milestone** | A milestone phase on a buyer-request contract was paid. One row per phase. |
 | **Withdrawal** | Money left the wallet to a payout method. This is a debit; it shows as a negative amount in the CSV. |
 | **Credit / Debit** | Admin manually credited or debited the wallet. |
-| **Dispute Refund** | A dispute resolved with a refund that reversed an earlier earning. |
+| **Dispute refund** | A dispute resolved with a refund that reversed an earlier earning. |
 
 Earning, Tip, Extension, and Milestone are all **credits**. Withdrawal,
 Debit, and Dispute Refund are **debits**.
@@ -118,7 +118,7 @@ transfer, Dispute Refund into "Refunds").
 
 ### Tax reporting
 
-For annual tax reports, use the **This Year** period and sum the
+For annual tax reports, use the **This year** period and sum the
 `Amount` column (or read the summary block's Total Credits and Total
 Debits). The Net figure is credits minus debits - this is the amount
 that changed in your wallet during the period, which is often what you

@@ -1,6 +1,6 @@
 # Payment Gateways Settings
 
-**Sell Services > Settings > Payment Gateways**
+**Sell Services > Settings > Payment gateways**
 Direct link: `wp-admin/admin.php?page=wpss-settings#payments`
 
 This tab is where you decide how buyers actually hand over money on the
@@ -80,7 +80,7 @@ Card payments, and the gateway most marketplaces start with.
 | Gateway Fee (%) | Number, 0-10 | `2.9` | Stripe's percentage. Only used to compute the fee, never read back from Stripe |
 | Gateway Fee (Fixed) | Number, 0-5 | `0.30` | Per-transaction fixed fee, in your currency |
 
-The card includes a three-step **Stripe Setup Guide** covering API keys, the
+The card includes a three-step **Stripe setup guide** covering API keys, the
 webhook endpoint to register (`/wpss-payment/stripe/callback/`, or
 `/?wpss_payment_callback=1&wpss_gateway=stripe` with Plain permalinks, listening for
 `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`,
@@ -117,7 +117,7 @@ with no gateway account. (Upgrades are never re-enabled.)
 | Field | Type | Default | Notes |
 |---|---|---|---|
 | Enable Offline Payment | Checkbox | **On** for new installs | |
-| Title | Text | "Manual / Offline Payment" | What the buyer sees at checkout |
+| Title | Text | "Manual / Offline payment" | What the buyer sees at checkout |
 | Description | Textarea | "Pay via bank transfer, cash, or other offline methods..." | Short line under the title |
 | Payment Instructions | Rich text | Seeded placeholder | Shown **after** the order is placed. Used while you have not named any methods below |
 | Auto-Cancel (Hours) | Number, 0-720 | `0` | Cancels unpaid orders after N hours. `0` disables |

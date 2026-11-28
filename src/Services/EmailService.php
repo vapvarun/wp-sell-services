@@ -338,9 +338,9 @@ class EmailService {
 			$subject = sprintf(
 				$is_digital
 					/* translators: %1$s: site name, %2$s: order number */
-					? __( '[%1$s] New Sale #%2$s', 'wp-sell-services' )
+					? __( '[%1$s] New sale #%2$s', 'wp-sell-services' )
 					/* translators: %1$s: site name, %2$s: order number */
-					: __( '[%1$s] New Service Order #%2$s', 'wp-sell-services' ),
+					: __( '[%1$s] New service order #%2$s', 'wp-sell-services' ),
 				wpss_get_platform_name(),
 				$order->order_number
 			);
@@ -352,7 +352,7 @@ class EmailService {
 				array(
 					'order'          => $order,
 					'recipient'      => $vendor,
-					'email_heading'  => $is_digital ? __( 'New Sale!', 'wp-sell-services' ) : __( 'New Order Received!', 'wp-sell-services' ),
+					'email_heading'  => $is_digital ? __( 'New sale!', 'wp-sell-services' ) : __( 'New order received!', 'wp-sell-services' ),
 					'service_title'  => $service_title,
 					'customer_name'  => $this->get_customer_name( $order->customer_id ),
 					'is_customer'    => false,
@@ -367,7 +367,7 @@ class EmailService {
 		if ( $customer ) {
 			$subject = sprintf(
 				/* translators: %1$s: site name, %2$s: order number */
-				__( '[%1$s] Order Confirmed #%2$s', 'wp-sell-services' ),
+				__( '[%1$s] Order confirmed #%2$s', 'wp-sell-services' ),
 				wpss_get_platform_name(),
 				$order->order_number
 			);
@@ -379,7 +379,7 @@ class EmailService {
 				array(
 					'order'          => $order,
 					'recipient'      => $customer,
-					'email_heading'  => $is_digital ? __( 'Your Download Is Ready', 'wp-sell-services' ) : __( 'Order Confirmed!', 'wp-sell-services' ),
+					'email_heading'  => $is_digital ? __( 'Your download is ready', 'wp-sell-services' ) : __( 'Order confirmed!', 'wp-sell-services' ),
 					'service_title'  => $service_title,
 					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
 					'is_customer'    => true,
@@ -539,7 +539,7 @@ class EmailService {
 
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
-			__( '[%1$s] Requirements Submitted - Order #%2$s', 'wp-sell-services' ),
+			__( '[%1$s] Requirements submitted - Order #%2$s', 'wp-sell-services' ),
 			wpss_get_platform_name(),
 			$order->order_number
 		);
@@ -549,7 +549,7 @@ class EmailService {
 		$template_vars = array(
 			'order'           => $order,
 			'recipient'       => $vendor,
-			'email_heading'   => __( 'Requirements Received', 'wp-sell-services' ),
+			'email_heading'   => __( 'Requirements received', 'wp-sell-services' ),
 			'field_data'      => $field_data,
 			'has_attachments' => ! empty( $attachments ),
 			'reply_to_email'  => $customer ? $customer->user_email : '',
@@ -591,7 +591,7 @@ class EmailService {
 				array(
 					'order'          => $order,
 					'recipient'      => $customer,
-					'email_heading'  => __( 'Your Order is In Progress', 'wp-sell-services' ),
+					'email_heading'  => __( 'Your order is in progress', 'wp-sell-services' ),
 					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
 					'is_customer'    => true,
 					'customer_name'  => $this->get_customer_name( $order->customer_id ),
@@ -612,8 +612,8 @@ class EmailService {
 					'order'         => $order,
 					'recipient'     => $vendor,
 					'email_heading' => wpss_order_needs_requirements( $order )
-						? __( 'Requirements Received - Start Working', 'wp-sell-services' )
-						: __( 'New Order - Start Working', 'wp-sell-services' ),
+						? __( 'Requirements received - Start working', 'wp-sell-services' )
+						: __( 'New order - Start working', 'wp-sell-services' ),
 					'customer_name' => $this->get_customer_name( $order->customer_id ),
 					'is_customer'   => false,
 				)
@@ -648,7 +648,7 @@ class EmailService {
 
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
-			__( '[%1$s] Delivery Ready - Order #%2$s', 'wp-sell-services' ),
+			__( '[%1$s] Delivery ready - Order #%2$s', 'wp-sell-services' ),
 			wpss_get_platform_name(),
 			$order->order_number
 		);
@@ -658,7 +658,7 @@ class EmailService {
 		$template_vars = array(
 			'order'          => $order,
 			'recipient'      => $customer,
-			'email_heading'  => __( 'Your Delivery is Ready!', 'wp-sell-services' ),
+			'email_heading'  => __( 'Your delivery is ready!', 'wp-sell-services' ),
 			'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
 			'reply_to_email' => $vendor ? $vendor->user_email : '',
 			'reply_to_name'  => $vendor ? $vendor->display_name : '',
@@ -1485,7 +1485,7 @@ class EmailService {
 
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
-			__( '[%1$s] Order #%2$s Completed', 'wp-sell-services' ),
+			__( '[%1$s] Order #%2$s completed', 'wp-sell-services' ),
 			wpss_get_platform_name(),
 			$order->order_number
 		);
@@ -1499,7 +1499,7 @@ class EmailService {
 				array(
 					'order'          => $order,
 					'recipient'      => $customer,
-					'email_heading'  => __( 'Order Completed!', 'wp-sell-services' ),
+					'email_heading'  => __( 'Order completed!', 'wp-sell-services' ),
 					'is_customer'    => true,
 					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
 					'customer_name'  => $this->get_customer_name( $order->customer_id ),
@@ -1518,7 +1518,7 @@ class EmailService {
 				array(
 					'order'          => $order,
 					'recipient'      => $vendor,
-					'email_heading'  => __( 'Order Completed!', 'wp-sell-services' ),
+					'email_heading'  => __( 'Order completed!', 'wp-sell-services' ),
 					'is_customer'    => false,
 					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
 					'customer_name'  => $this->get_customer_name( $order->customer_id ),
@@ -1545,7 +1545,7 @@ class EmailService {
 
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
-			__( '[%1$s] Revision Requested - Order #%2$s', 'wp-sell-services' ),
+			__( '[%1$s] Revision requested - Order #%2$s', 'wp-sell-services' ),
 			wpss_get_platform_name(),
 			$order->order_number
 		);
@@ -1717,7 +1717,7 @@ class EmailService {
 
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
-			__( '[%1$s] New Message - Order #%2$s', 'wp-sell-services' ),
+			__( '[%1$s] New message - Order #%2$s', 'wp-sell-services' ),
 			wpss_get_platform_name(),
 			$order->order_number
 		);
@@ -1726,7 +1726,7 @@ class EmailService {
 			'order'           => $order,
 			'recipient'       => $recipient,
 			'sender'          => $sender,
-			'email_heading'   => __( 'New Message Received', 'wp-sell-services' ),
+			'email_heading'   => __( 'New message received', 'wp-sell-services' ),
 			'message_content' => $message,
 			'sender_name'     => $sender->display_name,
 			'sender_email'    => $sender->user_email,
@@ -1877,7 +1877,7 @@ class EmailService {
 		if ( $vendor ) {
 			$subject = sprintf(
 				/* translators: %1$s: site name, %2$s: order number */
-				__( '[%1$s] Cancellation Requested - Order #%2$s', 'wp-sell-services' ),
+				__( '[%1$s] Cancellation requested - Order #%2$s', 'wp-sell-services' ),
 				wpss_get_platform_name(),
 				$order->order_number
 			);
@@ -1917,7 +1917,7 @@ class EmailService {
 				array(
 					'order'          => $order,
 					'recipient'      => $customer,
-					'email_heading'  => __( 'Cancellation Request Submitted', 'wp-sell-services' ),
+					'email_heading'  => __( 'Cancellation request submitted', 'wp-sell-services' ),
 					'buyer_name'     => $this->get_customer_name( $order->customer_id ),
 					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
 					'reason'         => $reason_label,
@@ -1977,7 +1977,7 @@ class EmailService {
 
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
-			__( '[%1$s] Order #%2$s Cancelled', 'wp-sell-services' ),
+			__( '[%1$s] Order #%2$s cancelled', 'wp-sell-services' ),
 			wpss_get_platform_name(),
 			$order->order_number
 		);
@@ -2021,7 +2021,7 @@ class EmailService {
 
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
-			__( '[%1$s] Dispute Opened - Order #%2$s', 'wp-sell-services' ),
+			__( '[%1$s] Dispute opened - Order #%2$s', 'wp-sell-services' ),
 			wpss_get_platform_name(),
 			$order->order_number
 		);
@@ -2162,9 +2162,9 @@ class EmailService {
 		);
 
 		$headings = array(
-			1 => __( 'Submit Your Requirements', 'wp-sell-services' ),
-			2 => __( 'Reminder: Requirements Needed', 'wp-sell-services' ),
-			3 => __( 'Final Reminder: Action Required', 'wp-sell-services' ),
+			1 => __( 'Submit your requirements', 'wp-sell-services' ),
+			2 => __( 'Reminder: Requirements needed', 'wp-sell-services' ),
+			3 => __( 'Final reminder: Action required', 'wp-sell-services' ),
 		);
 
 		$subject = sprintf(
@@ -2211,7 +2211,7 @@ class EmailService {
 
 		$template_vars = array(
 			'recipient'       => $vendor,
-			'email_heading'   => __( 'Congratulations! Level Up!', 'wp-sell-services' ),
+			'email_heading'   => __( 'Congratulations! Level up!', 'wp-sell-services' ),
 			'new_level'       => $new_level,
 			'new_level_label' => $level_label,
 			'old_level'       => $current_level,
@@ -2238,17 +2238,17 @@ class EmailService {
 		if ( $is_auto ) {
 			$subject = sprintf(
 				/* translators: %s: platform name */
-				__( '[%s] Auto Withdrawal Request', 'wp-sell-services' ),
+				__( '[%s] Auto withdrawal request', 'wp-sell-services' ),
 				wpss_get_platform_name()
 			);
-			$email_heading = __( 'Auto Withdrawal Request', 'wp-sell-services' );
+			$email_heading = __( 'Auto withdrawal request', 'wp-sell-services' );
 		} else {
 			$subject = sprintf(
 				/* translators: %s: platform name */
-				__( '[%s] New Withdrawal Request', 'wp-sell-services' ),
+				__( '[%s] New withdrawal request', 'wp-sell-services' ),
 				wpss_get_platform_name()
 			);
-			$email_heading = __( 'New Withdrawal Request', 'wp-sell-services' );
+			$email_heading = __( 'New withdrawal request', 'wp-sell-services' );
 		}
 
 		$template_vars = array(
@@ -2296,7 +2296,7 @@ class EmailService {
 
 		$template_vars = array(
 			'recipient'      => $vendor,
-			'email_heading'  => __( 'New Message Received', 'wp-sell-services' ),
+			'email_heading'  => __( 'New message received', 'wp-sell-services' ),
 			'sender'         => $sender,
 			'sender_name'    => $sender->display_name,
 			'sender_email'   => $sender->user_email,
@@ -2332,17 +2332,17 @@ class EmailService {
 			$type    = self::TYPE_WITHDRAWAL_REJECTED;
 			$heading = __( 'Withdrawal rejected', 'wp-sell-services' );
 			/* translators: 1: platform name, 2: amount */
-			$subject = __( '[%1$s] Withdrawal Request for %2$s Rejected', 'wp-sell-services' );
+			$subject = __( '[%1$s] Withdrawal request for %2$s rejected', 'wp-sell-services' );
 		} elseif ( 'completed' === $status ) {
 			$type    = self::TYPE_WITHDRAWAL_COMPLETED;
 			$heading = __( 'Withdrawal paid', 'wp-sell-services' );
 			/* translators: 1: platform name, 2: amount */
-			$subject = __( '[%1$s] Withdrawal of %2$s Paid', 'wp-sell-services' );
+			$subject = __( '[%1$s] Withdrawal of %2$s paid', 'wp-sell-services' );
 		} else {
 			$type    = self::TYPE_WITHDRAWAL_APPROVED;
 			$heading = __( 'Withdrawal approved', 'wp-sell-services' );
 			/* translators: 1: platform name, 2: amount */
-			$subject = __( '[%1$s] Withdrawal of %2$s Approved', 'wp-sell-services' );
+			$subject = __( '[%1$s] Withdrawal of %2$s approved', 'wp-sell-services' );
 		}
 
 		$subject = sprintf( $subject, wpss_get_platform_name(), $amount );
@@ -2385,7 +2385,7 @@ class EmailService {
 
 		$subject = sprintf(
 			/* translators: 1: platform name, 2: vendor name */
-			__( '[%1$s] New Proposal from %2$s', 'wp-sell-services' ),
+			__( '[%1$s] New proposal from %2$s', 'wp-sell-services' ),
 			wpss_get_platform_name(),
 			$vendor->display_name
 		);
@@ -2432,7 +2432,7 @@ class EmailService {
 				$request->post_title
 			),
 			'button_url'     => get_permalink( $request_id ),
-			'button_text'    => __( 'View Proposals', 'wp-sell-services' ),
+			'button_text'    => __( 'View proposals', 'wp-sell-services' ),
 			'reply_to_email' => $vendor->user_email,
 			'reply_to_name'  => $vendor->display_name,
 		);
@@ -2466,7 +2466,7 @@ class EmailService {
 
 		$template_vars = array(
 			'recipient'      => $vendor,
-			'email_heading'  => $is_offer ? __( 'Private offer accepted', 'wp-sell-services' ) : __( 'Proposal Accepted!', 'wp-sell-services' ),
+			'email_heading'  => $is_offer ? __( 'Private offer accepted', 'wp-sell-services' ) : __( 'Proposal accepted!', 'wp-sell-services' ),
 			'content'        => sprintf(
 				/* translators: 1: buyer name, 2: request title */
 				__( 'Congratulations! %1$s has accepted your proposal for "%2$s". An order will be created automatically.', 'wp-sell-services' ),
@@ -2474,7 +2474,7 @@ class EmailService {
 				$request->post_title
 			),
 			'button_url'     => wpss_get_dashboard_url( 'sales' ),
-			'button_text'    => __( 'View Orders', 'wp-sell-services' ),
+			'button_text'    => __( 'View orders', 'wp-sell-services' ),
 			'reply_to_email' => $buyer->user_email,
 			'reply_to_name'  => $buyer->display_name,
 		);
@@ -2569,14 +2569,14 @@ class EmailService {
 
 		$template_vars = array(
 			'recipient'     => $vendor,
-			'email_heading' => $is_offer ? __( 'Private offer declined', 'wp-sell-services' ) : __( 'Proposal Not Accepted', 'wp-sell-services' ),
+			'email_heading' => $is_offer ? __( 'Private offer declined', 'wp-sell-services' ) : __( 'Proposal not accepted', 'wp-sell-services' ),
 			'content'       => $content,
 			// There is no "proposals" dashboard section — this used to link at
 			// `?section=proposals`, which rendered a dead "Section Not
 			// Available" card. Send the seller where more work actually is:
 			// the buyer-request archive they bid from.
 			'button_url'    => $is_offer ? wpss_private_offer_url( (int) $proposal->request_id ) : (string) get_post_type_archive_link( 'wpss_request' ),
-			'button_text'   => $is_offer ? __( 'Open the conversation', 'wp-sell-services' ) : __( 'Browse Requests', 'wp-sell-services' ),
+			'button_text'   => $is_offer ? __( 'Open the conversation', 'wp-sell-services' ) : __( 'Browse requests', 'wp-sell-services' ),
 		);
 
 		if ( $buyer ) {

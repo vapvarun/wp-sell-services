@@ -1709,9 +1709,9 @@
    "title": "Buttons in mixed case, even within one row: 'View Request' beside 'View order', 'Create Service', 'Contact Vendor' beside 'Save to favorites'",
    "guard": "static:button-copy-sentence-case",
    "added": "2026-11-28",
-   "fails_on": "60de9ed5 (templates/content-request-card.php: 'Send Proposal', 'View Request')",
+   "fails_on": "60de9ed5 (templates/content-request-card.php: 'Send Proposal', 'View Request'); e0c0f2f1 (src/Admin/Settings.php: 'Save General Settings', 'Send Test Email')",
    "check": "tests/test-button-copy-sentence-case.php",
-   "note": "Reads every <button>/<a> with .wpss-btn in member-facing templates, src/Frontend and src/Blocks (Free and Pro). Product names, package tiers and acronyms keep their capitals; block titles in the editor follow core's Title Case"
+   "note": "Reads every <button>/<a> with .wpss-btn or .button, and every submit_button() label, across templates and src of Free and Pro (CLI output excluded). Product names, package tiers and acronyms keep their capitals; block titles in the editor follow core's Title Case"
   }
  ]
 }

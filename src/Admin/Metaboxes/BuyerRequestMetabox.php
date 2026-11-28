@@ -43,7 +43,7 @@ class BuyerRequestMetabox {
 	public function register_metaboxes(): void {
 		add_meta_box(
 			'wpss_request_details',
-			__( 'Request Details', 'wp-sell-services' ),
+			__( 'Request details', 'wp-sell-services' ),
 			array( $this, 'render_details_metabox' ),
 			BuyerRequestPostType::POST_TYPE,
 			'normal',
@@ -100,7 +100,7 @@ class BuyerRequestMetabox {
 				</td>
 			</tr>
 			<tr>
-				<th><label for="wpss_budget_type"><?php esc_html_e( 'Budget Type', 'wp-sell-services' ); ?></label></th>
+				<th><label for="wpss_budget_type"><?php esc_html_e( 'Budget type', 'wp-sell-services' ); ?></label></th>
 				<td>
 					<select id="wpss_budget_type" name="wpss_budget_type">
 						<?php foreach ( BuyerRequestService::get_budget_types() as $key => $label ) : ?>
@@ -112,7 +112,7 @@ class BuyerRequestMetabox {
 				</td>
 			</tr>
 			<tr>
-				<th><span class="wpss-field-group-label"><?php esc_html_e( 'Budget Amount', 'wp-sell-services' ); ?></span></th>
+				<th><span class="wpss-field-group-label"><?php esc_html_e( 'Budget amount', 'wp-sell-services' ); ?></span></th>
 				<td>
 					<label for="wpss_budget_min">
 						<?php esc_html_e( 'Min:', 'wp-sell-services' ); ?>
@@ -129,7 +129,7 @@ class BuyerRequestMetabox {
 				</td>
 			</tr>
 			<tr>
-				<th><label for="wpss_delivery_days"><?php esc_html_e( 'Expected Delivery (days)', 'wp-sell-services' ); ?></label></th>
+				<th><label for="wpss_delivery_days"><?php esc_html_e( 'Expected delivery (days)', 'wp-sell-services' ); ?></label></th>
 				<td>
 					<input type="number" id="wpss_delivery_days" name="wpss_delivery_days"
 							value="<?php echo esc_attr( $delivery_days ); ?>"
@@ -137,14 +137,14 @@ class BuyerRequestMetabox {
 				</td>
 			</tr>
 			<tr>
-				<th><label for="wpss_expires_at"><?php esc_html_e( 'Expires On', 'wp-sell-services' ); ?></label></th>
+				<th><label for="wpss_expires_at"><?php esc_html_e( 'Expires on', 'wp-sell-services' ); ?></label></th>
 				<td>
 					<input type="datetime-local" id="wpss_expires_at" name="wpss_expires_at"
 							value="<?php echo esc_attr( $expires_at ? wpss_datetime_local_input( $expires_at ) : '' ); ?>">
 				</td>
 			</tr>
 			<tr>
-				<th><label for="wpss_skills"><?php esc_html_e( 'Required Skills', 'wp-sell-services' ); ?></label></th>
+				<th><label for="wpss_skills"><?php esc_html_e( 'Required skills', 'wp-sell-services' ); ?></label></th>
 				<td>
 					<textarea id="wpss_skills" name="wpss_skills" rows="3" class="large-text"
 								placeholder="<?php esc_attr_e( 'One skill per line', 'wp-sell-services' ); ?>"><?php echo esc_textarea( implode( "\n", $skills ) ); ?></textarea>
@@ -265,7 +265,7 @@ class BuyerRequestMetabox {
 					</ul>
 				<?php endif; ?>
 			</div>
-			<button type="button" class="button" id="wpss-add-attachment"><?php esc_html_e( 'Add Attachment', 'wp-sell-services' ); ?></button>
+			<button type="button" class="button" id="wpss-add-attachment"><?php esc_html_e( 'Add attachment', 'wp-sell-services' ); ?></button>
 		</div>
 		<?php
 	}

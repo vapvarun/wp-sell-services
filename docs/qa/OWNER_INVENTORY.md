@@ -759,7 +759,7 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 57
 
 Lines in the readme that make a claim the smoke must prove. Confirm the real ones into `promises[]` in `qa-config.json`; each becomes a hard row.
 
-- `readme.txt:235` — Yes. Vendors can enable "Vacation Mode" which automatically pauses all their services from accepting new orders while keeping them published. A custom vacation message displays on their profile.
+- `readme.txt:235` — Yes. Vendors can enable "Vacation mode" which automatically pauses all their services from accepting new orders while keeping them published. A custom vacation message displays on their profile.
 
 ## What activation creates
 

@@ -46,7 +46,7 @@ Buyers must also write a review. It cannot be empty; there is no minimum length.
 
 After an order is completed, the buyer can leave a review in two ways:
 
-1. **From the order page** -- Go to **Dashboard > My Orders**, open the completed order, and click **Leave Review**.
+1. **From the order page** -- Go to **Dashboard > My Orders**, open the completed order, and click **Leave review**.
 2. **From the email reminder** -- The system sends a review invitation a few days after completion. Click the link to go directly to the review form.
 
 Once submitted, the review is published immediately (unless the admin has turned on review moderation -- see below).
@@ -72,10 +72,10 @@ By default, reviews are published immediately after submission. If you want to r
 
 ### Enabling Moderation
 
-Go to **Settings > Vendor Settings** and enable **Review Moderation**. Once enabled:
+Go to **Settings > Vendor settings** and enable **Review moderation**. Once enabled:
 
 - New reviews go into "Pending" status instead of publishing immediately.
-- You review them from **Sell Services > Review Moderation**.
+- You review them from **Sell Services > Review moderation**.
 - Click **Approve** to publish or **Reject** to hide a review.
 - The vendor is notified once an approved review goes live.
 
@@ -87,7 +87,7 @@ Moderation is useful for new marketplaces where you want to ensure review qualit
 
 When you launch a marketplace with vendors you added yourself, their profiles start empty. Admins can give them a head start with reviews gathered elsewhere. Vendors cannot add reviews for themselves.
 
-Go to **Sell Services > Import Reviews**. You can:
+Go to **Sell Services > Import reviews**. You can:
 
 - **Add one review** -- pick the vendor, pick one of their services, enter the reviewer name, a 1-5 star rating, the review text and an optional date.
 - **Import a CSV** -- download the template, fill it in (up to 500 rows per file), choose **Check file** to preview every row, then **Import**. The preview saves nothing and tells you which rows are ready, which are already imported and which need fixing.

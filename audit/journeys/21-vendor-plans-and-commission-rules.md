@@ -8,7 +8,7 @@
 ## Steps
 
 ### 1. Owner sets up plans
-Settings > Vendor Settings > Vendor Subscriptions: enable, create a free plan (0 services means unlimited) and a paid plan with a Stripe Price ID; then tick "Require Subscription to Sell".
+Settings > Vendor settings > Vendor Subscriptions: enable, create a free plan (0 services means unlimited) and a paid plan with a Stripe Price ID; then tick "Require subscription to sell".
 
 **Expect** a paid plan without a Price ID cannot be bought (400 `wpss_plan_not_billable`); the vendor dashboard gains a Subscription section only while the feature is on.
 

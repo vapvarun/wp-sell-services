@@ -85,7 +85,7 @@ class ServiceMetabox {
 		// Single consolidated metabox with tabbed/wizard interface.
 		add_meta_box(
 			'wpss_service_data',
-			__( 'Service Data', 'wp-sell-services' ),
+			__( 'Service data', 'wp-sell-services' ),
 			array( $this, 'render_service_data_metabox' ),
 			ServicePostType::POST_TYPE,
 			'normal',
@@ -317,7 +317,7 @@ class ServiceMetabox {
 	 */
 	private function render_package_item( $index, array $package ): void {
 		$is_first     = ( 0 === $index );
-		$package_name = ! empty( $package['name'] ) ? $package['name'] : __( 'New Package', 'wp-sell-services' );
+		$package_name = ! empty( $package['name'] ) ? $package['name'] : __( 'New package', 'wp-sell-services' );
 		$price        = ! empty( $package['price'] ) ? (float) $package['price'] : 0;
 		?>
 		<div class="wpss-package-item" data-index="<?php echo esc_attr( $index ); ?>">
@@ -523,7 +523,7 @@ class ServiceMetabox {
 			</div>
 			<button type="button" class="button button-secondary" id="wpss-add-gallery-images">
 				<i data-lucide="images" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Add Images', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Add images', 'wp-sell-services' ); ?>
 			</button>
 			<p class="description"><?php esc_html_e( 'Drag to reorder images.', 'wp-sell-services' ); ?></p>
 		</div>
@@ -596,7 +596,7 @@ class ServiceMetabox {
 		$price_type    = $addon['price_type'] ?? 'flat';
 		$show_quantity = 'quantity' === $field_type;
 		$show_dropdown = 'dropdown' === $field_type;
-		$title         = $addon['title'] ?? __( 'New Add-on', 'wp-sell-services' );
+		$title         = $addon['title'] ?? __( 'New add-on', 'wp-sell-services' );
 		?>
 		<div class="wpss-addon-item" data-index="<?php echo esc_attr( (string) $index ); ?>">
 			<div class="wpss-addon-header">
@@ -629,7 +629,7 @@ class ServiceMetabox {
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid">
 					<div class="wpss-addon-field">
-						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_field_type"><?php esc_html_e( 'Field Type', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_field_type"><?php esc_html_e( 'Field type', 'wp-sell-services' ); ?></label>
 						<select id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_field_type" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][field_type]" class="wpss-addon-field-type">
 							<?php foreach ( $field_types as $value => $label ) : ?>
 								<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $field_type, $value ); ?>><?php echo esc_html( $label ); ?></option>
@@ -637,7 +637,7 @@ class ServiceMetabox {
 						</select>
 					</div>
 					<div class="wpss-addon-field">
-						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_price_type"><?php esc_html_e( 'Price Type', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_price_type"><?php esc_html_e( 'Price type', 'wp-sell-services' ); ?></label>
 						<select id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_price_type" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][price_type]" class="wpss-addon-price-type">
 							<?php foreach ( $price_types as $value => $label ) : ?>
 								<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $price_type, $value ); ?>><?php echo esc_html( $label ); ?></option>
@@ -656,12 +656,12 @@ class ServiceMetabox {
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid wpss-addon-quantity-fields" <?php echo $show_quantity ? '' : 'style="display: none;"'; ?>>
 					<div class="wpss-addon-field">
-						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_min_quantity"><?php esc_html_e( 'Min Quantity', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_min_quantity"><?php esc_html_e( 'Min quantity', 'wp-sell-services' ); ?></label>
 						<input type="number" id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_min_quantity" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][min_quantity]"
 								value="<?php echo esc_attr( $addon['min_quantity'] ?? '1' ); ?>" min="1" max="100">
 					</div>
 					<div class="wpss-addon-field">
-						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_max_quantity"><?php esc_html_e( 'Max Quantity', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_max_quantity"><?php esc_html_e( 'Max quantity', 'wp-sell-services' ); ?></label>
 						<input type="number" id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_max_quantity" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][max_quantity]"
 								value="<?php echo esc_attr( $addon['max_quantity'] ?? '10' ); ?>" min="1" max="100">
 					</div>
@@ -676,7 +676,7 @@ class ServiceMetabox {
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid">
 					<div class="wpss-addon-field">
-						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_delivery_days_extra"><?php esc_html_e( 'Extra Delivery Days', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_delivery_days_extra"><?php esc_html_e( 'Extra delivery days', 'wp-sell-services' ); ?></label>
 						<div class="wpss-input-with-suffix">
 							<input type="number" id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_delivery_days_extra" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][delivery_days_extra]"
 									value="<?php echo esc_attr( $addon['delivery_days_extra'] ?? '0' ); ?>" min="0" max="30">
@@ -1609,7 +1609,7 @@ class ServiceMetabox {
 
 		$package_count = count( $packages );
 		?>
-		<h3 class="wpss-panel-title"><?php esc_html_e( 'Pricing Packages', 'wp-sell-services' ); ?></h3>
+		<h3 class="wpss-panel-title"><?php esc_html_e( 'Pricing packages', 'wp-sell-services' ); ?></h3>
 
 		<p class="description"><?php esc_html_e( 'Define your service package. Add more packages for tiered pricing (up to 3).', 'wp-sell-services' ); ?></p>
 
@@ -1622,7 +1622,7 @@ class ServiceMetabox {
 		<button type="button" class="button button-secondary" id="wpss-add-package"
 				<?php echo $package_count >= 3 ? 'style="display:none;"' : ''; ?>>
 			<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
-			<?php esc_html_e( 'Add Package', 'wp-sell-services' ); ?>
+			<?php esc_html_e( 'Add package', 'wp-sell-services' ); ?>
 		</button>
 
 		<script type="text/html" id="tmpl-wpss-package-item">
@@ -1660,7 +1660,7 @@ class ServiceMetabox {
 			</div>
 			<button type="button" class="button button-secondary" id="wpss-add-gallery-images">
 				<i data-lucide="images" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Add Images', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Add images', 'wp-sell-services' ); ?>
 			</button>
 		</div>
 		<?php
@@ -1678,7 +1678,7 @@ class ServiceMetabox {
 		$field_types = $this->get_addon_field_types();
 		$price_types = $this->get_addon_price_types();
 		?>
-		<h3 class="wpss-panel-title"><?php esc_html_e( 'Service Add-ons', 'wp-sell-services' ); ?></h3>
+		<h3 class="wpss-panel-title"><?php esc_html_e( 'Service add-ons', 'wp-sell-services' ); ?></h3>
 
 		<input type="hidden" name="wpss_addons_present" value="1">
 
@@ -1692,7 +1692,7 @@ class ServiceMetabox {
 
 		<button type="button" class="button button-secondary" id="wpss-add-addon">
 			<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
-			<?php esc_html_e( 'Add Add-on', 'wp-sell-services' ); ?>
+			<?php esc_html_e( 'Add add-on', 'wp-sell-services' ); ?>
 		</button>
 
 		<script type="text/html" id="tmpl-wpss-addon-item">
@@ -1710,7 +1710,7 @@ class ServiceMetabox {
 	private function render_requirements_content( \WP_Post $post ): void {
 		$requirements = wpss_get_service_requirements( $post->ID );
 		?>
-		<h3 class="wpss-panel-title"><?php esc_html_e( 'Buyer Requirements', 'wp-sell-services' ); ?></h3>
+		<h3 class="wpss-panel-title"><?php esc_html_e( 'Buyer requirements', 'wp-sell-services' ); ?></h3>
 
 		<p class="description"><?php esc_html_e( 'Questions to ask buyers when they place an order.', 'wp-sell-services' ); ?></p>
 
@@ -1722,7 +1722,7 @@ class ServiceMetabox {
 
 		<button type="button" class="button button-secondary" id="wpss-add-requirement">
 			<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
-			<?php esc_html_e( 'Add Requirement', 'wp-sell-services' ); ?>
+			<?php esc_html_e( 'Add requirement', 'wp-sell-services' ); ?>
 		</button>
 
 		<script type="text/html" id="tmpl-wpss-requirement-item">
@@ -1741,7 +1741,7 @@ class ServiceMetabox {
 		$faqs = get_post_meta( $post->ID, '_wpss_faqs', true );
 		$faqs = ! empty( $faqs ) ? $faqs : array();
 		?>
-		<h3 class="wpss-panel-title"><?php esc_html_e( 'Frequently Asked Questions', 'wp-sell-services' ); ?></h3>
+		<h3 class="wpss-panel-title"><?php esc_html_e( 'Frequently asked questions', 'wp-sell-services' ); ?></h3>
 
 		<p class="description"><?php esc_html_e( 'Add frequently asked questions about your service.', 'wp-sell-services' ); ?></p>
 
@@ -1804,7 +1804,7 @@ class ServiceMetabox {
 		<div class="wpss-addon-item" data-index="{{data.index}}">
 			<div class="wpss-addon-header">
 				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
-				<span class="wpss-addon-title"><?php esc_html_e( 'New Add-on', 'wp-sell-services' ); ?></span>
+				<span class="wpss-addon-title"><?php esc_html_e( 'New add-on', 'wp-sell-services' ); ?></span>
 				<div class="wpss-addon-actions">
 					<button type="button" class="wpss-addon-toggle" title="<?php esc_attr_e( 'Expand/Collapse', 'wp-sell-services' ); ?>">
 						<i data-lucide="chevron-down" class="wpss-icon" aria-hidden="true"></i>
@@ -1831,7 +1831,7 @@ class ServiceMetabox {
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid">
 					<div class="wpss-addon-field">
-						<label for="wpss_addon_{{data.index}}_field_type"><?php esc_html_e( 'Field Type', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_{{data.index}}_field_type"><?php esc_html_e( 'Field type', 'wp-sell-services' ); ?></label>
 						<select id="wpss_addon_{{data.index}}_field_type" name="wpss_addons[{{data.index}}][field_type]" class="wpss-addon-field-type">
 							<?php foreach ( $field_types as $value => $label ) : ?>
 								<option value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $label ); ?></option>
@@ -1839,7 +1839,7 @@ class ServiceMetabox {
 						</select>
 					</div>
 					<div class="wpss-addon-field">
-						<label for="wpss_addon_{{data.index}}_price_type"><?php esc_html_e( 'Price Type', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_{{data.index}}_price_type"><?php esc_html_e( 'Price type', 'wp-sell-services' ); ?></label>
 						<select id="wpss_addon_{{data.index}}_price_type" name="wpss_addons[{{data.index}}][price_type]" class="wpss-addon-price-type">
 							<?php foreach ( $price_types as $value => $label ) : ?>
 								<option value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $label ); ?></option>
@@ -1857,12 +1857,12 @@ class ServiceMetabox {
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid wpss-addon-quantity-fields" style="display: none;">
 					<div class="wpss-addon-field">
-						<label for="wpss_addon_{{data.index}}_min_quantity"><?php esc_html_e( 'Min Quantity', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_{{data.index}}_min_quantity"><?php esc_html_e( 'Min quantity', 'wp-sell-services' ); ?></label>
 						<input type="number" id="wpss_addon_{{data.index}}_min_quantity" name="wpss_addons[{{data.index}}][min_quantity]"
 								value="1" min="1" max="100">
 					</div>
 					<div class="wpss-addon-field">
-						<label for="wpss_addon_{{data.index}}_max_quantity"><?php esc_html_e( 'Max Quantity', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_{{data.index}}_max_quantity"><?php esc_html_e( 'Max quantity', 'wp-sell-services' ); ?></label>
 						<input type="number" id="wpss_addon_{{data.index}}_max_quantity" name="wpss_addons[{{data.index}}][max_quantity]"
 								value="10" min="1" max="100">
 					</div>
@@ -1876,7 +1876,7 @@ class ServiceMetabox {
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid">
 					<div class="wpss-addon-field">
-						<label for="wpss_addon_{{data.index}}_delivery_days_extra"><?php esc_html_e( 'Extra Delivery Days', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_{{data.index}}_delivery_days_extra"><?php esc_html_e( 'Extra delivery days', 'wp-sell-services' ); ?></label>
 						<div class="wpss-input-with-suffix">
 							<input type="number" id="wpss_addon_{{data.index}}_delivery_days_extra" name="wpss_addons[{{data.index}}][delivery_days_extra]"
 									value="0" min="0" max="30">

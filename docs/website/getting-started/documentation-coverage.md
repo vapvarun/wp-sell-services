@@ -39,7 +39,7 @@ run of `bin/docs-audit.py`.
 | **Analytics** | Vendor analytics, admin analytics **[PRO]**, data export **[PRO]** |
 | **Cloud storage** **[PRO]** | Overview and setup (S3, Google Cloud Storage, DigitalOcean Spaces) |
 | **Admin tools** | Service moderation, vendor management, withdrawal approvals, manual orders, **member reports**, the guided tour |
-| **Platform settings** | General, Pages, **Payment Gateways**, **Commission & Tax**, **Payouts**, White Label **[PRO]**, Advanced |
+| **Platform settings** | General, Pages, **Payment gateways**, **Commission & tax**, **Payouts**, White Label **[PRO]**, Advanced |
 | **Developer guide** | REST API overview, REST controller reference, hooks and filters, capabilities, database schema, template and theme integration, email customization, Action Scheduler, WP-CLI, Abilities API, Pro extension points, custom integrations |
 
 ### Recently closed gaps
@@ -89,7 +89,7 @@ site owner:
 | Not covered | Status |
 |---|---|
 | **What's New pages for 1.4.0 and 1.5.x** | 1.3.0 and 1.6.0 have narrative pages. The releases between them are covered by both plugins' `readme.txt` changelogs and by the pages they affect, but have no single narrative page. |
-| **A dedicated Audit Log page** | **Sell Services > Audit Log** is mentioned where it is relevant, and `GET /audit-log` is in the REST reference, but there is no page explaining what is recorded, retention, or how to read an entry. |
+| **A dedicated Audit Log page** | **Sell Services > Audit log** is mentioned where it is relevant, and `GET /audit-log` is in the REST reference, but there is no page explaining what is recorded, retention, or how to read an entry. |
 | **The Vendors, Orders & Disputes, and Emails settings tabs** | These are documented by *feature*, not by *tab*: see [Vendor Settings](../vendor-system/vendor-settings.md), [Order Settings](../order-management/order-settings.md) and [Email Configuration](../notifications-emails/email-configuration.md). The Platform Settings section does not yet have a page per tab for these three, so a reader looking tab-by-tab will not find them where they expect. |
 | **Migration between e-commerce rails** | Switching rails is safe (past orders are never rewritten, old gateway webhooks keep working) and that is stated in the REST and WooCommerce pages, but there is no step-by-step migration guide. |
 | **Scale and performance guidance** | No page on running the marketplace at thousands of services, vendors or orders: no indexing notes, no caching guidance, no benchmark figures. |

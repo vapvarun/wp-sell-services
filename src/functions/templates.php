@@ -424,7 +424,7 @@ function wpss_render_breadcrumb( array $crumbs ): void {
 function wpss_request_breadcrumb( int $request_id ): void {
 	wpss_render_breadcrumb(
 		array(
-			array( __( 'Buyer Requests', 'wp-sell-services' ), (string) get_post_type_archive_link( 'wpss_request' ) ),
+			array( __( 'Buyer requests', 'wp-sell-services' ), (string) get_post_type_archive_link( 'wpss_request' ) ),
 			array( (string) get_post_field( 'post_title', $request_id ), '' ),
 		)
 	);

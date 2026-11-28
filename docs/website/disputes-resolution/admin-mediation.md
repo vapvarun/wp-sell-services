@@ -112,7 +112,7 @@ Both parties have negotiated a solution that works for them. You formalize and e
 
 **Order status becomes:** Completed.
 
-Mutual Agreement does **not** refund the buyer -- it takes the same path as Favor Vendor, so the vendor keeps their earnings. If the compromise involves money going back, choose **Partial Refund** and enter the agreed amount instead.
+Mutual Agreement does **not** refund the buyer -- it takes the same path as Favor Vendor, so the vendor keeps their earnings. If the compromise involves money going back, choose **Partial refund** and enter the agreed amount instead.
 
 ## How to Resolve a Dispute
 

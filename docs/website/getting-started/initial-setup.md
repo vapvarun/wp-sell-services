@@ -25,7 +25,7 @@ Choose how vendors join your marketplace:
 | Mode | What Happens |
 |------|-------------|
 | **Open** | Any logged-in member can start selling immediately (the member needs an account first; WordPress registration controls who can create one) |
-| **Requires Approval** | People apply to become vendors, and you approve or decline each application |
+| **Requires approval** | People apply to become vendors, and you approve or decline each application |
 | **Closed** | Only you (the admin) can create vendor accounts |
 
 Open and Requires Approval both need visitors to be able to create an account. That is WordPress's own **Anyone can register** setting (**Settings > General**), which is off on a new site. The setup wizard's Vendor Settings step has a **Let visitors create accounts** box for it, and while vendor registration is open but sign-up is off, the WP Sell Services Dashboard says so. If your marketplace is invite-only, set Vendor Registration to **Closed** and the warning clears.
@@ -66,7 +66,7 @@ Each row disappears once its cause is fixed, and the box goes when nothing is le
 Here is everything you should review before inviting your first vendors:
 
 ### Commission and Tax
-Go to **Sell Services > Settings > Commission & Tax**:
+Go to **Sell Services > Settings > Commission & tax**:
 
 - **Commission rate** -- Your platform's cut on each sale (default: 10%)
 - **Per-vendor rates** -- Set different rates for specific vendors (on by default)
@@ -83,14 +83,14 @@ Go to **Sell Services > Settings > Payouts**:
 If you want a buffer against refunds and chargebacks, raise the clearance period. It ships at 0 so a new marketplace does not hold vendor money by surprise.
 
 ### Vendor Settings
-Go to **Sell Services > Settings > Vendor Settings**:
+Go to **Sell Services > Settings > Vendor settings**:
 
 - **Max services per vendor** -- How many active services each vendor can have (default: 20)
 - **Require verification** -- Whether vendors must verify their identity before selling (default: off)
 - **Service moderation** -- Whether you review and approve every new service before it goes live (default: off, so a new marketplace is not empty on launch day)
 
 ### Order Settings
-Go to **Sell Services > Settings > Orders & Disputes**:
+Go to **Sell Services > Settings > Orders & disputes**:
 
 - **Auto-complete days** -- If a buyer does not respond after delivery, the order auto-completes after this many days (default: 3)
 - **Requirements timeout** -- How long a buyer has to submit order requirements (default: 7 days)
@@ -111,10 +111,10 @@ Go to **Sell Services > Settings > Emails**. There are **30 notification types**
 - New review (sent to vendor)
 - Dispute opened (sent to both parties and admin; the same switch covers the owner's chargeback-opened alert)
 
-The same screen has a **Email Deliverability** test. Send yourself a test email before launch -- if it does not arrive, no other notification will either. See [Email Notifications](../notifications-emails/email-types.md) for the full list.
+The same screen has a **Email deliverability** test. Send yourself a test email before launch -- if it does not arrive, no other notification will either. See [Email Notifications](../notifications-emails/email-types.md) for the full list.
 
 ### Tax Settings (Optional)
-Tax lives with commission, in **Sell Services > Settings > Commission & Tax**:
+Tax lives with commission, in **Sell Services > Settings > Commission & tax**:
 
 - Enable tax and set a rate (off by default)
 - Choose a label (Tax, VAT, GST, etc.)

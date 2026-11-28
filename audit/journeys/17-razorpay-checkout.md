@@ -1,14 +1,14 @@
 # Journey 17 - Buyer pays with Razorpay (Pro)
 
 **Roles:** admin, buyer (`subscriber`)
-**Rail:** standalone (Razorpay registers only there; on a store rail the Payment Gateways tab says the store handles payment)
+**Rail:** standalone (Razorpay registers only there; on a store rail the Payment gateways tab says the store handles payment)
 **Status:** written 2026-11-03; walk pending, money (run after the sandbox is wired, see `docs/qa/` money-cards-last)
 **Docs:** docs/website/payments-checkout/other-gateways.md, platform-settings/payment-gateways-settings.md
 
 ## Steps
 
 ### 1. Owner turns Razorpay on
-Settings > Payment Gateways > Razorpay: enter test Key ID, Key Secret and Webhook Secret, tick Enabled, save.
+Settings > Payment gateways > Razorpay: enter test Key ID, Key Secret and Webhook Secret, tick Enabled, save.
 
 **Expect** the card saves and re-renders with the secrets masked; with the keys empty the gateway does not offer itself at checkout even when ticked.
 

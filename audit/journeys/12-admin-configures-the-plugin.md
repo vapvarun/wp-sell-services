@@ -27,7 +27,7 @@ General, Checkout, Pages, Payment Gateways (standalone only), Commission & Tax, 
 
 Same check, visual side: every `h2` on every Settings tab is the same size and case (card:10412306674, card:10412156063), and the first heading on Payment Gateways has no empty band above it. Pro cards injected into a tab follow the same rule.
 
-### 5. The Payment Gateways tab follows the rail
+### 5. The Payment gateways tab follows the rail
 Standalone: gateway cards. Woo: one notice that WooCommerce owns payment.
 
 **Expect** switching rails never rewrites past orders, and a gateway saved on one rail is not shown as active on the other.

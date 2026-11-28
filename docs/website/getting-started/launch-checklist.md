@@ -27,10 +27,10 @@ currency, and changing it later does not convert existing records.
 
 Get this right before a single real order.
 
-- [ ] **Settings > Payment Gateways** -- enable at least one gateway and complete its credentials
+- [ ] **Settings > Payment gateways** -- enable at least one gateway and complete its credentials
 - [ ] Add the gateway's **webhook** endpoint. Without it, payments can succeed at the gateway and never mark the order paid
 - [ ] Test in the gateway's sandbox mode, end to end, before switching to live keys
-- [ ] **Settings > Commission & Tax** -- commission rate [10%], per-vendor overrides [on], tax [off]
+- [ ] **Settings > Commission & tax** -- commission rate [10%], per-vendor overrides [on], tax [off]
 - [ ] Decide the **tip commission rate**. Empty means tips are commissioned at your normal rate; `0` means vendors keep tips in full
 - [ ] **Settings > Payouts** -- minimum withdrawal [$25], clearance period [**0 days**], wallet provider
 - [ ] Decide how you will actually pay vendors -- [Paying Your Vendors](../earnings-wallet/vendor-payouts.md)
@@ -41,14 +41,14 @@ Get this right before a single real order.
 
 ## 4. Vendors
 
-- [ ] **Settings > Vendor Settings** -- registration mode: open, requires approval, or closed
+- [ ] **Settings > Vendor settings** -- registration mode: open, requires approval, or closed
 - [ ] Max services per vendor [20], identity verification [off]
 - [ ] Service moderation [**off**]. Left off, new listings publish immediately. Turn it on if you want to review every service first -- [Service Moderation](../admin-tools/service-moderation.md)
 - [ ] **[PRO]** Vendor subscription plans, if vendors will pay to sell
 
 ## 5. Orders and policy
 
-- [ ] **Settings > Orders & Disputes** -- auto-complete [3 days], requirements timeout [7 days], dispute window [14 days], auto-flag late orders [3 days]
+- [ ] **Settings > Orders & disputes** -- auto-complete [3 days], requirements timeout [7 days], dispute window [14 days], auto-flag late orders [3 days]
 - [ ] Confirm disputes are enabled [on] and you know who will mediate them
 
 Revision limits are **not** here -- vendors set those per package.

@@ -101,11 +101,11 @@ Clear-cut cases (like non-delivery) may be resolved in 1-3 days. Complex dispute
 
 The admin will choose one of these resolutions:
 
-- **Full Refund** -- The buyer gets all their money back. The order is cancelled.
-- **Partial Refund** -- A percentage is refunded to the buyer, and the vendor receives the rest.
+- **Full refund** -- The buyer gets all their money back. The order is cancelled.
+- **Partial refund** -- A percentage is refunded to the buyer, and the vendor receives the rest.
 - **Complete Order (Vendor Wins)** -- No refund. The vendor is paid in full.
 - **Favor Buyer** -- Similar to full refund, decided in the buyer's favor.
-- **Mutual Agreement** -- A custom solution both parties agree to.
+- **Mutual agreement** -- A custom solution both parties agree to.
 
 ## Tips for a Strong Dispute
 

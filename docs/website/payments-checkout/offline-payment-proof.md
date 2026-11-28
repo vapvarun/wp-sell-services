@@ -13,13 +13,13 @@ buyers an upload box it will never use.
 
 ## Turning it on
 
-1. Go to **Sell Services > Settings > Orders & Disputes**.
-2. Find **Offline Payment Proof**.
+1. Go to **Sell Services > Settings > Orders & disputes**.
+2. Find **Offline payment proof**.
 3. Tick **Let buyers upload proof of an offline payment for an admin to verify**.
 4. Save.
 
 You also need at least one offline payment method enabled under
-**Settings > Payment Gateways**, with your bank details or instructions in it.
+**Settings > Payment gateways**, with your bank details or instructions in it.
 That text is what the buyer sees after ordering, so put everything they need to
 pay you in it.
 

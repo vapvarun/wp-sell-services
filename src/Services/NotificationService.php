@@ -395,7 +395,7 @@ class NotificationService {
 					: __( 'Great news! %s has placed an order for your service.', 'wp-sell-services' ),
 				$buyer_name
 			)
-			->heading( __( 'Order Details:', 'wp-sell-services' ) )
+			->heading( __( 'Order details:', 'wp-sell-services' ) )
 			->line(
 				/* translators: %s: service name */
 				__( 'Service: %s', 'wp-sell-services' ),
@@ -403,7 +403,7 @@ class NotificationService {
 			)
 			->line(
 				/* translators: %s: order number */
-				__( 'Order Number: #%s', 'wp-sell-services' ),
+				__( 'Order number: #%s', 'wp-sell-services' ),
 				$order_number
 			)
 			->line(
@@ -420,7 +420,7 @@ class NotificationService {
 		$this->create(
 			$order->vendor_id,
 			self::TYPE_ORDER_CREATED,
-			$is_digital ? __( 'New Sale', 'wp-sell-services' ) : __( 'New Order Received', 'wp-sell-services' ),
+			$is_digital ? __( 'New sale', 'wp-sell-services' ) : __( 'New order received', 'wp-sell-services' ),
 			$vendor_message,
 			array(
 				'order_id'     => $order_id,
@@ -433,7 +433,7 @@ class NotificationService {
 		// Notify buyer with confirmation.
 		$buyer_message = NotificationMessage::make()
 			->line( __( 'Thank you for your order!', 'wp-sell-services' ) )
-			->heading( __( 'Order Confirmation:', 'wp-sell-services' ) )
+			->heading( __( 'Order confirmation:', 'wp-sell-services' ) )
 			->line(
 				/* translators: %s: service name */
 				__( 'Service: %s', 'wp-sell-services' ),
@@ -446,7 +446,7 @@ class NotificationService {
 			)
 			->line(
 				/* translators: %s: order number */
-				__( 'Order Number: #%s', 'wp-sell-services' ),
+				__( 'Order number: #%s', 'wp-sell-services' ),
 				$order_number
 			)
 			->line(
@@ -456,7 +456,7 @@ class NotificationService {
 			)
 			->block()
 			->field(
-				__( 'Next Step:', 'wp-sell-services' ),
+				__( 'Next step:', 'wp-sell-services' ),
 				$is_digital
 					? __( 'Your download is ready. Download it from this order or from Downloads in your dashboard.', 'wp-sell-services' )
 					: __( 'Please submit your requirements so the vendor can start working on your order.', 'wp-sell-services' )
@@ -465,7 +465,7 @@ class NotificationService {
 		$this->create(
 			$order->customer_id,
 			'order_confirmation',
-			$is_digital ? __( 'Your Download Is Ready', 'wp-sell-services' ) : __( 'Order Confirmed', 'wp-sell-services' ),
+			$is_digital ? __( 'Your download is ready', 'wp-sell-services' ) : __( 'Order confirmed', 'wp-sell-services' ),
 			$buyer_message,
 			array(
 				'order_id'     => $order_id,
@@ -578,14 +578,14 @@ class NotificationService {
 				$this->create(
 					(int) $order->vendor_id,
 					'order_late',
-					__( 'Order Overdue', 'wp-sell-services' ),
+					__( 'Order overdue', 'wp-sell-services' ),
 					__( 'Your order is past the delivery deadline. Please deliver as soon as possible.', 'wp-sell-services' ),
 					array( 'order_id' => $order_id )
 				);
 				$this->create(
 					(int) $order->customer_id,
 					'order_late',
-					__( 'Order Delayed', 'wp-sell-services' ),
+					__( 'Order delayed', 'wp-sell-services' ),
 					__( 'Your order is past the expected delivery date. We have notified the vendor.', 'wp-sell-services' ),
 					array( 'order_id' => $order_id )
 				);
@@ -609,7 +609,7 @@ class NotificationService {
 								/* translators: 1: buyer name, 2: order number */
 								? __( '%1$s has submitted the requirements for Order #%2$s.', 'wp-sell-services' )
 								/* translators: 1: buyer name, 2: order number */
-								: __( '%1$s has paid for Order #%2$s.', 'wp-sell-services' ),
+								: __( '%1$s has paid for order #%2$s.', 'wp-sell-services' ),
 							$buyer_name,
 							$order_number
 						)
@@ -625,7 +625,7 @@ class NotificationService {
 				$this->create(
 					$order->customer_id,
 					'order_in_progress',
-					__( 'Your Order is In Progress', 'wp-sell-services' ),
+					__( 'Your order is in progress', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							$has_brief
@@ -655,7 +655,7 @@ class NotificationService {
 				$this->create(
 					$order->customer_id,
 					self::TYPE_DELIVERY_SUBMITTED,
-					__( 'Delivery Ready for Review', 'wp-sell-services' ),
+					__( 'Delivery ready for review', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							/* translators: 1: vendor name, 2: order number */
@@ -702,7 +702,7 @@ class NotificationService {
 				$this->create(
 					$order->vendor_id,
 					'order_completed_vendor',
-					__( 'Order Completed - Payment Released', 'wp-sell-services' ),
+					__( 'Order completed - Payment released', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							/* translators: 1: buyer name, 2: order number */
@@ -774,7 +774,7 @@ class NotificationService {
 					$this->create(
 						$order->vendor_id,
 						'cancellation_submitted',
-						__( 'Cancellation Request Submitted', 'wp-sell-services' ),
+						__( 'Cancellation request submitted', 'wp-sell-services' ),
 						NotificationMessage::make()
 							->line(
 								/* translators: %s: order number */
@@ -817,7 +817,7 @@ class NotificationService {
 				$this->create(
 					$order->customer_id,
 					'cancellation_submitted',
-					__( 'Cancellation Request Submitted', 'wp-sell-services' ),
+					__( 'Cancellation request submitted', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
 							/* translators: %s: order number */
@@ -915,7 +915,7 @@ class NotificationService {
 						)
 						->block()
 						->field( __( 'Service:', 'wp-sell-services' ), $service_name )
-						->field( __( 'Refund Amount:', 'wp-sell-services' ), $amount ),
+						->field( __( 'Refund amount:', 'wp-sell-services' ), $amount ),
 					array(
 						'order_id'      => $order_id,
 						'order_number'  => $order_number,
@@ -940,7 +940,7 @@ class NotificationService {
 						)
 						->block()
 						->field( __( 'Service:', 'wp-sell-services' ), $service_name )
-						->field( __( 'Refund Amount:', 'wp-sell-services' ), $amount ),
+						->field( __( 'Refund amount:', 'wp-sell-services' ), $amount ),
 					array(
 						'order_id'      => $order_id,
 						'order_number'  => $order_number,
@@ -1047,7 +1047,7 @@ class NotificationService {
 		$this->create(
 			$recipient_id,
 			self::TYPE_NEW_MESSAGE,
-			__( 'New Message Received', 'wp-sell-services' ),
+			__( 'New message received', 'wp-sell-services' ),
 			$notification,
 			array(
 				'conversation_id' => $conversation_id,
@@ -1131,7 +1131,7 @@ class NotificationService {
 		$this->create(
 			(int) $review->vendor_id,
 			self::TYPE_REVIEW_RECEIVED,
-			__( 'New Review Received', 'wp-sell-services' ),
+			__( 'New review received', 'wp-sell-services' ),
 			$message,
 			array(
 				'review_id'   => $review_id,
@@ -1292,7 +1292,7 @@ class NotificationService {
 			->field( __( 'Service:', 'wp-sell-services' ), $service_name );
 
 		if ( $refund_amount > 0 ) {
-			$customer_message->field( __( 'Refund Amount:', 'wp-sell-services' ), wpss_format_price( $refund_amount, (string) $order->currency ) );
+			$customer_message->field( __( 'Refund amount:', 'wp-sell-services' ), wpss_format_price( $refund_amount, (string) $order->currency ) );
 			$customer_message->paragraph( __( 'The refund will be processed according to our refund policy.', 'wp-sell-services' ) );
 		}
 
@@ -1324,7 +1324,7 @@ class NotificationService {
 
 		if ( $refund_amount > 0 ) {
 			$vendor_message->field(
-				__( 'Refund Amount:', 'wp-sell-services' ),
+				__( 'Refund amount:', 'wp-sell-services' ),
 				sprintf(
 					/* translators: %s: refund amount */
 					__( '%s (deducted from earnings)', 'wp-sell-services' ),
@@ -1405,7 +1405,7 @@ class NotificationService {
 				break;
 
 			case 'dispute_response_received':
-				$title     = __( 'Dispute Response Received', 'wp-sell-services' );
+				$title     = __( 'Dispute response received', 'wp-sell-services' );
 				$from_user = get_user_by( 'id', $data['from_user'] ?? 0 );
 				$from_name = wpss_get_member_display_name( (int) ( $from_user->ID ?? 0 ), __( 'The other party', 'wp-sell-services' ) );
 				$message->line(
@@ -1427,7 +1427,7 @@ class NotificationService {
 				);
 
 			case 'dispute_reminder':
-				$title = __( 'Dispute Response Reminder', 'wp-sell-services' );
+				$title = __( 'Dispute response reminder', 'wp-sell-services' );
 				$message->line(
 					/* translators: %s: order number */
 					__( 'This is a reminder that you have a pending dispute for Order #%s that requires your response.', 'wp-sell-services' ),
@@ -1437,7 +1437,7 @@ class NotificationService {
 				break;
 
 			case 'deadline_warning':
-				$title = __( 'Order Deadline Approaching', 'wp-sell-services' );
+				$title = __( 'Order deadline approaching', 'wp-sell-services' );
 				$message->line(
 					/* translators: %s: order number */
 					__( 'The delivery deadline for Order #%s is approaching.', 'wp-sell-services' ),
@@ -1772,7 +1772,7 @@ class NotificationService {
 			$this->create(
 				$user_id,
 				self::TYPE_VENDOR_REGISTERED,
-				__( 'Vendor Registration Received', 'wp-sell-services' ),
+				__( 'Vendor registration received', 'wp-sell-services' ),
 				sprintf(
 					/* translators: %s: platform name */
 					__( 'Thank you for registering as a vendor on %s. Your application has been submitted and is pending admin review. We will notify you once your application is approved.', 'wp-sell-services' ),
@@ -1791,7 +1791,7 @@ class NotificationService {
 			$this->create(
 				$user_id,
 				self::TYPE_VENDOR_REGISTERED,
-				__( 'Welcome to the Marketplace!', 'wp-sell-services' ),
+				__( 'Welcome to the marketplace!', 'wp-sell-services' ),
 				sprintf(
 					/* translators: %s: platform name */
 					__( 'Congratulations! Your vendor account on %s has been created. You can now start creating services and accepting orders.', 'wp-sell-services' ),
@@ -1853,7 +1853,7 @@ class NotificationService {
 				'email_heading' => __( 'Welcome aboard', 'wp-sell-services' ),
 				'content'       => $content,
 				'button_url'    => wpss_get_dashboard_url(),
-				'button_text'   => __( 'Go to Your Dashboard', 'wp-sell-services' ),
+				'button_text'   => __( 'Go to your dashboard', 'wp-sell-services' ),
 				'template'      => 'generic',
 			)
 		);
@@ -1870,7 +1870,7 @@ class NotificationService {
 	private function send_vendor_pending_email( \WP_User $user, string $display_name, string $platform_name ): bool {
 		$subject = sprintf(
 			/* translators: %s: platform name */
-			__( 'Vendor Registration Received - %s', 'wp-sell-services' ),
+			__( 'Vendor registration received - %s', 'wp-sell-services' ),
 			$platform_name
 		);
 
@@ -1975,7 +1975,7 @@ class NotificationService {
 
 		$subject = sprintf(
 			/* translators: %s: vendor display name */
-			__( 'New Vendor Registration: %s', 'wp-sell-services' ),
+			__( 'New vendor registration: %s', 'wp-sell-services' ),
 			$display_name
 		);
 
@@ -1987,7 +1987,7 @@ class NotificationService {
 		$content .= '<td style="padding: 8px; border: 1px solid #ddd;">' . esc_html( $user->user_login ) . '</td></tr>';
 		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Email', 'wp-sell-services' ) . '</strong></td>';
 		$content .= '<td style="padding: 8px; border: 1px solid #ddd;">' . esc_html( $user->user_email ) . '</td></tr>';
-		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Registration Date', 'wp-sell-services' ) . '</strong></td>';
+		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Registration date', 'wp-sell-services' ) . '</strong></td>';
 		$content .= '<td style="padding: 8px; border: 1px solid #ddd;">' . esc_html( current_time( 'F j, Y g:i a' ) ) . '</td></tr>';
 		$content .= '</table>';
 
@@ -2005,10 +2005,10 @@ class NotificationService {
 			self::TYPE_VENDOR_REGISTERED,
 			array(
 				'recipient'     => get_user_by( 'email', $admin_email ),
-				'email_heading' => __( 'New Vendor Registration', 'wp-sell-services' ),
+				'email_heading' => __( 'New vendor registration', 'wp-sell-services' ),
 				'content'       => $content,
 				'button_url'    => admin_url( 'admin.php?page=wpss-vendors' ),
-				'button_text'   => __( 'View All Vendors', 'wp-sell-services' ),
+				'button_text'   => __( 'View all vendors', 'wp-sell-services' ),
 				'template'      => 'generic',
 			)
 		);
@@ -2036,7 +2036,7 @@ class NotificationService {
 		$this->create(
 			$user_id,
 			self::TYPE_VENDOR_APPROVED,
-			$reactivated ? __( 'Vendor Account Reactivated', 'wp-sell-services' ) : __( 'Vendor Application Approved', 'wp-sell-services' ),
+			$reactivated ? __( 'Vendor account reactivated', 'wp-sell-services' ) : __( 'Vendor application approved', 'wp-sell-services' ),
 			sprintf(
 				$reactivated
 					/* translators: %s: platform name */
@@ -2093,7 +2093,7 @@ class NotificationService {
 		$this->create(
 			$user_id,
 			self::TYPE_VENDOR_REJECTED,
-			__( 'Vendor Application Update', 'wp-sell-services' ),
+			__( 'Vendor application update', 'wp-sell-services' ),
 			sprintf(
 				/* translators: %s: platform name */
 				__( 'Your vendor application on %s was not approved at this time.', 'wp-sell-services' ),
@@ -2109,7 +2109,7 @@ class NotificationService {
 			$user->user_email,
 			sprintf(
 				/* translators: %s: platform name */
-				__( 'Vendor Application Update - %s', 'wp-sell-services' ),
+				__( 'Vendor application update - %s', 'wp-sell-services' ),
 				$platform_name
 			),
 			EmailService::TYPE_VENDOR_REJECTED,
@@ -2181,7 +2181,7 @@ class NotificationService {
 		$this->create(
 			$user_id,
 			self::TYPE_VENDOR_SUSPENDED,
-			__( 'Vendor Account Suspended', 'wp-sell-services' ),
+			__( 'Vendor account suspended', 'wp-sell-services' ),
 			sprintf(
 				/* translators: %s: platform name */
 				__( 'Your vendor account on %s has been suspended. Your services are hidden and you cannot take new orders until it is reinstated.', 'wp-sell-services' ),
@@ -2440,7 +2440,7 @@ class NotificationService {
 
 		// Same target the in-app row links to (wpss_get_notification_url()).
 		$button_url  = wpss_get_notification_url( $data );
-		$button_text = '' === $button_url ? '' : ( ! empty( $data['order_id'] ) && empty( $data['action_url'] ) ? __( 'View Order Details', 'wp-sell-services' ) : __( 'View Details', 'wp-sell-services' ) );
+		$button_text = '' === $button_url ? '' : ( ! empty( $data['order_id'] ) && empty( $data['action_url'] ) ? __( 'View order details', 'wp-sell-services' ) : __( 'View details', 'wp-sell-services' ) );
 
 		// The in-app title is the heading; the subject carries the site name like every EmailService mail.
 		$prefix = '[' . wpss_get_platform_name() . ']';

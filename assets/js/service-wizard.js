@@ -818,7 +818,7 @@ function wpssServiceWizard(existingData = {}) {
 			}
 
 			const frame = wp.media({
-				title: type === 'main' ? ((wpssWizard.strings && wpssWizard.strings.selectMainImage) || 'Select Main Image') : ((wpssWizard.strings && wpssWizard.strings.addGalleryImage) || 'Add Gallery Image'),
+				title: type === 'main' ? ((wpssWizard.strings && wpssWizard.strings.selectMainImage) || 'Select main image') : ((wpssWizard.strings && wpssWizard.strings.addGalleryImage) || 'Add gallery image'),
 				multiple: false,
 				library: {
 					type: 'image'

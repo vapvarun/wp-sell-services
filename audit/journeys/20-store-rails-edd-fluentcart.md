@@ -12,7 +12,7 @@ Both rails load only when the `wpss_pro_beta_rails` filter (or `WPSS_PRO_BETA_RA
 ### 1. Enable
 Turn the beta filter on, install the platform, choose it in Settings > General.
 
-**Expect** without the filter the rail is not offered; with it, our Payment Gateways tab says the platform handles payment and shows no gateway cards.
+**Expect** without the filter the rail is not offered; with it, our Payment gateways tab says the platform handles payment and shows no gateway cards.
 
 ### 2. Buy a service
 As the buyer buy a service through the platform's own checkout.

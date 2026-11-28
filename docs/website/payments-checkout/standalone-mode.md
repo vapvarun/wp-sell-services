@@ -56,7 +56,7 @@ something to inherit silently.
 
 ## Choosing Which Billing Fields Checkout Asks For
 
-**Sell Services > Settings > Orders & Disputes > Checkout Billing Fields**
+**Sell Services > Settings > Orders & disputes > Checkout Billing Fields**
 
 Address fields make sense when something is being shipped. For a marketplace
 selling design work or code, asking a buyer for a street address before they can
@@ -78,7 +78,7 @@ accounts at checkout adds no new fields to the form.
 1. Go to **Sell Services > Settings > General**
 2. Under **E-commerce Platform**, select **Standalone Mode**
 3. Click **Save changes**
-4. Go to **Settings > Payment Gateways** and enable at least one payment gateway
+4. Go to **Settings > Payment gateways** and enable at least one payment gateway
 5. Test the full checkout with a sample service
 
 ## Available Payment Gateways
@@ -98,7 +98,7 @@ Turning a gateway off removes it from new checkouts only. A buyer who is paying 
 
 ### Test Gateway
 
-The **Test Gateway** completes payments instantly with no external credentials, for testing the full order lifecycle. No money moves.
+The **Test gateway** completes payments instantly with no external credentials, for testing the full order lifecycle. No money moves.
 
 It appears in two cases:
 

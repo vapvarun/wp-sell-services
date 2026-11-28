@@ -8,7 +8,7 @@ Free and Pro ship in lockstep. Install both.
 
 ## Import reviews for new vendors
 
-Admins can add one review or import a CSV for a vendor's service from **Sell Services > Import Reviews** (needs Pro). The CSV shows a preview before anything is saved, and a file with a missing column is refused by name. Imported reviews carry an **Imported review** label, count in ratings and send no email. See [Reviews and Ratings](../reviews-ratings/review-system.md).
+Admins can add one review or import a CSV for a vendor's service from **Sell Services > Import reviews** (needs Pro). The CSV shows a preview before anything is saved, and a file with a missing column is refused by name. Imported reviews carry an **Imported review** label, count in ratings and send no email. See [Reviews and Ratings](../reviews-ratings/review-system.md).
 
 ## Reviews
 
@@ -28,7 +28,7 @@ The Earnings ledger follows the chosen period, and the Pro CSV export uses the s
 - Submitting a milestone phase twice notifies the buyer once, and a paid extension returns a late order to In Progress.
 - Offline milestone, tip and extension pages show the bank instructions and receipt upload once, and a tip waiting for confirmation reads the same on every page.
 - An unpaid milestone, tip or extension no longer credits the vendor's wallet when an admin marks the order completed.
-- Custom-price manual orders read **Custom order**, and **Create Order** keeps a package order as a package.
+- Custom-price manual orders read **Custom order**, and **Create order** keeps a package order as a package.
 
 ## More fixes
 

@@ -41,7 +41,7 @@ foreach ( $expect as $status => list( $has, $lacks ) ) {
 	$mail->send_withdrawal_status( 999, $status, $row );
 	$s = $sent[0]['subject'] ?? '';
 	$b = $sent[0]['body'] ?? '';
-	$check( "{$status}: subject says {$has}", str_contains( $s, $has ) && ! str_contains( $s, $lacks ) );
+	$check( "{$status}: subject says {$has}", false !== stripos( $s, $has ) && false === stripos( $s, $lacks ) );
 	$check( "{$status}: body status cell says {$has}", str_contains( $b, '>' . $has . '<' ) || str_contains( $b, $has ) );
 }
 

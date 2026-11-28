@@ -68,7 +68,7 @@ Prefer to create pages yourself? Here is how.
 
 ### Services Page
 
-1. Go to **Pages > Add New**
+1. Go to **Pages > Add new**
 2. Give it a title like "Services" or "Browse Services"
 3. Add the Services Grid block (or the services page element)
 4. Publish the page
@@ -136,8 +136,8 @@ six, using a block or shortcode on any page you like:
 | Page | What to Add |
 |------|------------|
 | **Featured Services** | A curated showcase of your best services |
-| **Top Vendors** | Your highest-rated vendors |
-| **Buyer Requests** | The request board with a "Post a request" form |
+| **Top vendors** | Your highest-rated vendors |
+| **Buyer requests** | The request board with a "Post a request" form |
 
 See [Shortcodes Reference](../marketplace-display/shortcodes-reference.md) for
 the full list, including `[wpss_vendors]` if you want a second vendor directory

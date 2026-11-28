@@ -36,7 +36,7 @@ $check( 'helper: Home > Vendors (linked) > Maya', array( 'Home', 'Vendors', 'May
 
 $rid  = wp_insert_post( array( 'post_type' => 'wpss_request', 'post_status' => 'publish', 'post_title' => 'QA-RFT request crumb' ) );
 $html = $capture( static fn() => wpss_request_breadcrumb( $rid ) );
-$check( 'request page: Home > Buyer Requests > its title', array( 'Home', 'Buyer Requests', 'QA-RFT request crumb' ) === $crumbs( $html ) );
+$check( 'request page: Home > Buyer requests > its title', array( 'Home', 'Buyer requests', 'QA-RFT request crumb' ) === $crumbs( $html ) );
 
 $sid  = wp_insert_post( array( 'post_type' => 'wpss_service', 'post_status' => 'publish', 'post_title' => 'QA-RFT service crumb', 'post_author' => 1 ) );
 $html = $capture( static fn() => ( new \WPSellServices\Frontend\SingleServiceView() )->render_breadcrumb( wpss_get_service( $sid ) ) );

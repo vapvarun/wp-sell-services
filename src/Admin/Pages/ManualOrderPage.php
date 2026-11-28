@@ -52,8 +52,8 @@ class ManualOrderPage {
 		// Hidden page — accessible via "Create Order" button on the Orders list page.
 		add_submenu_page(
 			'wpss-orders',
-			__( 'Create Order', 'wp-sell-services' ),
-			__( 'Create Order', 'wp-sell-services' ),
+			__( 'Create order', 'wp-sell-services' ),
+			__( 'Create order', 'wp-sell-services' ),
 			'manage_options',
 			'wpss-create-order',
 			array( $this, 'render_page' )
@@ -70,7 +70,7 @@ class ManualOrderPage {
 		add_action(
 			'load-admin_page_wpss-create-order',
 			static function (): void {
-				$GLOBALS['title'] = __( 'Create Order', 'wp-sell-services' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- the admin page title core would have set.
+				$GLOBALS['title'] = __( 'Create order', 'wp-sell-services' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- the admin page title core would have set.
 			}
 		);
 	}
@@ -113,7 +113,7 @@ class ManualOrderPage {
 				'nonce'                 => wp_create_nonce( 'wpss_create_manual_order' ),
 				'defaultCommissionRate' => $default_rate,
 				'i18n'                  => array(
-					'selectPackage'       => __( '-- Select Package --', 'wp-sell-services' ),
+					'selectPackage'       => __( '-- Select package --', 'wp-sell-services' ),
 					'loadingPackages'     => __( 'Loading packages...', 'wp-sell-services' ),
 					'loadingAddons'       => __( 'Loading addons...', 'wp-sell-services' ),
 					'noAddons'            => __( 'No addons available for this service.', 'wp-sell-services' ),
@@ -143,14 +143,14 @@ class ManualOrderPage {
 		$order_statuses     = $this->get_initial_statuses();
 		?>
 		<div class="wrap wpss-manual-order-wrap">
-			<h1><?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?></h1>
+			<h1><?php esc_html_e( 'Create order', 'wp-sell-services' ); ?></h1>
 
 			<?php if ( ! $has_services ) : ?>
 				<div class="wpss-no-services-notice">
 					<p>
 						<?php esc_html_e( 'No services found. Please create at least one service before creating an order.', 'wp-sell-services' ); ?>
 						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>" class="button">
-							<?php esc_html_e( 'Create Service', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Create service', 'wp-sell-services' ); ?>
 						</a>
 					</p>
 				</div>
@@ -165,7 +165,7 @@ class ManualOrderPage {
 
 							<!-- Section A: Order Details -->
 							<div class="postbox">
-								<h2 class="hndle"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h2>
+								<h2 class="hndle"><?php esc_html_e( 'Order details', 'wp-sell-services' ); ?></h2>
 								<div class="inside">
 
 									<!-- Service -->
@@ -180,7 +180,7 @@ class ManualOrderPage {
 												'type'     => 'service',
 												'name'     => 'service_id',
 												'id'       => 'wpss-service-id',
-												'placeholder' => __( '-- Select a Service --', 'wp-sell-services' ),
+												'placeholder' => __( '-- Select a service --', 'wp-sell-services' ),
 												'search_label' => __( 'Search services by title', 'wp-sell-services' ),
 												'required' => true,
 											)
@@ -192,7 +192,7 @@ class ManualOrderPage {
 									<div class="wpss-form-row" id="wpss-package-row" style="display: none;">
 										<label for="wpss-package-id"><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></label>
 										<select name="package_id" id="wpss-package-id">
-											<option value=""><?php esc_html_e( '-- Select Package --', 'wp-sell-services' ); ?></option>
+											<option value=""><?php esc_html_e( '-- Select package --', 'wp-sell-services' ); ?></option>
 										</select>
 									</div>
 
@@ -228,14 +228,14 @@ class ManualOrderPage {
 
 									<!-- Vendor Override -->
 									<div class="wpss-form-row">
-										<label for="wpss-vendor-id"><?php esc_html_e( 'Vendor (Override)', 'wp-sell-services' ); ?></label>
+										<label for="wpss-vendor-id"><?php esc_html_e( 'Vendor (override)', 'wp-sell-services' ); ?></label>
 										<?php
 										wpss_admin_search_select(
 											array(
 												'type' => 'seller',
 												'name' => 'vendor_id',
 												'id'   => 'wpss-vendor-id',
-												'placeholder' => __( '-- Use Service Author --', 'wp-sell-services' ),
+												'placeholder' => __( '-- Use service author --', 'wp-sell-services' ),
 												'search_label' => __( 'Search vendors by name or email', 'wp-sell-services' ),
 											)
 										);
@@ -251,11 +251,11 @@ class ManualOrderPage {
 								<div class="inside">
 									<table class="wpss-pricing-summary">
 										<tr>
-											<td><?php esc_html_e( 'Subtotal (Package)', 'wp-sell-services' ); ?></td>
+											<td><?php esc_html_e( 'Subtotal (package)', 'wp-sell-services' ); ?></td>
 											<td id="wpss-summary-subtotal"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
 										</tr>
 										<tr id="wpss-pricing-addons-row" style="display: none;">
-											<td><?php esc_html_e( 'Addons Total', 'wp-sell-services' ); ?></td>
+											<td><?php esc_html_e( 'Addons total', 'wp-sell-services' ); ?></td>
 											<td id="wpss-summary-addons"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
 										</tr>
 										<tr id="wpss-pricing-tax-row" style="display: none;">
@@ -285,7 +285,7 @@ class ManualOrderPage {
 										</tr>
 										<tr class="wpss-pricing-commission">
 											<td>
-												<?php esc_html_e( 'Commission Rate', 'wp-sell-services' ); ?>
+												<?php esc_html_e( 'Commission rate', 'wp-sell-services' ); ?>
 												<input type="number"
 														name="commission_rate"
 														id="wpss-commission-rate"
@@ -304,7 +304,7 @@ class ManualOrderPage {
 											<td id="wpss-summary-platform-fee"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
 										</tr>
 										<tr class="wpss-pricing-commission">
-											<td><?php esc_html_e( 'Vendor Earnings', 'wp-sell-services' ); ?></td>
+											<td><?php esc_html_e( 'Vendor earnings', 'wp-sell-services' ); ?></td>
 											<td id="wpss-summary-vendor-earnings"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
 										</tr>
 									</table>
@@ -321,7 +321,7 @@ class ManualOrderPage {
 
 							<!-- Status & Payment -->
 							<div class="postbox">
-								<h2 class="hndle"><?php esc_html_e( 'Status & Payment', 'wp-sell-services' ); ?></h2>
+								<h2 class="hndle"><?php esc_html_e( 'Status & payment', 'wp-sell-services' ); ?></h2>
 								<div class="inside">
 
 									<div class="wpss-form-row">
@@ -338,7 +338,7 @@ class ManualOrderPage {
 									</div>
 
 									<div class="wpss-form-row">
-										<label for="wpss-payment-status"><?php esc_html_e( 'Payment Status', 'wp-sell-services' ); ?></label>
+										<label for="wpss-payment-status"><?php esc_html_e( 'Payment status', 'wp-sell-services' ); ?></label>
 										<select name="payment_status" id="wpss-payment-status">
 											<option value="pending"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></option>
 											<option value="paid" selected><?php esc_html_e( 'Paid', 'wp-sell-services' ); ?></option>
@@ -349,7 +349,7 @@ class ManualOrderPage {
 									</div>
 
 									<div class="wpss-form-row">
-										<label for="wpss-payment-method"><?php esc_html_e( 'Payment Method', 'wp-sell-services' ); ?></label>
+										<label for="wpss-payment-method"><?php esc_html_e( 'Payment method', 'wp-sell-services' ); ?></label>
 										<select name="payment_method" id="wpss-payment-method">
 											<?php foreach ( wpss_manual_order_payment_methods() as $wpss_slug => $wpss_label ) : ?>
 												<option value="<?php echo esc_attr( $wpss_slug ); ?>" <?php selected( 'manual', $wpss_slug ); ?>><?php echo esc_html( $wpss_label ); ?></option>
@@ -366,7 +366,7 @@ class ManualOrderPage {
 									</div>
 
 									<div class="wpss-form-row">
-										<label for="wpss-delivery-days"><?php esc_html_e( 'Delivery Days', 'wp-sell-services' ); ?></label>
+										<label for="wpss-delivery-days"><?php esc_html_e( 'Delivery days', 'wp-sell-services' ); ?></label>
 										<input type="number"
 												name="delivery_days"
 												id="wpss-delivery-days"
@@ -376,7 +376,7 @@ class ManualOrderPage {
 									</div>
 
 									<div class="wpss-form-row">
-										<label for="wpss-revisions"><?php esc_html_e( 'Revisions Included', 'wp-sell-services' ); ?></label>
+										<label for="wpss-revisions"><?php esc_html_e( 'Revisions included', 'wp-sell-services' ); ?></label>
 										<input type="number"
 												name="revisions_included"
 												id="wpss-revisions"
@@ -389,7 +389,7 @@ class ManualOrderPage {
 
 							<!-- Notes -->
 							<div class="postbox">
-								<h2 class="hndle"><?php esc_html_e( 'Admin Notes', 'wp-sell-services' ); ?></h2>
+								<h2 class="hndle"><?php esc_html_e( 'Admin notes', 'wp-sell-services' ); ?></h2>
 								<div class="inside">
 									<div class="wpss-form-row">
 										<textarea name="notes"
@@ -405,7 +405,7 @@ class ManualOrderPage {
 							<div class="postbox">
 								<div class="inside wpss-submit-section">
 									<button type="submit" class="button button-primary button-large" id="wpss-create-order-btn">
-										<?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?>
+										<?php esc_html_e( 'Create order', 'wp-sell-services' ); ?>
 									</button>
 									<span class="spinner"></span>
 								</div>
@@ -416,7 +416,7 @@ class ManualOrderPage {
 
 				<!-- Success Result -->
 				<div id="wpss-order-result" class="wpss-order-result" style="display: none;">
-					<h3><?php esc_html_e( 'Order Created Successfully!', 'wp-sell-services' ); ?></h3>
+					<h3><?php esc_html_e( 'Order created successfully!', 'wp-sell-services' ); ?></h3>
 					<p id="wpss-result-message"></p>
 					<div class="wpss-result-actions">
 						<a href="#" id="wpss-view-order-link" class="button button-primary" target="_blank">
@@ -426,7 +426,7 @@ class ManualOrderPage {
 							<?php esc_html_e( 'Submit requirements', 'wp-sell-services' ); ?>
 						</a>
 						<button type="button" class="button" id="wpss-create-another-btn">
-							<?php esc_html_e( 'Create Another Order', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Create another order', 'wp-sell-services' ); ?>
 						</button>
 					</div>
 				</div>
@@ -520,7 +520,7 @@ class ManualOrderPage {
 
 		// --- 2. Validate required ---
 		if ( ! $service_id || ! $customer_id ) {
-			wp_send_json_error( array( 'message' => __( 'Service and Buyer are required.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Service and buyer are required.', 'wp-sell-services' ) ) );
 		}
 
 		$service = get_post( $service_id );

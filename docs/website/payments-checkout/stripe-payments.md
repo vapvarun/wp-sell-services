@@ -38,7 +38,7 @@ Test keys start with `pk_test_` and `sk_test_`. Live keys start with `pk_live_` 
 
 ### Add Keys to Your Site
 
-1. Go to **Sell Services > Settings > Payment Gateways**
+1. Go to **Sell Services > Settings > Payment gateways**
 2. Click the **Stripe** tab
 3. Check **Enable Stripe**
 4. Paste your Publishable Key and Secret Key
@@ -56,7 +56,7 @@ Webhooks let Stripe tell your site when a payment succeeds or fails.
 4. Select these events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`
 5. Click **Add endpoint**
 6. Copy the **Signing secret** that appears
-7. Paste it into **Sell Services > Settings > Payment Gateways**
+7. Paste it into **Sell Services > Settings > Payment gateways**
 8. Click **Save changes**
 
 ### Sharing One Stripe Account Between Sites
@@ -125,7 +125,7 @@ To refund an order:
 1. Go to **Sell Services > Orders** and open the order
 2. Click **Refund**
 3. Choose full or partial refund
-4. Click **Process Refund**
+4. Click **Process refund**
 
 If a cart paid for several gigs in one charge, refund each gig from its own order: the refund is recorded on that gig and only its vendor is charged.
 
@@ -135,7 +135,7 @@ Refunds appear in the buyer's account within 5-10 business days. Stripe refunds 
 
 ### Chargebacks (Card Disputes)
 
-When a buyer disputes a card payment with their bank, **the dispute opening** emails you (the dispute contact under Orders & Disputes, or the site admin) and puts a **Chargeback open** notice on the order, with the date your evidence is due. Its Activity box records it too. Nothing else changes yet: the order keeps its status, the vendor's earnings stay where they are, and the vendor is not told. Answer the bank from your Stripe dashboard. The email follows the **Dispute opened** email setting; the notice on the order always shows.
+When a buyer disputes a card payment with their bank, **the dispute opening** emails you (the dispute contact under Orders & disputes, or the site admin) and puts a **Chargeback open** notice on the order, with the date your evidence is due. Its Activity box records it too. Nothing else changes yet: the order keeps its status, the vendor's earnings stay where they are, and the vendor is not told. Answer the bank from your Stripe dashboard. The email follows the **Dispute opened** email setting; the notice on the order always shows.
 
 If **you lose the dispute**, Stripe takes the disputed amount from your account. The order is then recorded as refunded for that amount, the vendor's earnings for it are reversed (their balance can go below zero if they already withdrew), and the usual refund notifications go out. A dispute you **win** changes nothing except clearing the notice. This needs the `charge.dispute.created` and `charge.dispute.closed` events on your webhook. PayPal (`CUSTOMER.DISPUTE.CREATED`, `CUSTOMER.DISPUTE.RESOLVED`, and `PAYMENT.CAPTURE.REVERSED` for the money) and Razorpay (`payment.dispute.created`, `payment.dispute.won`, `payment.dispute.lost`, `payment.dispute.closed`) work the same way.
 

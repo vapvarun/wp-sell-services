@@ -344,10 +344,10 @@ function wpss_get_service_revisions( int $service_id ): int {
  */
 function wpss_get_addon_field_types(): array {
 	return array(
-		'checkbox' => __( 'Checkbox (Yes/No)', 'wp-sell-services' ),
-		'quantity' => __( 'Quantity Selector', 'wp-sell-services' ),
-		'dropdown' => __( 'Dropdown Select', 'wp-sell-services' ),
-		'text'     => __( 'Text Input', 'wp-sell-services' ),
+		'checkbox' => __( 'Checkbox (yes/no)', 'wp-sell-services' ),
+		'quantity' => __( 'Quantity selector', 'wp-sell-services' ),
+		'dropdown' => __( 'Dropdown select', 'wp-sell-services' ),
+		'text'     => __( 'Text input', 'wp-sell-services' ),
 	);
 }
 
@@ -360,9 +360,9 @@ function wpss_get_addon_field_types(): array {
  */
 function wpss_get_addon_price_types(): array {
 	return array(
-		'flat'           => __( 'Flat Price', 'wp-sell-services' ),
-		'percentage'     => __( 'Percentage of Order', 'wp-sell-services' ),
-		'quantity_based' => __( 'Per Quantity', 'wp-sell-services' ),
+		'flat'           => __( 'Flat price', 'wp-sell-services' ),
+		'percentage'     => __( 'Percentage of order', 'wp-sell-services' ),
+		'quantity_based' => __( 'Per quantity', 'wp-sell-services' ),
 	);
 }
 

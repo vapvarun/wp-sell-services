@@ -427,7 +427,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		return array(
 			'enabled'         => array(
 				'type'        => 'checkbox',
-				'label'       => __( 'Enable Offline Payment', 'wp-sell-services' ),
+				'label'       => __( 'Enable offline payment', 'wp-sell-services' ),
 				'description' => __( 'Enable offline/manual payment methods.', 'wp-sell-services' ),
 			),
 			'title'           => array(
@@ -444,7 +444,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 			),
 			'auto_hold_hours' => array(
 				'type'        => 'number',
-				'label'       => __( 'Auto-Cancel (Hours)', 'wp-sell-services' ),
+				'label'       => __( 'Auto-cancel (hours)', 'wp-sell-services' ),
 				'description' => __( 'Automatically cancel unpaid orders after this many hours. Bank transfers take days, so 72 or more is sensible. An order whose proof of payment has been sent is never cancelled. Set to 0 to disable.', 'wp-sell-services' ),
 				'default'     => '0',
 				'min'         => '0',
@@ -613,11 +613,11 @@ class OfflineGateway extends AbstractPaymentGateway {
 				<?php echo '' === $instructions ? '<p>' . esc_html( self::no_instructions_text() ) . '</p>' : wp_kses_post( wpautop( $instructions ) ); ?>
 			</div>
 			<p style="margin-bottom: 0; color: #856404;">
-				<strong><?php esc_html_e( 'Order Reference:', 'wp-sell-services' ); ?></strong>
+				<strong><?php esc_html_e( 'Order reference:', 'wp-sell-services' ); ?></strong>
 				<?php echo esc_html( $order->order_number ); ?>
 			</p>
 			<p style="margin-bottom: 0; color: #856404;">
-				<strong><?php esc_html_e( 'Amount Due:', 'wp-sell-services' ); ?></strong>
+				<strong><?php esc_html_e( 'Amount due:', 'wp-sell-services' ); ?></strong>
 				<?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?>
 			</p>
 		</div>
@@ -836,11 +836,11 @@ class OfflineGateway extends AbstractPaymentGateway {
 					</div>
 					<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0c874;">
 						<p style="margin-bottom: 8px; color: #856404;">
-							<strong><?php esc_html_e( 'Order Reference:', 'wp-sell-services' ); ?></strong>
+							<strong><?php esc_html_e( 'Order reference:', 'wp-sell-services' ); ?></strong>
 							<?php echo esc_html( $order->order_number ); ?>
 						</p>
 						<p style="margin-bottom: 0; color: #856404;">
-							<strong><?php esc_html_e( 'Amount Due:', 'wp-sell-services' ); ?></strong>
+							<strong><?php esc_html_e( 'Amount due:', 'wp-sell-services' ); ?></strong>
 							<?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?>
 						</p>
 					</div>
@@ -1211,9 +1211,9 @@ class OfflineGateway extends AbstractPaymentGateway {
 
 		<?php $this->render_methods_editor(); ?>
 
-		<h3><?php esc_html_e( 'Available Placeholders for Instructions', 'wp-sell-services' ); ?></h3>
+		<h3><?php esc_html_e( 'Available placeholders for instructions', 'wp-sell-services' ); ?></h3>
 		<p class="description">
-			<?php esc_html_e( 'You can use these placeholders in the Payment Instructions:', 'wp-sell-services' ); ?>
+			<?php esc_html_e( 'You can use these placeholders in the payment instructions:', 'wp-sell-services' ); ?>
 		</p>
 		<ul style="list-style: disc; margin-left: 20px;">
 			<li><code>{order_number}</code> - <?php esc_html_e( 'Order reference number', 'wp-sell-services' ); ?></li>
@@ -1246,7 +1246,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		$slots   = (int) apply_filters( 'wpss_offline_method_slots', 4 );
 		$slots   = max( count( $methods ), max( 1, $slots ) );
 		?>
-		<h3><?php esc_html_e( 'Payment Methods', 'wp-sell-services' ); ?></h3>
+		<h3><?php esc_html_e( 'Payment methods', 'wp-sell-services' ); ?></h3>
 		<p class="description">
 			<?php esc_html_e( 'Name each way a buyer can pay you offline. Leave a slot blank to skip it. Buyers choose from the enabled ones at checkout, and the method they picked is recorded on the order, so renaming or removing one later never changes what a past order says.', 'wp-sell-services' ); ?>
 		</p>

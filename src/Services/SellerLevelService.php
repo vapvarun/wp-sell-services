@@ -355,7 +355,7 @@ class SellerLevelService {
 			( new NotificationService() )->create(
 				$user_id,
 				'seller_level_promotion',
-				__( 'Congratulations! Level Up!', 'wp-sell-services' ),
+				__( 'Congratulations! Level up!', 'wp-sell-services' ),
 				sprintf(
 					/* translators: %s: new seller level */
 					__( 'You have been promoted to %s! Keep up the great work.', 'wp-sell-services' ),

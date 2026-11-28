@@ -25,7 +25,7 @@ paid -- happens on **Sell Services > Withdrawals**, which this tab links to.
 
 ### Wallet Provider
 
-Where vendor balances live. The built-in **Internal Wallet** needs nothing else
+Where vendor balances live. The built-in **Internal wallet** needs nothing else
 installed and is the only choice the plugin ships. A developer can add another
 provider with the `wpss_wallet_providers` filter.
 
@@ -58,7 +58,7 @@ Set `7`, `14` or `30` if you want a refund buffer:
 | `14` | Fortnightly hold |
 | `30` | Monthly hold |
 
-**Match it to your dispute window.** Buyers can open a dispute for a number of days after an order completes (**Settings > Orders & Disputes > Dispute Window (Days)**, 14 by default). With a shorter clearance period, a dispute can arrive after the vendor has already withdrawn the money, and a refund then comes out of your pocket until their future earnings cover it. The field's help text and the setup wizard's last screen quote your current dispute window so you can match it. The default stays `0`; the choice is yours.
+**Match it to your dispute window.** Buyers can open a dispute for a number of days after an order completes (**Settings > Orders & disputes > Dispute Window (Days)**, 14 by default). With a shorter clearance period, a dispute can arrive after the vendor has already withdrawn the money, and a refund then comes out of your pocket until their future earnings cover it. The field's help text and the setup wizard's last screen quote your current dispute window so you can match it. The default stays `0`; the choice is yours.
 
 **What a hold buys you.** If a refund arrives inside the window, the money is
 still unpaid and nothing has to be clawed back.
@@ -111,7 +111,7 @@ Bulk-pay vendors through PayPal's Payouts API.
 | Sandbox Mode | Checkbox | Off | Test without moving real money |
 | Minimum Payout Amount | Number | -- | Vendors below this are excluded from a batch |
 
-The card also holds **Create Batch Payout** (pick vendors, send) and **Recent
+The card also holds **Create batch payout** (pick vendors, send) and **Recent
 Payout Batches**.
 
 **Vendors must save a PayPal email first.** Until they do, the vendor table here
@@ -124,9 +124,9 @@ Before 2.0.0 this card had a second switch, *Show PayPal Payout Option to
 Vendors*. It is folded into *Enable PayPal Payouts*: a site that had either one on
 keeps PayPal Payouts on after the update.
 
-This card saves over AJAX with its own **Save Payout Settings** button.
+This card saves over AJAX with its own **Save payout settings** button.
 
-> This is not the PayPal *gateway* on the Payment Gateways tab. That one takes
+> This is not the PayPal *gateway* on the Payment gateways tab. That one takes
 > money from buyers; this one sends money to vendors. They use separate
 > credentials and either can run without the other.
 

@@ -50,8 +50,8 @@ Here is what each metric measures:
 
 - **Completed orders** -- The total number of orders you have successfully delivered.
 - **Average rating** -- The average star rating across all your approved reviews.
-- **Total Reviews** -- How many reviews buyers have left for you.
-- **On-Time Delivery Rate** -- The percentage of orders you delivered before the deadline.
+- **Total reviews** -- How many reviews buyers have left for you.
+- **On-time delivery rate** -- The percentage of orders you delivered before the deadline.
 - **Days Active** -- How many days since you registered as a vendor.
 
 ## Automatic Upgrades

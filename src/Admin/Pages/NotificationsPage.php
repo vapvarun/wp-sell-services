@@ -69,8 +69,8 @@ class NotificationsPage {
 	public function add_menu_page(): void {
 		$hook = add_submenu_page(
 			'wp-sell-services',
-			__( 'My Notifications', 'wp-sell-services' ),
-			__( 'My Notifications', 'wp-sell-services' ),
+			__( 'My notifications', 'wp-sell-services' ),
+			__( 'My notifications', 'wp-sell-services' ),
 			'manage_options',
 			'wpss-notifications',
 			array( $this, 'render_page' )
@@ -136,7 +136,7 @@ class NotificationsPage {
 		}
 		?>
 		<div class="wrap wpss-listing-page wpss-notifications-page">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'My Notifications', 'wp-sell-services' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'My notifications', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
 
 			<p class="description wpss-notifications-intro">

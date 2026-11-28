@@ -39,13 +39,13 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 	 */
 	public function add_menu_items( array $items ): array {
 		$items['wpss-orders'] = array(
-			'label' => __( 'Service Orders', 'wp-sell-services' ),
+			'label' => __( 'Service orders', 'wp-sell-services' ),
 			'url'   => $this->get_orders_url(),
 		);
 
 		if ( $this->can_access_vendor_dashboard() ) {
 			$items['wpss-vendor-dashboard'] = array(
-				'label' => __( 'Vendor Dashboard', 'wp-sell-services' ),
+				'label' => __( 'Vendor dashboard', 'wp-sell-services' ),
 				'url'   => $this->get_vendor_dashboard_url(),
 			);
 		}
@@ -195,7 +195,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				'icon'  => 'layout-dashboard',
 			),
 			'orders'        => array(
-				'label' => __( 'Service Orders', 'wp-sell-services' ),
+				'label' => __( 'Service orders', 'wp-sell-services' ),
 				'url'   => $this->get_orders_url(),
 				'icon'  => 'list',
 			),
@@ -209,12 +209,12 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 		// Add vendor items if user is a vendor.
 		if ( wpss_is_vendor() ) {
 			$items['vendor-dashboard'] = array(
-				'label' => __( 'Vendor Dashboard', 'wp-sell-services' ),
+				'label' => __( 'Vendor dashboard', 'wp-sell-services' ),
 				'url'   => $this->get_vendor_dashboard_url(),
 				'icon'  => 'store',
 			);
 			$items['vendor-services']  = array(
-				'label' => __( 'My Services', 'wp-sell-services' ),
+				'label' => __( 'My services', 'wp-sell-services' ),
 				'url'   => $this->get_vendor_services_url(),
 				'icon'  => 'wrench',
 			);

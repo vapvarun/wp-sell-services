@@ -7273,19 +7273,19 @@
                                         "type": "integer",
                                         "minimum": 1,
                                         "maximum": 5,
-                                        "description": "Optional Communication rating (1-5)."
+                                        "description": "Optional communication rating (1-5)."
                                     },
                                     "rating_quality": {
                                         "type": "integer",
                                         "minimum": 1,
                                         "maximum": 5,
-                                        "description": "Optional Quality rating (1-5)."
+                                        "description": "Optional quality rating (1-5)."
                                     },
                                     "rating_value": {
                                         "type": "integer",
                                         "minimum": 1,
                                         "maximum": 5,
-                                        "description": "Optional Value rating (1-5)."
+                                        "description": "Optional value rating (1-5)."
                                     }
                                 },
                                 "required": [
@@ -10457,19 +10457,19 @@
                                         "type": "integer",
                                         "minimum": 1,
                                         "maximum": 5,
-                                        "description": "Optional Communication rating (1-5)."
+                                        "description": "Optional communication rating (1-5)."
                                     },
                                     "rating_quality": {
                                         "type": "integer",
                                         "minimum": 1,
                                         "maximum": 5,
-                                        "description": "Optional Quality rating (1-5)."
+                                        "description": "Optional quality rating (1-5)."
                                     },
                                     "rating_value": {
                                         "type": "integer",
                                         "minimum": 1,
                                         "maximum": 5,
-                                        "description": "Optional Value rating (1-5)."
+                                        "description": "Optional value rating (1-5)."
                                     }
                                 },
                                 "required": [
@@ -13001,7 +13001,7 @@
                                     "stripe_price_id": {
                                         "type": "string",
                                         "default": "",
-                                        "description": "Stripe Price ID (price_…) for automatic billing."
+                                        "description": "Stripe price ID (price_…) for automatic billing."
                                     },
                                     "is_active": {
                                         "type": "boolean",
@@ -13264,7 +13264,7 @@
                                     },
                                     "stripe_price_id": {
                                         "type": "string",
-                                        "description": "Stripe Price ID (price_…) for automatic billing."
+                                        "description": "Stripe price ID (price_…) for automatic billing."
                                     },
                                     "is_active": {
                                         "type": "boolean",
@@ -13373,7 +13373,7 @@
                                     },
                                     "stripe_price_id": {
                                         "type": "string",
-                                        "description": "Stripe Price ID (price_…) for automatic billing."
+                                        "description": "Stripe price ID (price_…) for automatic billing."
                                     },
                                     "is_active": {
                                         "type": "boolean",
@@ -13482,7 +13482,7 @@
                                     },
                                     "stripe_price_id": {
                                         "type": "string",
-                                        "description": "Stripe Price ID (price_…) for automatic billing."
+                                        "description": "Stripe price ID (price_…) for automatic billing."
                                     },
                                     "is_active": {
                                         "type": "boolean",

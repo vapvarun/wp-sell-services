@@ -13,7 +13,7 @@ PayPal lets buyers pay with their PayPal balance, linked bank account, or credit
 1. Create a PayPal Business account at [paypal.com/business](https://paypal.com/business) (if you do not have one)
 2. Go to the [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/)
 3. Create an app to get your **Client ID** and **Secret**
-4. In WordPress, go to **Sell Services > Settings > Payment Gateways**
+4. In WordPress, go to **Sell Services > Settings > Payment gateways**
 5. Check **Enable PayPal** and paste your credentials
 6. Click **Save changes**
 
@@ -26,7 +26,7 @@ PayPal provides a full sandbox environment for testing without real money.
 3. Click **Apps & Credentials** and make sure **Sandbox** tab is selected (not Live)
 4. Create a sandbox app or use the default one
 5. Copy the **Client ID** and **Secret** from the sandbox app
-6. In WP Sell Services settings, check **Sandbox Mode** and paste the sandbox credentials
+6. In WP Sell Services settings, check **Sandbox mode** and paste the sandbox credentials
 7. Use the sandbox personal account email to test buyer checkout
 
 **Sandbox test credentials:**
@@ -86,7 +86,7 @@ Razorpay is the go-to payment gateway for marketplaces serving buyers in India. 
 1. Create a Razorpay account at [razorpay.com](https://razorpay.com)
 2. Complete the KYC process (PAN, GSTIN, bank details)
 3. Get your API keys from **Settings > API Keys** in the Razorpay Dashboard
-4. In WordPress, go to **Sell Services > Settings > Payment Gateways**
+4. In WordPress, go to **Sell Services > Settings > Payment gateways**
 5. Check **Enable Razorpay** and enter your Key ID and Key Secret
 6. Click **Save changes**
 
@@ -142,7 +142,7 @@ Offline payments let you accept bank transfers, checks, or any manual payment me
 
 ### Setting Up Offline Payments
 
-1. Go to **Sell Services > Settings > Payment Gateways**
+1. Go to **Sell Services > Settings > Payment gateways**
 2. Check **Enable Offline Payments**
 3. Set a title like "Bank Transfer" or "Pay by Check"
 4. In the **Instructions** field, add your payment details (bank name, account number, routing number, etc.)
@@ -182,7 +182,7 @@ You can enable as many gateways as you like. Buyers will see all enabled options
 
 ## Test Gateway
 
-WP Sell Services includes a built-in **Test Gateway** for developers. It auto-completes payments instantly -- no external accounts, API keys, or webhooks needed.
+WP Sell Services includes a built-in **Test gateway** for developers. It auto-completes payments instantly -- no external accounts, API keys, or webhooks needed.
 
 ### When the Test Gateway Appears
 
@@ -195,7 +195,7 @@ Demo payments switch off for good the first time the store is live: a gateway su
 
 ### How It Works
 
-1. Buyer selects "Test Gateway" at checkout
+1. Buyer selects "Test gateway" at checkout
 2. Clicks "Pay" -- no card details needed
 3. Payment is instantly marked as successful
 4. Order is created and moved to "Pending Requirements"
@@ -220,7 +220,7 @@ Demo payments switch off for good the first time the store is live: a gateway su
 | Razorpay webhook failing | Verify the Webhook Secret matches. Razorpay webhooks require the exact URL with no trailing slash changes. |
 | Offline payment order stuck at "Pending" | Admin must manually confirm payment in Sell Services > Orders > click "Confirm Payment". |
 | Test Gateway not showing | Enable `WP_DEBUG` in wp-config.php. The Test Gateway is hidden on production sites. |
-| Gateway not appearing at checkout | Go to Settings > Payment Gateways and verify the gateway is checked as "Enabled". |
+| Gateway not appearing at checkout | Go to Settings > Payment gateways and verify the gateway is checked as "Enabled". |
 | Currency not supported | Check your gateway's supported currencies. Some gateways (Razorpay) only support certain currencies. |
 | "This payment was not made on this site" | The payment was started on a different site that shares the gateway account, or (PayPal) before the site was updated to 1.8.0. Ask the buyer to start the payment again on this site. |
 

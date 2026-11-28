@@ -392,11 +392,11 @@ class GalleryService {
 			<div class="wpss-gallery-actions">
 				<button type="button" class="button wpss-add-image" data-type="image">
 					<i data-lucide="image" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Add Image', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Add image', 'wp-sell-services' ); ?>
 				</button>
 				<button type="button" class="button wpss-add-video" data-type="video">
 					<i data-lucide="video" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Add Video', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Add video', 'wp-sell-services' ); ?>
 				</button>
 				<button type="button" class="button wpss-add-embed" data-type="embed">
 					<i data-lucide="globe" class="wpss-icon" aria-hidden="true"></i>

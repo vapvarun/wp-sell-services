@@ -71,13 +71,13 @@ class ReviewModerationPage {
 	 */
 	public function add_menu_page(): void {
 		$pending_count = $this->get_status_counts()[ Review::STATUS_PENDING ] ?? 0;
-		$menu_title    = __( 'Review Moderation', 'wp-sell-services' );
+		$menu_title    = __( 'Review moderation', 'wp-sell-services' );
 
 		$menu_title = wpss_admin_menu_title( $menu_title, (int) $pending_count );
 
 		$hook = add_submenu_page(
 			'wp-sell-services',
-			__( 'Review Moderation', 'wp-sell-services' ),
+			__( 'Review moderation', 'wp-sell-services' ),
 			$menu_title,
 			'manage_options',
 			'wpss-review-moderation',
@@ -246,7 +246,7 @@ JS;
 		$total_pages = $total > 0 ? (int) ceil( $total / self::PER_PAGE ) : 0;
 		?>
 		<div class="wrap wpss-listing-page wpss-review-moderation-page">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Review Moderation', 'wp-sell-services' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Review moderation', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
 
 			<?php if ( ! $is_enabled ) : ?>
@@ -266,7 +266,7 @@ JS;
 			<div class="wpss-stats-grid wpss-review-moderation-stats">
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( (int) array_sum( $counts ) ) ); ?></span>
-					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Reviews', 'wp-sell-services' ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total reviews', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( (int) ( $counts[ Review::STATUS_PENDING ] ?? 0 ) ) ); ?></span>

@@ -92,7 +92,7 @@ class UpgradePage {
 	 */
 	private function get_features(): array {
 		return array(
-			__( 'Marketplace & Services', 'wp-sell-services' ) => array(
+			__( 'Marketplace & services', 'wp-sell-services' ) => array(
 				array(
 					'feature' => __( 'Service listings with packages', 'wp-sell-services' ),
 					'free'    => true,
@@ -124,7 +124,7 @@ class UpgradePage {
 					'pro'     => __( 'Unlimited', 'wp-sell-services' ),
 				),
 			),
-			__( 'Orders & Workflow', 'wp-sell-services' ) => array(
+			__( 'Orders & workflow', 'wp-sell-services' ) => array(
 				array(
 					'feature' => __( 'Order management', 'wp-sell-services' ),
 					'free'    => true,
@@ -156,7 +156,7 @@ class UpgradePage {
 					'pro'     => true,
 				),
 			),
-			__( 'E-Commerce Integration', 'wp-sell-services' ) => array(
+			__( 'E-commerce integration', 'wp-sell-services' ) => array(
 				array(
 					'feature' => __( 'WooCommerce', 'wp-sell-services' ),
 					'free'    => false,
@@ -182,7 +182,7 @@ class UpgradePage {
 					'pro'     => true,
 				),
 			),
-			__( 'Payment Gateways', 'wp-sell-services' )  => array(
+			__( 'Payment gateways', 'wp-sell-services' )  => array(
 				array(
 					'feature' => __( 'WooCommerce payment gateways', 'wp-sell-services' ),
 					'free'    => false,
@@ -204,7 +204,7 @@ class UpgradePage {
 					'pro'     => true,
 				),
 			),
-			__( 'Storage & Media', 'wp-sell-services' )   => array(
+			__( 'Storage & media', 'wp-sell-services' )   => array(
 				array(
 					'feature' => __( 'Local file storage', 'wp-sell-services' ),
 					'free'    => true,
@@ -226,7 +226,7 @@ class UpgradePage {
 					'pro'     => true,
 				),
 			),
-			__( 'Vendor Payouts & Commissions', 'wp-sell-services' ) => array(
+			__( 'Vendor payouts & commissions', 'wp-sell-services' ) => array(
 				array(
 					'feature' => __( 'Manual payouts (mark as paid)', 'wp-sell-services' ),
 					'free'    => true,
@@ -253,7 +253,7 @@ class UpgradePage {
 					'pro'     => true,
 				),
 			),
-			__( 'Analytics & Vendor Management', 'wp-sell-services' ) => array(
+			__( 'Analytics & vendor management', 'wp-sell-services' ) => array(
 				array(
 					'feature' => __( 'Basic vendor dashboard', 'wp-sell-services' ),
 					'free'    => true,
@@ -285,7 +285,7 @@ class UpgradePage {
 					'pro'     => true,
 				),
 			),
-			__( 'Support & Updates', 'wp-sell-services' ) => array(
+			__( 'Support & updates', 'wp-sell-services' ) => array(
 				array(
 					'feature' => __( 'Community support', 'wp-sell-services' ),
 					'free'    => true,
@@ -360,10 +360,10 @@ class UpgradePage {
 			<div class="wpss-card wpss-upgrade-hero">
 				<div class="wpss-card__body">
 					<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
-						<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Get Pro now, from $69/year', 'wp-sell-services' ); ?>
 					</a>
 					<a href="<?php echo esc_url( $docs_url ); ?>" class="wpss-upgrade-docs" target="_blank" rel="noopener noreferrer">
-						<?php esc_html_e( 'Read the Documentation', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Read the documentation', 'wp-sell-services' ); ?>
 					</a>
 					<p class="wpss-upgrade-guarantee">
 						<?php esc_html_e( '30-day money-back guarantee. No questions asked.', 'wp-sell-services' ); ?>
@@ -402,7 +402,7 @@ class UpgradePage {
 			<div class="wpss-card wpss-upgrade-footer">
 				<div class="wpss-card__body">
 					<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
-						<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Get Pro now, from $69/year', 'wp-sell-services' ); ?>
 					</a>
 					<p class="wpss-upgrade-guarantee">
 						<?php esc_html_e( '30-day money-back guarantee. No questions asked.', 'wp-sell-services' ); ?>

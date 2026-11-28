@@ -62,18 +62,18 @@ class ServiceCategoryTaxonomy {
 	 */
 	public function register(): void {
 		$labels = array(
-			'name'                       => _x( 'Service Categories', 'taxonomy general name', 'wp-sell-services' ),
-			'singular_name'              => _x( 'Service Category', 'taxonomy singular name', 'wp-sell-services' ),
-			'search_items'               => __( 'Search Categories', 'wp-sell-services' ),
-			'popular_items'              => __( 'Popular Categories', 'wp-sell-services' ),
+			'name'                       => _x( 'Service categories', 'taxonomy general name', 'wp-sell-services' ),
+			'singular_name'              => _x( 'Service category', 'taxonomy singular name', 'wp-sell-services' ),
+			'search_items'               => __( 'Search categories', 'wp-sell-services' ),
+			'popular_items'              => __( 'Popular categories', 'wp-sell-services' ),
 			'all_items'                  => __( 'All categories', 'wp-sell-services' ),
-			'parent_item'                => __( 'Parent Category', 'wp-sell-services' ),
-			'parent_item_colon'          => __( 'Parent Category:', 'wp-sell-services' ),
-			'edit_item'                  => __( 'Edit Category', 'wp-sell-services' ),
-			'view_item'                  => __( 'View Category', 'wp-sell-services' ),
-			'update_item'                => __( 'Update Category', 'wp-sell-services' ),
-			'add_new_item'               => __( 'Add New Category', 'wp-sell-services' ),
-			'new_item_name'              => __( 'New Category Name', 'wp-sell-services' ),
+			'parent_item'                => __( 'Parent category', 'wp-sell-services' ),
+			'parent_item_colon'          => __( 'Parent category:', 'wp-sell-services' ),
+			'edit_item'                  => __( 'Edit category', 'wp-sell-services' ),
+			'view_item'                  => __( 'View category', 'wp-sell-services' ),
+			'update_item'                => __( 'Update category', 'wp-sell-services' ),
+			'add_new_item'               => __( 'Add new category', 'wp-sell-services' ),
+			'new_item_name'              => __( 'New category name', 'wp-sell-services' ),
 			'separate_items_with_commas' => __( 'Separate categories with commas', 'wp-sell-services' ),
 			'add_or_remove_items'        => __( 'Add or remove categories', 'wp-sell-services' ),
 			'choose_from_most_used'      => __( 'Choose from the most used categories', 'wp-sell-services' ),
@@ -81,7 +81,7 @@ class ServiceCategoryTaxonomy {
 			'no_terms'                   => __( 'No categories', 'wp-sell-services' ),
 			'items_list_navigation'      => __( 'Categories list navigation', 'wp-sell-services' ),
 			'items_list'                 => __( 'Categories list', 'wp-sell-services' ),
-			'back_to_items'              => __( '&larr; Back to Categories', 'wp-sell-services' ),
+			'back_to_items'              => __( '&larr; Back to categories', 'wp-sell-services' ),
 			'menu_name'                  => __( 'Categories', 'wp-sell-services' ),
 		);
 
@@ -136,15 +136,15 @@ class ServiceCategoryTaxonomy {
 		</div>
 
 		<div class="form-field term-image-wrap">
-			<label for="wpss-category-image"><?php esc_html_e( 'Category Image', 'wp-sell-services' ); ?></label>
+			<label for="wpss-category-image"><?php esc_html_e( 'Category image', 'wp-sell-services' ); ?></label>
 			<input type="hidden" name="wpss_category_image" id="wpss-category-image" value="">
 			<div id="wpss-category-image-preview"></div>
-			<button type="button" class="button wpss-upload-image" data-target="wpss-category-image"><?php esc_html_e( 'Upload Image', 'wp-sell-services' ); ?></button>
+			<button type="button" class="button wpss-upload-image" data-target="wpss-category-image"><?php esc_html_e( 'Upload image', 'wp-sell-services' ); ?></button>
 			<button type="button" class="button wpss-remove-image" data-target="wpss-category-image" style="display:none;"><?php esc_html_e( 'Remove image', 'wp-sell-services' ); ?></button>
 		</div>
 
 		<div class="form-field term-color-wrap">
-			<label for="wpss-category-color"><?php esc_html_e( 'Category Color', 'wp-sell-services' ); ?></label>
+			<label for="wpss-category-color"><?php esc_html_e( 'Category color', 'wp-sell-services' ); ?></label>
 			<input type="text" name="wpss_category_color" id="wpss-category-color" value="" class="wpss-color-picker" data-default-color="#1e40af">
 			<p class="description"><?php esc_html_e( 'Select a color for this category.', 'wp-sell-services' ); ?></p>
 		</div>
@@ -152,7 +152,7 @@ class ServiceCategoryTaxonomy {
 		<div class="form-field term-featured-wrap">
 			<label for="wpss-category-featured">
 				<input type="checkbox" name="wpss_category_featured" id="wpss-category-featured" value="1">
-				<?php esc_html_e( 'Featured Category', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Featured category', 'wp-sell-services' ); ?>
 			</label>
 			<p class="description"><?php esc_html_e( 'Featured categories may be displayed prominently on the site.', 'wp-sell-services' ); ?></p>
 		</div>
@@ -183,7 +183,7 @@ class ServiceCategoryTaxonomy {
 		</tr>
 
 		<tr class="form-field term-image-wrap">
-			<th scope="row"><label for="wpss-category-image"><?php esc_html_e( 'Category Image', 'wp-sell-services' ); ?></label></th>
+			<th scope="row"><label for="wpss-category-image"><?php esc_html_e( 'Category image', 'wp-sell-services' ); ?></label></th>
 			<td>
 				<input type="hidden" name="wpss_category_image" id="wpss-category-image" value="<?php echo esc_attr( $image_id ); ?>">
 				<div id="wpss-category-image-preview">
@@ -191,13 +191,13 @@ class ServiceCategoryTaxonomy {
 						<?php echo wp_get_attachment_image( $image_id, 'thumbnail' ); ?>
 					<?php endif; ?>
 				</div>
-				<button type="button" class="button wpss-upload-image" data-target="wpss-category-image"><?php esc_html_e( 'Upload Image', 'wp-sell-services' ); ?></button>
+				<button type="button" class="button wpss-upload-image" data-target="wpss-category-image"><?php esc_html_e( 'Upload image', 'wp-sell-services' ); ?></button>
 				<button type="button" class="button wpss-remove-image" data-target="wpss-category-image" <?php echo $image_id ? '' : 'style="display:none;"'; ?>><?php esc_html_e( 'Remove image', 'wp-sell-services' ); ?></button>
 			</td>
 		</tr>
 
 		<tr class="form-field term-color-wrap">
-			<th scope="row"><label for="wpss-category-color"><?php esc_html_e( 'Category Color', 'wp-sell-services' ); ?></label></th>
+			<th scope="row"><label for="wpss-category-color"><?php esc_html_e( 'Category color', 'wp-sell-services' ); ?></label></th>
 			<td>
 				<input type="text" name="wpss_category_color" id="wpss-category-color" value="<?php echo esc_attr( $color ); ?>" class="wpss-color-picker" data-default-color="#1e40af">
 				<p class="description"><?php esc_html_e( 'Select a color for this category.', 'wp-sell-services' ); ?></p>
@@ -209,7 +209,7 @@ class ServiceCategoryTaxonomy {
 			<td>
 				<label for="wpss-category-featured">
 					<input type="checkbox" name="wpss_category_featured" id="wpss-category-featured" value="1" <?php checked( $featured, '1' ); ?>>
-					<?php esc_html_e( 'Featured Category', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Featured category', 'wp-sell-services' ); ?>
 				</label>
 				<p class="description"><?php esc_html_e( 'Featured categories may be displayed prominently on the site.', 'wp-sell-services' ); ?></p>
 			</td>

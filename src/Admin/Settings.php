@@ -85,12 +85,12 @@ class Settings {
 			// silently lost the unsaved one. Split into the three questions an
 			// owner actually asks: how does money come IN, what do we KEEP, and
 			// how does it go OUT.
-			'payments'     => __( 'Payment Gateways', 'wp-sell-services' ),
-			'commission'   => __( 'Commission &amp; Tax', 'wp-sell-services' ),
+			'payments'     => __( 'Payment gateways', 'wp-sell-services' ),
+			'commission'   => __( 'Commission &amp; tax', 'wp-sell-services' ),
 			'payouts'      => __( 'Payouts', 'wp-sell-services' ),
 			// Marketplace.
-			'vendor'       => __( 'Vendor Settings', 'wp-sell-services' ),
-			'orders'       => __( 'Orders &amp; Disputes', 'wp-sell-services' ),
+			'vendor'       => __( 'Vendor settings', 'wp-sell-services' ),
+			'orders'       => __( 'Orders &amp; disputes', 'wp-sell-services' ),
 			'emails'       => __( 'Emails', 'wp-sell-services' ),
 			// System (Pro tabs inserted before this via filter). Advanced was
 			// split in two (Basecamp 10337154229): outside services on
@@ -422,7 +422,7 @@ class Settings {
 		$result        = $email_service->send(
 			$admin_email,
 			/* translators: %s: site/platform name */
-			sprintf( __( '[%s] Test Email', 'wp-sell-services' ), $site_name ),
+			sprintf( __( '[%s] Test email', 'wp-sell-services' ), $site_name ),
 			\WPSellServices\Services\EmailService::TYPE_TEST_EMAIL,
 			array(
 				'recipient' => wp_get_current_user(),
@@ -522,7 +522,7 @@ class Settings {
 
 		add_settings_field(
 			'platform_name',
-			__( 'Platform Name', 'wp-sell-services' ),
+			__( 'Platform name', 'wp-sell-services' ),
 			array( $this, 'render_text_field' ),
 			'wpss_general',
 			'wpss_general_section',
@@ -568,7 +568,7 @@ class Settings {
 		// position lived on Advanced, away from the currency it formats.
 		add_settings_field(
 			'currency_position',
-			__( 'Currency Symbol Position', 'wp-sell-services' ),
+			__( 'Currency symbol position', 'wp-sell-services' ),
 			array( $this, 'render_select_field' ),
 			'wpss_general',
 			'wpss_general_section',
@@ -590,8 +590,8 @@ class Settings {
 
 		foreach (
 			array(
-				'thousand_separator' => array( __( 'Thousand Separator', 'wp-sell-services' ), ',' ),
-				'decimal_separator'  => array( __( 'Decimal Separator', 'wp-sell-services' ), '.' ),
+				'thousand_separator' => array( __( 'Thousand separator', 'wp-sell-services' ), ',' ),
+				'decimal_separator'  => array( __( 'Decimal separator', 'wp-sell-services' ), '.' ),
 			) as $wpss_key => $wpss_field
 		) {
 			add_settings_field(
@@ -615,14 +615,14 @@ class Settings {
 		// E-commerce integration section.
 		add_settings_section(
 			'wpss_ecommerce_section',
-			__( 'E-Commerce Integration', 'wp-sell-services' ),
+			__( 'E-commerce integration', 'wp-sell-services' ),
 			array( $this, 'render_ecommerce_section' ),
 			'wpss_general'
 		);
 
 		add_settings_field(
 			'ecommerce_platform',
-			__( 'E-Commerce Platform', 'wp-sell-services' ),
+			__( 'E-commerce platform', 'wp-sell-services' ),
 			array( $this, 'render_ecommerce_platform_field' ),
 			'wpss_general',
 			'wpss_ecommerce_section',
@@ -661,7 +661,7 @@ class Settings {
 		// delivery or your money back", which nothing in the code honours.
 		add_settings_section(
 			'wpss_checkout_badges_section',
-			__( 'Checkout Reassurance', 'wp-sell-services' ),
+			__( 'Checkout reassurance', 'wp-sell-services' ),
 			array( $this, 'render_checkout_badges_section' ),
 			'wpss_checkout'
 		);
@@ -731,7 +731,7 @@ class Settings {
 
 		add_settings_section(
 			'wpss_commission_section',
-			__( 'Platform Commission', 'wp-sell-services' ),
+			__( 'Platform commission', 'wp-sell-services' ),
 			array( $this, 'render_commission_section' ),
 			'wpss_commission'
 		);
@@ -765,7 +765,7 @@ class Settings {
 
 		add_settings_field(
 			'enable_vendor_rates',
-			__( 'Per-Vendor Rates', 'wp-sell-services' ),
+			__( 'Per-vendor rates', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_commission',
 			'wpss_commission_section',
@@ -794,7 +794,7 @@ class Settings {
 		if ( wpss_tipping_enabled() ) {
 			add_settings_field(
 				'tip_commission_rate',
-				__( 'Tip Commission Rate (%)', 'wp-sell-services' ),
+				__( 'Tip commission rate (%)', 'wp-sell-services' ),
 				array( $this, 'render_number_field' ),
 				'wpss_commission',
 				'wpss_commission_section',
@@ -836,7 +836,7 @@ class Settings {
 
 		add_settings_field(
 			'wpss_wallet_provider',
-			__( 'Wallet Provider', 'wp-sell-services' ),
+			__( 'Wallet provider', 'wp-sell-services' ),
 			array( $this, 'render_wallet_provider_field' ),
 			'wpss_payouts',
 			'wpss_payouts_section'
@@ -844,7 +844,7 @@ class Settings {
 
 		add_settings_field(
 			'min_withdrawal',
-			__( 'Minimum Withdrawal', 'wp-sell-services' ),
+			__( 'Minimum withdrawal', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_payouts',
 			'wpss_payouts_section',
@@ -875,7 +875,7 @@ class Settings {
 		// have that conversation set a refund window: 7 / 14 / 30.
 		add_settings_field(
 			'clearance_days',
-			__( 'Clearance Period (Days)', 'wp-sell-services' ),
+			__( 'Clearance period (days)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_payouts',
 			'wpss_payouts_section',
@@ -891,14 +891,14 @@ class Settings {
 
 		add_settings_section(
 			'wpss_auto_withdrawal_section',
-			__( 'Automatic Withdrawals', 'wp-sell-services' ),
+			__( 'Automatic withdrawals', 'wp-sell-services' ),
 			array( $this, 'render_auto_withdrawal_section' ),
 			'wpss_payouts'
 		);
 
 		add_settings_field(
 			'auto_withdrawal_enabled',
-			__( 'Enable Auto-Withdrawal', 'wp-sell-services' ),
+			__( 'Enable auto-withdrawal', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_payouts',
 			'wpss_auto_withdrawal_section',
@@ -911,7 +911,7 @@ class Settings {
 
 		add_settings_field(
 			'auto_withdrawal_threshold',
-			__( 'Auto-Withdrawal Threshold', 'wp-sell-services' ),
+			__( 'Auto-withdrawal threshold', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_payouts',
 			'wpss_auto_withdrawal_section',
@@ -927,7 +927,7 @@ class Settings {
 
 		add_settings_field(
 			'auto_withdrawal_schedule',
-			__( 'Auto-Withdrawal Schedule', 'wp-sell-services' ),
+			__( 'Auto-withdrawal schedule', 'wp-sell-services' ),
 			array( $this, 'render_select_field' ),
 			'wpss_payouts',
 			'wpss_auto_withdrawal_section',
@@ -952,14 +952,14 @@ class Settings {
 
 		add_settings_section(
 			'wpss_tax_section',
-			__( 'Tax Configuration', 'wp-sell-services' ),
+			__( 'Tax configuration', 'wp-sell-services' ),
 			array( $this, 'render_tax_section' ),
 			'wpss_tax'
 		);
 
 		add_settings_field(
 			'enable_tax',
-			__( 'Enable Tax', 'wp-sell-services' ),
+			__( 'Enable tax', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_tax',
 			'wpss_tax_section',
@@ -974,7 +974,7 @@ class Settings {
 
 		add_settings_field(
 			'tax_label',
-			__( 'Tax Label', 'wp-sell-services' ),
+			__( 'Tax label', 'wp-sell-services' ),
 			array( $this, 'render_text_field' ),
 			'wpss_tax',
 			'wpss_tax_section',
@@ -988,7 +988,7 @@ class Settings {
 
 		add_settings_field(
 			'tax_rate',
-			__( 'Tax Rate (%)', 'wp-sell-services' ),
+			__( 'Tax rate (%)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_tax',
 			'wpss_tax_section',
@@ -1005,7 +1005,7 @@ class Settings {
 
 		add_settings_field(
 			'tax_included',
-			__( 'Prices Include Tax', 'wp-sell-services' ),
+			__( 'Prices include tax', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_tax',
 			'wpss_tax_section',
@@ -1020,7 +1020,7 @@ class Settings {
 
 		add_settings_field(
 			'tax_tips',
-			__( 'Tax Tips', 'wp-sell-services' ),
+			__( 'Tax tips', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_tax',
 			'wpss_tax_section',
@@ -1042,14 +1042,14 @@ class Settings {
 
 		add_settings_section(
 			'wpss_vendor_section',
-			__( 'Vendor Settings', 'wp-sell-services' ),
+			__( 'Vendor settings', 'wp-sell-services' ),
 			array( $this, 'render_vendor_section' ),
 			'wpss_vendor'
 		);
 
 		add_settings_field(
 			'vendor_registration',
-			__( 'Vendor Registration', 'wp-sell-services' ),
+			__( 'Vendor registration', 'wp-sell-services' ),
 			array( $this, 'render_select_field' ),
 			'wpss_vendor',
 			'wpss_vendor_section',
@@ -1058,7 +1058,7 @@ class Settings {
 				'field'       => 'vendor_registration',
 				'options'     => array(
 					'open'     => __( 'Open (any member can start selling at once)', 'wp-sell-services' ),
-					'approval' => __( 'Requires Approval', 'wp-sell-services' ),
+					'approval' => __( 'Requires approval', 'wp-sell-services' ),
 					'closed'   => __( 'Closed (admin only)', 'wp-sell-services' ),
 				),
 			)
@@ -1066,7 +1066,7 @@ class Settings {
 
 		add_settings_field(
 			'max_services_per_vendor',
-			__( 'Max Services per Vendor', 'wp-sell-services' ),
+			__( 'Max services per vendor', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_vendor',
 			'wpss_vendor_section',
@@ -1083,7 +1083,7 @@ class Settings {
 
 		add_settings_field(
 			'require_service_moderation',
-			__( 'Service Moderation', 'wp-sell-services' ),
+			__( 'Service moderation', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_vendor',
 			'wpss_vendor_section',
@@ -1097,7 +1097,7 @@ class Settings {
 
 		add_settings_field(
 			'signup_notify_admin',
-			__( 'Sign-up Notice', 'wp-sell-services' ),
+			__( 'Sign-up notice', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_vendor',
 			'wpss_vendor_section',
@@ -1111,7 +1111,7 @@ class Settings {
 
 		add_settings_field(
 			'verify_email_for_vendors',
-			__( 'Verify Email Before Selling', 'wp-sell-services' ),
+			__( 'Verify email before selling', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_vendor',
 			'wpss_vendor_section',
@@ -1125,7 +1125,7 @@ class Settings {
 
 		add_settings_field(
 			'application_fields',
-			__( 'Vendor Application Questions', 'wp-sell-services' ),
+			__( 'Vendor application questions', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_vendor',
 			'wpss_vendor_section',
@@ -1139,7 +1139,7 @@ class Settings {
 
 		add_settings_field(
 			'suspended_money_access',
-			__( 'Suspended Vendors and Earnings', 'wp-sell-services' ),
+			__( 'Suspended vendors and earnings', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_vendor',
 			'wpss_vendor_section',
@@ -1153,7 +1153,7 @@ class Settings {
 
 		add_settings_field(
 			're_review_live_edits',
-			__( 'Re-review Live Edits', 'wp-sell-services' ),
+			__( 'Re-review live edits', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_vendor',
 			'wpss_vendor_section',
@@ -1167,7 +1167,7 @@ class Settings {
 
 		add_settings_field(
 			'moderate_reviews',
-			__( 'Review Moderation', 'wp-sell-services' ),
+			__( 'Review moderation', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_vendor',
 			'wpss_vendor_section',
@@ -1210,7 +1210,7 @@ class Settings {
 
 		add_settings_field(
 			'cancel_window_hours',
-			__( 'Buyer Cancellation Window (Hours)', 'wp-sell-services' ),
+			__( 'Buyer cancellation window (hours)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_orders',
 			'wpss_orders_section',
@@ -1225,7 +1225,7 @@ class Settings {
 
 		add_settings_field(
 			'auto_complete_days',
-			__( 'Auto-Complete Days', 'wp-sell-services' ),
+			__( 'Auto-complete days', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_orders',
 			'wpss_orders_section',
@@ -1248,7 +1248,7 @@ class Settings {
 
 		add_settings_field(
 			'wpss_offline_receipts',
-			__( 'Offline Payment Proof', 'wp-sell-services' ),
+			__( 'Offline payment proof', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_orders',
 			'wpss_orders_section',
@@ -1265,7 +1265,7 @@ class Settings {
 
 		add_settings_field(
 			'allow_disputes',
-			__( 'Allow Disputes', 'wp-sell-services' ),
+			__( 'Allow disputes', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_orders',
 			'wpss_disputes_section',
@@ -1278,7 +1278,7 @@ class Settings {
 
 		add_settings_field(
 			'dispute_window_days',
-			__( 'Dispute Window (Days)', 'wp-sell-services' ),
+			__( 'Dispute window (days)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_orders',
 			'wpss_disputes_section',
@@ -1293,7 +1293,7 @@ class Settings {
 
 		add_settings_field(
 			'auto_dispute_late_days',
-			__( 'Auto-Dispute Late Orders (Days)', 'wp-sell-services' ),
+			__( 'Auto-dispute late orders (days)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_orders',
 			'wpss_disputes_section',
@@ -1308,7 +1308,7 @@ class Settings {
 
 		add_settings_field(
 			'allow_late_requirements',
-			__( 'Late Requirements Submission', 'wp-sell-services' ),
+			__( 'Late requirements submission', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_orders',
 			'wpss_orders_section',
@@ -1322,7 +1322,7 @@ class Settings {
 
 		add_settings_field(
 			'requirements_timeout_days',
-			__( 'Requirements Timeout (Days)', 'wp-sell-services' ),
+			__( 'Requirements timeout (days)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_orders',
 			'wpss_orders_section',
@@ -1337,7 +1337,7 @@ class Settings {
 
 		add_settings_field(
 			'auto_start_on_timeout',
-			__( 'Auto-Start on Timeout', 'wp-sell-services' ),
+			__( 'Auto-start on timeout', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_orders',
 			'wpss_orders_section',
@@ -1351,7 +1351,7 @@ class Settings {
 
 		add_settings_field(
 			'review_window_days',
-			__( 'Review Window (Days)', 'wp-sell-services' ),
+			__( 'Review window (days)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_orders',
 			'wpss_orders_section',
@@ -1385,7 +1385,7 @@ class Settings {
 
 		add_settings_section(
 			'wpss_notification_delivery_section',
-			__( 'Message Email Delivery', 'wp-sell-services' ),
+			__( 'Message email delivery', 'wp-sell-services' ),
 			static function (): void {
 				echo '<p>' . esc_html__( 'Message emails are the most frequent mail the marketplace sends - one per message on every active order. These two settings cut the ones nobody needed.', 'wp-sell-services' ) . '</p>';
 			},
@@ -1510,8 +1510,8 @@ class Settings {
 		$page_definitions = wpss_get_page_definitions();
 
 		$page_labels = array(
-			'services_page' => __( 'Services Page', 'wp-sell-services' ),
-			'vendors_page'  => __( 'Vendors Directory', 'wp-sell-services' ),
+			'services_page' => __( 'Services page', 'wp-sell-services' ),
+			'vendors_page'  => __( 'Vendors directory', 'wp-sell-services' ),
 		);
 
 		$pages = array();
@@ -1559,7 +1559,7 @@ class Settings {
 
 		add_settings_field(
 			'delete_data_on_uninstall',
-			__( 'Delete Data on Uninstall', 'wp-sell-services' ),
+			__( 'Delete data on uninstall', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_advanced',
 			'wpss_advanced_section',
@@ -1573,7 +1573,7 @@ class Settings {
 
 		add_settings_field(
 			'enable_debug_mode',
-			__( 'Debug Mode', 'wp-sell-services' ),
+			__( 'Debug mode', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_advanced',
 			'wpss_advanced_section',
@@ -1586,7 +1586,7 @@ class Settings {
 
 		add_settings_field(
 			'max_file_size',
-			__( 'Max File Upload Size (MB)', 'wp-sell-services' ),
+			__( 'Max file upload size (MB)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_advanced',
 			'wpss_advanced_section',
@@ -1602,7 +1602,7 @@ class Settings {
 
 		add_settings_field(
 			'allowed_file_types',
-			__( 'Allowed File Types', 'wp-sell-services' ),
+			__( 'Allowed file types', 'wp-sell-services' ),
 			array( $this, 'render_text_field' ),
 			'wpss_advanced',
 			'wpss_advanced_section',
@@ -1641,7 +1641,7 @@ class Settings {
 
 		add_settings_field(
 			'enabled',
-			__( 'Enable Real-time Updates', 'wp-sell-services' ),
+			__( 'Enable real-time updates', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_realtime',
 			'wpss_realtime_section',
@@ -1792,7 +1792,7 @@ class Settings {
 				<div class="wpss-page-header__left">
 					<h1 class="wpss-page-header__title">
 						<i data-lucide="settings" class="wpss-icon--sm"></i>
-						<?php echo esc_html__( 'WP Sell Services Settings', 'wp-sell-services' ); ?>
+						<?php echo esc_html__( 'WP Sell Services settings', 'wp-sell-services' ); ?>
 					</h1>
 					<p class="wpss-page-header__desc">
 						<?php echo esc_html__( 'Configure your service marketplace.', 'wp-sell-services' ); ?>
@@ -1980,7 +1980,7 @@ class Settings {
 					do_settings_sections( 'wpss_general' );
 					?>
 					<div class="wpss-settings-section__footer">
-						<?php submit_button( __( 'Save General Settings', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-save-general' ) ); ?>
+						<?php submit_button( __( 'Save general settings', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-save-general' ) ); ?>
 					</div>
 				</form>
 			</div>
@@ -2004,7 +2004,7 @@ class Settings {
 					do_settings_sections( 'wpss_pages' );
 					?>
 					<div class="wpss-settings-section__footer">
-						<?php submit_button( __( 'Save Page Settings', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-save-pages' ) ); ?>
+						<?php submit_button( __( 'Save page settings', 'wp-sell-services' ), 'primary', 'submit', false, array( 'id' => 'wpss-save-pages' ) ); ?>
 					</div>
 				</form>
 			</div>
@@ -2025,7 +2025,7 @@ class Settings {
 	 */
 	private function render_payments_tab(): void {
 		echo '<div class="wpss-settings-subhead">';
-		echo '<h2 class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</h2>';
+		echo '<h2 class="wpss-settings-subhead__title">' . esc_html__( 'Payment gateways', 'wp-sell-services' ) . '</h2>';
 		if ( wpss_uses_standalone_payments() ) {
 			echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
 		}
@@ -2059,14 +2059,14 @@ class Settings {
 			array(
 				array(
 					'id'           => 'commission',
-					'title'        => __( 'Platform Commission', 'wp-sell-services' ),
+					'title'        => __( 'Platform commission', 'wp-sell-services' ),
 					'description'  => __( 'Configure the platform commission deducted from vendor earnings.', 'wp-sell-services' ),
 					'option_group' => 'wpss_commission',
 					'settings_id'  => 'wpss_commission',
 				),
 				array(
 					'id'           => 'tax',
-					'title'        => __( 'Tax Configuration', 'wp-sell-services' ),
+					'title'        => __( 'Tax configuration', 'wp-sell-services' ),
 					'description'  => __( 'Configure tax calculation for services.', 'wp-sell-services' ),
 					'option_group' => 'wpss_tax',
 					'settings_id'  => 'wpss_tax',
@@ -2292,7 +2292,7 @@ class Settings {
 		<div class="wpss-card wpss-payment-methods" data-rest="<?php echo esc_url( rest_url( 'wpss/v1/payments/settings' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-saved="<?php esc_attr_e( 'Saved', 'wp-sell-services' ); ?>">
 			<div class="wpss-card__head">
 				<div>
-					<h2 class="wpss-card__title"><?php esc_html_e( 'Payment Methods', 'wp-sell-services' ); ?></h2>
+					<h2 class="wpss-card__title"><?php esc_html_e( 'Payment methods', 'wp-sell-services' ); ?></h2>
 					<p class="wpss-card__desc"><?php esc_html_e( 'Turn methods on or off and drag them into the order buyers see at checkout. The first one is selected by default.', 'wp-sell-services' ); ?></p>
 				</div>
 			</div>
@@ -2381,7 +2381,7 @@ class Settings {
 						submit_button(
 							sprintf(
 								/* translators: %s: gateway name */
-								__( 'Save %s Settings', 'wp-sell-services' ),
+								__( 'Save %s settings', 'wp-sell-services' ),
 								$title
 							),
 							'primary',
@@ -2417,21 +2417,21 @@ class Settings {
 				),
 				array(
 					'id'          => 'demo-content',
-					'title'       => __( 'Demo Content', 'wp-sell-services' ),
+					'title'       => __( 'Demo content', 'wp-sell-services' ),
 					'description' => __( 'Import sample services, vendors, and categories to preview your marketplace. Demo content can be removed at any time.', 'wp-sell-services' ),
 					'collapsed'   => true,
 					'callback'    => array( $this, 'render_demo_content_section' ),
 				),
 				array(
 					'id'          => 'template-overrides',
-					'title'       => __( 'Template Overrides', 'wp-sell-services' ),
+					'title'       => __( 'Template overrides', 'wp-sell-services' ),
 					'description' => __( 'Templates your theme replaces, and whether each is older than the version this plugin ships.', 'wp-sell-services' ),
 					'collapsed'   => true,
 					'callback'    => array( $this, 'render_template_overrides_section' ),
 				),
 				array(
 					'id'          => 'setup-wizard',
-					'title'       => __( 'Setup Wizard', 'wp-sell-services' ),
+					'title'       => __( 'Setup wizard', 'wp-sell-services' ),
 					'description' => __( 'Re-run the setup wizard to reconfigure your marketplace settings.', 'wp-sell-services' ),
 					'collapsed'   => true,
 					'callback'    => array( $this, 'render_setup_wizard_section' ),
@@ -2829,11 +2829,8 @@ class Settings {
 						<div class="wpss-settings-section__footer">
 							<?php
 							submit_button(
-								sprintf(
-									/* translators: %s: section title */
-									__( 'Save %s', 'wp-sell-services' ),
-									$title ?: __( 'Changes', 'wp-sell-services' )
-								),
+								// Core's wording; a sentence-case section title cannot sit mid-sentence ("Save Vendor settings").
+								__( 'Save changes', 'wp-sell-services' ),
 								'primary',
 								'submit',
 								false,
@@ -2862,7 +2859,7 @@ class Settings {
 			array(
 				array(
 					'id'           => 'vendor-settings',
-					'title'        => __( 'Vendor Settings', 'wp-sell-services' ),
+					'title'        => __( 'Vendor settings', 'wp-sell-services' ),
 					'description'  => __( 'Configure vendor registration and capabilities.', 'wp-sell-services' ),
 					'option_group' => 'wpss_vendor',
 					'settings_id'  => 'wpss_vendor',
@@ -2906,13 +2903,13 @@ class Settings {
 			array(
 				array(
 					'id'          => 'email-test',
-					'title'       => __( 'Email Deliverability', 'wp-sell-services' ),
+					'title'       => __( 'Email deliverability', 'wp-sell-services' ),
 					'description' => __( 'Verify that your site can send emails. If the test fails, check your SMTP or email sending plugin configuration.', 'wp-sell-services' ),
 					'callback'    => array( $this, 'render_test_email_section' ),
 				),
 				array(
 					'id'           => 'email-notifications',
-					'title'        => __( 'Email Notifications', 'wp-sell-services' ),
+					'title'        => __( 'Email notifications', 'wp-sell-services' ),
 					'description'  => __( 'Configure which email notifications are sent. These toggles are the master switch for each notification type.', 'wp-sell-services' ),
 					'option_group' => 'wpss_notifications',
 					'settings_id'  => 'wpss_notifications',
@@ -2943,7 +2940,7 @@ class Settings {
 				?>
 			</p>
 			<button type="button" class="button button-primary wpss-send-test-email" data-nonce="<?php echo esc_attr( $nonce ); ?>">
-				<?php esc_html_e( 'Send Test Email', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Send test email', 'wp-sell-services' ); ?>
 			</button>
 			<span class="wpss-test-email-status" style="margin-left: 10px; display: none;"></span>
 		</div>
@@ -2970,14 +2967,14 @@ class Settings {
 					<?php esc_html_e( 'Demo content is currently installed.', 'wp-sell-services' ); ?>
 				</p>
 				<button type="button" class="button button-secondary wpss-delete-demo" data-nonce="<?php echo esc_attr( $nonce ); ?>">
-					<?php esc_html_e( 'Delete Demo Content', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Delete demo content', 'wp-sell-services' ); ?>
 				</button>
 			<?php else : ?>
 				<p style="margin-bottom: 10px;">
 					<?php esc_html_e( 'Creates sample services across 6 categories with 4 demo vendors.', 'wp-sell-services' ); ?>
 				</p>
 				<button type="button" class="button button-primary wpss-import-demo" data-nonce="<?php echo esc_attr( $nonce ); ?>">
-					<?php esc_html_e( 'Import Demo Content', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Import demo content', 'wp-sell-services' ); ?>
 				</button>
 			<?php endif; ?>
 
@@ -3080,7 +3077,7 @@ class Settings {
 				</p>
 			<?php endif; ?>
 			<a href="<?php echo esc_url( $wizard_url ); ?>" class="button button-secondary">
-				<?php echo $completed ? esc_html__( 'Re-Run Setup Wizard', 'wp-sell-services' ) : esc_html__( 'Run Setup Wizard', 'wp-sell-services' ); ?>
+				<?php echo $completed ? esc_html__( 'Re-run setup wizard', 'wp-sell-services' ) : esc_html__( 'Run setup wizard', 'wp-sell-services' ); ?>
 			</a>
 		</div>
 		<?php
@@ -3422,7 +3419,7 @@ class Settings {
 		}
 
 		if ( empty( $providers ) ) {
-			$providers = array( 'internal' => __( 'Internal Wallet', 'wp-sell-services' ) );
+			$providers = array( 'internal' => __( 'Internal wallet', 'wp-sell-services' ) );
 		}
 
 		$selected = get_option( 'wpss_wallet_provider', 'internal' );
@@ -3496,7 +3493,7 @@ class Settings {
 			'wpss_decimal_places',
 			'wpss_general',
 			'wpss_general_section',
-			__( 'Price Decimal Places', 'wp-sell-services' ),
+			__( 'Price decimal places', 'wp-sell-services' ),
 			array(
 				'default'     => wpss_get_currency_decimals(),
 				'value'       => '' !== wpss_currency_owner() ? wpss_get_decimal_places( wpss_get_currency() ) : null,
@@ -3510,7 +3507,7 @@ class Settings {
 			'wpss_min_order_amount',
 			'wpss_general',
 			'wpss_general_section',
-			__( 'Minimum Order Amount', 'wp-sell-services' ),
+			__( 'Minimum order amount', 'wp-sell-services' ),
 			array(
 				'default'     => 5,
 				'min'         => 0,
@@ -3524,7 +3521,7 @@ class Settings {
 			'wpss_max_order_amount',
 			'wpss_general',
 			'wpss_general_section',
-			__( 'Maximum Order Amount', 'wp-sell-services' ),
+			__( 'Maximum order amount', 'wp-sell-services' ),
 			array(
 				'default'     => 10000,
 				'min'         => 0,
@@ -3540,7 +3537,7 @@ class Settings {
 			'wpss_max_extension_days',
 			'wpss_orders',
 			'wpss_orders_section',
-			__( 'Max Extension Days', 'wp-sell-services' ),
+			__( 'Max extension days', 'wp-sell-services' ),
 			array(
 				'default'     => 14,
 				'min'         => 1,
@@ -3552,7 +3549,7 @@ class Settings {
 			'wpss_request_expiry_days',
 			'wpss_orders',
 			'wpss_orders_section',
-			__( 'Buyer Request Expiry (Days)', 'wp-sell-services' ),
+			__( 'Buyer request expiry (days)', 'wp-sell-services' ),
 			array(
 				'default'     => 30,
 				'min'         => 1,
@@ -3572,7 +3569,7 @@ class Settings {
 			'wpss_dispute_response_days',
 			'wpss_orders',
 			'wpss_disputes_section',
-			__( 'Response Window (Days)', 'wp-sell-services' ),
+			__( 'Response window (days)', 'wp-sell-services' ),
 			array(
 				'default'     => 3,
 				'min'         => 1,
@@ -3584,7 +3581,7 @@ class Settings {
 			'wpss_dispute_reminder_days',
 			'wpss_orders',
 			'wpss_disputes_section',
-			__( 'Reminder After (Days)', 'wp-sell-services' ),
+			__( 'Reminder after (days)', 'wp-sell-services' ),
 			array(
 				'default'     => 2,
 				'min'         => 1,
@@ -3596,7 +3593,7 @@ class Settings {
 			'wpss_dispute_auto_escalate_days',
 			'wpss_orders',
 			'wpss_disputes_section',
-			__( 'Auto-Escalate After (Days)', 'wp-sell-services' ),
+			__( 'Auto-escalate after (days)', 'wp-sell-services' ),
 			array(
 				'default'     => 7,
 				'min'         => 1,
@@ -3608,7 +3605,7 @@ class Settings {
 		register_setting( 'wpss_orders', 'wpss_dispute_admin_email', array( 'sanitize_callback' => 'sanitize_email' ) );
 		add_settings_field(
 			'wpss_dispute_admin_email',
-			__( 'Dispute Notifications Email', 'wp-sell-services' ),
+			__( 'Dispute notifications email', 'wp-sell-services' ),
 			array( $this, 'render_standalone_email_field' ),
 			'wpss_orders',
 			'wpss_disputes_section',
@@ -3623,7 +3620,7 @@ class Settings {
 			'wpss_max_portfolio_items',
 			'wpss_vendor',
 			'wpss_vendor_section',
-			__( 'Max Portfolio Items', 'wp-sell-services' ),
+			__( 'Max portfolio items', 'wp-sell-services' ),
 			array(
 				'default'     => 50,
 				'min'         => 1,
@@ -3635,7 +3632,7 @@ class Settings {
 			'wpss_max_featured_portfolio',
 			'wpss_vendor',
 			'wpss_vendor_section',
-			__( 'Max Featured Portfolio Items', 'wp-sell-services' ),
+			__( 'Max featured portfolio items', 'wp-sell-services' ),
 			array(
 				'default'     => 6,
 				'min'         => 1,
@@ -3649,7 +3646,7 @@ class Settings {
 			'wpss_audit_log_retention_days',
 			'wpss_advanced',
 			'wpss_advanced_section',
-			__( 'Audit Log Retention (Days)', 'wp-sell-services' ),
+			__( 'Audit log retention (days)', 'wp-sell-services' ),
 			array(
 				'default'     => AuditLogService::RETENTION_DEFAULT,
 				'min'         => 0,
@@ -3660,8 +3657,8 @@ class Settings {
 
 		// Pages: confirmation + terms mapping.
 		foreach ( array(
-			'wpss_order_confirmation_page' => array( __( 'Order Confirmation Page', 'wp-sell-services' ), __( 'Custom thank-you page buyers land on after checkout. Leave unset to use the default order view.', 'wp-sell-services' ) ),
-			'wpss_terms_page'              => array( __( 'Terms & Conditions Page', 'wp-sell-services' ), __( 'Map your own page - we never publish one. Linked from checkout and exposed to API clients. Privacy Policy comes from Settings > Privacy.', 'wp-sell-services' ) ),
+			'wpss_order_confirmation_page' => array( __( 'Order confirmation page', 'wp-sell-services' ), __( 'Custom thank-you page buyers land on after checkout. Leave unset to use the default order view.', 'wp-sell-services' ) ),
+			'wpss_terms_page'              => array( __( 'Terms & conditions page', 'wp-sell-services' ), __( 'Map your own page - we never publish one. Linked from checkout and exposed to API clients. Privacy Policy comes from Settings > Privacy.', 'wp-sell-services' ) ),
 		) as $option => $labels ) {
 			register_setting( 'wpss_pages', $option, array( 'sanitize_callback' => 'absint' ) );
 			add_settings_field(
@@ -3868,7 +3865,7 @@ class Settings {
 		foreach ( $registered as $id => $adapter ) {
 			$name      = $adapter->get_name();
 			$is_active = $adapter->is_active();
-			$status    = $is_active ? __( 'Available', 'wp-sell-services' ) : __( 'Not Installed', 'wp-sell-services' );
+			$status    = $is_active ? __( 'Available', 'wp-sell-services' ) : __( 'Not installed', 'wp-sell-services' );
 
 			/**
 			 * Filter the status word shown beside one platform.
@@ -3910,7 +3907,7 @@ class Settings {
 		if ( $active_adapter ) {
 			printf(
 				'<p class="description"><strong>%s:</strong> %s</p>',
-				esc_html__( 'Currently Active', 'wp-sell-services' ),
+				esc_html__( 'Currently active', 'wp-sell-services' ),
 				esc_html( $active_adapter->get_name() )
 			);
 		} else {
@@ -3970,7 +3967,7 @@ class Settings {
 			'<button type="button" class="button wpss-create-page" data-field="%s" data-title="%s">%s</button>',
 			esc_attr( $args['field'] ),
 			esc_attr( $page_title ),
-			esc_html__( 'Create Page', 'wp-sell-services' )
+			esc_html__( 'Create page', 'wp-sell-services' )
 		);
 
 		// View page link (only show if page is selected).
@@ -4596,8 +4593,8 @@ class Settings {
 				'delivery_submitted'     => __( 'Delivery submitted', 'wp-sell-services' ),
 				'revision_requested'     => __( 'Revision requested', 'wp-sell-services' ),
 				'new_message'            => __( 'New message', 'wp-sell-services' ),
-				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
-				'new_review'             => __( 'New Review', 'wp-sell-services' ),
+				'vendor_contact'         => __( 'Vendor direct message', 'wp-sell-services' ),
+				'new_review'             => __( 'New review', 'wp-sell-services' ),
 				'dispute_opened'         => __( 'Dispute opened', 'wp-sell-services' ),
 				'withdrawal_requested'   => __( 'Withdrawal requested', 'wp-sell-services' ),
 				'withdrawal_approved'    => __( 'Withdrawal approved', 'wp-sell-services' ),
@@ -4613,12 +4610,12 @@ class Settings {
 				'extension_proposed'     => __( 'Extension proposed', 'wp-sell-services' ),
 				'extension_approved'     => __( 'Extension approved', 'wp-sell-services' ),
 				'extension_declined'     => __( 'Extension declined', 'wp-sell-services' ),
-				'moderation'             => __( 'Service Moderation', 'wp-sell-services' ),
+				'moderation'             => __( 'Service moderation', 'wp-sell-services' ),
 				'review_reply'           => __( 'Review reply', 'wp-sell-services' ),
 				'request_expired'        => __( 'Request expired', 'wp-sell-services' ),
 				'dispute_escalated'      => __( 'Dispute escalated', 'wp-sell-services' ),
 				'dispute_cancelled'      => __( 'Dispute cancelled', 'wp-sell-services' ),
-				'tip_receipt'            => __( 'Tip Receipt', 'wp-sell-services' ),
+				'tip_receipt'            => __( 'Tip receipt', 'wp-sell-services' ),
 			)
 		);
 	}

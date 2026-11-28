@@ -49,18 +49,18 @@ class ServiceTagTaxonomy {
 	 */
 	public function register(): void {
 		$labels = [
-			'name'                       => _x( 'Service Tags', 'taxonomy general name', 'wp-sell-services' ),
-			'singular_name'              => _x( 'Service Tag', 'taxonomy singular name', 'wp-sell-services' ),
+			'name'                       => _x( 'Service tags', 'taxonomy general name', 'wp-sell-services' ),
+			'singular_name'              => _x( 'Service tag', 'taxonomy singular name', 'wp-sell-services' ),
 			'search_items'               => __( 'Search tags', 'wp-sell-services' ),
-			'popular_items'              => __( 'Popular Tags', 'wp-sell-services' ),
-			'all_items'                  => __( 'All Tags', 'wp-sell-services' ),
+			'popular_items'              => __( 'Popular tags', 'wp-sell-services' ),
+			'all_items'                  => __( 'All tags', 'wp-sell-services' ),
 			'parent_item'                => null,
 			'parent_item_colon'          => null,
-			'edit_item'                  => __( 'Edit Tag', 'wp-sell-services' ),
-			'view_item'                  => __( 'View Tag', 'wp-sell-services' ),
-			'update_item'                => __( 'Update Tag', 'wp-sell-services' ),
-			'add_new_item'               => __( 'Add New Tag', 'wp-sell-services' ),
-			'new_item_name'              => __( 'New Tag Name', 'wp-sell-services' ),
+			'edit_item'                  => __( 'Edit tag', 'wp-sell-services' ),
+			'view_item'                  => __( 'View tag', 'wp-sell-services' ),
+			'update_item'                => __( 'Update tag', 'wp-sell-services' ),
+			'add_new_item'               => __( 'Add new tag', 'wp-sell-services' ),
+			'new_item_name'              => __( 'New tag name', 'wp-sell-services' ),
 			'separate_items_with_commas' => __( 'Separate tags with commas', 'wp-sell-services' ),
 			'add_or_remove_items'        => __( 'Add or remove tags', 'wp-sell-services' ),
 			'choose_from_most_used'      => __( 'Choose from the most used tags', 'wp-sell-services' ),
@@ -68,7 +68,7 @@ class ServiceTagTaxonomy {
 			'no_terms'                   => __( 'No tags', 'wp-sell-services' ),
 			'items_list_navigation'      => __( 'Tags list navigation', 'wp-sell-services' ),
 			'items_list'                 => __( 'Tags list', 'wp-sell-services' ),
-			'back_to_items'              => __( '&larr; Back to Tags', 'wp-sell-services' ),
+			'back_to_items'              => __( '&larr; Back to tags', 'wp-sell-services' ),
 			'menu_name'                  => __( 'Tags', 'wp-sell-services' ),
 		];
 

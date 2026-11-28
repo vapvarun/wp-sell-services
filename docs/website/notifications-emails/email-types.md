@@ -88,7 +88,7 @@ bold is the label you will see.
 | **Delivery Submitted** | A vendor delivers work. Also gates the auto-complete reminder buyers get the day before a delivery completes on its own. |
 | **Revision Requested** | A buyer asks for a revision |
 | **New Message** | A message is sent on an order |
-| **Vendor Direct Message** | A buyer contacts a vendor outside an order |
+| **Vendor direct message** | A buyer contacts a vendor outside an order |
 | **New Review** | A buyer leaves a review |
 | **Dispute Opened** | A dispute is opened on an order |
 | **Withdrawal Requested** | A vendor requests a payout |
@@ -105,7 +105,7 @@ bold is the label you will see.
 | **Extension Proposed** | A vendor quotes a paid extension |
 | **Extension Approved** | A buyer accepts an extension |
 | **Extension Declined** | A buyer declines an extension |
-| **Service Moderation** | A service is approved, rejected, or queued for review |
+| **Service moderation** | A service is approved, rejected, or queued for review |
 | **Review Reply** | A vendor replies to a buyer's review |
 | **Request Expired** | A buyer request reaches its closing date |
 | **Dispute Escalated** | A dispute goes to the marketplace team (buyer, vendor and admin) |
@@ -140,7 +140,7 @@ Emails are responsive and display well on both desktop and mobile email clients.
 
 ### Throttling, failures and retries
 
-Only conversational mail (**New Message**, **Vendor Direct Message**) is
+Only conversational mail (**New Message**, **Vendor direct message**) is
 throttled to one per recipient per five minutes. Order, payment, moderation,
 dispute and withdrawal mail is never throttled: two orders placed a minute
 apart send two New Order emails.

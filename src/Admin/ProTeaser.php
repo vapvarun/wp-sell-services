@@ -130,7 +130,7 @@ class ProTeaser {
 			<div class="wpss-pro-locked__overlay">
 				<span class="wpss-pro-teaser__badge"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></span>
 				<h2 style="margin:12px 0 8px;font-size:20px;">
-					<?php esc_html_e( 'Detailed Analytics Dashboard', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Detailed analytics dashboard', 'wp-sell-services' ); ?>
 				</h2>
 				<p style="color:#646970;font-size:14px;margin:0 0 16px;max-width:400px;">
 					<?php esc_html_e( 'Revenue charts, vendor performance metrics, order trends, and CSV exports.', 'wp-sell-services' ); ?>
@@ -157,7 +157,7 @@ class ProTeaser {
 		<div class="wpss-card" data-section="pro-vendor-features">
 			<div class="wpss-card__head">
 				<h2 class="wpss-card__title">
-					<?php esc_html_e( 'Advanced Vendor Features', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Advanced vendor features', 'wp-sell-services' ); ?>
 					<span class="wpss-pro-badge"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></span>
 				</h2>
 			</div>

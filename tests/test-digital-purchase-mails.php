@@ -82,9 +82,9 @@ try {
 	$check( 'its kind is recorded as digital', 'digital' === wpss_get_order_kind( $order ) );
 
 	$subj = $subjects();
-	$check( 'the buyer gets a receipt (Order Confirmed)', str_contains( $subj, 'Order Confirmed' ), $subj );
-	$check( 'the vendor gets a new sale', str_contains( $subj, 'New Sale' ), $subj );
-	$check( 'no "In Progress" email', ! str_contains( $subj, 'In Progress' ), $subj );
+	$check( 'the buyer gets a receipt (Order confirmed)', str_contains( $subj, 'Order confirmed' ), $subj );
+	$check( 'the vendor gets a new sale', str_contains( $subj, 'New sale' ), $subj );
+	$check( 'no "In progress" email', false === stripos( $subj, 'in progress' ), $subj );
 	$check( 'no "Delivery Ready" email', ! str_contains( $subj, 'Delivery Ready' ), $subj );
 	$buyer_mail = implode( ' ', array_column( $mail_to( (int) $f->buyer ), 'body' ) );
 	$check( 'the receipt says the download is ready', str_contains( $buyer_mail, 'Your download is ready' ), substr( $buyer_mail, 0, 200 ) );
@@ -92,7 +92,7 @@ try {
 
 	$notes = implode( ' | ', $titles( $oid ) );
 	$check( 'buyer notice: Your Download Is Ready', str_contains( $notes, $f->buyer . ':Your Download Is Ready' ), $notes );
-	$check( 'vendor notice: New Sale', str_contains( $notes, $f->vendor . ':New Sale' ), $notes );
+	$check( 'vendor notice: New sale', str_contains( $notes, $f->vendor . ':New sale' ), $notes );
 	$check( 'no "started" or "delivery ready" notices', ! preg_match( '/In Progress|ready to start|Delivery Ready/i', $notes ), $notes );
 
 	// 2. No file uploaded: the vendor delivers by hand, so the in-progress messages stay.
@@ -100,7 +100,7 @@ try {
 	$oid  = $pay();
 	$subj = $subjects();
 	$check( 'without a file the order waits in progress', 'in_progress' === wpss_get_order( $oid )->status );
-	$check( 'and both sides get the In Progress email, not a download receipt', str_contains( $subj, 'In Progress' ) && ! str_contains( $subj, 'New Sale' ), $subj );
+	$check( 'and both sides get the in progress email, not a download receipt', false !== stripos( $subj, 'in progress' ) && ! str_contains( $subj, 'New sale' ), $subj );
 } finally {
 	$order_ids = array_map( 'intval', $f->orders );
 	if ( $order_ids ) {

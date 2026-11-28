@@ -559,27 +559,27 @@ class PayPalGateway extends AbstractPaymentGateway {
 			),
 			'sandbox_mode'          => array(
 				'type'        => 'checkbox',
-				'label'       => __( 'Sandbox Mode', 'wp-sell-services' ),
+				'label'       => __( 'Sandbox mode', 'wp-sell-services' ),
 				'description' => __( 'Use PayPal sandbox for testing.', 'wp-sell-services' ),
 			),
 			'sandbox_client_id'     => array(
 				'type'        => 'text',
-				'label'       => __( 'Sandbox Client ID', 'wp-sell-services' ),
+				'label'       => __( 'Sandbox client ID', 'wp-sell-services' ),
 				'description' => __( 'PayPal sandbox app client ID.', 'wp-sell-services' ),
 			),
 			'sandbox_client_secret' => array(
 				'type'        => 'password',
-				'label'       => __( 'Sandbox Client Secret', 'wp-sell-services' ),
+				'label'       => __( 'Sandbox client secret', 'wp-sell-services' ),
 				'description' => __( 'PayPal sandbox app client secret.', 'wp-sell-services' ),
 			),
 			'live_client_id'        => array(
 				'type'        => 'text',
-				'label'       => __( 'Live Client ID', 'wp-sell-services' ),
+				'label'       => __( 'Live client ID', 'wp-sell-services' ),
 				'description' => __( 'PayPal live app client ID.', 'wp-sell-services' ),
 			),
 			'live_client_secret'    => array(
 				'type'        => 'password',
-				'label'       => __( 'Live Client Secret', 'wp-sell-services' ),
+				'label'       => __( 'Live client secret', 'wp-sell-services' ),
 				'description' => __( 'PayPal live app client secret.', 'wp-sell-services' ),
 			),
 			'webhook_id'            => array(
@@ -589,12 +589,12 @@ class PayPalGateway extends AbstractPaymentGateway {
 			),
 			'pass_fees_to_buyer'    => array(
 				'type'        => 'checkbox',
-				'label'       => __( 'Pass Gateway Fees to Buyer', 'wp-sell-services' ),
+				'label'       => __( 'Pass gateway fees to buyer', 'wp-sell-services' ),
 				'description' => __( 'Add gateway processing fees to the buyer\'s total instead of deducting from vendor earnings.', 'wp-sell-services' ),
 			),
 			'gateway_fee_percent'   => array(
 				'type'        => 'number',
-				'label'       => __( 'Gateway Fee (%)', 'wp-sell-services' ),
+				'label'       => __( 'Gateway fee (%)', 'wp-sell-services' ),
 				'description' => __( 'Percentage fee charged by PayPal (default: 2.9% for US domestic).', 'wp-sell-services' ),
 				'default'     => '2.9',
 				'step'        => '0.01',
@@ -603,7 +603,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 			),
 			'gateway_fee_fixed'     => array(
 				'type'        => 'number',
-				'label'       => __( 'Gateway Fee (Fixed)', 'wp-sell-services' ),
+				'label'       => __( 'Gateway fee (fixed)', 'wp-sell-services' ),
 				'description' => __( 'Fixed fee per transaction in your currency (default: $0.30 for US).', 'wp-sell-services' ),
 				'default'     => '0.30',
 				'step'        => '0.01',
@@ -1234,17 +1234,17 @@ class PayPalGateway extends AbstractPaymentGateway {
 		</table>
 
 		<div class="wpss-gateway-setup-guide" style="margin-top: 20px; padding: 15px; background: #f0f6fc; border: 1px solid #c8d8e6; border-radius: 4px;">
-			<h3 style="margin-top: 0;"><?php esc_html_e( 'PayPal Setup Guide', 'wp-sell-services' ); ?></h3>
+			<h3 style="margin-top: 0;"><?php esc_html_e( 'PayPal setup guide', 'wp-sell-services' ); ?></h3>
 
-			<p><strong><?php esc_html_e( 'Step 1: Create a REST API App', 'wp-sell-services' ); ?></strong></p>
+			<p><strong><?php esc_html_e( 'Step 1: Create a REST API app', 'wp-sell-services' ); ?></strong></p>
 			<ol style="margin-left: 20px;">
 				<li><?php esc_html_e( 'Go to PayPal Developer Dashboard → My Apps & Credentials', 'wp-sell-services' ); ?></li>
 				<li><?php esc_html_e( 'Click "Create App" under REST API apps', 'wp-sell-services' ); ?></li>
-				<li><?php esc_html_e( 'Copy the Client ID and Secret from the app details', 'wp-sell-services' ); ?></li>
+				<li><?php esc_html_e( 'Copy the client ID and secret from the app details', 'wp-sell-services' ); ?></li>
 				<li><?php esc_html_e( 'For testing, switch to "Sandbox" mode to get sandbox credentials', 'wp-sell-services' ); ?></li>
 			</ol>
 
-			<p><strong><?php esc_html_e( 'Step 2: Configure Webhook', 'wp-sell-services' ); ?></strong></p>
+			<p><strong><?php esc_html_e( 'Step 2: Configure webhook', 'wp-sell-services' ); ?></strong></p>
 			<ol style="margin-left: 20px;">
 				<li><?php esc_html_e( 'In your REST API app, scroll to "Webhooks" and click "Add Webhook"', 'wp-sell-services' ); ?></li>
 				<li><?php esc_html_e( 'Enter this URL:', 'wp-sell-services' ); ?>
@@ -1263,7 +1263,7 @@ class PayPalGateway extends AbstractPaymentGateway {
 				<li><?php esc_html_e( 'After creating the webhook, copy the "Webhook ID" and paste it in the Webhook ID field above.', 'wp-sell-services' ); ?></li>
 			</ol>
 
-			<p><strong><?php esc_html_e( 'Step 3: Required API Scopes', 'wp-sell-services' ); ?></strong></p>
+			<p><strong><?php esc_html_e( 'Step 3: Required API scopes', 'wp-sell-services' ); ?></strong></p>
 			<p style="margin-bottom: 5px; margin-left: 20px;">
 				<?php esc_html_e( 'Your REST API app needs these scopes enabled. Configure them in the PayPal Developer Dashboard under your app settings:', 'wp-sell-services' ); ?>
 			</p>
@@ -1271,13 +1271,13 @@ class PayPalGateway extends AbstractPaymentGateway {
 				<thead>
 					<tr>
 						<th style="text-align: left; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Scope', 'wp-sell-services' ); ?></th>
-						<th style="text-align: left; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Used For', 'wp-sell-services' ); ?></th>
+						<th style="text-align: left; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Used for', 'wp-sell-services' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
 						<td style="padding: 6px 12px; border: 1px solid #ddd;"><code style="font-size: 12px;">payments/payment</code></td>
-						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Create checkout orders (Orders v2 API)', 'wp-sell-services' ); ?></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Create checkout orders (orders v2 API)', 'wp-sell-services' ); ?></td>
 					</tr>
 					<tr>
 						<td style="padding: 6px 12px; border: 1px solid #ddd;"><code style="font-size: 12px;">payments/payment/authcapture</code></td>

@@ -135,7 +135,7 @@ class ServiceModerationPage {
 
 		$hook = add_submenu_page(
 			'wp-sell-services',
-			__( 'Service Moderation', 'wp-sell-services' ),
+			__( 'Service moderation', 'wp-sell-services' ),
 			$menu_title,
 			'manage_options',
 			'wpss-moderation',
@@ -337,7 +337,7 @@ class ServiceModerationPage {
 		$counts = $this->get_status_counts();
 		?>
 		<div class="wrap wpss-listing-page wpss-moderation-page">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Service Moderation', 'wp-sell-services' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Service moderation', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
 
 			<?php if ( ! $is_enabled ) : ?>
@@ -364,7 +364,7 @@ class ServiceModerationPage {
 			<div class="wpss-stats-grid wpss-moderation-stats">
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $moderation_total ) ); ?></span>
-					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Services', 'wp-sell-services' ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total services', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $moderation_pending ) ); ?></span>
@@ -420,7 +420,7 @@ class ServiceModerationPage {
 						<!-- Bulk actions sit alongside filter tabs in the filter row -->
 						<div class="alignleft actions bulkactions">
 							<select name="bulk_action" id="bulk-action-selector">
-								<option value=""><?php esc_html_e( 'Bulk Actions', 'wp-sell-services' ); ?></option>
+								<option value=""><?php esc_html_e( 'Bulk actions', 'wp-sell-services' ); ?></option>
 								<option value="approve"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></option>
 								<option value="reject"><?php esc_html_e( 'Reject', 'wp-sell-services' ); ?></option>
 							</select>
@@ -1104,7 +1104,7 @@ class ServiceModerationPage {
 	public function add_moderation_metabox(): void {
 		add_meta_box(
 			'wpss_moderation_status',
-			__( 'Moderation Status', 'wp-sell-services' ),
+			__( 'Moderation status', 'wp-sell-services' ),
 			array( $this, 'render_moderation_metabox' ),
 			'wpss_service',
 			'side',

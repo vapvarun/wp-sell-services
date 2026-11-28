@@ -38,7 +38,7 @@ Marketplace colours follow the site's theme, and every public page and dashboard
 
 ## Admin and vendors
 
-Notification lists page by number on the dashboard, My Account and admin. Dashboard order counts open an Orders view that shows the same number. Sales Orders tells a suspended vendor why the menu shrank. The owner is warned when the plugin's background jobs are more than an hour overdue. On a store rail, the **Payment Gateways** tab links to the store's own payment settings, and EDD and FluentCart checkout are labelled beta and off by default.
+Notification lists page by number on the dashboard, My Account and admin. Dashboard order counts open an Orders view that shows the same number. Sales Orders tells a suspended vendor why the menu shrank. The owner is warned when the plugin's background jobs are more than an hour overdue. On a store rail, the **Payment gateways** tab links to the store's own payment settings, and EDD and FluentCart checkout are labelled beta and off by default.
 
 ## Safety
 

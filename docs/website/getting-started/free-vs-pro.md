@@ -141,7 +141,7 @@ same six-step flow either way; Pro simply stops capping how much they can add.
 | Buyer tips on completed orders, with their own commission rate | -- | **[PRO]** |
 | Recurring Services (subscription billing for services) | -- | Not enabled in 1.7.0 |
 
-**Recurring Services** ships behind a default-off feature flag in 1.7.0 and its
+**Recurring services** ships behind a default-off feature flag in 1.7.0 and its
 UI is hidden. Do not buy Pro for recurring billing yet -- see
 [Recurring Services](../order-management/recurring-services.md).
 

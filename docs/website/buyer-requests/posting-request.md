@@ -22,7 +22,7 @@ Instead of browsing services, you flip the script. Post a description of your pr
 
 ## How to Post a Request
 
-Go to **Dashboard > Buyer Requests** and click **Post New Request**. Fill out the form with these details:
+Go to **Dashboard > Buyer requests** and click **Post a request**. Fill out the form with these details:
 
 ### Title
 
@@ -83,7 +83,7 @@ Requests automatically expire after 30 days if no proposal is accepted. After ex
 
 ## Reviewing Proposals
 
-Go to **Dashboard > Buyer Requests** and click on your request to see all proposals. For each one, you will see:
+Go to **Dashboard > Buyer requests** and click on your request to see all proposals. For each one, you will see:
 
 - Vendor profile and ratings
 - Proposed price and delivery timeline
@@ -113,11 +113,11 @@ Attachments follow one extra rule. Until a vendor sends a proposal you can add a
 
 ### Closing
 
-If you no longer need the work, click **Close** next to the request in **Dashboard > Buyer Requests**. The request is removed from vendor listings and shows as Draft in your dashboard. Vendors who sent proposals are not notified.
+If you no longer need the work, click **Close** next to the request in **Dashboard > Buyer requests**. The request is removed from vendor listings and shows as Draft in your dashboard. Vendors who sent proposals are not notified.
 
 ### Reopening
 
-A request you closed has a **Reopen** button in **Dashboard > Buyer Requests** that lists it again. An expired request can be reposted with updates to start receiving proposals again.
+A request you closed has a **Reopen** button in **Dashboard > Buyer requests** that lists it again. An expired request can be reposted with updates to start receiving proposals again.
 
 ---
 

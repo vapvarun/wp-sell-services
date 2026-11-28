@@ -773,7 +773,7 @@ function wpss_manual_order_payment_methods(): array {
 		'wpss_manual_order_payment_methods',
 		array(
 			'manual'        => __( 'Manual', 'wp-sell-services' ),
-			'bank_transfer' => __( 'Bank Transfer', 'wp-sell-services' ),
+			'bank_transfer' => __( 'Bank transfer', 'wp-sell-services' ),
 			'cash'          => __( 'Cash', 'wp-sell-services' ),
 			'other'         => __( 'Other', 'wp-sell-services' ),
 		)
@@ -886,7 +886,7 @@ function wpss_payment_method_rows(): array {
 		'needs_setup' => __( 'Needs setup', 'wp-sell-services' ),
 		/* translators: %s: currency code */
 		'currency'    => sprintf( __( 'Does not take %s', 'wp-sell-services' ), $currency ),
-		'test'        => __( 'Test Mode', 'wp-sell-services' ),
+		'test'        => __( 'Test mode', 'wp-sell-services' ),
 		'live'        => __( 'Ready', 'wp-sell-services' ),
 	);
 	$rows     = array();

@@ -690,7 +690,7 @@ class EarningsService {
 				self::WITHDRAWAL_COMPLETED => __( 'Withdrawal paid', 'wp-sell-services' ),
 				self::WITHDRAWAL_APPROVED  => __( 'Withdrawal approved', 'wp-sell-services' ),
 				self::WITHDRAWAL_REJECTED  => __( 'Withdrawal rejected', 'wp-sell-services' ),
-				default                    => __( 'Withdrawal Update', 'wp-sell-services' ),
+				default                    => __( 'Withdrawal update', 'wp-sell-services' ),
 			},
 			sprintf(
 				/* translators: 1: amount, 2: status */
@@ -767,7 +767,7 @@ class EarningsService {
 				return array(
 					'id'              => (int) $order->id,
 					'order_number'    => $order->order_number,
-					'service_name'    => '' !== $title ? $title : __( 'Deleted Service', 'wp-sell-services' ),
+					'service_name'    => '' !== $title ? $title : __( 'Deleted service', 'wp-sell-services' ),
 					'amount'          => $amount,
 					'order_total'     => (float) $order->total,
 					'commission_rate' => null !== $order->commission_rate ? (float) $order->commission_rate : null,
@@ -1337,7 +1337,7 @@ class EarningsService {
 				),
 			),
 			'bank_transfer' => array(
-				'label'  => __( 'Bank Transfer', 'wp-sell-services' ),
+				'label'  => __( 'Bank transfer', 'wp-sell-services' ),
 				'fields' => array(
 					'account_name'   => array(
 						'label'    => __( 'Account holder name', 'wp-sell-services' ),
@@ -1864,7 +1864,7 @@ class EarningsService {
 		$notification_service->create(
 			$vendor_id,
 			'auto_withdrawal_created',
-			__( 'Auto Withdrawal Created', 'wp-sell-services' ),
+			__( 'Auto withdrawal created', 'wp-sell-services' ),
 			sprintf(
 				/* translators: %s: amount */
 				__( 'An automatic withdrawal of %s has been scheduled based on your payout settings.', 'wp-sell-services' ),
@@ -1904,7 +1904,7 @@ class EarningsService {
 	public static function add_cron_schedules( array $schedules ): array {
 		$schedules['biweekly'] = array(
 			'interval' => 14 * DAY_IN_SECONDS,
-			'display'  => __( 'Every 14 Days (Bi-weekly)', 'wp-sell-services' ),
+			'display'  => __( 'Every 14 days (bi-weekly)', 'wp-sell-services' ),
 		);
 		return $schedules;
 	}

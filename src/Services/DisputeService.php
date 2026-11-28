@@ -1398,11 +1398,11 @@ class DisputeService {
 	 */
 	public static function get_resolution_types(): array {
 		return array(
-			self::RESOLUTION_REFUND         => __( 'Full Refund', 'wp-sell-services' ),
-			self::RESOLUTION_PARTIAL_REFUND => __( 'Partial Refund', 'wp-sell-services' ),
-			self::RESOLUTION_FAVOR_VENDOR   => __( 'In Favor of Vendor', 'wp-sell-services' ),
-			self::RESOLUTION_FAVOR_BUYER    => __( 'In Favor of Buyer', 'wp-sell-services' ),
-			self::RESOLUTION_MUTUAL         => __( 'Mutual Agreement', 'wp-sell-services' ),
+			self::RESOLUTION_REFUND         => __( 'Full refund', 'wp-sell-services' ),
+			self::RESOLUTION_PARTIAL_REFUND => __( 'Partial refund', 'wp-sell-services' ),
+			self::RESOLUTION_FAVOR_VENDOR   => __( 'In favor of vendor', 'wp-sell-services' ),
+			self::RESOLUTION_FAVOR_BUYER    => __( 'In favor of buyer', 'wp-sell-services' ),
+			self::RESOLUTION_MUTUAL         => __( 'Mutual agreement', 'wp-sell-services' ),
 		);
 	}
 }

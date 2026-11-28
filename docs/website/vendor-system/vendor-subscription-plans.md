@@ -11,8 +11,8 @@ site.
 
 ## Setting up
 
-1. Add your Stripe keys under **Sell Services > Settings > Payment Gateways**.
-2. Go to **Sell Services > Settings > Vendor Settings** and find the **Vendor Subscriptions** card.
+1. Add your Stripe keys under **Sell Services > Settings > Payment gateways**.
+2. Go to **Sell Services > Settings > Vendor settings** and find the **Vendor subscriptions** card.
 3. Turn **Vendor subscriptions** on under **Sell Services > Settings > Features**, then decide on the card whether a subscription is **required** to sell (see the matrix below).
 4. Create one or more plans.
 
@@ -25,7 +25,7 @@ site.
 | **Max services** | Active services allowed. `-1` means unlimited |
 | **Max featured** | Featured slots allowed |
 | **Commission override** | Charge members a different platform rate |
-| **Stripe Price ID** | The Stripe price this plan bills against |
+| **Stripe price ID** | The Stripe price this plan bills against |
 | **Active / sort order** | Whether it is offered, and where it appears |
 
 > **A paid plan must have a valid Stripe Price ID.** A plan marked paid but

@@ -20,7 +20,7 @@ The buyer has started checkout but payment has not gone through yet. Nothing hap
 
 Payment is confirmed. Now the buyer needs to fill in the project details the vendor needs before starting work. The system sends automatic reminders on day 1, day 3, and day 5 if the buyer has not submitted yet.
 
-If you have set a requirements timeout (in **Settings > Orders & Disputes**), one of two things happens when time runs out:
+If you have set a requirements timeout (in **Settings > Orders & disputes**), one of two things happens when time runs out:
 - **Auto-start enabled** -- The order moves forward without requirements, and the vendor starts work.
 - **Auto-start disabled** -- The order is cancelled and the buyer gets a refund.
 
@@ -114,7 +114,7 @@ And here is one with a revision:
 
 ## Key Settings
 
-You can adjust how orders behave at **Sell Services > Settings > Orders & Disputes**:
+You can adjust how orders behave at **Sell Services > Settings > Orders & disputes**:
 
 | Setting | Default | What It Does |
 |---------|---------|--------------|

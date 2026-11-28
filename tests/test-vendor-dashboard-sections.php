@@ -192,10 +192,10 @@ $check( 'resolved in favour of the vendor', $disputes->resolve( $dispute_id, 'fa
 
 $vendor_view = $render( $vendor, 'disputes', array( 'dispute' => $dispute_id ) );
 $buyer_view  = $render( $buyer, 'disputes', array( 'dispute' => $dispute_id ) );
-$check( 'vendor sees the resolution label', false !== strpos( $vendor_view, 'In Favor of Vendor' ) );
+$check( 'vendor sees the resolution label', false !== strpos( $vendor_view, 'In favor of vendor' ) );
 $check( '  and the admin note', false !== strpos( $vendor_view, 'F24 contract note' ) );
 $check( '  and what happened to their earnings', false !== strpos( $vendor_view, 'earnings were released' ) );
-$check( 'buyer sees the resolution label', false !== strpos( $buyer_view, 'In Favor of Vendor' ) );
+$check( 'buyer sees the resolution label', false !== strpos( $buyer_view, 'In favor of vendor' ) );
 $check( '  and that no refund was issued', false !== strpos( $buyer_view, 'No refund was issued' ) );
 
 wp_set_current_user( 1 );

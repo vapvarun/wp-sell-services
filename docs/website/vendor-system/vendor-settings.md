@@ -1,6 +1,6 @@
 # Vendor Settings (Admin)
 
-These settings control how vendors join your marketplace, how many services they can create, and whether their services need your approval before going live. Find them at **Sell Services > Settings > Vendor Settings**.
+These settings control how vendors join your marketplace, how many services they can create, and whether their services need your approval before going live. Find them at **Sell Services > Settings > Vendor settings**.
 
 ![Vendor Settings Tab](../images/settings-vendors-tab.webp)
 
@@ -13,12 +13,12 @@ Choose how vendors can join your marketplace:
 | Mode | What Happens | Best For |
 |------|-------------|----------|
 | **Open** | Any logged-in member can start selling immediately | Growing marketplaces, community platforms |
-| **Requires Approval** | Users submit applications; you approve or reject them | Curated marketplaces, quality control |
+| **Requires approval** | Users submit applications; you approve or reject them | Curated marketplaces, quality control |
 | **Closed** | Only you can create vendor accounts | Invite-only platforms, soft launches |
 
 ### How Approval Works
 
-When set to "Requires Approval":
+When set to "Requires approval":
 
 1. A user submits the vendor registration form.
 2. You receive a notification.
@@ -32,7 +32,7 @@ Try to respond within 24-48 hours. Slow approvals can discourage quality vendors
 
 When registration is closed, you create vendor accounts manually:
 
-1. Go to **Users > Add New** and create a WordPress user account.
+1. Go to **Users > Add new** and create a WordPress user account.
 2. Assign the vendor role.
 3. The user can now access vendor features immediately.
 
@@ -58,7 +58,7 @@ This adds an extra quality gate -- vendors must be verified before they can list
 
 When it is off, new services publish immediately. When enabled, every new service a vendor creates goes into "Pending Review" status instead of being published immediately. You review each service and approve or reject it. Only administrators can moderate.
 
-To review pending services, go to **Sell Services > Moderation** - the queue carries a pending count in the menu. To browse everything else, go to **Sell Services > All Services** and filter by status.
+To review pending services, go to **Sell Services > Moderation** - the queue carries a pending count in the menu. To browse everything else, go to **Sell Services > All services** and filter by status.
 
 This is useful for maintaining marketplace quality, especially in the early days. As you build trust with your top vendors, you might consider disabling this to speed things up.
 
@@ -121,7 +121,7 @@ From **Sell Services > Vendors**, you can manage all vendors on your marketplace
 
 ## Recommended Approaches
 
-**For a brand-new marketplace:** Start with "Requires Approval" and "Require Service Moderation" both enabled. This lets you control quality as you build your initial vendor base. Once you have a solid group of trusted vendors, you can relax these settings.
+**For a brand-new marketplace:** Start with "Requires approval" and "Require Service Moderation" both enabled. This lets you control quality as you build your initial vendor base. Once you have a solid group of trusted vendors, you can relax these settings.
 
 **For a growing marketplace:** Switch to "Open" registration and disable service moderation to reduce friction. Use vendor levels to naturally incentivize quality.
 

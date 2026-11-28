@@ -30,14 +30,14 @@ You will need:
 1. Go to **IAM > Users > Add User**
 2. Create a user with programmatic access
 3. Attach the **AmazonS3FullAccess** policy (or a custom policy limited to your bucket)
-4. Save the **Access Key ID** and **Secret Access Key**
+4. Save the **Access key ID** and **Secret access key**
 
 ### Step 3: Configure in WP Sell Services
 
 1. Go to **Sell Services > Settings > Integrations**
 2. Select **Amazon S3** as the provider
 3. Enter your Access Key ID, Secret Access Key, bucket name, and region
-4. Click **Test Connection** to verify
+4. Click **Test connection** to verify
 5. Save Changes
 
 ---
@@ -65,7 +65,7 @@ You will need:
 2. Select **Google Cloud Storage** as the provider
 3. Upload or paste your service account JSON key
 4. Enter your bucket name
-5. Click **Test Connection** to verify
+5. Click **Test connection** to verify
 6. Save Changes
 
 ---
@@ -90,7 +90,7 @@ You will need:
 1. Go to **Sell Services > Settings > Integrations**
 2. Select **DigitalOcean Spaces** as the provider
 3. Enter your Key, Secret, Space name, and region
-4. Click **Test Connection** to verify
+4. Click **Test connection** to verify
 5. Save Changes
 
 ---
@@ -110,7 +110,7 @@ after confirming they are a party to that order.
 Upload a delivery on a real order, then check your bucket: the file appears
 under `wpss/{order_id}/delivery/`, named `{file id}-{original name}`. That is the end-to-end check.
 
-**Test Connection** on the settings card writes a small test file, downloads it
+**Test connection** on the settings card writes a small test file, downloads it
 through a signed link exactly as a buyer would, and deletes it. It fails if the
 credentials, region or permissions would stop buyers downloading, which is the
 faster check when you are first setting up.

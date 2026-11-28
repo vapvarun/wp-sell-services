@@ -491,7 +491,7 @@ function wpss_get_page_definitions(): array {
 		// depending on when the site was installed (Basecamp 10235849842).
 		// wpss_redirect_legacy_vendor_slug() sends the other form here.
 		'become_vendor' => array(
-			'title'     => __( 'Become a Vendor', 'wp-sell-services' ),
+			'title'     => __( 'Become a vendor', 'wp-sell-services' ),
 			'shortcode' => '[wpss_vendor_registration]',
 			'slug'      => 'become-a-vendor',
 			'required'  => true,
@@ -501,13 +501,13 @@ function wpss_get_page_definitions(): array {
 		// owns /cart/ and /checkout/. Taking the generic slug is what produced
 		// the /cart-2/ … /cart-16/ trail on sites running both.
 		'cart'          => array(
-			'title'     => __( 'Service Cart', 'wp-sell-services' ),
+			'title'     => __( 'Service cart', 'wp-sell-services' ),
 			'shortcode' => '[wpss_cart]',
 			'slug'      => 'service-cart',
 			'required'  => false,
 		),
 		'checkout'      => array(
-			'title'     => __( 'Service Checkout', 'wp-sell-services' ),
+			'title'     => __( 'Service checkout', 'wp-sell-services' ),
 			'shortcode' => '[wpss_checkout]',
 			'slug'      => 'service-checkout',
 			'required'  => true,

@@ -26,19 +26,19 @@ If you need to collect tax on services, the plugin has a built-in tax system tha
 
 ### How to Turn On Tax
 
-1. Go to **Sell Services > Settings > Commission & Tax**
+1. Go to **Sell Services > Settings > Commission & tax**
 2. Scroll to the **Tax Settings** section
-3. Check **Enable Tax**
+3. Check **Enable tax**
 4. Fill in the settings below
-5. Click **Save Tax Settings**
+5. Click **Save changes**
 
 ### Tax Settings Explained
 
 | Setting | What It Does |
 |---------|-------------|
-| **Tax Label** | The name buyers see (e.g., "VAT", "GST", "Sales Tax") |
+| **Tax label** | The name buyers see (e.g., "VAT", "GST", "Sales Tax") |
 | **Tax Rate (%)** | The percentage applied to service prices (e.g., 20 for 20%) |
-| **Prices Include Tax** | Whether your displayed prices already include tax or not |
+| **Prices include tax** | Whether your displayed prices already include tax or not |
 | **Tax tips** | Charge tax on tips too. Off by default |
 | **Tax on Commission** | How tax interacts with your platform commission |
 

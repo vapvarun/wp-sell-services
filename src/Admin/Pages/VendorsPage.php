@@ -665,11 +665,11 @@ class VendorsPage {
 			<div class="wpss-stats-grid wpss-vendor-stats">
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-card__value"><?php echo esc_html( number_format_i18n( $stats['total'] ) ); ?></span>
-					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Vendors', 'wp-sell-services' ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total vendors', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $stats['total_earnings'] ) ); ?></span>
-					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Earned', 'wp-sell-services' ); ?></span>
+					<span class="wpss-stat-card__label"><?php esc_html_e( 'Total earned', 'wp-sell-services' ); ?></span>
 				</div>
 			</div>
 
@@ -752,8 +752,8 @@ class VendorsPage {
 					<?php wp_nonce_field( 'wpss_vendors_bulk', 'wpss_vendors_bulk_nonce' ); ?>
 					<label for="bulk-action-selector-top" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'wp-sell-services' ); ?></label>
 					<select name="bulk_action" id="bulk-action-selector-top" class="wpss-vendors-bulk-select">
-						<option value=""><?php esc_html_e( 'Bulk Actions', 'wp-sell-services' ); ?></option>
-						<option value="approve"><?php esc_html_e( 'Approve (set Active)', 'wp-sell-services' ); ?></option>
+						<option value=""><?php esc_html_e( 'Bulk actions', 'wp-sell-services' ); ?></option>
+						<option value="approve"><?php esc_html_e( 'Approve (set active)', 'wp-sell-services' ); ?></option>
 						<option value="suspend"><?php esc_html_e( 'Suspend', 'wp-sell-services' ); ?></option>
 						<option value="reactivate"><?php esc_html_e( 'Reactivate', 'wp-sell-services' ); ?></option>
 					</select>
@@ -1031,7 +1031,7 @@ class VendorsPage {
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&action=view&vendor_id=' . $vendor->user_id ) ); ?>"><?php esc_html_e( 'View', 'wp-sell-services' ); ?></a> |
 					</span>
 					<span class="edit">
-						<a href="<?php echo esc_url( get_edit_user_link( $vendor->user_id ) ); ?>"><?php esc_html_e( 'Edit User', 'wp-sell-services' ); ?></a>
+						<a href="<?php echo esc_url( get_edit_user_link( $vendor->user_id ) ); ?>"><?php esc_html_e( 'Edit user', 'wp-sell-services' ); ?></a>
 					</span>
 					<?php if ( 'active' === $status ) : ?>
 						<span class="trash">
@@ -1160,20 +1160,20 @@ class VendorsPage {
 		$money_summary = ( new \WPSellServices\Services\EarningsService() )->get_summary( (int) $vendor_id );
 		?>
 		<div class="wrap wpss-vendor-detail-page">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Vendor Details', 'wp-sell-services' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Vendor details', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
 			<!-- Back link and action buttons -->
 			<div class="wpss-detail-header-actions">
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors' ) ); ?>" class="wpss-back-link">
-					&larr; <?php esc_html_e( 'Back to Vendors', 'wp-sell-services' ); ?>
+					&larr; <?php esc_html_e( 'Back to vendors', 'wp-sell-services' ); ?>
 				</a>
 				<div class="wpss-detail-buttons">
 					<a href="<?php echo esc_url( get_edit_user_link( $vendor_id ) ); ?>" class="button">
-						<?php esc_html_e( 'Edit User', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Edit user', 'wp-sell-services' ); ?>
 					</a>
 					<?php if ( function_exists( 'wpss_get_vendor_profile_url' ) ) : ?>
 						<a href="<?php echo esc_url( wpss_get_vendor_profile_url( $vendor_id ) ); ?>" class="button" target="_blank">
-							<?php esc_html_e( 'View Profile', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'View profile', 'wp-sell-services' ); ?>
 						</a>
 					<?php endif; ?>
 				</div>
@@ -1195,7 +1195,7 @@ class VendorsPage {
 							<?php echo esc_html( ucfirst( $status ) ); ?>
 						</span>
 						<select id="wpss-vendor-status-select" data-vendor-id="<?php echo esc_attr( $vendor_id ); ?>" data-current="<?php echo esc_attr( $status ); ?>">
-							<option value=""><?php esc_html_e( 'Change Status...', 'wp-sell-services' ); ?></option>
+							<option value=""><?php esc_html_e( 'Change status...', 'wp-sell-services' ); ?></option>
 							<?php if ( $status !== 'active' ) : ?>
 								<option value="active"><?php esc_html_e( 'Activate', 'wp-sell-services' ); ?></option>
 							<?php endif; ?>
@@ -1560,7 +1560,7 @@ class VendorsPage {
 		}
 		?>
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Profile Information', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Profile information', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-info-grid">
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Bio', 'wp-sell-services' ); ?></span>
@@ -1574,7 +1574,7 @@ class VendorsPage {
 		</div>
 
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Location & Contact', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Location & contact', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-info-grid">
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Country', 'wp-sell-services' ); ?></span>
@@ -1620,14 +1620,14 @@ class VendorsPage {
 		<?php endif; ?>
 
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Verification & Status', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Verification & status', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-info-grid">
 				<div class="wpss-info-item">
-					<span class="wpss-info-label"><?php esc_html_e( 'Verification Tier', 'wp-sell-services' ); ?></span>
+					<span class="wpss-info-label"><?php esc_html_e( 'Verification tier', 'wp-sell-services' ); ?></span>
 					<span class="wpss-info-value"><?php echo esc_html( \WPSellServices\Models\VendorProfile::get_tiers()[ $profile->verification_tier ?? 'new' ] ?? ucfirst( $profile->verification_tier ?? 'new' ) ); ?></span>
 				</div>
 				<div class="wpss-info-item">
-					<span class="wpss-info-label"><?php esc_html_e( 'Verified At', 'wp-sell-services' ); ?></span>
+					<span class="wpss-info-label"><?php esc_html_e( 'Verified at', 'wp-sell-services' ); ?></span>
 					<span class="wpss-info-value">
 						<?php echo $profile->verified_at ? esc_html( wpss_date_label( $profile->verified_at ) ) : '-'; ?>
 					</span>
@@ -1643,15 +1643,15 @@ class VendorsPage {
 					</span>
 				</div>
 				<div class="wpss-info-item">
-					<span class="wpss-info-label"><?php esc_html_e( 'Vacation Mode', 'wp-sell-services' ); ?></span>
+					<span class="wpss-info-label"><?php esc_html_e( 'Vacation mode', 'wp-sell-services' ); ?></span>
 					<span class="wpss-info-value">
 						<?php if ( ! empty( $profile->vacation_mode ) ) : ?>
-							<span style="color: #dba617;">● <?php esc_html_e( 'On Vacation', 'wp-sell-services' ); ?></span>
+							<span style="color: #dba617;">● <?php esc_html_e( 'On vacation', 'wp-sell-services' ); ?></span>
 							<?php if ( $profile->vacation_message ) : ?>
 								<br><small><?php echo esc_html( $profile->vacation_message ); ?></small>
 							<?php endif; ?>
 						<?php else : ?>
-							<span style="color: #646970;">○ <?php esc_html_e( 'Not on Vacation', 'wp-sell-services' ); ?></span>
+							<span style="color: #646970;">○ <?php esc_html_e( 'Not on vacation', 'wp-sell-services' ); ?></span>
 						<?php endif; ?>
 					</span>
 				</div>
@@ -1659,14 +1659,14 @@ class VendorsPage {
 		</div>
 
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Performance Metrics', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Performance metrics', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-info-grid">
 				<div class="wpss-info-item">
-					<span class="wpss-info-label"><?php esc_html_e( 'On-Time Delivery Rate', 'wp-sell-services' ); ?></span>
+					<span class="wpss-info-label"><?php esc_html_e( 'On-time delivery rate', 'wp-sell-services' ); ?></span>
 					<span class="wpss-info-value"><?php echo esc_html( number_format_i18n( (float) ( $profile->on_time_delivery_rate ?? 0 ), 1 ) ); ?>%</span>
 				</div>
 				<div class="wpss-info-item">
-					<span class="wpss-info-label"><?php esc_html_e( 'Completed Orders', 'wp-sell-services' ); ?></span>
+					<span class="wpss-info-label"><?php esc_html_e( 'Completed orders', 'wp-sell-services' ); ?></span>
 					<span class="wpss-info-value"><?php echo esc_html( number_format_i18n( (int) ( $profile->completed_orders ?? 0 ) ) ); ?></span>
 				</div>
 			</div>
@@ -1972,19 +1972,19 @@ class VendorsPage {
 		$withdrawal_pages = ceil( $total_withdrawals / $per_page );
 		?>
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Earnings Summary', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Earnings summary', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-earnings-summary">
 				<div class="wpss-earnings-card">
 					<strong><?php echo esc_html( wpss_format_price( $commission_summary['total_revenue'] ) ); ?></strong>
-					<?php esc_html_e( 'Total Revenue', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Total revenue', 'wp-sell-services' ); ?>
 				</div>
 				<div class="wpss-earnings-card">
 					<strong><?php echo esc_html( wpss_format_price( $commission_summary['net_earnings'] ) ); ?></strong>
-					<?php esc_html_e( 'Net Earnings', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Net earnings', 'wp-sell-services' ); ?>
 				</div>
 				<div class="wpss-earnings-card">
 					<strong><?php echo esc_html( wpss_format_price( $commission_summary['total_commission'] ) ); ?></strong>
-					<?php esc_html_e( 'Platform Fees', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Platform fees', 'wp-sell-services' ); ?>
 				</div>
 				<?php
 				// A negative wallet balance means a refund reclaimed earnings
@@ -1998,15 +1998,15 @@ class VendorsPage {
 					<strong><?php echo esc_html( wpss_format_price( $wallet_balance ) ); ?></strong>
 					<?php
 					echo $wpss_balance_owed
-						? esc_html__( 'Wallet Balance (owed to platform)', 'wp-sell-services' )
-						: esc_html__( 'Wallet Balance', 'wp-sell-services' );
+						? esc_html__( 'Wallet balance (owed to platform)', 'wp-sell-services' )
+						: esc_html__( 'Wallet balance', 'wp-sell-services' );
 					?>
 				</div>
 			</div>
 		</div>
 
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Commission Configuration', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Commission configuration', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-commission-form">
 				<p class="description">
 					<?php
@@ -2029,7 +2029,7 @@ class VendorsPage {
 					</button>
 					<?php if ( $effective_rate['is_custom'] ) : ?>
 						<button type="button" class="button" id="wpss-reset-commission-detail">
-							<?php esc_html_e( 'Reset to Global', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Reset to global', 'wp-sell-services' ); ?>
 						</button>
 					<?php endif; ?>
 				</div>
@@ -2054,7 +2054,7 @@ class VendorsPage {
 		</div>
 
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Withdrawal History', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Withdrawal history', 'wp-sell-services' ); ?></h3>
 			<?php if ( empty( $withdrawals ) ) : ?>
 				<p><?php esc_html_e( 'No withdrawal requests yet.', 'wp-sell-services' ); ?></p>
 			<?php else : ?>
@@ -2177,25 +2177,25 @@ class VendorsPage {
 		);
 		?>
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Wallet balance', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-earnings-summary">
 				<div class="wpss-earnings-card<?php echo $wallet_balance < 0 ? ' wpss-earnings-card--owed' : ''; ?>">
 					<strong><?php echo esc_html( wpss_format_price( $wallet_balance ) ); ?></strong>
 					<?php
 					echo $wallet_balance < 0
-						? esc_html__( 'Current Balance (owed to platform)', 'wp-sell-services' )
-						: esc_html__( 'Current Balance', 'wp-sell-services' );
+						? esc_html__( 'Current balance (owed to platform)', 'wp-sell-services' )
+						: esc_html__( 'Current balance', 'wp-sell-services' );
 					?>
 				</div>
 				<div class="wpss-earnings-card">
 					<strong><?php echo esc_html( number_format_i18n( $total ) ); ?></strong>
-					<?php esc_html_e( 'Total Transactions', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Total transactions', 'wp-sell-services' ); ?>
 				</div>
 			</div>
 		</div>
 
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Transaction History', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Transaction history', 'wp-sell-services' ); ?></h3>
 			<?php if ( count( $wallet_types ) > 1 ) : ?>
 				<p class="wpss-wallet-filter">
 					<label for="wpss-wallet-type"><?php esc_html_e( 'Type', 'wp-sell-services' ); ?></label>
@@ -2314,7 +2314,7 @@ class VendorsPage {
 		}
 		?>
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Rating Distribution', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Rating distribution', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-rating-distribution" style="max-width: 400px;">
 				<?php for ( $i = 5; $i >= 1; $i-- ) : ?>
 					<?php
@@ -2333,7 +2333,7 @@ class VendorsPage {
 		</div>
 
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Recent Reviews', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Recent reviews', 'wp-sell-services' ); ?></h3>
 			<?php if ( empty( $reviews ) ) : ?>
 				<p><?php esc_html_e( 'No reviews yet', 'wp-sell-services' ); ?></p>
 			<?php else : ?>
@@ -2424,7 +2424,7 @@ class VendorsPage {
 		);
 		?>
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Portfolio Moderation', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Portfolio moderation', 'wp-sell-services' ); ?></h3>
 			<p class="description">
 				<?php esc_html_e( 'Review the items this vendor shows on their public profile. Feature an item to pin it to the top, or remove items that breach your marketplace policy.', 'wp-sell-services' ); ?>
 			</p>
@@ -2435,7 +2435,7 @@ class VendorsPage {
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'Title', 'wp-sell-services' ); ?></th>
-							<th><?php esc_html_e( 'Linked Service', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Linked service', 'wp-sell-services' ); ?></th>
 							<th><?php esc_html_e( 'Featured', 'wp-sell-services' ); ?></th>
 							<th><?php esc_html_e( 'Added', 'wp-sell-services' ); ?></th>
 							<th><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></th>
@@ -2512,7 +2512,7 @@ class VendorsPage {
 		}
 		?>
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Commission Rate', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Commission rate', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-settings-section">
 				<p class="description">
 					<?php
@@ -2536,7 +2536,7 @@ class VendorsPage {
 					</button>
 					<?php if ( $effective_rate['is_custom'] ) : ?>
 						<button type="button" class="button" id="wpss-reset-commission-detail">
-							<?php esc_html_e( 'Reset to Global', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Reset to global', 'wp-sell-services' ); ?>
 						</button>
 					<?php endif; ?>
 				</div>
@@ -2574,7 +2574,7 @@ class VendorsPage {
 		</div>
 
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Vacation Mode (Admin Override)', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Vacation mode (admin override)', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-settings-section">
 				<p class="description">
 					<?php esc_html_e( 'Toggle vacation mode on the vendor\'s behalf. While on vacation the vendor cannot accept new orders and their services are hidden from search.', 'wp-sell-services' ); ?>
@@ -2587,7 +2587,7 @@ class VendorsPage {
 				</div>
 				<div class="wpss-vacation-message">
 					<label for="wpss-vacation-message">
-						<?php esc_html_e( 'Vacation Message (shown to buyers)', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Vacation message (shown to buyers)', 'wp-sell-services' ); ?>
 					</label>
 					<textarea id="wpss-vacation-message" rows="3"><?php echo esc_textarea( $profile->vacation_message ?? '' ); ?></textarea>
 				</div>
@@ -2608,7 +2608,7 @@ class VendorsPage {
 		$admin_set     = $this->seller_level_service->is_admin_set( $vendor_id );
 		?>
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Vendor Level (Admin Override)', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Vendor level (admin override)', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-settings-section">
 				<p class="description">
 					<?php
@@ -2621,7 +2621,7 @@ class VendorsPage {
 				</p>
 				<div class="form-row wpss-form-row--inline">
 					<label for="wpss-level-select-detail" class="screen-reader-text">
-						<?php esc_html_e( 'Vendor Level', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Vendor level', 'wp-sell-services' ); ?>
 					</label>
 					<select id="wpss-level-select-detail" data-vendor-id="<?php echo esc_attr( (string) $vendor_id ); ?>">
 						<option value="" <?php selected( ! $admin_set ); ?>>
@@ -2637,7 +2637,7 @@ class VendorsPage {
 						<?php endforeach; ?>
 					</select>
 					<button type="button" class="button button-primary" id="wpss-save-level-detail">
-						<?php esc_html_e( 'Save Level', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Save level', 'wp-sell-services' ); ?>
 					</button>
 				</div>
 				<p id="wpss-level-status" class="wpss-status-line">
@@ -2658,7 +2658,7 @@ class VendorsPage {
 			<h3><?php esc_html_e( 'Verification', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-settings-section">
 				<p>
-					<strong><?php esc_html_e( 'Current Tier:', 'wp-sell-services' ); ?></strong>
+					<strong><?php esc_html_e( 'Current tier:', 'wp-sell-services' ); ?></strong>
 					<?php echo esc_html( \WPSellServices\Models\VendorProfile::get_tiers()[ $profile->verification_tier ?? 'new' ] ?? ucfirst( $profile->verification_tier ?? 'new' ) ); ?>
 				</p>
 				<?php if ( $profile->verified_at ) : ?>

@@ -81,9 +81,9 @@ Everything below is off by default except the licence screen and vendor analytic
 | "My licence is active and Pro features are on" | admin, Sell Services > License | 12 | `test-license-gate-and-storage` |
 | "Sellers can see how they are doing" | vendor, `/dashboard/analytics/` | 15 | `test-pro-perf-and-options` |
 | "I can see how the marketplace is doing" | admin, Sell Services > Analytics | 13 | same |
-| "I take a different cut per seller or category" | admin, Settings > Commission & Tax | 12, 21 | `test-rest-partial-update` |
+| "I take a different cut per seller or category" | admin, Settings > Commission & tax | 12, 21 | `test-rest-partial-update` |
 | "Sellers get paid out automatically" | Stripe Connect, PayPal Payouts | 18 | `test-payout-integrity`, `test-connect-refund-observation` |
-| "Sellers pay me a plan to sell" | vendor `/dashboard/subscription/`, Settings > Vendor Settings | 21 | `test-seams-subscriptions-carrier` |
+| "Sellers pay me a plan to sell" | vendor `/dashboard/subscription/`, Settings > Vendor settings | 21 | `test-seams-subscriptions-carrier` |
 | "Deliveries go to my cloud storage" | admin, Settings > Integrations | 23 | `test-license-gate-and-storage` |
 | "The vendor wallet balance is right and I can adjust it" | admin, user profile; vendor, Earnings | 19 | `test-wallet-provider-contract`, `test-admin-wallet-adjustment-leaves-trail` |
 | "The dashboard carries my brand" | admin, White label | 12, 23 | |

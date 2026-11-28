@@ -15,10 +15,10 @@ This happens automatically when an order is marked as completed. You do not need
 
 ## Setting Your Global Commission Rate
 
-1. Go to **Sell Services > Settings > Commission & Tax**
+1. Go to **Sell Services > Settings > Commission & tax**
 2. Find the **Commission Settings** section
 3. Enter your **Commission Rate (%)** -- this can be anything from 0% to 50%
-4. Click **Save Commission Settings**
+4. Click **Save changes**
 
 The default rate is 10%. This applies to all vendors unless you set a custom rate for specific vendors.
 

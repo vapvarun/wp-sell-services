@@ -54,15 +54,15 @@ By default, every review is published as soon as the buyer submits it. The vendo
 
 If you want to review submissions before they go public:
 
-1. Go to **Settings > Vendor Settings**.
-2. Enable **Review Moderation** ("Hold new reviews for admin approval before they are published").
+1. Go to **Settings > Vendor settings**.
+2. Enable **Review moderation** ("Hold new reviews for admin approval before they are published").
 3. Save changes.
 
 With moderation enabled, new reviews go into "Pending" status. They are hidden from the public until you approve them.
 
 ### Approving and Rejecting Reviews
 
-Go to **Sell Services > Review Moderation** to manage pending reviews.
+Go to **Sell Services > Review moderation** to manage pending reviews.
 
 **To approve:** Click **Approve**. The review goes live instantly and the service and vendor ratings are updated.
 
@@ -78,7 +78,7 @@ For established marketplaces with a trusted user base, auto-approval is usually 
 
 ## Admin Review Management
 
-The **Review Moderation** page lists reviews newest first. You can:
+The **Review moderation** page lists reviews newest first. You can:
 
 - **Filter** by status with the tabs: All, Pending, Approved, and Rejected.
 - **Search** by reviewer name or review text.

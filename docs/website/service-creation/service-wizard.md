@@ -31,7 +31,7 @@ This is where vendors describe what they are offering.
 | **Custom quote** | No buy button. Buyers see **Ask for a quote** (opens the contact form) and **Post a request**, and the vendor answers with a price in a proposal. The packages still show, as a price guide. | Basic Info, Pricing, Gallery, Extras and FAQs (FAQs only, no add-ons), Review. Requirements is skipped, because it belongs to a package purchase. |
 | **Digital product** | A file buyers download the moment they pay, shown as **Instant download**. No delivery time, revisions or brief. See [Digital Products](digital-products.md). | Basic Info, Pricing (title, description and price only), Gallery, Your File, Extras and FAQs (FAQs only), Review. |
 
-Every service created before this choice existed is a **Fixed price** service; nothing changes for it. The site owner can change a service's type in **Sell Services > All Services > edit > Overview > Sold as**.
+Every service created before this choice existed is a **Fixed price** service; nothing changes for it. The site owner can change a service's type in **Sell Services > All services > edit > Overview > Sold as**.
 
 A custom-quote service cannot be bought through any checkout, cart or the REST API, even by a direct link. The buyer is told to message the seller or post a request instead.
 
@@ -61,7 +61,7 @@ Each package includes:
 - **Revisions** -- How many rounds of changes are included (0 to 5, or unlimited)
 - **Features list** -- A checklist of what is included in this package
 
-**[PRO]** When the Pro plugin is active, the recurring-services feature flag is on, and recurring services are globally enabled in **Sell Services > Settings > Orders & Disputes**, a **Recurring Billing** section appears in this step. The flag is **off by default in 1.3.0**, so this section is normally hidden. Vendors can toggle recurring billing on and choose a frequency (Weekly, Monthly, Quarterly, or Yearly). See [Recurring Services](../order-management/recurring-services.md) for full details.
+**[PRO]** When the Pro plugin is active, the recurring-services feature flag is on, and recurring services are globally enabled in **Sell Services > Settings > Orders & disputes**, a **Recurring billing** section appears in this step. The flag is **off by default in 1.3.0**, so this section is normally hidden. Vendors can toggle recurring billing on and choose a frequency (Weekly, Monthly, Quarterly, or Yearly). See [Recurring Services](../order-management/recurring-services.md) for full details.
 
 For a deeper look at pricing strategy, see [Pricing and Packages](pricing-packages.md).
 

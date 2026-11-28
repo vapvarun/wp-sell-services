@@ -80,8 +80,8 @@ class AuditLogPage {
 	public function add_menu_page(): void {
 		$hook = add_submenu_page(
 			'wp-sell-services',
-			__( 'Audit Log', 'wp-sell-services' ),
-			__( 'Audit Log', 'wp-sell-services' ),
+			__( 'Audit log', 'wp-sell-services' ),
+			__( 'Audit log', 'wp-sell-services' ),
 			'manage_options',
 			'wpss-audit-log',
 			array( $this, 'render_page' )
@@ -181,7 +181,7 @@ class AuditLogPage {
 		$forced      = $this->count_forced();
 		?>
 		<div class="wrap wpss-listing-page wpss-audit-log-page">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Audit Log', 'wp-sell-services' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Audit log', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
 
 			<p class="description wpss-audit-intro">

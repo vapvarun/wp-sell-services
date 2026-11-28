@@ -303,7 +303,7 @@ class YoastIntegration extends AbstractSeoIntegration {
 	public function add_seo_hints_meta_box(): void {
 		add_meta_box(
 			'wpss_seo_hints',
-			__( 'Service SEO Tips', 'wp-sell-services' ),
+			__( 'Service SEO tips', 'wp-sell-services' ),
 			array( $this, 'render_seo_hints_meta_box' ),
 			'wpss_service',
 			'side',

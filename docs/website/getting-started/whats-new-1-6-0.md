@@ -44,7 +44,7 @@ Existing orders are repaired against what was actually paid.
 
 A buyer can upload proof of an offline payment; you verify it and the order
 starts. Three new emails cover submitted, verified and rejected. Off by default
--- enable it under **Settings > Orders & Disputes**.
+-- enable it under **Settings > Orders & disputes**.
 
 Two admins approving the same receipt at once credits the vendor once.
 

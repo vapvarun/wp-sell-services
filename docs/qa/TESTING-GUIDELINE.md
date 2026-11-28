@@ -177,7 +177,7 @@ were not, and nobody had tested the instructions.
 So when you test a flow, open the page that documents it and follow it
 literally.
 
-- Does every step exist on the screen? (A "Create All Pages" button was
+- Does every step exist on the screen? (A "Create all pages" button was
   documented on a screen that has no such button.)
 - Do the stated defaults match the real ones? (10 MB documented as 50 MB,
   minimum withdrawal 50 documented as 25.)

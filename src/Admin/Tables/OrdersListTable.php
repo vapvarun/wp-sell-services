@@ -528,8 +528,8 @@ class OrdersListTable extends \WP_List_Table {
 	 */
 	protected function get_bulk_actions(): array {
 		return [
-			'mark_completed' => __( 'Mark as Completed', 'wp-sell-services' ),
-			'mark_cancelled' => __( 'Mark as Cancelled', 'wp-sell-services' ),
+			'mark_completed' => __( 'Mark as completed', 'wp-sell-services' ),
+			'mark_cancelled' => __( 'Mark as cancelled', 'wp-sell-services' ),
 		];
 	}
 
@@ -853,7 +853,7 @@ class OrdersListTable extends \WP_List_Table {
 			<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-empty-state__body"><?php esc_html_e( 'When buyers purchase services, their orders appear here with full lifecycle tracking.', 'wp-sell-services' ); ?></p>
 			<p class="wpss-empty-state__actions">
-				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wpss_service' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Manage Services', 'wp-sell-services' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wpss_service' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Manage services', 'wp-sell-services' ); ?></a>
 				<a href="https://wbcomdesigns.com/docs/wp-sell-services/order-workflow-wpss" class="button button-link" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
 			</p>
 		</div>

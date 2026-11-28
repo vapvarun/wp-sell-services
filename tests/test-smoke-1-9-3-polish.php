@@ -41,9 +41,9 @@ $after = static function () use ( $wpdb, $notes, $vendor, &$since ): array {
 // 1. Reactivation is not a new approval.
 $service = new NotificationService();
 $service->notify_vendor_approved( $vendor, true );
-$check( 'reactivated vendor: the notice says reactivated', in_array( 'Vendor Account Reactivated', $after(), true ) );
+$check( 'reactivated vendor: the notice says reactivated', in_array( 'Vendor account reactivated', $after(), true ) );
 $service->notify_vendor_approved( $vendor );
-$check( 'new approval: the notice still says application approved', in_array( 'Vendor Application Approved', $after(), true ) );
+$check( 'new approval: the notice still says application approved', in_array( 'Vendor application approved', $after(), true ) );
 
 // 2. Approved and paid are different news.
 $earnings = new EarningsService();

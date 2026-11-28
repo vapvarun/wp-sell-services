@@ -12,7 +12,7 @@ No. WP Sell Services works completely standalone with its own built-in checkout,
 
 ### How do I change the commission rate?
 
-Go to **Sell Services > Settings > Commission & Tax** and set a platform-wide percentage (0-50%, default 10%). Per-vendor rates are also included free -- open a vendor under **Sell Services > Vendors** and give them their own rate, which overrides the global one. Pro adds **tiered** rules on top: rates that resolve automatically by category, vendor level, or sales volume.
+Go to **Sell Services > Settings > Commission & tax** and set a platform-wide percentage (0-50%, default 10%). Per-vendor rates are also included free -- open a vendor under **Sell Services > Vendors** and give them their own rate, which overrides the global one. Pro adds **tiered** rules on top: rates that resolve automatically by category, vendor level, or sales volume.
 
 ### Can vendors set their own prices?
 
@@ -60,7 +60,7 @@ Yes. WP Sell Services works on WordPress multisite. Each site in the network run
 ### Vendor registration not working
 
 1. **Enable WordPress registration** -- Go to **Settings > General** and check "Anyone can register"
-2. **Enable vendor registration** -- Go to **Sell Services > Settings > Vendor Settings** and enable it
+2. **Enable vendor registration** -- Go to **Sell Services > Settings > Vendor settings** and enable it
 3. **Check approval mode** -- If admin approval is required, approve pending vendors at **Sell Services > Vendors > Pending**
 
 ### Pages showing 404 errors

@@ -252,7 +252,7 @@ if ( ! $service || is_wp_error( $line ) ) {
 	ob_start();
 	( new \WPSellServices\Admin\OrderScreen() )->render_admin_order_actions( wpss_get_order( (int) $order->id ), 'pending_payment' );
 	$box = (string) ob_get_clean();
-	$check( 'sample: the admin box says "Bank transfer - Awaiting Confirmation", not Offline', str_contains( $box, 'Bank transfer - Awaiting Confirmation' ) && ! str_contains( $box, 'Offline' ), wp_strip_all_tags( substr( $box, 0, 400 ) ) );
+	$check( 'sample: the admin box says "Bank transfer - Awaiting confirmation", not Offline', str_contains( $box, 'Bank transfer - Awaiting confirmation' ) && ! str_contains( $box, 'Offline' ), wp_strip_all_tags( substr( $box, 0, 400 ) ) );
 
 	// An existing order (a tip) paid through /checkout/pay/{id}/ goes on the method too, and the sweep leaves it.
 	$tip = $row( null );

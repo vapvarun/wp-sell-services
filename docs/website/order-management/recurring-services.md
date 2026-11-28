@@ -16,17 +16,17 @@ Sell services that bill on a schedule: weekly, monthly, quarterly, or yearly. Th
 > add_filter( 'wpss_pro_recurring_feature_available', '__return_true' );
 > ```
 >
-> Once the filter returns true, the settings appear under **Sell Services > Settings > Orders & Disputes** and the rest of this page applies. We will announce general availability in a release note; this banner comes down at that point.
+> Once the filter returns true, the settings appear under **Sell Services > Settings > Orders & disputes** and the rest of this page applies. We will announce general availability in a release note; this banner comes down at that point.
 
 ## Enable recurring billing on a service
 
 ### From the frontend Service Wizard
 
-Vendors can enable recurring billing directly from the frontend wizard at **Dashboard > Create Service > Pricing step**. A **Recurring Billing** section appears in the Pricing step when all of these are true:
+Vendors can enable recurring billing directly from the frontend wizard at **Dashboard > Create Service > Pricing step**. A **Recurring billing** section appears in the Pricing step when all of these are true:
 
 - The Pro plugin is active.
 - The `wpss_pro_recurring_feature_available` filter returns true (see the notice above).
-- Recurring services are globally enabled in **Sell Services > Settings > Orders & Disputes**.
+- Recurring services are globally enabled in **Sell Services > Settings > Orders & disputes**.
 
 Toggle **Enable recurring billing** on, then pick a billing frequency: Weekly, Monthly, Quarterly, or Yearly.
 

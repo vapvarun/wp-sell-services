@@ -6,7 +6,7 @@ As a vendor, proposals are how you pitch your services to buyers who have posted
 
 ## Finding Buyer Requests
 
-Go to **Dashboard > Buyer Requests** to see all open requests from buyers. You can:
+Go to **Dashboard > Buyer requests** to see all open requests from buyers. You can:
 
 - Browse all open requests
 - Filter by category

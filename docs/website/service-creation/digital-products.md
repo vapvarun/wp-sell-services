@@ -18,7 +18,7 @@ The **Requirements** step is skipped: a file needs no brief.
 
 ## Update the file
 
-Upload a new file in the wizard's **Your file** step, or in **Sell Services > All Services > edit > Overview > Product file** and press **Update**. Each upload is a new version.
+Upload a new file in the wizard's **Your file** step, or in **Sell Services > All services > edit > Overview > Product file** and press **Update**. Each upload is a new version.
 
 - Buyers always get the latest version, including everyone who bought earlier.
 - Earlier versions are kept, so a download already in progress is never cut off.
@@ -29,7 +29,7 @@ Upload a new file in the wizard's **Your file** step, or in **Sell Services > Al
 - **Service page and cards:** **Instant download** instead of a delivery time. No revisions line.
 - **Checkout:** no delivery time and no revisions badge. **What happens next?** reads **Pay, Download, Complete**.
 - **After paying:** the order is delivered at once, whichever way they paid (card, PayPal, offline once the site owner confirms it). The order page shows **Your download** with the file and a **Download** button, and the delivery message says the download is ready.
-- **Emails and notifications:** the buyer gets one receipt, **Your Download Is Ready**, with a **Download** button, and the seller gets **New Sale**. Neither is told work has started or that a delivery needs review. A digital product with no file uploaded yet waits in progress like any order, and the seller delivers it by hand.
+- **Emails and notifications:** the buyer gets one receipt, **Your download is ready**, with a **Download** button, and the seller gets **New sale**. Neither is told work has started or that a delivery needs review. A digital product with no file uploaded yet waits in progress like any order, and the seller delivers it by hand.
 - **Dashboard > Downloads:** every digital product they bought, newest first, each with its order and a **Download** button. The menu item appears once they have bought one.
 - **Offline payment:** while the payment waits, the order says the download is ready once it is confirmed.
 
@@ -47,7 +47,7 @@ A product that has orders cannot be deleted, so a buyer's download never disappe
 
 ## Download log
 
-Each download is recorded in **Sell Services > Audit Log** as **Product file downloaded**, with the file name and the member who downloaded it.
+Each download is recorded in **Sell Services > Audit log** as **Product file downloaded**, with the file name and the member who downloaded it.
 
 There is no download limit or expiry by default. A site can add one with the `wpss_can_download_product` filter.
 

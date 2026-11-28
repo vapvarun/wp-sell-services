@@ -14,7 +14,7 @@ At the top of the page, four cards summarize your vendor base:
 
 | Card | What It Shows |
 |------|-------------|
-| **Total Vendors** | Everyone who has signed up as a vendor |
+| **Total vendors** | Everyone who has signed up as a vendor |
 | **Active** | Vendors currently able to sell and receive orders |
 | **Pending** | Vendors waiting for your approval (if approval is required) |
 | **Suspended** | Vendors whose accounts are temporarily restricted |
@@ -49,7 +49,7 @@ Click the tabs above the table to filter:
 
 If you want to screen vendors before they can sell, enable vendor verification:
 
-1. Go to **Sell Services > Settings > Vendor Settings**
+1. Go to **Sell Services > Settings > Vendor settings**
 2. Check **Require Verification**
 3. Click **Save changes**
 

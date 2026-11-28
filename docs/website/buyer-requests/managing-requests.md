@@ -6,7 +6,7 @@ Once you have posted a buyer request and proposals start coming in, this is wher
 
 ## Your Requests Dashboard
 
-Go to **Dashboard > Buyer Requests** to see all your buyer requests at a glance. Each request card shows:
+Go to **Dashboard > Buyer requests** to see all your buyer requests at a glance. Each request card shows:
 
 - Title and current status
 - Number of proposals received
@@ -70,7 +70,7 @@ If a proposal is not the right fit, you can reject it individually. The vendor i
 
 ## Editing a Request
 
-You can edit your request at any time while it is still open and no proposal has been accepted. Go to **Dashboard > Buyer Requests**, click **Edit**, make your changes, and click **Update**.
+You can edit your request at any time while it is still open and no proposal has been accepted. Go to **Dashboard > Buyer requests**, click **Edit**, make your changes, and click **Update**.
 
 **What you can change:**
 - Title and description
@@ -93,7 +93,7 @@ After the first proposal arrives, the **Remove** button disappears from the file
 
 ## Closing a Request
 
-If you no longer need the work done, click **Close** next to the request in **Dashboard > Buyer Requests**. The request is removed from public listings and shows as Draft in your dashboard, where **Reopen** lists it again. Vendors with pending proposals are not notified.
+If you no longer need the work done, click **Close** next to the request in **Dashboard > Buyer requests**. The request is removed from public listings and shows as Draft in your dashboard, where **Reopen** lists it again. Vendors with pending proposals are not notified.
 
 **Reasons to close:**
 - Found a vendor outside the platform

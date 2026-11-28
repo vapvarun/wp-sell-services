@@ -309,7 +309,7 @@ Primary, secondary, outline, ghost, danger, success, small, large, block and ico
 
 ### Payment gateways seam
 
-Settings > Payment Gateways: one card per gateway (Stripe, PayPal, Offline, Test, Razorpay in Pro) in the right order, each saves its own fields. Checkout renders only enabled gateways. REST create and confirm accept product_id and product_type; service_id still works; another product type is refused with `wpss_unsupported_product_type`. Money walks (Stripe test mode, PayPal sandbox) are NOT part of this pass.
+Settings > Payment gateways: one card per gateway (Stripe, PayPal, Offline, Test, Razorpay in Pro) in the right order, each saves its own fields. Checkout renders only enabled gateways. REST create and confirm accept product_id and product_type; service_id still works; another product type is refused with `wpss_unsupported_product_type`. Money walks (Stripe test mode, PayPal sandbox) are NOT part of this pass.
 
 ### Payout methods registry
 

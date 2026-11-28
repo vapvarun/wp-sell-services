@@ -400,7 +400,7 @@ class DisputesListTable extends \WP_List_Table {
 	 */
 	protected function get_bulk_actions(): array {
 		return array(
-			'mark_pending_review' => __( 'Mark Pending Review', 'wp-sell-services' ),
+			'mark_pending_review' => __( 'Mark pending review', 'wp-sell-services' ),
 			'mark_escalated'      => __( 'Escalate', 'wp-sell-services' ),
 			'mark_closed'         => __( 'Close', 'wp-sell-services' ),
 		);

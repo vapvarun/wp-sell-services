@@ -899,7 +899,7 @@ function wpss_get_order_payment_reference( object $order ): ?array {
 	}
 
 	return array(
-		'label'  => (string) ( $reference['label'] ?? __( 'Payment Reference', 'wp-sell-services' ) ),
+		'label'  => (string) ( $reference['label'] ?? __( 'Payment reference', 'wp-sell-services' ) ),
 		'number' => (string) $reference['number'],
 		'url'    => (string) ( $reference['url'] ?? '' ),
 	);

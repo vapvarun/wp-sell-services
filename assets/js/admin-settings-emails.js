@@ -25,7 +25,7 @@
 				action: 'wpss_send_test_email',
 				nonce: $btn.data( 'nonce' ),
 			}, function( response ) {
-				$btn.prop( 'disabled', false ).text( l10n.sendTest || 'Send Test Email' );
+				$btn.prop( 'disabled', false ).text( l10n.sendTest || 'Send test email' );
 				$status.show();
 				if ( response.success ) {
 					$status.css( 'color', '#00a32a' ).text( response.data.message );
@@ -33,7 +33,7 @@
 					$status.css( 'color', '#d63638' ).text( response.data.message );
 				}
 			} ).fail( function() {
-				$btn.prop( 'disabled', false ).text( l10n.sendTest || 'Send Test Email' );
+				$btn.prop( 'disabled', false ).text( l10n.sendTest || 'Send test email' );
 				$status.show().css( 'color', '#d63638' ).text( l10n.ajaxError || 'Request failed. Please try again.' );
 			} );
 		} );

@@ -38,12 +38,12 @@
 							setTimeout( function() { location.reload(); }, 1500 );
 						} else {
 							$status.css( 'color', '#d63638' ).text( response.data.message || ( l10n.importFailed || 'Import failed.' ) );
-							$btn.prop( 'disabled', false ).text( l10n.importBtn || 'Import Demo Content' );
+							$btn.prop( 'disabled', false ).text( l10n.importBtn || 'Import demo content' );
 						}
 					},
 					error: function() {
 						$status.css( 'color', '#d63638' ).text( l10n.ajaxError || 'An error occurred. Please try again.' );
-						$btn.prop( 'disabled', false ).text( l10n.importBtn || 'Import Demo Content' );
+						$btn.prop( 'disabled', false ).text( l10n.importBtn || 'Import demo content' );
 					},
 				} );
 			} );
@@ -74,12 +74,12 @@
 							setTimeout( function() { location.reload(); }, 4000 );
 						} else {
 							$status.css( 'color', '#d63638' ).text( response.data.message || ( l10n.deleteFailed || 'Deletion failed.' ) );
-							$btn.prop( 'disabled', false ).text( l10n.deleteBtn || 'Delete Demo Content' );
+							$btn.prop( 'disabled', false ).text( l10n.deleteBtn || 'Delete demo content' );
 						}
 					},
 					error: function() {
 						$status.css( 'color', '#d63638' ).text( l10n.ajaxError || 'An error occurred. Please try again.' );
-						$btn.prop( 'disabled', false ).text( l10n.deleteBtn || 'Delete Demo Content' );
+						$btn.prop( 'disabled', false ).text( l10n.deleteBtn || 'Delete demo content' );
 					},
 				} );
 			} );

@@ -2,7 +2,7 @@
 
 A payment method (a gateway) is a small plugin that adds one way to pay at checkout. WP Sell Services owns everything around the money: pricing, the orders, the checkout page, the Payment methods screen, Mark as paid, refunds, the abandoned-order sweep and the app routes. Your gateway only moves the money and says what it can do.
 
-Start from the sample: **`docs/examples/wpss-sample-bank-transfer/`** in the plugin's GitHub repository. It is a complete bank transfer method in two files. Copy the folder into `wp-content/plugins/`, activate **WP Sell Services - Sample Bank Transfer**, and it appears under **Sell Services > Settings > Payment Gateways**.
+Start from the sample: **`docs/examples/wpss-sample-bank-transfer/`** in the plugin's GitHub repository. It is a complete bank transfer method in two files. Copy the folder into `wp-content/plugins/`, activate **WP Sell Services - Sample Bank Transfer**, and it appears under **Sell Services > Settings > Payment gateways**.
 
 ## 1. Register the gateway
 
@@ -51,9 +51,9 @@ Set `$supports` on your class. Everything else is asked through `supports()`, ne
 
 ## 4. Settings and the on/off switch
 
-Your gateway gets a card on the **Payment Gateways** settings tab. Its settings are one option named `wpss_{id}_settings`, which is also the card's settings group: register it with `register_setting()` on `admin_init` and draw the fields on `wpss_gateway_settings_{id}`.
+Your gateway gets a card on the **Payment gateways** settings tab. Its settings are one option named `wpss_{id}_settings`, which is also the card's settings group: register it with `register_setting()` on `admin_init` and draw the fields on `wpss_gateway_settings_{id}`.
 
-The **Payment Methods** table turns the method on and off by writing `enabled` into that option, so your sanitizer must keep `enabled` along with your own fields. The table shows **Needs setup** when the switch is on but `is_enabled()` is false.
+The **Payment methods** table turns the method on and off by writing `enabled` into that option, so your sanitizer must keep `enabled` along with your own fields. The table shows **Needs setup** when the switch is on but `is_enabled()` is false.
 
 ## 5. The checkout
 

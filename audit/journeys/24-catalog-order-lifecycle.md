@@ -11,7 +11,7 @@ The most common flow on any marketplace: a catalog purchase, not a request. Jour
 
 - One published service by the vendor with two packages: Basic (2 revisions) and Standard (unlimited revisions, Express delivery on), and two requirement questions, one of them a file.
 - A second published service by the same vendor with no requirement questions.
-- Settings > Orders & Disputes: note the Auto-Complete Days value (default 3) and the review window (default 30 days).
+- Settings > Orders & disputes: note the Auto-Complete Days value (default 3) and the review window (default 30 days).
 
 ## Steps
 
@@ -28,7 +28,7 @@ Answer both questions, attach the file, submit.
 ### 3. A buyer who has nothing to say
 The website has no skip button (it went with the old checkout script in 1.0.x); skip is an API action for apps. On a second Basic order, call `POST /orders/{id}/requirements/skip` twice as the buyer.
 
-**Expect** the first skip starts the order, the second is refused and writes nothing. Buy the service that has no questions: it starts at payment and never asks for a brief. A website buyer who never answers is handled by Requirements Timeout (Settings > Orders & Disputes): after that many days the order auto-starts or auto-cancels, as the owner chose. It is off (0) by default, so on a default site the order waits.
+**Expect** the first skip starts the order, the second is refused and writes nothing. Buy the service that has no questions: it starts at payment and never asks for a brief. A website buyer who never answers is handled by Requirements Timeout (Settings > Orders & disputes): after that many days the order auto-starts or auto-cancels, as the owner chose. It is off (0) by default, so on a default site the order waits.
 
 ### 4. Vendor delivers, and a bad file is refused
 As the vendor, open the order from Sales Orders. Deliver with a message and a file the site refuses (for example a `.php`), then with an allowed file.

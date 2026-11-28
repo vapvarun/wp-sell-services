@@ -23,7 +23,7 @@ drift** between the price a shopper sees at checkout and the amount they pay.
 ## Setup
 
 1. Sign up at [openexchangerates.org](https://openexchangerates.org/signup) and copy your App ID. The free tier is enough for a typical marketplace.
-2. Go to **Sell Services > Settings > Integrations** and find the **Display Currency** card.
+2. Go to **Sell Services > Settings > Integrations** and find the **Display currency** card.
 3. Paste your App ID, list the currencies you want to offer, and save.
 4. Turn **Display currency** on under **Sell Services > Settings > Features**.
 

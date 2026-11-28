@@ -71,8 +71,8 @@ class SetupWizardPage {
 
 		$hook = add_submenu_page(
 			$parent,
-			__( 'Setup Wizard', 'wp-sell-services' ),
-			__( 'Setup Wizard', 'wp-sell-services' ),
+			__( 'Setup wizard', 'wp-sell-services' ),
+			__( 'Setup wizard', 'wp-sell-services' ),
 			'manage_options',
 			'wpss-setup-wizard',
 			array( $this, 'render' )
@@ -96,7 +96,7 @@ class SetupWizardPage {
 			add_action(
 				'load-' . $hook,
 				static function (): void {
-					$GLOBALS['title'] = __( 'Setup Wizard', 'wp-sell-services' );
+					$GLOBALS['title'] = __( 'Setup wizard', 'wp-sell-services' );
 				}
 			);
 		}
@@ -159,9 +159,9 @@ class SetupWizardPage {
 					'create'       => __( 'Create', 'wp-sell-services' ),
 					'created'      => __( 'Created', 'wp-sell-services' ),
 					'done'         => __( 'Done', 'wp-sell-services' ),
-					'allCreated'   => __( 'All Created', 'wp-sell-services' ),
+					'allCreated'   => __( 'All created', 'wp-sell-services' ),
 					'importing'    => __( 'Importing...', 'wp-sell-services' ),
-					'demoImported' => __( 'Demo Imported!', 'wp-sell-services' ),
+					'demoImported' => __( 'Demo imported!', 'wp-sell-services' ),
 					'viewDemo'     => __( 'Click to view the services.', 'wp-sell-services' ),
 					'demoAlready'  => __( 'Already imported', 'wp-sell-services' ),
 					'importFailed' => __( 'Import failed', 'wp-sell-services' ),
@@ -500,17 +500,17 @@ class SetupWizardPage {
 				</div>
 				<div class="wpss-wizard-steps-indicator" id="wpss-steps-indicator"></div>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings' ) ); ?>" class="wpss-wizard-exit">
-					<?php esc_html_e( 'Exit Wizard', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Exit wizard', 'wp-sell-services' ); ?>
 				</a>
 			</div>
 
 			<!-- Step 1: Platform Basics -->
 			<div class="wpss-wizard-step active" data-step="1">
-				<h2><?php esc_html_e( 'Platform Basics', 'wp-sell-services' ); ?></h2>
+				<h2><?php esc_html_e( 'Platform basics', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-wizard-desc"><?php esc_html_e( 'Let\'s set up the foundation of your marketplace.', 'wp-sell-services' ); ?></p>
 
 				<div class="wpss-wizard-field">
-					<label for="wpss-wiz-name"><?php esc_html_e( 'Marketplace Name', 'wp-sell-services' ); ?></label>
+					<label for="wpss-wiz-name"><?php esc_html_e( 'Marketplace name', 'wp-sell-services' ); ?></label>
 					<input type="text" id="wpss-wiz-name" value="<?php echo esc_attr( $platform_name ); ?>">
 				</div>
 
@@ -539,14 +539,14 @@ class SetupWizardPage {
 					<span></span>
 					<div>
 						<button type="button" class="button wpss-wizard-skip" data-skip="1"><?php esc_html_e( 'Skip', 'wp-sell-services' ); ?></button>
-						<button type="button" class="button button-primary wpss-wizard-save" data-step="1"><?php esc_html_e( 'Save & Continue', 'wp-sell-services' ); ?></button>
+						<button type="button" class="button button-primary wpss-wizard-save" data-step="1"><?php esc_html_e( 'Save & continue', 'wp-sell-services' ); ?></button>
 					</div>
 				</div>
 			</div>
 
 			<!-- Step 2: Create Pages -->
 			<div class="wpss-wizard-step" data-step="2">
-				<h2><?php esc_html_e( 'Create Pages', 'wp-sell-services' ); ?></h2>
+				<h2><?php esc_html_e( 'Create pages', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-wizard-desc"><?php esc_html_e( 'These pages are required for your marketplace to work. We\'ll create them with the right shortcodes.', 'wp-sell-services' ); ?></p>
 
 				<div class="wpss-wizard-pages-list">
@@ -565,7 +565,7 @@ class SetupWizardPage {
 								<?php if ( $page_id && get_post( $page_id ) ) : ?>
 									<span class="wpss-wizard-badge wpss-badge-success"><?php esc_html_e( 'Created', 'wp-sell-services' ); ?></span>
 								<?php else : ?>
-									<span class="wpss-wizard-badge wpss-badge-pending"><?php esc_html_e( 'Not Created', 'wp-sell-services' ); ?></span>
+									<span class="wpss-wizard-badge wpss-badge-pending"><?php esc_html_e( 'Not created', 'wp-sell-services' ); ?></span>
 								<?php endif; ?>
 							</div>
 							<button type="button" class="button wpss-wizard-create-page"
@@ -589,7 +589,7 @@ class SetupWizardPage {
 					}
 					?>
 					<button type="button" class="button" id="wpss-wizard-create-all-pages" <?php disabled( $wpss_all_created ); ?>>
-						<?php echo $wpss_all_created ? esc_html__( 'All Pages Created', 'wp-sell-services' ) : esc_html__( 'Create All Pages', 'wp-sell-services' ); ?>
+						<?php echo $wpss_all_created ? esc_html__( 'All pages created', 'wp-sell-services' ) : esc_html__( 'Create all pages', 'wp-sell-services' ); ?>
 					</button>
 				</div>
 
@@ -604,7 +604,7 @@ class SetupWizardPage {
 
 			<!-- Step 3: Service Categories -->
 			<div class="wpss-wizard-step" data-step="3">
-				<h2><?php esc_html_e( 'Service Categories', 'wp-sell-services' ); ?></h2>
+				<h2><?php esc_html_e( 'Service categories', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-wizard-desc"><?php esc_html_e( 'Select suggested categories or add your own. These help buyers find services.', 'wp-sell-services' ); ?></p>
 
 				<div class="wpss-wizard-chips" id="wpss-wizard-chips">
@@ -634,7 +634,7 @@ class SetupWizardPage {
 				</div>
 
 				<div class="wpss-wizard-field" style="margin-top: 16px;">
-					<label for="wpss-wiz-custom-cat"><?php esc_html_e( 'Add Your Own', 'wp-sell-services' ); ?></label>
+					<label for="wpss-wiz-custom-cat"><?php esc_html_e( 'Add your own', 'wp-sell-services' ); ?></label>
 					<div style="display: flex; gap: 8px;">
 						<input type="text" id="wpss-wiz-custom-cat" placeholder="<?php esc_attr_e( 'e.g. AI Services', 'wp-sell-services' ); ?>">
 						<button type="button" class="button" id="wpss-wiz-add-cat"><?php esc_html_e( 'Add', 'wp-sell-services' ); ?></button>
@@ -645,18 +645,18 @@ class SetupWizardPage {
 					<button type="button" class="button wpss-wizard-back" data-back="2"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
 					<div>
 						<button type="button" class="button wpss-wizard-skip" data-skip="3"><?php esc_html_e( 'Skip', 'wp-sell-services' ); ?></button>
-						<button type="button" class="button button-primary wpss-wizard-save" data-step="3"><?php esc_html_e( 'Save & Continue', 'wp-sell-services' ); ?></button>
+						<button type="button" class="button button-primary wpss-wizard-save" data-step="3"><?php esc_html_e( 'Save & continue', 'wp-sell-services' ); ?></button>
 					</div>
 				</div>
 			</div>
 
 			<!-- Step 4: Vendor Settings -->
 			<div class="wpss-wizard-step" data-step="4">
-				<h2><?php esc_html_e( 'Vendor Settings', 'wp-sell-services' ); ?></h2>
+				<h2><?php esc_html_e( 'Vendor settings', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-wizard-desc"><?php esc_html_e( 'Configure how vendors can join and operate on your marketplace.', 'wp-sell-services' ); ?></p>
 
 				<div class="wpss-wizard-field">
-					<label><?php esc_html_e( 'Vendor Registration', 'wp-sell-services' ); ?></label>
+					<label><?php esc_html_e( 'Vendor registration', 'wp-sell-services' ); ?></label>
 					<div class="wpss-wizard-radio-group">
 						<label class="wpss-wizard-radio-inline">
 							<input type="radio" name="wpss_vendor_reg" value="open" <?php checked( 'open', $vendor_registration ); ?>>
@@ -664,7 +664,7 @@ class SetupWizardPage {
 						</label>
 						<label class="wpss-wizard-radio-inline">
 							<input type="radio" name="wpss_vendor_reg" value="approval" <?php checked( 'approval', $vendor_registration ); ?>>
-							<?php esc_html_e( 'Requires Approval — Admin must approve', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Requires approval: an admin must approve', 'wp-sell-services' ); ?>
 						</label>
 					</div>
 				</div>
@@ -678,7 +678,7 @@ class SetupWizardPage {
 				</div>
 
 				<div class="wpss-wizard-field">
-					<label for="wpss-wiz-max-services"><?php esc_html_e( 'Max Services per Vendor', 'wp-sell-services' ); ?></label>
+					<label for="wpss-wiz-max-services"><?php esc_html_e( 'Max services per vendor', 'wp-sell-services' ); ?></label>
 					<input type="number" id="wpss-wiz-max-services" value="<?php echo esc_attr( $max_services ); ?>" min="0" max="100">
 				</div>
 
@@ -695,7 +695,7 @@ class SetupWizardPage {
 					<button type="button" class="button wpss-wizard-back" data-back="3"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
 					<div>
 						<button type="button" class="button wpss-wizard-skip" data-skip="4"><?php esc_html_e( 'Skip', 'wp-sell-services' ); ?></button>
-						<button type="button" class="button button-primary wpss-wizard-save" data-step="4"><?php esc_html_e( 'Save & Continue', 'wp-sell-services' ); ?></button>
+						<button type="button" class="button button-primary wpss-wizard-save" data-step="4"><?php esc_html_e( 'Save & continue', 'wp-sell-services' ); ?></button>
 					</div>
 				</div>
 			</div>
@@ -704,19 +704,19 @@ class SetupWizardPage {
 			<div class="wpss-wizard-step" data-step="5">
 				<div class="wpss-wizard-done">
 					<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
-					<h2><?php esc_html_e( 'Your Marketplace is Ready!', 'wp-sell-services' ); ?></h2>
+					<h2><?php esc_html_e( 'Your marketplace is ready!', 'wp-sell-services' ); ?></h2>
 					<p><?php esc_html_e( 'You\'ve completed the initial setup. Here\'s what to do next:', 'wp-sell-services' ); ?></p>
 				</div>
 
 				<div class="wpss-wizard-cards">
 					<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>" class="wpss-wizard-card">
 						<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
-						<strong><?php esc_html_e( 'Create Your First Service', 'wp-sell-services' ); ?></strong>
+						<strong><?php esc_html_e( 'Create your first service', 'wp-sell-services' ); ?></strong>
 						<span><?php esc_html_e( 'Add a service listing to your marketplace.', 'wp-sell-services' ); ?></span>
 					</a>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings#payments' ) ); ?>" class="wpss-wizard-card">
 						<i data-lucide="credit-card" class="wpss-icon" aria-hidden="true"></i>
-						<strong><?php esc_html_e( 'Set Up Payment Methods', 'wp-sell-services' ); ?></strong>
+						<strong><?php esc_html_e( 'Set up payment methods', 'wp-sell-services' ); ?></strong>
 						<span><?php esc_html_e( 'Offline payment works out of the box. Add Stripe, PayPal or your gateway keys to accept card payments.', 'wp-sell-services' ); ?></span>
 						<?php $wpss_dispute_days = wpss_post_completion_dispute_days(); ?>
 						<?php if ( $wpss_dispute_days ) : ?>
@@ -730,12 +730,12 @@ class SetupWizardPage {
 					</a>
 					<a href="#" class="wpss-wizard-card" id="wpss-wizard-import-demo">
 						<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
-						<strong><?php esc_html_e( 'Import Demo Content', 'wp-sell-services' ); ?></strong>
+						<strong><?php esc_html_e( 'Import demo content', 'wp-sell-services' ); ?></strong>
 						<span><?php esc_html_e( 'Get started with sample services and vendors.', 'wp-sell-services' ); ?></span>
 					</a>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings' ) ); ?>" class="wpss-wizard-card">
 						<i data-lucide="settings" class="wpss-icon" aria-hidden="true"></i>
-						<strong><?php esc_html_e( 'Go to Settings', 'wp-sell-services' ); ?></strong>
+						<strong><?php esc_html_e( 'Go to settings', 'wp-sell-services' ); ?></strong>
 						<span><?php esc_html_e( 'Fine-tune your marketplace configuration.', 'wp-sell-services' ); ?></span>
 					</a>
 				</div>
