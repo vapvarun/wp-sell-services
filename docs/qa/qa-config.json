@@ -1071,6 +1071,10 @@
    {
     "id": "finished-surfaces",
     "run": "${WP_CLI:-wp} eval-file tests/test-finished-surfaces.php"
+   },
+   {
+    "id": "admin-box-contract",
+    "run": "${WP_CLI:-wp} eval-file tests/test-admin-box-contract.php"
    }
   ]
  }

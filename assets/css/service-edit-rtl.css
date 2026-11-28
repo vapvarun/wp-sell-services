@@ -256,9 +256,9 @@
 .wpss-overview-section {
 	min-width: 0;
 	background: var(--wpss-admin-bg-light);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 4px;
-	padding: 20px;
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
+	padding: var(--wpss-admin-box-pad);
 }
 
 .wpss-overview-section h4 {

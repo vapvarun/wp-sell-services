@@ -94,7 +94,7 @@
 	align-items: center;
 	gap: 12px;
 	padding: 10px 12px;
-	border-bottom: 1px solid var(--wpss-border-light, #f0f0f1);
+	border-bottom: 1px solid var(--wpss-border-light, #f0f0f1); /* box-ok: row divider inside .wpss-addons-list */
 }
 
 .wpss-addon-item:last-child {

@@ -1694,6 +1694,15 @@
    "fails_on": "551281e2 (timeline.php, conversation.php and 9 admin files carry a literal day format)",
    "check": "bin/check-time-formatter.php",
    "note": "Machine formats (Y-m-d keys, input values) and the month-year 'Member since' stay literal; the rule only matches a day format"
+  },
+  {
+   "card": "10554052748",
+   "title": "Admin boxes wore five looks: rounded 8-12px cards, square postboxes, a 3px accent edge on the active queue tile that shifted its content, and labels split mid-word; Pro white label also painted the admin purple from a #7f54b3 default nobody chose",
+   "guard": "static:admin-box-contract",
+   "added": "2026-11-28",
+   "fails_on": "edde222f (6 failures with the HEAD admin CSS of Free and Pro swapped in)",
+   "check": "tests/test-admin-box-contract.php",
+   "note": "Covers every wp-admin-only sheet in Free plus Pro admin.css; shared sheets keep the frontend look and get admin overrides under .wp-admin. A line marked box-ok: is an allowed exception"
   }
  ]
 }

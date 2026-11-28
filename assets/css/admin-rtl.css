@@ -32,6 +32,13 @@
 	--wpss-admin-radius-sm: 4px;
 	--wpss-admin-radius-md: 6px;
 	--wpss-admin-radius-lg: 8px;
+	/* One box look across wp-admin: the core .postbox (owner, 2026-11-28). Every admin box reads these;
+	   tests/test-admin-box-contract.php fails a box rule that sets its own border, radius or shadow. */
+	--wpss-admin-box-border: 1px solid var(--wpss-wp-admin-border, #c3c4c7);
+	--wpss-admin-box-radius: 0;
+	--wpss-admin-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	--wpss-admin-box-pad: 20px;
+	--wpss-admin-box-gap: 20px;
 	--wpss-admin-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -172,10 +179,10 @@
 
 .wpss-card {
 	background: var(--wpss-admin-white);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: var(--wpss-admin-radius-lg);
-	box-shadow: var(--wpss-admin-shadow-sm);
-	margin-bottom: 16px;
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
+	box-shadow: var(--wpss-admin-box-shadow);
+	margin-bottom: var(--wpss-admin-box-gap);
 	overflow: hidden;
 }
 
@@ -337,8 +344,8 @@ h2.wpss-settings-subhead__title {
 
 .wpss-package-item {
 	background: var(--wpss-bg-subtle, #f6f7f7);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 4px;
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
 	padding: 15px;
 	margin-bottom: 10px;
 }
@@ -388,8 +395,8 @@ h2.wpss-settings-subhead__title {
 
 .wpss-faq-item {
 	background: var(--wpss-bg-subtle, #f6f7f7);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 4px;
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
 	padding: 15px;
 	margin-bottom: 10px;
 }
@@ -436,9 +443,10 @@ h2.wpss-settings-subhead__title {
 /* Finish setting up (Basecamp 10550887795): derived from setup health, hidden when empty. */
 .wpss-setup-steps {
 	background: var(--wpss-admin-white);
-	border: 1px solid var(--wpss-admin-border);
-	border-inline-start: 4px solid var(--wpss-admin-warning);
-	border-radius: var(--wpss-admin-radius-sm);
+	border: var(--wpss-admin-box-border);
+	border-inline-start: 4px solid var(--wpss-admin-warning); /* box-ok: core .notice edge */
+	border-radius: var(--wpss-admin-box-radius);
+	box-shadow: var(--wpss-admin-box-shadow);
 	padding: 16px 20px;
 }
 
@@ -521,9 +529,10 @@ h2.wpss-settings-subhead__title {
 /* Dashboard Box */
 .wpss-dashboard-box {
 	background: var(--wpss-admin-white);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 4px;
-	padding: 20px;
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
+	box-shadow: var(--wpss-admin-box-shadow);
+	padding: var(--wpss-admin-box-pad);
 }
 
 .wpss-dashboard-box h2 {
@@ -984,12 +993,13 @@ h2.wpss-settings-subhead__title {
 
 .wpss-detail-card {
 	background: var(--wpss-surface, #fff);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 8px;
-	padding: 20px;
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
+	box-shadow: var(--wpss-admin-box-shadow);
+	padding: var(--wpss-admin-box-pad);
 	display: flex;
 	gap: 15px;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	transition: border-color 0.2s ease;
 }
 
 /* A card for some service types only (data-wpss-for-types) is hidden while another type is chosen. */
@@ -1012,7 +1022,6 @@ h2.wpss-settings-subhead__title {
 
 .wpss-detail-card:hover {
 	border-color: var(--wpss-gray-400, #b4b9be);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .wpss-detail-icon {
@@ -1104,18 +1113,14 @@ h2.wpss-settings-subhead__title {
 /* Package Card Item */
 .wpss-package-item {
 	background: var(--wpss-surface, #fff);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 8px;
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
 	overflow: hidden;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	transition: border-color 0.2s ease;
 }
 
 .wpss-package-item:hover {
 	border-color: var(--wpss-admin-primary);
-}
-
-.wpss-package-item:first-child {
-	border-right: 3px solid var(--wpss-admin-primary);
 }
 
 /* Package Header */
@@ -1380,17 +1385,15 @@ h2.wpss-settings-subhead__title {
 
 #wpss-faqs-list .wpss-faq-item {
 	background: var(--wpss-surface, #fff);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 8px;
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
 	padding: 15px;
 	margin-bottom: 12px;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-	transition: box-shadow 0.2s ease, border-color 0.2s ease;
+	transition: border-color 0.2s ease;
 }
 
 #wpss-faqs-list .wpss-faq-item:hover {
 	border-color: var(--wpss-gray-400, #b4b9be);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 #wpss-faqs-list .wpss-faq-item:last-child {
@@ -1458,17 +1461,15 @@ h2.wpss-settings-subhead__title {
 
 #wpss-requirements-list .wpss-requirement-item {
 	background: var(--wpss-surface, #fff);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 8px;
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
 	padding: 15px;
 	margin-bottom: 12px;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-	transition: box-shadow 0.2s ease, border-color 0.2s ease;
+	transition: border-color 0.2s ease;
 }
 
 #wpss-requirements-list .wpss-requirement-item:hover {
 	border-color: var(--wpss-gray-400, #b4b9be);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 #wpss-requirements-list .wpss-requirement-item:last-child {
@@ -1583,8 +1584,8 @@ h2.wpss-settings-subhead__title {
 .wpss-requirement-choices {
 	background: var(--wpss-bg-subtle, #f8f9fa);
 	padding: 12px;
-	border-radius: 6px;
-	border: 1px solid var(--wpss-border, #e2e4e7);
+	border-radius: var(--wpss-admin-box-radius);
+	border: var(--wpss-admin-box-border);
 }
 
 .wpss-requirement-choices input {
@@ -1665,7 +1666,7 @@ h2.wpss-settings-subhead__title {
 
 .wpss-stats-wrapper .wpss-stat-item {
 	background: var(--wpss-bg-subtle, #f8f9fa);
-	border-radius: 8px;
+	border-radius: var(--wpss-admin-box-radius);
 	padding: 12px;
 	display: flex;
 	align-items: center;
@@ -1740,17 +1741,15 @@ h2.wpss-settings-subhead__title {
 
 .wpss-addon-item {
 	background: var(--wpss-surface, #fff);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 8px;
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
 	margin-bottom: 12px;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-	transition: box-shadow 0.2s ease, border-color 0.2s ease;
+	transition: border-color 0.2s ease;
 	overflow: hidden;
 }
 
 .wpss-addon-item:hover {
 	border-color: var(--wpss-gray-400, #b4b9be);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .wpss-addon-item:last-child {
@@ -2249,25 +2248,8 @@ h2.wpss-settings-subhead__title {
 	margin: 0 0 5px;
 }
 
-.wpss-vendor-stats-grid {
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
-	gap: 15px;
-	margin-bottom: 20px;
-}
 
-.wpss-vendor-stat {
-	background: var(--wpss-bg-subtle, #f6f7f7);
-	padding: 15px;
-	border-radius: 4px;
-	text-align: center;
-}
 
-.wpss-vendor-stat strong {
-	display: block;
-	font-size: 20px;
-	margin-bottom: 5px;
-}
 
 /* ==========================================================================
    Vendor Detail Page
@@ -2316,10 +2298,11 @@ h2.wpss-settings-subhead__title {
 	align-items: flex-start;
 	gap: 24px;
 	background: var(--wpss-admin-white);
-	padding: 24px;
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: 4px;
-	margin-bottom: 20px;
+	padding: var(--wpss-admin-box-pad);
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
+	box-shadow: var(--wpss-admin-box-shadow);
+	margin-bottom: var(--wpss-admin-box-gap);
 }
 
 .wpss-detail-avatar {
@@ -2378,9 +2361,9 @@ h2.wpss-settings-subhead__title {
 	flex-wrap: wrap; /* Eight tabs overflowed an 820px screen by 41px; wrapping only started at 640px. */
 	gap: 0;
 	background: var(--wpss-admin-white);
-	border: 1px solid var(--wpss-admin-border);
+	border: var(--wpss-admin-box-border);
 	border-bottom: none;
-	border-radius: 4px 4px 0 0;
+	border-radius: var(--wpss-admin-box-radius);
 }
 
 .wpss-detail-tab {
@@ -2408,9 +2391,9 @@ h2.wpss-settings-subhead__title {
 /* Tab Content */
 .wpss-detail-tab-content {
 	background: var(--wpss-admin-white);
-	border: 1px solid var(--wpss-admin-border);
+	border: var(--wpss-admin-box-border);
 	border-top: none;
-	border-radius: 0 0 4px 4px;
+	border-radius: var(--wpss-admin-box-radius);
 	padding: 24px;
 	min-height: 400px;
 }
@@ -2508,7 +2491,7 @@ h2.wpss-settings-subhead__title {
 .wpss-earnings-card {
 	background: var(--wpss-bg-subtle, #f6f7f7);
 	padding: 15px;
-	border-radius: 4px;
+	border-radius: var(--wpss-admin-box-radius);
 	text-align: center;
 }
 
@@ -2523,7 +2506,8 @@ h2.wpss-settings-subhead__title {
    spots a debt without having to read the sign. */
 .wpss-earnings-card--owed {
 	background: var(--wpss-danger-light, #fef2f2);
-	border: 1px solid var(--wpss-danger-border, #fecaca);
+	border: var(--wpss-admin-box-border);
+	border-color: var(--wpss-danger-border, #fecaca);
 }
 
 .wpss-earnings-card--owed strong {
@@ -2533,9 +2517,9 @@ h2.wpss-settings-subhead__title {
 /* Commission Form */
 .wpss-commission-form {
 	background: var(--wpss-bg-subtle, #f6f7f7);
-	padding: 20px;
-	border-radius: 4px;
-	margin-bottom: 20px;
+	padding: var(--wpss-admin-box-pad);
+	border-radius: var(--wpss-admin-box-radius);
+	margin-bottom: var(--wpss-admin-box-gap);
 }
 
 .wpss-commission-form h4 {
@@ -2559,9 +2543,9 @@ h2.wpss-settings-subhead__title {
 /* Settings Section */
 .wpss-settings-section {
 	background: var(--wpss-bg-subtle, #f6f7f7);
-	padding: 20px;
-	border-radius: 4px;
-	margin-bottom: 20px;
+	padding: var(--wpss-admin-box-pad);
+	border-radius: var(--wpss-admin-box-radius);
+	margin-bottom: var(--wpss-admin-box-gap);
 }
 
 .wpss-settings-section h4 {
@@ -2643,9 +2627,9 @@ h2.wpss-settings-subhead__title {
 
 .wpss-list-card {
 	background: var(--wpss-admin-white);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: var(--wpss-admin-radius-lg);
-	box-shadow: var(--wpss-admin-shadow-sm);
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
+	box-shadow: var(--wpss-admin-box-shadow);
 	margin: 16px 0;
 	overflow: hidden;
 }
@@ -2719,9 +2703,9 @@ h2.wpss-settings-subhead__title {
 	text-align: center;
 	padding: 56px 24px 48px;
 	background: var(--wpss-admin-white);
-	border: 1px solid var(--wpss-admin-border);
-	border-radius: var(--wpss-admin-radius-lg);
-	box-shadow: var(--wpss-admin-shadow-sm);
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
+	box-shadow: var(--wpss-admin-box-shadow);
 	margin: 16px 0;
 }
 
@@ -3873,9 +3857,9 @@ button.wpss-change-status:focus {
    neighbours: square, no tinted head, no icon. The member page is unchanged. */
 .wpss-admin-order__blocks .wpss-order-section {
 	margin: 0 0 20px;
-	border: 1px solid var(--wpss-wp-admin-border);
-	border-radius: 0;
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04); /* core .postbox */
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
+	box-shadow: var(--wpss-admin-box-shadow);
 }
 
 .wpss-admin-order__blocks .wpss-order-section__header {
@@ -4026,15 +4010,55 @@ button.wpss-change-status:focus {
 	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
-/* Admin deltas on the shared stat card (design-system.css section 13): a queue
-   with work gets an accent edge, an empty one a grey icon; a figure that links
-   reads as the figure until hovered. */
-.wpss-stat-card--link.is-active {
-	border-inline-start: 3px solid var(--wpss-primary);
+/* Admin deltas on the shared stat card (design-system.css section 13 stays as it is).
+   One tile anatomy on every admin screen: the postbox frame, icon and figure on one
+   centred row, the label below at full width, one height for every tile row. A queue
+   with work keeps its coloured icon; an empty one goes grey. State never changes the
+   border, so no tile shifts. A figure that links reads as the figure until hovered. */
+.wp-admin .wpss-stat-card {
+	min-height: 96px;
+	padding: 16px;
+	border: var(--wpss-admin-box-border);
+	border-radius: var(--wpss-admin-box-radius);
+	box-shadow: var(--wpss-admin-box-shadow);
+}
+
+.wp-admin .wpss-stat-card--icon {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-content: start;
+	align-items: center;
+	gap: 8px 12px;
+}
+
+.wp-admin .wpss-stat-card--icon > .wpss-stat-card__content {
+	display: contents;
+}
+
+.wp-admin .wpss-stat-card--icon .wpss-stat-card__icon {
+	width: 36px;
+	height: 36px;
+}
+
+.wp-admin .wpss-stat-card--icon .wpss-stat-card__label,
+.wp-admin .wpss-stat-card--icon .wpss-stat-card__meta,
+.wp-admin .wpss-stat-card--icon .wpss-stat-card__trend {
+	grid-column: 1 / -1;
+	justify-self: start;
+}
+
+/* Labels wrap between words, never inside one ("Payment s"). */
+.wp-admin .wpss-stat-card__label {
+	overflow-wrap: normal;
+	hyphens: manual;
 }
 
 .wpss-stat-card--link.is-empty .wpss-stat-card__icon {
 	background: var(--wpss-bg-subtle);
+	color: var(--wpss-text-muted);
+}
+
+.wpss-stat-card--link.is-empty .wpss-stat-card__value {
 	color: var(--wpss-text-muted);
 }
 

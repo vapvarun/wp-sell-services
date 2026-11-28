@@ -104,10 +104,11 @@
 .wpss-wizard-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
 .wpss-wizard-card {
 	display: flex; flex-direction: column; align-items: center; text-align: center;
-	padding: 24px 16px; border: 1px solid var(--wpss-gray-300, #ddd); border-radius: 8px;
-	text-decoration: none; color: var(--wpss-gray-800, #1e1e1e); transition: all 0.2s; gap: 8px;
+	padding: 24px 16px; border: var(--wpss-admin-box-border, 1px solid #c3c4c7); border-radius: var(--wpss-admin-box-radius, 0); /* fallbacks: the wizard loads without admin.css */
+	text-decoration: none; color: var(--wpss-gray-800, #1e1e1e); transition: border-color 0.2s; gap: 8px;
 }
-.wpss-wizard-card:hover { border-color: var(--wpss-vendor-green); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.wpss-wizard-card:hover,
+.wpss-wizard-card:focus-visible { border-color: var(--wpss-vendor-green); }
 .wpss-wizard-card .dashicons { font-size: 32px; width: 32px; height: 32px; color: var(--wpss-vendor-green); }
 .wpss-wizard-card strong { font-size: 14px; }
 .wpss-wizard-card span:last-child { color: var(--wpss-wp-admin-text-secondary, #646970); font-size: 12px; }
